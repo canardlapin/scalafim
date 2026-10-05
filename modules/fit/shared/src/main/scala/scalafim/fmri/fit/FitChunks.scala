@@ -211,11 +211,20 @@ private[fit] object PreparedFitContexts:
             s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
           ))
       interpreter <- FitInterpreters.forPlan(plan)
-      context <- interpreter.prepareContext(
-        plan,
-        chunkPlan.timepoints,
-        reader.seriesEither(chunkPlan.selection).left.map(FitChunkPlan.mapDatasetError)
-      )
+      context <-
+        if plan.engine == FitEngine.OrdinaryLeastSquares &&
+            plan.config.volumeWeighting.isInstanceOf[scalafim.fmri.model.VolumeWeighting.Estimated]
+        then FitPreparation.dvars(reader, plan, chunkPlan).map(FitInterpreters.olsContext(plan, _))
+        else if plan.engine == FitEngine.GeneralizedLeastSquares &&
+            FitPreparation.describe(plan).reductions.contains(FitPreparationReduction.PooledAutocorrelation)
+        then PooledGlsPreparation.prepare(reader, plan, chunkPlan)
+        else FitPreparation.describe(plan).topology match
+          case FitPreparationTopology.BlockLocal => Right(new BlockLocalFitContext(interpreter, plan))
+          case _ => interpreter.prepareContext(
+            plan,
+            chunkPlan.timepoints,
+            reader.seriesEither(chunkPlan.selection).left.map(FitChunkPlan.mapDatasetError)
+          )
     yield context
 
 private[fit] type CompletedFitChunk = CompletedChunk[FitBlockResult]
@@ -453,10 +462,20 @@ object ChunkedFitExecutor:
       chunk: FitChunkSpec,
       context: PreparedFitContext
   ): Either[FitError, FitBlockResult] =
+    readChunk(reader, chunk).flatMap(context.fitChunk)
+
+  private[fit] def readChunk(
+      reader: DatasetSeriesReader,
+      chunk: FitChunkSpec
+  ): Either[FitError, scalafim.dataset.FmriSeries] =
     reader.seriesEither(chunk.selection)
       .left
       .map(FitChunkPlan.mapDatasetError)
-      .flatMap(context.fitChunk)
+      .flatMap { series =>
+        if series.timepoints == chunk.timepoints && series.voxelIndices == chunk.voxelIndices &&
+            series.shape == reader.dataset.shape then Right(series)
+        else Left(FitError.InvalidFitAxis("fit chunk response", s"reader returned different axes for chunk ${chunk.ordinal.value}"))
+      }
 
   private[fit] def mergeChunks(
       plan: FitPlan,
