@@ -1,0 +1,13 @@
+{
+ "n_scored": 40,
+ "n_pool_generated": 4000,
+ "snr": 1.0,
+ "volumes_per_run": 150,
+ "threads": 1,
+ "wall_s": 9.473467457981315,
+ "cpu_s": 9.182469999999999,
+ "noisepool_size": 2452,
+ "pcnum": 3,
+ "hrf_index_correct_fraction_B": 0.575,
+ "hrf_index_correct_fraction_D": 0.575
+}

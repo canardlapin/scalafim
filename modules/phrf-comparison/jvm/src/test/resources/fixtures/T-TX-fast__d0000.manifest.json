@@ -1,0 +1,259 @@
+{
+  "arrays": {
+    "cond_coef": {
+      "dtype": "float64",
+      "npy_sha256": "3f751df76010c41290bbcf85379f8081d0c8fd2e6e98d9bbbe2edf73037b899d",
+      "shape": [
+        3,
+        3
+      ]
+    },
+    "cond_peak_amp": {
+      "dtype": "float64",
+      "npy_sha256": "3f751df76010c41290bbcf85379f8081d0c8fd2e6e98d9bbbe2edf73037b899d",
+      "shape": [
+        3,
+        3
+      ]
+    },
+    "ev_cond": {
+      "dtype": "int32",
+      "npy_sha256": "6b773e7380de6fd35c638a76c79245e2accd2c2611ef5b7f11350a6167bac9b7",
+      "shape": [
+        144
+      ]
+    },
+    "ev_duration": {
+      "dtype": "float64",
+      "npy_sha256": "565c848754b95725fdd7e8072435363870e4c97bfd0bdf41abd77d29b3260e76",
+      "shape": [
+        144
+      ]
+    },
+    "ev_onset": {
+      "dtype": "float64",
+      "npy_sha256": "b1383d4ef0345f5b90c2c01dd72c6aa5610b4aefb2cf7520da935e5b87244d32",
+      "shape": [
+        144
+      ]
+    },
+    "ev_onset_true": {
+      "dtype": "float64",
+      "npy_sha256": "b1383d4ef0345f5b90c2c01dd72c6aa5610b4aefb2cf7520da935e5b87244d32",
+      "shape": [
+        144
+      ]
+    },
+    "ev_run": {
+      "dtype": "int32",
+      "npy_sha256": "b3448f8e5c735289e0b2685695511139a83b7a063dd32859cb557c20774797b3",
+      "shape": [
+        144
+      ]
+    },
+    "ev_stim": {
+      "dtype": "int32",
+      "npy_sha256": "f3d26e4ec340d4c869e48107d97e1ff3b8c1b024e3d71f824a93003ff79a21a9",
+      "shape": [
+        144
+      ]
+    },
+    "nuisance": {
+      "dtype": "float64",
+      "npy_sha256": "fa5df8e4b80863109974e7250283c811a3255a773e7822a04190e24e2a83c198",
+      "shape": [
+        600,
+        24
+      ]
+    },
+    "nuisance_coef": {
+      "dtype": "float64",
+      "npy_sha256": "204bb003eb9b1920d85adb01e7c95ad773734b25fc0eb052e0edff54f7c5992a",
+      "shape": [
+        3,
+        24
+      ]
+    },
+    "nuisance_coef_pool": {
+      "dtype": "float64",
+      "npy_sha256": "f1a077b000908fde494fa862fb9e098bff8f8584f47cbdc3689bc87db4f141e4",
+      "shape": [
+        2,
+        24
+      ]
+    },
+    "run_id": {
+      "dtype": "int32",
+      "npy_sha256": "7b13e703dad57b40b614b6a5bbbce4e39b7823ea85ddb9261b15bd461ddab022",
+      "shape": [
+        600
+      ]
+    },
+    "sample_time": {
+      "dtype": "float64",
+      "npy_sha256": "3f02a2e4f7590b132dced9c396036d83565a9aa03b6fb407db024c07d9025884",
+      "shape": [
+        600
+      ]
+    },
+    "signal": {
+      "dtype": "float64",
+      "npy_sha256": "b69a145141c0dae1898c7b440fa40aa9865e3150dba86670e8cce24418fb2dc9",
+      "shape": [
+        3,
+        600
+      ]
+    },
+    "signal_condition_mean": {
+      "dtype": "float64",
+      "npy_sha256": "19abeec03df02783626b642900be3940b5f371ef1d26ef88f751ac1920d36256",
+      "shape": [
+        3,
+        600
+      ]
+    },
+    "signal_scale": {
+      "dtype": "float64",
+      "npy_sha256": "9708eeed52ee10fbd4ebcdd83c8e7480fc5a37e735b4275cfd00c2597398777b",
+      "shape": [
+        3
+      ]
+    },
+    "trial_beta": {
+      "dtype": "float64",
+      "npy_sha256": "178f405950acf96d838acaa3c2762f0a5175699dc5047c1aabead06c8ea317a5",
+      "shape": [
+        3,
+        144
+      ]
+    },
+    "truth_kernel": {
+      "dtype": "float64",
+      "npy_sha256": "4645e00000e4a663e62f61a218f11ef2ed3b9d9b5add7d0d329d395b4850e4b6",
+      "shape": [
+        3,
+        481
+      ]
+    },
+    "truth_params": {
+      "dtype": "float64",
+      "npy_sha256": "9bd5664602793e4cb8a4bc8583491f1ce230a77b3d55ee2b36f3acdae65e3b4b",
+      "shape": [
+        3,
+        7
+      ]
+    },
+    "truth_t": {
+      "dtype": "float64",
+      "npy_sha256": "4007da0681401422c3a0a9890dd7d8be767b5e99e7f2e4672760c291ef03ccb5",
+      "shape": [
+        481
+      ]
+    },
+    "y": {
+      "dtype": "float64",
+      "npy_sha256": "8081159126c66f2d8c79408dbd1d524105f934d7604aa3726aefd79d996bd3fd",
+      "shape": [
+        3,
+        600
+      ]
+    },
+    "y_pool": {
+      "dtype": "float64",
+      "npy_sha256": "56ece9fb4aafee5a4eb87202c24353e2328494711e6cb68f481197540475fb7b",
+      "shape": [
+        2,
+        600
+      ]
+    }
+  },
+  "cell": {
+    "ar": [
+      0.3
+    ],
+    "cell_id": "T-TX-fast",
+    "deviation": "persistent",
+    "duration": 0.0,
+    "kind": "trial",
+    "latency_jitter": false,
+    "n_pool": 2,
+    "n_voxels": 3,
+    "note": "",
+    "null_cal": false,
+    "snr": 1.0,
+    "spacing": "fast",
+    "tr": 1.0,
+    "tr_aligned_onsets": true,
+    "truth": "TX"
+  },
+  "dataset": 0,
+  "denylist": [
+    11,
+    101,
+    102,
+    103,
+    20260909,
+    20260910,
+    20260911,
+    7000930101,
+    7000930102,
+    7000930103,
+    7000930201
+  ],
+  "file": "T-TX-fast__d0000.npz",
+  "generator_code_sha256": "b4ba7ac95cc226b7f4132167e67acab885543a0bd157c985bfb51bfd286d3edf",
+  "generator_version": "0a.1",
+  "n_events": 144,
+  "n_nuisance_cols": 24,
+  "n_pool": 2,
+  "n_samples": 600,
+  "n_voxels": 3,
+  "noise_sd": 1.0,
+  "npz_sha256": "3b5cb36b65bc5ef8d30455b9522d74a0982014f651fcda513e9812123d86cd0f",
+  "numpy": "2.4.3",
+  "root_denylisted": false,
+  "root_hex": "7a3c91d50b44e2f1",
+  "root_kind": "harness",
+  "schema": "phrf-gen-npz-1",
+  "scipy": "1.17.1",
+  "snr_definition": "std_t(signal)/marginal_noise_sd, per voxel, ddof=0",
+  "stream_denylist_check": {
+    "design": {
+      "hit": false,
+      "seed": 7445587948497063369
+    },
+    "noise": {
+      "hit": false,
+      "seed": 6355680464947817139
+    },
+    "nullcal": {
+      "hit": false,
+      "seed": 3246703383566900510
+    },
+    "truth": {
+      "hit": false,
+      "seed": 3236142379493101838
+    }
+  },
+  "streams": {
+    "design": 7445587948497063369,
+    "noise": 6355680464947817139,
+    "nullcal": 3246703383566900510,
+    "truth": 3236142379493101838
+  },
+  "truth_grid": {
+    "n": 481,
+    "start": 0.0,
+    "step": 0.1,
+    "stop": 48.0
+  },
+  "truth_param_names": [
+    "T1",
+    "D1",
+    "g2",
+    "D2",
+    "g3",
+    "D3",
+    "c"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+ "baseline_0": {
+  "hrf_index_exact": 1.0,
+  "relerr_L2_max": 2.0575115649754023e-06,
+  "elementwise_rel_max": 1.1510257571920125e-05,
+  "abs_err_max_vs_float32_ulp_of_baseline": [
+   1.7500287797345138e-05,
+   1.1641532182693481e-10
+  ]
+ },
+ "baseline_1": {
+  "hrf_index_exact": 1.0,
+  "relerr_L2_max": 2.1434556776637866e-06,
+  "elementwise_rel_max": 1.0789995465580741e-05,
+  "abs_err_max_vs_float32_ulp_of_baseline": [
+   1.8215543534649825e-05,
+   1.1920928955078125e-07
+  ]
+ },
+ "baseline_100": {
+  "hrf_index_exact": 1.0,
+  "relerr_L2_max": 9.13997994006246e-06,
+  "elementwise_rel_max": 6.129837818412422e-05,
+  "abs_err_max_vs_float32_ulp_of_baseline": [
+   3.736435661960691e-05,
+   7.62939453125e-06
+  ]
+ },
+ "baseline_1000": {
+  "hrf_index_exact": 1.0,
+  "relerr_L2_max": 8.23402866299408e-05,
+  "elementwise_rel_max": 0.0006594168298106514,
+  "abs_err_max_vs_float32_ulp_of_baseline": [
+   0.0003662766929748429,
+   6.103515625e-05
+  ]
+ },
+ "design_condition_number_float64": 26.74056796845508,
+ "float64_reference_OLS_relerr_L2_max": 3.1126245899599076e-08,
+ "note": "data are cast to float32 at check_inputs.py:53 and glm_estimatemodel.py:434; betas are float32 (glm_estimatemodel.py:790)"
+}

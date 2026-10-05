@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "18d24dbb5056122032b0278f8bad557a9bb1cf23"
+lazy val galeRevision = "da38f8c429294657d30ec29f06eae3fab636d428"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -1096,6 +1096,25 @@ lazy val fit =
 lazy val fitJS  = fit.js
 lazy val fitJVM = fit.jvm
 
+lazy val phrfComparison =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/phrf-comparison"))
+    .dependsOn(model, ar, hrf, fit)
+    .settings(commonSettings)
+    .settings(strictFirstLevelCompilerSettings)
+    .settings(
+      name := "scalafim-phrf-comparison",
+      libraryDependencies += "com.lihaoyi" %%% "upickle" % "4.1.0",
+      publish / skip := true
+    )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jsSettings(jsSettingsBase)
+
+lazy val phrfComparisonJS  = phrfComparison.js
+lazy val phrfComparisonJVM = phrfComparison.jvm
+
 lazy val fitBenchJVM =
   project
     .in(file("benchmarks/fit-jvm"))
@@ -1409,6 +1428,8 @@ lazy val root =
       modelJVM,
       fitJS,
       fitJVM,
+      phrfComparisonJS,
+      phrfComparisonJVM,
       firstLevelLawsJS,
       firstLevelLawsJVM,
       mvpaJS,
