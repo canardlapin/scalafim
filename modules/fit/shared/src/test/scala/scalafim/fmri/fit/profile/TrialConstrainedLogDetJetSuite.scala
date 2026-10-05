@@ -15,6 +15,8 @@ import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, JetLayout, Par
   * do; the oracle shares only the compiled basis coefficients with production.
   */
 class TrialConstrainedLogDetJetSuite extends munit.FunSuite:
+  // Accepted/dense determinant checks took 76 s in the full Java 17 gate.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
   private val step = PositiveSeconds(0.2).fold(error => fail(error.message), identity)
   private lazy val gaussian = HrfKernelBasis.compile(
     KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))

@@ -10,6 +10,12 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReferenc
 import scala.collection.mutable.ArrayBuffer
 
 class ProfileHrfFitParallelSuite extends ProfileHrfFitSuite:
+  // The two 2048-voxel matrices deliberately exercise eight actual workers even
+  // at chunk size 256. Hosted Java 17 coverage takes over three minutes per
+  // matrix; these are semantic parity checks, with explicit short lifecycle
+  // deadlines below, rather than 30-second performance gates.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
+
   private val ids = Vector(15, 0, 11, 2, 8, 4, 1, 13, 3, 14, 5, 12)
   private val chosen = DataSelection(voxels = VoxelSelection.indices(ids*))
 

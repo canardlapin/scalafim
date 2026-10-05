@@ -33,12 +33,34 @@ class ConditionAdmissionDiagnosticsSuite extends munit.FunSuite:
       termTag = Some("cond")
     )
   private lazy val prep =
-    val basis = HrfKernelBasis.compile(KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), 1e-3, 48)).fold(e => fail(e.message), identity)
+    val basis = HrfKernelBasis
+      .compile(KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), 1e-3, 48))
+      .fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(schedule, frame, basis, precision).fold(e => fail(e.message), identity)
     val midpoint = ShapePoint.unsafe(Vector(5.25, math.log(1.55)))
-    val admission = ObservedFamilyCertification.admitForCompact(expanded, schedule, frame, precision, Some(whitening), Some(nuisance), Vector(midpoint), ObservedFamilyRequirements(1e-2, 1e8, 1e-6)).fold(e => fail(e.message), identity)
-    CompactConditionPreparation.prepare(expanded, admission, Some(whitening), Some(nuisance), schedule, frame, precision).fold(e => fail(e.message), identity)
-  private val budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 6, maxJets = 8, maxExactEvaluations = 2, weakSdLimit = Vector(0.5, 1.0), stationarityStepTolerance = 1e-9)
+    val admission = ObservedFamilyCertification
+      .admitForCompact(
+        expanded,
+        schedule,
+        frame,
+        precision,
+        Some(whitening),
+        Some(nuisance),
+        Vector(midpoint),
+        ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+      )
+      .fold(e => fail(e.message), identity)
+    CompactConditionPreparation
+      .prepare(expanded, admission, Some(whitening), Some(nuisance), schedule, frame, precision)
+      .fold(e => fail(e.message), identity)
+  private val budget = DecodeBudget(
+    coarseStride = 2,
+    maxNewtonSteps = 6,
+    maxJets = 8,
+    maxExactEvaluations = 2,
+    weakSdLimit = Vector(0.5, 1.0),
+    stationarityStepTolerance = 1e-9
+  )
 
   private def diagnosticNumber(value: Double): String =
     if value.isNaN then "NaN"
@@ -98,13 +120,19 @@ class ConditionAdmissionDiagnosticsSuite extends munit.FunSuite:
     val signal = new Array[Double](rows)
     var voxel = 0
     while voxel < voxels do
-      val point = ShapePoint.unsafe(Vector(
-        chart.lower(0) + 0.5 + rng.nextDouble() * (chart.width(0) - 1.0),
-        chart.lower(1) + 0.2 + rng.nextDouble() * (chart.width(1) - 0.4)
-      ))
+      val point = ShapePoint.unsafe(
+        Vector(
+          chart.lower(0) + 0.5 + rng.nextDouble() * (chart.width(0) - 1.0),
+          chart.lower(1) + 0.2 + rng.nextDouble() * (chart.width(1) - 0.4)
+        )
+      )
       val beta = Array.fill(3)((if rng.nextBoolean() then 1.0 else -1.0) * (0.5 + 1.5 * rng.nextDouble()))
       GaussianFamily.Default.scaleJetInto(GaussianFamily.Default.libraryNormalization, point, scale)
-      val design = schedule.convolve(GaussianFamily.Default.toHrf(point), frame, precision = precision).data.data.map(_ / scale(JetLayout.Value))
+      val design = schedule
+        .convolve(GaussianFamily.Default.toHrf(point), frame, precision = precision)
+        .data
+        .data
+        .map(_ / scale(JetLayout.Value))
       var sum = 0.0; var sum2 = 0.0; var t = 0
       while t < rows do
         var value = 0.0
@@ -170,7 +198,11 @@ class ConditionAdmissionDiagnosticsSuite extends munit.FunSuite:
         val result = decoder.decode(counters)
         statuses(result.status) += 1
         if result.status != DecodeStatus.Accepted then
-          println(s"{\"family\":\"Gaussian\",\"snr\":$snr,\"voxel\":$voxel,\"status\":\"${result.status}\",\"budgetExit\":\"${result.budgetExit}\",\"jets\":${counters.jets},\"exact\":${counters.exactEvaluations},\"candidates\":${counters.candidateAttempts},\"trace\":${diagnosticTrace(observed.trace)}}")
+          println(
+            s"{\"family\":\"Gaussian\",\"snr\":$snr,\"voxel\":$voxel,\"status\":\"${result.status}\",\"budgetExit\":\"${result.budgetExit}\",\"jets\":${counters.jets},\"exact\":${counters.exactEvaluations},\"candidates\":${counters.candidateAttempts},\"trace\":${diagnosticTrace(observed.trace)}}"
+          )
         voxel += 1
       assertEquals(statuses.values.sum, 200)
-      println(s"[diagnostic-statuses] family=Gaussian snr=$snr counts=${statuses.toVector.sortBy(_._1.toString).mkString(",")}")
+      println(
+        s"[diagnostic-statuses] family=Gaussian snr=$snr counts=${statuses.toVector.sortBy(_._1.toString).mkString(",")}"
+      )

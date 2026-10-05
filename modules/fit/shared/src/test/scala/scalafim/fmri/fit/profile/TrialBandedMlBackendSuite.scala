@@ -1,6 +1,6 @@
 package scalafim.fmri.fit.profile
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, QROptions, QRPivoting}
 import scalafim.fmri.ar.{ArmaCoefficients, TimeSegment, WhiteningPlan}
 import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, KernelBasisSpec, TrialMembership}
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
@@ -18,6 +18,8 @@ import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, ParametricHrfF
   * and never reuses the production accepted band, release or factor.
   */
 class TrialBandedMlBackendSuite extends munit.FunSuite:
+  // Independent dense/finite-difference checks took 82 s in the full Java 17 gate.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
   private val step = PositiveSeconds(0.2).fold(error => fail(error.message), identity)
   private lazy val gaussian = HrfKernelBasis.compile(
     KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))
@@ -495,3 +497,92 @@ class TrialBandedMlBackendSuite extends munit.FunSuite:
     assert(ml.exactReadoutPayload(nonfinite, last).isLeft)
     assertEquals(ml.legacyWork, failedWork)
     assertEquals(ml.measurementWork, TrialResidualMeasurementWork())
+
+
+  /** Original-time augmented QR: sum squared residuals and penalty rows directly,
+    * without a Gram/release factor or subtraction of fitted quadratic forms.
+    */
+  private def residualOracle(fx: Fixture, at: Vector[Double]): Double =
+    val n = fx.trials
+    val f = fx.nuisanceColumns
+    val t = fx.rows
+    val members = fx.expanded.membership
+    val x = whiten(fx, n, designAt(fx.expanded, ShapePoint.unsafe(at)))
+    val nuisanceRaw = new Array[Double](t * f)
+    fx.nuisance.foreach(_.copyRowMajorTo(nuisanceRaw))
+    val nuisance = whiten(fx, f, nuisanceRaw)
+    val a = DMat.tabulate(t + n, n + f): (r, col) =>
+      if r < t then
+        if col < n then x(r * n + col) else nuisance(r * f + col - n)
+      else if col >= n then 0.0
+      else math.sqrt(fx.lambda) * ((if r - t == col then 1.0 else 0.0) -
+        (if members.conditionOfTrial(r - t) == members.conditionOfTrial(col) then
+          1.0 / members.trialsOf(members.conditionOfTrial(col)).length else 0.0))
+    val rhs = DMat.tabulate(t + n, 1)((r, _) => if r < t then fx.response(r) else 0.0)
+    val beta = a.qr(QROptions(QRPivoting.Column, Some(1e-12))).solveLeastSquares(rhs)
+      .fold(error => fail(error.toString), identity)
+    var energy = 0.0
+    var r = 0
+    while r < t + n do
+      var fitted = 0.0
+      var col = 0
+      while col < n + f do
+        fitted += a(r, col) * beta(col, 0)
+        col += 1
+      val residual = rhs(r, 0) - fitted
+      energy += residual * residual
+      r += 1
+    energy
+
+  test("native ML residual energy preserves QR ordering near an exact condition-centred fit"):
+    val base = fixture(gaussian, lambda = 1.0)
+    val truth = offNode(gaussian.family, Vector(0.55, 0.45))
+    val x = designAt(base.expanded, ShapePoint.unsafe(truth))
+    val means = Vector(0.8, -0.3, 0.45)
+    val raw = Array.tabulate(base.rows): row =>
+      var value = base.nuisance.fold(0.0)(f => 0.4 * f(row, 0))
+      var i = 0
+      while i < base.trials do
+        value += x(row * base.trials + i) * means(base.expanded.membership.conditionOfTrial(i))
+        i += 1
+      value
+    val fx = base.copy(response = whiten(base, 1, raw))
+    val ml = backend(fx)
+    val displacement = Vector(4e-8, -6e-8)
+    val energies = Vector(1.0, 0.5, 0.0).map: fraction =>
+      val at = truth.zip(displacement).map((a, d) => a + fraction * d)
+      val valueAttempt = ml.valueAt(at)
+      val jetAttempt = ml.jetAt(at)
+      val value = success(valueAttempt)
+      val jet = success(jetAttempt)
+      val oracle = residualOracle(fx, at)
+      assert(value.raw.energy >= 0.0)
+      assertEqualsDouble(value.raw.energy, oracle, 1e-20)
+      assertEqualsDouble(value.raw.energy, jet.raw.jet.energy, 0.0)
+      assertEqualsDouble(success(ml.valueAt(at)).raw.energy, value.raw.energy, 0.0)
+      assertEquals(valueAttempt.work.residualEnergyEvaluations, 1L)
+      assertEquals(jetAttempt.work.residualEnergyEvaluations, 1L)
+      assertEquals(valueAttempt.work.residualEnergyRows, fx.rows.toLong)
+      assertEquals(valueAttempt.work.residualEnergySourceValues, prepared(fx).sparseDesign.length.toLong)
+      value.raw.energy
+    assert(energies(0) > energies(1) && energies(1) > energies(2), clues(energies))
+    assert(energies(2) < 1e-23, clues(energies))
+
+  test("native ML owns its response copy and invalidates it after a refused point"):
+    val fx = fixture(gaussian)
+    val response = fx.response.clone()
+    val ml = backend(fx.copy(response = response))
+    assertEquals(ml.energyScratchValues, 2 * fx.rows + fx.trials + fx.expanded.membership.conditionCount)
+    assertEquals(ml.workerWorkSnapshot.responseCopyValues, fx.rows.toLong)
+    val at = offNode(gaussian.family, Vector(0.43, 0.61))
+    val before = success(ml.valueAt(at))
+    java.util.Arrays.fill(response, 1e6)
+    assertEqualsDouble(success(ml.valueAt(at)).raw.energy, before.raw.energy, 0.0)
+    val other = ml.newWorker()
+    assert(other.valueAt(at).result.isLeft)
+    assert(other.pointAt(response).result.isRight)
+    assert(success(other.valueAt(at)).raw.energy > before.raw.energy)
+    assertEqualsDouble(success(ml.valueAt(at)).raw.energy, before.raw.energy, 0.0)
+    assert(ml.pointAt(Array(Double.NaN)).result.isLeft)
+    assert(ml.valueAt(at).result.isLeft)
+    assert(ml.jetAt(at).result.isLeft)

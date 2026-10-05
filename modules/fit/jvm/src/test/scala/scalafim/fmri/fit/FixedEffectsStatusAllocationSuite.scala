@@ -11,6 +11,8 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, FitPlan, FitStrategy}
 
 class FixedEffectsStatusAllocationSuite extends munit.FunSuite:
+  // Model preparation and allocation checks took 53 s in the full Java 17 gate.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
   private def checked[E, A](value: Either[E, A]): A = value.fold(e => fail(e.toString), identity)
 
   private def runwiseWithoutStatuses(voxels: Int): RunwiseFmriFitResult =

@@ -14,6 +14,8 @@ import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, ParametricHrfF
   * basis-approximation accuracy.
   */
 class TrialConditionalSolveSuite extends munit.FunSuite:
+  // Independent dense conditional checks took 42 s in the full Java 17 gate.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
   private val step = PositiveSeconds(0.2).fold(error => fail(error.message), identity)
   private lazy val gaussian = HrfKernelBasis.compile(
     KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))
@@ -408,7 +410,14 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
       payload.summary.conditionMeans.indices.foreach: c =>
         val members = prep.membership.trialsOf(c)
         assertEqualsDouble(payload.summary.conditionMeans(c), members.map(actual(_)).sum / members.length, 1e-10)
-      assertEquals(backend.workerWorkSnapshot, mlBefore)
+      // Only the new residual traversal joins the ML energy ledger. The
+      // readout's factor/solve work remains separately charged below.
+      val mlCompleted = mlBefore + TrialMlWork(
+        residualEnergyEvaluations = 1L,
+        residualEnergyRows = fx.rows.toLong,
+        residualEnergySourceValues = prep.sparseDesign.length.toLong,
+        residualEnergyNuisanceValues = fx.rows.toLong * nuisance)
+      assertEquals(backend.workerWorkSnapshot, mlCompleted)
       assertEquals(backend.legacyWork.voxels, before.voxels)
       assertEquals(backend.legacyWork.trialBasisScores, before.trialBasisScores)
       assertEquals(payload.numerical.attempted.readoutAttempts, 1L)
@@ -426,6 +435,7 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
       assert(backend.exactReadoutPayload(at, epoch).toOption.get eq payload)
       assertEquals(backend.exactReadout(at).toOption.get, payload.raw)
       assertEquals(backend.legacyWork, completed)
+      assertEquals(backend.workerWorkSnapshot, mlCompleted)
       assertEquals(backend.measurementWork, TrialResidualMeasurementWork(1, 0, 1))
       // The measurement helper alone cannot alter any objective work fields.
       val solver = new TrialConditionalSolve(objective)

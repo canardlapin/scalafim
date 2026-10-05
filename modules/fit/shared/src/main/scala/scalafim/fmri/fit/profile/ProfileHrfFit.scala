@@ -143,7 +143,8 @@ final case class ProfileSetupReceipt(
     expandedTrialLoweringDoubles: Option[Long],
     observedAdmissionFingerprint: Option[String],
     bankSetup: Option[TrialBandedSetupReceipt] = None,
-    mlSetup: Option[TrialMlWork] = None)
+    mlSetup: Option[TrialMlWork] = None,
+    mlEnergyScratchValuesPerWorker: Option[Int] = None)
 final case class ProfileRunSummary(
     receipts: Vector[ProfileFitReceipt],
     progress: ProfileRunProgress,
@@ -755,13 +756,17 @@ object ProfileHrfFit:
         case ProfileBackend.Trial(prepared, criterion) =>
           val bank = criterion.objectiveBank
           ProfileSetupReceipt(route, Some(prepared.receipt), Some(bank.estimatedSharedBytes),
-            Some(prepared.rows.toLong * prepared.trials * prepared.basisRank), None, Some(bank.setupReceipt), criterion.mlSetup)
+            Some(prepared.rows.toLong * prepared.trials * prepared.basisRank), None, Some(bank.setupReceipt), criterion.mlSetup,
+            criterion match
+              case TrialCriterionFacade.Ml(_, bundle, _) => Some(bundle.energyScratchValues)
+              case _ => None)
         case _ => ProfileSetupReceipt(route, None, None, None, policy.observedAdmission.map(_.fingerprint))
       val provenance = s"profile-fit/v2|dataset=${dataset.id.value}:${dataset.shape}:${dataset.voxelDomain.indices}:${dataset.samplingFrame}:${dataset.events}|time-axis=$timeAxis|metadata=$metadata:${dataset.metadata.provenance}|selected=${selected.timepoints}:${selected.voxels}|drive=$identity|basis=${plan.basis.provenance.canonical}|basis-lags=$basisLags|basis-values=$basisValues|basis-coefficients=$coefficientMap|nuisance=${nuisanceValues.map(java.lang.Double.toHexString).mkString(",")}|config=$config|whitening=$w|amplitudes=${plan.amplitudes}|lambda=$lambda|criterion=${plan.criterion}|grid=${policy.nodesPerAxis}|decode=${policy.budget}|prior=${policy.prior}|admission=${policy.observedAdmission.map(_.fingerprint)}|execution=$budget|route=$route|exact-readout=${backend.isInstanceOf[ProfileBackend.Trial]}"
       val boundProvenance = backend match
         case ProfileBackend.Trial(_, TrialCriterionFacade.Ml(_, bundle, sigma2)) =>
           provenance + "|criterion-form=J=E+sigma2*D|sigma2=" + java.lang.Double.toHexString(sigma2) +
             "|native-lambda=" + java.lang.Double.toHexString(bundle.intrinsicLambda) +
+            "|raw-energy=prepared-sparse-residual-plus-centered-penalty|response=worker-owned-copy" +
             "|conditional-sd=sqrt(diag(2*sigma2*inverse(HJ)))|terminal-evidence=required-at-returned-shape"
         case _ => provenance
       new PreparedProfileHrf(plan, selection, policy, dataset, selected, setup, boundProvenance, backend)

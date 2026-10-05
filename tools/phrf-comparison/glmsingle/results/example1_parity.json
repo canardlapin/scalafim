@@ -1,0 +1,86 @@
+{
+ "n_runs": 12,
+ "data_shape_run0": [
+  145,
+  186,
+  1,
+  300
+ ],
+ "stimdur": 3,
+ "tr": 1,
+ "wall_s": [
+  240.02505862497492,
+  247.7100209579803
+ ],
+ "cpu_s": [
+  252.698157,
+  254.666048
+ ],
+ "typeb.betasmd": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typeb.R2": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typeb.HRFindex": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typec.betasmd": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typec.R2": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typec.HRFindex": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typed.betasmd": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typed.R2": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typed.HRFindex": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "typed.FRACvalue": {
+  "max_abs_diff_over_max_abs": 0.0,
+  "identical": true
+ },
+ "roi_voxels": 2653,
+ "typed_HRFindex_hist_roi": [
+  17,
+  4,
+  18,
+  5,
+  9,
+  23,
+  36,
+  129,
+  192,
+  163,
+  281,
+  360,
+  257,
+  363,
+  313,
+  114,
+  145,
+  71,
+  20,
+  133
+ ],
+ "n_voxels_slice": 26970,
+ "typed_pcnum": 6,
+ "typed_noisepool_size": 12919,
+ "typed_FRACvalue_median_roi": 0.800000011920929
+}

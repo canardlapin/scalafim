@@ -6,6 +6,10 @@ import gale.spectral.{Eigen, EigenSelection, EigenVectors}
 
 /** Attempt accounting supplied by the core, including refused attempts. Setup
   * and per-response work remain separate. These are counts, never factor data.
+  * Residual-energy counts include native criterion and native readout evaluation.
+  * Source values count sparse trial-basis visits; nuisance values count their own
+  * row visits. Response copies count pointAt's owned copy only; residualRows also
+  * counts the response-to-residual copy performed at each energy evaluation.
   */
 final case class TrialMlWork(
     referenceAttempts: Long = 0L,
@@ -17,13 +21,23 @@ final case class TrialMlWork(
     derivativeRightHandSides: Long = 0L,
     smallFactorAttempts: Long = 0L,
     logDetRecursionAttempts: Long = 0L,
-    failures: Long = 0L):
+    failures: Long = 0L,
+    residualEnergyEvaluations: Long = 0L,
+    residualEnergyRows: Long = 0L,
+    residualEnergySourceValues: Long = 0L,
+    responseCopyValues: Long = 0L,
+    residualEnergyCoefficientProducts: Long = 0L,
+    residualEnergyNuisanceValues: Long = 0L):
   def +(other: TrialMlWork): TrialMlWork = TrialMlWork(
     referenceAttempts + other.referenceAttempts, nFactorAttempts + other.nFactorAttempts,
     nFactorFailures + other.nFactorFailures, solveAttempts + other.solveAttempts,
     rightHandSideAttempts + other.rightHandSideAttempts, membershipRightHandSides + other.membershipRightHandSides,
     derivativeRightHandSides + other.derivativeRightHandSides, smallFactorAttempts + other.smallFactorAttempts,
-    logDetRecursionAttempts + other.logDetRecursionAttempts, failures + other.failures)
+    logDetRecursionAttempts + other.logDetRecursionAttempts, failures + other.failures,
+    residualEnergyEvaluations + other.residualEnergyEvaluations, residualEnergyRows + other.residualEnergyRows,
+    residualEnergySourceValues + other.residualEnergySourceValues, responseCopyValues + other.responseCopyValues,
+    residualEnergyCoefficientProducts + other.residualEnergyCoefficientProducts,
+    residualEnergyNuisanceValues + other.residualEnergyNuisanceValues)
 
 private[profile] enum TrialMlFailure:
   case MissingCapability
