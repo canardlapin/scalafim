@@ -340,10 +340,12 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     assert(accepted >= 0.8 * voxels, s"accepted $accepted of $voxels")
 
   test("prepared provenance carries the policy's typed prior, output and the retained preparation"):
-    val queries = Vector(SignedQuery.make("a_minus_b", Vector(1.0, -1.0, 0.0), 1e-6).fold(e => fail(e.message), identity))
+    val queries =
+      Vector(SignedQuery.make("a_minus_b", Vector(1.0, -1.0, 0.0), 1e-6).fold(e => fail(e.message), identity))
     val output = OutputRequest.ConditionQueries(queries, NormalizationRule.Unnormalised)
     val prior = Some(ShapePrior(Vector(5.0, 0.1), Vector(0.1, 0.0, 0.0, 0.1)))
-    val prep = ConditionProfileFit.prepare(plan, policy(output).copy(prior = prior)).fold(e => fail(e.message), identity)
+    val prep =
+      ConditionProfileFit.prepare(plan, policy(output).copy(prior = prior)).fold(e => fail(e.message), identity)
     assertEquals(prep.provenance.output, output)
     assertEquals(prep.provenance.prior, prior)
     assertEquals(prep.provenance.preparation, prep.retention.preparation)
