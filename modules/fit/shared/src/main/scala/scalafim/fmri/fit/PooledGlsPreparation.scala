@@ -44,6 +44,37 @@ private[fit] object PooledGlsPreparation:
   ): Either[FitError, PreparedFitContext] =
     complete(reader, plan, chunks, saveIdentity = false).map(_._1)
 
+  /** Shared whitening for a learned spatial reduction. Response preparation is
+    * already frozen; use its effective design and post-filter run geometry.
+    */
+  private[fit] def shared(source: BoundedResponseReplay): Either[FitError, GlsPrepared] =
+    val prepared = makeUnit(source.design, source.partitions, source.plan.config.autocorrelation,
+      source.plan.coefficientAxis, None)
+    prepared.flatMap(shared(source, _))
+
+  private def shared(source: BoundedResponseReplay, unit: NoiseUnit): Either[FitError, GlsPrepared] =
+    var previous = Option.empty[WhiteningPlan]
+    var pass = 0
+    while pass < math.max(1, unit.config.iterations) do
+      var summary = Option.empty[ArNoiseSummary]
+      source.foreachBlock { input =>
+        val fitted = previous.fold(unit.initial.fit(input.response))(
+          Gls.fitWithPlan(_, unit.design.value, input.response.value))
+        for
+          fit <- fitted
+          residuals = Gls.residualMatrix(unit.design.value, input.response.value, fit.coefficients.value)
+          next <- ArEstimation.summarizeNoise(residuals, unit.layout, ArOrderValue.unsafe(unit.config.order.value)).left.map(Gls.arToFitError)
+          combined <- summary.fold[Either[FitError, ArNoiseSummary]](Right(next))(_.merge(next).left.map(Gls.arToFitError))
+        yield summary = Some(combined)
+      } match
+        case Left(error) => return Left(unit.bind(error))
+        case Right(_) => ()
+      ArEstimation.fitNoise(summary.get, unit.noiseOptions).left.map(Gls.arToFitError) match
+        case Left(error) => return Left(unit.bind(error))
+        case Right(value) => previous = Some(value)
+      pass += 1
+    Right(unit.prepared(previous.get, source.retainedVoxelIndices))
+
   private[fit] def complete(
       reader: DatasetSeriesReader,
       plan: FitPlan,

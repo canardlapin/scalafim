@@ -25,8 +25,12 @@ final case class FitPreparationRequirements(
   def supportsBoundedExecution(engine: FitEngine): Boolean =
     reductions.forall {
       case FitPreparationReduction.ObservationPatterns | FitPreparationReduction.Dvars => true
-      case FitPreparationReduction.PooledAutocorrelation => engine == FitEngine.GeneralizedLeastSquares
-      case _ => false
+      case FitPreparationReduction.PooledAutocorrelation =>
+        engine == FitEngine.GeneralizedLeastSquares || engine == FitEngine.RobustLeastSquares
+          || engine == FitEngine.ReducedRankGls
+      case FitPreparationReduction.RobustRowWeights | FitPreparationReduction.RobustScales =>
+        engine == FitEngine.RobustLeastSquares
+      case FitPreparationReduction.SpatialBasis => engine == FitEngine.ReducedRankGls
     }
 
 object FitPreparation:
@@ -78,7 +82,7 @@ object FitPreparation:
       Vector(0), timepoints, plan.model.dataset.shape
     ).left.map(FitChunkPlan.mapDatasetError)
 
-  private def designInput(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, FitBlockInput] =
+  private[fit] def designInput(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, FitBlockInput] =
     for
       design <- MatrixAdapters.designMatrix(plan.model, timepoints)
     yield FitBlockInput(
@@ -95,6 +99,20 @@ object FitPreparation:
   ): Either[FitError, OlsExecutionPrepared] =
     for
       input <- designInput(plan, timepoints)
+      resolved <- responsePreparation(plan, timepoints, dvars)
+      prepared <- resolved.prepare(input)
+      solver <- Ols.prepare(prepared.input.design).left.map { error =>
+        plan.coefficientAxis.fold(error)(axis => FitKernel.bindRankFailure(error, axis))
+      }
+    yield OlsExecutionPrepared(solver, resolved, input.partitions)
+
+  private[fit] def responsePreparation(
+      plan: FitPlan,
+      timepoints: Vector[Int],
+      dvars: Option[(Vector[Double], Vector[Double])] = None
+  ): Either[FitError, ResolvedResponsePreparation] =
+    for
+      input <- designInput(plan, timepoints)
       declared = ResponsePreparationPlan.fromPlan(plan)
       resolved <- (plan.config.volumeWeighting, dvars) match
         case (VolumeWeighting.Estimated(estimator), Some((weights, metric))) =>
@@ -103,11 +121,7 @@ object FitPreparation:
         case (VolumeWeighting.Estimated(_), None) =>
           Left(FitError.UnsupportedVolumeWeighting("DVARS requires a completed global reduction"))
         case _ => declared.resolve(input)
-      prepared <- resolved.prepare(input)
-      solver <- Ols.prepare(prepared.input.design).left.map { error =>
-        plan.coefficientAxis.fold(error)(axis => FitKernel.bindRankFailure(error, axis))
-      }
-    yield OlsExecutionPrepared(solver, resolved, input.partitions)
+    yield resolved
 
   /** One bounded scan, retaining O(selected timepoints) numeric reduction state.
     * Column exclusions are computed before reduction, just as in the dense path.

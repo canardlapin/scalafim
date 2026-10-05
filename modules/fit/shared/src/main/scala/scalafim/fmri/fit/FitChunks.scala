@@ -215,6 +215,10 @@ private[fit] object PreparedFitContexts:
         if plan.engine == FitEngine.OrdinaryLeastSquares &&
             plan.config.volumeWeighting.isInstanceOf[scalafim.fmri.model.VolumeWeighting.Estimated]
         then FitPreparation.dvars(reader, plan, chunkPlan).map(FitInterpreters.olsContext(plan, _))
+        else if plan.engine == FitEngine.RobustLeastSquares then
+          BoundedRobustPreparation.prepare(reader, plan, chunkPlan)
+        else if plan.engine == FitEngine.ReducedRankGls then
+          BoundedReducedRankGlsPreparation.prepare(reader, plan, chunkPlan)
         else if plan.engine == FitEngine.GeneralizedLeastSquares &&
             FitPreparation.describe(plan).reductions.contains(FitPreparationReduction.PooledAutocorrelation)
         then PooledGlsPreparation.prepare(reader, plan, chunkPlan)
