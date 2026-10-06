@@ -2,6 +2,40 @@ package scalafim.fmri.design.hrf
 
 import scalafim.fmri.hrf.family.ShapeChartError
 
+enum KernelBasisCapacityError:
+  case ArrayCellsOutsideEnvelope(requested: Long, maximum: Long)
+  case SpectralWorkOutsideExactRange(requested: Long, maximum: Long)
+
+  def message: String = this match
+    case ArrayCellsOutsideEnvelope(requested, maximum) =>
+      s"kernel array capacity $requested must lie in 1..$maximum cells"
+    case SpectralWorkOutsideExactRange(requested, maximum) =>
+      s"kernel spectral capacity $requested must lie in 1..$maximum exact work units"
+
+/** Explicit per-compilation admission policy. The common storage, training and
+  * certification envelopes remain fixed; this does not change sampled inputs.
+  */
+final class KernelBasisCapacity private (val arrayCells: Int, val spectralWork: Long):
+  override def equals(other: Any): Boolean = other match
+    case that: KernelBasisCapacity => arrayCells == that.arrayCells && spectralWork == that.spectralWork
+    case _ => false
+
+  override def hashCode(): Int = 31 * arrayCells + java.lang.Long.hashCode(spectralWork)
+
+  override def toString: String = s"KernelBasisCapacity($arrayCells,$spectralWork)"
+
+object KernelBasisCapacity:
+  val MaxExactSpectralWork: Long = 9_007_199_254_740_991L
+  val Default: KernelBasisCapacity =
+    new KernelBasisCapacity(KernelBasisBudget.MaxArrayCells, KernelBasisBudget.MaxSpectralWork)
+
+  def apply(arrayCells: Long, spectralWork: Long): Either[KernelBasisCapacityError, KernelBasisCapacity] =
+    if arrayCells < 1L || arrayCells > KernelBasisBudget.MaxStorageCells then
+      Left(KernelBasisCapacityError.ArrayCellsOutsideEnvelope(arrayCells, KernelBasisBudget.MaxStorageCells))
+    else if spectralWork < 1L || spectralWork > MaxExactSpectralWork then
+      Left(KernelBasisCapacityError.SpectralWorkOutsideExactRange(spectralWork, MaxExactSpectralWork))
+    else Right(new KernelBasisCapacity(arrayCells.toInt, spectralWork))
+
 enum KernelBasisAdmissionError:
   case LimitExceeded(quantity: String, requested: Double, maximum: Long)
   case InvalidChartWidth(axis: String, width: Double)
@@ -50,15 +84,20 @@ final case class KernelBasisEstimate private[hrf] (
     storageCells: Long,
     trainingWork: Long,
     spectralWork: Long,
-    certificationWork: Long):
+    certificationWork: Long,
+    capacity: KernelBasisCapacity = KernelBasisCapacity.Default):
+  require(capacity != null, "kernel estimate capacity must be supplied")
   def retained(rank: Int): KernelBasisAllocation =
     require(rank >= 1 && rank <= availableRank, s"retained rank $rank outside 1..$availableRank")
     KernelBasisAllocation(rank, fineCount.toLong * rank.toLong, rank,
       availableRank, certificateErrorValues)
 
-/** Fixed portable compiler policy: requests are refused, never coarsened.
+/** Portable compiler policy: requests are refused, never coarsened. Array and
+  * spectral capacities can be explicitly selected per compilation; other
+  * envelopes remain fixed.
   *
-  * Gale 54e73f8e's lexical `SpectralBackend.none` uses the pure full/economy SVD:
+  * Gale b56a9dd0's lexical `SpectralBackend.none` uses the pure full/economy SVD
+  * (the same implementation as 54e73f8e):
   * k=min(rows,cols), raw tall input clone rows*cols and right factor k*k,
   * canonical factors rows*k+k*cols, plus k*k orthogonality Gram matrices and
   * residual vectors. Requested maxRank does not reduce these full-SVD shapes.
@@ -127,7 +166,8 @@ object KernelBasisBudget:
   def estimate(spec: KernelBasisSpec): Either[KernelBasisError, KernelBasisEstimate] =
     val family = spec.family
     val d = family.dimension
-    if spec.nodesPerAxis.length != d then Left(KernelBasisError.InvalidSpec(s"nodesPerAxis has ${spec.nodesPerAxis.length} entries for a $d-dimensional chart"))
+    if spec.capacity == null then Left(KernelBasisError.InvalidSpec("capacity must be supplied"))
+    else if spec.nodesPerAxis.length != d then Left(KernelBasisError.InvalidSpec(s"nodesPerAxis has ${spec.nodesPerAxis.length} entries for a $d-dimensional chart"))
     else if spec.nodesPerAxis.exists(_ < 2) then Left(KernelBasisError.InvalidSpec("every axis needs at least two nodes"))
     else if !(spec.tolerance > 0.0 && spec.tolerance < 1.0) then Left(KernelBasisError.InvalidSpec(s"tolerance must lie in (0, 1), got ${spec.tolerance}"))
     else if spec.maxRank < 1 then Left(KernelBasisError.InvalidSpec(s"maxRank must be >= 1, got ${spec.maxRank}"))
@@ -168,19 +208,28 @@ object KernelBasisBudget:
       // trapezoid energy; point generation/validation includes the tail API.
       val certification = spec.heldOutPoints.toDouble *
         (3.0 * d.toDouble + 4.0 * tail + 2.0 * jet + jets * available * n + jets * available)
+      // Every spectral operand is an integer and all terms are nonnegative.
+      // When the final count is <=2^53-1, each intermediate is also within the
+      // exact integer range. Larger counts are refused independently of the
+      // caller's capacity before conversion to Long.
+      // Independently, admitted storage bounds matrix and k*k by 16m,
+      // hence k<=4000; n<=100k and columns<=1m give spectral<=78,592b,
+      // below 2^53. The explicit exact-range guard also preserves this contract
+      // if the common dimension/storage envelopes are revised in the future.
       for
         _ <- checked("fine samples", n, MaxFineSamples)
         _ <- checked("shape grid points", points, MaxGridPoints)
         _ <- checked("training columns", columns, MaxTrainingColumns)
-        _ <- checked("training matrix cells", matrix, MaxArrayCells)
-        _ <- checked("jet scratch cells", jet, MaxArrayCells)
-        _ <- checked("thin left factor cells", left, MaxArrayCells)
-        _ <- checked("thin right factor cells", right, MaxArrayCells)
-        _ <- checked("right factor/Gram cells", k * k, MaxArrayCells)
-        _ <- checked("phi cells", phi, MaxArrayCells)
+        _ <- checked("training matrix cells", matrix, spec.capacity.arrayCells)
+        _ <- checked("jet scratch cells", jet, spec.capacity.arrayCells)
+        _ <- checked("thin left factor cells", left, spec.capacity.arrayCells)
+        _ <- checked("thin right factor cells", right, spec.capacity.arrayCells)
+        _ <- checked("right factor/Gram cells", k * k, spec.capacity.arrayCells)
+        _ <- checked("phi cells", phi, spec.capacity.arrayCells)
         _ <- checked("storage cells", storage, MaxStorageCells)
         _ <- checked("training work", training, MaxTrainingWork)
-        _ <- checked("spectral work", spectral, MaxSpectralWork)
+        _ <- checked("spectral work", spectral, KernelBasisCapacity.MaxExactSpectralWork)
+        _ <- checked("spectral work", spectral, spec.capacity.spectralWork)
         _ <- checked("certification work", certification, MaxCertificationWork)
         _ <-
           val last = (n - 1.0) * spec.fineStep.value
@@ -190,4 +239,4 @@ object KernelBasisBudget:
         columns.toInt, matrix.toLong, k.toInt, left.toLong, right.toLong,
         raw.toLong, canonical.toLong, gram.toLong, available.toInt, jet.toLong,
         phi.toLong, cert.toLong, tail.toInt, storage.toLong,
-        training.toLong, spectral.toLong, certification.toLong)
+        training.toLong, spectral.toLong, certification.toLong, spec.capacity)

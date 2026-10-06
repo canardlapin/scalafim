@@ -33,7 +33,8 @@ final case class KernelBasisSpec(
     maxRank: Int = 32,
     includeDerivatives: Boolean = true,
     heldOutPoints: Int = 300,
-    seed: Long = 11L)
+    seed: Long = 11L,
+    capacity: KernelBasisCapacity = KernelBasisCapacity.Default)
 
 /** Held-out evidence for a compiled basis, per rank `1..maxRank`. Relative
   * errors are maxima over the held-out points; the tail bound is the maximum
@@ -61,7 +62,9 @@ final case class KernelBasisProvenance(
     maxRank: Int,
     heldOutPoints: Int,
     rank: Int,
-    seed: Long):
+    seed: Long,
+    capacity: KernelBasisCapacity = KernelBasisCapacity.Default):
+  require(capacity != null, "kernel provenance capacity must be supplied")
   def canonical: String =
     val axes = chart.map { case (name, lower, upper) =>
       KernelBasisProvenance.record(
@@ -75,7 +78,9 @@ final case class KernelBasisProvenance(
       s"horizon=${KernelBasisProvenance.number(horizonSeconds)}|step=${KernelBasisProvenance.number(fineStepSeconds)}|" +
       s"nodes=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|derivatives=$includeDerivatives|" +
       s"tolerance=${KernelBasisProvenance.number(tolerance)}|maxRank=$maxRank|heldOutPoints=$heldOutPoints|" +
-      s"rank=$rank|seed=$seed"
+      s"rank=$rank|seed=$seed" +
+      (if capacity.arrayCells == KernelBasisBudget.MaxArrayCells && capacity.spectralWork == KernelBasisBudget.MaxSpectralWork then ""
+       else s"|arrayCells=${capacity.arrayCells}|spectralWork=${capacity.spectralWork}")
 
 /** Structural encoding helpers shared by the kernel and its downstream fit
   * provenance. Strings are length-framed and doubles retain their IEEE-754
@@ -151,7 +156,8 @@ final class HrfKernelBasis private (
       maxRank = spec.maxRank,
       heldOutPoints = spec.heldOutPoints,
       rank = rank,
-      seed = spec.seed
+      seed = spec.seed,
+      capacity = spec.capacity
     )
 
   /** Basis value `phi_j(lags(i))`. */

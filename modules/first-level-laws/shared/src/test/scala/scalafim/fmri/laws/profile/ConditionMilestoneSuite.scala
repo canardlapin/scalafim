@@ -3,7 +3,7 @@ package scalafim.fmri.laws.profile
 import gale.linalg.{DMat, DVec}
 import scalafim.fmri.ar.{ArmaCoefficients, TimeSegment, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.event.{Event, EventTerm}
-import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
+import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisCapacity, KernelBasisSpec}
 import scalafim.fmri.fit.profile.*
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -51,9 +51,13 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       termTag = Some("cond")
     )
 
-  private def compile(family: ParametricHrfFamily, nodes: Vector[Int]): (HrfKernelBasis, CompactConditionPreparation) =
+  private def compile(
+      family: ParametricHrfFamily,
+      nodes: Vector[Int],
+      capacity: KernelBasisCapacity = KernelBasisCapacity.Default
+  ): (HrfKernelBasis, CompactConditionPreparation) =
     val basis = HrfKernelBasis
-      .compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48))
+      .compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48, capacity = capacity))
       .fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(schedule, frame, basis, precision).fold(e => fail(e.message), identity)
     val midpoint = Vector.tabulate(family.dimension)(i => 0.5 * (family.chart.lower(i) + family.chart.upper(i)))
@@ -75,7 +79,10 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     (basis, prep)
 
   private lazy val gaussian = compile(GaussianFamily.Default, Vector(26, 21))
-  private lazy val lwu = compile(LwuFamily.Default, Vector(14, 9, 7))
+  // Frozen LWU inputs request 2,831,220 training cells and
+  // 120,096,758,484 spectral units, inside the fixed storage envelope.
+  private lazy val lwu = compile(LwuFamily.Default, Vector(14, 9, 7),
+    KernelBasisCapacity(3_000_000L, 128_000_000_000L).fold(e => fail(e.message), identity))
 
   private def whitenColumns(cols: Int, rowMajor: Array[Double]): Array[Double] =
     val b = DMat.newBuilder(rows, cols)
@@ -375,7 +382,10 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     println(s"[milestone] LWU basis rank ${basis.rank}, K = ${prep.rank}")
     for (snr, seed) <- Seq((1.0, 111L), (0.5, 112L)) do
       val (fraction, p95L, p95W, p95A) = accuracy("LWU", LwuFamily.Default, prep, 100, snr, seed, Vector(26, 11, 9))
-      println(f"[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)")
+      val declaredBudget = budgetFor(LwuFamily.Default)
+      println(s"[milestone] LWU budget: ${nodesFor(LwuFamily.Default).mkString("x")} bank, " +
+        s"${declaredBudget.maxNewtonSteps} Newton steps, ${declaredBudget.maxJets} jets, " +
+        s"${declaredBudget.maxExactEvaluations} exact evaluations (recorded per-family budget)")
       assert(p95L <= 0.02, s"p95 latency $p95L at SNR $snr")
       assert(p95W <= 0.05, s"p95 FWHM $p95W at SNR $snr")
       assert(p95A <= 1e-3, s"p95 amplitude $p95A at SNR $snr")

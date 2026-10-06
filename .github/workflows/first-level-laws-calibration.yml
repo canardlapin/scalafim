@@ -1,24 +1,30 @@
 name: first-level-laws-calibration
-run-name: focused compact precision qualification on native Linux
+run-name: final published precision and frozen LWU qualification on native Linux
 on:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: compact-paired-focused-${{ github.run_id }}
+  group: precision-lwu-final-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
-  compact-precision:
-    name: compact paired precision on native Linux x64
+  final-qualification:
+    name: final precision and LWU (${{ matrix.platform }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [JVM, JS]
     env:
       COURSIER_REPOSITORIES: https://repo.maven.apache.org/maven2
-      SBT_OPTS: -Xmx4g -XX:ActiveProcessorCount=4 -Dsbt.supershell=false -Dsbt.color=false
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Check out final candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+      - name: Initialize retained evidence
+        run: mkdir -p diagnostics/${{ matrix.platform }}
       - name: Resolve exact historical JDK
         id: exact-jdk
         continue-on-error: true
@@ -26,68 +32,31 @@ jobs:
         with:
           distribution: temurin
           java-version: "17.0.20+1"
-      - name: Resolve current declared JDK if historical cache is unavailable
+      - name: Resolve declared JDK baseline if exact historical build is unavailable
         if: steps.exact-jdk.outcome == 'failure'
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: "17"
-      - uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55
+      - name: Set up sbt
+        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55
         with:
           sbt-runner-version: "1.11.7"
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      - name: Set up exact scientific Node runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: "24.21.0"
           package-manager-cache: false
-      - name: Prepare sealed Gale comparison overlay
-        run: |
-          precision_gale_checkout="$RUNNER_TEMP/gale-paired-precision"
-          echo "a18e2746e43e0414436d69c23534df74c3220c42d8ab5dc350fd032adc49736c  tools/diagnostics/paired-residual-gale-source.patch" | sha256sum --check
-          git clone https://github.com/canardlapin/gale.git "$precision_gale_checkout"
-          git -C "$precision_gale_checkout" checkout 54e73f8e8f1218c4cb115a850aa80e1a36c6978f
-          git -C "$precision_gale_checkout" apply "$GITHUB_WORKSPACE/tools/diagnostics/paired-residual-gale-source.patch"
-          mkdir -p diagnostics
-          git -C "$precision_gale_checkout" rev-parse HEAD > diagnostics/gale-base.txt
-          git -C "$precision_gale_checkout" diff --stat > diagnostics/gale-overlay-stat.txt
-          sha256sum "$precision_gale_checkout/core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala" > diagnostics/gale-source-sha256.txt
-          echo "PRECISION_GALE_CHECKOUT=$precision_gale_checkout" >> "$GITHUB_ENV"
-      - name: Record host and source fingerprint
-        run: |
-          uname -a > diagnostics/host.txt
-          cat /etc/os-release >> diagnostics/host.txt
-          java -version 2>> diagnostics/host.txt
-          node --version >> diagnostics/host.txt
-          node -p 'JSON.stringify(process.versions)' >> diagnostics/host.txt
-          ldd --version >> diagnostics/host.txt
-          git rev-parse HEAD > diagnostics/source-commit.txt
-          echo "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb  modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala" | sha256sum --check
-          sha256sum build.sbt tools/diagnostics/paired-residual-gale-source.patch modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactPairedComparison.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactConditionJets.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/CompactPairedComparisonSuite.scala modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala > diagnostics/source-sha256.txt
-      - name: Qualify fit and first-level laws on both platforms in bounded processes
-        run: |
-          precision_gate_failed=0
-          precision_tasks=(
-            "fitJVM/testOnly scalafim.fmri.fit.profile.CompactPairedComparisonSuite scalafim.fmri.fit.profile.ShapeDecoderSuite scalafim.fmri.fit.profile.ShapeDecoderTangentSuite"
-            "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite"
-            "fitJS/testOnly scalafim.fmri.fit.profile.CompactPairedComparisonSuite scalafim.fmri.fit.profile.ShapeDecoderSuite scalafim.fmri.fit.profile.ShapeDecoderTangentSuite"
-            "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite"
-          )
-          precision_labels=(fit-jvm laws-jvm fit-js laws-js)
-          for precision_index in "${!precision_tasks[@]}"; do
-            precision_task="${precision_tasks[$precision_index]}"
-            precision_label="${precision_labels[$precision_index]}"
-            set +e
-            timeout 15m sbt "-Dscalafim.gale.build=$PRECISION_GALE_CHECKOUT" "$precision_task" > "diagnostics/$precision_label.log" 2>&1
-            precision_result=$?
-            set -e
-            echo "$precision_result" > "diagnostics/$precision_label-exit-code.txt"
-            if [ "$precision_result" -ne 0 ]; then precision_gate_failed=1; fi
-          done
-          exit "$precision_gate_failed"
-      - name: Upload complete scientific qualification evidence
+      - name: Run default published precision, kernel, LWU and full fit gates
+        env:
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-final-${{ matrix.platform }}
+          SCALAFIM_QUALIFICATION_DIR: ${{ github.workspace }}/diagnostics/${{ matrix.platform }}
+        run: bash tools/qualification/precision-lwu-final.sh ${{ matrix.platform }}
+      - name: Upload complete source and scientific outcome evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: compact-paired-focused-${{ github.run_id }}
-          path: diagnostics/
+          name: precision-lwu-final-${{ matrix.platform }}-${{ github.run_id }}
+          path: diagnostics/${{ matrix.platform }}/
           if-no-files-found: error
           retention-days: 14

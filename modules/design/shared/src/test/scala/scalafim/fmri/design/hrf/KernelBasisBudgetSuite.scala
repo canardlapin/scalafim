@@ -54,6 +54,70 @@ class KernelBasisBudgetSuite extends munit.FunSuite:
       limit(KernelBasisBudget.checked(quantity, maximum.toDouble + 1.0, maximum), quantity)
       limit(KernelBasisBudget.checked(quantity, Double.PositiveInfinity, maximum), quantity)
 
+  test("explicit-capacity-is-positive-and-bounded-without-changing-defaults"):
+    assertEquals(KernelBasisCapacity.Default.arrayCells, 2_000_000)
+    assertEquals(KernelBasisCapacity.Default.spectralWork, 100_000_000_000L)
+    Vector(0L, -1L, KernelBasisBudget.MaxStorageCells + 1L, Long.MaxValue).foreach: cells =>
+      assert(KernelBasisCapacity(cells, 128_000_000_000L).isLeft)
+    Vector(0L, -1L, KernelBasisCapacity.MaxExactSpectralWork + 1L, Long.MaxValue).foreach: work =>
+      assert(KernelBasisCapacity(3_000_000L, work).isLeft)
+    val maximum = KernelBasisCapacity(KernelBasisBudget.MaxStorageCells, KernelBasisCapacity.MaxExactSpectralWork).toOption.get
+    assertEquals(maximum.arrayCells.toLong, KernelBasisBudget.MaxStorageCells)
+    assertEquals(maximum.spectralWork, KernelBasisCapacity.MaxExactSpectralWork)
+    limit(KernelBasisBudget.checked("spectral work", math.pow(2.0, 53.0), maximum.spectralWork), "spectral work")
+
+  test("explicit-array-admission-retains-fixed-total-storage-and-callback-refusal"):
+    val family = new Family(ShapeChart(("a", 0.0, 1.0), ("b", 0.0, 1.0), ("c", 0.0, 1.0)))
+    val input = spec(family).copy(nodesPerAxis = Vector(50, 50, 30))
+    assertEquals(HrfKernelBasis.estimate(input.copy(capacity = null)), Left(KernelBasisError.InvalidSpec("capacity must be supplied")))
+    limit(HrfKernelBasis.estimate(input), "training matrix cells")
+    val capacity = KernelBasisCapacity(2_250_000L, KernelBasisBudget.MaxSpectralWork).toOption.get
+    val admitted = HrfKernelBasis.estimate(input.copy(capacity = capacity)).toOption.get
+    assertEquals(admitted.trainingCells, 2_250_000L)
+    assertEquals(admitted.capacity, capacity)
+    assert(admitted.storageCells <= KernelBasisBudget.MaxStorageCells)
+    val below = KernelBasisCapacity(2_249_999L, KernelBasisBudget.MaxSpectralWork).toOption.get
+    limit(HrfKernelBasis.compile(input.copy(capacity = below)), "training matrix cells")
+    val enlarged = KernelBasisCapacity(3_000_000L, 128_000_000_000L).toOption.get
+    limit(HrfKernelBasis.compile(input.copy(nodesPerAxis = Vector(100, 100, 10), capacity = enlarged)), "storage cells")
+    assertEquals(family.evaluations, 0)
+
+  test("frozen-LWU-capacity-admits-exact-inputs-and-keeps-spectral-default-refusal"):
+    val family = scalafim.fmri.hrf.family.LwuFamily.Default
+    val input = KernelBasisSpec(family, PositiveSeconds(0.1).toOption.get, Vector(14, 9, 7), 1e-3, maxRank = 48)
+    limit(HrfKernelBasis.estimate(input), "training matrix cells")
+    val arraysOnly = KernelBasisCapacity(3_000_000L, KernelBasisBudget.MaxSpectralWork).toOption.get
+    limit(HrfKernelBasis.estimate(input.copy(capacity = arraysOnly)), "spectral work")
+    val capacity = KernelBasisCapacity(3_000_000L, 128_000_000_000L).toOption.get
+    val estimate = HrfKernelBasis.estimate(input.copy(capacity = capacity)).toOption.get
+    assertEquals(estimate.fineCount, 321)
+    assertEquals(estimate.gridPoints, 882)
+    assertEquals(estimate.trainingCells, 2_831_220L)
+    assertEquals(estimate.storageCells, 9_024_270L)
+    assertEquals(estimate.trainingWork, 8_498_985L)
+    assertEquals(estimate.spectralWork, 120_096_758_484L)
+    assertEquals(estimate.certificationWork, 49_833_900L)
+    assertEquals(estimate.capacity, capacity)
+
+  test("nondefault-capacity-is-recorded-and-default-provenance-is-unchanged"):
+    val family = new Family(ShapeChart(("a", 0.0, 1.0)), refuseCallbacks = false)
+    val input = spec(family)
+    val baseline = HrfKernelBasis.compile(input).fold(e => fail(e.message), identity)
+    val capacity = KernelBasisCapacity(3_000_000L, 128_000_000_000L).toOption.get
+    val explicit = HrfKernelBasis.compile(input.copy(capacity = capacity)).fold(e => fail(e.message), identity)
+    assertEquals(explicit.provenance.canonical, baseline.provenance.canonical + "|arrayCells=3000000|spectralWork=128000000000")
+    assertEquals(baseline.provenance.copy(capacity = KernelBasisCapacity(2_000_000L, 100_000_000_000L).toOption.get).canonical,
+      baseline.provenance.canonical)
+    val equivalentDefault = KernelBasisCapacity(2_000_000L, 100_000_000_000L).toOption.get
+    assertEquals(baseline.provenance.copy(capacity = equivalentDefault), baseline.provenance)
+    assertEquals(equivalentDefault.hashCode(), KernelBasisCapacity.Default.hashCode())
+    val workOnly = KernelBasisCapacity(2_000_000L, 128_000_000_000L).toOption.get
+    assertEquals(baseline.provenance.copy(capacity = workOnly).canonical,
+      baseline.provenance.canonical + "|arrayCells=2000000|spectralWork=128000000000")
+    assertEquals(explicit.rank, baseline.rank)
+    assertEquals(explicit.singularValues.map(java.lang.Double.doubleToLongBits),
+      baseline.singularValues.map(java.lang.Double.doubleToLongBits))
+
   test("node-products-refuse-before-integer-overflow-or-callbacks"):
     val family = new Family(ShapeChart(("a", 0.0, 1.0), ("b", 0.0, 1.0), ("c", 0.0, 1.0)))
     limit(HrfKernelBasis.compile(spec(family).copy(nodesPerAxis = Vector.fill(3)(Int.MaxValue))), "shape grid points")
