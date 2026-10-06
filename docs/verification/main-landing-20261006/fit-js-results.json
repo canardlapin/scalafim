@@ -1,0 +1,626 @@
+[
+  {
+    "name": "scalafim.examples.SelectedEstimatesExampleSuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.032"
+  },
+  {
+    "name": "scalafim.fmri.fit.BasisExpandedRetentionSuite",
+    "tests": "5",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.005"
+  },
+  {
+    "name": "scalafim.fmri.fit.BoundedReducedRankGlsPreparationSuite",
+    "tests": "25",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.893"
+  },
+  {
+    "name": "scalafim.fmri.fit.BoundedRobustPreparationSuite",
+    "tests": "16",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.995"
+  },
+  {
+    "name": "scalafim.fmri.fit.ChunkedFitExecutorSuite",
+    "tests": "36",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.081"
+  },
+  {
+    "name": "scalafim.fmri.fit.CompactFixedEffectsSuite",
+    "tests": "5",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.03"
+  },
+  {
+    "name": "scalafim.fmri.fit.ContrastReprojectionSuite",
+    "tests": "4",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.003"
+  },
+  {
+    "name": "scalafim.fmri.fit.ConvolvedBasisReadoutSuite",
+    "tests": "4",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.048"
+  },
+  {
+    "name": "scalafim.fmri.fit.DctDriftFitSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.031"
+  },
+  {
+    "name": "scalafim.fmri.fit.DesignMatrixOwnershipSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.065"
+  },
+  {
+    "name": "scalafim.fmri.fit.ExactRowMediansSuite",
+    "tests": "16",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.FirstLevelEstimatesSuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.015"
+  },
+  {
+    "name": "scalafim.fmri.fit.FirstLevelFixedEffectsEstimatesSuite",
+    "tests": "10",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.087"
+  },
+  {
+    "name": "scalafim.fmri.fit.FitBlockSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "scalafim.fmri.fit.FitPlanBuilderSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.009"
+  },
+  {
+    "name": "scalafim.fmri.fit.FitPlanExecutorSuite",
+    "tests": "32",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.126"
+  },
+  {
+    "name": "scalafim.fmri.fit.FitPreparationSuite",
+    "tests": "14",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.139"
+  },
+  {
+    "name": "scalafim.fmri.fit.FitWorkDescriptorSuite",
+    "tests": "8",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.009"
+  },
+  {
+    "name": "scalafim.fmri.fit.FixedEffectsEstimatesSuite",
+    "tests": "5",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.007"
+  },
+  {
+    "name": "scalafim.fmri.fit.GlsSuite",
+    "tests": "18",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.137"
+  },
+  {
+    "name": "scalafim.fmri.fit.ImageMapsSuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.017"
+  },
+  {
+    "name": "scalafim.fmri.fit.InferenceSuite",
+    "tests": "11",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.013"
+  },
+  {
+    "name": "scalafim.fmri.fit.LssSuite",
+    "tests": "9",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.001"
+  },
+  {
+    "name": "scalafim.fmri.fit.LssTargetDesignSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.001"
+  },
+  {
+    "name": "scalafim.fmri.fit.MaskedResponseStreamingSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.016"
+  },
+  {
+    "name": "scalafim.fmri.fit.MatrixAdaptersSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.002"
+  },
+  {
+    "name": "scalafim.fmri.fit.OlsEstimatesSuite",
+    "tests": "9",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.OlsSuite",
+    "tests": "16",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.001"
+  },
+  {
+    "name": "scalafim.fmri.fit.PipelineFitWorkflowSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.004"
+  },
+  {
+    "name": "scalafim.fmri.fit.PooledGlsPreparationSuite",
+    "tests": "10",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.123"
+  },
+  {
+    "name": "scalafim.fmri.fit.PreparedContrastGeometrySuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.001"
+  },
+  {
+    "name": "scalafim.fmri.fit.PreparedGlsArtifactSuite",
+    "tests": "9",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.041"
+  },
+  {
+    "name": "scalafim.fmri.fit.PreparedGlsPortabilitySuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.01"
+  },
+  {
+    "name": "scalafim.fmri.fit.PreparedManovaGeometrySuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.009"
+  },
+  {
+    "name": "scalafim.fmri.fit.ResponsePreparationSuite",
+    "tests": "14",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.ResultArtifactsSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.002"
+  },
+  {
+    "name": "scalafim.fmri.fit.RidgeLssSuite",
+    "tests": "10",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.098"
+  },
+  {
+    "name": "scalafim.fmri.fit.RobustSuite",
+    "tests": "9",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "1.054"
+  },
+  {
+    "name": "scalafim.fmri.fit.RunwiseGlsSuite",
+    "tests": "4",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.083"
+  },
+  {
+    "name": "scalafim.fmri.fit.RunwiseOlsSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.019"
+  },
+  {
+    "name": "scalafim.fmri.fit.SelectedEstimatesSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.051"
+  },
+  {
+    "name": "scalafim.fmri.fit.StructuralHypothesisDslSuite",
+    "tests": "13",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.016"
+  },
+  {
+    "name": "scalafim.fmri.fit.StructuralHypothesisSuite",
+    "tests": "12",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.002"
+  },
+  {
+    "name": "scalafim.fmri.fit.TrialReadoutSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.VoxelStatusLookupSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.BlockExecutorSuite",
+    "tests": "4",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.CompactPairedComparisonSuite",
+    "tests": "17",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.773"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ConditionProfileProvenanceSuite",
+    "tests": "4",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.122"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.CriterionJetSuite",
+    "tests": "8",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.OutputRequestSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.001"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ProfileFitIdentitySuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.038"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ProfileHrfFitSuite",
+    "tests": "21",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.517"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite",
+    "tests": "37",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "5.447"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ProfileReductionSuite",
+    "tests": "5",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ProfileTrialReadoutSuite",
+    "tests": "8",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.608"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ShapeDecoderSuite",
+    "tests": "22",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.851"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ShapeDecoderTangentSuite",
+    "tests": "8",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.001"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.ShapeEvidencePoolSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.SummaryPreparationSuite",
+    "tests": "9",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.379"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.TrialBandedMlBackendSuite",
+    "tests": "11",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.334"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.TrialBandedWorkReceiptSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.714"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.TrialConditionalSolveSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.104"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.TrialConstrainedLogDetJetSuite",
+    "tests": "12",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "5.552"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.TrialHeldOutPredictionSuite",
+    "tests": "5",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.569"
+  },
+  {
+    "name": "scalafim.fmri.fit.profile.TrialMlObjectiveSuite",
+    "tests": "13",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.009"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.016"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.01"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.359"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.021"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.273"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.017"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.01"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.029"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.ScenarioHarnessSuite",
+    "tests": "5",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.0"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.003"
+  },
+  {
+    "name": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.51"
+  }
+]

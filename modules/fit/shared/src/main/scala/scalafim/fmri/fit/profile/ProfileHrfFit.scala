@@ -144,7 +144,8 @@ final case class ProfileSetupReceipt(
     observedAdmissionFingerprint: Option[String],
     bankSetup: Option[TrialBandedSetupReceipt] = None,
     mlSetup: Option[TrialMlWork] = None,
-    mlEnergyScratchValuesPerWorker: Option[Int] = None)
+    mlEnergyScratchValuesPerWorker: Option[Int] = None,
+    compactComparisonPerWorker: Option[CompactComparisonWorkspaceReceipt] = None)
 final case class ProfileRunSummary(
     receipts: Vector[ProfileFitReceipt],
     progress: ProfileRunProgress,
@@ -720,6 +721,12 @@ object ProfileHrfFit:
       _ <- if selected.timepoints == (0 until dataset.shape.timepoints).toVector then Right(())
            else Left(ProfileFitError.Unsupported("only the full ordered time frame is implemented"))
       source <- prepareSource(plan, selection, whitening, policy)
+      compactComparison <- source._1 match
+        case ProfileBackend.Compact(prepared) =>
+          CompactComparisonWorkspaceReceipt.estimate(prepared,
+            CompactComparisonWorkspaceReceipt.enabled(policy.prior, policy.budget))
+            .left.map(error => ProfileFitError.Unsupported(error.message)).map(Some(_))
+        case _ => Right(None)
     yield
       val (backend, route) = source
       val setup = backend match
@@ -730,6 +737,9 @@ object ProfileHrfFit:
             criterion match
               case TrialCriterionFacade.Ml(_, bundle, _) => Some(bundle.energyScratchValues)
               case _ => None)
+        case ProfileBackend.Compact(_) =>
+          ProfileSetupReceipt(route, None, None, None, policy.observedAdmission.map(_.fingerprint),
+            compactComparisonPerWorker = compactComparison)
         case _ => ProfileSetupReceipt(route, None, None, None, policy.observedAdmission.map(_.fingerprint))
       val mlIdentity = backend match
         case ProfileBackend.Trial(_, TrialCriterionFacade.Ml(_, bundle, sigma2)) => Some((sigma2, bundle.intrinsicLambda))

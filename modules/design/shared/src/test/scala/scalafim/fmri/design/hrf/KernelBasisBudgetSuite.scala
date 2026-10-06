@@ -66,6 +66,76 @@ class KernelBasisBudgetSuite extends munit.FunSuite:
     limit(HrfKernelBasis.compile(spec(family).copy(fineStep = fine, nodesPerAxis = Vector(1000))), "training matrix cells")
     assertEquals(family.evaluations, 0)
 
+  test("blocked-partial-admits-frozen-LWU-within-unchanged-array-storage-and-work-limits"):
+    val input = KernelBasisSpec(scalafim.fmri.hrf.family.LwuFamily.Default,
+      PositiveSeconds(0.1).toOption.get, Vector(14, 9, 7), 1e-3,
+      maxRank = 48, compilation = KernelBasisCompilation.BlockedPartial(96))
+    val estimate = HrfKernelBasis.estimate(input).fold(e => fail(e.message), identity)
+    assertEquals(estimate.trainingCells, 2_831_220L)
+    assertEquals(estimate.trainingBlocks, 2)
+    assertEquals(estimate.trainingBlockColumns, 6230)
+    assertEquals(estimate.trainingBlockCells, 1_999_830L)
+    assertEquals(estimate.partialSubspace, Some(96))
+    assertEquals(KernelBasisBudget.MaxArrayCells, 2_000_000)
+    assertEquals(KernelBasisBudget.MaxStorageCells, 16_000_000L)
+    assert(estimate.storageCells <= KernelBasisBudget.MaxStorageCells)
+    assert(estimate.trainingWork <= KernelBasisBudget.MaxTrainingWork)
+    assert(estimate.spectralWork <= KernelBasisBudget.MaxSpectralWork)
+    assert(estimate.certificationWork <= KernelBasisBudget.MaxCertificationWork)
+    limit(HrfKernelBasis.estimate(input.copy(compilation = KernelBasisCompilation.Dense)), "training matrix cells")
+
+  test("blocked-partial-rejects-invalid-subspace-and-storage-before-family-callbacks"):
+    val family = new Family(ShapeChart(("a", 0.0, 1.0)))
+    val input = spec(family)
+    Vector(-1, 0, 2).foreach: subspace =>
+      assert(HrfKernelBasis.compile(input.copy(compilation = KernelBasisCompilation.BlockedPartial(subspace)))
+        .left.exists(_.isInstanceOf[KernelBasisError.InvalidSpec]))
+    val lwu = KernelBasisSpec(scalafim.fmri.hrf.family.LwuFamily.Default,
+      PositiveSeconds(0.1).toOption.get, Vector(14, 9, 7), 1e-3,
+      maxRank = 48, compilation = KernelBasisCompilation.BlockedPartial(200))
+    limit(HrfKernelBasis.estimate(lwu), "storage cells")
+    assertEquals(family.evaluations, 0)
+
+  test("blocked-partial-keeps-only-converged-triplets-and-certifies-the-same-family-values"):
+    val family = new Family(ShapeChart(("a", 0.0, 1.0)), refuseCallbacks = false)
+    val input = spec(family)
+    val dense = HrfKernelBasis.compile(input).fold(e => fail(e.message), identity)
+    val partial = HrfKernelBasis.compile(input.copy(compilation = KernelBasisCompilation.BlockedPartial(3)))
+      .fold(e => fail(e.message), identity)
+    val point = ShapePoint.unsafe(Vector(0.3))
+    def reconstruction(basis: HrfKernelBasis): Array[Double] =
+      val coefficients = new Array[Double](basis.rank)
+      val scratch = new Array[Double](basis.fineCount)
+      val result = new Array[Double](basis.fineCount)
+      basis.coefficientsInto(point, scratch, coefficients)
+      basis.reconstructInto(coefficients, result)
+      result
+    val (a, b) = (reconstruction(dense), reconstruction(partial))
+    a.indices.foreach(i => assertEqualsDouble(b(i), a(i), 1e-12))
+    assert(partial.spectralDiagnostics.converged >= partial.rank)
+    assertEquals(partial.spectralDiagnostics.iterations, 1)
+    val receipt = partial.compilationReceipt
+    assertEquals(receipt.trainingArrayCells.sum, partial.allocationEstimate.trainingCells)
+    assert(receipt.trainingArrayCells.forall(_ <= KernelBasisBudget.MaxArrayCells))
+    assertEquals(receipt.trainingGridPoints, partial.allocationEstimate.gridPoints)
+    assertEquals(receipt.jetScratchCells.toLong, partial.allocationEstimate.jetScratchCells)
+    assert(receipt.forwardApplications <= 3 + input.maxRank)
+    assert(receipt.adjointApplications <= 3 + input.maxRank)
+    assert(receipt.leftFactorCells <= partial.allocationEstimate.thinLeftCells)
+    assert(receipt.rightFactorCells <= partial.allocationEstimate.thinRightCells)
+    assertEquals(partial.allocation.certificateRanks, partial.certificate.valueError.length)
+    assertEquals(partial.allocation.certificateErrorValues, 3L * partial.certificate.valueError.length)
+    assert(partial.provenance.canonical.startsWith("kernel-basis/v3|blocked-partial=3|builds=1|"))
+    assert(dense.provenance.canonical.startsWith("kernel-basis/v2|"))
+
+  test("blocked-partial-refuses-when-no-triplet-converges-without-a-dense-fallback"):
+    val family = new Family(ShapeChart(("a", 0.0, 1.0)), refuseCallbacks = false):
+      override def jetInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit =
+        java.util.Arrays.fill(out, 0.0)
+    HrfKernelBasis.compile(spec(family).copy(compilation = KernelBasisCompilation.BlockedPartial(3))) match
+      case Left(KernelBasisError.Spectral(detail)) => assert(detail.contains("no singular triplet"))
+      case other => fail(s"expected bounded nonconvergence refusal, got $other")
+
   test("full-SVD-shapes-are-independent-of-requested-rank"):
     val family = new Family(ShapeChart(("a", 0.0, 1.0), ("b", 0.0, 1.0)))
     val input = spec(family).copy(nodesPerAxis = Vector(3, 2))

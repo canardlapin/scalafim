@@ -99,6 +99,9 @@ final class DecoderCounters:
   var terminalVerifications: Long = 0L
   var newtonSteps: Long = 0L
   var fallbacks: Long = 0L
+  /** Also included in exactEvaluations; these never bypass its cap. */
+  var pairedComparisons: Long = 0L
+  var pairedCertifiedMoves: Long = 0L
   def perVoxel(value: Long): Double = if voxels == 0L then 0.0 else value.toDouble / voxels
 
 enum DecodeStatus:
@@ -133,7 +136,8 @@ final case class ShapeDecodeResult(
     augmentedHessian: Vector[Double],
     conditionalSd: Vector[Double],
     ambiguityGap: Double,
-    budgetExit: Option[DecodeBudgetExit] = None):
+    budgetExit: Option[DecodeBudgetExit] = None,
+    pairedDecrease: Option[PairedShapeDecrease] = None):
   def point: ShapePoint = ShapePoint.unsafe(coordinates)
 
 private enum NewtonDirectionStatus:
@@ -174,6 +178,12 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val neighbour = new Array[Int](d)
   private val nodeScored = new Array[Boolean](grid.count)
   prior.foreach(p => require(p.dimension == d, "prior dimension must match the chart"))
+  private val pairedObjective: Option[PairedProfileObjective] =
+    if !CompactComparisonWorkspaceReceipt.enabled(prior, budget) then None
+    else objective match
+      case compact: PairedProfileObjective => Some(compact)
+      case _ => None
+  pairedObjective.foreach(_.enablePairedComparison())
 
   private def finite(value: Double): Boolean = !value.isNaN && !value.isInfinite
 
@@ -448,6 +458,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       budgetExceeded = true
       if budgetExit.isEmpty then budgetExit = Some(reason)
     var terminalCurvature = true
+    var terminalPairedDecrease: Option[PairedShapeDecrease] = None
     clearJet()
     val nodeOk = objective.jetAtNode(best, jet) && finiteJet()
     jetsUsed += 1
@@ -455,6 +466,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     if !nodeOk then return refused(best, gap)
     var current = jet.energy + priorEnergy(x)
     copyJetState(x)
+    pairedObjective.foreach(_.captureAcceptedProfile(x, jet))
     var directionStatus = newtonDirection(x, grad, hess, delta)
     val initialCurvatureNotPositive = directionStatus == NewtonDirectionStatus.CurvatureNotPositive
     var continue = directionStatus == NewtonDirectionStatus.Direction
@@ -537,8 +549,18 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                   equalStationary = objective.jetAt(trial, jet) && finiteJet() &&
                     finite(jet.energy + priorEnergy(trial)) && jet.energy + priorEnergy(trial) == current &&
                     candidateStationary(trial)
-              if finite(value) && (value < current || equalStationary) then
+              var pairedDecrease: Option[PairedShapeDecrease] = None
+              if finite(value) && value > current && useJet && exactUsed < budget.maxExactEvaluations &&
+                  pairedObjective.nonEmpty && candidateStationary(trial) then
+                val compact = pairedObjective.get
+                val attempted = PaidProfileComparison.attempt(compact, trial, jet, exactUsed,
+                  budget.maxExactEvaluations, counters)
+                exactUsed = attempted.exactUsed
+                pairedDecrease = attempted.proof
+              if finite(value) && (value < current || equalStationary || pairedDecrease.nonEmpty) then
                 accepted = true
+                terminalPairedDecrease = pairedDecrease
+                if pairedDecrease.nonEmpty then counters.pairedCertifiedMoves += 1
                 current = value
                 System.arraycopy(trial, 0, x, 0, d)
                 System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
@@ -546,6 +568,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                 counters.newtonSteps += 1
                 if useJet || equalStationary then
                   copyJetState(x)
+                  pairedObjective.foreach(_.captureAcceptedProfile(x, jet))
                   directionStatus = newtonDirection(x, grad, hess, delta)
                   continue = directionStatus == NewtonDirectionStatus.Direction
                 else
@@ -559,6 +582,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                     if objective.jetAt(x, jet) && finiteJet() then
                       current = jet.energy + priorEnergy(x)
                       copyJetState(x)
+                      pairedObjective.foreach(_.captureAcceptedProfile(x, jet))
                       terminalCurvature = true
                       directionStatus = newtonDirection(x, grad, hess, delta)
                       if directionStatus == NewtonDirectionStatus.Direction then
@@ -616,6 +640,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
             if objective.jetAt(x, jet) && finiteJet() then
               current = jet.energy + priorEnergy(x)
               copyJetState(x)
+              pairedObjective.foreach(_.captureAcceptedProfile(x, jet))
               terminalCurvature = true
             else clearCurvature()
           else exhaust(DecodeBudgetExit.FallbackTerminalJetQuota)
@@ -645,5 +670,6 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       augmentedHessian = hess.toVector,
       conditionalSd = sd.toVector,
       ambiguityGap = gap,
-      budgetExit = if status == DecodeStatus.BudgetExceeded then budgetExit else None
+      budgetExit = if status == DecodeStatus.BudgetExceeded then budgetExit else None,
+      pairedDecrease = terminalPairedDecrease
     )

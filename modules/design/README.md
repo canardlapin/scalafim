@@ -34,6 +34,17 @@ Preferred typed entry points:
   provide a typed, total contrast path via `compileEither` while legacy
   `ContrastSpec`/`ContrastWeights` constructors remain available.
 
+`HrfKernelBasis.compile` defaults to the admitted full/economy SVD. An explicit
+`KernelBasisCompilation.BlockedPartial(subspaceDimension)` keeps every normalized
+training column in separately admitted arrays and delegates one bounded partial
+SVD build to Gale. It never grows the subspace or falls back to dense allocation.
+Only converged triplets enter the same held-out value/derivative certificate;
+failure to achieve the requested value tolerance still refuses compilation.
+`allocationEstimate`, `compilationReceipt` and `spectralDiagnostics` expose the
+declared storage/work, actual training/factor shapes and operator applications,
+and convergence. All portable resource limits remain unchanged. Dense provenance
+retains `kernel-basis/v2`; the explicit blocked plan uses `kernel-basis/v3`.
+
 Renderer-neutral event plot export:
 
 ```scala

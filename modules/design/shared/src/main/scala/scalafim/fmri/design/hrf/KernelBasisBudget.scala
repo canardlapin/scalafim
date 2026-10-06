@@ -26,8 +26,9 @@ final case class KernelBasisAllocation(
     certificateRanks: Int,
     certificateErrorValues: Long)
 
-/** Inspectable admission estimate for the emitted training matrix, full economy
-  * SVD and certification. The retained rank is chosen from `1..availableRank`.
+/** Inspectable admission estimate for the training arrays, selected Gale SVD
+  * route and certification. `availableRank` is an upper bound; the blocked
+  * partial route certifies only the triplets that actually converged.
   */
 final case class KernelBasisEstimate private[hrf] (
     fineCount: Int,
@@ -50,7 +51,11 @@ final case class KernelBasisEstimate private[hrf] (
     storageCells: Long,
     trainingWork: Long,
     spectralWork: Long,
-    certificationWork: Long):
+    certificationWork: Long,
+    trainingBlockColumns: Int,
+    trainingBlocks: Int,
+    trainingBlockCells: Long,
+    partialSubspace: Option[Int]):
   def retained(rank: Int): KernelBasisAllocation =
     require(rank >= 1 && rank <= availableRank, s"retained rank $rank outside 1..$availableRank")
     KernelBasisAllocation(rank, fineCount.toLong * rank.toLong, rank,
@@ -58,7 +63,7 @@ final case class KernelBasisEstimate private[hrf] (
 
 /** Fixed portable compiler policy: requests are refused, never coarsened.
   *
-  * Gale 54e73f8e's lexical `SpectralBackend.none` uses the pure full/economy SVD:
+  * The default lexical `SpectralBackend.none` uses Gale's pure full/economy SVD:
   * k=min(rows,cols), raw tall input clone rows*cols and right factor k*k,
   * canonical factors rows*k+k*cols, plus k*k orthogonality Gram matrices and
   * residual vectors. Requested maxRank does not reduce these full-SVD shapes.
@@ -70,6 +75,16 @@ final case class KernelBasisEstimate private[hrf] (
   * One unit can read/write multiple cells; these are declared loop-work units,
   * not primitive memory accesses, CPU instructions or elapsed time.
   * Custom family callback internals/overridden tail diagnostics are not inferred.
+  *
+  * `BlockedPartial` keeps the same normalized training columns in separately
+  * admitted arrays and delegates one partial SVD build to Gale. Its subspace
+  * cannot grow (`maxIterations=1`). The storage envelope charges twelve copies
+  * of all subspace-sized vectors, eight augmented spectral matrix arrays,
+  * returned factors, Gram/residual buffers and certificate arrays together.
+  * Work includes bounded matvecs, two reorthogonalization passes, Ritz vector
+  * assembly, residual/orthogonality diagnostics and tridiagonal eigensolution.
+  * No family callback is repeated by the operator; the training work cap and
+  * all global limits remain unchanged.
   */
 object KernelBasisBudget:
   val MaxFineSamples: Int = 100_000
@@ -140,12 +155,25 @@ object KernelBasisBudget:
       val points = spec.nodesPerAxis.iterator.map(_.toDouble).product
       val columns = points * components
       val matrix = n * columns
-      val k = math.min(n, columns)
-      val available = math.min(spec.maxRank.toDouble, k)
+      val fullRank = math.min(n, columns)
+      val available = math.min(spec.maxRank.toDouble, fullRank)
+      val partial = spec.compilation match
+        case KernelBasisCompilation.Dense => None
+        case KernelBasisCompilation.BlockedPartial(subspace) =>
+          Some(math.min(subspace.toDouble, fullRank))
+      val k = if partial.isDefined then available else fullRank
+      val blockColumns = if partial.isDefined then math.max(1.0, math.floor(MaxArrayCells.toDouble / n)) else columns
+      val blocks = math.ceil(columns / blockColumns)
+      val blockCells = n * math.min(columns, blockColumns)
       val tail = math.max(2.0, math.ceil(4.0 * family.horizon.value / spec.fineStep.value) + 1.0)
       val left = n * k
       val right = k * columns
-      val raw = matrix + k * k + 3.0 * k
+      // The one-build partial path retains the column blocks and charges all
+      // Krylov/temporary/Ritz vectors together, plus augmented tridiagonal
+      // factors. maxIterations=1 prevents Gale's subspace growth/rebuilds.
+      val raw = partial match
+        case None => matrix + k * k + 3.0 * k
+        case Some(q) => 12.0 * (n + columns) * (q + 1.0) + 8.0 * math.pow(2.0 * q + 1.0, 2)
       val canonical = left + right
       // Residual products and subtraction vectors, sort/scalar buffers and two
       // Gram matrices are conservatively charged even when lifetimes overlap.
@@ -162,7 +190,11 @@ object KernelBasisBudget:
       // 30*(q+k)*k*(k-1), cancellation by 30.5*q*k*(k+1), q=max(n,columns).
       // 128*matrix*k also leaves room for reduction/accumulation loops; the
       // additional term charges both residual matvecs and Gram diagnostics.
-      val spectral = 128.0 * matrix * k + 4.0 * (n + columns) * k * k
+      val spectral = partial match
+        case None => 128.0 * matrix * k + 4.0 * (n + columns) * k * k
+        case Some(q) =>
+          64.0 * matrix * (q + 2.0 * k) + 128.0 * (n + columns) * q * q +
+            64.0 * math.pow(2.0 * q + 1.0, 3)
       // Certification always requests a full jet, also for value-only training.
       // Tail work includes lag generation, declared values, finite scans and
       // trapezoid energy; point generation/validation includes the tail API.
@@ -172,7 +204,11 @@ object KernelBasisBudget:
         _ <- checked("fine samples", n, MaxFineSamples)
         _ <- checked("shape grid points", points, MaxGridPoints)
         _ <- checked("training columns", columns, MaxTrainingColumns)
-        _ <- checked("training matrix cells", matrix, MaxArrayCells)
+        _ <-
+          if partial.forall(q => available < fullRank && q > available) then Right(())
+          else Left(KernelBasisError.InvalidSpec("blocked partial compilation requires maxRank < min(rows, columns) and subspaceDimension > maxRank"))
+        _ <- checked("training matrix cells", blockCells, MaxArrayCells)
+        _ <- checked("augmented spectral matrix cells", partial.fold(0.0)(q => math.pow(2.0 * q + 1.0, 2)), MaxArrayCells)
         _ <- checked("jet scratch cells", jet, MaxArrayCells)
         _ <- checked("thin left factor cells", left, MaxArrayCells)
         _ <- checked("thin right factor cells", right, MaxArrayCells)
@@ -190,4 +226,5 @@ object KernelBasisBudget:
         columns.toInt, matrix.toLong, k.toInt, left.toLong, right.toLong,
         raw.toLong, canonical.toLong, gram.toLong, available.toInt, jet.toLong,
         phi.toLong, cert.toLong, tail.toInt, storage.toLong,
-        training.toLong, spectral.toLong, certification.toLong)
+        training.toLong, spectral.toLong, certification.toLong,
+        math.min(blockColumns, columns).toInt, blocks.toInt, blockCells.toLong, partial.map(_.toInt))
