@@ -1,0 +1,22 @@
+[
+  {
+    "iteration": 0,
+    "seconds": 30.67629670817405,
+    "warmup": true
+  },
+  {
+    "iteration": 1,
+    "seconds": 0.5768113327212632,
+    "warmup": false
+  },
+  {
+    "iteration": 2,
+    "seconds": 0.5061229998245835,
+    "warmup": false
+  },
+  {
+    "iteration": 3,
+    "seconds": 0.5547352079302073,
+    "warmup": false
+  }
+]

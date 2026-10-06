@@ -1,0 +1,18 @@
+[
+  {
+    "repo": "adoptium/temurin21-binaries",
+    "version": "jdk-21.0.12.1+1",
+    "name": "OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.12.1_1.tar.gz",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.12.1_1.tar.gz",
+    "checksum_url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.12.1_1.tar.gz.sha256.txt",
+    "sha256": "3623232f33a9c3baadf304480b2535f9a3cba8a58d42ecbb438ba267315d9998"
+  },
+  {
+    "repo": "sbt/sbt",
+    "version": "v1.13.0",
+    "name": "sbt-1.13.0.tgz",
+    "url": "https://github.com/sbt/sbt/releases/download/v1.13.0/sbt-1.13.0.tgz",
+    "checksum_url": "https://github.com/sbt/sbt/releases/download/v1.13.0/sbt-1.13.0.tgz.sha256",
+    "sha256": "06806805ffd26232727326216766ed4793b549f8c1e6ffeef2e610db7245b698"
+  }
+]
