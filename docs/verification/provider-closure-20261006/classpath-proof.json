@@ -1,0 +1,93 @@
+{
+  "jvm": {
+    "classpath_entries": 60,
+    "single_provider_paths": {
+      "image4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-geometry": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes"
+      ],
+      "locus4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes"
+      ],
+      "locus4s-data": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes"
+      ]
+    },
+    "unchanged_gale_paths": [
+      "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/156b2c0006a4d83e/staging/5a3fe250684692aa42c1/gale/core/jvm/target/scala-3.7.4/classes",
+      "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/156b2c0006a4d83e/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes"
+    ],
+    "all_image_locus_artifact_paths": {
+      "locus4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes"
+      ],
+      "locus4s-data": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-geometry": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-locus": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-filter": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-ops-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes"
+      ],
+      "image4s-nifti": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes"
+      ]
+    }
+  },
+  "js": {
+    "classpath_entries": 57,
+    "single_provider_paths": {
+      "image4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-core/js/target/scala-3.7.4/classes"
+      ],
+      "image4s-geometry": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes"
+      ],
+      "locus4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes"
+      ],
+      "locus4s-data": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes"
+      ]
+    },
+    "unchanged_gale_paths": [
+      "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/156b2c0006a4d83e/staging/5a3fe250684692aa42c1/gale/core/js/target/scala-3.7.4/classes",
+      "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/156b2c0006a4d83e/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes"
+    ],
+    "all_image_locus_artifact_paths": {
+      "locus4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes"
+      ],
+      "locus4s-data": [
+        "/private/tmp/scalafim-provider-closure-20261006/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes"
+      ],
+      "image4s-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-core/js/target/scala-3.7.4/classes"
+      ],
+      "image4s-geometry": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes"
+      ],
+      "image4s-locus": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-locus/js/target/scala-3.7.4/classes"
+      ],
+      "image4s-filter": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-filter/js/target/scala-3.7.4/classes"
+      ],
+      "image4s-ops-core": [
+        "/private/tmp/scalafim-provider-closure-20261006/image4s/modules/image4s-ops-core/js/target/scala-3.7.4/classes"
+      ]
+    }
+  }
+}
