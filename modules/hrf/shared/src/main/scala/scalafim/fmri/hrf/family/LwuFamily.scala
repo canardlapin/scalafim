@@ -108,27 +108,37 @@ final class LwuFamily private (val chart: ShapeChart, val horizon: PositiveSecon
     java.util.Arrays.fill(out, 0, jetComponents, 0.0)
     out(JetLayout.Value) = 1.0
 
-  /** Attained peak, FWHM of the positive lobe and trough-to-peak ratio on a 0.01 s grid. */
+  /** Attained peak, FWHM and trough ratio on the unchanged 0.01 s floor grid.
+    * Refuses more than FamilySummaryGrid.MaxSamples before allocation or evaluation.
+    */
+  def summariesEither(point: ShapePoint): Either[FamilySummaryError, ShapeSummary] =
+    for
+      checkedPoint <- chart.point(point.coordinates).left.map(FamilySummaryError.Chart.apply)
+      grid <- FamilySummaryGrid.summary(horizon)
+      evaluated <- grid.evaluate(this, checkedPoint)
+      summary <-
+        val (lags, values) = evaluated
+        val n = values.length
+        var peak = 0
+        var trough = 0
+        var i = 1
+        while i < n do
+          if values(i) > values(peak) then peak = i
+          if values(i) < values(trough) then trough = i
+          i += 1
+        val half = 0.5 * values(peak)
+        var left = peak
+        while left > 0 && values(left) > half do left -= 1
+        var right = peak
+        while right < n - 1 && values(right) > half do right += 1
+        val undershoot = if values(peak) > 0.0 && values(trough) < 0.0 then Some(-values(trough) / values(peak)) else None
+        Right(ShapeSummary(Seconds(lags(peak)), Seconds(lags(right) - lags(left)), undershoot))
+
+    yield summary
+
+  /** Throwing compatibility facade for [[summariesEither]]. */
   def summaries(point: ShapePoint): ShapeSummary =
-    val dt = 0.01
-    val n = math.floor(horizon.value / dt).toInt + 1
-    val lags = Array.tabulate(n)(i => i * dt)
-    val values = new Array[Double](n)
-    evalInto(lags, point, values)
-    var peak = 0
-    var trough = 0
-    var i = 1
-    while i < n do
-      if values(i) > values(peak) then peak = i
-      if values(i) < values(trough) then trough = i
-      i += 1
-    val half = 0.5 * values(peak)
-    var left = peak
-    while left > 0 && values(left) > half do left -= 1
-    var right = peak
-    while right < n - 1 && values(right) > half do right += 1
-    val undershoot = if values(peak) > 0.0 && values(trough) < 0.0 then Some(-values(trough) / values(peak)) else None
-    ShapeSummary(Seconds(lags(peak)), Seconds(lags(right) - lags(left)), undershoot)
+    summariesEither(point).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def descriptor(point: ShapePoint): HrfDescriptor =
     HrfDescriptor.scalar(

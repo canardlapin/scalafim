@@ -130,3 +130,35 @@ class HrfKernelBasisSuite extends munit.FunSuite:
         assertEquals(again.value(j, i), basis.value(j, i))
         i += 1
       j += 1
+
+  test("tail-grid refusals remain typed and precede basis allocation and family evaluation"):
+    val fine = PositiveSeconds(1e-10).fold(e => fail(e.message), identity)
+    HrfKernelBasis.compile(spec.copy(fineStep = fine, nodesPerAxis = Vector(2, 2), heldOutPoints = 1)) match
+      case Left(KernelBasisError.Summary(error: scalafim.fmri.hrf.family.FamilySummaryError.SampleLimitExceeded)) =>
+        assert(error.requested > error.maximum.toDouble)
+      case other => fail(s"expected typed tail admission refusal, got $other")
+    val unsafe = PositiveSeconds.unsafe(scalafim.fmri.hrf.Seconds.unsafe(Double.NaN))
+    assert(HrfKernelBasis.compile(spec.copy(fineStep = unsafe)).swap.exists:
+      case KernelBasisError.Summary(_: scalafim.fmri.hrf.family.FamilySummaryError.InvalidPrecision) => true
+      case _ => false
+    )
+
+  test("certificate diagnostic failures propagate through compile as typed errors"):
+    import scalafim.fmri.hrf.family.{FamilySummaryError, NormalizationRule, ParametricHrfFamily, ShapeChart, ShapeSummary}
+    import scalafim.fmri.hrf.{Hrf, HrfDescriptor, HrfKind}
+    val expected = FamilySummaryError.EvaluationFailed("certificate validation failure")
+    val failing = new ParametricHrfFamily:
+      def name: String = family.name
+      def kind: HrfKind = family.kind
+      def chart: ShapeChart = family.chart
+      def horizon: PositiveSeconds = family.horizon
+      def supports(rule: NormalizationRule): Boolean = family.supports(rule)
+      def libraryNormalization: NormalizationRule = family.libraryNormalization
+      def evalInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit = family.evalInto(lags, point, out)
+      def jetInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit = family.jetInto(lags, point, out)
+      def scaleJetInto(rule: NormalizationRule, point: ShapePoint, out: Array[Double]): Unit = family.scaleJetInto(rule, point, out)
+      def summaries(point: ShapePoint): ShapeSummary = family.summaries(point)
+      def descriptor(point: ShapePoint): HrfDescriptor = family.descriptor(point)
+      def toHrf(point: ShapePoint): Hrf = family.toHrf(point)
+      override def tailRelativeEnergyEither(point: ShapePoint, precision: PositiveSeconds, extent: Double): Either[FamilySummaryError, Double] = Left(expected)
+    assertEquals(HrfKernelBasis.compile(spec.copy(family = failing, nodesPerAxis = Vector(2, 2), fineStep = PositiveSeconds(1.0).toOption.get, heldOutPoints = 1, includeDerivatives = false)), Left(KernelBasisError.Summary(expected)))

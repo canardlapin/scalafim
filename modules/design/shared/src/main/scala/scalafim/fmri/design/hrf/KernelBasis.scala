@@ -2,16 +2,18 @@ package scalafim.fmri.design.hrf
 
 import gale.linalg.DMat
 import scalafim.fmri.hrf.{Hrf, HrfDescriptor, IntegrationPolicy, Lag, PositiveSeconds, ResponseBasis, Support}
-import scalafim.fmri.hrf.family.{JetLayout, ParametricHrfFamily, ShapePoint}
+import scalafim.fmri.hrf.family.{FamilySummaryError, JetLayout, ParametricHrfFamily, ShapePoint}
 
 enum KernelBasisError:
   case InvalidSpec(detail: String)
+  case Summary(error: FamilySummaryError)
   case Spectral(detail: String)
   case BudgetExceeded(maxRank: Int, tolerance: Double, achieved: Double)
 
   def message: String =
     this match
       case InvalidSpec(detail) => s"invalid kernel basis specification: $detail"
+      case Summary(error) => error.message
       case Spectral(detail) => s"kernel basis SVD failed: $detail"
       case BudgetExceeded(maxRank, tolerance, achieved) =>
         s"no rank <= $maxRank reaches held-out relative value error $tolerance (best $achieved); refusing rather than relaxing"
@@ -225,7 +227,7 @@ object HrfKernelBasis:
     else if spec.maxRank < 1 then Left(KernelBasisError.InvalidSpec(s"maxRank must be >= 1, got ${spec.maxRank}"))
     else if spec.fineStep.value >= family.horizon.value then Left(KernelBasisError.InvalidSpec("fineStep must be smaller than the family horizon"))
     else if spec.heldOutPoints < 1 then Left(KernelBasisError.InvalidSpec("heldOutPoints must be >= 1"))
-    else
+    else family.validateTailRelativeEnergyGrid(spec.fineStep).left.map(KernelBasisError.Summary.apply).flatMap: _ =>
       val dt = spec.fineStep.value
       val n = math.floor(family.horizon.value / dt).toInt + 1
       val lags = Array.tabulate(n)(i => i * dt)
@@ -276,16 +278,16 @@ object HrfKernelBasis:
               phiFull(j * n + i) = svd.u(i, j)
               i += 1
             j += 1
-          val certificate = certify(family, lags, phiFull, available, spec)
-          certificate.rankFor(spec.tolerance) match
-            case None =>
-              Left(KernelBasisError.BudgetExceeded(spec.maxRank, spec.tolerance, certificate.valueError.lastOption.getOrElse(1.0)))
-            case Some(rank) =>
-              val phi = java.util.Arrays.copyOf(phiFull, rank * n)
-              val sv = Vector.tabulate(rank)(j => svd.singularValues(j))
-              Right(new HrfKernelBasis(spec, lags, phi, rank, sv, certificate))
+          certify(family, lags, phiFull, available, spec).flatMap: certificate =>
+            certificate.rankFor(spec.tolerance) match
+              case None =>
+                Left(KernelBasisError.BudgetExceeded(spec.maxRank, spec.tolerance, certificate.valueError.lastOption.getOrElse(1.0)))
+              case Some(rank) =>
+                val phi = java.util.Arrays.copyOf(phiFull, rank * n)
+                val sv = Vector.tabulate(rank)(j => svd.singularValues(j))
+                Right(new HrfKernelBasis(spec, lags, phi, rank, sv, certificate))
 
-  private def certify(family: ParametricHrfFamily, lags: Array[Double], phi: Array[Double], ranks: Int, spec: KernelBasisSpec): KernelBasisCertificate =
+  private def certify(family: ParametricHrfFamily, lags: Array[Double], phi: Array[Double], ranks: Int, spec: KernelBasisSpec): Either[KernelBasisError, KernelBasisCertificate] =
     val rng = new scala.util.Random(spec.seed)
     val n = lags.length
     val d = family.dimension
@@ -300,7 +302,9 @@ object HrfKernelBasis:
     while p < spec.heldOutPoints do
       val coordinates = Vector.tabulate(d)(axis => family.chart.lower(axis) + rng.nextDouble() * family.chart.width(axis))
       val point = ShapePoint.unsafe(coordinates)
-      tail = math.max(tail, family.tailRelativeEnergy(point, spec.fineStep))
+      family.tailRelativeEnergyEither(point, spec.fineStep) match
+        case Left(error) => return Left(KernelBasisError.Summary(error))
+        case Right(energy) => tail = math.max(tail, energy)
       family.jetInto(lags, point, jet)
       var comp = 0
       while comp < comps do
@@ -329,4 +333,4 @@ object HrfKernelBasis:
           j += 1
         comp += 1
       p += 1
-    KernelBasisCertificate(value.toVector, first.toVector, second.toVector, tail, spec.heldOutPoints, spec.seed)
+    Right(KernelBasisCertificate(value.toVector, first.toVector, second.toVector, tail, spec.heldOutPoints, spec.seed))
