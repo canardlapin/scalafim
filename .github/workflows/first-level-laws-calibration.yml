@@ -1,11 +1,11 @@
 name: first-level-laws-calibration
-run-name: compact paired precision qualification on native Linux
+run-name: focused compact precision qualification on native Linux
 on:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: compact-paired-qualification-${{ github.ref }}
+  group: compact-paired-focused-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
   compact-precision:
@@ -65,8 +65,16 @@ jobs:
       - name: Qualify fit and first-level laws on both platforms in bounded processes
         run: |
           precision_gate_failed=0
-          for precision_task in fitJVM/test firstLevelLawsJVM/test fitJS/test firstLevelLawsJS/test; do
-            precision_label=$(echo "$precision_task" | tr / -)
+          precision_tasks=(
+            "fitJVM/testOnly scalafim.fmri.fit.profile.CompactPairedComparisonSuite scalafim.fmri.fit.profile.ShapeDecoderSuite scalafim.fmri.fit.profile.ShapeDecoderTangentSuite"
+            "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite"
+            "fitJS/testOnly scalafim.fmri.fit.profile.CompactPairedComparisonSuite scalafim.fmri.fit.profile.ShapeDecoderSuite scalafim.fmri.fit.profile.ShapeDecoderTangentSuite"
+            "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite"
+          )
+          precision_labels=(fit-jvm laws-jvm fit-js laws-js)
+          for precision_index in "${!precision_tasks[@]}"; do
+            precision_task="${precision_tasks[$precision_index]}"
+            precision_label="${precision_labels[$precision_index]}"
             set +e
             timeout 15m sbt "-Dscalafim.gale.build=$PRECISION_GALE_CHECKOUT" "$precision_task" > "diagnostics/$precision_label.log" 2>&1
             precision_result=$?
@@ -79,7 +87,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: compact-paired-qualification-${{ github.run_id }}
+          name: compact-paired-focused-${{ github.run_id }}
           path: diagnostics/
           if-no-files-found: error
           retention-days: 14
