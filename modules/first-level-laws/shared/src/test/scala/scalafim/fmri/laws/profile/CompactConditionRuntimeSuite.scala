@@ -250,16 +250,18 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
       v += 1
     val whitened = prep.whiten(voxels, raw).fold(e => fail(e.message), identity)
     val grid = NodeGrid(family.chart, Vector(15, 15))
+    val budget = DecodeBudget(
+      coarseStride = 2,
+      maxNewtonSteps = 6,
+      maxJets = 8,
+      maxExactEvaluations = 2,
+      weakSdLimit = Vector(0.5, 1.0)
+    )
+    CompactConditionPrecisionDiagnostic.global(prep, budget)
     val runtime = new CompactConditionRuntime(
       prep,
       grid,
-      DecodeBudget(
-        coarseStride = 2,
-        maxNewtonSteps = 6,
-        maxJets = 8,
-        maxExactEvaluations = 2,
-        weakSdLimit = Vector(0.5, 1.0)
-      ),
+      budget,
       None,
       1.0,
       NormalizationRule.Unnormalised
@@ -277,7 +279,10 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
       while t < rows do
         column(t) = whitened(t * voxels + v)
         t += 1
+      val before = CompactConditionPrecisionDiagnostic.work(counters)
       val fit = runtime.fit(column, 0, counters)
+      val after = CompactConditionPrecisionDiagnostic.work(counters)
+      CompactConditionPrecisionDiagnostic.voxel(v, runtime, grid, budget, column, fit, before, after)
       System.arraycopy(projectNuisance(1, column), 0, projectedY, 0, rows)
       val (oTau, oV, oBeta, _) = oracle.solve(projectedY)
       if fit.decode.status == DecodeStatus.Accepted then
