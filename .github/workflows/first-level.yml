@@ -21,7 +21,9 @@ jobs:
   full-repository:
     name: full repository JVM/Scala.js compile and test
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # The historical run reached analysis-js (batch 10/16) after 82 minutes.
+    # Keep every bounded batch and allow the complete court to finish.
+    timeout-minutes: 180
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -72,7 +74,7 @@ jobs:
   focused-first-level:
     name: focused first-level JVM/Scala.js gates
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -102,7 +104,7 @@ jobs:
   scientific-coverage:
     name: scoped first-level scientific coverage
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

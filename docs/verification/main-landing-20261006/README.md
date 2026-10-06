@@ -84,3 +84,9 @@ that build metadata diagnostic are reported separately.
 Final receipts retain runtime, command/exit/count, source, hosted-head and merge
 evidence. Main publication requires all three protected checks at the final
 head; no protection, test, scientific tolerance or coverage floor is bypassed.
+
+The historical full job reached analysis-js (batch 10 of 16) after 82 minutes
+and failed before the remaining six batches ran. Workflow wall-clock deadlines
+are 180 minutes for the full court, 120 for focused gates and 90 for coverage.
+The 95 supported test targets, sixteen process-bounded batches, per-test and
+scientific work limits, fixture policy and coverage floors are unchanged.
