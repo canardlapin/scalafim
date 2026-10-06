@@ -925,7 +925,25 @@ lazy val atlas =
       name := "scalafim-atlas"
     )
     .jvmSettings(
-      libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
+      libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0",
+      // Full-resolution MNI inversion retains large fields and residual arrays. Give this
+      // native oracle a fresh heap on every gate, independent of the resident sbt server.
+      Test / parallelExecution := false,
+      Test / testForkedParallel := false,
+      Test / testGrouping := {
+        val (nativeOracle, ordinary) = (Test / definedTests).value.partition(
+          _.name == "scalafim.atlas.io.MniTemplateBridgeFilesSuite"
+        )
+        val inherited = (Test / forkOptions).value
+        val nativeOptions = inherited.withRunJVMOptions(
+          inherited.runJVMOptions.filterNot(option => option.startsWith("-Xmx") || option.startsWith("-Xms")) ++
+            Vector("-Xmx3g", "-XX:ActiveProcessorCount=2")
+        )
+        Seq(
+          Tests.Group("atlas", ordinary, Tests.InProcess),
+          Tests.Group("atlas-mni-native-oracle", nativeOracle, Tests.SubProcess(nativeOptions))
+        ).filter(_.tests.nonEmpty)
+      }
     )
     .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
     .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
