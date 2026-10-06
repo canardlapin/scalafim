@@ -1,0 +1,30 @@
+[
+  {
+    "url": "https://jogamp.org/deployment/maven/org/jogamp/jogl/jogl-all/2.6.0/jogl-all-2.6.0.jar",
+    "file": "jogl-all-2.6.0.jar",
+    "bytes": 3991187,
+    "sha256": "34c919bc6073c2d9e73cbe7558c4e9de6b5c58146f3658e2bcc5f23ec3fccc9f",
+    "upstream_sha1": "dc0dd5ce77cf31ea1dd8fc2c2c27592be76feb7c"
+  },
+  {
+    "url": "https://jogamp.org/deployment/maven/org/jogamp/jogl/jogl-all/2.6.0/jogl-all-2.6.0-natives-macosx-universal.jar",
+    "file": "jogl-all-2.6.0-natives-macosx-universal.jar",
+    "bytes": 583638,
+    "sha256": "81db6a2b50f3803d4307a8bd7570a4f78c41ae0d44361208d0885a5cdf289dfa",
+    "upstream_sha1": "380dbba3613c1a3dafc18389074ca7fc6720076c"
+  },
+  {
+    "url": "https://jogamp.org/deployment/maven/org/jogamp/gluegen/gluegen-rt/2.6.0/gluegen-rt-2.6.0.jar",
+    "file": "gluegen-rt-2.6.0.jar",
+    "bytes": 411363,
+    "sha256": "465bbc8d410b872a76b5b901cdb9c2c07905edd5e61a7120dc6a4d007880ec2f",
+    "upstream_sha1": "524e9cc0f1939e201ae548229c66bafca0e1ed24"
+  },
+  {
+    "url": "https://jogamp.org/deployment/maven/org/jogamp/gluegen/gluegen-rt/2.6.0/gluegen-rt-2.6.0-natives-macosx-universal.jar",
+    "file": "gluegen-rt-2.6.0-natives-macosx-universal.jar",
+    "bytes": 9734,
+    "sha256": "e543d5e81bc8b8f63e5dc365ac47da009f82175b2c6eba16a24ce3b2eb031773",
+    "upstream_sha1": "4bf2501aaa5cf4fad1cb76c725b0960208b12178"
+  }
+]
