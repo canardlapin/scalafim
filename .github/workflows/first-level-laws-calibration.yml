@@ -17,6 +17,8 @@ jobs:
       SBT_OPTS: -Xmx4g -XX:ActiveProcessorCount=4 -Dsbt.supershell=false -Dsbt.color=false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
       - name: Resolve exact historical JDK
         id: exact-jdk
         continue-on-error: true
