@@ -41,4 +41,12 @@ with tarfile.open(folder / "local-gates-and-sources.tar.gz", "r:gz") as tar:
             request = re.search(r"kernel compiler requests ([\d.Ee+-]+) training matrix cells, maximum is (\d+)", log)
             assert request and float(request.group(1)) == 2831220 and int(request.group(2)) == 2000000
 assert not receipt["cohort"]["accuracy_and_work_limits_changed"]
+with tarfile.open(folder / "native-linux-full-module.tar.gz", "r:gz") as tar:
+    assert json.load(tar.extractfile("run.json"))["conclusion"] == "failure"
+    for label, code, total, passed in [("fitJVM-test", 0, 686, 686), ("fitJS-test", 0, 629, 629),
+                                        ("firstLevelLawsJVM-test", 1, 84, 83), ("firstLevelLawsJS-test", 1, 84, 83)]:
+        assert int(tar.extractfile(label + "-exit-code.txt").read()) == code
+        log = tar.extractfile(label + ".log").read().decode()
+        summary = "Passed" if code == 0 else "Failed"
+        assert f"{summary}: Total {total}, Failed {code}, Errors 0, Passed {passed}" in log
 print("PASS: native102 tests, unchanged Linux cohort23/24; fit gates; full-module LWU failure retained")

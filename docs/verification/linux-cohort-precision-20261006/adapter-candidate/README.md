@@ -21,6 +21,13 @@ before the decoder runs. It is tracked separately as
 `bd-01M49ADJ9D7QJXSNY2G4WG01H3` and still blocks main publication. Neither its
 frozen inputs nor compiler limits were changed.
 
+[Broader native run 37515545567](https://github.com/canardlapin/scalafim/actions/runs/37515545567)
+independently completed all four full-module processes: fit passed 686 JVM and
+629 Scala.js tests; first-level laws passed 83/84 on each platform with exactly
+the same LWU refusal. Its unchanged compact cohort also admitted 24 JVM and
+23 Scala.js voxels. The workflow correctly concludes failure for the whole-module
+scope, and its full logs are retained in `native-linux-full-module.tar.gz`.
+
 This is a qualified rehearsal using published Gale 54e73f8e plus the sealed
 numeric source patch in an explicit local clone. [Draft Gale PR 16](https://github.com/canardlapin/gale/pull/16)
 contains the generic capability; production adoption waits for upstream merge.
@@ -28,7 +35,7 @@ The historical exact JDK patch is unavailable; retained host output establishes
 the actual 17.0.20.1+1 runtime. Existing first-level build metadata warnings are
 retained separately from production compiler warnings.
 
-`source-only.patch` preserves the seven fit files. The two sealed archives retain
+`source-only.patch` preserves the seven fit files. The sealed archives retain
 source, independent reviews, complete local results, source-identical LWU refusal
 and native host/source/exit/count evidence. The original cohort digest is
 `72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb`.

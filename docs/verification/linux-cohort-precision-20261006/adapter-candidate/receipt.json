@@ -34,11 +34,26 @@
   "source_only_patch_sha256": "1bc061800cf68844a176fd255acf868af8b9e5bed0c0e2b37c67cf7829ec4ea6",
   "archives": {
     "local-gates-and-sources.tar.gz": "fcd0abd98fd4802528a3ca0444bb99e3f22250a0cbb0dfa6614f0404c17992fc",
-    "native-linux-focused.tar.gz": "ee250c9938f77a35d19c11b2fde9708785e0665fdcf74e2fb819e037fd077b15"
+    "native-linux-focused.tar.gz": "ee250c9938f77a35d19c11b2fde9708785e0665fdcf74e2fb819e037fd077b15",
+    "native-linux-full-module.tar.gz": "ddcc30fe4700e63fea518c9deb35bb8ceb401fb87644edba222eab74782d1751"
   },
   "limits": [
     "Feature qualification passed; entire first-level module is not green",
     "Historical exactJDK17.0.20+1 unavailable; actual17.0.20.1+1 fingerprint retained",
     "No upstream merge, root production precision change or main publication performed"
-  ]
+  ],
+  "native_full_module": {
+    "run": "https://github.com/canardlapin/scalafim/actions/runs/37515545567",
+    "head": "5e9930ae91d4af3a058bb99958f8eff302070278",
+    "conclusion": "failure",
+    "fit_jvm_passed": 686,
+    "fit_js_passed": 629,
+    "first_level_jvm_passed": 83,
+    "first_level_js_passed": 83,
+    "first_level_total_each": 84,
+    "sole_failure": "same preallocation LWU training cells2,831,220>fixed2,000,000",
+    "cohort_jvm": "24/24",
+    "cohort_js": "23/24",
+    "all_four_processes_completed": true
+  }
 }
