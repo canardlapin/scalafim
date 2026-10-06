@@ -65,6 +65,21 @@ class NpzSuite extends munit.FunSuite:
     val npz = Npz.parse(z).fold(e => fail(e.message), identity)
     assertEquals(npz.members.head.rawNpy.toSeq, good.toSeq)
 
+  test("frozen adapter output parses identically on JVM and JS"):
+    val bytes = AdapterGoldenBytes.npz
+    assertEquals(Digests.sha256Hex(bytes), AdapterGoldenBytes.NpzSha256)
+    val npz = Npz.parse(bytes).fold(e => fail(e.message), identity)
+    assertEquals(npz.names, Vector(
+      "d_FRACvalue", "d_HRFindex", "d_R2", "d_beta_data", "d_beta_psc", "hrf_library",
+      "meanvol", "noisepool", "trial_cond", "trial_event_index", "trial_run", "trial_vol"
+    ))
+    assertEquals(npz.get("d_beta_data").map(_.array.shape), Some(Vector(3, 144)))
+    assertEquals(npz.get("noisepool").map(_.array.shape), Some(Vector(5)))
+    assertEquals(
+      Digests.sha256Hex(fingerprint(npz).getBytes("UTF-8")),
+      AdapterGoldenBytes.FingerprintSha256
+    )
+
   test("tiny STORED npz built in-test parses (f8, i4, scalar shape, 1-D, 3-D)"):
     val z = zip(
       Seq(

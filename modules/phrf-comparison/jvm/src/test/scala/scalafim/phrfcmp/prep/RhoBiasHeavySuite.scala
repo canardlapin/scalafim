@@ -47,7 +47,8 @@ class RhoBiasHeavySuite extends munit.FunSuite:
          |    for d in range($n):
          |        write_dataset(dataclasses.replace(CELLS[cid], **kw), 0x$HarnessRoot, 'harness', d, '$out')
          |""".stripMargin
-    val p = new ProcessBuilder("python3", "-c", script).redirectErrorStream(true).start()
+    val python = sys.env.getOrElse("PHRF_GENERATOR_PYTHON", "python3")
+    val p = new ProcessBuilder(python, "-c", script).redirectErrorStream(true).start()
     val log = new String(p.getInputStream.readAllBytes())
     assertEquals(p.waitFor(), 0, log)
 

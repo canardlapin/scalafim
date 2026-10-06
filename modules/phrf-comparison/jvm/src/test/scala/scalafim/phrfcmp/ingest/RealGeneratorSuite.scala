@@ -131,15 +131,19 @@ class RealGeneratorSuite extends munit.FunSuite:
          |for cid, kw in [('T-TX-fast', dict(n_voxels=3, n_pool=2)), ('C-TX-.5', dict(n_voxels=3))]:
          |    write_dataset(dataclasses.replace(CELLS[cid], **kw), HARNESS_ROOT, 'harness', 0, '$out')
          |""".stripMargin
-    val ran =
-      scala.util.Try {
-        val python = sys.env.getOrElse("PHRF_GENERATOR_PYTHON", "python3")
-        val p = new ProcessBuilder(python, "-c", script).redirectErrorStream(true).start()
-        p.getInputStream.readAllBytes()
-        p.waitFor()
-      }.toOption
-    assume(ran.contains(0), "python3 with numpy/scipy unavailable")
     try
+      val configured = sys.env.get("PHRF_GENERATOR_PYTHON")
+      val python = configured.getOrElse("python3")
+      if configured.isEmpty then
+        val available = scala.util.Try {
+          val p = new ProcessBuilder(python, "-c", "import numpy, scipy").redirectErrorStream(true).start()
+          p.getInputStream.readAllBytes()
+          p.waitFor()
+        }.toOption
+        assume(available.contains(0), "python3 with numpy/scipy unavailable")
+      val p = new ProcessBuilder(python, "-c", script).redirectErrorStream(true).start()
+      val log = new String(p.getInputStream.readAllBytes(), "UTF-8")
+      assertEquals(p.waitFor(), 0, log)
       for stem <- Seq("T-TX-fast__d0000", "C-TX-.5__d0000"); ext <- Seq("npz", "manifest.json") do
         assertEquals(Files.readAllBytes(out.resolve(s"$stem.$ext")).toSeq, bytes(stem, ext).toSeq, s"$stem.$ext differs")
     finally

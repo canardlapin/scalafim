@@ -1,0 +1,144 @@
+{
+  "base": "08547ded484483d131e8e605eb8eda71159e9ed5",
+  "runtime": {
+    "os": "Darwin arm64",
+    "java": "Temurin 21.0.12.1",
+    "node": "24.21.0",
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "python": "3.12.13",
+    "sbt_heap": "5g",
+    "sbt_processors": 4
+  },
+  "environment": {
+    "PHRF_GENERATOR_PYTHON": "/private/tmp/scalafim-phrf-closeout-python-20261006/bin/python"
+  },
+  "gates": [
+    {
+      "commands": [
+        "eval System.setProperty(\"phrf.s2.bias\", \"true\")",
+        "phrfComparisonJVM/testOnly scalafim.phrfcmp.ingest.* scalafim.phrfcmp.typing.* scalafim.phrfcmp.prep.* scalafim.phrfcmp.run.S11*"
+      ],
+      "exit_code": 0,
+      "passed": 137,
+      "skipped": 0,
+      "log": "jvm-final.log.gz"
+    },
+    {
+      "commands": [
+        "arJVM/test",
+        "arJS/test",
+        "fitJVM/testOnly scalafim.fmri.fit.RidgeLssSuite",
+        "fitJS/testOnly scalafim.fmri.fit.RidgeLssSuite",
+        "phrfComparisonJS/test"
+      ],
+      "exit_code": 0,
+      "passed_by_command": [
+        155,
+        153,
+        10,
+        10,
+        243
+      ],
+      "skipped": 0,
+      "log": "portability.log.gz"
+    },
+    {
+      "command": "PYTHONPATH=tools/phrf-comparison/generator python -m pytest -q -p no:cacheprovider tools/phrf-comparison/generator/tests",
+      "exit_code": 0,
+      "passed": 45,
+      "log": "generator.log.gz"
+    },
+    {
+      "name": "negative-configure",
+      "commands": [
+        "set Seq(phrfComparisonJVM / Test / fork := true, phrfComparisonJVM / Test / envVars := Map(\"PHRF_GENERATOR_PYTHON\" -> \"/usr/bin/false\"))"
+      ],
+      "exit_code": 0,
+      "expected_failure": false
+    },
+    {
+      "name": "negative-generator",
+      "commands": [
+        "phrfComparisonJVM/testOnly scalafim.phrfcmp.ingest.RealGeneratorSuite"
+      ],
+      "exit_code": 1,
+      "expected_failure": true
+    },
+    {
+      "name": "negative-reset",
+      "commands": [
+        "set Seq(phrfComparisonJVM / Test / fork := false, phrfComparisonJVM / Test / envVars := Map.empty[String, String])"
+      ],
+      "exit_code": 0,
+      "expected_failure": false
+    },
+    {
+      "name": "restored-generator",
+      "commands": [
+        "phrfComparisonJVM/testOnly scalafim.phrfcmp.ingest.RealGeneratorSuite"
+      ],
+      "exit_code": 0,
+      "expected_failure": false
+    },
+    {
+      "name": "compile-all",
+      "commands": [
+        "scalafimCompileAll"
+      ],
+      "exit_code": 0,
+      "expected_failure": false
+    }
+  ],
+  "s2_heavy": {
+    "root_hex": "80dd06a7d4666a7b",
+    "historical_seed_replay": true,
+    "datasets_per_kind": 50,
+    "cells": [
+      "T-TX-fast",
+      "C-TX-.5"
+    ],
+    "mean_rho": [
+      0.29983,
+      0.30043
+    ],
+    "bias": [
+      -0.00017,
+      0.00043
+    ],
+    "absolute_bias_limit": 0.02,
+    "both_pass": true
+  },
+  "adapter_golden": {
+    "bytes": 14778,
+    "npz_sha256": "8f51afe73ee4b094b3bfdbfdcfdb68d4bff3ebf6c0a3b6ddabaeebae1e974b3c",
+    "decode_fingerprint_sha256": "86790d21e83fca5e6ec652b995881a878420380326d35b1e30c673ba8261bf0f",
+    "producer": "frozen from_generator.py with deterministic wrapper double",
+    "native_glmsingle_qualification": false
+  },
+  "r_fixture_files_verified": 101,
+  "artifacts_sha256": {
+    "compile-all.log.gz": "985e14b18ffcacb38528e6034a2ab92c0b00b697c32da1014f6846b2e934cfbd",
+    "configured-generator-probe.py": "086ca0b594789561cf18387b3c10ca716f16f083b8fddd09e569dfe6e7feb838",
+    "generator.log.gz": "7d99893030517f3f31c2f9419c0723ae2fade5c46aaf84b07cb4d22cf3fc2a14",
+    "jvm-final.log.gz": "b2f34413fc35ae6fda9ae58aa45cebf32432a1c00d19f102ac43f2a5aa4d3d63",
+    "jvm.log.gz": "cdb71c250f1fc7e10ba38a57f482bf5ff75e82bf47a0ad891b22cef1d053d8a0",
+    "negative-configure.log.gz": "cad93aa60785cdc7e61a8b03626aa16c7d1250982c2d70289280783c66daae0e",
+    "negative-generator.log.gz": "105a4cbab7a4bda75f7a715f5a28b10636241caa24c640460887114fdda0da78",
+    "negative-reset.log.gz": "3756366081ee68f11b41cb3ad83de5b762163ea79682bd04e72ce7c50834dd6e",
+    "portability.log.gz": "cdbb4ffac13eb95a7e94bc092170e4e938e85c8deabcd2eedf12467efc657fdc",
+    "python-freeze.txt": "c517cb1521b6a7ede33564c375981d479015e61b698a0839719c4ace899f87ab",
+    "restored-generator.log.gz": "3e87a8dc65fc4fb36acfcc7db3ebc0bb1ae3d8516b518849392820805e1fb5b8",
+    "source-manifest.json": "3b40aa2de7b3e275aac3593e0b9c741bc7f487427b3757b8eded9291bb1a9f18"
+  },
+  "all_required_gates_pass": true,
+  "setup_attempts": [
+    {
+      "log": "jvm.log.gz",
+      "status": "bootstrap stopped, no gate executed"
+    },
+    {
+      "status": "initial pytest collection failed without generator PYTHONPATH; corrected command passes 45"
+    }
+  ]
+}

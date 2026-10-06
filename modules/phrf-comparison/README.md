@@ -75,11 +75,31 @@ and asserts byte equality. Use the generator's `requirements.lock`: NumPy and Sc
 versions are part of the fixture manifests. The embedded `GoldenBytes` in the shared tests is real `phrf_gen.io.npz_bytes`
 output as well.
 
+An explicit `PHRF_GENERATOR_PYTHON` makes generator launch and execution failures
+fail the fixture test. Without it, a missing default NumPy/SciPy environment may
+skip regeneration. `AdapterGoldenBytes` holds output from the frozen adapter with
+a deterministic wrapper double; its Python-derived decode fingerprint is checked
+on JVM and JS. Regenerate it with the generator lock environment:
+
+```
+"$PHRF_GENERATOR_PYTHON" tools/phrf-comparison/parity/generate_adapter_golden.py
+```
+
 ## Commands
 
 ```
 sbt phrfComparisonJVM/test phrfComparisonJS/test
 ```
+
+The S2 acceptance gate is opt-in and uses `PHRF_GENERATOR_PYTHON` as well:
+
+```
+sbt -Dphrf.s2.bias=true "phrfComparisonJVM/testOnly scalafim.phrfcmp.prep.RhoBiasHeavySuite"
+```
+
+Acceptance requires the default 50 datasets for **both** cell kinds; a skipped
+test or a reduced dataset count does not qualify it. The frozen historical
+verdict seeds are reused for reproducibility, rather than supplying a new draw.
 
 For native qualification, set `PHRF_GLMSINGLE_PYTHON` to the pinned GLMsingle
 interpreter, `PHRF_GENERATOR_PYTHON` to the generator interpreter, and
