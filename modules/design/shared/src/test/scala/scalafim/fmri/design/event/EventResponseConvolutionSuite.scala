@@ -3,6 +3,7 @@ package scalafim.fmri.design.event
 import scalafim.fmri.design.HrfColumnScaling
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.regressor.{ConvolutionDiscretization, ConvolutionError}
 
 class EventResponseConvolutionSuite extends munit.FunSuite:
   private val kernel = Hrfs.boxcar(1.0.s)
@@ -193,3 +194,68 @@ class EventResponseConvolutionSuite extends munit.FunSuite:
       EventResponseConvolution.convolve(source, kernel, fineFrame, precision = Seconds(0.0)).left.toOption,
       Some(EventResponseConvolutionError.InvalidPrecision(0.0))
     )
+
+  test("tiny convolution precision is a typed kernel refusal before HRF evaluation"):
+    var calls = 0
+    val counted = Hrf.scalar("counted", span = 1.0.s): _ =>
+      calls += 1
+      1.0
+    val source = term(Vector(0.0), Vector(0.0))
+    for normalization <- Seq(EventResponseNormalization.PreservePulseScale, unitPeak) do
+      EventResponseConvolution.convolve(source, counted, fineFrame, normalization, precision = Seconds(java.lang.Double.MIN_VALUE)) match
+        case Left(EventResponseConvolutionError.InvalidConvolution(ConvolutionError.SampleLimitExceeded("kernel grid", _, _))) => ()
+        case other => fail(s"expected typed kernel refusal, got $other")
+    assertEquals(calls, 0)
+
+  test("long scan ranges and long blocks receive typed drive refusals"):
+    val limit = ConvolutionDiscretization.MaxGridSamples.toDouble
+    val farFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(limit), startTime = Seq(0.0))
+    val cases = Seq(
+      (term(Vector(0.0), Vector(0.0)), farFrame),
+      (term(Vector(0.0), Vector(limit)), fineFrame),
+      (term(Vector(0.0), Vector(Double.MaxValue)), fineFrame)
+    )
+    for (source, frame) <- cases do
+      EventResponseConvolution.convolve(source, kernel, frame, precision = 1.0.s) match
+        case Left(EventResponseConvolutionError.InvalidConvolution(ConvolutionError.SampleLimitExceeded("drive grid", _, _))) => ()
+        case other => fail(s"expected typed drive refusal, got $other")
+
+  test("convolved output rejects overflowing row totals before frame sample allocation"):
+    val huge = SamplingFrame(blockLens = Seq(Int.MaxValue, Int.MaxValue), tr = Seq(1.0))
+    val source = term(Vector(0.0), Vector(0.0))
+    EventResponseConvolution.convolve(source, kernel, huge, precision = 1.0.s) match
+      case Left(EventResponseConvolutionError.InvalidConvolution(ConvolutionError.CellLimitExceeded("convolved term output", requested, _))) =>
+        assertEqualsDouble(requested, Int.MaxValue.toDouble * 2.0, 0.0)
+      case other => fail(s"expected typed output refusal, got $other")
+    val error = intercept[IllegalArgumentException](source.convolve(kernel, huge, precision = 1.0.s))
+    assert(error.getMessage.contains("convolved term output"))
+
+  test("all-zero conditions retain lazy kernel preparation at tiny precision"):
+    var calls = 0
+    val counted = Hrf.scalar("counted", span = 1.0.s): _ =>
+      calls += 1
+      1.0
+    val source = EventTerm(
+      Vector(Event.variable(Vector(0.0), "amplitude")), Vector(0.0.s), Vector(0.0.s), Vector(0), Some("task")
+    )
+    val result = EventResponseConvolution.convolve(source, counted, fineFrame, dropEmpty = false, precision = Seconds(java.lang.Double.MIN_VALUE))
+      .fold(error => fail(error.message), identity)
+    result.convolved.data.data.foreach(value => assertEqualsDouble(value, 0.0, 0.0))
+    assertEquals(calls, 0)
+
+  test("finite metadata with overflowing global timings returns a typed refusal"):
+    val frame = SamplingFrame(blockLens = Seq(2, 2), tr = Seq(Double.MaxValue), startTime = Seq(0.0))
+    val source = term(Vector(0.0), Vector(0.0), Vector(1))
+    EventResponseConvolution.convolve(source, kernel, frame, precision = 1.0.s) match
+      case Left(EventResponseConvolutionError.InvalidConvolution(ConvolutionError.InvalidGrid(_))) => ()
+      case other => fail(s"expected typed timing refusal, got $other")
+
+  test("zero-column convolution still checks its row dimension before Int summation"):
+    val source = EventTerm(
+      Vector(Event.variable(Vector(0.0), "amplitude")), Vector(0.0.s), Vector(0.0.s), Vector(0), Some("task")
+    )
+    assertEquals(source.designMatrix(dropEmpty = true).conditionTags.length, 0)
+    val huge = SamplingFrame(blockLens = Seq(Int.MaxValue, Int.MaxValue), tr = Seq(1.0))
+    EventResponseConvolution.convolve(source, kernel, huge, precision = 1.0.s) match
+      case Left(EventResponseConvolutionError.InvalidConvolution(ConvolutionError.CellLimitExceeded("convolved term rows", _, _))) => ()
+      case other => fail(s"expected typed row dimension refusal, got $other")

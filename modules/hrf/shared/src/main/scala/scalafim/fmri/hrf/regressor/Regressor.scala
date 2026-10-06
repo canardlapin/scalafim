@@ -105,7 +105,19 @@ private[scalafim] final class PreparedConvolutionKernel private[regressor] (
     private[regressor] val fineColumns: Array[Array[Double]]
 ):
   def evaluate(regressor: Regressor, grid: Seq[Double]): Mat =
-    Regressor.evaluatePrepared(regressor, grid, this)
+    evaluateEither(regressor, grid).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def evaluateEither(regressor: Regressor, grid: Seq[Double]): Either[ConvolutionError, Mat] =
+    if regressor.span.value != span.value then
+      Left(ConvolutionError.InvalidPreparedKernel("prepared kernel span does not match regressor span"))
+    else regressor.hrf match
+      case HrfAssignment.Shared(kernel) if kernel eq hrf =>
+        Regressor.validateConvolution(regressor, grid, precision.value)
+          .map(_ => Regressor.evaluatePrepared(regressor, grid, this))
+      case HrfAssignment.Shared(_) =>
+        Left(ConvolutionError.InvalidPreparedKernel("prepared kernel HRF does not match regressor HRF"))
+      case HrfAssignment.PerEvent(_) =>
+        Left(ConvolutionError.InvalidPreparedKernel("a shared prepared kernel cannot evaluate per-event HRFs"))
 
 object Regressor:
 
@@ -116,10 +128,11 @@ object Regressor:
       hrf: Hrf,
       span: Seconds,
       precision: Seconds
-  ): Either[TimeError, PreparedConvolutionKernel] =
+  ): Either[ConvolutionError, PreparedConvolutionKernel] =
     for
-      span0 <- PositiveSeconds.fromSeconds(span, "span")
-      precision0 <- PositiveSeconds.fromSeconds(precision, "precision")
+      span0 <- PositiveSeconds(span.value, "span").left.map(ConvolutionError.InvalidSpan.apply)
+      precision0 <- PositiveSeconds(precision.value, "precision").left.map(ConvolutionError.InvalidPrecision.apply)
+      _ <- kernelSampleCount(hrf, span0.seconds, precision0.value)
     yield
       new PreparedConvolutionKernel(
         hrf = hrf,
@@ -127,6 +140,51 @@ object Regressor:
         precision = precision0,
         fineColumns = hrfFineColumns(hrf, span0.seconds, precision0.value)
       )
+
+  private[scalafim] def kernelSampleCount(hrf: Hrf, span: Seconds, precision: Double): Either[ConvolutionError, Int] =
+    for
+      samples <- ConvolutionDiscretization.sampleCount(span.value, precision, "kernel grid")
+      _ <- ConvolutionDiscretization.cellCount(samples, hrf.nbasis, "sampled kernel")
+    yield samples
+
+  /** Check the sampled plan without evaluating the HRF or allocating microtime
+    * arrays. Empty and windowed-out event schedules require no sampled plan.
+    * Legacy Conv/FFT evaluation and the design boundary use this same policy.
+    */
+  private[scalafim] def validateConvolution(
+      reg: Regressor,
+      grid: Seq[Double],
+      precision: Double
+  ): Either[ConvolutionError, Unit] =
+    ConvolutionDiscretization.cellCount(grid.length, reg.hrf.nbasis, "rendered output") match
+      case Left(error) => return Left(error)
+      case Right(_) => ()
+    if grid.isEmpty then Left(ConvolutionError.InvalidGrid("`grid` must be non-empty"))
+    else if !grid.forall(_.isFinite) then Left(ConvolutionError.InvalidGrid("`grid` must be finite"))
+    else
+      for
+        _ <- PositiveSeconds(precision, "precision").left.map(ConvolutionError.InvalidPrecision.apply)
+        _ <- NonNegativeSeconds(reg.span.value, "span").left.map(ConvolutionError.InvalidSpan.apply)
+        _ <-
+          val first = grid.min
+          val last = grid.max
+          val keep = reg.events.filter(event =>
+            event.onset.value + event.duration.value >= first - reg.span.value && event.onset.value <= last
+          )
+          if keep.isEmpty then Right(())
+          else
+            for
+              _ <- reg.hrf match
+                case HrfAssignment.Shared(hrf) => kernelSampleCount(hrf, reg.span, precision).map(_ => ())
+                case HrfAssignment.PerEvent(_) => Right(())
+              _ <-
+                val maxDur = keep.map(_.duration.value).max
+                val lastOnset = keep.map(_.onset.value).max
+                val start = first - reg.span.value
+                val end = math.max(last, lastOnset + maxDur) + reg.span.value
+                ConvolutionDiscretization.sampleCount(end - start, precision, "drive grid").map(_ => ())
+            yield ()
+      yield ()
 
   private def recycleOrError[A](xs: Seq[A], n: Int, name: String): Either[RegressorError, Vector[A]] =
     if xs.length == n then Right(xs.toVector)
@@ -337,6 +395,8 @@ object Regressor:
     val dt = Seconds(precision)
     require(dt.value > 0.0, "`precision` must be > 0")
     require(grid.nonEmpty, "`grid` must be non-empty")
+    ConvolutionDiscretization.cellCount(grid.length, reg.hrf.nbasis, "rendered output")
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     require(grid.forall(_.isFinite), "`grid` must be finite")
     val gridSec: Array[Seconds] = grid.map(Seconds(_)).toArray
     val sorted: Array[Seconds] = gridSec.sortBy(_.value)(using Ordering.Double.TotalOrdering)
@@ -366,9 +426,12 @@ object Regressor:
         case (HrfAssignment.PerEvent(_), _) =>
           evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, eventIdx, dt, reg.summate, integration)
         case (HrfAssignment.Shared(hrf), EvalMethod.Conv) =>
+          if prepared.isEmpty then
+            validateConvolution(reg, grid, precision).fold(error => throw new IllegalArgumentException(error.message), identity)
           val fineColumns = prepared.map(_.fineColumns).getOrElse(hrfFineColumns(hrf, reg.span, dt.value))
           evalConv(reg.span, sorted, ons, durs, amps, dt, reg.summate, fineColumns)
         case (HrfAssignment.Shared(hrf), EvalMethod.FFT) =>
+          validateConvolution(reg, grid, precision).fold(error => throw new IllegalArgumentException(error.message), identity)
           evalFft(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
 
   private def evalHrfEvent(
@@ -457,7 +520,8 @@ object Regressor:
       t1: Double,
       dt: Double
   ): Array[Double] =
-    val nBins = math.floor((t1 - t0) / dt).toInt + 1
+    val nBins = ConvolutionDiscretization.sampleCount(t1 - t0, dt, "drive grid")
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     val diff = Array.fill(nBins + 2)(0.0)
     val maxPosition = (nBins - 1).toDouble
     var i = 0
@@ -521,7 +585,8 @@ object Regressor:
     * time; a row-major layout forced a fresh `Array` per column per call.
     */
   private def hrfFineColumns(hrf: Hrf, span: Seconds, dt: Double): Array[Array[Double]] =
-    val n = math.floor(span.value / dt).toInt + 1
+    val n = kernelSampleCount(hrf, span, dt)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     val nb = hrf.nbasis
     val out = Array.ofDim[Double](nb, n)
     var i = 0

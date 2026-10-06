@@ -3,6 +3,7 @@ package scalafim.fmri.design.event
 import scalafim.fmri.design.HrfColumnScaling
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.regressor.ConvolutionError
 
 import scala.util.control.NonFatal
 
@@ -46,6 +47,7 @@ enum EventResponseConvolutionError:
   case NonFiniteAggregate(row: Int, column: Int, value: Double)
   case InvalidPrecision(value: Double)
   case InvalidKernelSpan(value: Double)
+  case InvalidConvolution(error: ConvolutionError)
   case ConvolutionFailed(detail: String)
 
   def message: String = this match
@@ -55,6 +57,7 @@ enum EventResponseConvolutionError:
     case NonFiniteAggregate(row, column, value) => s"convolved value at row ${row + 1}, column ${column + 1} is non-finite: $value"
     case InvalidPrecision(value) => s"convolution precision must be finite and positive, got $value"
     case InvalidKernelSpan(value) => s"kernel span must be finite and positive, got $value"
+    case InvalidConvolution(error) => error.message
     case ConvolutionFailed(detail) => s"event response convolution failed: $detail"
 
 /** Convolution with event-duration normalization kept separate from kernel and
@@ -100,21 +103,24 @@ object EventResponseConvolution:
       invalidBlock.orElse(invalidAmplitude) match
         case Some(error) => Left(error)
         case None =>
-          normalization match
-            case EventResponseNormalization.PreservePulseScale =>
-              attempt(term.convolve(hrf, frame, precision, dropEmpty, summate, scaling)).flatMap(checkFinite).map { convolved =>
-                val unit = Vector.fill(hrf.nbasis)(1.0)
-                EventResponseConvolution(convolved, term.durations0.zipWithIndex.map((duration, event) => EventPeakScaleReceipt(event, duration, unit)))
-              }
-            case unitPeak: EventResponseNormalization.UnitPeak =>
-              for
-                scales <- prepareScales(term, hrf, unitPeak, summate, integration)
-                divisors = scales.map(_.divisors)
-                convolved0 <- attempt(term.convolveWithEventDivisors(hrf, frame, precision, dropEmpty, summate, scaling, divisors))
-                convolved <- checkFinite(convolved0)
-              yield
-                val columnScales = columnEventScales(term, dm, divisors, hrf.nbasis, frame, "unit-peak", hrf.span)
-                EventResponseConvolution(convolved.copy(eventPeakScales = scales, columnEventScales = columnScales), scales)
+          term.validateSharedConvolution(hrf, frame, precision, dropEmpty, summate)
+            .left.map(EventResponseConvolutionError.InvalidConvolution.apply)
+            .flatMap: _ =>
+              normalization match
+                case EventResponseNormalization.PreservePulseScale =>
+                  attempt(term.convolve(hrf, frame, precision, dropEmpty, summate, scaling)).flatMap(checkFinite).map { convolved =>
+                    val unit = Vector.fill(hrf.nbasis)(1.0)
+                    EventResponseConvolution(convolved, term.durations0.zipWithIndex.map((duration, event) => EventPeakScaleReceipt(event, duration, unit)))
+                  }
+                case unitPeak: EventResponseNormalization.UnitPeak =>
+                  for
+                    scales <- prepareScales(term, hrf, unitPeak, summate, integration)
+                    divisors = scales.map(_.divisors)
+                    convolved0 <- attempt(term.convolveWithEventDivisors(hrf, frame, precision, dropEmpty, summate, scaling, divisors))
+                    convolved <- checkFinite(convolved0)
+                  yield
+                    val columnScales = columnEventScales(term, dm, divisors, hrf.nbasis, frame, "unit-peak", hrf.span)
+                    EventResponseConvolution(convolved.copy(eventPeakScales = scales, columnEventScales = columnScales), scales)
 
   private def attempt(value: => ConvolvedTerm): Either[EventResponseConvolutionError, ConvolvedTerm] =
     try Right(value)
