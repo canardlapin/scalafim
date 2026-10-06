@@ -1,0 +1,1 @@
+{"actor":"scalafim-identity-20261005","entity":"bd-01M44E76ZC0J12GACBSGXAV6GA","kind":"note","note_kind":"progress","op":"20261006T000432.815081Z-p33277-c0003-r22bc-h4fe596","text":"Replace display-rendered profile and observed geometry identities with versioned structural encodings and JVM/JS literal golden regressions.","ts":"2026-10-06T00:04:32.815081Z","v":1}

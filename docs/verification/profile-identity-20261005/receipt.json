@@ -1,0 +1,123 @@
+{
+  "mote": "bd-01M44E76ZC0J12GACBSGXAV6GA",
+  "actor": "scalafim-identity-20261005",
+  "verified_at_utc": "2026-10-06T00:34:54.745562+00:00",
+  "base_commit": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+  "status": "Complete: focused identities and public/parallel consumers plus parent full affected-module and admission-consumer JVM/JS gates passed.",
+  "formats": {
+    "observed_geometry": "observed-family-geometry/v2",
+    "profile_fit": "profile-fit/v3"
+  },
+  "migration": "Previous unversioned observed geometry and profile-fit/v2 strings are intentionally incompatible. Regenerate observed admissions and prepared profile fits before comparing identities or reusing any identity-keyed caches. Public method signatures remain unchanged; no old-format translation is provided.",
+  "behavior": "All numeric inputs use IEEE-754 bit encodings; string values and nested records are length framed and tagged. Existing kernel-basis, decode-budget, prior, response-preparation and matrix encoders are reused. Both profile source routes, typed dataset metadata/events, space and sampling axes, selection order, actual basis samples/coefficient jets, nuisance, fit config, whitening, amplitude/criterion, decoder/execution policy, admission and ML evidence declarations participate in the canonical format.",
+  "source_sha256": {
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ObservedFamilyCertification.scala": "972eaa9da31b378a6d06054fbd87e9a09bb688cd76b61aabfa4818921e3cc91c",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "345acd5634f40a3f04b77c0e8c1099f60e82057ebb871afa709f257e89eefa1d",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala": "bc5578d2dc82c3a3cdfc91b9a36b091f30ac33e71caf57b0e2c31ab03cf8aad0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileFitIdentitySuite.scala": "c24641007eaea78e0489c7d1a6dba217f006e8109f5e31923ff31667e8cff393",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileHrfFitSuite.scala": "c45d0d17815a40087f2ddc07e61b3057b1d55133f794a7d23f0980287403b3b6"
+  },
+  "runner_sha256": "96c5bdf2127b177f7c4e428e1e3ff91449b4f3cac931d3a1867573bf3612beec",
+  "log_archive_sha256": "8e0c25fc9929c189c770fc36fa718a85e524784ef503d10f160f8d7a0afaaafe",
+  "passed_tests": {
+    "fitJVM_focused": 28,
+    "fitJS_focused": 28,
+    "identity_per_platform": 7,
+    "existing_profile_fit_per_platform": 21,
+    "fitJVM_expanded_focused": 99,
+    "fitJS_expanded_focused": 65
+  },
+  "warning_clean": true,
+  "goldens": {
+    "ProfileGolden": {
+      "sha256_utf8": "023362b274661ed7253c2703849858b11fc09273f1b49d7073c26ed9b09571b2",
+      "characters": 3268,
+      "actual_producer": true,
+      "matches_literal_on_JVM_and_JS": true
+    },
+    "FixedGolden": {
+      "sha256_utf8": "4de54d0731ca66e32b9083ae35f31d63af924f9a5fea27e597156bf9dc19484e",
+      "characters": 4192,
+      "actual_producer": true,
+      "matches_literal_on_JVM_and_JS": true
+    },
+    "MlGolden": {
+      "sha256_utf8": "b93b22d5a3f2bf46c228c7ecca7ad97a0b28f70ed87f43f3ad826a747a77a68f",
+      "characters": 3599,
+      "actual_producer": true,
+      "matches_literal_on_JVM_and_JS": true
+    },
+    "GeometryGolden": {
+      "sha256_utf8": "6ad731d0c0d284923727c947e2daaf8640ed0a2243e7912126ffb407b30ec3a3",
+      "characters": 1111,
+      "actual_producer": true,
+      "matches_literal_on_JVM_and_JS": true
+    }
+  },
+  "fixture": "A one-dimensional rank-one family with horizon=2, step=1 and exactly representable basis [1,0,0] isolates structural encoding from numerical decomposition variation. Dataset space uses a persistent declared template world. Literal inputs include 24.0, -0.0, 0.1, 1e-6, delimiter-bearing labels, optional typed metadata sources, ARMA coefficients, precomputed first-row scale and nuisance values.",
+  "regressions": "Actual producer discrimination covers every DecodeBudget field, node grid, prior presence/mean/precision, execution block size/workers, amplitude alpha/lambda, criterion/noise variance and typed dataset metadata. Geometry distinguishes onsets/durations/blocks, event weights/condition labels, expanded matrix values, frame/precision, whitening/nuisance presence and values. Additional checks distinguish IEEE signed zero, number vs integer metadata, source presence, LSS numeric config and whitening scope/initial policy.",
+  "calibration": {
+    "initial_fixture_refusal": "Initial horizon=1, step=1 violates the delivered basis specification; corrected to horizon=2. Retained initial-invalid-fixture-jvm.log is development evidence, not a passing gate.",
+    "golden_capture": "Four initial placeholder comparisons failed as expected; all three discrimination tests passed. Actual producer outputs were captured as literal shared goldens, then all seven tests and the 21 existing profile tests passed on each platform. The retained runner records this initial capture procedure; an already calibrated suite needs only the focused gate commands.",
+    "no_temporary_instrumentation_remains": true
+  },
+  "runs": [
+    {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.ProfileFitIdentitySuite"
+      ],
+      "exit_code": 1,
+      "started_at_utc": "2026-10-06T00:22:25.433079+00:00",
+      "log": "capture-jvm.log"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.ProfileFitIdentitySuite scalafim.fmri.fit.profile.ProfileHrfFitSuite",
+        "fitJS/testOnly scalafim.fmri.fit.profile.ProfileFitIdentitySuite scalafim.fmri.fit.profile.ProfileHrfFitSuite"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-10-06T00:23:05.446636+00:00",
+      "log": "focused-jvm-js.log"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.ProfileFitIdentitySuite scalafim.fmri.fit.profile.ProfileHrfFitSuite scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite scalafim.fmri.fit.profile.ProfileHrfFitParallelSuite",
+        "fitJS/testOnly scalafim.fmri.fit.profile.ProfileFitIdentitySuite scalafim.fmri.fit.profile.ProfileHrfFitSuite scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite"
+      ],
+      "exit_code": 0,
+      "log": "focused-consumers-jvm-js.log",
+      "reason": "Parent full-fit gate exposed two public provenance consumers depending on exact-readout being the final field; corrected producer ordering and retained existing assertions."
+    }
+  ],
+  "limits": [
+    "Identical numeric bits yield identical encodings. Numerically different basis/decomposition or computed coefficient values intentionally remain different identities; this format does not promise equality across different numerical implementations.",
+    "Matrix identities reuse the delivered 64-bit FNV-1a content digest and are not security hashes or collision-free cryptographic proofs.",
+    "Persistent physical frame/grid IDs, unit, coordinate convention, shape, affine and nonspatial sampling records are encoded. For an ephemeral frame/grid, absent persistent IDs cannot distinguish separate runtime owners with identical geometry; ephemeral ownership is not repaired here.",
+    "ParametricHrfFamily remains unsealed and kernel-basis/v2 still identifies it by name/chart/horizon: custom evaluators reusing those fields can collide. This remains a separate structural-family identity decision.",
+    "The unreachable ConditionProfile trial-axis count-only encoding remains a distinct caveat; this work does not change that producer.",
+    "Continuous-event open ParametricBasis identity uses its exposed realized matrix and semantic metadata. It does not serialize custom implementation closures or hidden constructor state."
+  ],
+  "consumer_contract": "The producer keeps |exact-readout=... as the final field, with all ML structural evidence before it. ProfileHrfTrialOutputs removes only the final legacy exact-readout assertion via stripSuffix when binding public execution, preserving all ML preparation identity inputs. Existing consumer assertions were preserved; literal goldens changed only field order for this compatibility correction.",
+  "integrated_gates": {
+    "receipt": "docs/verification/scalafim-chunk-20261005/receipt.json",
+    "passed_tests": {
+      "hrfJVM": 321,
+      "hrfJS": 321,
+      "designJVM": 454,
+      "designJS": 453,
+      "fitJVM": 660,
+      "fitJS": 603,
+      "observed_admission_consumersJVM": 4,
+      "observed_admission_consumersJS": 4
+    },
+    "compiler_warnings": false,
+    "other_diagnostic": "Existing sbt multiple-main diagnostic during the law build is recorded separately in parent evidence."
+  },
+  "integration_regression_evidence": "Parent archive retains the initial full-fit run with two unchanged public/parallel provenance assertions failing when ML followed the readout marker. The final producer places the same ML evidence before the final exact-readout marker, preserving safe suffix removal. Consumer assertions were not loosened. Expanded focused and full integrated gates then passed."
+}

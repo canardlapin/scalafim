@@ -645,8 +645,8 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     assertEquals(summary.setup.route, "trial-banded-ml")
     assert(summary.setup.mlSetup.nonEmpty)
     assert(summary.provenance.contains("criterion-form=J=E+sigma2*D"))
-    assert(summary.provenance.contains("sigma2=" + java.lang.Double.toHexString(sigma2)))
-    assert(summary.provenance.contains("native-lambda=" + java.lang.Double.toHexString(2.5)))
+    assert(summary.provenance.contains("sigma2=" + scalafim.fmri.design.hrf.KernelBasisProvenance.number(sigma2)))
+    assert(summary.provenance.contains("native-lambda=" + scalafim.fmri.design.hrf.KernelBasisProvenance.number(2.5)))
     assert(summary.provenance.contains("conditional-sd=sqrt(diag(2*sigma2*inverse(HJ)))"))
     assert(summary.provenance.contains("terminal-evidence=required-at-returned-shape"))
     val prep = TrialBandedPreparation.prepare(expanded, Some(arPlan), Some(nuisance), 2.5).toOption.get

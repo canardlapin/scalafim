@@ -348,14 +348,10 @@ object ObservedFamilyCertification:
 
 object ObservedFamilyAdmission:
   private[profile] def geometry(expanded: ExpandedConditionDesign, term: EventTerm, frame: SamplingFrame, precision: Seconds, whitening: Option[WhiteningPlan], nuisance: Option[DMat]): String =
-    val drives = term.onsets.zip(term.durations0).zip(term.blockIds0).map { case ((onset, duration), run) => s"${onset.value},${duration.value},$run" }.mkString(";")
-    val rows = s"${frame.blockLens.mkString(",")}/${frame.tr.map(_.value).mkString(",")}/${frame.startTime.map(_.value).mkString(",")}"
-    val expandedValues = expanded.term.data.data.mkString(",")
-    val eventWeights = term.designMatrix(dropEmpty = false).data.data.mkString(",")
-    val w = whitening.map(p => s"${p.segments.mkString(",")}|${p.coefficients.mkString(",")}|${p.exactFirstAr1}|${p.method}").getOrElse("none")
-    val n = nuisance.map { m =>
-      val values = new Array[Double](m.rows * m.cols)
-      m.copyRowMajorTo(values)
-      s"${m.rows}x${m.cols}:${values.mkString(",")}"
-    }.getOrElse("none")
-    s"basis=${expanded.basis.provenance.canonical}|drives=$drives|event-weights=$eventWeights|conditions=${expanded.conditions.mkString(",")}|expanded=$expandedValues|frame=$rows|precision=${precision.value}|whitening=$w|nuisance=$n"
+    import scalafim.fmri.design.hrf.KernelBasisProvenance.{field, number, option}
+    val eventWeights = term.designMatrix(dropEmpty = false).data
+    s"observed-family-geometry/v2|basis=${field(expanded.basis.provenance.canonical)}|" +
+      s"drives=${ProfileFitIdentity.schedule(term.schedule)}|event-weights=${ProfileFitIdentity.mat(eventWeights)}|" +
+      s"conditions=${ProfileFitIdentity.strings(expanded.conditions)}|expanded=${ProfileFitIdentity.mat(expanded.term.data)}|" +
+      s"frame=${ProfileFitIdentity.frame(frame)}|precision=${number(precision.value)}|" +
+      s"whitening=${option(whitening.map(ProfileFitIdentity.whitening))}|nuisance=${option(nuisance.map(ProfileFitIdentity.dmat))}"

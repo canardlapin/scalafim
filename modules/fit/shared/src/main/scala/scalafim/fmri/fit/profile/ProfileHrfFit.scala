@@ -722,36 +722,6 @@ object ProfileHrfFit:
       source <- prepareSource(plan, selection, whitening, policy)
     yield
       val (backend, route) = source
-      val identity = plan.source match
-        case ProfileHrfSource.FixedCondition(_, term) => s"fixed:${term.term.onsets.zip(term.term.durations0).zip(term.term.blockIds0).mkString(",")}:${term.term.events}:${term.term.eventProvenance}:${term.term.designMatrix(dropEmpty = false).conditionTags}:${term.term.designMatrix(dropEmpty = false).data.data.map(java.lang.Double.toHexString).mkString(",")}"
-        case ProfileHrfSource.TrialEvents(_, drive, _, _) => s"events:${drive.schedule.onsets.zip(drive.schedule.durations).zip(drive.schedule.blockIds).mkString(",")}:${drive.schedule.events.mkString(",")}:${drive.conditionLabels.map(_.value).mkString(",")}:${drive.trialLabels.map(_.value).mkString(",")}:${drive.membership.conditionOfTrial.mkString(",")}"
-      val nuisanceValues = plan.source match
-        case ProfileHrfSource.FixedCondition(fixed, _) => fixed.model.designMatrix.data
-        case ProfileHrfSource.TrialEvents(_, _, baseline, _) => baseline.designMatrix.data
-      val config = plan.source match
-        case ProfileHrfSource.FixedCondition(fixed, _) => fixed.config
-        case ProfileHrfSource.TrialEvents(_, _, _, trialConfig) => trialConfig
-      val lambda = plan.amplitudes match
-        case AmplitudeStructure.ConditionMeans => "none"
-        case AmplitudeStructure.ConditionCenteredTrials(alpha) => alpha.lambda.toString
-      val w = whitening match
-        case CanonicalTemporalWhitening.Iid => "iid"
-        case CanonicalTemporalWhitening.Shared(value) => s"${value.method}:${value.pooling}:${value.coefficients}:${value.segments}:${value.initialCondition}"
-      val basisValues =
-        val b = plan.basis
-        (0 until b.rank).iterator.flatMap(j => (0 until b.fineCount).iterator.map(i => java.lang.Double.toHexString(b.value(j, i)))).mkString(",")
-      val basisLags = plan.basis.lags.iterator.map(java.lang.Double.toHexString).mkString(",")
-      val coefficientMap =
-        val b = plan.basis
-        val grid = NodeGrid(b.family.chart, b.spec.nodesPerAxis)
-        val scratch = new Array[Double](b.family.jetComponents * b.fineCount)
-        val values = new Array[Double](b.family.jetComponents * b.rank)
-        (0 until grid.count).iterator.map { node =>
-          b.coefficientJetInto(grid.point(node), scratch, values, b.family.jetComponents)
-          values.iterator.map(java.lang.Double.toHexString).mkString(",")
-        }.mkString(";")
-      val timeAxis = dataset.timeAxis.blocks.map(block => s"${block.run.value}:${block.startValue}:${block.length}").mkString(",")
-      val metadata = dataset.metadata.typedValues.toVector.sortBy(_._1.value).map { case (key, value) => s"${key.value}=${value.asString}" }.mkString(",")
       val setup = backend match
         case ProfileBackend.Trial(prepared, criterion) =>
           val bank = criterion.objectiveBank
@@ -761,14 +731,11 @@ object ProfileHrfFit:
               case TrialCriterionFacade.Ml(_, bundle, _) => Some(bundle.energyScratchValues)
               case _ => None)
         case _ => ProfileSetupReceipt(route, None, None, None, policy.observedAdmission.map(_.fingerprint))
-      val provenance = s"profile-fit/v2|dataset=${dataset.id.value}:${dataset.shape}:${dataset.voxelDomain.indices}:${dataset.samplingFrame}:${dataset.events}|time-axis=$timeAxis|metadata=$metadata:${dataset.metadata.provenance}|selected=${selected.timepoints}:${selected.voxels}|drive=$identity|basis=${plan.basis.provenance.canonical}|basis-lags=$basisLags|basis-values=$basisValues|basis-coefficients=$coefficientMap|nuisance=${nuisanceValues.map(java.lang.Double.toHexString).mkString(",")}|config=$config|whitening=$w|amplitudes=${plan.amplitudes}|lambda=$lambda|criterion=${plan.criterion}|grid=${policy.nodesPerAxis}|decode=${policy.budget}|prior=${policy.prior}|admission=${policy.observedAdmission.map(_.fingerprint)}|execution=$budget|route=$route|exact-readout=${backend.isInstanceOf[ProfileBackend.Trial]}"
-      val boundProvenance = backend match
-        case ProfileBackend.Trial(_, TrialCriterionFacade.Ml(_, bundle, sigma2)) =>
-          provenance + "|criterion-form=J=E+sigma2*D|sigma2=" + java.lang.Double.toHexString(sigma2) +
-            "|native-lambda=" + java.lang.Double.toHexString(bundle.intrinsicLambda) +
-            "|raw-energy=prepared-sparse-residual-plus-centered-penalty|response=worker-owned-copy" +
-            "|conditional-sd=sqrt(diag(2*sigma2*inverse(HJ)))|terminal-evidence=required-at-returned-shape"
-        case _ => provenance
+      val mlIdentity = backend match
+        case ProfileBackend.Trial(_, TrialCriterionFacade.Ml(_, bundle, sigma2)) => Some((sigma2, bundle.intrinsicLambda))
+        case _ => None
+      val boundProvenance = ProfileFitIdentity.canonical(plan, selected, whitening, policy, budget,
+        route, backend.isInstanceOf[ProfileBackend.Trial], mlIdentity)
       new PreparedProfileHrf(plan, selection, policy, dataset, selected, setup, boundProvenance, backend)
 
   private def validateGrid(plan: ProfileHrfPlan, policy: ProfileDecodePolicy): Either[ProfileFitError, Unit] =
