@@ -1,0 +1,165 @@
+{
+  "verified_at_utc": "2026-10-06T02:32:48.993941+00:00",
+  "base_commit": "dbda35ea91ccb7c1d2d35c7b11e576006f0e970d",
+  "motes_completed": [
+    "bd-01M47BDP95QPW2SZEV7TF52RQX",
+    "bd-01M47BDR7J7FKGXESZFY9J370P",
+    "bd-01M47BDT7PT73Z82RK6EETWDZ7"
+  ],
+  "validation": {
+    "hrfJVM": 383,
+    "hrfJS": 383,
+    "designJVM": 458,
+    "designJS": 457,
+    "fitJVM": 660,
+    "fitJS": 603,
+    "observed_family_consumersJVM": 6,
+    "observed_family_consumersJS": 6
+  },
+  "total_passed_tests": 2956,
+  "compiler_warning_clean": true,
+  "sbt_diagnostics": [
+    {
+      "gate": "observed-family-consumers",
+      "message": "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+    }
+  ],
+  "runs": [
+    {
+      "label": "hrf-design",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/test",
+        "hrfJS/test",
+        "designJVM/test",
+        "designJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 68.596,
+      "counts": [
+        {
+          "total": 383,
+          "failed": 0,
+          "errors": 0,
+          "passed": 383
+        },
+        {
+          "total": 383,
+          "failed": 0,
+          "errors": 0,
+          "passed": 383
+        },
+        {
+          "total": 458,
+          "failed": 0,
+          "errors": 0,
+          "passed": 458
+        },
+        {
+          "total": 457,
+          "failed": 0,
+          "errors": 0,
+          "passed": 457
+        }
+      ],
+      "compiler_warnings": [],
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "fit",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/test",
+        "fitJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 118.78,
+      "counts": [
+        {
+          "total": 660,
+          "failed": 0,
+          "errors": 0,
+          "passed": 660
+        },
+        {
+          "total": 603,
+          "failed": 0,
+          "errors": 0,
+          "passed": 603
+        }
+      ],
+      "compiler_warnings": [],
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "observed-family-consumers",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite scalafim.fmri.laws.profile.ObservedFamilyCertificationSuite",
+        "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite scalafim.fmri.laws.profile.ObservedFamilyCertificationSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 25.635,
+      "counts": [
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6
+        },
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6
+        }
+      ],
+      "compiler_warnings": [],
+      "sbt_diagnostics": [
+        "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+      ]
+    }
+  ],
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfConstructorCalibration.scala": "16e854dc1826c23aef239471a2c4c6a6ebf598410e1fbc08448f25bb80bff621",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfSpec.scala": "42d8c2c2c1cc8876dfed950eeb311842076e058375d2600f1ae9b01660eab55b",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala": "1a181c4ed8088e1133f2aa13ed71e3beaeef31871a8c4bd992f4fcf485ff9b1a",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfConstructorCalibrationSuite.scala": "c807957d8cabd7342568dfd2969e2f5101b55337bf691e15803ee98d1690fef9",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/FamilySummaryGrid.scala": "b12d2d6033b1333a39fa29a3220fa14b0c5a275eb2a50f254ee2dcb3fbae64bf",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/ParametricHrfFamily.scala": "65401bb3ae06791dd7838d030652b10e17aa5b17133c78752bcba4b15f14785e",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/LwuFamily.scala": "a05eede12d810c823708f6b8761f99bb77daaf5c4a7c52382f2473ae1b3ba94a",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/FamilySummaryGridSuite.scala": "7f2287029b9515d03a6a532106ab0d93005ce878f91dcaf62c77d47f94dd7c94",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": "b987d3e0aed0615e9602f46596dfe1ab0686c8be66addb79a0686bbce0d082fc",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala": "16bbcd368107b65f86f9bb8a866c9a9dd6b2de3fe8c875916dddf2ea8c9d9cc5",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/EventResponseNormalization.scala": "f6e2a7344ae4045fd0fa8946b7bef060eb8e8a9306e2c96f775c281686e31aa2",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/EventResponseNormalizationSuite.scala": "65205d47f93e9669626a0834d939dd41850dbe651a4e2109499454766456220d",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/event/EventResponseConvolutionSuite.scala": "f86dae42762729bba2d0dde1d05c1e5d98f76ca80415431af7800665889adcef",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "0f9ab4e15537ef4660a44445af1af62ee22136a9d8c9afe2bcf63a2e1a68c27c"
+  },
+  "feature_receipts": [
+    "docs/verification/hrf-constructor-budget-20261005/receipt.json",
+    "docs/verification/family-summary-budget-20261005/receipt.json",
+    "docs/verification/event-response-budget-20261005/receipt.json"
+  ],
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "422b16f40bbfceb277a4345b3e9a7d99bd01ad1acd0a7bf7d1846cd6b9e1ddab",
+  "review_repairs": [
+    "LWU/Daguerre calibration detects nonfinite values/factors before creating an apparently normalized kernel.",
+    "Tail-grid admission precedes KernelBasis sampled allocation; certification propagates typed family failures.",
+    "EventResponse peak/scale allocations and composed normalization work are admitted before evaluation, preserving modes with no unused precision constraint."
+  ],
+  "mutation_evidence": "Feature archives retain safe constructor count/work/finite-factor/typed-route mutations, family count/final-time mutations, and EventResponse work/final-time/scale mutations. Each detected on JVM+JS; all final sources restored and temporary selectors removed.",
+  "scientific_evidence": "Existing HRF R parity fixtures passed in full suites; family scalar Gaussian/LWU fixtures were generated independently in Python and retain generator/data hashes. No new R fixture-generation run claimed.",
+  "follow_up_motes": [
+    "bd-01M47G78N9NB5BF8YX8HW9ZEKX",
+    "bd-01M47GK9VZNQRGCERREZ09PXW1"
+  ],
+  "scope_limits": [
+    "Declared sample/scalar work bounds do not measure arbitrary custom callback arithmetic.",
+    "Kernel-basis matrix/SVD/certification aggregate budgets remain a distinct tracked task.",
+    "Fit preparation summary-grid admission remains distinct from standalone diagnostic guards."
+  ]
+}

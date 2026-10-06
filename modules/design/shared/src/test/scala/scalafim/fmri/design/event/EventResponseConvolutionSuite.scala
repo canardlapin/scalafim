@@ -21,6 +21,21 @@ class EventResponseConvolutionSuite extends munit.FunSuite:
 
   private def maxAbs(data: Array[Double]): Double = data.iterator.map(math.abs).max
 
+  test("composed event normalization refusal remains typed before convolution evaluation"):
+    var calls = 0
+    val counted = Hrf.scalar("event-work-sentinel", span = 1.0.s): _ =>
+      calls += 1
+      fail("event normalization must refuse before convolution evaluates the kernel")
+    val policy = EventResponseNormalization.unitPeak(0.0001.s).toOption.get
+    val result = EventResponseConvolution.convolve(term(Vector(0.0), Vector(1.0)),
+      counted, fineFrame, policy, integration = Integration.Trapezoid, precision = 0.1.s)
+    result match
+      case Left(EventResponseConvolutionError.InvalidEventResponse(0, detail)) =>
+        assert(detail.contains("scalar evaluations"))
+        assert(detail.contains("exceeding maximum"))
+      case other => fail(s"expected typed event response refusal, got $other")
+    assertEquals(calls, 0)
+
   test("event unit-peak normalization is per duration and retains duration receipts"):
     val source = term(Vector(0.0, 2.0, 4.0), Vector(0.0, 0.2, 0.5))
     val result = EventResponseConvolution.convolve(source, kernel, fineFrame, unitPeak).fold(error => fail(error.message), identity)
