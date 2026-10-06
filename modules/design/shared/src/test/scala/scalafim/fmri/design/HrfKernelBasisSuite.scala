@@ -162,3 +162,32 @@ class HrfKernelBasisSuite extends munit.FunSuite:
       def toHrf(point: ShapePoint): Hrf = family.toHrf(point)
       override def tailRelativeEnergyEither(point: ShapePoint, precision: PositiveSeconds, extent: Double): Either[FamilySummaryError, Double] = Left(expected)
     assertEquals(HrfKernelBasis.compile(spec.copy(family = failing, nodesPerAxis = Vector(2, 2), fineStep = PositiveSeconds(1.0).toOption.get, heldOutPoints = 1, includeDerivatives = false)), Left(KernelBasisError.Summary(expected)))
+
+  test("default Cascade compilation preserves legacy endpoint bits and certified scientific values"):
+    val cascade = scalafim.fmri.hrf.family.Cascade34Family.Default
+    val input = KernelBasisSpec(cascade, step, Vector(9, 7, 5), 1e-3, maxRank = 40, heldOutPoints = 10)
+    val compiled = HrfKernelBasis.compile(input).fold(e => fail(e.message), identity)
+    assertEquals(compiled.fineCount, 481)
+    assertEquals(compiled.allocationEstimate.trainingColumns, 3150)
+    assertEquals(compiled.allocationEstimate.trainingCells, 1_515_150L)
+    assertEquals(compiled.allocationEstimate.thinRank, 481)
+    assert(compiled.provenance.canonical.startsWith("kernel-basis/v2|family=9:cascade34"))
+    assert(compiled.provenance.canonical.contains("|nodes=nodes(1:9,1:7,1:5)|derivatives=true|"))
+    // The first seeded held-out point is covered by the emitted certificate.
+    val rng = new scala.util.Random(input.seed)
+    val point = ShapePoint.unsafe(Vector.tabulate(cascade.dimension)(axis =>
+      cascade.chart.lower(axis) + rng.nextDouble() * cascade.chart.width(axis)))
+    val truth = new Array[Double](compiled.fineCount)
+    val coefficients = new Array[Double](compiled.rank)
+    compiled.coefficientsInto(point, truth, coefficients)
+    val rebuilt = new Array[Double](compiled.fineCount)
+    compiled.reconstructInto(coefficients, rebuilt)
+    var error = 0.0
+    var norm = 0.0
+    var i = 0
+    while i < truth.length do
+      val delta = rebuilt(i) - truth(i)
+      error += delta * delta
+      norm += truth(i) * truth(i)
+      i += 1
+    assert(math.sqrt(error / norm) <= compiled.certificate.valueError(compiled.rank - 1) + 1e-12)
