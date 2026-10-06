@@ -10,6 +10,7 @@ enum HrfSpecError:
   case InvalidQuadrature(error: QuadratureError)
   case InvalidLag(error: TimeError)
   case InvalidNormalization(error: HrfNormalizationError)
+  case InvalidConstructor(error: HrfConstructorError)
   case ExpectedScalar(name: String, nbasis: Int)
 
   def message: String =
@@ -31,6 +32,8 @@ enum HrfSpecError:
       case InvalidLag(error) =>
         error.message
       case InvalidNormalization(error) =>
+        error.message
+      case InvalidConstructor(error) =>
         error.message
       case ExpectedScalar(name, nbasis) =>
         s"HRF '$name' must have exactly one basis column for scalar evaluation, got $nbasis"
@@ -105,7 +108,7 @@ final case class HrfSpec private (
         case HrfKind.Spmg3     => Right(Hrfs.SPMG3)
         case HrfKind.Gamma     => Right(Hrfs.gamma(span = span.seconds))
         case HrfKind.Gaussian  => Right(Hrfs.gaussian(span = span.seconds))
-        case HrfKind.Lwu       => Right(Hrfs.lwu(span = span.seconds))
+        case HrfKind.Lwu       => Hrfs.lwuValidated(span = span.seconds).left.map(HrfSpecError.InvalidConstructor.apply)
         case HrfKind.Cascade34 => Right(Hrfs.cascade34(span = span.seconds))
         case HrfKind.Mexhat    => Right(Hrfs.mexhat(span = span.seconds))
         case HrfKind.InvLogit  => Right(Hrfs.invLogit(span = span.seconds))
@@ -114,7 +117,7 @@ final case class HrfSpec private (
         case HrfKind.Bspline   => Right(Hrfs.bspline(nBasis = nbasis, span = span.seconds))
         case HrfKind.Tent      => Right(Hrfs.tent(nBasis = nbasis, span = span.seconds))
         case HrfKind.Fourier   => Right(Hrfs.fourier(nBasis = nbasis, span = span.seconds))
-        case HrfKind.Daguerre  => Right(Hrfs.daguerre(nBasis = nbasis, span = span.seconds))
+        case HrfKind.Daguerre  => Hrfs.daguerreValidated(nBasis = nbasis, span = span.seconds).left.map(HrfSpecError.InvalidConstructor.apply)
         case HrfKind.Sine      => Right(Hrfs.sine(nBasis = nbasis, span = span.seconds))
         case HrfKind.Boxcar =>
           Left(HrfSpecError.UnsupportedKind(kind, "boxcar requires an explicit width parameter"))
