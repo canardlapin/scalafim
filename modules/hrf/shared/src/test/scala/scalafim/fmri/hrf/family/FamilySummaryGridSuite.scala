@@ -104,3 +104,29 @@ class FamilySummaryGridSuite extends munit.FunSuite:
       undershoot match
         case Some(expected) => assertEqualsDouble(actual.undershootRatio.getOrElse(fail("missing undershoot")), expected, 1e-13)
         case None => assertEquals(actual.undershootRatio, None)
+
+  test("summary structural admission is independent of coarse tail diagnostic precision"):
+    val family = LwuFamily.make(horizon = Seconds(10000.0)).fold(e => fail(e.message), identity)
+    assertEquals(family.validateTailRelativeEnergyGrid(positive(500.0)), Right(()))
+    assertEquals(family.validateSummaryGrid, Left(FamilySummaryError.SampleLimitExceeded(1000001.0, FamilySummaryGrid.MaxSamples)))
+    assertEquals(GaussianFamily.Default.validateSummaryGrid, Right(()))
+
+  test("typed analytic summaries validate points and report decoded parameter overflow"):
+    val chart = ShapeChart(("tau", 3.0, 8.0), ("logSd", 799.0, 801.0))
+    val family = GaussianFamily.make(chart).fold(e => fail(e.message), identity)
+    val point = chart.point(5.0, 800.0).fold(e => fail(e.message), identity)
+    assert(family.summariesEither(point).swap.exists(_.isInstanceOf[FamilySummaryError.EvaluationFailed]))
+    assert(GaussianFamily.Default.summariesEither(ShapePoint.unsafe(Vector(5.0))).swap.exists(_.isInstanceOf[FamilySummaryError.Chart]))
+
+  test("typed summary validation rejects nonfinite returned scalars"):
+    val invalid = Seq(
+      (ShapeSummary(Seconds.unsafe(Double.NaN), Seconds(1.0), None), ShapeSummaryField.PeakLatency),
+      (ShapeSummary(Seconds(1.0), Seconds.unsafe(Double.PositiveInfinity), None), ShapeSummaryField.Fwhm),
+      (ShapeSummary(Seconds(1.0), Seconds(1.0), Some(Double.PositiveInfinity)), ShapeSummaryField.UndershootRatio)
+    )
+    for (summary, field) <- invalid do
+      val family = new Probe(positive(1.0)):
+        override def summaries(point: ShapePoint): ShapeSummary = summary
+      family.summariesEither(point) match
+        case Left(FamilySummaryError.NonFiniteSummary(actualField, _)) => assertEquals(actualField, field)
+        case other => fail(s"expected finite summary scalar error, got $other")

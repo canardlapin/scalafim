@@ -23,6 +23,9 @@ final class LwuFamily private (val chart: ShapeChart, val horizon: PositiveSecon
 
   def libraryNormalization: NormalizationRule = NormalizationRule.Unnormalised
 
+  override def validateSummaryGrid: Either[FamilySummaryError, Unit] =
+    FamilySummaryGrid.summary(horizon).map(_ => ())
+
   private val K = 1.6
 
   def evalInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit =
@@ -111,7 +114,7 @@ final class LwuFamily private (val chart: ShapeChart, val horizon: PositiveSecon
   /** Attained peak, FWHM and trough ratio on the unchanged 0.01 s floor grid.
     * Refuses more than FamilySummaryGrid.MaxSamples before allocation or evaluation.
     */
-  def summariesEither(point: ShapePoint): Either[FamilySummaryError, ShapeSummary] =
+  override def summariesEither(point: ShapePoint): Either[FamilySummaryError, ShapeSummary] =
     for
       checkedPoint <- chart.point(point.coordinates).left.map(FamilySummaryError.Chart.apply)
       grid <- FamilySummaryGrid.summary(horizon)
@@ -132,7 +135,7 @@ final class LwuFamily private (val chart: ShapeChart, val horizon: PositiveSecon
         var right = peak
         while right < n - 1 && values(right) > half do right += 1
         val undershoot = if values(peak) > 0.0 && values(trough) < 0.0 then Some(-values(trough) / values(peak)) else None
-        Right(ShapeSummary(Seconds(lags(peak)), Seconds(lags(right) - lags(left)), undershoot))
+        ShapeSummary.validate(ShapeSummary(Seconds(lags(peak)), Seconds(lags(right) - lags(left)), undershoot))
 
     yield summary
 

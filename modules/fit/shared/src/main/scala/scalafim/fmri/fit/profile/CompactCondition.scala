@@ -3,9 +3,12 @@ package scalafim.fmri.fit.profile
 import gale.linalg.{DMat, QROptions, QRPivoting}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis}
-import scalafim.fmri.hrf.family.{JetLayout, NormalizationRule, ParametricHrfFamily, ShapePoint, ShapeSummary}
+import scala.util.control.NonFatal
+import scalafim.fmri.hrf.family.{FamilySummaryError, JetLayout, NormalizationRule, ParametricHrfFamily, ShapePoint, ShapeSummary}
 
 enum CompactConditionError:
+  case RuntimePreparation(detail: String)
+  case Summary(error: FamilySummaryError)
   case Whitening(detail: String)
   case RankDeficient(rank: Int, columns: Int)
   case Normalization(rule: NormalizationRule)
@@ -13,6 +16,8 @@ enum CompactConditionError:
 
   def message: String =
     this match
+      case RuntimePreparation(detail) => s"compact runtime preparation failed: $detail"
+      case Summary(error) => error.message
       case Whitening(detail) => s"whitening failed: $detail"
       case RankDeficient(rank, columns) => s"the projected expanded design has rank $rank of $columns; identify the shape-invariant directions before fitting"
       case Normalization(rule) => s"the family does not support ${rule.label} normalisation"
@@ -80,6 +85,23 @@ final class CompactConditionPreparation private (
     total - q2
 
 object CompactConditionPreparation:
+
+  /** Opt in when the consumer emits summaries; ordinary preparation is reusable geometry. */
+  def prepareWithSummaries(
+      expanded: ExpandedConditionDesign,
+      admission: ObservedFamilyAdmission,
+      whitening: Option[WhiteningPlan],
+      nuisance: Option[DMat],
+      sourceTerm: scalafim.fmri.design.event.EventTerm,
+      frame: scalafim.fmri.hrf.design.SamplingFrame,
+      precision: scalafim.fmri.hrf.Seconds
+  ): Either[CompactConditionError, CompactConditionPreparation] =
+    val summaryAdmission =
+      try expanded.basis.family.validateSummaryGrid
+      catch
+        case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+    summaryAdmission.left.map(CompactConditionError.Summary.apply)
+      .flatMap(_ => prepare(expanded, admission, whitening, nuisance, sourceTerm, frame, precision))
 
   def prepare(
       expanded: ExpandedConditionDesign,
@@ -284,14 +306,29 @@ final case class CompactConditionFit(
     noisePlugin: Double,
     summaries: ShapeSummary)
 
+private[profile] final case class CompactConditionReadout(
+    decode: ShapeDecodeResult,
+    amplitudes: Vector[Double],
+    normalization: NormalizationRule,
+    nuisanceProjection: Vector[Double],
+    residualEnergy: Double,
+    noisePlugin: Double):
+  def withSummary(summary: ShapeSummary): CompactConditionFit =
+    CompactConditionFit(decode, amplitudes, normalization, nuisanceProjection, residualEnergy, noisePlugin, summary)
+
 /** Per-voxel driver: project a whitened response, decode, read out. */
-final class CompactConditionRuntime(
+final class CompactConditionRuntime private (
     val prep: CompactConditionPreparation,
     grid: NodeGrid,
     budget: DecodeBudget,
     prior: Option[ShapePrior],
     noiseVariance: Double,
-    normalization: NormalizationRule):
+    normalization: NormalizationRule,
+    emitSummaries: Boolean):
+  def this(prep: CompactConditionPreparation, grid: NodeGrid, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double, normalization: NormalizationRule) =
+    this(prep, grid, budget, prior, noiseVariance, normalization, true)
+
+  if emitSummaries then prep.family.validateSummaryGrid.fold(error => throw new IllegalArgumentException(error.message), identity)
   require(prep.family.supports(normalization), s"family does not support ${normalization.label}")
   val objective: CompactConditionObjective = new CompactConditionObjective(prep, grid)
   private val decoder = new ShapeDecoder(objective, budget, prior, noiseVariance)
@@ -304,21 +341,42 @@ final class CompactConditionRuntime(
   def lastNodeEnergies: Array[Double] = decoder.lastNodeEnergies
 
   /** Fit one voxel from its whitened response column starting at `offset`. */
+  def fitEither(whitened: Array[Double], offset: Int, counters: DecoderCounters): Either[FamilySummaryError, CompactConditionFit] =
+    try
+      val raw = fitRaw(whitened, offset, counters)
+      prep.family.summariesEither(raw.decode.point).map(raw.withSummary)
+    catch
+      case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+
   def fit(whitened: Array[Double], offset: Int, counters: DecoderCounters): CompactConditionFit =
+    fitEither(whitened, offset, counters).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[profile] def fitRaw(whitened: Array[Double], offset: Int, counters: DecoderCounters): CompactConditionReadout =
     val e = prep.project(whitened, offset, z, qy)
     objective.pointAt(z, e)
     val decode = decoder.decode(counters)
     prep.family.scaleJetInto(normalization, decode.point, scale)
     val amplitudes = decode.amplitudes.map(_ / scale(JetLayout.Value))
-    CompactConditionFit(
+    CompactConditionReadout(
       decode = decode,
       amplitudes = amplitudes,
       normalization = normalization,
       nuisanceProjection = qy.toVector,
       residualEnergy = decode.energy,
-      noisePlugin = if residualDf > 0 then decode.energy / residualDf else Double.NaN,
-      summaries = prep.family.summaries(decode.point)
+      noisePlugin = if residualDf > 0 then decode.energy / residualDf else Double.NaN
     )
+
+object CompactConditionRuntime:
+  def prepare(prep: CompactConditionPreparation, grid: NodeGrid, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double, normalization: NormalizationRule): Either[CompactConditionError, CompactConditionRuntime] =
+    try
+      prep.family.validateSummaryGrid.left.map(CompactConditionError.Summary.apply).flatMap: _ =>
+        if !prep.family.supports(normalization) then Left(CompactConditionError.Normalization(normalization))
+        else Right(new CompactConditionRuntime(prep, grid, budget, prior, noiseVariance, normalization, false))
+    catch
+      case NonFatal(error) => Left(CompactConditionError.RuntimePreparation(Option(error.getMessage).getOrElse(error.toString)))
+
+  private[profile] def raw(prep: CompactConditionPreparation, grid: NodeGrid, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double, normalization: NormalizationRule): CompactConditionRuntime =
+    new CompactConditionRuntime(prep, grid, budget, prior, noiseVariance, normalization, false)
 
 private[profile] object CompactCondition:
   def toDMat(rows: Int, cols: Int, rowMajor: Array[Double]): DMat =

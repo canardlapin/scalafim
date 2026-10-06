@@ -3,6 +3,11 @@ package scalafim.fmri.hrf.family
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scala.util.control.NonFatal
 
+enum ShapeSummaryField(val label: String):
+  case PeakLatency extends ShapeSummaryField("peak latency")
+  case Fwhm extends ShapeSummaryField("FWHM")
+  case UndershootRatio extends ShapeSummaryField("undershoot ratio")
+
 enum FamilySummaryError:
   case Chart(error: ShapeChartError)
   case InvalidExtent(value: Double)
@@ -13,6 +18,7 @@ enum FamilySummaryError:
   case SampleLimitExceeded(requested: Double, maximum: Int)
   case NonFiniteValue(index: Int, value: Double)
   case NonFiniteEnergy
+  case NonFiniteSummary(field: ShapeSummaryField, value: Double)
   case EvaluationFailed(detail: String)
 
   def message: String = this match
@@ -25,6 +31,7 @@ enum FamilySummaryError:
     case SampleLimitExceeded(requested, maximum) => s"summary grid requests $requested samples, maximum is $maximum"
     case NonFiniteValue(index, value) => s"summary kernel value at sample $index must be finite, got $value"
     case NonFiniteEnergy => "summary squared energy must be finite"
+    case NonFiniteSummary(field, value) => s"summary ${field.label} must be finite, got $value"
     case EvaluationFailed(detail) => s"family summary evaluation failed: $detail"
 
 /** Portable admission for scalar family summaries. Each admitted sample allocates

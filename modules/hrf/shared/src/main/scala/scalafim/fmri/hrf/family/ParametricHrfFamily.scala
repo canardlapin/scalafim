@@ -1,6 +1,7 @@
 package scalafim.fmri.hrf.family
 
 import scalafim.fmri.hrf.{Hrf, HrfDescriptor, HrfKind, PositiveSeconds, Seconds}
+import scala.util.control.NonFatal
 
 /** A normalisation rule declared over a whole family. The rule is fixed; its
   * numerical scale may vary with shape and then carries derivatives.
@@ -24,6 +25,14 @@ enum RealizationSupport:
   case Unavailable
 
 final case class ShapeSummary(peakLatency: Seconds, fwhm: Seconds, undershootRatio: Option[Double])
+
+object ShapeSummary:
+  private[family] def validate(value: ShapeSummary): Either[FamilySummaryError, ShapeSummary] =
+    if !value.peakLatency.value.isFinite then Left(FamilySummaryError.NonFiniteSummary(ShapeSummaryField.PeakLatency, value.peakLatency.value))
+    else if !value.fwhm.value.isFinite then Left(FamilySummaryError.NonFiniteSummary(ShapeSummaryField.Fwhm, value.fwhm.value))
+    else value.undershootRatio match
+      case Some(ratio) if !ratio.isFinite => Left(FamilySummaryError.NonFiniteSummary(ShapeSummaryField.UndershootRatio, ratio))
+      case _ => Right(value)
 
 /** A constrained scalar HRF family with a parameter chart and analytic jets.
   *
@@ -71,6 +80,21 @@ trait ParametricHrfFamily:
   def scaleJetInto(rule: NormalizationRule, point: ShapePoint, out: Array[Double]): Unit
 
   def summaries(point: ShapePoint): ShapeSummary
+
+  /** Allocation-free admission for consumers that emit shape summaries.
+    * Analytic summaries need no sampled grid. Families with sampled summaries
+    * override this capability; consumers returning only coordinates need not call it.
+    */
+  def validateSummaryGrid: Either[FamilySummaryError, Unit] = Right(())
+
+  /** Typed decoded-point validation; structural admission is independent of shape.
+    * Custom or legacy summary callback failures are represented explicitly.
+    */
+  def summariesEither(point: ShapePoint): Either[FamilySummaryError, ShapeSummary] =
+    chart.point(point.coordinates).left.map(FamilySummaryError.Chart.apply).flatMap: checked =>
+      try ShapeSummary.validate(summaries(checked))
+      catch
+        case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
 
   /** Structurally unidentified chart coordinates at this shape, independently
     * of any experiment's information or a fitter's conditional uncertainty.

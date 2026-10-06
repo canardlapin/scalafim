@@ -5,8 +5,9 @@ import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.event.ConvolvedTerm
 import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisProvenance}
 import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, EstimateExecutionOutcome, FitError, ResponsePreparationIdentity, ResponsePreparationProvenance, TaskBasisStructure}
-import scalafim.fmri.hrf.family.{JetLayout, NormalizationRule, ShapeSummary}
+import scalafim.fmri.hrf.family.{FamilySummaryError, JetLayout, NormalizationRule, ShapePoint, ShapeSummary}
 import scalafim.fmri.model.FitPlan
+import scala.util.control.NonFatal
 
 /** The condition-only ProfileHrf policy composed over an existing fixed
   * `FitPlan` whose task term was convolved with `basis.kernel`: the ordinary
@@ -35,6 +36,19 @@ final case class ConditionVoxelResult(
     residualEnergy: Double,
     noisePlugin: Double,
     newtonSteps: Int)
+
+private[profile] final case class ConditionVoxelReadout(
+    voxel: Int,
+    coordinates: Vector[Double],
+    amplitudes: Vector[QueryValue],
+    queries: Vector[QueryValue],
+    status: DecodeStatus,
+    conditionalSd: Vector[Double],
+    residualEnergy: Double,
+    noisePlugin: Double,
+    newtonSteps: Int):
+  def withSummary(summary: ShapeSummary): ConditionVoxelResult =
+    ConditionVoxelResult(voxel, coordinates, summary, amplitudes, queries, status, conditionalSd, residualEnergy, noisePlugin, newtonSteps)
 
 /** One block's payload: released to the sink, never retained by the runner. */
 final case class ConditionProfileBlock(ordinal: Int, results: Vector[ConditionVoxelResult])
@@ -199,7 +213,17 @@ final class ConditionProfilePreparation private[profile] (
     private val x = new Array[Double](conditions * basisRank)
     private val residualDf = retention.residualDf - policy.basis.family.dimension
 
+    def fitEither(voxel: Int, crossProducts: gale.linalg.DVec, responseEnergy: Double): Either[FamilySummaryError, ConditionVoxelResult] =
+      try
+        val raw = fitRaw(voxel, crossProducts, responseEnergy)
+        policy.basis.family.summariesEither(ShapePoint.unsafe(raw.coordinates)).map(raw.withSummary)
+      catch
+        case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+
     def fit(voxel: Int, crossProducts: gale.linalg.DVec, responseEnergy: Double): ConditionVoxelResult =
+      fitEither(voxel, crossProducts, responseEnergy).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+    private[profile] def fitRaw(voxel: Int, crossProducts: gale.linalg.DVec, responseEnergy: Double): ConditionVoxelReadout =
       crossProducts.copyTo(x)
       objective.pointAt(x, responseEnergy)
       val decode = decoder.decode(counters)
@@ -213,10 +237,9 @@ final class ConditionProfilePreparation private[profile] (
       val queryValues = policy.output match
         case OutputRequest.ConditionQueries(queries, _) => QueryEvaluation.evaluate(amplitudes, queries)
         case _ => Vector.empty
-      ConditionVoxelResult(
+      ConditionVoxelReadout(
         voxel = voxel,
         coordinates = decode.coordinates,
-        summaries = family.summaries(decode.point),
         amplitudes = amplitudeValues,
         queries = queryValues,
         status = decode.status,
@@ -242,16 +265,22 @@ final class ConditionProfilePreparation private[profile] (
           val product = block.product
           val results = Vector.newBuilder[ConditionVoxelResult]
           var v = 0
-          while v < block.voxelIndices.length do
-            results += worker.fit(block.voxelIndices(v), product.crossProducts.col(v), product.responseSquares(v))
+          var failure: Option[FitError] = None
+          while v < block.voxelIndices.length && failure.isEmpty do
+            worker.fitEither(block.voxelIndices(v), product.crossProducts.col(v), product.responseSquares(v)) match
+              case Left(error) => failure = Some(FitError.InvalidFitAxis("condition profile summary", error.message))
+              case Right(result) => results += result
             v += 1
-          val payload = ConditionProfileBlock(ordinal, results.result())
-          ordinal += 1
-          sink.accept(VoxelBlock(payload.ordinal, block.voxelIndices.headOption.getOrElse(0), block.voxelIndices.length), payload) match
-            case Left(detail) => Left(FitError.InvalidFitAxis("condition profile sink", detail))
-            case Right(receipt) =>
-              receipts += receipt
-              Right(())
+          failure match
+            case Some(error) => Left(error)
+            case None =>
+              val payload = ConditionProfileBlock(ordinal, results.result())
+              ordinal += 1
+              sink.accept(VoxelBlock(payload.ordinal, block.voxelIndices.headOption.getOrElse(0), block.voxelIndices.length), payload) match
+                case Left(detail) => Left(FitError.InvalidFitAxis("condition profile sink", detail))
+                case Right(receipt) =>
+                  receipts += receipt
+                  Right(())
         ,
         cancelled
       )
@@ -281,6 +310,17 @@ object ConditionProfileFit:
       .flatMap(TaskBasisStructure.make)
 
   def prepare(plan: FitPlan, policy: ConditionProfilePolicy): Either[FitError, ConditionProfilePreparation] =
+    if !policy.output.isConditionNative then prepareRaw(plan, policy)
+    else
+      val summaryAdmission =
+        try policy.basis.family.validateSummaryGrid
+        catch
+          case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+      summaryAdmission.left.map(error => FitError.InvalidFitAxis("condition profile summary", error.message))
+        .flatMap(_ => prepareRaw(plan, policy))
+
+  /** The unified raw profile payload emits coordinates and amplitudes only. */
+  private[profile] def prepareRaw(plan: FitPlan, policy: ConditionProfilePolicy): Either[FitError, ConditionProfilePreparation] =
     val c = policy.structure.conditionCount
     if policy.structure.basisSize != policy.basis.rank then
       Left(FitError.InvalidFitAxis("condition profile", s"structure declares ${policy.structure.basisSize} basis columns per condition but the kernel basis has rank ${policy.basis.rank}"))

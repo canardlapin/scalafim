@@ -250,7 +250,7 @@ final class PreparedProfileTrialOutputs private (
       val payload = new ProfilePayload[ProfileTrialOutputVoxel, ProfileTrialOutputBlock]:
         override def publicOutputs: Boolean = true
         override val publicExecution: Option[ProfileTrialExecutionDeclaration] = Some(declaration)
-        def condition(voxelId: Int, fit: CompactConditionFit,
+        def condition(voxelId: Int, fit: CompactConditionReadout,
             normalization: scalafim.fmri.hrf.family.NormalizationRule): ProfileTrialOutputVoxel =
           throw new IllegalStateException("checked public view requires a trial backend")
         def trial(voxelId: Int, evaluation: ProfileTrialEvaluation,

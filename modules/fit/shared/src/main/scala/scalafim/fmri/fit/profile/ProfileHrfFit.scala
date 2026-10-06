@@ -294,7 +294,7 @@ private[profile] enum TrialCriterionFacade:
 private[profile] trait ProfilePayload[V, P]:
   def publicOutputs: Boolean = false
   def publicExecution: Option[ProfileTrialExecutionDeclaration] = None
-  def condition(voxelId: Int, fit: CompactConditionFit, normalization: scalafim.fmri.hrf.family.NormalizationRule): V
+  def condition(voxelId: Int, fit: CompactConditionReadout, normalization: scalafim.fmri.hrf.family.NormalizationRule): V
   def trial(voxelId: Int, evaluation: ProfileTrialEvaluation,
     whitened: Array[Double], work: ProfileTrialOutputWork): Either[ProfileWorkFailure, V]
   def block(ordinal: Int, ids: Vector[Int], values: Vector[V]): P
@@ -302,7 +302,7 @@ private[profile] trait ProfilePayload[V, P]:
   def retainedTrialValues(payload: P): Long = 0L
 
 private object LegacyProfilePayload extends ProfilePayload[ProfileVoxelResult, ProfileFitBlock]:
-  def condition(voxelId: Int, fit: CompactConditionFit, normalization: scalafim.fmri.hrf.family.NormalizationRule): ProfileVoxelResult =
+  def condition(voxelId: Int, fit: CompactConditionReadout, normalization: scalafim.fmri.hrf.family.NormalizationRule): ProfileVoxelResult =
     ProfileVoxelResult(voxelId, fit.decode.coordinates, fit.decode.status,
       fit.residualEnergy, fit.amplitudes, ProfileAmplitudeReadout.ConditionMeans(fit.amplitudes,
         normalization), fit.decode.conditionalSd)
@@ -396,7 +396,7 @@ final class PreparedProfileHrf private[profile] (
               case Right(_) =>
                 try
                   attemptedVoxels += 1
-                  val fit = worker.fit(block.voxelIndices(within), block.product.crossProducts.col(within), block.product.responseSquares(within))
+                  val fit = worker.fitRaw(block.voxelIndices(within), block.product.crossProducts.col(within), block.product.responseSquares(within))
                   val means = fit.amplitudes.map(_.value)
                   results += ProfileVoxelResult(fit.voxel, fit.coordinates, fit.status, fit.residualEnergy,
                     means, ProfileAmplitudeReadout.ConditionMeans(means, plan.basis.family.libraryNormalization), fit.conditionalSd)
@@ -500,7 +500,7 @@ final class PreparedProfileHrf private[profile] (
     final class ProfileBlockWorker(val reader: DatasetSeriesReader) extends BlockWorker[P]:
       val counters = new DecoderCounters
       val compact = backend match
-        case ProfileBackend.Compact(prepared) => Some(new CompactConditionRuntime(prepared, grid, policy.budget,
+        case ProfileBackend.Compact(prepared) => Some(CompactConditionRuntime.raw(prepared, grid, policy.budget,
           policy.prior, plan.criterion.noiseVariance, plan.basis.family.libraryNormalization))
         case _ => None
       val trial = backend match
@@ -558,7 +558,7 @@ final class PreparedProfileHrf private[profile] (
           val result = try
             backend match
               case ProfileBackend.Compact(_) =>
-                val fit = compact.get.fit(contiguous, 0, counters)
+                val fit = compact.get.fitRaw(contiguous, 0, counters)
                 statuses.update(fit.decode.status, statuses.getOrElse(fit.decode.status, 0L) + 1L)
                 Right(payload.condition(ids(within), fit, plan.basis.family.libraryNormalization))
               case ProfileBackend.Trial(_, _) =>
@@ -783,7 +783,7 @@ object ProfileHrfFit:
             nuisance <- fixedNuisance(fixed, structure)
             _ <- held.admits(expanded, term.term, fixed.model.dataset.samplingFrame, plan.basis.spec.fineStep.seconds, None,
               nuisance).left.map(error => ProfileFitError.Preparation(error.message))
-            prepared <- ConditionProfileFit.prepare(fixed, ConditionProfilePolicy(plan.basis, structure, policy.nodesPerAxis,
+            prepared <- ConditionProfileFit.prepareRaw(fixed, ConditionProfilePolicy(plan.basis, structure, policy.nodesPerAxis,
               policy.budget, policy.prior, plan.criterion.noiseVariance,
               OutputRequest.ConditionAmplitudes(plan.basis.family.libraryNormalization), held,
               policy.execution.blockSize)).left.map(error => ProfileFitError.Preparation(error.message))
