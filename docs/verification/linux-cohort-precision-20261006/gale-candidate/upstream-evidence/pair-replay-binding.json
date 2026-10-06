@@ -1,0 +1,32 @@
+[
+  {
+    "platform": "jvm",
+    "voxel": 2,
+    "candidate_is_actual_replay_callback": true,
+    "matching_callbacks": [
+      "voxel-2-replay-4-jet"
+    ]
+  },
+  {
+    "platform": "jvm",
+    "voxel": 15,
+    "candidate_is_actual_replay_callback": false,
+    "matching_callbacks": []
+  },
+  {
+    "platform": "js",
+    "voxel": 4,
+    "candidate_is_actual_replay_callback": true,
+    "matching_callbacks": [
+      "voxel-4-replay-4-jet"
+    ]
+  },
+  {
+    "platform": "js",
+    "voxel": 15,
+    "candidate_is_actual_replay_callback": true,
+    "matching_callbacks": [
+      "voxel-15-replay-3-jet"
+    ]
+  }
+]

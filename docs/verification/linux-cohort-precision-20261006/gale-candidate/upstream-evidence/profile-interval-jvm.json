@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "certified_decrease": true,
+      "certified_increase": false,
+      "certified_profile_decrease": true,
+      "exact_stored_predictor_difference_mp": "-0.00000000000000213394016024548763256236610875228645550027627646313309078592",
+      "gram_eigenvalue_lower": 9.766761402515856,
+      "lower": -2.133940338103093e-15,
+      "old_suboptimality_upper": 1.2274541058023179e-28,
+      "profile_difference_upper": -2.133939977245427e-15,
+      "upper": -2.13393997724555e-15,
+      "voxel": 2
+    },
+    {
+      "certified_decrease": true,
+      "certified_increase": false,
+      "certified_profile_decrease": true,
+      "exact_stored_predictor_difference_mp": "-0.00000000000000679736066858852924150633964584874567746768291794807005092778",
+      "gram_eigenvalue_lower": 11.507775498715805,
+      "lower": -6.797362599650247e-15,
+      "old_suboptimality_upper": 4.037633916008768e-28,
+      "profile_difference_upper": -6.797358738370741e-15,
+      "upper": -6.797358738371146e-15,
+      "voxel": 15
+    }
+  ],
+  "scope": "Captured returned predictors; no optimizer/admission policy",
+  "status": "diagnostic-prototype"
+}
