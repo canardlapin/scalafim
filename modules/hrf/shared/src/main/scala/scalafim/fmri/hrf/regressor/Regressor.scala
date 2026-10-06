@@ -721,3 +721,10 @@ extension (reg: Regressor)
       resolution: Double = 0.33
   ): (Array[Double], Array[Double]) =
     NeuralInput(reg, from, to, resolution)
+
+  def neuralInputEither(
+      from: Double = 0.0,
+      to: Option[Double] = None,
+      resolution: Double = 0.33
+  ): Either[NeuralInputError, (Array[Double], Array[Double])] =
+    NeuralInput.either(reg, from, to, resolution)
