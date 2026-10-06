@@ -57,6 +57,7 @@ def load_legacy_module():
 SHA_A = "a" * 40
 SHA_B = "b" * 40
 SHA_C = "c" * 40
+SERVER_IDENTITY = {"uri": "local:///test/sock", "device": 1, "inode": 2, "ctime_ns": 3}
 
 BUILD = f"""
 // Gale is pinned. Revision bumps are coordinated upstream.
@@ -332,6 +333,9 @@ class CliSuite(WarmCase):
 class ShutdownSuite(WarmCase):
     def shutdown(self, alive_sequence, client=None):
         alive = iter(alive_sequence)
+        target = self.root / "project" / "target"
+        target.mkdir(exist_ok=True)
+        (target / "active.json").write_text(json.dumps({"uri": "local:///test/sock"}))
         with mock.patch.object(
             self.sw, "worktree", return_value=self.root
         ), mock.patch.object(
@@ -406,6 +410,45 @@ class ShutdownSuite(WarmCase):
             f"local://{sock_dir / 'sock'}",
         )
 
+    def test_shutdown_repairs_malformed_active_records_from_single_live_base_socket(self):
+        self.sw.HOME = self.short_socket_dir() / "h"
+        base = self.make_base()
+        sock_dir = base / "server" / "x"
+        sock_dir.mkdir(parents=True)
+        target = self.root / "project" / "target"
+        target.mkdir()
+        for payload in ("[]", "null", "1", '{"uri":1}', "{broken"):
+            with self.subTest(payload=payload):
+                listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                listener.bind(str(sock_dir / "sock"))
+                listener.listen(32)
+                self.addCleanup(listener.close)
+                (target / "active.json").write_text(payload)
+
+                def client(root, base_, command, timeout=None):
+                    listener.close()
+                    (sock_dir / "sock").unlink()
+                    return 0
+
+                with mock.patch.object(self.sw, "worktree", return_value=self.root), mock.patch.object(
+                    self.sw, "run_client", side_effect=client
+                ) as run_client:
+                    code, _, _ = self.run_main("--shutdown")
+                self.assertEqual(code, 0)
+                run_client.assert_called_once_with(self.root, base, "shutdown", timeout=self.sw.STOP_SECONDS)
+                self.assertEqual(self.sw.active_uri(self.root), f"local://{sock_dir / 'sock'}")
+
+    def test_shutdown_does_not_launch_client_for_ambiguous_base_with_malformed_active(self):
+        base = self.make_base()
+        target = self.root / "project" / "target"
+        target.mkdir()
+        (target / "active.json").write_text("[]")
+        with mock.patch.object(self.sw, "live_base_sockets", return_value=[Path("/a"), Path("/b")]), mock.patch.object(
+            self.sw, "run_client", side_effect=AssertionError("replacement server started")
+        ):
+            self.assertFalse(self.sw.stop_server(self.root, base))
+        self.assertEqual((target / "active.json").read_text(), "[]")
+
 
 class ClientIoSuite(WarmCase):
     def test_non_tty_forces_dumb_terminal_and_devnull_stdin(self):
@@ -453,6 +496,7 @@ class CloneTreeSuite(WarmCase):
         (source / "staging").mkdir()
         (source / "staging" / "f").write_text("x")
         (source / ".worktree").write_text("/elsewhere")
+        (source / self.sw.STARTUP_RECORD).write_text("server metadata must not be cloned")
         return source
 
     def test_failed_copy_is_cleaned_up_and_not_renamed(self):
@@ -497,6 +541,7 @@ class CloneTreeSuite(WarmCase):
         self.assertEqual((target / "staging" / "f").read_text(), "x")
         self.assertFalse((target / "server").exists())
         self.assertFalse((target / ".worktree").exists())
+        self.assertFalse((target / self.sw.STARTUP_RECORD).exists())
 
     def test_real_copy_excludes_server_and_record(self):
         source = self.source()
@@ -506,6 +551,7 @@ class CloneTreeSuite(WarmCase):
         self.assertEqual((target / "staging" / "f").read_text(), "x")
         self.assertFalse((target / "server").exists())
         self.assertFalse((target / ".worktree").exists())
+        self.assertFalse((target / self.sw.STARTUP_RECORD).exists())
         self.assertFalse(target.with_name("target.partial").exists())
 
 
@@ -550,12 +596,197 @@ class GcSuite(WarmCase):
             self.assertTrue(base.exists(), base)
 
 
+class ResourceConfigSuite(WarmCase):
+    @contextlib.contextmanager
+    def live(self, record=True, identity=SERVER_IDENTITY):
+        base = self.make_base()
+        (self.home / "templates" / self.key()).mkdir(parents=True)
+        if record:
+            self.sw.write_startup(base, self.sw.requested_config(), SERVER_IDENTITY)
+        with mock.patch.object(self.sw, "worktree", return_value=self.root), mock.patch.object(
+            self.sw, "server_alive", return_value=True
+        ), mock.patch.object(self.sw, "server_identity", return_value=identity):
+            yield base
+
+    def test_matching_warm_server_runs_without_replacing_startup(self):
+        with self.live() as base, mock.patch.object(
+            self.sw, "run_client", return_value=0
+        ) as client, mock.patch.object(
+            self.sw, "acquire_slot", return_value=io.StringIO()
+        ), mock.patch.object(self.sw, "write_startup", side_effect=AssertionError("warm write")):
+            code, _, _ = self.run_main("compile")
+        self.assertEqual(code, 0)
+        client.assert_called_once_with(self.root, base, "compile")
+
+    def assert_refused_before_mutation(self):
+        with mock.patch.object(
+            self.sw, "prepare_base", side_effect=AssertionError("base modified")
+        ), mock.patch.object(
+            self.sw, "run_client", side_effect=AssertionError("client called")
+        ), mock.patch.object(self.sw, "acquire_slot", side_effect=AssertionError("slot acquired")):
+            code, _, err = self.run_main("compile")
+        self.assertEqual(code, 1)
+        self.assertIn("--shutdown", err)
+        return err
+
+    def test_each_requested_launch_setting_mismatch_refuses_before_mutation(self):
+        for setting, wanted in (("HEAP", "4g" if self.sw.HEAP != "4g" else "5g"), ("CPUS", "8" if self.sw.CPUS != "8" else "9"), ("IDLE_MINUTES", self.sw.IDLE_MINUTES + 1)):
+            with self.subTest(setting=setting), self.live(), mock.patch.object(self.sw, setting, wanted):
+                err = self.assert_refused_before_mutation()
+                self.assertIn("differs", err)
+                self.assertIn(str(wanted), err)
+            shutil.rmtree(self.home)
+
+    def test_missing_corrupt_and_unbound_record_refuse(self):
+        for payload in (None, "{broken", "[]", '{"config": null}', json.dumps({
+            "config": self.sw.requested_config(), "identity": {**SERVER_IDENTITY, "inode": 99}
+        })):
+            with self.subTest(payload=payload), self.live(record=False) as base:
+                if payload is not None:
+                    (base / self.sw.STARTUP_RECORD).write_text(payload)
+                self.assertIn("unknown", self.assert_refused_before_mutation())
+            shutil.rmtree(self.home)
+
+    def test_unaddressable_live_server_refuses_even_with_record(self):
+        with self.live(identity=None):
+            self.assertIn("unknown", self.assert_refused_before_mutation())
+
+    def test_malformed_active_records_are_unknown_for_run_status_and_shutdown(self):
+        base = self.make_base()
+        target = self.root / "project" / "target"
+        target.mkdir()
+        for payload in ("[]", "null", "1", '{"uri":1}', "{}", "{broken"):
+            with self.subTest(payload=payload), mock.patch.object(self.sw, "worktree", return_value=self.root):
+                (target / "active.json").write_text(payload)
+                self.assertTrue(self.sw.server_running(self.root))
+                self.assertIsNone(self.sw.server_identity(self.root))
+                self.assertIn("unknown", self.assert_refused_before_mutation())
+                code, out, _ = self.run_main("--status")
+                self.assertEqual(code, 0)
+                self.assertIn("config   unknown", out)
+                with mock.patch.object(self.sw, "run_client", side_effect=AssertionError("replacement server started")):
+                    self.assertEqual(self.run_main("--shutdown")[0], 1)
+                self.assertEqual((target / "active.json").read_text(), payload)
+        self.assertTrue(base.exists())
+
+    def test_nonlocal_active_uri_is_kept_and_treated_as_unknown(self):
+        base = self.make_base()
+        target = self.root / "project" / "target"
+        target.mkdir()
+        payload = json.dumps({"uri": "tcp://127.0.0.1:12345"})
+        (target / "active.json").write_text(payload)
+        with mock.patch.object(self.sw, "worktree", return_value=self.root):
+            self.assertTrue(self.sw.server_running(self.root))
+            self.assertIsNone(self.sw.server_identity(self.root))
+            self.assertIn("unknown", self.assert_refused_before_mutation())
+            self.assertIn("config   unknown", self.run_main("--status")[1])
+            with mock.patch.object(self.sw, "live_base_sockets", return_value=[Path("/a")]), mock.patch.object(
+                self.sw, "run_client", side_effect=AssertionError("nonlocal client called")
+            ):
+                self.assertFalse(self.sw.stop_server(self.root, base))
+            self.assertEqual((target / "active.json").read_text(), payload)
+
+    def test_status_reports_requests_and_matching_or_unknown_startup(self):
+        with self.live() as base:
+            code, out, _ = self.run_main("--status")
+            self.assertEqual(code, 0)
+            self.assertIn("config   matches", out)
+            self.assertIn("not verified effective JVM flags", out)
+            with mock.patch.object(self.sw, "HEAP", "4g"):
+                _, out, _ = self.run_main("--status")
+            self.assertIn("config   differs", out)
+            (base / self.sw.STARTUP_RECORD).unlink()
+            _, out, _ = self.run_main("--status")
+            self.assertIn("recorded startup config unknown", out)
+
+    def test_shutdown_ignores_unknown_or_different_startup(self):
+        target = self.root / "project" / "target"
+        target.mkdir()
+        (target / "active.json").write_text(json.dumps({"uri": "local:///test/sock"}))
+        with self.live(record=False), mock.patch.object(self.sw, "stop_server", return_value=True) as stop:
+            self.assertEqual(self.run_main("--shutdown")[0], 0)
+            stop.assert_called_once()
+        shutil.rmtree(self.home)
+        with mock.patch.object(self.sw, "HEAP", "4g"), self.live(), mock.patch.object(
+            self.sw, "CPUS", "8"
+        ), mock.patch.object(self.sw, "stop_server", return_value=True) as stop:
+            self.assertEqual(self.run_main("--shutdown")[0], 0)
+            stop.assert_called_once()
+
+    def test_dead_failed_launch_removes_stale_record_and_records_nothing(self):
+        base = self.make_base()
+        self.sw.write_startup(base, self.sw.requested_config(), SERVER_IDENTITY)
+        with mock.patch.object(self.sw, "server_alive", return_value=False), mock.patch.object(
+            self.sw, "server_identity", return_value=None
+        ), mock.patch.object(self.sw, "server_running", return_value=False), mock.patch.object(
+            self.sw, "run_client", return_value=1
+        ), mock.patch.object(self.sw, "acquire_slot", return_value=io.StringIO()):
+            self.assertEqual(self.sw.run(self.root, ["compile"]), 1)
+        self.assertFalse((base / self.sw.STARTUP_RECORD).exists())
+
+    def test_shutdown_between_commands_reenters_serialized_cold_startup(self):
+        alive = {"value": False, "generation": 0}
+        calls = []
+
+        def identity(_):
+            return {**SERVER_IDENTITY, "inode": alive["generation"]} if alive["value"] else None
+
+        def client(root, base, command):
+            calls.append(command)
+            if command == "shutdown":
+                alive["value"] = False
+            else:
+                alive["value"] = True
+                alive["generation"] += 1
+            return 0
+
+        (self.home / "templates" / self.key()).mkdir(parents=True)
+        self.make_base()
+        with mock.patch.object(self.sw, "server_alive", side_effect=lambda *_: alive["value"]), mock.patch.object(
+            self.sw, "server_identity", side_effect=identity
+        ), mock.patch.object(self.sw, "run_client", side_effect=client), mock.patch.object(
+            self.sw, "acquire_slot", return_value=io.StringIO()
+        ), mock.patch.object(self.sw, "prepare_base", wraps=self.sw.prepare_base) as prepare:
+            self.assertEqual(self.sw.run(self.root, ["compile", "shutdown", "test"]), 0)
+        self.assertEqual(calls, ["compile", "shutdown", "test"])
+        self.assertEqual(prepare.call_count, 2)
+        self.assertEqual(self.sw.read_startup(self.sw.base_for(self.root))["identity"]["inode"], 2)
+
+    def test_same_uri_socket_restart_invalidates_startup(self):
+        sock = self.short_socket_dir() / "sock"
+        target = self.root / "project" / "target"
+        target.mkdir()
+        (target / "active.json").write_text(json.dumps({"uri": f"local://{sock}"}))
+        base = self.make_base()
+        first = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        first.bind(str(sock))
+        first.listen(32)
+        try:
+            original = self.sw.server_identity(self.root)
+            self.assertIsNotNone(original)
+            self.sw.write_startup(base, self.sw.requested_config(), original)
+        finally:
+            first.close()
+        sock.unlink()
+        second = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        second.bind(str(sock))
+        second.listen(32)
+        self.addCleanup(second.close)
+        current = self.sw.server_identity(self.root)
+        self.assertEqual(original["uri"], current["uri"])
+        self.assertNotEqual(original, current)
+        with self.assertRaisesRegex(RuntimeError, "unknown"):
+            self.sw.require_matching_startup(self.root, base, self.sw.requested_config())
+
+
 class WorktreeLockSuite(WarmCase):
     """Real fcntl locks: a run in one thread versus shutdown/gc in another."""
 
     def start_run(self, root):
         entered, release = threading.Event(), threading.Event()
         result = {}
+        base = self.make_base()
+        self.sw.write_startup(base, self.sw.requested_config(), SERVER_IDENTITY)
 
         def client(root_, base, command, timeout=None):
             entered.set()
@@ -570,6 +801,8 @@ class WorktreeLockSuite(WarmCase):
             mock.patch.object(self.sw, "run_client", side_effect=client),
             mock.patch.object(self.sw, "acquire_slot", return_value=io.StringIO()),
             mock.patch.object(self.sw, "server_running", return_value=False),
+            mock.patch.object(self.sw, "server_alive", return_value=True),
+            mock.patch.object(self.sw, "server_identity", return_value=SERVER_IDENTITY),
         ]
         for patch in patches:
             patch.start()
@@ -617,6 +850,97 @@ class WorktreeLockSuite(WarmCase):
             release.set()
             thread.join(10)
 
+    def test_two_warm_runs_reach_clients_together(self):
+        base = self.make_base()
+        self.sw.write_startup(base, self.sw.requested_config(), SERVER_IDENTITY)
+        entered = {name: threading.Event() for name in ("compile", "test")}
+        release = threading.Event()
+        results = {}
+
+        def client(root, base_, command):
+            entered[command].set()
+            self.assertTrue(release.wait(10))
+            return 0
+
+        def body(command):
+            try:
+                results[command] = self.sw.run(self.root, [command])
+            except BaseException as error:
+                results[command] = error
+
+        with mock.patch.object(self.sw, "server_alive", return_value=True), mock.patch.object(
+            self.sw, "server_identity", return_value=SERVER_IDENTITY
+        ), mock.patch.object(self.sw, "run_client", side_effect=client), mock.patch.object(
+            self.sw, "acquire_slot", side_effect=io.StringIO
+        ), mock.patch.object(self.sw, "server_running", return_value=False):
+            threads = [threading.Thread(target=body, args=(command,)) for command in entered]
+            try:
+                for thread in threads:
+                    thread.start()
+                for event in entered.values():
+                    self.assertTrue(event.wait(10))
+                with self.sw.worktree_lock(base) as held:
+                    self.assertFalse(self.sw.try_exclusive(held))
+            finally:
+                release.set()
+                for thread in threads:
+                    thread.join(10)
+                    self.assertFalse(thread.is_alive())
+        self.assertEqual(results, {"compile": 0, "test": 0})
+
+    def test_different_cold_configs_cannot_both_start(self):
+        other = load_module("sbt_warm_other")
+        other.HOME = self.home
+        other.HEAP = "4g" if self.sw.HEAP != "4g" else "5g"
+        base = self.make_base()
+        entered, release, contender = threading.Event(), threading.Event(), threading.Event()
+        alive = {"value": False}
+        results = {}
+
+        def launch(root, base_, command):
+            entered.set()
+            self.assertTrue(release.wait(10))
+            alive["value"] = True
+            return 0
+
+        def body(module, name):
+            if name == "other":
+                contender.set()
+            try:
+                results[name] = module.run(self.root, ["compile"])
+            except BaseException as error:
+                results[name] = error
+
+        with contextlib.ExitStack() as stack:
+            for module in (self.sw, other):
+                stack.enter_context(mock.patch.object(module, "server_alive", side_effect=lambda *_: alive["value"]))
+                stack.enter_context(mock.patch.object(module, "server_identity", side_effect=lambda _: SERVER_IDENTITY if alive["value"] else None))
+                stack.enter_context(mock.patch.object(module, "server_running", return_value=False))
+                stack.enter_context(mock.patch.object(module, "acquire_slot", side_effect=io.StringIO))
+            stack.enter_context(mock.patch.object(self.sw, "run_client", side_effect=launch))
+            unwanted = stack.enter_context(mock.patch.object(other, "run_client", side_effect=AssertionError("second cold launch")))
+            threads = [threading.Thread(target=body, args=(module, name)) for module, name in ((self.sw, "first"), (other, "other"))]
+            try:
+                threads[0].start()
+                self.assertTrue(entered.wait(10))
+                # A real second descriptor cannot take even a shared startup lock.
+                with self.sw.worktree_lock(base) as held:
+                    with self.assertRaises(BlockingIOError):
+                        fcntl.flock(held, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                threads[1].start()
+                self.assertTrue(contender.wait(10))
+            finally:
+                release.set()
+                for thread in threads:
+                    if thread.ident is not None:
+                        thread.join(10)
+                        self.assertFalse(thread.is_alive())
+            unwanted.assert_not_called()
+        self.assertEqual(results["first"], 0)
+        self.assertIsInstance(results["other"], RuntimeError)
+        self.assertIn("differs", str(results["other"]))
+        self.assertEqual(self.sw.read_startup(base)["config"]["heap"], self.sw.HEAP)
+
     def test_gc_apply_skips_a_base_whose_lock_is_held(self):
         gone = Path(self.tmp.name) / "removed-worktree"
         base = self.sw.base_for(gone)
@@ -643,16 +967,29 @@ class WorktreeLockSuite(WarmCase):
 class RunSuite(WarmCase):
     def run_with(self, codes, server_running=True, before_first=None):
         codes = iter(codes)
+        state = {"alive": False}
 
         def client(root, base, command, timeout=None):
             (base / "staging" / "dep").mkdir(parents=True, exist_ok=True)
             if before_first is not None:
                 before_first()
+            state["alive"] = server_running
             return next(codes)
+
+        @contextlib.contextmanager
+        def running():
+            with mock.patch.object(
+                self.sw, "server_running", side_effect=lambda _: state["alive"]
+            ), mock.patch.object(
+                self.sw, "server_alive", side_effect=lambda *_: state["alive"]
+            ), mock.patch.object(
+                self.sw, "server_identity", side_effect=lambda _: SERVER_IDENTITY if state["alive"] else None
+            ):
+                yield
 
         return (
             mock.patch.object(self.sw, "run_client", side_effect=client),
-            mock.patch.object(self.sw, "server_running", return_value=server_running),
+            running(),
             mock.patch.object(self.sw, "acquire_slot", return_value=io.StringIO()),
         )
 

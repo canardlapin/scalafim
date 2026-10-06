@@ -34,6 +34,16 @@ are running. `--shutdown` stops the server named by project/target/active.json;
 if that file is missing or stale but a socket in the base answers, it is
 repointed at that socket first.
 
+Cold startup holds that lock exclusively until its first command returns and
+a usable server can be recorded. Warm runs share the lock. A live server must
+match the requested heap, processor count and idle timeout; otherwise commands
+refuse before modifying its base. Run `--shutdown`, then rerun with the desired
+environment. `--status` shows the requested launch values and the recorded
+startup values; these are not measurements of effective JVM flags.
+If a server dies after the reuse check, sbt may restart it while the run still
+holds a shared lock. Its changed socket identity makes the next reuse check
+refuse; the startup record does not prove such a restart's launch values.
+
 `--gc` only considers bases that record their worktree (`.worktree`), whose
 worktree directory no longer exists, and whose server is not alive. It is a dry
 run unless `--apply` is given. Bases created before `.worktree` existed are
@@ -58,6 +68,7 @@ import os
 import re
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 import time
@@ -75,8 +86,9 @@ REPO_PATTERN = re.compile(r"canardlapin/[A-Za-z0-9._-]+")
 WORKTREE_RECORD = ".worktree"
 LEGACY_PIN_MARKER = ".pin-key"  # compared (and rmtree'd on mismatch) by older scripts
 PIN_MARKER = ".pin-key-v2"
+STARTUP_RECORD = ".server-startup.json"
 # Never copied into a clone: live server sockets and the source base's identity.
-CLONE_EXCLUDES = ("server", WORKTREE_RECORD)
+CLONE_EXCLUDES = ("server", WORKTREE_RECORD, STARTUP_RECORD)
 
 
 class UsageError(Exception):
@@ -168,14 +180,26 @@ def base_server_alive(base: Path) -> bool:
     return bool(live_base_sockets(base))
 
 
+def active_uri(root: Path):
+    """An active server URI, or None for missing or malformed records."""
+    active = root / "project" / "target" / "active.json"
+    try:
+        record = json.loads(active.read_text())
+        if not isinstance(record, dict):
+            return None
+        uri = record.get("uri")
+        return uri if isinstance(uri, str) and uri else None
+    except (OSError, ValueError):
+        return None
+
+
 def server_running(root: Path) -> bool:
-    """True when the server named by this worktree's active.json is alive."""
+    """Conservatively keep an unknown active server; only missing/stale is dead."""
     active = root / "project" / "target" / "active.json"
     if not active.exists():
         return False
-    try:
-        uri = json.loads(active.read_text()).get("uri", "")
-    except (OSError, ValueError):
+    uri = active_uri(root)
+    if uri is None:
         return True
     if not uri.startswith("local://"):
         return True
@@ -184,6 +208,67 @@ def server_running(root: Path) -> bool:
 
 def server_alive(root: Path, base: Path) -> bool:
     return server_running(root) or base_server_alive(base)
+
+
+def requested_config() -> dict:
+    return {"heap": HEAP, "cpus": CPUS, "idle_minutes": IDLE_MINUTES}
+
+
+def server_identity(root: Path):
+    """Identity of a usable active Unix socket, including same-path restarts."""
+    try:
+        uri = active_uri(root)
+        if uri is None or not uri.startswith("local://"):
+            return None
+        path = Path(uri[len("local://"):])
+        if not socket_alive(path):
+            return None
+        info = path.stat()
+        if not stat.S_ISSOCK(info.st_mode):
+            return None
+        return {"uri": uri, "device": info.st_dev, "inode": info.st_ino, "ctime_ns": info.st_ctime_ns}
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def read_startup(base: Path):
+    try:
+        value = json.loads((base / STARTUP_RECORD).read_text())
+        if not isinstance(value, dict):
+            return None
+        if set(value.get("config", {})) != {"heap", "cpus", "idle_minutes"}:
+            return None
+        if not isinstance(value.get("identity"), dict):
+            return None
+        return value
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def write_startup(base: Path, config: dict, identity: dict) -> None:
+    # Cold startup is exclusive, so no two writers can share this temporary file.
+    target = base / STARTUP_RECORD
+    temporary = target.with_suffix(".tmp")
+    try:
+        temporary.write_text(json.dumps({"config": config, "identity": identity}, sort_keys=True) + "\n")
+        temporary.replace(target)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def require_matching_startup(root: Path, base: Path, config: dict) -> None:
+    identity = server_identity(root)
+    record = read_startup(base)
+    if identity is not None and record is not None and record["identity"] == identity:
+        if record["config"] == config:
+            return
+        reason = f"recorded startup {record['config']} differs from requested {config}"
+    else:
+        reason = f"live server startup configuration is unknown (requested {config})"
+    raise RuntimeError(
+        f"{reason}; run `python3 tools/build/sbt-warm --shutdown`, then rerun "
+        "with the desired SBT_WARM_HEAP, SBT_WARM_CPUS and SBT_WARM_IDLE_MINUTES"
+    )
 
 
 def client_io(env: dict) -> dict:
@@ -210,7 +295,10 @@ def point_active_json(root: Path, base: Path) -> None:
     `sbt --client` only consults active.json and starts a fresh server when it
     is missing or stale, so a shutdown would otherwise miss the live server.
     """
-    if server_running(root):
+    uri = active_uri(root)
+    # Keep valid nonlocal URIs conservatively; malformed records can be repaired
+    # only when exactly one known base socket supplies the missing identity.
+    if uri is not None and (not uri.startswith("local://") or socket_alive(Path(uri[len("local://"):]))):
         return
     live = live_base_sockets(base)
     if len(live) != 1:
@@ -230,8 +318,9 @@ def stop_server(root: Path, base: Path) -> bool:
     if not server_alive(root, base):
         return True
     point_active_json(root, base)
-    if not server_running(root):
-        log(f"a server socket in {base} cannot be addressed through active.json; not stopping it")
+    uri = active_uri(root)
+    if uri is None or not uri.startswith("local://") or not server_running(root):
+        log(f"the server for {root} cannot be addressed through active.json and {base}; not stopping it or starting a replacement")
         return False
     run_client(root, base, "shutdown", timeout=STOP_SECONDS)
     deadline = time.time() + STOP_SECONDS
@@ -450,21 +539,54 @@ def parse(argv: list):
     return "run", commands
 
 
-def run(root: Path, commands: list) -> int:
-    with worktree_lock(base_for(root)) as held:
+def claim_server(root: Path, base: Path, held, config: dict) -> bool:
+    """Keep a shared matching server, or acquire exclusive cold startup.
+
+    Never upgrade a shared lock in place: competing cold clients release it
+    before waiting for exclusive ownership, then recheck the winner's server.
+    True means the caller owns the exclusive lock and must record any startup.
+    """
+    if server_alive(root, base):
+        require_matching_startup(root, base, config)
+        return False
+    fcntl.flock(held, fcntl.LOCK_UN)
+    fcntl.flock(held, fcntl.LOCK_EX)
+    if server_alive(root, base):
+        require_matching_startup(root, base, config)
         fcntl.flock(held, fcntl.LOCK_SH)
-        base, key = prepare_base(root)
+        return False
+    (base / STARTUP_RECORD).unlink(missing_ok=True)
+    return True
+
+
+def run(root: Path, commands: list) -> int:
+    base = base_for(root)
+    config = requested_config()
+    with worktree_lock(base) as held:
+        fcntl.flock(held, fcntl.LOCK_SH)
+        key = None
         code = 0
-        slot = acquire_slot()
+        slot = None
         try:
             for command in commands:
+                cold = claim_server(root, base, held, config)
+                if key is None or cold:
+                    base, key = prepare_base(root)
+                if slot is None:
+                    slot = acquire_slot()
                 started = time.time()
                 code = run_client(root, base, command)
+                if cold:
+                    identity = server_identity(root)
+                    if identity is not None:
+                        write_startup(base, config, identity)
+                        fcntl.flock(held, fcntl.LOCK_SH)
                 log(f"{command}: exit {code} in {time.time() - started:.1f}s")
                 if code != 0:
                     break
         finally:
-            slot.close()
+            if slot is not None:
+                slot.close()
         # The commands are finished, so this client leaves the server idle. A live
         # server means the build loaded, even if a later command failed. The key
         # is the one the base was prepared with, not a re-read of build.sbt.
@@ -507,6 +629,13 @@ def main(argv: list) -> int:
         print(f"worktree {root}\npin key  {key}\nbase     {base} ({'present' if base.exists() else 'absent'})")
         print(f"template {'present' if (HOME / 'templates' / key).exists() else 'absent'}")
         print(f"server   {'running' if server_alive(root, base) else 'not running'}")
+        config = requested_config()
+        record = read_startup(base)
+        identity = server_identity(root)
+        trusted = identity is not None and record is not None and record["identity"] == identity
+        print(f"requested launch config {json.dumps(config, sort_keys=True)}")
+        print(f"recorded startup config {json.dumps(record['config'], sort_keys=True) if trusted else 'unknown (no matching live socket identity)'}")
+        print(f"config   {'matches' if trusted and record['config'] == config else 'differs' if trusted else 'unknown'} (requested values, not verified effective JVM flags)")
         return 0
     if mode == "shutdown":
         return shutdown(root)

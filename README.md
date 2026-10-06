@@ -164,6 +164,23 @@ batches, as described in `AGENTS.md`. The
 [local sbt/Mill comparison](docs/benchmarks/build-tools-20261005.md) records
 the rationale for retaining the current build.
 
+The warm server uses a 3 GB heap by default. For `reload` followed by `set`
+or repeated settings changes, use the explicitly qualified 4 GB profile:
+
+```sh
+python3 tools/build/sbt-warm --shutdown
+SBT_WARM_HEAP=4g python3 tools/build/sbt-warm reload 'set atlasJVM / Test / envVars += ("MY_TEST_OPTION" -> "value")'
+SBT_WARM_HEAP=4g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
+python3 tools/build/sbt-warm --shutdown
+```
+
+Keep the same profile for commands while that server runs. The wrapper refuses
+an unknown or differing recorded startup profile; restart after changing heap,
+processor count or idle timeout. `--status` reports requested and recorded
+startup values. An existing server from an older wrapper needs one shutdown
+before reuse. See the [reconfiguration evidence](docs/verification/sbt-reconfiguration-20261006/README.md)
+for measured limits; source pins and the ordinary 3 GB default are preserved.
+
 On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that
 are not yet on Maven Central. This helper checks out the exact pinned Multivar
