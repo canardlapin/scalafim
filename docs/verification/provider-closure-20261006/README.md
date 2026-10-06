@@ -1,12 +1,12 @@
 # Local image4s / reframe4s / locus4s candidate closure
 
 The preparation receipt describes the local qualification before publication.
-Owner-approved [image4s draft PR #16](https://github.com/canardlapin/image4s/pull/16)
-contains the exact tested candidate. The reframe4s draft push is pending the
-canonical OAuth token's `workflow` scope, required for its matching CI pin update.
-`publication.json` records the verified heads and access result. Upstream merge
-and clean default-URI qualification remain pending. Root ScalaFIM pins have not
-been changed.
+Owner-approved [image4s PR #16](https://github.com/canardlapin/image4s/pull/16)
+contains the exact tested candidate and is observed merged. The exact reframe4s
+candidate is published in [draft PR #3](https://github.com/canardlapin/reframe4s/pull/3).
+`publication.json` records verified heads and states; this task performed no merges.
+Reframe4s review/merge and clean default-URI qualification remain pending.
+Root ScalaFIM pins have not been changed.
 
 ## Candidate changes
 

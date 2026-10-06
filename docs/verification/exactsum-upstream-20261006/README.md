@@ -3,8 +3,9 @@
 Prepared local commit `54e73f8e8f1218c4cb115a850aa80e1a36c6978f` on public main base
 `d12a83fc6c31e685dff710e2c5a0ddbfb043320a`. The preparation receipt describes
 the local qualification before publication. With owner approval, the exact
-commit is published in [Gale draft PR #15](https://github.com/canardlapin/gale/pull/15);
-`publication.json` records the verified account, head and draft state.
+commit was published in [Gale PR #15](https://github.com/canardlapin/gale/pull/15),
+now observed merged. `publication.json` records the verified account, head and
+state; this task did not perform the merge.
 
 Full core tests passed: 763 JVM and 751 Scala.js, including 13 ExactSum tests on each.
 The new files are admitted to Gale's existing scoped scalafmt configuration. The
@@ -32,8 +33,8 @@ The initial post-review format check failed only because the clarified Scaladoc
 needed reflow. The subsequent formatter and final check passed. That documentation
 change did not alter numerical/API bodies after the full core tests.
 
-No ScalaFIM production source or Mote state was changed by this preparation. Upstream
-merge and final ScalaFIM immutable pin adoption remain pending.
+No ScalaFIM production source or Mote state was changed by this preparation.
+Final ScalaFIM immutable pin adoption remains pending.
 
 The source-only ScalaFIM AR migration is retained as `ar-exactsum-rehearsal.patch`.
 Its [rehearsal receipt](rehearsal/README.md) records 410 passing AR/affected fit
