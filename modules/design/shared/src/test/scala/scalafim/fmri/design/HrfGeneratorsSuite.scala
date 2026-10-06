@@ -8,6 +8,23 @@ import scalafim.fmri.hrf.design.SamplingFrame
 
 class HrfGeneratorsSuite extends munit.FunSuite:
 
+  test("duration generator reports excessive quadrature as a typed model error"):
+    val events = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(0.0)),
+      "condition" -> Column.Strings(Vector("A"))
+    )
+    val result = EventModelBuilder.buildEither(
+      formula = "onset ~ hrf(condition, hrf_fun = duration)",
+      data = events,
+      samplingFrame = SamplingFrame(blockLens = Seq(10), tr = Seq(1.0)),
+      blockIds = Seq(0),
+      durations = Seq(1.0),
+      hrfFuns = Map("duration" -> HrfGenerators.duration(precision = Seconds(java.lang.Double.MIN_VALUE)))
+    )
+    result match
+      case Left(DesignError.InvalidHrfFun(_, detail)) => assert(detail.contains("exceeding maximum"))
+      case other => fail(s"expected typed generator refusal, got $other")
+
   test("duration HRF generator preserves zero-duration events and blocks positive durations") {
     val data = DataTable.fromColumns(
       "duration" -> Column.Doubles(Vector(0.0, 2.0))

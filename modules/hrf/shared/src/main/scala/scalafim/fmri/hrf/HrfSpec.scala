@@ -7,6 +7,7 @@ enum HrfSpecError:
   case InvalidSpan(error: TimeError)
   case InvalidWidth(error: TimeError)
   case InvalidPrecision(error: TimeError)
+  case InvalidQuadrature(error: QuadratureError)
   case InvalidLag(error: TimeError)
   case InvalidNormalization(error: HrfNormalizationError)
   case ExpectedScalar(name: String, nbasis: Int)
@@ -24,6 +25,8 @@ enum HrfSpecError:
       case InvalidWidth(error) =>
         error.message
       case InvalidPrecision(error) =>
+        error.message
+      case InvalidQuadrature(error) =>
         error.message
       case InvalidLag(error) =>
         error.message
@@ -90,6 +93,11 @@ final case class HrfSpec private (
     build(applySpecSpan = false)
 
   private def build(applySpecSpan: Boolean): Either[HrfSpecError, Hrf] =
+    Quadrature.boxIntervalCount(width.value, precision.value)
+      .left.map(HrfSpecError.InvalidQuadrature.apply)
+      .flatMap(_ => buildWithinBudget(applySpecSpan))
+
+  private def buildWithinBudget(applySpecSpan: Boolean): Either[HrfSpecError, Hrf] =
     val base =
       kind match
         case HrfKind.Spmg1     => Right(Hrfs.spmg1(span = span.seconds))

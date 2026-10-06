@@ -1,0 +1,83 @@
+{
+  "mote": "bd-01M43S7GV3M4E6AC1W35DPF17C",
+  "verified_at_utc": "2026-10-05T23:49:58.138292+00:00",
+  "base_commit": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+  "working_tree": "Uncommitted scoped implementation; prior toolchain setup changes remain separate.",
+  "behavior": "At most 1,000,000 box trapezoids, including a partial final interval. Invalid inputs, non-finite counts and excessive work are refused before Int conversion or array allocation. Existing boxOffsets throws IllegalArgumentException; boxOffsetsEither and HrfSpec expose typed refusals.",
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Pulse.scala": "b55eb8d9af9792e2d9fadba8d7b3faafd305b78d8bc5bad45d21791027979bf0",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfSpec.scala": "f3ce400ed4b913692823220617b34761c11741a696c2293d0f40e11ceccdb363",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/QuadratureSuite.scala": "6db8e42a95aecfa1ec3d6477921ba861205222eb979b2404fde766de9115ce02",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "775f7aeb21f929925fa5ec98d2d0c90d925ff24184d89d3a1e49da4a07e37d6a"
+  },
+  "passed_tests": {
+    "hrfJVM": 310,
+    "hrfJS": 310,
+    "designJVM": 448,
+    "designJS": 447
+  },
+  "warning_clean": true,
+  "mutation": {
+    "change": "Removed only the intervals > MaxBoxIntervals check; retained finite-count validation.",
+    "selector": "Archived QuadratureMutationSuite inherits two existing finite work-budget regressions. It avoids running overflow inputs against deliberately unsafe code.",
+    "expected": "Both selected tests fail with unexpected Right results on each platform.",
+    "observed": {
+      "JVM": {
+        "failed": 2,
+        "passed": 0
+      },
+      "JS": {
+        "failed": 2,
+        "passed": 0
+      }
+    },
+    "restored": true,
+    "temporary_selector_removed": true
+  },
+  "runs": [
+    {
+      "name": "mutation-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.QuadratureMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 37.17648758320138
+    },
+    {
+      "name": "mutation-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.QuadratureMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 6.2841429160907865
+    },
+    {
+      "name": "hrf-restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/test",
+        "hrfJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 23.96624887501821
+    },
+    {
+      "name": "design-restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/test",
+        "designJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 21.415077874902636
+    }
+  ],
+  "archive_sha256": "0bd17a9deaf069304b36c527e8fefc73ab6bcde1d243bd1126e4672fbb37049c",
+  "follow_up": "bd-01M477F67P8ZJKHSCWSPCECG85 tracks the separate sampled-convolution grid allocation risk. Optional orthogonalization/performance nits were not changed."
+}
