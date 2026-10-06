@@ -27,6 +27,7 @@ enum ArError:
   case EmptySpatialNoiseBlock
   case IncompatibleNoiseSummaries(detail: String)
   case NoiseSummaryCountOverflow(runIndex: Int, lag: ArLag)
+  case NoiseSumCapacityExceeded(lag: ArLag, currentTerms: Long, incomingTerms: Long)
   case NonFiniteNoiseSummary(runIndex: Int, lag: ArLag, value: Double)
   case NonFiniteArCoefficient(index: Int, value: Double)
   case NonFiniteMaCoefficient(index: Int, value: Double)
@@ -96,6 +97,8 @@ enum ArError:
         s"incompatible noise summaries: $detail"
       case NoiseSummaryCountOverflow(runIndex, lag) =>
         s"noise-summary pair count overflow for run $runIndex at lag ${lag.value}"
+      case NoiseSumCapacityExceeded(lag, currentTerms, incomingTerms) =>
+        s"noise sum at lag ${lag.value} exceeds the exact finite-input capacity: $currentTerms + $incomingTerms"
       case NonFiniteNoiseSummary(runIndex, lag, value) =>
         s"noise-summary sum for run $runIndex at lag ${lag.value} must be finite, got $value"
       case NonFiniteArCoefficient(index, value) =>

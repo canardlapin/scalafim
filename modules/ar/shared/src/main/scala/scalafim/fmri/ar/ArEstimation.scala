@@ -1,6 +1,7 @@
 package scalafim.fmri.ar
 
 import gale.linalg.{CholeskyOptions, DMat, Matrix}
+import gale.numeric.{ExactSum, ExactSumError}
 
 enum ArOrder:
   case Fixed(order: ArOrderValue)
@@ -124,10 +125,13 @@ private object ArNoiseSummary:
         val mergedCounts = Array.ofDim[Long](left.maxOrder.value + 1)
         var lag = 0
         while lag <= left.maxOrder.value do
-          val sum = left.exactSum(run, lag).copy()
-          sum.addAll(right.exactSum(run, lag))
           if Long.MaxValue - left.countsByRun(run)(lag) < right.countsByRun(run)(lag) then
             return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
+          val sum = left.exactSum(run, lag).copy()
+          sum.addAll(right.exactSum(run, lag)) match
+            case Left(ExactSumError.CapacityExceeded(current, incoming)) =>
+              return Left(ArError.NoiseSumCapacityExceeded(ArLag.unsafe(lag), current, incoming))
+            case Right(_) => ()
           mergedSums += sum
           mergedCounts(lag) = left.countsByRun(run)(lag) + right.countsByRun(run)(lag)
           lag += 1
@@ -631,7 +635,10 @@ object ArEstimation:
           val pairs = lagPairCount(segments, lag)
           if Long.MaxValue - counts(run)(lag) < pairs then
             return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
-          sums(run)(lag).add(partial)
+          sums(run)(lag).add(partial) match
+            case Left(ExactSumError.CapacityExceeded(current, incoming)) =>
+              return Left(ArError.NoiseSumCapacityExceeded(ArLag.unsafe(lag), current, incoming))
+            case Right(_) => ()
           counts(run)(lag) += pairs
           lag += 1
         column += 1
@@ -721,7 +728,10 @@ object ArEstimation:
           loadMeans(col)
           var lag = 0
           while lag < lags do
-            exact(lag).add(columnLagProductSum(residuals, col, lag, segments, segmentMeans))
+            exact(lag).add(columnLagProductSum(residuals, col, lag, segments, segmentMeans)) match
+              case Left(ExactSumError.CapacityExceeded(current, incoming)) =>
+                return Left(ArError.NoiseSumCapacityExceeded(ArLag.unsafe(lag), current, incoming))
+              case Right(_) => ()
             lag += 1
           col += 1
         var lag = 0

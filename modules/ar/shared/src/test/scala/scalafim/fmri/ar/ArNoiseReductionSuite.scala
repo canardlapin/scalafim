@@ -1,6 +1,7 @@
 package scalafim.fmri.ar
 
 import gale.linalg.{DMat, Matrix}
+import gale.numeric.ExactSum
 
 class ArNoiseReductionSuite extends munit.FunSuite:
 
@@ -126,6 +127,33 @@ class ArNoiseReductionSuite extends munit.FunSuite:
       case _ => false
     })
   }
+
+  test("summary self-merges refuse exact accumulation capacity without changing source statistics"):
+    val layout = value(NoiseEstimationLayout.allRows(TimeSegments.continuous(2), 2))
+    val residuals = Matrix.tabulate(2, 1)((row, _) => if row == 0 then -1.0 else 1.0)
+    val original = value(ArEstimation.summarizeNoise(residuals, layout, ArOrderValue.Zero))
+    var summary = original
+    var merges = 0
+    while merges < 60 do
+      summary = value(summary.merge(summary))
+      merges += 1
+    assertEquals(summary.exactSum(0, 0).finiteTerms, ExactSum.MaxTerms)
+    val sumsBefore = summary.lagSumsByRun
+    val countsBefore = summary.pairCountsByRun
+    assertEqualsDouble(sumsBefore(0)(0), 2.0 * ExactSum.MaxTerms.toDouble, 0.0)
+    assertEquals(countsBefore, Vector(Vector(2L * ExactSum.MaxTerms)))
+    assertEquals(
+      summary.merge(summary).left.toOption,
+      Some(ArError.NoiseSumCapacityExceeded(ArLag.Zero, ExactSum.MaxTerms, ExactSum.MaxTerms))
+    )
+    assertEquals(summary.lagSumsByRun, sumsBefore)
+    assertEquals(summary.pairCountsByRun, countsBefore)
+    assertEquals(summary.exactSum(0, 0).finiteTerms, ExactSum.MaxTerms)
+    assertEqualsDouble(summary.exactSum(0, 0).value, sumsBefore(0)(0), 0.0)
+    assertEqualsDouble(original.lagSumsByRun(0)(0), 2.0, 0.0)
+    assertEqualsDouble(original.exactSum(0, 0).value, 2.0, 0.0)
+    assertEquals(original.pairCountsByRun, Vector(Vector(2L)))
+    assertEquals(original.exactSum(0, 0).finiteTerms, 1L)
 
   private def residualMatrix(rows: Int, columns: Int): DMat =
     Matrix.tabulate(rows, columns) { (row, column) =>

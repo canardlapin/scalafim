@@ -1,0 +1,164 @@
+{
+  "design-jvm": {
+    "entries": 31,
+    "gale_order": [
+      {
+        "index": 4,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/35e2831a7fba78a849cf/gale/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f"
+      }
+    ],
+    "ravel_entries": [],
+    "evidence_log": "design-jvm-classpath.log",
+    "method": "export"
+  },
+  "design-js": {
+    "entries": 29,
+    "gale_order": [
+      {
+        "index": 4,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/35e2831a7fba78a849cf/gale/core/js/target/scala-3.7.4/classes",
+        "source_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f"
+      }
+    ],
+    "ravel_entries": [],
+    "evidence_log": "design-js-classpath-show.log",
+    "method": "show after missing export stdout"
+  },
+  "fit-jvm": {
+    "entries": 64,
+    "gale_order": [
+      {
+        "index": 5,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/35e2831a7fba78a849cf/gale/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f"
+      },
+      {
+        "index": 16,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
+      }
+    ],
+    "ravel_entries": [
+      {
+        "index": 9,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 17,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 21,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      }
+    ],
+    "evidence_log": "fit-jvm-classpath-show.log",
+    "method": "show after missing export stdout"
+  },
+  "fit-js": {
+    "entries": 63,
+    "gale_order": [
+      {
+        "index": 5,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/35e2831a7fba78a849cf/gale/core/js/target/scala-3.7.4/classes",
+        "source_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f"
+      },
+      {
+        "index": 16,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes",
+        "source_revision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
+      }
+    ],
+    "ravel_entries": [
+      {
+        "index": 9,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 17,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 21,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/js/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      }
+    ],
+    "evidence_log": "fit-js-classpath.log",
+    "method": "export"
+  },
+  "mvpaFit-jvm": {
+    "entries": 71,
+    "gale_order": [
+      {
+        "index": 6,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/35e2831a7fba78a849cf/gale/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f"
+      },
+      {
+        "index": 17,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
+      }
+    ],
+    "ravel_entries": [
+      {
+        "index": 10,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 18,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 22,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      }
+    ],
+    "evidence_log": "mvpaFit-jvm-classpath.log",
+    "method": "export"
+  },
+  "mvpaFit-js": {
+    "entries": 70,
+    "gale_order": [
+      {
+        "index": 6,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/35e2831a7fba78a849cf/gale/core/js/target/scala-3.7.4/classes",
+        "source_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f"
+      },
+      {
+        "index": 17,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes",
+        "source_revision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
+      }
+    ],
+    "ravel_entries": [
+      {
+        "index": 10,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 18,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      },
+      {
+        "index": 22,
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/js/target/scala-3.7.4/classes",
+        "source_revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+      }
+    ],
+    "evidence_log": "mvpaFit-js-classpath.log",
+    "method": "export"
+  }
+}

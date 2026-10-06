@@ -58,7 +58,7 @@ final case class KernelBasisEstimate private[hrf] (
 
 /** Fixed portable compiler policy: requests are refused, never coarsened.
   *
-  * Gale da38f8c's lexical `SpectralBackend.none` uses the pure full/economy SVD:
+  * Gale 54e73f8e's lexical `SpectralBackend.none` uses the pure full/economy SVD:
   * k=min(rows,cols), raw tall input clone rows*cols and right factor k*k,
   * canonical factors rows*k+k*cols, plus k*k orthogonality Gram matrices and
   * residual vectors. Requested maxRank does not reduce these full-SVD shapes.
