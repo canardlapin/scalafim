@@ -1,0 +1,120 @@
+{
+  "additional_tests": [
+    "copy independence and source preservation",
+    "read then continue cancellation/merge",
+    "self-merge finite count and special channel",
+    "80 seeded mixed-exponent merge trees anchored to BigInteger nearest-even oracle",
+    "2^60 exact capacity reached in60 self-merges; rejected add and merge leave states unchanged",
+    "zero/nonfinite exemption even at full capacity",
+    "finite overflow can cancel back to finite"
+  ],
+  "artifacts": {
+    "bundle-verify.txt": "9d0150a405f9da302cc779de26d08eabd64c5f4ae2bbba23492b648e414cb852",
+    "gale-exactsum.bundle": "78773c06886353b3e0ff1c006a688c3efc6a7776e518c81614c29e170d794b83",
+    "gale-exactsum.patch": "709b1d9e2ad38393a624bc79725067a89407dc4f7919d4dc9b21039e4a622d9f",
+    "logs-and-sources.tar.gz": "db62cb2182486eab304c08738c605bc77f0919c0ad918bc6c02109584bc22f1e"
+  },
+  "author": "canardlapin <brad@duckrabbit.ai>",
+  "base_commit": "d12a83fc6c31e685dff710e2c5a0ddbfb043320a",
+  "branch": "feature/exactsum-numeric-20261006",
+  "capacity_argument": "Each finite term magnitude is below 2^2098 units of2^-1074; at most2^60 such terms have magnitude below2^2158.70 base2^32 digits retain signed headroom. Normalize every2^30 nonzero finite additions keeps carry-save digit additions withinLong bounds; merges normalize their destination and cannot exceed the declared count.",
+  "capacity_contract": {
+    "max_nonzero_finite_terms": 1152921504606846976,
+    "merge": "Counts add, including self-merge doubling; cancellation never reduces counts.",
+    "refusal": "Either[ExactSumError,Unit]; CapacityExceeded is admitted before mutation; source and target remain unchanged.",
+    "scope": "Finite-input nearest-even bit identity; canonical exact zero +0.0. NaN payload bits/order unspecified. Builders mutable and not thread-safe. value clones its finite digit buffer; copy owns independent storage.",
+    "success": "Cached Right(()) avoids per-call success result objects; no unchecked Unit facade.",
+    "zero_nonfinite": "Do not consume finite-input capacity; original separate IEEE channel is preserved."
+  },
+  "development_correction": "After both full core gates, a documentation-only review clarified finite-input bit identity and unspecified NaN payload bits/order. Its initial format check failed; coreJVM/scalafmt reflowed that comment and the final scalafmtCheckAll passed. Numeric and API bodies did not change after full core gates.",
+  "gates": {
+    "final-format": {
+      "command": [
+        "sbt",
+        "-batch",
+        "scalafmtCheckAll"
+      ],
+      "cpus": 4,
+      "cwd": "/private/tmp/scalafim-exactsum-gale-20261006",
+      "elapsed_seconds": 11.075106143951416,
+      "exit_code": 1,
+      "heap": "3g",
+      "isolated_cache": "/private/tmp/scalafim-exactsum-cache-20261006",
+      "log": "/private/tmp/scalafim-exactsum-evidence-20261006/final-format.log"
+    },
+    "js": {
+      "command": [
+        "sbt",
+        "-batch",
+        "coreJS/test"
+      ],
+      "cpus": 4,
+      "cwd": "/private/tmp/scalafim-exactsum-gale-20261006",
+      "elapsed_seconds": 50.155022859573364,
+      "exit_code": 0,
+      "heap": "3g",
+      "isolated_cache": "/private/tmp/scalafim-exactsum-cache-20261006",
+      "log": "/private/tmp/scalafim-exactsum-evidence-20261006/js.log"
+    },
+    "jvm-format": {
+      "command": [
+        "sbt",
+        "-batch",
+        "coreJVM/scalafmt",
+        "coreJVM/Test/scalafmt",
+        "scalafmtCheckAll",
+        "coreJVM/test"
+      ],
+      "cpus": 4,
+      "cwd": "/private/tmp/scalafim-exactsum-gale-20261006",
+      "elapsed_seconds": 52.576977014541626,
+      "exit_code": 0,
+      "heap": "3g",
+      "isolated_cache": "/private/tmp/scalafim-exactsum-cache-20261006",
+      "log": "/private/tmp/scalafim-exactsum-evidence-20261006/jvm-format.log"
+    },
+    "restored-format": {
+      "command": [
+        "sbt",
+        "-batch",
+        "coreJVM/scalafmt",
+        "scalafmtCheckAll"
+      ],
+      "cpus": 4,
+      "cwd": "/private/tmp/scalafim-exactsum-gale-20261006",
+      "elapsed_seconds": 9.358668804168701,
+      "exit_code": 0,
+      "heap": "3g",
+      "isolated_cache": "/private/tmp/scalafim-exactsum-cache-20261006",
+      "log": "/private/tmp/scalafim-exactsum-evidence-20261006/restored-format.log"
+    }
+  },
+  "local_commit": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "mote": "bd-01M42FRAY1S2DS6808TAWAQXBZ",
+  "mote_mutations": false,
+  "origin_scalafim_sources": {
+    "/Users/bbuchsbaum/code/scala/scalafim/modules/ar/shared/src/main/scala/scalafim/fmri/ar/ExactSum.scala": "a19ec067af4334105f4c2a08a9b6341b28cab6381629161d9005b976b556eb57",
+    "/Users/bbuchsbaum/code/scala/scalafim/modules/ar/shared/src/test/scala/scalafim/fmri/ar/ExactSumSuite.scala": "ade37d6f6a4ec84ee4100e519a6f4df88149fcbfcca66f3fe003fa0f18332701"
+  },
+  "passing_counts": {
+    "ExactSumSuiteJS": 13,
+    "ExactSumSuiteJVM": 13,
+    "coreJS": 751,
+    "coreJVM": 763
+  },
+  "pending": [
+    "upstream review and publication/merge under separately authorized scope",
+    "ScalaFIM local-override rehearsal and domain typed error adaptation",
+    "published immutable galeRevision adoption and duplicate removal only after landing"
+  ],
+  "published_or_pushed": false,
+  "repository": "https://github.com/canardlapin/gale.git",
+  "root_scalafim_production_edits": false,
+  "source_sha256": {
+    ".scalafmt.conf": "b9a5446a04950dd5ff02e5acf1634f7c0eaa644673704b436e532fd2b3b8fb4c",
+    "README.md": "006ca22a9464034933bcdefc1938c57e30312b36a12a1ef57e93f42b73744cf0",
+    "core/shared/src/main/scala/gale/numeric/ExactSum.scala": "850c8ab9b5c74b6cc7510dc54891916495977914255af6f77814d42c41857591",
+    "core/shared/src/test/scala/gale/numeric/ExactSumSuite.scala": "0cba5c14f46ebce92b5a72518728a53dc88b4b474ebe049ddaca1383233e5fdb"
+  },
+  "status": "prepared-locally-not-published"
+}

@@ -1,0 +1,6 @@
+The bundle contains this ref:
+54e73f8e8f1218c4cb115a850aa80e1a36c6978f refs/heads/feature/exactsum-numeric-20261006
+The bundle requires this ref:
+d12a83fc6c31e685dff710e2c5a0ddbfb043320a 
+The bundle uses this hash algorithm: sha1
+/private/tmp/scalafim-exactsum-evidence-20261006/gale-exactsum.bundle is okay

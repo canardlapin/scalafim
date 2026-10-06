@@ -1,0 +1,16 @@
+{
+  "checked_at_utc": "2026-10-06T12:51:21.444772+00:00",
+  "authenticated_account": "canardlapin",
+  "default_account_preserved": "bbuchsbaum",
+  "published": [
+    {
+      "repository": "canardlapin/gale",
+      "commit": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+      "branch": "feature/exactsum-numeric-20261006",
+      "url": "https://github.com/canardlapin/gale/pull/15",
+      "draft": true,
+      "state": "OPEN"
+    }
+  ],
+  "merges_performed": false
+}

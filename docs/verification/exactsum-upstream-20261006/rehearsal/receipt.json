@@ -1,0 +1,98 @@
+{
+  "recorded_at": "2026-10-06T12:21:19.584620+00:00",
+  "scope": "isolated ScalaFIM AR consumer migration rehearsal; not root landing or a pin bump",
+  "base_commit": "bc981ddf09016c1e29b30810f53cff4517df95d3",
+  "consumer_commit": "be7e6caa740b776ee71c811f306b51e9a84933ac",
+  "gale_candidate_commit": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "gale_exact_sum_sha256": "850c8ab9b5c74b6cc7510dc54891916495977914255af6f77814d42c41857591",
+  "source_sha256": {
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala": "22b213a29ed09040c4cc50280ce1fac38ab3d404a816d61ad5dd4ddcee7e960d",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala": "335048564f391b47705e31664c92e242f368bc800026a111a83059688e1fcdc8",
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala": "2eb60504fdcd295c28ec02bd71596b9e5d6b838152aecc6375703f65f6440e32"
+  },
+  "deleted_sources": [
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ExactSum.scala",
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ExactSumSuite.scala"
+  ],
+  "changes": [
+    "Use gale.numeric.ExactSum for summary and pooled accumulation",
+    "Map typed Gale capacity refusal at all three add/merge sites to ArError.NoiseSumCapacityExceeded",
+    "Retain pair-count overflow precedence and existing nonfinite input/finalized-sum checks",
+    "Domain regression reaches 2^60 finite inputs through sixty two-row-summary self-merges then proves typed refusal and source preservation"
+  ],
+  "accepted_gates": [
+    {
+      "gate": "ar-final",
+      "commands": [
+        "arJVM/test",
+        "arJS/test"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 78.97770190238953,
+      "gale_override": "-Dscalafim.gale.build=/private/tmp/scalafim-exactsum-gale-20261006",
+      "heap": "3g",
+      "cpus": 2,
+      "total_tests": 308,
+      "warnings": [],
+      "log_sha256": "166f1afe2b4da095c99b112c16e1a01614f808323ebe0c1b76f16a479a7f918c"
+    },
+    {
+      "gate": "fit-jvm",
+      "commands": [
+        "fitJVM/testOnly scalafim.fmri.fit.PooledGlsPreparationSuite scalafim.fmri.fit.BoundedRobustPreparationSuite scalafim.fmri.fit.GlsSuite scalafim.fmri.fit.TrialReadoutSuite"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 153.7340087890625,
+      "gale_override": "-Dscalafim.gale.build=/private/tmp/scalafim-exactsum-gale-20261006",
+      "heap": "3g",
+      "cpus": 2,
+      "total_tests": 51,
+      "warnings": [],
+      "log_sha256": "d181e1a7f44808057a419154b6ade949ee5203bc51b283ac5ab52ca483a21457"
+    },
+    {
+      "gate": "fit-js",
+      "commands": [
+        "fitJS/testOnly scalafim.fmri.fit.PooledGlsPreparationSuite scalafim.fmri.fit.BoundedRobustPreparationSuite scalafim.fmri.fit.GlsSuite scalafim.fmri.fit.TrialReadoutSuite"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 179.644859790802,
+      "gale_override": "-Dscalafim.gale.build=/private/tmp/scalafim-exactsum-gale-20261006",
+      "heap": "3g",
+      "cpus": 2,
+      "total_tests": 51,
+      "warnings": [],
+      "log_sha256": "e33f3a6b8f2acac8390b0267bd98213a30b9d00df3ce0151556f97cb63d38e5c"
+    }
+  ],
+  "accepted_test_executions": 410,
+  "initial_gate": "ar-jvm passed155 before strengthened live source-value assertions; retained as development evidence and excluded from410 accepted count",
+  "runtime": {
+    "jdk": "Eclipse Adoptium Temurin21.0.12.1+1",
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "node": "v24.1.0",
+    "requested_sbt_heap": "3g",
+    "requested_active_processors": 2,
+    "js_links": "serialized with provider audit",
+    "cleanup": "isolated sbt-warm --shutdown exit0"
+  },
+  "compatibility_adapters_beyond_exact_sum": [],
+  "source_override": "JAVA_TOOL_OPTIONS=-Dscalafim.gale.build=/private/tmp/scalafim-exactsum-gale-20261006",
+  "archive": {
+    "path": "logs-and-sources.tar.gz",
+    "sha256": "53237e4cc887e61cb96d572ba0c312f6aadcbfeabfdf3b938d11b549d353b429"
+  },
+  "portable_patch": {
+    "path": "../ar-exactsum-rehearsal.patch",
+    "sha256": "6d74ea70f94c011d40bb964ad58f54692da4882d7be05d29102fb34a21ec1c76"
+  },
+  "limits": [
+    "No root source, build.sbt, dependency pin or Mote mutation was performed",
+    "Current default root Gale pin lacks this API; adopt source patch only after upstream publication and a corresponding pin update",
+    "The explicit local Gale override is part of all accepted gates; this is not a default-pin build qualification",
+    "Local JDK21 qualification does not establish latest Gale compatibility with GitHub JDK17",
+    "Selected fit suites cover affected consumers, not the full fit test court",
+    "Thin clients restarted a departed server between isolated invocations; no resident-server reuse or performance claim"
+  ]
+}
