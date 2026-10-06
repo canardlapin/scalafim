@@ -143,6 +143,11 @@ private[profile] object ProfileFitIdentity:
     case AmplitudeStructure.ConditionMeans => record("condition_means")
     case AmplitudeStructure.ConditionCenteredTrials(alpha) => record("condition_centered_trials", number(alpha.value), number(alpha.lambda))
 
+  private[profile] def compactComparisonMarker(route: String, policy: ProfileDecodePolicy): String =
+    if route == "direct-condition-compact" && CompactComparisonWorkspaceReceipt.enabled(policy.prior, policy.budget) then
+      s"|compact-comparison=${field(CompactComparisonWorkspaceReceipt.PolicyId)}"
+    else ""
+
   def canonical(plan: ProfileHrfPlan, selected: ResolvedDataSelection,
       temporal: CanonicalTemporalWhitening, policy: ProfileDecodePolicy, execution: ExecutionBudget,
       route: String, exactReadout: Boolean, ml: Option[(Double, Double)]): String =
@@ -174,4 +179,5 @@ private[profile] object ProfileFitIdentity:
       s"nuisance=${mat(nuisance)}|config=${field(config(fitConfig))}|whitening=$temporalId|amplitudes=${amplitudes(plan.amplitudes)}|" +
       s"criterion=${criterion(plan.criterion)}|grid=${ints(policy.nodesPerAxis)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
-      s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}|exact-readout=$exactReadout"
+      s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +
+      compactComparisonMarker(route, policy) + s"|exact-readout=$exactReadout"

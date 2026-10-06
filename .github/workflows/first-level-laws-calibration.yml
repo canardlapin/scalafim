@@ -1,64 +1,85 @@
 name: first-level-laws-calibration
-run-name: generated first-level calibration (${{ github.event_name }})
-
+run-name: compact paired precision qualification on native Linux
 on:
-  schedule:
-    - cron: "41 5 * * 3"
   workflow_dispatch:
-
-concurrency:
-  group: first-level-laws-calibration-${{ github.ref }}
-  cancel-in-progress: false
-
 permissions:
   contents: read
-
+concurrency:
+  group: compact-paired-qualification-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  generated-laws:
-    name: generated laws on JVM and Scala.js (seed ${{ matrix.seed_long }})
+  compact-precision:
+    name: compact paired precision on native Linux x64
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        seed_long:
-          - "97131249"
-          - "324508639"
-          - "610839776"
+    timeout-minutes: 55
     env:
-      SCALAFIM_LAW_PROFILE: calibration
-      SCALAFIM_LAW_SEED_LONG: ${{ matrix.seed_long }}
+      COURSIER_REPOSITORIES: https://repo.maven.apache.org/maven2
+      SBT_OPTS: -Xmx4g -XX:ActiveProcessorCount=4 -Dsbt.supershell=false -Dsbt.color=false
     steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up the declared JDK baseline
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Resolve exact historical JDK
+        id: exact-jdk
+        continue-on-error: true
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: "17.0.20+1"
+      - name: Resolve current declared JDK if historical cache is unavailable
+        if: steps.exact-jdk.outcome == 'failure'
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: "17"
-
-      - name: Set up sbt
-        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
-
-      - name: Set up the declared Scala.js Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55
         with:
-          node-version: "24"
+          sbt-runner-version: "1.11.7"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24.21.0"
           package-manager-cache: false
-
-      - name: Run the calibration profile
-        shell: bash
-        env:
-          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-laws-sbt
+      - name: Prepare sealed Gale comparison overlay
         run: |
-          cache_root="$SCALAFIM_SBT_CACHE_ROOT"
-          mkdir -p "$cache_root"
-          export COURSIER_CACHE="$cache_root/coursier"
-          sbt \
-            -Dsbt.boot.directory="$cache_root/boot" \
-            -Dsbt.global.base="$cache_root/global" \
-            -Dsbt.ivy.home="$cache_root/ivy" \
-            -Dsbt.supershell=false \
-            firstLevelLawsJVM/test \
-            firstLevelLawsJS/test
+          precision_gale_checkout="$RUNNER_TEMP/gale-paired-precision"
+          echo "a18e2746e43e0414436d69c23534df74c3220c42d8ab5dc350fd032adc49736c  tools/diagnostics/paired-residual-gale-source.patch" | sha256sum --check
+          git clone https://github.com/canardlapin/gale.git "$precision_gale_checkout"
+          git -C "$precision_gale_checkout" checkout 54e73f8e8f1218c4cb115a850aa80e1a36c6978f
+          git -C "$precision_gale_checkout" apply "$GITHUB_WORKSPACE/tools/diagnostics/paired-residual-gale-source.patch"
+          mkdir -p diagnostics
+          git -C "$precision_gale_checkout" rev-parse HEAD > diagnostics/gale-base.txt
+          git -C "$precision_gale_checkout" diff --stat > diagnostics/gale-overlay-stat.txt
+          sha256sum "$precision_gale_checkout/core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala" > diagnostics/gale-source-sha256.txt
+          echo "PRECISION_GALE_CHECKOUT=$precision_gale_checkout" >> "$GITHUB_ENV"
+      - name: Record host and source fingerprint
+        run: |
+          uname -a > diagnostics/host.txt
+          cat /etc/os-release >> diagnostics/host.txt
+          java -version 2>> diagnostics/host.txt
+          node --version >> diagnostics/host.txt
+          node -p 'JSON.stringify(process.versions)' >> diagnostics/host.txt
+          ldd --version >> diagnostics/host.txt
+          git rev-parse HEAD > diagnostics/source-commit.txt
+          echo "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb  modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala" | sha256sum --check
+          sha256sum build.sbt tools/diagnostics/paired-residual-gale-source.patch modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactPairedComparison.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactConditionJets.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/CompactPairedComparisonSuite.scala modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala > diagnostics/source-sha256.txt
+      - name: Qualify fit and first-level laws on both platforms in bounded processes
+        run: |
+          precision_gate_failed=0
+          for precision_task in fitJVM/test firstLevelLawsJVM/test fitJS/test firstLevelLawsJS/test; do
+            precision_label=$(echo "$precision_task" | tr / -)
+            set +e
+            timeout 15m sbt "-Dscalafim.gale.build=$PRECISION_GALE_CHECKOUT" "$precision_task" > "diagnostics/$precision_label.log" 2>&1
+            precision_result=$?
+            set -e
+            echo "$precision_result" > "diagnostics/$precision_label-exit-code.txt"
+            if [ "$precision_result" -ne 0 ]; then precision_gate_failed=1; fi
+          done
+          exit "$precision_gate_failed"
+      - name: Upload complete scientific qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: compact-paired-qualification-${{ github.run_id }}
+          path: diagnostics/
+          if-no-files-found: error
+          retention-days: 14

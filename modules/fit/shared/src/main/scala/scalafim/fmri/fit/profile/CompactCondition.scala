@@ -183,13 +183,21 @@ object CompactConditionPreparation:
       }
     }
 
-/** The compact condition backend as a [[ShapeObjective]]: a node bank of
-  * orthonormal node projectors (for exact node scores) and full design jets
-  * (so the node jet costs only small Gram products), continuous jets and
-  * exact energies through [[CompactConditionJets]] and [[ProfileReduction]].
-  * Point it at a voxel with [[pointAt]]; it holds only `z` and `e`.
+/** The capability is sealed here so arbitrary objective callbacks cannot
+  * introduce comparison evidence unrelated to their returned criterion.
   */
-final class CompactConditionObjective(val prep: CompactConditionPreparation, val grid: NodeGrid) extends ShapeObjective:
+private[profile] sealed trait PairedProfileObjective extends ShapeObjective:
+  private[profile] def enablePairedComparison(): Unit
+  private[profile] def captureAcceptedProfile(coordinates: Array[Double], jet: ProfileJetBuffer): Unit
+  private[profile] def pairedCandidateAvailable(coordinates: Array[Double], jet: ProfileJetBuffer): Boolean
+  private[profile] def comparePairedCandidate(coordinates: Array[Double], jet: ProfileJetBuffer)
+    : Either[CompactComparisonFailure, PairedShapeDecrease]
+
+/** Compact condition energies and jets over an owned response and fixed factor.
+  * Optional owned model snapshots bind paired comparisons to successful full
+  * jets. Response epochs are local to this objective, not global response IDs.
+  */
+final class CompactConditionObjective(val prep: CompactConditionPreparation, val grid: NodeGrid) extends PairedProfileObjective:
   private val family = prep.family
   private val basis = prep.basis
   private val k = prep.rank
@@ -206,8 +214,48 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
   private val bank = new Array[Double](grid.count * jets.designJetSize)
   private val gram = new Array[Double](c * c)
   private val tmp = new Array[Double](c)
-  private var z: Array[Double] = new Array[Double](k)
+  private val z: Array[Double] = new Array[Double](k)
   private var e: Double = 0.0
+  private var responseEpoch: Long = 0L
+  private var evaluationGeneration: Long = 0L
+  private var pairedState: Option[CompactPairedState] = None
+
+  private[profile] def comparisonWorkspaceReceipt(enabled: Boolean): CompactComparisonWorkspaceReceipt =
+    CompactComparisonWorkspaceReceipt.estimate(prep, enabled)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[profile] def enablePairedComparison(): Unit =
+    if pairedState.isEmpty then
+      val receipt = comparisonWorkspaceReceipt(true)
+      require(receipt.enabled, "paired allocation must be admitted")
+      pairedState = Some(new CompactPairedState(k, c, d))
+
+  private[profile] def captureAcceptedProfile(coordinates: Array[Double], jet: ProfileJetBuffer): Unit =
+    pairedState.foreach(_.capture(coordinates, jet, z, e, responseEpoch))
+
+  private[profile] def pairedCandidateAvailable(coordinates: Array[Double], jet: ProfileJetBuffer): Boolean =
+    pairedState.exists(_.available(coordinates, jet, z, e, responseEpoch))
+
+  private[profile] def comparePairedCandidate(coordinates: Array[Double], jet: ProfileJetBuffer)
+      : Either[CompactComparisonFailure, PairedShapeDecrease] =
+    pairedState match
+      case None => Left(CompactComparisonFailure.SnapshotMismatch)
+      case Some(state) => state.compare(coordinates, jet, z, e, responseEpoch)
+
+  private def beginPoint(): Long =
+    pairedState.foreach(_.currentFullJet = false)
+    evaluationGeneration += 1L
+    evaluationGeneration
+
+  private def stampPoint(point: ShapePoint, out: ProfileJetBuffer, epoch: Long, generation: Long, ok: Boolean): Boolean =
+    if responseEpoch != epoch || evaluationGeneration != generation then
+      pairedState.foreach(_.currentFullJet = false)
+      false
+    else
+      if ok then pairedState.foreach: state =>
+        jets.copyValueDesignInto(state.currentDesign)
+        state.stamp(point.coordinates, out, epoch)
+      ok
 
   locally {
     var node = 0
@@ -256,10 +304,17 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
 
   def amplitudeCount: Int = c
 
-  /** Point the objective at a voxel's compact response. */
+  /** Own a compact response for one voxel and invalidate previous comparison
+    * snapshots. Caller arrays cannot change the criterion after this boundary.
+    */
   def pointAt(response: Array[Double], energy: Double): Unit =
-    z = response
+    require(response.length == k, "compact response has the wrong rank")
+    System.arraycopy(response, 0, z, 0, k)
     e = energy
+    responseEpoch += 1L
+    pairedState.foreach: state =>
+      state.previousValid = false
+      state.currentFullJet = false
 
   def scoreNode(node: Int): Double =
     var fit = 0.0
@@ -279,19 +334,38 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
     reduction.reduce(jets.s, jets.b, jets.g, out)
 
   def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+    val epoch = responseEpoch
+    val generation = beginPoint()
+    val point = grid.point(node)
     jets.assembleLoaded(z, e, bank, node * jets.designJetSize, comps)
-    reduceInto(out)
+    stampPoint(point, out, epoch, generation, reduceInto(out))
 
   def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
-    basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coeff, comps)
+    val epoch = responseEpoch
+    val generation = beginPoint()
+    val point = ShapePoint.unsafe(coordinates.toVector)
+    basis.coefficientJetInto(point, kernelScratch, coeff, comps)
     jets.assemble(z, e, coeff, comps)
-    reduceInto(out)
+    val ok = reduceInto(out)
+    var axis = 0
+    while axis < d do
+      if java.lang.Double.doubleToRawLongBits(point(axis)) != java.lang.Double.doubleToRawLongBits(coordinates(axis)) then
+        pairedState.foreach(_.currentFullJet = false)
+        return false
+      axis += 1
+    stampPoint(point, out, epoch, generation, ok)
 
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
-    basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coeff, 1)
+    val epoch = responseEpoch
+    val generation = beginPoint()
+    val point = ShapePoint.unsafe(coordinates.toVector)
+    basis.coefficientJetInto(point, kernelScratch, coeff, 1)
     jets.assemble(z, e, coeff, 1)
     reduceInto(out)
-    out.energy
+    pairedState.foreach(_.currentFullJet = false)
+    if responseEpoch == epoch && evaluationGeneration == generation &&
+      point.coordinates.indices.forall(axis => java.lang.Double.doubleToRawLongBits(point(axis)) ==
+        java.lang.Double.doubleToRawLongBits(coordinates(axis))) then out.energy else Double.PositiveInfinity
 
 /** One voxel's condition fit: decoded shape, signed amplitudes in the
   * requested normalisation, nuisance projections retained for recovery,
@@ -330,6 +404,9 @@ final class CompactConditionRuntime private (
 
   if emitSummaries then prep.family.validateSummaryGrid.fold(error => throw new IllegalArgumentException(error.message), identity)
   require(prep.family.supports(normalization), s"family does not support ${normalization.label}")
+  val comparisonWorkspaceReceipt: CompactComparisonWorkspaceReceipt = CompactComparisonWorkspaceReceipt.estimate(prep,
+    CompactComparisonWorkspaceReceipt.enabled(prior, budget))
+    .fold(error => throw new IllegalArgumentException(error.message), identity)
   val objective: CompactConditionObjective = new CompactConditionObjective(prep, grid)
   private val decoder = new ShapeDecoder(objective, budget, prior, noiseVariance)
   private val z = new Array[Double](prep.rank)
