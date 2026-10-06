@@ -1,0 +1,86 @@
+{
+  "recorded_at": "2026-10-06T12:02:53.430714+00:00",
+  "base_commit": "bc981ddf09016c1e29b30810f53cff4517df95d3",
+  "origin_main": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+  "origin_main_is_ancestor": true,
+  "origin_main_ahead_behind": {
+    "ahead": 130,
+    "behind": 0
+  },
+  "changes": [
+    "Add exact pinned provider bootstrap before focused first-level gates",
+    "Add exact pinned provider bootstrap before scoped scientific coverage gates"
+  ],
+  "change_rationale": "Independent clean CI jobs require Multivar revision-tagged Gale and Resample4s artifacts; repository documentation and pinned provider scripts say these artifacts are not yet available on Maven Central. Existing full-repository job already performs the same bootstrap.",
+  "historical_failure_cause": "unresolved; public annotations contain generic exit-code failures only",
+  "historical_runs": {
+    "37379226968": {
+      "head_sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+      "full_compile": "success",
+      "full_tests": "failure",
+      "focused": "failure",
+      "coverage": "success"
+    },
+    "37383711609": {
+      "head_sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+      "full_compile": "success",
+      "full_tests": "failure",
+      "focused": "failure",
+      "coverage": "failure"
+    }
+  },
+  "authentication": {
+    "canonical_profile": "tools/github/gh-repo",
+    "api_user_status": 401,
+    "public_job_log_status": 403,
+    "public_job_log_error": "Must have admin rights to Repository.",
+    "credentials_or_auth_configuration_changed": false
+  },
+  "validation": {
+    "yaml_parse": "Ruby standard-library YAML successfully parsed all three jobs",
+    "cache_scopes": "All three preparation steps use same job-specific Coursier, boot, global and Ivy paths as following gate",
+    "shell_syntax": "bash -n passed for provider, focused, coverage and full-repository scripts",
+    "diff_whitespace": "git diff --check passed",
+    "scientific_or_sbt_runs": 0
+  },
+  "unchanged_source_sha256": [
+    {
+      "path": "tools/prepare-pinned-dependencies.sh",
+      "sha256": "51646aa40343372924c96ac7946e51f80238efcf32bf1bba2bb37e95fa73e919",
+      "unchanged_at_validation": true
+    },
+    {
+      "path": "tools/ci/first-level-gate.sh",
+      "sha256": "d1a362ae7f9e0ed16c046c2954fd765f0010fd67a5928dbd3bd4d6bd69592aab",
+      "unchanged_at_validation": true
+    },
+    {
+      "path": "tools/ci/first-level-coverage.sh",
+      "sha256": "52527fcdb43458368e802da014099eef243a5c36e900673391ac6f3a09261cce",
+      "unchanged_at_validation": true
+    },
+    {
+      "path": "tools/ci/full-repository-tests.sh",
+      "sha256": "20418ee069de35a3b2ca6e25929caeaf0bc693753e09e9a8813a885b3e33a908",
+      "unchanged_at_validation": true
+    },
+    {
+      "path": "build.sbt",
+      "sha256": "a91b1e35bc80a4380315d2f06172dda0f2e2e071bd63244c0ee21135caf5ed17",
+      "unchanged_at_validation": true
+    },
+    {
+      "path": ".jvmopts",
+      "sha256": "bf1a1d03f789112c9c74214eb9d1bf918ef5021cd1101d09b44a1426911a6bf0",
+      "unchanged_at_validation": true
+    }
+  ],
+  "workflow_sha256": "e6bf4f426b53456bfb743665338c28a06ef5c30e22fbedbca875d0976181b927",
+  "public_ci_api_sha256": "af34027915ea97ef60e9087325b5078cfe213ffdb8ae9de933c27580141d5c4e",
+  "limits": [
+    "This workflow-only repair does not establish the causes of either historical failed test run.",
+    "No fresh GitHub run was launched; provider publication and full JVM/JS CI remain unverified on this candidate.",
+    "No coverage threshold, scientific source, scientific tolerance, test selection, branch publication or pull request was changed.",
+    "Publication Mote remains open until authenticated publication and required CI complete."
+  ]
+}

@@ -12,6 +12,18 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
       Thread.sleep(if block.index % 3 == 0 then 6 else 1)
       Array.tabulate(block.count)(i => (block.start + i).toDouble)
 
+  /** Pool termination precedes the final return from a worker thread's run method.
+    * Join the captured owned threads within one deadline, then require actual thread exit.
+    */
+  private def assertOwnedThreadsExit(seen: ConcurrentLinkedQueue[Thread]): Unit =
+    val threads = seen.asScala.toVector.distinct
+    val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+    threads.foreach: thread =>
+      val remaining = deadline - System.nanoTime()
+      if remaining > 0L then TimeUnit.NANOSECONDS.timedJoin(thread, remaining)
+    assert(threads.forall(thread => !thread.isAlive),
+      s"owned pool threads still alive: ${threads.filter(_.isAlive).map(_.getName)}")
+
   private final class OrderSink extends BlockSink[Array[Double], (Int, Double)]:
     val order = Vector.newBuilder[Int]
     def accept(block: VoxelBlock, payload: Array[Double]): Either[String, (Int, Double)] =
@@ -76,7 +88,7 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
     ParallelBlockExecutor.run[Int, Int](10, ExecutionBudget(1, 3), factory, sink) match
       case Left(ExecutionError.WorkerFailed(_, detail)) => assert(detail.contains("factory boom"))
       case other => fail(s"expected WorkerFailed, got $other")
-    assert(seenThreads.asScala.forall(t => !t.isAlive))
+    assertOwnedThreadsExit(seenThreads)
 
     val throwing = new BlockSink[Int, Int]:
       def accept(block: VoxelBlock, payload: Int): Either[String, Int] = throw new IllegalStateException("sink boom")
@@ -101,10 +113,11 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
     ParallelBlockExecutor.run(10, ExecutionBudget(1, 3), () => worker, sink, () => stop.get()) match
       case Left(ExecutionError.Cancelled(completed)) => assertEquals(completed, 0)
       case other => fail(s"expected Cancelled, got $other")
-    assert(seenThreads.asScala.forall(t => !t.isAlive))
+    assertOwnedThreadsExit(seenThreads)
 
   test("worker failure interrupts another in-flight task and releases owned threads"):
     val bothStarted = new CountDownLatch(2)
+    val otherReady = new CountDownLatch(1)
     val otherInterrupted = new CountDownLatch(1)
     val seenThreads = new ConcurrentLinkedQueue[Thread]()
     val worker = new BlockWorker[Int]:
@@ -112,8 +125,11 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
         seenThreads.add(Thread.currentThread())
         bothStarted.countDown()
         if !bothStarted.await(5, TimeUnit.SECONDS) then throw new IllegalStateException("workers did not start")
-        if block.index == 0 then throw new IllegalStateException("worker boom")
+        if block.index == 0 then
+          if !otherReady.await(5, TimeUnit.SECONDS) then throw new IllegalStateException("other worker was not ready")
+          throw new IllegalStateException("worker boom")
         try
+          otherReady.countDown()
           if !new CountDownLatch(1).await(5, TimeUnit.SECONDS) then throw new IllegalStateException("task was not interrupted")
         catch
           case _: InterruptedException => otherInterrupted.countDown()
@@ -126,7 +142,7 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
         assert(detail.contains("worker boom"))
       case other => fail(s"expected WorkerFailed, got $other")
     assertEquals(otherInterrupted.getCount, 0L)
-    assert(seenThreads.asScala.forall(t => !t.isAlive))
+    assertOwnedThreadsExit(seenThreads)
 
   test("interrupting the caller cancels in-flight tasks and restores its interrupt flag"):
     val bothStarted = new CountDownLatch(2)
@@ -160,7 +176,7 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
     assertEquals(result.get(), Left(ExecutionError.Cancelled(0)))
     assert(interruptRestored.get())
     assertEquals(workerInterrupted.getCount, 0L)
-    assert(seenThreads.asScala.forall(t => !t.isAlive))
+    assertOwnedThreadsExit(seenThreads)
 
   test("sink interruption waits for owned workers or returns a nonfinal termination handle"):
     for expires <- Vector(false, true) do
