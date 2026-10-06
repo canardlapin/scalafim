@@ -1,64 +1,67 @@
 name: first-level-laws-calibration
-run-name: generated first-level calibration (${{ github.event_name }})
-
+run-name: published Gale adoption on Linux JDK17
 on:
-  schedule:
-    - cron: "41 5 * * 3"
   workflow_dispatch:
-
-concurrency:
-  group: first-level-laws-calibration-${{ github.ref }}
-  cancel-in-progress: false
-
 permissions:
   contents: read
-
+concurrency:
+  group: exactsum-linux17-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  generated-laws:
-    name: generated laws on JVM and Scala.js (seed ${{ matrix.seed_long }})
+  compact-precision:
+    name: Gale adoption on native Linux x64
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        seed_long:
-          - "97131249"
-          - "324508639"
-          - "610839776"
+    timeout-minutes: 55
     env:
-      SCALAFIM_LAW_PROFILE: calibration
-      SCALAFIM_LAW_SEED_LONG: ${{ matrix.seed_long }}
+      COURSIER_REPOSITORIES: https://repo.maven.apache.org/maven2
+      SBT_OPTS: -Xmx4g -XX:ActiveProcessorCount=4 -Dsbt.supershell=false -Dsbt.color=false
     steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up the declared JDK baseline
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Resolve exact historical JDK
+        id: exact-jdk
+        continue-on-error: true
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: "17.0.20+1"
+      - name: Resolve current declared JDK if historical cache is unavailable
+        if: steps.exact-jdk.outcome == 'failure'
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: "17"
-
-      - name: Set up sbt
-        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
-
-      - name: Set up the declared Scala.js Node runtime
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55
         with:
-          node-version: "24"
+          sbt-runner-version: "1.11.7"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24.21.0"
           package-manager-cache: false
-
-      - name: Run the calibration profile
-        shell: bash
-        env:
-          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-laws-sbt
+      - name: Record host and source fingerprint
         run: |
-          cache_root="$SCALAFIM_SBT_CACHE_ROOT"
-          mkdir -p "$cache_root"
-          export COURSIER_CACHE="$cache_root/coursier"
-          sbt \
-            -Dsbt.boot.directory="$cache_root/boot" \
-            -Dsbt.global.base="$cache_root/global" \
-            -Dsbt.ivy.home="$cache_root/ivy" \
-            -Dsbt.supershell=false \
-            firstLevelLawsJVM/test \
-            firstLevelLawsJS/test
+          mkdir -p diagnostics
+          uname -a > diagnostics/host.txt
+          cat /etc/os-release >> diagnostics/host.txt
+          java -version 2>> diagnostics/host.txt
+          node --version >> diagnostics/host.txt
+          node -p 'JSON.stringify(process.versions)' >> diagnostics/host.txt
+          ldd --version >> diagnostics/host.txt
+          git rev-parse HEAD > diagnostics/source-commit.txt
+          sha256sum build.sbt modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisBudget.scala > diagnostics/source-sha256.txt
+      - name: Published Gale AR and compiler budget gates
+        run: |
+          set +e
+          sbt "arJVM/test" "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite scalafim.fmri.design.HrfKernelBasisSuite" > diagnostics/gate.log 2>&1
+          result=$?
+          echo "$result" > diagnostics/gate-exit-code.txt
+          exit "$result"
+      - name: Upload complete gate evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: exactsum-linux17-${{ github.run_id }}
+          path: diagnostics/
+          if-no-files-found: error
+          retention-days: 14
