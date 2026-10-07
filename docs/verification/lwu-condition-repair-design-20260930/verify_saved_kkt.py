@@ -1,0 +1,77 @@
+"""Exact rational algebra on recorded binary64 jets, plus analytic box controls."""
+import argparse
+from collections import Counter
+from fractions import Fraction as F
+import hashlib
+import json
+import math
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[3]
+OLD=ROOT/'docs/verification/condition-lwu-diagnostics-20260930'
+BOUNDS=[(3.,8.),(math.log(.8),math.log(3.)),(0.,.8)]
+def determinant(a):
+    if not a:return F(1)
+    if len(a)==1:return a[0][0]
+    return sum((-1)**j*a[0][j]*determinant([r[:j]+r[j+1:] for r in a[1:]]) for j in range(len(a)))
+def solve(a,b):
+    d=determinant(a);assert d!=0
+    return [determinant([r[:i]+[b[k]]+r[i+1:] for k,r in enumerate(a)])/d for i in range(len(a))]
+def spd(a):return all(determinant([r[:i] for r in a[:i]])>0 for i in range(1,len(a)+1))
+def direction(x,g,h):
+    free=[i for i,(z,(lo,hi)) in enumerate(zip(x,BOUNDS)) if not ((z<=lo+1e-12 and g[i]>0) or (z>=hi-1e-12 and g[i]<0))]
+    a=[[h[i][j] for j in free] for i in free]
+    # Production requires full-Hessian positive curvature when all coordinates
+    # are fixed; empty free-block SPD alone would not establish this.
+    if not spd(a) or (not free and not spd(h)):return None
+    delta=[F(0)]*3
+    for i,v in zip(free,solve(a,[-g[i] for i in free]) if free else []):delta[i]=v
+    return delta
+
+def main():
+    details=[];counts=Counter();proof=[];caps=[];inputs={}
+    for name in ['lwu-diagnostic-v3-jvm.log','lwu-diagnostic-v4-js-node.log']:
+        p=OLD/name;raw=p.read_bytes();inputs[name]=hashlib.sha256(raw).hexdigest()
+        records=[json.loads(s) for l in raw.decode().splitlines() if (s:=l.removeprefix('[info] ').strip()).startswith('{"kind":"lwu-diagnostic"')]
+        assert len(records)==200
+        for r in records:
+            if r['status']=='Accepted':continue
+            x=r['coordinates'];t=r['terminal'];g=[F(float.fromhex(v)) for v in t['gradientHex']]
+            v=[F(float.fromhex(z)) for z in t['hessianHex']];h=[v[3*i:3*i+3] for i in range(3)]
+            delta=direction(x,g,h);norm=max(map(abs,delta)) if delta is not None else None
+            stationary=norm is not None and norm<=F(1,10**9)
+            counts[r['status']+'-stationary' if stationary else r['status']+'-nonstationary']+=1
+            d={'platform':r['platform'],'snr':r['snr'],'voxel':r['voxel'],'status':r['status'],'compactNewtonCorrection':float(norm) if norm is not None else None,'stationary':stationary,'fullHessianPositive':spd(h)}
+            if r['status']=='BudgetExceeded':
+                assert delta is not None and not stationary
+                predicted=-sum(a*b for a,b in zip(g,delta))/2
+                ulp=math.ulp(r['decodeEnergy'])
+                d['quadraticPredictedDecrease']=float(predicted);d['energyUlp']=ulp;d['predictedDecreaseInUlps']=float(predicted/F(ulp));caps.append(d)
+            if r['snr']==.5 and r['voxel']==50:
+                assert x[2]==0. and g[2]<0 and spd(h) and delta[2]<0
+                alpha=F(1)
+                for z,p,(lo,hi) in zip(x,delta,BOUNDS):
+                    if p>0:alpha=min(alpha,(F(hi)-F(z))/p)
+                    if p<0:alpha=min(alpha,(F(lo)-F(z))/p)
+                assert alpha==0 and norm>F(1,10**9)
+                tangent=[F(0) if ((z<=lo+1e-12 and p<0) or (z>=hi-1e-12 and p>0)) else p for z,p,(lo,hi) in zip(x,delta,BOUNDS)]
+                slope=sum(a*b for a,b in zip(g,tangent));assert slope<0
+                assert r['work']==[157,1,0,0,0,0,0]
+                d|={'newtonDirection':list(map(float,delta)),'boxAlpha':float(alpha),'tangentDirection':list(map(float,tangent)),'tangentDirectionalDerivative':float(slope),'feasibleRhoDerivative':float(g[2]),'work':r['work']}
+                proof.append(d)
+            details.append(d)
+    assert len(details)==57 and len(proof)==2 and len(caps)==14
+    # Exact independent convex quadratic: x²+xy+y²-x/2-2y.
+    h=[[F(2),F(1)],[F(1),F(2)]];g=[F(-1,2),F(-2)]
+    p=solve(h,[-z for z in g]);assert p==[F(-1,3),F(7,6)]
+    tangent=[F(0),p[1]];e=lambda x,y:x*x+x*y+y*y-x/2-2*y
+    assert e(*tangent)<e(F(0),F(0))
+    assert e(F(0),F(1))==F(-1)
+    # At (0,1), g=(1/2,0): lower-bound KKT and positive curvature.
+    assert F(1,2)>0 and spd(h)
+    return {'scope':'Exact recorded-jet algebra and analytic counterexample; no objective re-evaluation, policy, new cohort or qualification','inputSha256':inputs,'refusals':57,'classification':dict(counts),'voxel50Proof':proof,'candidateCapDiagnostics':caps,'analyticControl':{'hessian':[[2,1],[1,2]],'originGradient':[-.5,-2],'newtonDirection':['-1/3','7/6'],'tangentEnergy':'-35/36','constrainedMinimum':[0,1],'minimumEnergy':-1,'minimumGradient':[.5,0]},'details':details}
+if __name__=='__main__':
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--out',required=True);a=p.parse_args()
+    result=main()
+    with Path(a.out).open('x') as f:json.dump(result,f,indent=2);f.write('\n')
+    print(json.dumps({k:result[k] for k in ['classification','voxel50Proof']},indent=2))

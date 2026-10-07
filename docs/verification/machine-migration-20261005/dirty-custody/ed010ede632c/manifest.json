@@ -1,0 +1,41 @@
+{
+  "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c0ulp",
+  "head": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+  "branch": "refs/heads/fix/c0-ulp-stationarity-20261004",
+  "files": [
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionPlatformParitySuite.scala",
+      "kind": "file",
+      "bytes": 7581,
+      "sha256": "94374b7d653cf8c08feeb23bc14a1e42d5395070f88c0ea9432cb7a1be68a561"
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala",
+      "kind": "file",
+      "bytes": 71307,
+      "sha256": "23e84aa5a9843ee328d3963a7b8a8195405e1f232333bbece246b4ebda0e763e"
+    },
+    {
+      "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 15101,
+      "sha256": "58d9d6bf76fafe44722964c057fcc7fcbcff2c87ade53a993c9f56ce2a516599"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala",
+      "kind": "file",
+      "bytes": 29157,
+      "sha256": "dc8974845b97349a3a6b8363b0b8fac5ffadb16e796e6079ccd91600ed65522e"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderUnresolvableDecreaseSuite.scala",
+      "kind": "file",
+      "bytes": 6651,
+      "sha256": "40697756e050903ab91cb6c3e911c6aeeb6c29c035564fe75347ed420a6ad807"
+    }
+  ],
+  "archive_sha256": "d33ade63898a564874b0a354c6ac631b685f807b3dc18c64001c82d2bd6f6384",
+  "archive_bytes": 30457,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

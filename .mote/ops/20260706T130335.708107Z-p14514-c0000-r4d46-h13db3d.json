@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVR2V97459PQ7B78WVC7Q23","kind":"note","note_kind":"progress","op":"20260706T130335.708107Z-p14514-c0000-r4d46-h13db3d","text":"Added shared FmriModelBuilder/ModelBuildSpec with dataset event table inference, explicit missing/ragged column checks, and JVM/JS model plus fit acceptance tests.","ts":"2026-07-06T13:03:35.708107Z","v":1}

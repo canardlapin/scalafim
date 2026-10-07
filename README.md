@@ -9,7 +9,7 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
+- `locus-data`: ScalaFIM domain adapters, supported parcellations, and searchlights over standalone locus4s spaces and data; aggregation over parcellations uses `locus4s.data.Aggregation`.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
@@ -46,6 +46,7 @@ cross-compiled sbt build.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
+- `phrf-comparison`: unpublished comparative-evaluation preparation and scoring on JVM/Scala.js, with JVM runners and custody tooling. [Pilot integration scope](modules/phrf-comparison/README.md) excludes the pending S10 launch and rehearsal.
 - `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
@@ -102,7 +103,8 @@ Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
 source revision; `locus-data` retains only ScalaFIM-specific adapters and
-higher-level parcellation, searchlight, and aggregation policy.
+higher-level parcellation and searchlight policy. Aggregation over
+parcellations is owned by `locus4s.data.Aggregation`.
 
 Generic dense and sparse matrices, linear operators, factorizations, and
 spectral algorithms now live in standalone
@@ -152,6 +154,32 @@ orientation and coordinate contracts, JavaFX/Three.js backends, lifecycle,
 serialization, performance gates, and the cross-platform example.
 
 ## Common Commands
+
+Use a JDK 21 installation for local development and an sbt launcher;
+`project/build.properties` selects sbt 1.11.7 for this build. CI checks the
+JDK 17 API baseline, and Scala.js tests require Node.js (CI uses Node 24).
+For repeated local gates, use `python3 tools/build/sbt-warm hrfJVM/test hrfJS/test`
+to reuse a worktree-specific server. Run large test campaigns in bounded
+batches, as described in `AGENTS.md`. The
+[local sbt/Mill comparison](docs/benchmarks/build-tools-20261005.md) records
+the rationale for retaining the current build.
+
+The warm server uses a 3 GB heap by default. For `reload` followed by `set`
+or repeated settings changes, use the explicitly qualified 4 GB profile:
+
+```sh
+python3 tools/build/sbt-warm --shutdown
+SBT_WARM_HEAP=4g python3 tools/build/sbt-warm reload 'set atlasJVM / Test / envVars += ("MY_TEST_OPTION" -> "value")'
+SBT_WARM_HEAP=4g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
+python3 tools/build/sbt-warm --shutdown
+```
+
+Keep the same profile for commands while that server runs. The wrapper refuses
+an unknown or differing recorded startup profile; restart after changing heap,
+processor count or idle timeout. `--status` reports requested and recorded
+startup values. An existing server from an older wrapper needs one shutdown
+before reuse. See the [reconfiguration evidence](docs/verification/sbt-reconfiguration-20261006/README.md)
+for measured limits; source pins and the ordinary 3 GB default are preserved.
 
 On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that

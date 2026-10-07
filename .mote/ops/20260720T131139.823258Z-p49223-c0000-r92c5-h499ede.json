@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXZNT7A9C1GN4G44STTR9VHS","kind":"reserve_open","mode":"exclusive","op":"20260720T131139.823258Z-p49223-c0000-r92c5-h499ede","paths":["modules/dataset-zarr","build.sbt"],"reservation_id":"rv-01KXZTEMHFCCFH6B7EAS4PPYD7","ts":"2026-07-20T13:11:39.823258Z","ttl_s":3600,"v":1}

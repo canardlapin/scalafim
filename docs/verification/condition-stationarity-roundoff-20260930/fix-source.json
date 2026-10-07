@@ -1,0 +1,11 @@
+{
+  "head": "a6dbd3b188bd321c41053877121ccf64cf93259b",
+  "productionDelta": "GaussianFamily direct per-lag evaluator only. Decoder, admission and budget sources unchanged.",
+  "sources": {
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionStationarityRoundoffSuite.scala": "b930e42a6760751dfa60d4c17506790e59390af66236b007cd4ae198ecd9e116",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala": "99eb71105718627607a5fb5689f06a292f7378e0e5e3e35c014fbfdc4f66b6f7",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/GaussianFamilySuite.scala": "a7e8cd97d03a3808363c68c2d395340c136cc6bb114c4a4d84e73170808657ad",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/GaussianPrecisionFixtures.scala": "43b1f9b6b652c16414d070b25dae9b301750d4b726db982d058f03be4d1066f0",
+    "tools/hrf/generate_gaussian_precision_oracle.py": "fad1ae1f03c8ecd89085d1f5649b4b26ea6f315b6d22774cb573ae021bd07364"
+  }
+}

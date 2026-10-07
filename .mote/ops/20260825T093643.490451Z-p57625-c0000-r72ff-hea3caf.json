@@ -1,0 +1,1 @@
+{"actor":"p7-2-quality-gate","entity":"bd-01M0SVMDTQT0CM8CH10CEXD2C2","kind":"reserve_open","mode":"exclusive","op":"20260825T093643.490451Z-p57625-c0000-r72ff-hea3caf","paths":["build.sbt","tools/ci/mvpa-gate.sh",".github/workflows/mvpa.yml"],"reservation_id":"rv-01M0W4EYF2YJ5Y9YMNTKVZG8BW","ts":"2026-08-25T09:36:43.490451Z","ttl_s":3600,"v":1}

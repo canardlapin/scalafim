@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVQAD0J2EGWFQYTZ81J2HNS","kind":"note","note_kind":"progress","op":"20260706T125004.189913Z-p10294-c0000-rec1b-hcbd65b","text":"Added RunPartition, RunwiseOls, runwise fit result branch, row slicing, executor dispatch for FitEngine.RunwiseLeastSquares, and JVM/JS runwise tests.","ts":"2026-07-06T12:50:04.189913Z","v":1}

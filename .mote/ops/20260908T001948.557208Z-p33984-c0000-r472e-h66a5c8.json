@@ -1,0 +1,1 @@
+{"actor":"plsneuro-workbench-ui","entity":"bd-01M1Z1WZTJM6F37TWPBQC7NWG9","kind":"reserve_open","mode":"exclusive","op":"20260908T001948.557208Z-p33984-c0000-r472e-h66a5c8","paths":["modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelPreviewSuite.scala"],"reservation_id":"rv-01M1Z658PD7K0CAH5ZADS4NZYP","ts":"2026-09-08T00:19:48.557208Z","ttl_s":3600,"v":2}

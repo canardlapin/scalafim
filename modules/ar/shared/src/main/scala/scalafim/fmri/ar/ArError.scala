@@ -24,6 +24,11 @@ enum ArError:
   case InsufficientAutocovariances(required: Int, actual: Int)
   case NonFiniteAutocovariance(lag: ArLag, value: Double)
   case NonFiniteResidual(row: Int, column: Int, value: Double)
+  case EmptySpatialNoiseBlock
+  case IncompatibleNoiseSummaries(detail: String)
+  case NoiseSummaryCountOverflow(runIndex: Int, lag: ArLag)
+  case NoiseSumCapacityExceeded(lag: ArLag, currentTerms: Long, incomingTerms: Long)
+  case NonFiniteNoiseSummary(runIndex: Int, lag: ArLag, value: Double)
   case NonFiniteArCoefficient(index: Int, value: Double)
   case NonFiniteMaCoefficient(index: Int, value: Double)
   case NonFinitePartialAutocorrelation(index: Int, value: Double)
@@ -34,6 +39,14 @@ enum ArError:
   case NonInvertibleMaCoefficients(maxRootMagnitude: Double)
   case StationarityCheckFailed(detail: String)
   case UnableToEstimateArModel
+  case DesignRowMismatch(designRows: Int, residualRows: Int)
+  case NonFiniteDesign(row: Int, column: Int, value: Double)
+  case DesignResidualMismatch(relativeProjection: Double, tolerance: Double)
+  case InvalidCorrectionLag(lag: Int)
+  case NoResidualDegreesOfFreedom(rows: Int, designRank: Int)
+  case PreparedCorrectionLayoutMismatch
+  case PreparedCorrectionDesignMismatch
+  case PreparedCorrectionOrderMismatch(prepared: Int, requested: Int)
 
   def message: String =
     this match
@@ -78,6 +91,16 @@ enum ArError:
         s"autocovariance at lag ${lag.value} must be finite, got $value"
       case NonFiniteResidual(row, column, value) =>
         s"residual at row $row, column $column must be finite, got $value"
+      case EmptySpatialNoiseBlock =>
+        "noise summary requires at least one spatial residual column"
+      case IncompatibleNoiseSummaries(detail) =>
+        s"incompatible noise summaries: $detail"
+      case NoiseSummaryCountOverflow(runIndex, lag) =>
+        s"noise-summary pair count overflow for run $runIndex at lag ${lag.value}"
+      case NoiseSumCapacityExceeded(lag, currentTerms, incomingTerms) =>
+        s"noise sum at lag ${lag.value} exceeds the exact finite-input capacity: $currentTerms + $incomingTerms"
+      case NonFiniteNoiseSummary(runIndex, lag, value) =>
+        s"noise-summary sum for run $runIndex at lag ${lag.value} must be finite, got $value"
       case NonFiniteArCoefficient(index, value) =>
         s"AR coefficient at index $index must be finite, got $value"
       case NonFiniteMaCoefficient(index, value) =>
@@ -98,3 +121,20 @@ enum ArError:
         s"could not verify AR stationarity: $detail"
       case UnableToEstimateArModel =>
         "unable to estimate AR model"
+      case DesignRowMismatch(designRows, residualRows) =>
+        s"design has $designRows rows but residuals have $residualRows"
+      case NonFiniteDesign(row, column, value) =>
+        s"design entry at row $row, column $column must be finite, got $value"
+      case DesignResidualMismatch(relativeProjection, tolerance) =>
+        s"residuals are not orthogonal to the design (relative projection $relativeProjection exceeds $tolerance); " +
+          "design-corrected estimation requires the ordinary least-squares residuals of this design"
+      case InvalidCorrectionLag(lag) =>
+        s"correction lag budget must be at least 1, got $lag"
+      case PreparedCorrectionDesignMismatch =>
+        "prepared correction was built from a different design (dimensions or entries differ)"
+      case PreparedCorrectionOrderMismatch(prepared, requested) =>
+        s"prepared correction targets AR order $prepared but order $requested was requested"
+      case PreparedCorrectionLayoutMismatch =>
+        "prepared correction was built for a different estimation layout"
+      case NoResidualDegreesOfFreedom(rows, designRank) =>
+        s"design of rank $designRank leaves no residual degrees of freedom in $rows rows"

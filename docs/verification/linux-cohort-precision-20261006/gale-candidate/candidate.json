@@ -1,0 +1,34 @@
+{
+  "candidate": "a57146ff55404039c3261a9af4a82ed307f6e625",
+  "base": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "identity": {
+    "user.name": "canardlapin",
+    "user.email": "brad@duckrabbit.ai",
+    "github.account": "canardlapin"
+  },
+  "repository": "https://github.com/canardlapin/gale.git",
+  "publication": false,
+  "scope": [
+    "README.md",
+    "core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala",
+    "core/shared/src/test/scala/gale/numeric/PairedResidualFixtures.scala",
+    "core/shared/src/test/scala/gale/numeric/PairedSquaredResidualComparisonSuite.scala",
+    "docs/verification/paired-residual-comparison-20261006"
+  ],
+  "source_only_patch": {
+    "file": "paired-residual-source-only.patch",
+    "sha256": "a18e2746e43e0414436d69c23534df74c3220c42d8ab5dc350fd032adc49736c",
+    "paths": [
+      "README.md",
+      "core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala",
+      "core/shared/src/test/scala/gale/numeric/PairedResidualFixtures.scala",
+      "core/shared/src/test/scala/gale/numeric/PairedSquaredResidualComparisonSuite.scala"
+    ]
+  },
+  "docs_corrected_candidate": "b56a9dd0b8ad479621a3594880f90c9add8c2824",
+  "source_candidate_unchanged": "a57146ff55404039c3261a9af4a82ed307f6e625",
+  "corrected_bundle": {
+    "file": "paired-residual-comparison-corrected.bundle",
+    "sha256": "4fdd31278c6a660cc8cb0335a0c63fdaf43af8c9e80ed731c48f37b75177a8df"
+  }
+}

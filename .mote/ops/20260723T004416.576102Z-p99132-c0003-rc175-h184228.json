@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXSPYV2NK99EFJ0ACNVYFH98","kind":"note","note_kind":"progress","op":"20260723T004416.576102Z-p99132-c0003-rc175-h184228","text":"Implementing the independent reference interpreter, explicit semantics, physical explain, and FS2 resource/cancellation boundary on JVM and Scala.js.","ts":"2026-07-23T00:44:16.576102Z","v":1}

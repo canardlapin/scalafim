@@ -1,0 +1,1 @@
+{"actor":"surface-map-semantics","entity":"bd-01M1Z4FNEQ28YY1BZSWAN6WBER","kind":"note","note_kind":"progress","op":"20260908T021724.845775Z-p80756-c0002-rad28-h6699b6","text":"Honor explicit near/far clipping in shared camera projection and validate direct construction; add analytical endpoint tests on both platforms.","ts":"2026-09-08T02:17:24.845775Z","v":1}

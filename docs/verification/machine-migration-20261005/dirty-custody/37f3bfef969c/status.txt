@@ -1,0 +1,20 @@
+ M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala
+ M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala
+ M modules/fit/README.md
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala
+ M modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala
+?? modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala

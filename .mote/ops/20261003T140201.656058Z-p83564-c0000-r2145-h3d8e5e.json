@@ -1,0 +1,1 @@
+{"actor":"umvpa-helper-claude","entity":"bd-01M40WMENBWK5WE0T1PAHACNHW","kind":"reserve_open","mode":"exclusive","op":"20261003T140201.656058Z-p83564-c0000-r2145-h3d8e5e","paths":["tools/ci/full-repository-tests.sh"],"reservation_id":"rv-01M4114RHREXBWW7V0Y67BJC13","ts":"2026-10-03T14:02:01.656058Z","ttl_s":7200,"v":2}

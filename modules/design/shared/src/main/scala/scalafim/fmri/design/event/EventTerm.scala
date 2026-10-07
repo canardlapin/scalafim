@@ -6,7 +6,7 @@ import scalafim.fmri.design.Names
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.hrf.regressor.{HrfAssignment, Regressor}
+import scalafim.fmri.hrf.regressor.{ConvolutionDiscretization, ConvolutionError, HrfAssignment, Regressor}
 
 import scala.util.control.NonFatal
 
@@ -24,9 +24,20 @@ final case class ConvolvedTerm(
     columnCells: Vector[Option[CellKey]] = Vector.empty,
     columnModulators: Vector[Option[ModulatorId]] = Vector.empty,
     columnHrfs: Vector[Hrf] = Vector.empty,
-    columnScales: Vector[HrfColumnScale] = Vector.empty
+    columnScales: Vector[HrfColumnScale] = Vector.empty,
+    eventPeakScales: Vector[EventPeakScaleReceipt] = Vector.empty,
+    eventHrfs: Vector[Hrf] = Vector.empty,
+    /** Per-column event-level divisors (empty when events carry no event
+      * normalization). A response readout can transport a column back to
+      * kernel units only when its contributing events share one divisor. */
+    columnEventScales: Vector[ColumnEventScale] = Vector.empty
 ) extends EventModelTerm:
   requireColumnMetadata()
+  require(
+    columnEventScales.isEmpty || columnEventScales.length == data.cols,
+    s"columnEventScales has ${columnEventScales.length} entries for ${data.cols} data columns"
+  )
+  require(eventHrfs.isEmpty || eventHrfs.length == term.onsets.length, "event HRFs must align with term events")
   require(
     columnConditions.isEmpty || columnConditions.length == data.cols,
     s"columnConditions has ${columnConditions.length} entries for ${data.cols} data columns"
@@ -50,6 +61,14 @@ final case class ConvolvedTerm(
   require(
     columnScales.isEmpty || columnScales.length == data.cols,
     s"columnScales has ${columnScales.length} entries for ${data.cols} data columns"
+  )
+  require(
+    eventPeakScales.isEmpty || eventPeakScales.length == term.onsets.length,
+    s"eventPeakScales has ${eventPeakScales.length} entries for ${term.onsets.length} term events"
+  )
+  require(
+    eventPeakScales.isEmpty || eventPeakScales.map(_.eventIndex) == term.onsets.indices.toVector,
+    "eventPeakScales must retain the term-local event-row identity and ordering"
   )
 
   def keyHint: Option[String] = term.termTag
@@ -139,11 +158,11 @@ final case class EventTerm(
           )
         }
       case c: ContinuousEvent =>
-        c.columnTags.zip(c.modulatorIds).map { case (tag, modulator) =>
+        c.columnTags.zip(c.modulatorIds).zipWithIndex.map { case ((tag, modulator), index) =>
           (
             tag,
             Option.empty[CellAssignment],
-            Some(modulator)
+            if c.mainEffectColumn.contains(index) then None else Some(modulator)
           )
         }
     }.filter(_.nonEmpty)
@@ -211,9 +230,105 @@ final case class EventTerm(
       summate: Boolean = true,
       scaling: HrfColumnScaling = HrfColumnScaling.AsConvolved
   ): ConvolvedTerm =
+    convolveShared(hrf, samplingFrame, precision, dropEmpty, summate, scaling, eventDivisors = None)
+
+  /** The shared-kernel convolution of [[convolve]], with each event's
+    * contribution to basis column `b` divided by `eventDivisors(event)(b)`.
+    * Microtime precision, span truncation, onset windowing and column scaling
+    * are exactly those of [[convolve]]; only the per-event amplitudes differ. */
+  private[design] def convolveWithEventDivisors(
+      hrf: Hrf,
+      samplingFrame: SamplingFrame,
+      precision: Seconds,
+      dropEmpty: Boolean,
+      summate: Boolean,
+      scaling: HrfColumnScaling,
+      eventDivisors: Vector[Vector[Double]]
+  ): ConvolvedTerm =
+    require(eventDivisors.length == n, "event divisors must align with term events")
+    require(
+      eventDivisors.forall(d => d.length == hrf.nbasis && d.forall(v => v.isFinite && v > 0.0)),
+      "event divisors must be finite, positive and match the basis width"
+    )
+    convolveShared(hrf, samplingFrame, precision, dropEmpty, summate, scaling, Some(eventDivisors))
+
+  /** Check microtime counts without allocating microtime arrays, for the same
+    * active conditions and runs as shared convolution. An all-zero term never samples its
+    * HRF, even when the requested precision would exceed the kernel budget.
+    */
+  private[design] def validateSharedConvolution(
+      hrf: Hrf,
+      samplingFrame: SamplingFrame,
+      precision: Seconds,
+      dropEmpty: Boolean,
+      summate: Boolean
+  ): Either[ConvolutionError, Unit] =
+    val dm = designMatrix(dropEmpty)
+    val nConds = dm.conditionTags.length
+    val (rows, columns, _) = convolutionShape(samplingFrame, nConds.toDouble * hrf.nbasis.toDouble) match
+      case Left(error) => return Left(error)
+      case Right(shape) => shape
+    if rows == 0 || columns == 0 then return Right(())
+    // Use the frame's arithmetic in Double until derived times are checked;
+    // finite block lengths/TRs can still overflow their cumulative offsets.
+    val offsets = samplingFrame.blockLens.zip(samplingFrame.tr)
+      .map((length, tr) => length.toDouble * tr.value).scanLeft(0.0)(_ + _)
+    val globalOnsets = onsets.indices.map(i => onsets(i).value + offsets(blockIds0(i))).toVector
+    if !globalOnsets.forall(_.isFinite) then
+      return Left(ConvolutionError.InvalidGrid("global event onsets must be finite"))
+    var block = 0
+    while block < samplingFrame.nBlocks do
+      val grid = (0 until samplingFrame.blockLens(block)).map(i =>
+        samplingFrame.startTime(block).value + i.toDouble * samplingFrame.tr(block).value + offsets(block)
+      )
+      if !grid.forall(_.isFinite) then
+        return Left(ConvolutionError.InvalidGrid("global acquisition times must be finite"))
+      val indices = blockIds0.indices.filter(i => blockIds0(i) == block).toVector
+      val ons = indices.map(globalOnsets)
+      val durations = indices.map(i => durations0(i).value)
+      var condition = 0
+      while condition < nConds do
+        val amplitudes = indices.map(i => dm.data.data(i * nConds + condition))
+        if amplitudes.exists(_ != 0.0) then
+          // Preparation is lazy per active term, but precedes onset windowing
+          // in evaluation; retain that ordering in the validation boundary.
+          Regressor.kernelSampleCount(hrf, hrf.span, precision.value) match
+            case Left(error) => return Left(error)
+            case Right(_) => ()
+          val reg = sharedRegressor(ons, hrf, durations, amplitudes, summate)
+          Regressor.validateConvolution(reg, grid, precision.value) match
+            case Left(error) => return Left(error)
+            case Right(_) => ()
+        condition += 1
+      block += 1
+    Right(())
+
+  private def convolutionShape(
+      frame: SamplingFrame,
+      columns: Double
+  ): Either[ConvolutionError, (Int, Int, Int)] =
+    val rows = frame.blockLens.iterator.map(_.toDouble).sum
+    for
+      cells <- ConvolutionDiscretization.cellCount(rows, columns, "convolved term output")
+      // Check dimensions independently, including a zero-column output.
+      rowCount <- ConvolutionDiscretization.cellCount(rows, 1.0, "convolved term rows")
+      columnCount <- ConvolutionDiscretization.cellCount(columns, 1.0, "convolved term columns")
+    yield (rowCount, columnCount, cells)
+
+  private def convolveShared(
+      hrf: Hrf,
+      samplingFrame: SamplingFrame,
+      precision: Seconds,
+      dropEmpty: Boolean,
+      summate: Boolean,
+      scaling: HrfColumnScaling,
+      eventDivisors: Option[Vector[Vector[Double]]]
+  ): ConvolvedTerm =
     val dm = designMatrix(dropEmpty = dropEmpty)
     val nConds = dm.conditionTags.length
     val nb = hrf.nbasis
+    val (totalRows, totalCols, outputCells) = convolutionShape(samplingFrame, nConds.toDouble * nb.toDouble)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
     val finalConditions = columnConditionsFor(dm.conditionTags, nb)
     val finalBasisIx = columnBasisIxFor(nConds, nb)
@@ -221,9 +336,7 @@ final case class EventTerm(
     val finalCells = provenanceFor(provenance, p => Some(p.cell), nb)
     val finalModulators = provenanceFor(provenance, _.modulator, nb)
 
-    val totalRows = samplingFrame.blockLens.sum
-    val totalCols = nConds * nb
-    val out = new Array[Double](totalRows * totalCols)
+    val out = new Array[Double](outputCells)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
@@ -266,17 +379,34 @@ final case class EventTerm(
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
         if ampB.exists(_ != 0.0) then
-          val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
-          val ev = preparedKernel.evaluate(reg, grid)
           // Store basis-major: [b01: all conds] [b02: all conds] ...
-          var basis = 0
-          while basis < nb do
-            val outCol = basis * nConds + cond
-            var r = 0
-            while r < blockLen do
-              out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
-              r += 1
-            basis += 1
+          eventDivisors match
+            case None =>
+              val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
+              val ev = preparedKernel.evaluate(reg, grid)
+              var basis = 0
+              while basis < nb do
+                val outCol = basis * nConds + cond
+                var r = 0
+                while r < blockLen do
+                  out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
+                  r += 1
+                basis += 1
+            case Some(divisors) =>
+              // Convolution is linear in event amplitude: dividing each event's
+              // amplitude by its basis divisor and keeping that basis's column
+              // is exactly the sum of per-event scaled responses.
+              var basis = 0
+              while basis < nb do
+                val scaledB = eIdx.indices.map(k => ampB(k) / divisors(eIdx(k))(basis))
+                val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = scaledB, summate = summate)
+                val ev = preparedKernel.evaluate(reg, grid)
+                val outCol = basis * nConds + cond
+                var r = 0
+                while r < blockLen do
+                  out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
+                  r += 1
+                basis += 1
         cond += 1
 
       rowOffset += blockLen
@@ -319,8 +449,8 @@ final case class EventTerm(
     require(provenance.length == nConds, "condition provenance and design columns must have equal length")
 
     val representative = hrfs0.headOption.getOrElse(Hrfs.SPMG1)
-    val totalRows = samplingFrame.blockLens.sum
-    val totalCols = hrfs0.map(_.nbasis).sum
+    val (totalRows, totalCols, outputCells) = convolutionShape(samplingFrame, hrfs0.iterator.map(_.nbasis.toDouble).sum)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     val finalNames =
       dm.conditionTags.zip(hrfs0).flatMap { case (condition, conditionHrf) =>
         Names.makeColumnNames(termTag, Vector(condition), conditionHrf.nbasis)
@@ -336,7 +466,7 @@ final case class EventTerm(
     val finalModulators =
       provenance.zip(hrfs0).flatMap { case (p, conditionHrf) => Vector.fill(conditionHrf.nbasis)(p.modulator) }
     val finalHrfs = hrfs0.flatMap(conditionHrf => Vector.fill(conditionHrf.nbasis)(conditionHrf))
-    val out = new Array[Double](totalRows * totalCols)
+    val out = new Array[Double](outputCells)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
@@ -426,6 +556,14 @@ final case class EventTerm(
     val rep = hrfs0.headOption.getOrElse(Hrfs.SPMG1)
     val nb = rep.nbasis
     require(hrfs0.forall(_.nbasis == nb), "all per-event HRFs must have the same nbasis")
+    // A broadcast (or one identical) HRF is a shared kernel: it is recorded as
+    // the term HRF, not as per-event HRFs, so shared-kernel operations such as
+    // basis orthogonalization remain available.
+    val sharedKernel = hrfs.length == 1 || hrfs0.forall(_ eq rep)
+    val recordedEventHrfs = if sharedKernel then Vector.empty else hrfs0
+
+    val (totalRows, totalCols, outputCells) = convolutionShape(samplingFrame, nConds.toDouble * nb.toDouble)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
     val finalConditions = columnConditionsFor(dm.conditionTags, nb)
@@ -434,9 +572,7 @@ final case class EventTerm(
     val finalCells = provenanceFor(provenance, p => Some(p.cell), nb)
     val finalModulators = provenanceFor(provenance, _.modulator, nb)
 
-    val totalRows = samplingFrame.blockLens.sum
-    val totalCols = nConds * nb
-    val out = new Array[Double](totalRows * totalCols)
+    val out = new Array[Double](outputCells)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 || n == 0 then
@@ -449,7 +585,8 @@ final case class EventTerm(
         columnBasisIx = finalBasisIx,
         columnCells = finalCells,
         columnModulators = finalModulators,
-        columnScales = emptyScales
+        columnScales = emptyScales,
+        eventHrfs = recordedEventHrfs
       )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
@@ -495,7 +632,8 @@ final case class EventTerm(
       columnBasisIx = finalBasisIx,
       columnCells = finalCells,
       columnModulators = finalModulators,
-      columnScales = columnScales
+      columnScales = columnScales,
+      eventHrfs = recordedEventHrfs
     )
 
   private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =

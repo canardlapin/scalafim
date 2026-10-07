@@ -1,6 +1,6 @@
 package scalafim.fmri.design
 
-import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisError, KernelBasisSpec}
+import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisError, KernelBasisProvenance, KernelBasisSpec}
 import scalafim.fmri.hrf.{Lag, PositiveSeconds}
 import scalafim.fmri.hrf.family.{GaussianFamily, ShapePoint}
 
@@ -55,8 +55,37 @@ class HrfKernelBasisSuite extends munit.FunSuite:
     assert(kernel(Lag(24.5)).data.forall(_ == 0.0))
     assertEquals(basis.responseBasis.dimension, basis.rank)
     assertEquals(basis.responseBasis.elements.length, basis.rank)
-    assert(basis.provenance.canonical.contains(s"rank=${basis.rank}"))
-    assert(basis.provenance.canonical.startsWith("kernel-basis/v1|family=gaussian"))
+    assert(basis.provenance.canonical.contains(s"|rank=${basis.rank}|"))
+    assert(basis.provenance.canonical.contains(s"|maxRank=${basis.spec.maxRank}|heldOutPoints=${basis.spec.heldOutPoints}|"))
+    assert(basis.provenance.canonical.startsWith("kernel-basis/v2|family=8:gaussian"))
+
+  test("kernel basis provenance has a platform-independent IEEE and string-framed golden"):
+    val provenance = KernelBasisProvenance(
+      family = "gauss|ian;=",
+      chart = Vector(("axis,|[]:=", -0.0, 24.0)),
+      horizonSeconds = -0.0,
+      fineStepSeconds = 0.1,
+      nodesPerAxis = Vector(2, 21),
+      includeDerivatives = true,
+      tolerance = 1e-3,
+      maxRank = 32,
+      heldOutPoints = 300,
+      rank = 4,
+      seed = 11L
+    )
+    assertEquals(
+      provenance.canonical,
+      "kernel-basis/v2|family=11:gauss|ian;=|chart=chart(76:axis(10:axis,|[]:=,25:bits:-9223372036854775808,24:bits:4627448617123184640))|horizon=bits:-9223372036854775808|step=bits:4591870180066957722|nodes=nodes(1:2,2:21)|derivatives=true|tolerance=bits:4562254508917369340|maxRank=32|heldOutPoints=300|rank=4|seed=11"
+    )
+
+  test("matrix identity is dimensions plus a portable FNV-1a digest of the IEEE bits"):
+    val values = Array(1.0, -0.0, 0.1, -1.0, 1e-6, 2.5)
+    assertEquals(KernelBasisProvenance.matrix(2, 3, values), "matrix(1:2,1:3,24:fnv1a64:da488cb4783cb320)")
+    assertEquals(KernelBasisProvenance.matrix(3, 2, values), "matrix(1:3,1:2,24:fnv1a64:da488cb4783cb320)")
+    assertEquals(KernelBasisProvenance.matrix(1, 2, Array(0.0, -0.0)), "matrix(1:1,1:2,24:fnv1a64:881f9fb960fe8ae5)")
+    assertEquals(KernelBasisProvenance.matrix(1, 2, Array(-0.0, 0.0)), "matrix(1:1,1:2,24:fnv1a64:d2f570ef13845ae5)")
+    assertEquals(KernelBasisProvenance.option(None), "none")
+    assertEquals(KernelBasisProvenance.option(Some("")), "some(0:)")
 
   test("coefficient jets match finite differences and reconstruct within the certificate"):
     val point = family.chart.point(5.3, math.log(1.9)).fold(e => fail(e.message), identity)
@@ -101,3 +130,64 @@ class HrfKernelBasisSuite extends munit.FunSuite:
         assertEquals(again.value(j, i), basis.value(j, i))
         i += 1
       j += 1
+
+  test("tail-grid refusals remain typed and precede basis allocation and family evaluation"):
+    val fine = PositiveSeconds(1e-10).fold(e => fail(e.message), identity)
+    HrfKernelBasis.compile(spec.copy(fineStep = fine, nodesPerAxis = Vector(2, 2), heldOutPoints = 1)) match
+      case Left(KernelBasisError.Summary(error: scalafim.fmri.hrf.family.FamilySummaryError.SampleLimitExceeded)) =>
+        assert(error.requested > error.maximum.toDouble)
+      case other => fail(s"expected typed tail admission refusal, got $other")
+    val unsafe = PositiveSeconds.unsafe(scalafim.fmri.hrf.Seconds.unsafe(Double.NaN))
+    assert(HrfKernelBasis.compile(spec.copy(fineStep = unsafe)).swap.exists:
+      case KernelBasisError.Summary(_: scalafim.fmri.hrf.family.FamilySummaryError.InvalidPrecision) => true
+      case _ => false
+    )
+
+  test("certificate diagnostic failures propagate through compile as typed errors"):
+    import scalafim.fmri.hrf.family.{FamilySummaryError, NormalizationRule, ParametricHrfFamily, ShapeChart, ShapeSummary}
+    import scalafim.fmri.hrf.{Hrf, HrfDescriptor, HrfKind}
+    val expected = FamilySummaryError.EvaluationFailed("certificate validation failure")
+    val failing = new ParametricHrfFamily:
+      def name: String = family.name
+      def kind: HrfKind = family.kind
+      def chart: ShapeChart = family.chart
+      def horizon: PositiveSeconds = family.horizon
+      def supports(rule: NormalizationRule): Boolean = family.supports(rule)
+      def libraryNormalization: NormalizationRule = family.libraryNormalization
+      def evalInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit = family.evalInto(lags, point, out)
+      def jetInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit = family.jetInto(lags, point, out)
+      def scaleJetInto(rule: NormalizationRule, point: ShapePoint, out: Array[Double]): Unit = family.scaleJetInto(rule, point, out)
+      def summaries(point: ShapePoint): ShapeSummary = family.summaries(point)
+      def descriptor(point: ShapePoint): HrfDescriptor = family.descriptor(point)
+      def toHrf(point: ShapePoint): Hrf = family.toHrf(point)
+      override def tailRelativeEnergyEither(point: ShapePoint, precision: PositiveSeconds, extent: Double): Either[FamilySummaryError, Double] = Left(expected)
+    assertEquals(HrfKernelBasis.compile(spec.copy(family = failing, nodesPerAxis = Vector(2, 2), fineStep = PositiveSeconds(1.0).toOption.get, heldOutPoints = 1, includeDerivatives = false)), Left(KernelBasisError.Summary(expected)))
+
+  test("default Cascade compilation preserves legacy endpoint bits and certified scientific values"):
+    val cascade = scalafim.fmri.hrf.family.Cascade34Family.Default
+    val input = KernelBasisSpec(cascade, step, Vector(9, 7, 5), 1e-3, maxRank = 40, heldOutPoints = 10)
+    val compiled = HrfKernelBasis.compile(input).fold(e => fail(e.message), identity)
+    assertEquals(compiled.fineCount, 481)
+    assertEquals(compiled.allocationEstimate.trainingColumns, 3150)
+    assertEquals(compiled.allocationEstimate.trainingCells, 1_515_150L)
+    assertEquals(compiled.allocationEstimate.thinRank, 481)
+    assert(compiled.provenance.canonical.startsWith("kernel-basis/v2|family=9:cascade34"))
+    assert(compiled.provenance.canonical.contains("|nodes=nodes(1:9,1:7,1:5)|derivatives=true|"))
+    // The first seeded held-out point is covered by the emitted certificate.
+    val rng = new scala.util.Random(input.seed)
+    val point = ShapePoint.unsafe(Vector.tabulate(cascade.dimension)(axis =>
+      cascade.chart.lower(axis) + rng.nextDouble() * cascade.chart.width(axis)))
+    val truth = new Array[Double](compiled.fineCount)
+    val coefficients = new Array[Double](compiled.rank)
+    compiled.coefficientsInto(point, truth, coefficients)
+    val rebuilt = new Array[Double](compiled.fineCount)
+    compiled.reconstructInto(coefficients, rebuilt)
+    var error = 0.0
+    var norm = 0.0
+    var i = 0
+    while i < truth.length do
+      val delta = rebuilt(i) - truth(i)
+      error += delta * delta
+      norm += truth(i) * truth(i)
+      i += 1
+    assert(math.sqrt(error / norm) <= compiled.certificate.valueError(compiled.rank - 1) + 1e-12)

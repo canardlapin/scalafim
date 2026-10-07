@@ -1,0 +1,1349 @@
+{
+  "worktree": "/private/tmp/scalafim-fit-preparation-20261002",
+  "head": "d727969c476a5553ffe4804945eaa667cddae18d",
+  "branch": null,
+  "files": [
+    {
+      "path": ".agent-work/fit-preparation/fit-all-01.log.meta.json",
+      "kind": "file",
+      "bytes": 561,
+      "sha256": "f6f718c394fc9a3b93c6248446b16f76b27b1eb7551ccd160a2b46b252dc255e"
+    },
+    {
+      "path": ".agent-work/fit-preparation/focused-jvm-01.log.meta.json",
+      "kind": "file",
+      "bytes": 719,
+      "sha256": "9e5fe7f97f9ceaf7f4c0db4509d8990ae7e00e2563653f4ac1c32c9a831b7d59"
+    },
+    {
+      "path": ".agent-work/fit-preparation/focused-jvm-02.log.meta.json",
+      "kind": "file",
+      "bytes": 717,
+      "sha256": "b235233b8c36cb1bc60f2eaaa0d11688dffce10514753452eede561fef5b071c"
+    },
+    {
+      "path": ".agent-work/gls-artifact/compile-01.log.meta.json",
+      "kind": "file",
+      "bytes": 541,
+      "sha256": "27832cbd0bac053412004e9a73516658412274f662c8ba63e40d78e8cdc757e5"
+    },
+    {
+      "path": ".agent-work/gls-artifact/fit-all-01.log.meta.json",
+      "kind": "file",
+      "bytes": 558,
+      "sha256": "d8fd52fdc149ce9b7e062950760f0f61fe1421d5c2df9af0cad94c851b0cf959"
+    },
+    {
+      "path": ".agent-work/gls-artifact/focused-01.log.meta.json",
+      "kind": "file",
+      "bytes": 674,
+      "sha256": "037e623b5413fb4ed4756dfc861e41e3cce563de053f3a31268d79b8bfef2748"
+    },
+    {
+      "path": ".agent-work/gls-artifact/focused-02.log.meta.json",
+      "kind": "file",
+      "bytes": 675,
+      "sha256": "fc720d409e7a46e8c1ff4ffe3dbeb24185465622b219f8d0fb372da699eecefe"
+    },
+    {
+      "path": ".agent-work/gls-artifact/focused-03.log.meta.json",
+      "kind": "file",
+      "bytes": 675,
+      "sha256": "1a3afad47b91f3a49b1d56fade6bbdd1687b73faf41be768fa284a45a6268401"
+    },
+    {
+      "path": ".agent-work/pooled-ar/ar-js-01.log.meta.json",
+      "kind": "file",
+      "bytes": 531,
+      "sha256": "5053fd399fc3a4b2eaf9035dfcccde15d3009608848fdf1ae8152de1554ec1e1"
+    },
+    {
+      "path": ".agent-work/pooled-ar/compile-01.log.meta.json",
+      "kind": "file",
+      "bytes": 627,
+      "sha256": "e449dee9e638730d8d396b545960707b0357410e96b08a58388ad4211e136181"
+    },
+    {
+      "path": ".agent-work/pooled-ar/fit-all-01.log.meta.json",
+      "kind": "file",
+      "bytes": 554,
+      "sha256": "7abca7e64a300e184854a28bbd0309009f9a1fae3fdbd7e6437a77d287aa2ca5"
+    },
+    {
+      "path": ".agent-work/pooled-ar/fit-all-02.log.meta.json",
+      "kind": "file",
+      "bytes": 555,
+      "sha256": "96eb3cc271d3b77fcc8c1646f8ea065ec7c55dd0a27af85f329a1a2e8e2c7a2c"
+    },
+    {
+      "path": ".agent-work/pooled-ar/fit-focused-02.log.meta.json",
+      "kind": "file",
+      "bytes": 611,
+      "sha256": "cfabbfee00d07a2761bb357902520e00e6dc269d1738083a8c08a98d13bac83f"
+    },
+    {
+      "path": ".agent-work/pooled-ar/fit-focused-03.log.meta.json",
+      "kind": "file",
+      "bytes": 611,
+      "sha256": "1af8682b3e502fca48ca2f53012d4d0ae2e787e9132ed235f41cf25345eabc7d"
+    },
+    {
+      "path": ".agent-work/pooled-ar/fit-focused-04.log.meta.json",
+      "kind": "file",
+      "bytes": 611,
+      "sha256": "781425d0c2f67624807207cf8022a07017465a2e4750ccfeb757960600fb0ae0"
+    },
+    {
+      "path": "atlas-workflows.sbt",
+      "kind": "file",
+      "bytes": 1123,
+      "sha256": "59d62dd54a072a9cc926bfc6cf45bbf374e29eaf6e8f0c010237c4e7051df863"
+    },
+    {
+      "path": "build.sbt",
+      "kind": "file",
+      "bytes": 56075,
+      "sha256": "f8b8c578059e11fc3b1f8771c42caf0f29172280475add2bb673912483451274"
+    },
+    {
+      "path": "examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/AtlasExampleData.scala",
+      "kind": "file",
+      "bytes": 2838,
+      "sha256": "8ba4dbe5ebfaa012d737e643aaf626941cbc7a26b8b5ccd7b08855fbc7159c50"
+    },
+    {
+      "path": "examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/ReduceByParcel.scala",
+      "kind": "file",
+      "bytes": 1470,
+      "sha256": "8c75adc251c12bbc4f9a5d676befd34da8cfbebae1460dc6cf90007d9c19086f"
+    },
+    {
+      "path": "examples/atlas-jvm/src/test/scala/scalafim/examples/atlas/AtlasExamplesSmokeSuite.scala",
+      "kind": "file",
+      "bytes": 1982,
+      "sha256": "e7b55b41d6b6b58ab14a81508af17b226282ff27628bb4fea74b38d235203bb5"
+    },
+    {
+      "path": "examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala",
+      "kind": "file",
+      "bytes": 4845,
+      "sha256": "e3473d6634bf2208f038b098929f9432fb10a756345447ed23d64063aa77c03c"
+    },
+    {
+      "path": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala",
+      "kind": "file",
+      "bytes": 6014,
+      "sha256": "7948027bb7376f502e98289f4fbfae692f31077eb2343e89f78f4ae4e1de79c1"
+    },
+    {
+      "path": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala",
+      "kind": "file",
+      "bytes": 23884,
+      "sha256": "de4dba93b28f356b12997172d230d105f7c5ad79f910f72904c0c49deb3764e9"
+    },
+    {
+      "path": "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala",
+      "kind": "file",
+      "bytes": 5281,
+      "sha256": "ee92bef5e328e01c5c13f5a22dc8c02d87d6ec65f0195fcfbbcc9bbcb7bddfba"
+    },
+    {
+      "path": "modules/atlas-workflows/README.md",
+      "kind": "file",
+      "bytes": 1703,
+      "sha256": "ac6af4bc0d196d4309cd5f660d3c1fa940ae3e06da8dfac8fb4231d69e13efa3"
+    },
+    {
+      "path": "modules/atlas-workflows/shared/src/main/scala/scalafim/atlas/workflows/AtlasTransport.scala",
+      "kind": "file",
+      "bytes": 5727,
+      "sha256": "b0ac77e2944221c5566e16c861f43f51a0fc4221703745df25c44880305fba76"
+    },
+    {
+      "path": "modules/atlas-workflows/shared/src/main/scala/scalafim/atlas/workflows/ParcelWorkflows.scala",
+      "kind": "file",
+      "bytes": 4492,
+      "sha256": "ae49bc0da6d5420b4e8fc8b4a363e12a560960cb34d3f2c74b1bbc036da3c136"
+    },
+    {
+      "path": "modules/atlas-workflows/shared/src/test/scala/scalafim/atlas/workflows/AtlasWorkflowsSuite.scala",
+      "kind": "file",
+      "bytes": 6028,
+      "sha256": "de7d84b279550b9f0541720aac7c69e24984e9a73bfc4dab25d0a548191fd819"
+    },
+    {
+      "path": "modules/atlas/README.md",
+      "kind": "file",
+      "bytes": 27878,
+      "sha256": "cf779de474809a72c5977a2edcd3fc279c314f6b7826f8e89c66912dea813b0b"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala",
+      "kind": "file",
+      "bytes": 6466,
+      "sha256": "51768aea0ef4d66e64037d7c5bb5d7d76e1250d2295b618cd09bbb2ff8bccbfc"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala",
+      "kind": "file",
+      "bytes": 9449,
+      "sha256": "77154fe0a9e2b9c53d1664e90a80dc270fc2d1ece77a3a00b1503237401b66a5"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/FslAtlasLoader.scala",
+      "kind": "file",
+      "bytes": 5473,
+      "sha256": "e0f8c4def70c2aaa9fe86b6fdd9ab76c3001311e1a68fb68035336a302181167"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala",
+      "kind": "file",
+      "bytes": 5094,
+      "sha256": "ed2aa6585270733ffcb47045e576196312d58285bf404c6a7ab8732883d8b0b4"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/HcpExLoader.scala",
+      "kind": "file",
+      "bytes": 3540,
+      "sha256": "43d5725d5363b1b1f3f7456562eb33bce86261ee7864d03253232bc1bdedc270"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/JulichVisualLoader.scala",
+      "kind": "file",
+      "bytes": 568,
+      "sha256": "48957043a0eef7965f485bf275b61a688ab4ccce266ecf2ffc0a5878e29f2bcf"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/OlsenMtlLoader.scala",
+      "kind": "file",
+      "bytes": 1198,
+      "sha256": "3f95a43dde6dc2622c543c7c4fb8d68705a133292e8c9f89bcad9745fa797650"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/ParcelMetricFiles.scala",
+      "kind": "file",
+      "bytes": 1950,
+      "sha256": "f759363fd099b89497426d7d7ffb21117d3bad874d85bc691890a5bdaa2f2015"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/PinnedVolumeLoader.scala",
+      "kind": "file",
+      "bytes": 5881,
+      "sha256": "cb5e6b0509b1dd8f8eb034ffd21eca89206d4653e134bb94fa8433651f64185c"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala",
+      "kind": "file",
+      "bytes": 5405,
+      "sha256": "0ef411573461df4025305e0c18bb1affd04f4825e01d8d7382416fc621c0e2d6"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/StandardSurfaceAtlasLoader.scala",
+      "kind": "file",
+      "bytes": 10207,
+      "sha256": "daa1f3f47c542fff78e6a6d0b43caacd345ab5f81e10e14bf3c1f280b5599102"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SubcorticalAtlasLoader.scala",
+      "kind": "file",
+      "bytes": 5321,
+      "sha256": "95bb867def33b8c7a09bfae6d64a64b6f5c72830d16e8085971c8f17f45ef300"
+    },
+    {
+      "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoader.scala",
+      "kind": "file",
+      "bytes": 9889,
+      "sha256": "75825be9392a3b92ba04e505967e333d8c31dd5716bafbfb537227ac09a30c6a"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/resources/scalafim/atlas/io/figshare-glasser/MANIFEST.txt",
+      "kind": "file",
+      "bytes": 394,
+      "sha256": "d197d79fe24c09ba03db10661999d23c242c2abcad5a039e92cef9b5274fcb56"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/resources/scalafim/atlas/io/figshare-glasser/lh.annot",
+      "kind": "file",
+      "bytes": 1316983,
+      "sha256": "d4da634644b4c595dbda23963e01752059f0e7714be70169eb84e25e09ba2b44"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/resources/scalafim/atlas/io/figshare-glasser/rh.annot",
+      "kind": "file",
+      "bytes": 1316984,
+      "sha256": "744eff4e57ce8121c43851eea425475baf92d9ba8686299a7435517ab972e9a2"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AsegLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 5496,
+      "sha256": "31a4c38655d85cb8574f62eb6367786cac13c54c8a51c30fe70791ca54d4bc02"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AtlasIoSuite.scala",
+      "kind": "file",
+      "bytes": 20889,
+      "sha256": "160b265386b9a74bfff1e9e5d0ac27989c5309680312929138bfa69fd85407b1"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/BrainnetomeLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 9786,
+      "sha256": "2e2856307b0bbbc39871d65e95c2b95ca2264de815195bdb3734a3436b3a7100"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/FslAtlasLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 4109,
+      "sha256": "4abe956995c0880dcd499abb96730a2f4a12676e1de625604e9f9973cfc77649"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/GlasserIdentityIoSuite.scala",
+      "kind": "file",
+      "bytes": 1197,
+      "sha256": "cc6501e9e32fc766e6dafab065f6eb112b8a11d886c918a5f91937c296f09c1a"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/HcpExLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 193,
+      "sha256": "e06dc70e684e1f02cc42f7f5fc1dd2db757ccb3deb53c319da60c9e9cc0c3e6a"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/JulichVisualLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 2188,
+      "sha256": "6bea7eb9e84b5bc5c9fdc574b3b52868485a637366409cc383381f210cac3fe9"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/OlsenMtlLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 290,
+      "sha256": "7be08e22e11bdfc5e2c76e5f88204ac3a41a8d709c3da98611e36b3c222f2847"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/ParcelMetricFilesSuite.scala",
+      "kind": "file",
+      "bytes": 2343,
+      "sha256": "785ed8c055917e92ea60551b289b5a2182b5aae27e40d83daa7a18f6617021b1"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/PinnedAtlasQualificationSuite.scala",
+      "kind": "file",
+      "bytes": 4683,
+      "sha256": "8cda7418a610dde50b15ef6b6529af369f13ac780e474a920753c2f863dd386f"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/StandardSurfaceAtlasLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 7571,
+      "sha256": "f8dbb0afd8f221871cac3331d71ab0f33d42504398a0e41a8ca745188a9a273c"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 1979,
+      "sha256": "dd2f381f55b45f07aa08dce29eff86918c6b4d082f67dbb7a509e52d54a2749a"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasQualificationSuite.scala",
+      "kind": "file",
+      "bytes": 2776,
+      "sha256": "b33d3ffed5f9d764c17d6876151b98597fea78e159bb732a77f52badfd59d4fe"
+    },
+    {
+      "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoaderSuite.scala",
+      "kind": "file",
+      "bytes": 5633,
+      "sha256": "454bd5b4d4c9d339d5c7574e06fb2406c805f6deea040a532d4b3783966f93ee"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasCompose.scala",
+      "kind": "file",
+      "bytes": 21690,
+      "sha256": "d78ddb09b8ef1f134f450913c12fa14c3d17656120464cde8b6e1b030a459167"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasDilation.scala",
+      "kind": "file",
+      "bytes": 1920,
+      "sha256": "70398759f76daf3c519a0205bf26d4292145063e1823b1f5b17f3ff451f02dd2"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasError.scala",
+      "kind": "file",
+      "bytes": 3752,
+      "sha256": "7d8f35876966a5e6dec132c2cdc44db6d8dd93572aa2c63e9a4d187f1455b04a"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasExpand.scala",
+      "kind": "file",
+      "bytes": 517,
+      "sha256": "dbbaa7581701b82453b98bb359e1990b0ed2582a25500b124ced9cb1325f478e"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasGrouping.scala",
+      "kind": "file",
+      "bytes": 9545,
+      "sha256": "d797e1d1d969478af93f772961a2ed8d470c740d5e1f2d39b4419809046995be"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala",
+      "kind": "file",
+      "bytes": 61157,
+      "sha256": "0bac238cd2ea00e4a6e3616237e33ad7a83b58718c5f651e15cc5359b7854188"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRealization.scala",
+      "kind": "file",
+      "bytes": 32062,
+      "sha256": "8f7b5cdaa4f0a474eb1ab909d7826636fe3bfa52c3c7eb03a4a2d0e625aaf223"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala",
+      "kind": "file",
+      "bytes": 13991,
+      "sha256": "f7f6f9ad37075516eb6128a4425b0a0182d81a3f088eda775231e85e0bd4b7d9"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/FslAtlasRequest.scala",
+      "kind": "file",
+      "bytes": 2566,
+      "sha256": "d4045934452bfa9d34eaa5a97b3742c1592da10c08bffa6c28e7c8994223b8c1"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/HcpExRequest.scala",
+      "kind": "file",
+      "bytes": 2069,
+      "sha256": "ec28b938cd23b2fd7495f3fe272d42155befeed3a37930072c45510041f32149"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/JulichVisualRequest.scala",
+      "kind": "file",
+      "bytes": 967,
+      "sha256": "8f218db91f88f420bd7232cfc888f6177d5cf265c37b5550332b87a6e96a2cdd"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/OlsenMtlRequest.scala",
+      "kind": "file",
+      "bytes": 2253,
+      "sha256": "fc2767fd6101b535c8ab8dfbf4c0506641b4553b3b2c2c0a01ad37239f5495cc"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelData.scala",
+      "kind": "deleted-or-nonfile"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelFields.scala",
+      "kind": "file",
+      "bytes": 7989,
+      "sha256": "9c5cc580b9b5b3f6945f1571d2808cd30338f9521f6c9807dc34ff683e0d2c77"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelIdentity.scala",
+      "kind": "file",
+      "bytes": 3275,
+      "sha256": "b8eb390d47a26ea978be4ed83a2a0837fa37ce24a0aa107bad5c6f439b13c930"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetric.scala",
+      "kind": "file",
+      "bytes": 3586,
+      "sha256": "135d0a1c25986f2d041c5f5e7ce2ee01b87a4cab40c7978d560c6e5139541f9a"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetricJson.scala",
+      "kind": "file",
+      "bytes": 17899,
+      "sha256": "6efa230aab69a7a584b041db749c352cc07f9dfd061c0de6badd21f877ed3fdc"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/PinnedAtlasAsset.scala",
+      "kind": "file",
+      "bytes": 2162,
+      "sha256": "b4fd2e64502298f027915ff6c5b673d5dc2376f248ca88b6821835bb2f37c188"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Provenance.scala",
+      "kind": "file",
+      "bytes": 20269,
+      "sha256": "396c7a62389a97f5d706023f24f86193b3de8421c7eaa67c370ff5524dbb0fd6"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Query.scala",
+      "kind": "file",
+      "bytes": 6251,
+      "sha256": "1f6323cb122bbb6ea334239a1c68395fa0ef38de18fefb0e7645360b92b03838"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Reduce.scala",
+      "kind": "file",
+      "bytes": 11083,
+      "sha256": "0b97855e39dc1c936bc55250310432ae4ad50930d03776a47f256cac3b32321a"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Region.scala",
+      "kind": "file",
+      "bytes": 6056,
+      "sha256": "57354451f7061cfa5981422245949f1a16e99d5701e135ed86b7bfaf756b8bde"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala",
+      "kind": "file",
+      "bytes": 12764,
+      "sha256": "48c8281b2cc7fcbb76508d72a169df6b0453643aaa187d2752b8c8fb13b08951"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Spaces.scala",
+      "kind": "file",
+      "bytes": 17944,
+      "sha256": "559cd3e8dd225884a38768deb1f9a57cc432f009742b2bf7a65df9fa6349dbe0"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/StandardAtlases.scala",
+      "kind": "file",
+      "bytes": 11893,
+      "sha256": "f83a0378bb2e72ed38846320f3c88e75fcb541d846cdbe75e97f8f2e74ef45b7"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/StandardSurfaceAcquisition.scala",
+      "kind": "file",
+      "bytes": 3365,
+      "sha256": "7bfb055238738f637a7daa32b2410910716c13d5549447ce41b45dd767d28c24"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SubcorticalAtlasRequest.scala",
+      "kind": "file",
+      "bytes": 5430,
+      "sha256": "13559b73b638f96bfee36912603a1be710c602bb412854341e141ce7948659ec"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlas.scala",
+      "kind": "file",
+      "bytes": 10437,
+      "sha256": "4c7f6e894a0cac0c92c8f1104210409fa007bf82a48eec14a3459bb8104a3ddd"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlasFields.scala",
+      "kind": "file",
+      "bytes": 2035,
+      "sha256": "4f84462ffbc91025dbddbdb59597984ed26bb451083af454ddd981738b3c4077"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateFlowBridge.scala",
+      "kind": "file",
+      "bytes": 14489,
+      "sha256": "8d0cf081def5d652b115187ccac29a5a7982cf00eaa8af894990fb2c4f72ee37"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/VolumeAtlas.scala",
+      "kind": "file",
+      "bytes": 3359,
+      "sha256": "175288da4bfa0f720f650366a331d6f5178ecef0a05530ec91977461b4768ca4"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/syntax.scala",
+      "kind": "file",
+      "bytes": 3418,
+      "sha256": "b1034dce16407364630332837d9cbcd1e386e646365aa2ba341c4e86c1a6587d"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-alignment.json",
+      "kind": "file",
+      "bytes": 656,
+      "sha256": "f929f8786b9e1c907331c5bbbd031c01ded97dc5cc33ee2d84a66897b104c97a"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-alignment.tsv",
+      "kind": "file",
+      "bytes": 882,
+      "sha256": "00117ff5fdf84f291420f9b2c34d27aff2ea62d8686881977b3b8fbc591f2e1a"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-composition.json",
+      "kind": "file",
+      "bytes": 955,
+      "sha256": "ca6dda7cfac34971998b33d7b443d75db4dfdf91428c300a9156d70015593756"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-composition.tsv",
+      "kind": "file",
+      "bytes": 732,
+      "sha256": "5a531673da070ec307da0694075071a59786925bade52bf42231f8755d9b6f85"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-expansion.json",
+      "kind": "file",
+      "bytes": 702,
+      "sha256": "226b76c599a2862db67b626b83e6fceb669b03cdf98ecb8190c8a76e8e77a241"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-expansion.tsv",
+      "kind": "file",
+      "bytes": 734,
+      "sha256": "1cefc5b6e2cc47a165d27e770247ae4b7d50f28c2becf9f1d438a62690479a25"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasComposeSuite.scala",
+      "kind": "file",
+      "bytes": 21533,
+      "sha256": "5dcbfefac9a35da70830cdc0a58aab8ed9fece229a5d61a5ed8b34b42857ba81"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoreSuite.scala",
+      "kind": "file",
+      "bytes": 11640,
+      "sha256": "564cf503fd423082a4cb6009d1a2f359672e6d51f31d6508f8804df728d06cda"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoverageSuite.scala",
+      "kind": "file",
+      "bytes": 15184,
+      "sha256": "e9550f8e00cff7d1e221325110aa62272b6357f62c519c55b15bc0a4cb7cae42"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasDilationSuite.scala",
+      "kind": "file",
+      "bytes": 4219,
+      "sha256": "11875425524c3d360f1418eb4004d5b406de26ca90c2c1f795248e8aa5aef1d9"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasExpandSuite.scala",
+      "kind": "file",
+      "bytes": 2050,
+      "sha256": "ef5c87ad2c1cbf579610ff2493a306071d0282a6c471d091720dfaafc640493a"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasGroupingSuite.scala",
+      "kind": "file",
+      "bytes": 6694,
+      "sha256": "731c00db23ed69fc2367342f55988e1f978512e4444b828cf830a6c5f04441f5"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasInvariantSuite.scala",
+      "kind": "file",
+      "bytes": 11071,
+      "sha256": "933c89f32d81eebb6076add49b4db985cd954f03c21d946b61d56228fb2b8302"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasParityCorpusSuite.scala",
+      "kind": "file",
+      "bytes": 4651,
+      "sha256": "2343f2535859a5cd49268d8983ddd42ce3136fad4124c2882353c0deebc3551a"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasProvenanceSuite.scala",
+      "kind": "file",
+      "bytes": 8728,
+      "sha256": "aaeffe72d68230e0970c118a122e3fdcdbcd6d20476d81c08dab0d0fd1e75f22"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasPublicationSuite.scala",
+      "kind": "file",
+      "bytes": 18851,
+      "sha256": "84fae35f46ccb6f53017c5a831ec216470f760adbb5443e0d4ebb34a312ef260"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasQuotientSuite.scala",
+      "kind": "file",
+      "bytes": 7212,
+      "sha256": "98d7f0eb259320471ba275f1a1ceca0c16a2ef8290f4bcc9b31daa3824c0909a"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasRealizationSuite.scala",
+      "kind": "file",
+      "bytes": 7797,
+      "sha256": "f25cb0db03a59a56c98e032dcd6484c7e494f2cd9669bac64b2ebc7f8c9dae6f"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasReductionSuite.scala",
+      "kind": "file",
+      "bytes": 8902,
+      "sha256": "4be74213bc34c35c1a2f437bed09e723592c4e3d88947e9d4a69ef218aaaa341"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/FslAtlasRequestSuite.scala",
+      "kind": "file",
+      "bytes": 1132,
+      "sha256": "517a485b39c9758476c04d35dfb30850704c73473cc9399092e17c23b1741040"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/GraphDifferentialSuite.scala",
+      "kind": "file",
+      "bytes": 5052,
+      "sha256": "346a896d90bffc569973f51fa7a8ebce6ee94f2cc9ef7d95b7ea071717148b86"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/HcpExRequestSuite.scala",
+      "kind": "file",
+      "bytes": 513,
+      "sha256": "5235310690f36a4fbea78d1f40f3a03b0262f2acf31b6050195815877dec2800"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/JulichVisualSuite.scala",
+      "kind": "file",
+      "bytes": 1454,
+      "sha256": "51144fe9ea3072b65c7c53816264b59534e9a6686bc3de7f34e7dd6485519f1c"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/OlsenMtlRequestSuite.scala",
+      "kind": "file",
+      "bytes": 436,
+      "sha256": "36e64f5027a4a778b01b72c941b0cc651d124989f6aa948150bd0220484b4c22"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelFieldsSuite.scala",
+      "kind": "file",
+      "bytes": 9637,
+      "sha256": "ead07179511e50eb835f4d174e6c8701a10cb0bd2914ec225c9025da5713b5be"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelIdentitySuite.scala",
+      "kind": "file",
+      "bytes": 11825,
+      "sha256": "ec9753ec59e1628ed5d982949a1c24bd2e71387ce4953147c8d592bfc224cac1"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricInteropSuite.scala",
+      "kind": "file",
+      "bytes": 2152,
+      "sha256": "17f1c1d7da93227db7260b2fcfaa1071f845e4b3b5d3d768284179f5ff8461e4"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricSuite.scala",
+      "kind": "file",
+      "bytes": 10232,
+      "sha256": "1e1ace69b97acf04938bd2a852f79dd8499f4f1bc169c07cd5ad4423ffa61d7e"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/SpaceTransformGraphSuite.scala",
+      "kind": "file",
+      "bytes": 11163,
+      "sha256": "e372a43c2cdf00cefc858a0ba7ec4fd67d41cded1394976e4cc7dc829f10b72f"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/SubcorticalAtlasRequestSuite.scala",
+      "kind": "file",
+      "bytes": 885,
+      "sha256": "5c0c18dd92475b15dc74bb5bc766d42e5b6919a2f64780d9060332c0e80921fe"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasFieldsSuite.scala",
+      "kind": "file",
+      "bytes": 2957,
+      "sha256": "e4ae7311b2887105cb94b589a9b8ed2dea463a5ccc7125174a79adc4bcd97da4"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasSuite.scala",
+      "kind": "file",
+      "bytes": 6730,
+      "sha256": "597556682bbea8a2002e24487748bc44ef9ebb125f01137a0a95e24f0f18e22c"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasCompositionFixture.scala",
+      "kind": "file",
+      "bytes": 657,
+      "sha256": "247eccc836e428e7a4605411889e5e137b04b54abdfe9914de24772ed267bd05"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasParityFixtures.scala",
+      "kind": "file",
+      "bytes": 5614,
+      "sha256": "33743f0fcaecd3d0f7b7675e1e97de4d735af1f2bdf35d6db32d3f35c93bf8ef"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelAlignmentFixture.scala",
+      "kind": "file",
+      "bytes": 1796,
+      "sha256": "fd446abc4df411b70ac1a4175a14d73f3580da1ba79383ac4b7ec13d13dc1c78"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelExpansionFixture.scala",
+      "kind": "file",
+      "bytes": 900,
+      "sha256": "17e0245e37ce651c2071b3b6dc4ca97353854fd07b049cda14d9aed8f657fe39"
+    },
+    {
+      "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelMetricInteropFixture.scala",
+      "kind": "file",
+      "bytes": 30009,
+      "sha256": "4b2009ebef08c0478e008051d38e59704ac99b585ae15cb4b9ba2ade6869def4"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReview.scala",
+      "kind": "file",
+      "bytes": 3747,
+      "sha256": "94d3168aad262e698843461b6bfc4bcba2eeda0384046a6e16ec89afeeaf92e7"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReviewGraphics.scala",
+      "kind": "file",
+      "bytes": 8131,
+      "sha256": "eec33a7305d60b6282baccab4eae28eeb5bceffbd480519b4e4bd1569205d9b0"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisGraphics.scala",
+      "kind": "file",
+      "bytes": 4129,
+      "sha256": "e01bc0b58ec1c85b0b8667e0bf9805a654390dfa3145a0e8c4defdbcb2d860b2"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisReview.scala",
+      "kind": "file",
+      "bytes": 5628,
+      "sha256": "1cfed7062d7f50b5616b69f5aeda28870c4de54a21f13fcbc491a1a607c083bb"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala",
+      "kind": "file",
+      "bytes": 12917,
+      "sha256": "be73e7cd392eb240d358fa03c505534ff007472aa20eae7888eef896b3d578d3"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignReviewSuite.scala",
+      "kind": "file",
+      "bytes": 6297,
+      "sha256": "a255419ce36f37164583590f29a0f0cf8036fceccf738fef6182e43c0f4f5142"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala",
+      "kind": "file",
+      "bytes": 5886,
+      "sha256": "c9fe4193dbf00723eadeaa3887aec72d9e50efe9fea798b6f3bee2dd9b20ec55"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/ResponseBasisReviewSuite.scala",
+      "kind": "file",
+      "bytes": 7499,
+      "sha256": "69ca80a35a71be1c4940696d8547ac9ce1177b34a26be01d980f94ac4160cd48"
+    },
+    {
+      "path": "modules/fit/README.md",
+      "kind": "file",
+      "bytes": 29236,
+      "sha256": "c0f2efbb08b238ae35ead378bbd805c851b239ba1c3a3132455097bfefa74620"
+    },
+    {
+      "path": "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala",
+      "kind": "file",
+      "bytes": 25177,
+      "sha256": "2d34c616f6898db78a7277ccbca8de708ad95eb0903f21b832e7759a2478b070"
+    },
+    {
+      "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelStatusAllocationSuite.scala",
+      "kind": "file",
+      "bytes": 1230,
+      "sha256": "124d047fbfa4ff23a396d650720f7b687dedfeddb659bbf3b71a7a82598c060e"
+    },
+    {
+      "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala",
+      "kind": "file",
+      "bytes": 19480,
+      "sha256": "bdd396eecab9a14bc667995703ee60e5f59b38fa38956cd64907d68b11c51917"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala",
+      "kind": "file",
+      "bytes": 29432,
+      "sha256": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala",
+      "kind": "file",
+      "bytes": 41572,
+      "sha256": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala",
+      "kind": "file",
+      "bytes": 20376,
+      "sha256": "6ad275998dfb203697dc248b7435f645134df8f596b296f0d7a61b9ad8c0e9f7"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala",
+      "kind": "file",
+      "bytes": 7547,
+      "sha256": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala",
+      "kind": "file",
+      "bytes": 32538,
+      "sha256": "01e5b9bcc21bf6e15371279045273117a67e1de42f98ea7dc374fb990dcb5517"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala",
+      "kind": "file",
+      "bytes": 7896,
+      "sha256": "145f74c12e1c598b28106792b36c22625f5b7a0c517a362fb412d1a13040ccc8"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala",
+      "kind": "file",
+      "bytes": 7515,
+      "sha256": "41ad45750c40474f9d04d43246db918cba88d558c769920297a53608e8ccdf3f"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala",
+      "kind": "file",
+      "bytes": 27444,
+      "sha256": "e0f87abbd66f7723378f52b266019b425fbfb9e4c3bc5870603daf5c106c223a"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala",
+      "kind": "file",
+      "bytes": 37217,
+      "sha256": "964446c98d1b50289c76c6b9e19bda99b685fb84a85dfa1c4836bf42cf19351e"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala",
+      "kind": "file",
+      "bytes": 10079,
+      "sha256": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala",
+      "kind": "file",
+      "bytes": 17834,
+      "sha256": "7718922b7b1d0398c39878714d05a527bf9d782be6774bc248a3d638d20a0f0f"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala",
+      "kind": "file",
+      "bytes": 13026,
+      "sha256": "aba19f5d69637c3ddc5aeb00cb07d55ec070fe18a19ec5f3129329fc3c4d93de"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala",
+      "kind": "file",
+      "bytes": 11910,
+      "sha256": "82c457ab430d7002f58cc7885c8e6754813e837a7e9b786283dc8fb17cc86800"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala",
+      "kind": "file",
+      "bytes": 30575,
+      "sha256": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala",
+      "kind": "file",
+      "bytes": 26623,
+      "sha256": "8258bee2c61ad9f3f4c350c2e587e64ea3c1ba69a25575cebedc0ff34447c8af"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala",
+      "kind": "file",
+      "bytes": 26554,
+      "sha256": "8dfe38ddf13da033fd0d09da100e9014d8b68187f8856ee343f3318097a6b760"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala",
+      "kind": "file",
+      "bytes": 10258,
+      "sha256": "129d9ead39f28bea64b1d5e1048aa6edba55375c361fbaa3bed2b996ce03b528"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala",
+      "kind": "file",
+      "bytes": 10773,
+      "sha256": "0496e573434dbef63710232b38fe911e659b35473355870ec7de45984036a66f"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala",
+      "kind": "file",
+      "bytes": 19614,
+      "sha256": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala",
+      "kind": "file",
+      "bytes": 10460,
+      "sha256": "99ac53d654e0e453b01e4e91c6e3747c23c931a722d7b706de2b778ab94e4c2c"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala",
+      "kind": "file",
+      "bytes": 9799,
+      "sha256": "dadd411d732e3e1f29e09f75299797c5b9372946ac531e6fb558a7faefa417e2"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 48635,
+      "sha256": "ca74220911f5f2a21c6c650d2c51f552f9c9b2e670f8a6fa8fbe5ea4032abb98"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/CompactFixedEffectsSuite.scala",
+      "kind": "file",
+      "bytes": 11695,
+      "sha256": "77ad4d9a2160a694558e883ba733e2023c62904445fa2c506a018746e0190038"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 62306,
+      "sha256": "0b6b0ea2af7ca56556aa02917bf65506ba9a9a80f6ceda6d94c98032f6735ac0"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala",
+      "kind": "file",
+      "bytes": 10786,
+      "sha256": "62dfc06e0c935928c4bbbf9190f5c42b4a0a7636dfb8935c26cc6b0eeff339b8"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala",
+      "kind": "file",
+      "bytes": 10100,
+      "sha256": "0710898747e86004b39c404b4f371d236b3967bfadef90508a9ef50ebb5db711"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala",
+      "kind": "file",
+      "bytes": 7059,
+      "sha256": "e5a255c04536096fd79ab6975407be01d050784bbdb6e162e74c56c16b53fcf7"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala",
+      "kind": "file",
+      "bytes": 18146,
+      "sha256": "ba0cf58d55a2e6a596aae696355b4aa1979c6a6a0b8112211f2e701c57831199"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala",
+      "kind": "file",
+      "bytes": 21495,
+      "sha256": "cdbc5e60ae6baf9892abf0e3b295aff42d0077657249b536e1718ec681882263"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala",
+      "kind": "file",
+      "bytes": 7679,
+      "sha256": "d01322224a823ecf779b2ef4a0034f90270e2fba6178c1d6f75f1eb32328a67e"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelStatusLookupSuite.scala",
+      "kind": "file",
+      "bytes": 2375,
+      "sha256": "8f442c147cc59d8a152d818ea790396e303d7cb853221019f8c983155b1aa66c"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala",
+      "kind": "file",
+      "bytes": 9262,
+      "sha256": "1978ec83ccd1a6096b52ebb1ec29c45d44bd6dc570d6d6bb7019f8bed5bd2722"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala",
+      "kind": "file",
+      "bytes": 7598,
+      "sha256": "3b995ac3c21f8d7c89310e5346b288305e5d149d4f9e2928139081cd2d0c8011"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala",
+      "kind": "file",
+      "bytes": 9910,
+      "sha256": "04edfa220c216d15fa3081bd2b1d8ce5529218e40063a30c9fc89c2647c22f22"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala",
+      "kind": "file",
+      "bytes": 3640,
+      "sha256": "aa5f0b870e0a2b8e7f2b65b04a5bac3435e756299e964e516963341c70202cc0"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ConditionProfileProvenanceSuite.scala",
+      "kind": "file",
+      "bytes": 1312,
+      "sha256": "4ac9a6cc9ccb9103ec78942feeee987229b2a97c0111bd5816a8efb4df08bea7"
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala",
+      "kind": "file",
+      "bytes": 12647,
+      "sha256": "e433d6420105efee012c11f908d0344f4b29c8b93c0ff8f137071d5f833bb9a0"
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala",
+      "kind": "file",
+      "bytes": 28821,
+      "sha256": "443646d1d116bcdf4f56a110785c907bee5be38803bfc0cf1125294bb3fc7f43"
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfIdentity.scala",
+      "kind": "file",
+      "bytes": 6681,
+      "sha256": "5262b1a22789bacf6f14812c4190e819a1db6b0f028e93755ceb901a64e1f638"
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/CompleteBsplineSuite.scala",
+      "kind": "file",
+      "bytes": 3252,
+      "sha256": "31da4a50dda0c49a56215573a2e308b5c483b48a46c2e6a59c6716e2e5227233"
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfIdentitySuite.scala",
+      "kind": "file",
+      "bytes": 11156,
+      "sha256": "b1666db836ac129c535923b5ea2b99f53e09f924fa2ab5bcb3c6b5832b62c067"
+    },
+    {
+      "path": "modules/image-view/README.md",
+      "kind": "file",
+      "bytes": 886,
+      "sha256": "804e736dad946f12de71fc47fa034ded659d65517e7fd5a7119cc93ce3ed39d3"
+    },
+    {
+      "path": "modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerModelUpdateSuite.scala",
+      "kind": "file",
+      "bytes": 3836,
+      "sha256": "6b46934aca285c1c603c1fb9b76a91ce6e31bb00a2bec9829e4012c6cc2be996"
+    },
+    {
+      "path": "modules/image/shared/src/main/scala/scalafim/image/VolumeDilation.scala",
+      "kind": "file",
+      "bytes": 5570,
+      "sha256": "fc103245fd2b00bf2b1c15c064d89eaad97fe82619032dd7901d2ce4c7398ea1"
+    },
+    {
+      "path": "modules/image/shared/src/main/scala/scalafim/image/VolumeParcellation.scala",
+      "kind": "file",
+      "bytes": 14215,
+      "sha256": "13e4f3dbfd8033c577fb353e1884b794394fed063a69fbd72f8ec485f9a6d149"
+    },
+    {
+      "path": "modules/image/shared/src/test/scala/scalafim/image/VolumeDilationSuite.scala",
+      "kind": "file",
+      "bytes": 4838,
+      "sha256": "0fa50bb66087b64a9c3a8b609f14896e87acccb0a6fc13705ebde2e68b78e623"
+    },
+    {
+      "path": "modules/image/shared/src/test/scala/scalafim/image/VolumeParcellationSuite.scala",
+      "kind": "file",
+      "bytes": 13259,
+      "sha256": "f6dd83b0707f3b09fe03eccfb43affa91634dede55ead72c2f34900e2af37393"
+    },
+    {
+      "path": "modules/locus-data/README.md",
+      "kind": "file",
+      "bytes": 3249,
+      "sha256": "84b1f50576f03353395dc6081df8e1bbfa2ff5d3da3276dfda3123cdf654ffff"
+    },
+    {
+      "path": "modules/locus-data/shared/src/main/scala/scalafim/locus/Aggregation.scala",
+      "kind": "deleted-or-nonfile"
+    },
+    {
+      "path": "modules/locus-data/shared/src/test/scala/scalafim/locus/AggregationSuite.scala",
+      "kind": "deleted-or-nonfile"
+    },
+    {
+      "path": "modules/locus-data/shared/src/test/scala/scalafim/locus/ProviderAggregationSuite.scala",
+      "kind": "file",
+      "bytes": 2148,
+      "sha256": "0816c54c9ee472ee156319cc2779778db0cd95ce69354df8cd647443e7113bfb"
+    },
+    {
+      "path": "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "kind": "file",
+      "bytes": 57295,
+      "sha256": "b05c6b7d03ba162838c9267ed01a4e6bdff277143c57d66da8df348a148750a1"
+    },
+    {
+      "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala",
+      "kind": "file",
+      "bytes": 1526,
+      "sha256": "605672c3404d5a8f2d2ec948d169176aa0447cc8bc486e0f12b70afb72390b9b"
+    },
+    {
+      "path": "modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlans.scala",
+      "kind": "file",
+      "bytes": 14092,
+      "sha256": "dc59717d54bb89744a561734ec5c555ac1349bf233b0f1692d4a2e6f64df5429"
+    },
+    {
+      "path": "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlansSuite.scala",
+      "kind": "file",
+      "bytes": 11195,
+      "sha256": "e627bbd447c57ce19f46a953b96fdf1af3436b0c163723ff212d9f6ca9ae63a4"
+    },
+    {
+      "path": "modules/surface-view-raster/README.md",
+      "kind": "file",
+      "bytes": 587,
+      "sha256": "878594294646c9fd0347a4dd1aa497c12f3c01d7225ef66c2010b3924ec35643"
+    },
+    {
+      "path": "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala",
+      "kind": "file",
+      "bytes": 18223,
+      "sha256": "08dcfb6865e5d5b4b493acbe79a437f2e2b5b3bf7b8e1dd5d888c4b4e279cd8a"
+    },
+    {
+      "path": "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceRasterizerSuite.scala",
+      "kind": "file",
+      "bytes": 12575,
+      "sha256": "6df62b153561d830a4f2a0cad782063781903f2cd7f891d2f52f375d95b28430"
+    },
+    {
+      "path": "modules/surface-view/README.md",
+      "kind": "file",
+      "bytes": 2650,
+      "sha256": "9e35e385ac5efa533787f84db530fa61835eb45ce0ea3d7949c40d5abb9cb6ef"
+    },
+    {
+      "path": "modules/surface-view/jvm/src/test/scala/scalafim/surface/view/SurfaceWorldIndexBenchmark.scala",
+      "kind": "file",
+      "bytes": 3007,
+      "sha256": "e6305752ae7cc28f73aa1d7fac1f103425091180d4a6ca85fb135468873f6376"
+    },
+    {
+      "path": "modules/surface/README.md",
+      "kind": "file",
+      "bytes": 10843,
+      "sha256": "6a4b6cc92a9c31bedafea108b03e6d5682410955dc31ce413034c66958fb744c"
+    },
+    {
+      "path": "modules/surface/js/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala",
+      "kind": "file",
+      "bytes": 3584,
+      "sha256": "dd3bdd47251ce2be8fd464286e623079319b8b6c6b7804f41a3f019549234951"
+    },
+    {
+      "path": "modules/surface/js/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderJsSuite.scala",
+      "kind": "file",
+      "bytes": 963,
+      "sha256": "10592e9ded6d57822230af528117205ad25efa100b2f4fce42516027eec34a2d"
+    },
+    {
+      "path": "modules/surface/js/src/test/scala/scalafim/surface/io/GiftiPlacementReaderJsSuite.scala",
+      "kind": "file",
+      "bytes": 450,
+      "sha256": "e7811a417a99a4abad23c1ea31602cbb3898273643ae1cf80fb44aad9929df68"
+    },
+    {
+      "path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferAnnotationReader.scala",
+      "kind": "file",
+      "bytes": 4944,
+      "sha256": "d37076e7d3c9eb405c765442cc829fce55ec0ae05859eb37720e11b8f0299502"
+    },
+    {
+      "path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala",
+      "kind": "file",
+      "bytes": 2939,
+      "sha256": "cdc0b98ad97e02132f6a8a2de1b9af9e93f18680f8e55a4b26bbd7092b071755"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/scala/scalafim/surface/io/FreeSurferAnnotationReaderSuite.scala",
+      "kind": "file",
+      "bytes": 1819,
+      "sha256": "705364842e527f439894e2935a738260f93e39d87611ca5fedfd6f9bfe6c3535"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderSuite.scala",
+      "kind": "file",
+      "bytes": 822,
+      "sha256": "d5b26d22f47751cb755d3aa6c22ba9ca9bb7300d6594c70c77f2a7dd00835045"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiPlacementReaderSuite.scala",
+      "kind": "file",
+      "bytes": 517,
+      "sha256": "db159c467f575d8e98080a654d633b5abdd4270f281a0111d9d41b2c74d49639"
+    },
+    {
+      "path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiModel.scala",
+      "kind": "file",
+      "bytes": 12406,
+      "sha256": "bc5b90ebd84f4226f00cfa75c22ea8d437d78c5973da3c98d42272100218fd92"
+    },
+    {
+      "path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPayloadDecoder.scala",
+      "kind": "file",
+      "bytes": 9295,
+      "sha256": "94a389886575eedfe82b3edad24494e5e1b31a3a0f2c684d27db975fbc6fae54"
+    },
+    {
+      "path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPlacement.scala",
+      "kind": "file",
+      "bytes": 3609,
+      "sha256": "e6edca6688360d293adb60f6ea8b79fc3bb384d1cceb2742ab9fdccb7c33e259"
+    },
+    {
+      "path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiSurfaceCodec.scala",
+      "kind": "file",
+      "bytes": 5357,
+      "sha256": "5c79a60abc44fb063e091437f0a6b65bb3519afa82af3c979c795b37e31efcb5"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Fixtures.scala",
+      "kind": "file",
+      "bytes": 1371,
+      "sha256": "ad2b7c909339b798ccbf6974925e1d52581256074188993a679f9d7f3fe54197"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Suite.scala",
+      "kind": "file",
+      "bytes": 1461,
+      "sha256": "dc83e927e6aa33c9b4db1257a5334268afc3bb70b4cfe20f1902d3d8338c4bf9"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementFixtures.scala",
+      "kind": "file",
+      "bytes": 3951,
+      "sha256": "777dab4c6b94efe5229f958f6c929a436fcda344db5fc408615892d343858131"
+    },
+    {
+      "path": "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementSuite.scala",
+      "kind": "file",
+      "bytes": 2295,
+      "sha256": "b6ae54de0b6dfa62d66d4b988d31de36dbbc135b89f6e415cf1572b2ff2df8f7"
+    },
+    {
+      "path": "modules/transform/jvm/src/test/scala/scalafim/transform/qualification/P312FreshFlirtSuite.scala",
+      "kind": "file",
+      "bytes": 1771,
+      "sha256": "30a9921707e8c18d78fda223777398c665c0cfa337a035a28705cfbfcecff4f0"
+    },
+    {
+      "path": "tools/r-parity/check_glasser_parcel_identity.R",
+      "kind": "file",
+      "bytes": 2038,
+      "sha256": "25fb52649f85ba08c92fa5281245d3ac6f585631103290ef78cabf4b9ff5feaf"
+    },
+    {
+      "path": "tools/r-parity/generate_atlas_composition.R",
+      "kind": "file",
+      "bytes": 4548,
+      "sha256": "bc1e286788f9d23b15e72d577e9745feb2672824376a07498b48917e37e2ee2a"
+    },
+    {
+      "path": "tools/r-parity/generate_atlas_parcel_alignment.R",
+      "kind": "file",
+      "bytes": 5510,
+      "sha256": "984f1958fdaf00ff26ba8f3e440a98610eb67d5063df35163fe1ee0443a2461c"
+    },
+    {
+      "path": "tools/r-parity/generate_atlas_parcel_expansion.R",
+      "kind": "file",
+      "bytes": 4191,
+      "sha256": "d27607b8ef63f9e74428fb3c60d4aeaa9644a27d490c821e9e21328fec76ebff"
+    },
+    {
+      "path": "tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R",
+      "kind": "file",
+      "bytes": 4613,
+      "sha256": "32ae8c4d1c5f9f5ba7107a5c23a264b5d657ccbe9f9090694cf57831f52f813e"
+    },
+    {
+      "path": "tools/r-parity/verify_voxelwise_ar_rrg_design.R",
+      "kind": "file",
+      "bytes": 6293,
+      "sha256": "3717cf3e15290b8f4be42467aa27072f0935e486a900efde3073a7280a9d90e2"
+    }
+  ],
+  "archive_sha256": "9262ca8ac31e2c6b1d560c62d5879226fa5582f09a85e12c956d993abb7b82be",
+  "archive_bytes": 1091157,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

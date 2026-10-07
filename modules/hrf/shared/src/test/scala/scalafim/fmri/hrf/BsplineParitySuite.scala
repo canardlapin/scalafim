@@ -2,6 +2,9 @@ package scalafim.fmri.hrf
 
 import scalafim.fmri.hrf.HrfFunctions
 
+/** LegacyR parity is frozen to released fmrihrf 0.4.0 before 18d418f.
+  * The later convention has separate fixtures in EndpointAnchoredBsplineSuite.
+  */
 class BsplineParitySuite extends munit.FunSuite:
 
   test("bsplineBasis matches R hrf_bspline for non-integer span") {

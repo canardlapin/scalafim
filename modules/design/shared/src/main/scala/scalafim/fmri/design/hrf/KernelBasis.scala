@@ -1,24 +1,38 @@
 package scalafim.fmri.design.hrf
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, DoubleLinearOperator, DVec, LinearOperator, MutableDVec}
+import gale.spectral.{SingularOrder, SingularSelection, SpectralDiagnostics, SpectralOptions, Svds}
 import scalafim.fmri.hrf.{Hrf, HrfDescriptor, IntegrationPolicy, Lag, PositiveSeconds, ResponseBasis, Support}
-import scalafim.fmri.hrf.family.{JetLayout, ParametricHrfFamily, ShapePoint}
+import scalafim.fmri.hrf.family.{FamilySummaryError, JetLayout, ParametricHrfFamily, ShapePoint}
 
 enum KernelBasisError:
   case InvalidSpec(detail: String)
+  case Summary(error: FamilySummaryError)
   case Spectral(detail: String)
+  case Admission(error: KernelBasisAdmissionError)
+  case Evaluation(detail: String)
   case BudgetExceeded(maxRank: Int, tolerance: Double, achieved: Double)
 
   def message: String =
     this match
       case InvalidSpec(detail) => s"invalid kernel basis specification: $detail"
+      case Summary(error) => error.message
       case Spectral(detail) => s"kernel basis SVD failed: $detail"
+      case Admission(error) => error.message
+      case Evaluation(detail) => s"kernel basis family evaluation failed: $detail"
       case BudgetExceeded(maxRank, tolerance, achieved) =>
         s"no rank <= $maxRank reaches held-out relative value error $tolerance (best $achieved); refusing rather than relaxing"
 
 /** How a kernel basis is compiled: the family, the fine lag grid, the shape
   * grid it is sampled on, the accuracy it must certify and its rank budget.
   */
+enum KernelBasisCompilation:
+  case Dense
+  /** One bounded Gale Golub–Kahan build over normalized column blocks. Only
+    * converged triplets are eligible for the unchanged held-out certificate.
+    */
+  case BlockedPartial(subspaceDimension: Int)
+
 final case class KernelBasisSpec(
     family: ParametricHrfFamily,
     fineStep: PositiveSeconds,
@@ -27,7 +41,20 @@ final case class KernelBasisSpec(
     maxRank: Int = 32,
     includeDerivatives: Boolean = true,
     heldOutPoints: Int = 300,
-    seed: Long = 11L)
+    seed: Long = 11L,
+    compilation: KernelBasisCompilation = KernelBasisCompilation.Dense)
+
+/** Observed producer allocations and operator applications. Gale's internal
+  * workspace is bounded separately by [[KernelBasisEstimate]].
+  */
+final case class KernelBasisCompilationReceipt(
+    trainingArrayCells: Vector[Long],
+    trainingGridPoints: Int,
+    jetScratchCells: Int,
+    leftFactorCells: Long,
+    rightFactorCells: Long,
+    forwardApplications: Long,
+    adjointApplications: Long)
 
 /** Held-out evidence for a compiled basis, per rank `1..maxRank`. Relative
   * errors are maxima over the held-out points; the tail bound is the maximum
@@ -52,11 +79,64 @@ final case class KernelBasisProvenance(
     nodesPerAxis: Vector[Int],
     includeDerivatives: Boolean,
     tolerance: Double,
+    maxRank: Int,
+    heldOutPoints: Int,
     rank: Int,
-    seed: Long):
+    seed: Long,
+    compilation: KernelBasisCompilation = KernelBasisCompilation.Dense):
   def canonical: String =
-    val axes = chart.map { case (n, lo, hi) => s"$n:[$lo,$hi]" }.mkString(",")
-    s"kernel-basis/v1|family=$family|chart=$axes|horizon=$horizonSeconds|step=$fineStepSeconds|nodes=${nodesPerAxis.mkString("x")}|derivatives=$includeDerivatives|tolerance=$tolerance|rank=$rank|seed=$seed"
+    val axes = chart.map { case (name, lower, upper) =>
+      KernelBasisProvenance.record(
+        "axis",
+        name,
+        KernelBasisProvenance.number(lower),
+        KernelBasisProvenance.number(upper)
+      )
+    }
+    val prefix = compilation match
+      case KernelBasisCompilation.Dense => "kernel-basis/v2"
+      case KernelBasisCompilation.BlockedPartial(subspace) => s"kernel-basis/v3|blocked-partial=$subspace|builds=1"
+    s"$prefix|family=${KernelBasisProvenance.field(family)}|chart=${KernelBasisProvenance.record("chart", axes*)}|" +
+      s"horizon=${KernelBasisProvenance.number(horizonSeconds)}|step=${KernelBasisProvenance.number(fineStepSeconds)}|" +
+      s"nodes=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|derivatives=$includeDerivatives|" +
+      s"tolerance=${KernelBasisProvenance.number(tolerance)}|maxRank=$maxRank|heldOutPoints=$heldOutPoints|" +
+      s"rank=$rank|seed=$seed"
+
+/** Structural encoding helpers shared by the kernel and its downstream fit
+  * provenance. Strings are length-framed and doubles retain their IEEE-754
+  * bits, so these encodings do not depend on platform display rendering.
+  */
+object KernelBasisProvenance:
+  private[scalafim] def number(value: Double): String =
+    s"bits:${java.lang.Double.doubleToLongBits(value)}"
+
+  private[scalafim] def field(value: String): String =
+    s"${value.length}:$value"
+
+  private[scalafim] def record(tag: String, fields: String*): String =
+    fields.map(field).mkString(s"$tag(", ",", ")")
+
+  /** `none` or `some(<framed>)`, so an absent value never collides with a present one. */
+  private[scalafim] def option(value: Option[String]): String =
+    value.fold("none")(present => record("some", present))
+
+  /** Row-major dimensions plus a content digest: 64-bit FNV-1a over the
+    * little-endian bytes of each entry's `doubleToLongBits`. Portable shared
+    * code, identical on the JVM and Scala.js; an identity, not a security hash.
+    */
+  private[scalafim] def matrix(rows: Int, cols: Int, rowMajor: Array[Double]): String =
+    require(rowMajor.length == rows * cols, "row-major values must match the declared dimensions")
+    var hash = 0xcbf29ce484222325L
+    var i = 0
+    while i < rowMajor.length do
+      val bits = java.lang.Double.doubleToLongBits(rowMajor(i))
+      var byte = 0
+      while byte < 8 do
+        hash = (hash ^ ((bits >>> (8 * byte)) & 0xffL)) * 0x100000001b3L
+        byte += 1
+      i += 1
+    val hex = java.lang.Long.toHexString(hash)
+    record("matrix", rows.toString, cols.toString, s"fnv1a64:${"0" * (16 - hex.length)}$hex")
 
 /** A data-independent basis `Phi` for a parametric HRF family:
   * `h_theta ~= sum_j c_j(theta) phi_j`, with `c(theta)` and its parameter
@@ -76,7 +156,15 @@ final class HrfKernelBasis private (
     private val phi: Array[Double],
     val rank: Int,
     val singularValues: Vector[Double],
-    val certificate: KernelBasisCertificate):
+    val certificate: KernelBasisCertificate,
+    val allocationEstimate: KernelBasisEstimate,
+    val spectralDiagnostics: SpectralDiagnostics,
+    val compilationReceipt: KernelBasisCompilationReceipt):
+
+  val allocation: KernelBasisAllocation = allocationEstimate.retained(rank).copy(
+    certificateRanks = certificate.valueError.length,
+    certificateErrorValues = certificate.valueError.length.toLong +
+      certificate.firstDerivativeError.length + certificate.secondDerivativeError.length)
 
   def family: ParametricHrfFamily = spec.family
   def fineCount: Int = lags.length
@@ -90,8 +178,11 @@ final class HrfKernelBasis private (
       nodesPerAxis = spec.nodesPerAxis,
       includeDerivatives = spec.includeDerivatives,
       tolerance = spec.tolerance,
+      maxRank = spec.maxRank,
+      heldOutPoints = spec.heldOutPoints,
       rank = rank,
-      seed = spec.seed
+      seed = spec.seed,
+      compilation = spec.compilation
     )
 
   /** Basis value `phi_j(lags(i))`. */
@@ -165,76 +256,111 @@ final class HrfKernelBasis private (
 
 object HrfKernelBasis:
 
+  /** Inspect compiler shapes/work before sampled allocation or family evaluation. */
+  def estimate(spec: KernelBasisSpec): Either[KernelBasisError, KernelBasisEstimate] =
+    KernelBasisBudget.estimate(spec)
+
   def compile(spec: KernelBasisSpec): Either[KernelBasisError, HrfKernelBasis] =
+    estimate(spec).flatMap(admitted => compileAdmitted(spec, admitted))
+
+  private def compileAdmitted(spec: KernelBasisSpec, admitted: KernelBasisEstimate): Either[KernelBasisError, HrfKernelBasis] =
     val family = spec.family
     val d = family.dimension
-    if spec.nodesPerAxis.length != d then Left(KernelBasisError.InvalidSpec(s"nodesPerAxis has ${spec.nodesPerAxis.length} entries for a $d-dimensional chart"))
-    else if spec.nodesPerAxis.exists(_ < 2) then Left(KernelBasisError.InvalidSpec("every axis needs at least two nodes"))
-    else if !(spec.tolerance > 0.0 && spec.tolerance < 1.0) then Left(KernelBasisError.InvalidSpec(s"tolerance must lie in (0, 1), got ${spec.tolerance}"))
-    else if spec.maxRank < 1 then Left(KernelBasisError.InvalidSpec(s"maxRank must be >= 1, got ${spec.maxRank}"))
-    else if spec.fineStep.value >= family.horizon.value then Left(KernelBasisError.InvalidSpec("fineStep must be smaller than the family horizon"))
-    else if spec.heldOutPoints < 1 then Left(KernelBasisError.InvalidSpec("heldOutPoints must be >= 1"))
-    else
-      val dt = spec.fineStep.value
-      val n = math.floor(family.horizon.value / dt).toInt + 1
-      val lags = Array.tabulate(n)(i => i * dt)
-      val comps = if spec.includeDerivatives then family.jetComponents else 1
-      val gridPoints = spec.nodesPerAxis.product
-      val builder = DMat.newBuilder(n, gridPoints * comps)
-      val scratch = new Array[Double](family.jetComponents * n)
-      var col = 0
-      var g = 0
-      while g < gridPoints do
-        // mixed-radix decode of the grid index into one node per axis
-        var rest = g
-        val coordinates = Vector.newBuilder[Double]
-        var axis = 0
-        while axis < d do
-          val nodes = spec.nodesPerAxis(axis)
-          val index = rest % nodes
-          rest /= nodes
-          coordinates += family.chart.lower(axis) + family.chart.width(axis) * index / (nodes - 1)
-          axis += 1
-        val point = ShapePoint.unsafe(coordinates.result())
+    val dt = spec.fineStep.value
+    val n = admitted.fineCount
+    val lags = Array.tabulate(n)(i => i * dt)
+    val comps = admitted.trainingComponents
+    val gridPoints = admitted.gridPoints
+    val builders = Vector.tabulate(admitted.trainingBlocks): block =>
+      DMat.newBuilder(n, math.min(admitted.trainingBlockColumns, admitted.trainingColumns - block * admitted.trainingBlockColumns))
+    val scratch = new Array[Double](admitted.jetScratchCells.toInt)
+    var col = 0
+    var g = 0
+    while g < gridPoints do
+      // mixed-radix decode of the grid index into one node per axis
+      var rest = g
+      val coordinates = Vector.newBuilder[Double]
+      var axis = 0
+      while axis < d do
+        val nodes = spec.nodesPerAxis(axis)
+        val index = rest % nodes
+        rest /= nodes
+        coordinates += KernelBasisBudget.coordinate(spec, axis, index)
+        axis += 1
+      val point = KernelBasisBudget.generatedPoint(spec, coordinates.result()) match
+        case Left(error) => return Left(error)
+        case Right(checked) => checked
+      try
         if spec.includeDerivatives then family.jetInto(lags, point, scratch) else family.evalInto(lags, point, scratch)
-        var comp = 0
-        while comp < comps do
-          var norm = 0.0
+      catch
+        case scala.util.control.NonFatal(error) =>
+          return Left(KernelBasisError.Evaluation(Option(error.getMessage).getOrElse(error.toString)))
+      var comp = 0
+      while comp < comps do
+        var norm = 0.0
+        var i = 0
+        while i < n do
+          val x = scratch(comp * n + i)
+          if !x.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite training value at grid $g, component $comp, lag $i: $x"))
+          norm += x * x
+          i += 1
+        if !norm.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite training norm at grid $g, component $comp: $norm"))
+        val scale = if norm > 0.0 then 1.0 / math.sqrt(norm) else 0.0
+        val builder = builders(col / admitted.trainingBlockColumns)
+        val blockColumn = col % admitted.trainingBlockColumns
+        i = 0
+        while i < n do
+          builder.update(i, blockColumn, scratch(comp * n + i) * scale)
+          i += 1
+        col += 1
+        comp += 1
+      g += 1
+    val training = builders.map(_.result())
+    var forwardApplications = 0L
+    var adjointApplications = 0L
+    val decomposition = admitted.partialSubspace match
+      case None => training.head.svd
+      case Some(subspace) =>
+        LinearOperator.block(Vector(training)).flatMap: operator =>
+          val counted = new DoubleLinearOperator:
+            def rows: Int = operator.rows
+            def cols: Int = operator.cols
+            def applyTo(input: DVec, into: MutableDVec): Unit =
+              forwardApplications += 1L
+              operator.applyTo(input, into)
+            override def transposeApplyTo(input: DVec, into: MutableDVec): Unit =
+              adjointApplications += 1L
+              operator.transposeApplyTo(input, into)
+          Svds.svd(counted, n, admitted.trainingColumns,
+            SingularSelection.Count(admitted.availableRank, SingularOrder.Largest),
+            SpectralOptions(maxIterations = 1, subspaceDimension = Some(subspace)))
+    decomposition match
+      case Left(err) => Left(KernelBasisError.Spectral(err.getMessage))
+      case Right(svd) =>
+        val available = math.min(admitted.availableRank, svd.size)
+        if available == 0 then return Left(KernelBasisError.Spectral("no singular triplet converged within the bounded build"))
+        val phiFull = new Array[Double](admitted.phiCellsAtMaxRank.toInt)
+        var j = 0
+        while j < available do
           var i = 0
           while i < n do
-            val x = scratch(comp * n + i)
-            norm += x * x
+            phiFull(j * n + i) = svd.u(i, j)
             i += 1
-          val scale = if norm > 0.0 then 1.0 / math.sqrt(norm) else 0.0
-          i = 0
-          while i < n do
-            builder.update(i, col, scratch(comp * n + i) * scale)
-            i += 1
-          col += 1
-          comp += 1
-        g += 1
-      builder.result().svd match
-        case Left(err) => Left(KernelBasisError.Spectral(err.getMessage))
-        case Right(svd) =>
-          val available = math.min(spec.maxRank, math.min(svd.u.cols, svd.singularValues.length))
-          val phiFull = new Array[Double](available * n)
-          var j = 0
-          while j < available do
-            var i = 0
-            while i < n do
-              phiFull(j * n + i) = svd.u(i, j)
-              i += 1
-            j += 1
-          val certificate = certify(family, lags, phiFull, available, spec)
+          j += 1
+        certify(family, lags, phiFull, available, spec, admitted).flatMap: certificate =>
           certificate.rankFor(spec.tolerance) match
             case None =>
               Left(KernelBasisError.BudgetExceeded(spec.maxRank, spec.tolerance, certificate.valueError.lastOption.getOrElse(1.0)))
             case Some(rank) =>
-              val phi = java.util.Arrays.copyOf(phiFull, rank * n)
+              val phi = java.util.Arrays.copyOf(phiFull, admitted.retained(rank).phiCells.toInt)
               val sv = Vector.tabulate(rank)(j => svd.singularValues(j))
-              Right(new HrfKernelBasis(spec, lags, phi, rank, sv, certificate))
+              val receipt = KernelBasisCompilationReceipt(
+                training.map(matrix => matrix.rows.toLong * matrix.cols), g, scratch.length,
+                svd.u.rows.toLong * svd.u.cols, svd.vt.rows.toLong * svd.vt.cols,
+                forwardApplications, adjointApplications)
+              Right(new HrfKernelBasis(spec, lags, phi, rank, sv, certificate, admitted, svd.diagnostics, receipt))
 
-  private def certify(family: ParametricHrfFamily, lags: Array[Double], phi: Array[Double], ranks: Int, spec: KernelBasisSpec): KernelBasisCertificate =
+  private[hrf] def certify(family: ParametricHrfFamily, lags: Array[Double], phi: Array[Double], ranks: Int, spec: KernelBasisSpec, admitted: KernelBasisEstimate): Either[KernelBasisError, KernelBasisCertificate] =
     val rng = new scala.util.Random(spec.seed)
     val n = lags.length
     val d = family.dimension
@@ -242,23 +368,40 @@ object HrfKernelBasis:
     val value = new Array[Double](ranks)
     val first = new Array[Double](ranks)
     val second = new Array[Double](ranks)
-    val jet = new Array[Double](comps * n)
+    val jet = new Array[Double](admitted.jetScratchCells.toInt)
     val coeff = new Array[Double](ranks)
     var tail = 0.0
     var p = 0
     while p < spec.heldOutPoints do
       val coordinates = Vector.tabulate(d)(axis => family.chart.lower(axis) + rng.nextDouble() * family.chart.width(axis))
-      val point = ShapePoint.unsafe(coordinates)
-      tail = math.max(tail, family.tailRelativeEnergy(point, spec.fineStep))
-      family.jetInto(lags, point, jet)
+      val point = KernelBasisBudget.generatedPoint(spec, coordinates) match
+        case Left(error) => return Left(error)
+        case Right(checked) => checked
+      val tailResult =
+        try family.tailRelativeEnergyEither(point, spec.fineStep)
+        catch
+          case scala.util.control.NonFatal(error) =>
+            return Left(KernelBasisError.Evaluation(Option(error.getMessage).getOrElse(error.toString)))
+      tailResult match
+        case Left(error) => return Left(KernelBasisError.Summary(error))
+        case Right(energy) =>
+          if !energy.isFinite || energy < 0.0 || energy > 1.0 then
+            return Left(KernelBasisError.Evaluation(s"invalid certificate relative tail energy at point $p: $energy"))
+          tail = math.max(tail, energy)
+      try family.jetInto(lags, point, jet)
+      catch
+        case scala.util.control.NonFatal(error) =>
+          return Left(KernelBasisError.Evaluation(Option(error.getMessage).getOrElse(error.toString)))
       var comp = 0
       while comp < comps do
         var norm = 0.0
         var i = 0
         while i < n do
           val x = jet(comp * n + i)
+          if !x.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite certificate value at point $p, component $comp, lag $i: $x"))
           norm += x * x
           i += 1
+        if !norm.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite certificate norm at point $p, component $comp: $norm"))
         var j = 0
         while j < ranks do
           var acc = 0.0
@@ -266,16 +409,21 @@ object HrfKernelBasis:
           while i < n do
             acc += phi(j * n + i) * jet(comp * n + i)
             i += 1
+          if !acc.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite certificate projection at point $p, component $comp, rank $j: $acc"))
           coeff(j) = acc
           j += 1
         val target = if comp == JetLayout.Value then value else if comp <= d then first else second
         var residual = norm
         j = 0
         while j < ranks do
-          residual -= coeff(j) * coeff(j)
+          val projected = coeff(j) * coeff(j)
+          if !projected.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite squared certificate projection at point $p, component $comp, rank $j: $projected"))
+          residual -= projected
+          if !residual.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite certificate residual at point $p, component $comp, rank $j: $residual"))
           val rel = if norm > 0.0 then math.sqrt(math.max(0.0, residual) / norm) else 0.0
+          if !rel.isFinite then return Left(KernelBasisError.Evaluation(s"non-finite certificate relative error at point $p, component $comp, rank $j: $rel"))
           if rel > target(j) then target(j) = rel
           j += 1
         comp += 1
       p += 1
-    KernelBasisCertificate(value.toVector, first.toVector, second.toVector, tail, spec.heldOutPoints, spec.seed)
+    Right(KernelBasisCertificate(value.toVector, first.toVector, second.toVector, tail, spec.heldOutPoints, spec.seed))

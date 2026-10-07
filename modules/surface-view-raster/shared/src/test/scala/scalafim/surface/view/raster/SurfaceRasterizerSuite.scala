@@ -117,6 +117,57 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assertEqualsDouble(left.barycentricA + left.barycentricB + left.barycentricC, 1.0, 1e-5)
     assert(first.pick(-1, 0).isLeft)
 
+  test("advertised lighting produces ambient and directional Lambert pixels"):
+    assert(SurfaceRasterizer.capabilities.supports(SurfaceBackendFeature.Lighting))
+    val mesh = triangleGeometry()
+    val color = Rgba32.unsafe(200, 120, 80)
+    val unlit = plan(mesh, Vector(packedLayer(mesh, "lighting", Vector.fill(3)(color))))
+    // This triangle has a +Z normal. The oracle uses known geometry, not renderer normals.
+    val cases = Vector(
+      (SurfaceLighting.Unlit, color),
+      (SurfaceLighting.directional(0.25, 0.5, 0.0, 0.0, 1.0).toOption.get, Rgba32.unsafe(150, 90, 60)),
+      (SurfaceLighting.directional(0.25, 0.5, 0.0, 0.0, -1.0).toOption.get, Rgba32.unsafe(50, 30, 20)),
+      (SurfaceLighting.directional(0.25, 0.5, 1.0, 0.0, 0.0).toOption.get, Rgba32.unsafe(50, 30, 20)),
+      (SurfaceLighting.directional(0.75, 0.75, 0.0, 0.0, 1.0).toOption.get, color)
+    )
+    cases.foreach: (lighting, expected) =>
+      val result = SurfaceRasterizer.render(unlit.copy(lighting = lighting), dimensions).toOption.get
+      assert(result.pick(30, 40).toOption.flatten.nonEmpty)
+      assertEquals(result.image.pixelUnsafe(30, 40), expected)
+
+  test("lighting uses world-space normals under a rotated surface-to-world affine"):
+    // Rotate +90 degrees about X: (x, y, z) -> (x, -z, y). The local +Z face
+    // normal becomes world -Y, so the Posterior viewpoint faces the triangle.
+    val rotation = testAffine(Vector(
+      Vector(1.0, 0.0, 0.0, 0.0),
+      Vector(0.0, 0.0, -1.0, 0.0),
+      Vector(0.0, 1.0, 0.0, 0.0),
+      Vector(0.0, 0.0, 0.0, 1.0)
+    ))
+    val mesh = geometry(
+      Seq(Seq(-1.0, -1.0, 0.0), Seq(1.0, -1.0, 0.0), Seq(-0.6, 0.8, 0.0)),
+      Seq((0, 1, 2)),
+      transform = rotation
+    )
+    val color = Rgba32.unsafe(200, 120, 80)
+    val base = plan(mesh, Vector(packedLayer(mesh, "rotated", Vector.fill(3)(color))), SurfaceViewpoint.Posterior)
+    def litPixel(lighting: SurfaceLighting): Rgba32 =
+      val result = SurfaceRasterizer.render(base.copy(lighting = lighting), dimensions).toOption.get
+      val covered =
+        for
+          y <- 0 until dimensions.height
+          x <- 0 until dimensions.width
+          if result.pick(x, y).toOption.flatten.nonEmpty
+        yield (x, y)
+      assert(covered.nonEmpty, "rotated triangle must be visible from the Posterior viewpoint")
+      val (x, y) = covered(covered.length / 2)
+      result.image.pixelUnsafe(x, y)
+    // The light direction points from the surface toward the light.
+    val alongWorldNormal = SurfaceLighting.directional(0.25, 0.5, 0.0, -1.0, 0.0).toOption.get
+    val alongLocalNormal = SurfaceLighting.directional(0.25, 0.5, 0.0, 0.0, 1.0).toOption.get
+    assertEquals(litPixel(alongWorldNormal), Rgba32.unsafe(150, 90, 60))
+    assertEquals(litPixel(alongLocalNormal), Rgba32.unsafe(50, 30, 20))
+
   test("world translation preserves framing, pixels, and picks"):
     val base = triangleGeometry()
     val translation = testAffine(Vector(

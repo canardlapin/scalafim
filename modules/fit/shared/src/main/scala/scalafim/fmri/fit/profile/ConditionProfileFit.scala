@@ -3,10 +3,11 @@ package scalafim.fmri.fit.profile
 import scalafim.dataset.DatasetSeriesReader
 import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.event.ConvolvedTerm
-import scalafim.fmri.design.hrf.HrfKernelBasis
-import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, FitError, TaskBasisStructure}
-import scalafim.fmri.hrf.family.{JetLayout, ShapeSummary}
+import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisProvenance}
+import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, EstimateExecutionOutcome, FitError, ResponsePreparationIdentity, ResponsePreparationProvenance, TaskBasisStructure}
+import scalafim.fmri.hrf.family.{FamilySummaryError, JetLayout, NormalizationRule, ShapePoint, ShapeSummary}
 import scalafim.fmri.model.FitPlan
+import scala.util.control.NonFatal
 
 /** The condition-only ProfileHrf policy composed over an existing fixed
   * `FitPlan` whose task term was convolved with `basis.kernel`: the ordinary
@@ -21,6 +22,7 @@ final case class ConditionProfilePolicy(
     prior: Option[ShapePrior],
     noiseVariance: Double,
     output: OutputRequest,
+    admission: ObservedFamilyAdmission,
     blockSize: Int = 256)
 
 final case class ConditionVoxelResult(
@@ -35,21 +37,158 @@ final case class ConditionVoxelResult(
     noisePlugin: Double,
     newtonSteps: Int)
 
+private[profile] final case class ConditionVoxelReadout(
+    voxel: Int,
+    coordinates: Vector[Double],
+    amplitudes: Vector[QueryValue],
+    queries: Vector[QueryValue],
+    status: DecodeStatus,
+    conditionalSd: Vector[Double],
+    residualEnergy: Double,
+    noisePlugin: Double,
+    newtonSteps: Int):
+  def withSummary(summary: ShapeSummary): ConditionVoxelResult =
+    ConditionVoxelResult(voxel, coordinates, summary, amplitudes, queries, status, conditionalSd, residualEnergy, noisePlugin, newtonSteps)
+
 /** One block's payload: released to the sink, never retained by the runner. */
 final case class ConditionProfileBlock(ordinal: Int, results: Vector[ConditionVoxelResult])
 
 final case class ConditionProfileReceipt(ordinal: Int, voxels: Int, accepted: Int)
 
+/** The exact inputs of one condition-profile post-solve, held as typed values
+  * and encoded structurally by [[canonical]]. Every policy field that can change
+  * the numerics is recorded; [[ConditionProfileProvenance.unencodedPolicyFields]]
+  * lists the ones that cannot, with the reason.
+  */
 final case class ConditionProfileProvenance(
     basis: String,
     structure: Vector[Vector[String]],
-    preparation: String,
+    preparation: ResponsePreparationProvenance,
     nodesPerAxis: Vector[Int],
     budget: DecodeBudget,
-    output: String,
+    prior: Option[ShapePrior],
+    output: OutputRequest,
     noiseVariance: Double):
+  /** Destructured positionally: a new field fails compilation until encoded. */
   def canonical: String =
-    s"condition-profile/v1|basis=$basis|structure=${structure.map(_.mkString("+")).mkString(";")}|preparation=$preparation|nodes=${nodesPerAxis.mkString("x")}|budget=$budget|output=$output|sigma2=$noiseVariance"
+    this match
+      case ConditionProfileProvenance(basis, structure, preparation, nodesPerAxis, budget, prior, output, noiseVariance) =>
+        val conditions = structure.map(condition => KernelBasisProvenance.record("condition", condition*))
+        s"condition-profile/v2|basis=${KernelBasisProvenance.field(basis)}|" +
+          s"structure=${KernelBasisProvenance.record("conditions", conditions*)}|" +
+          s"preparation=${KernelBasisProvenance.field(ResponsePreparationIdentity.provenance(preparation))}|" +
+          s"nodesPerAxis=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|" +
+          s"budget=${KernelBasisProvenance.field(ConditionProfileProvenance.budgetCanonical(budget))}|" +
+          s"prior=${ConditionProfileProvenance.priorCanonical(prior)}|" +
+          s"output=${ConditionProfileProvenance.outputCanonical(output)}|" +
+          s"noiseVariance=${KernelBasisProvenance.number(noiseVariance)}"
+
+object ConditionProfileProvenance:
+
+  /** The policy fields recorded by [[ConditionProfileProvenance.canonical]], by name. */
+  private[profile] val encodedPolicyFields: Vector[String] =
+    Vector("basis", "structure", "nodesPerAxis", "budget", "prior", "noiseVariance", "output")
+
+  /** Policy fields deliberately absent from the identity, with the reason. */
+  private[profile] val unencodedPolicyFields: Map[String, String] =
+    Map(
+      "admission" -> "gates whether preparation is admitted; it cannot change any accepted result",
+      "blockSize" -> "batching only; each voxel's post-solve is independent of the block it is read in"
+    )
+
+  private[profile] def of(policy: ConditionProfilePolicy, preparation: ResponsePreparationProvenance): ConditionProfileProvenance =
+    ConditionProfileProvenance(
+      basis = policy.basis.provenance.canonical,
+      structure = policy.structure.conditions.map(_.map(_.value)),
+      preparation = preparation,
+      nodesPerAxis = policy.nodesPerAxis,
+      budget = policy.budget,
+      prior = policy.prior,
+      output = policy.output,
+      noiseVariance = policy.noiseVariance
+    )
+
+  private def numbers(values: Vector[Double]): String =
+    KernelBasisProvenance.record("values", values.map(KernelBasisProvenance.number)*)
+
+  private[profile] def budgetCanonical(budget: DecodeBudget): String =
+    budget match
+      case DecodeBudget(
+            coarseStride,
+            maxNewtonSteps,
+            maxJets,
+            maxExactEvaluations,
+            weakSdLimit,
+            ambiguityEnergy,
+            maxCandidateAttempts,
+            stationarityStepTolerance
+          ) =>
+        s"decode-budget/v1|coarseStride=$coarseStride|maxNewtonSteps=$maxNewtonSteps|" +
+          s"maxJets=$maxJets|maxExactEvaluations=$maxExactEvaluations|" +
+          s"weakSdLimit=${numbers(weakSdLimit)}|" +
+          s"ambiguityEnergy=${KernelBasisProvenance.number(ambiguityEnergy)}|" +
+          s"maxCandidateAttempts=$maxCandidateAttempts|" +
+          s"stationarityStepTolerance=${KernelBasisProvenance.number(stationarityStepTolerance)}"
+
+  private[profile] def priorCanonical(prior: Option[ShapePrior]): String =
+    KernelBasisProvenance.option(prior.map { case ShapePrior(mean, precision) =>
+      KernelBasisProvenance.record("shape_prior", s"mean=${numbers(mean)}", s"precision=${numbers(precision)}")
+    })
+
+  private def normalization(rule: NormalizationRule): String =
+    rule match
+      case NormalizationRule.Unnormalised => "unnormalised"
+      case NormalizationRule.UnitPeak => "unit_peak"
+      case NormalizationRule.UnitIntegral => "unit_integral"
+      case NormalizationRule.Density => "density"
+      case NormalizationRule.PositiveComponentArea => "positive_component_area"
+
+  /** Destructured positionally: a new `SignedQuery` field fails compilation until encoded. */
+  private[profile] def signedQuery(value: SignedQuery): String =
+    value match
+      case SignedQuery(label, weights, absoluteTolerance) => query(label, weights, absoluteTolerance)
+
+  private def query(label: String, weights: Vector[Double], absoluteTolerance: Double): String =
+    KernelBasisProvenance.record(
+      "query",
+      s"label=$label",
+      s"weights=${numbers(weights)}",
+      s"absoluteTolerance=${KernelBasisProvenance.number(absoluteTolerance)}"
+    )
+
+  /** Condition outputs are encoded in full. Trial outputs are refused by
+    * [[ConditionProfileFit.prepare]] before any provenance exists; they are
+    * still encoded totally, with the trial axis by its ordered trial and
+    * condition counts, because that axis is bound by reference identity.
+    */
+  private[profile] def outputCanonical(output: OutputRequest): String =
+    output match
+      case OutputRequest.ConditionAmplitudes(rule) =>
+        KernelBasisProvenance.record("condition_amplitudes", normalization(rule))
+      case OutputRequest.ConditionQueries(queries, rule) =>
+        KernelBasisProvenance.record(
+          "condition_queries",
+          normalization(rule),
+          KernelBasisProvenance.record("queries", queries.map(signedQuery)*)
+        )
+      case OutputRequest.TrialAmplitudes(rule) =>
+        KernelBasisProvenance.record("trial_amplitudes", normalization(rule))
+      case OutputRequest.TrialQueries(queries, rule) =>
+        KernelBasisProvenance.record(
+          "trial_queries",
+          normalization(rule),
+          KernelBasisProvenance.record(
+            "queries",
+            queries.map(q =>
+              KernelBasisProvenance.record(
+                "trial_query",
+                query(q.label, q.weights, q.absoluteTolerance),
+                s"trials=${q.axis.trialIds.length}",
+                s"conditions=${q.axis.conditionIds.length}"
+              )
+            )*
+          )
+        )
 
 /** Prepared from the plan only; no response is read until [[run]]. */
 final class ConditionProfilePreparation private[profile] (
@@ -62,15 +201,7 @@ final class ConditionProfilePreparation private[profile] (
   def basisRank: Int = policy.structure.basisSize
 
   val provenance: ConditionProfileProvenance =
-    ConditionProfileProvenance(
-      basis = policy.basis.provenance.canonical,
-      structure = policy.structure.conditions.map(_.map(_.value)),
-      preparation = retention.preparation.toString,
-      nodesPerAxis = policy.nodesPerAxis,
-      budget = policy.budget,
-      output = policy.output.toString,
-      noiseVariance = policy.noiseVariance
-    )
+    ConditionProfileProvenance.of(policy, retention.preparation)
 
   /** A worker owning its own objective, decoder and counters. */
   final class Worker:
@@ -82,7 +213,17 @@ final class ConditionProfilePreparation private[profile] (
     private val x = new Array[Double](conditions * basisRank)
     private val residualDf = retention.residualDf - policy.basis.family.dimension
 
+    def fitEither(voxel: Int, crossProducts: gale.linalg.DVec, responseEnergy: Double): Either[FamilySummaryError, ConditionVoxelResult] =
+      try
+        val raw = fitRaw(voxel, crossProducts, responseEnergy)
+        policy.basis.family.summariesEither(ShapePoint.unsafe(raw.coordinates)).map(raw.withSummary)
+      catch
+        case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+
     def fit(voxel: Int, crossProducts: gale.linalg.DVec, responseEnergy: Double): ConditionVoxelResult =
+      fitEither(voxel, crossProducts, responseEnergy).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+    private[profile] def fitRaw(voxel: Int, crossProducts: gale.linalg.DVec, responseEnergy: Double): ConditionVoxelReadout =
       crossProducts.copyTo(x)
       objective.pointAt(x, responseEnergy)
       val decode = decoder.decode(counters)
@@ -96,10 +237,9 @@ final class ConditionProfilePreparation private[profile] (
       val queryValues = policy.output match
         case OutputRequest.ConditionQueries(queries, _) => QueryEvaluation.evaluate(amplitudes, queries)
         case _ => Vector.empty
-      ConditionVoxelResult(
+      ConditionVoxelReadout(
         voxel = voxel,
         coordinates = decode.coordinates,
-        summaries = family.summaries(decode.point),
         amplitudes = amplitudeValues,
         queries = queryValues,
         status = decode.status,
@@ -125,20 +265,30 @@ final class ConditionProfilePreparation private[profile] (
           val product = block.product
           val results = Vector.newBuilder[ConditionVoxelResult]
           var v = 0
-          while v < block.voxelIndices.length do
-            results += worker.fit(block.voxelIndices(v), product.crossProducts.col(v), product.responseSquares(v))
+          var failure: Option[FitError] = None
+          while v < block.voxelIndices.length && failure.isEmpty do
+            worker.fitEither(block.voxelIndices(v), product.crossProducts.col(v), product.responseSquares(v)) match
+              case Left(error) => failure = Some(FitError.InvalidFitAxis("condition profile summary", error.message))
+              case Right(result) => results += result
             v += 1
-          val payload = ConditionProfileBlock(ordinal, results.result())
-          ordinal += 1
-          sink.accept(VoxelBlock(payload.ordinal, block.voxelIndices.headOption.getOrElse(0), block.voxelIndices.length), payload) match
-            case Left(detail) => Left(FitError.InvalidFitAxis("condition profile sink", detail))
-            case Right(receipt) =>
-              receipts += receipt
-              Right(())
+          failure match
+            case Some(error) => Left(error)
+            case None =>
+              val payload = ConditionProfileBlock(ordinal, results.result())
+              ordinal += 1
+              sink.accept(VoxelBlock(payload.ordinal, block.voxelIndices.headOption.getOrElse(0), block.voxelIndices.length), payload) match
+                case Left(detail) => Left(FitError.InvalidFitAxis("condition profile sink", detail))
+                case Right(receipt) =>
+                  receipts += receipt
+                  Right(())
         ,
         cancelled
       )
-      .map(_ => (receipts.result(), worker.counters))
+      .flatMap:
+        case EstimateExecutionOutcome.Completed(_, _) => Right((receipts.result(), worker.counters))
+        case EstimateExecutionOutcome.Cancelled(chunksDone, voxelsDone) =>
+          Left(FitError.InvalidFitAxis("condition profile",
+            s"cancelled after $chunksDone chunks / $voxelsDone voxels; previously delivered blocks remain partial"))
 
 object ConditionProfileFit:
 
@@ -160,6 +310,17 @@ object ConditionProfileFit:
       .flatMap(TaskBasisStructure.make)
 
   def prepare(plan: FitPlan, policy: ConditionProfilePolicy): Either[FitError, ConditionProfilePreparation] =
+    if !policy.output.isConditionNative then prepareRaw(plan, policy)
+    else
+      val summaryAdmission =
+        try policy.basis.family.validateSummaryGrid
+        catch
+          case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+      summaryAdmission.left.map(error => FitError.InvalidFitAxis("condition profile summary", error.message))
+        .flatMap(_ => prepareRaw(plan, policy))
+
+  /** The unified raw profile payload emits coordinates and amplitudes only. */
+  private[profile] def prepareRaw(plan: FitPlan, policy: ConditionProfilePolicy): Either[FitError, ConditionProfilePreparation] =
     val c = policy.structure.conditionCount
     if policy.structure.basisSize != policy.basis.rank then
       Left(FitError.InvalidFitAxis("condition profile", s"structure declares ${policy.structure.basisSize} basis columns per condition but the kernel basis has rank ${policy.basis.rank}"))
@@ -170,6 +331,7 @@ object ConditionProfileFit:
     else
       for
         _ <- policy.output.validateFor(c).left.map(err => FitError.InvalidFitAxis("condition profile output", err.message))
+        _ <- policy.admission.admits(plan, policy.structure, policy.basis).left.map(err => FitError.InvalidFitAxis("condition profile observed-family admission", err.message))
         size <- ChunkSize(policy.blockSize)
         retention <- BasisExpandedRetention.prepare(plan, policy.structure, size)
       yield

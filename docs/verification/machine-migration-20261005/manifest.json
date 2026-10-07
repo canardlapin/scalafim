@@ -1,0 +1,122 @@
+{
+  "schema": "scalafim-machine-handoff/v1",
+  "date": "2026-10-05",
+  "repository": "canardlapin/scalafim",
+  "authorization": "Owner requested commit and GitHub publication of development work and Motes to move development to another machine.",
+  "code_baseline": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+  "remote_main_before": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+  "ahead_commits_before": 112,
+  "mote_version": "mote 0.1.0",
+  "mote_format_sha256": "df4e9c0f4941230a6d831a031f77a49944806461094c849e49ff270728e274c4",
+  "mote_ops": 23905,
+  "mote_bytes": 10806774,
+  "mote_operation_manifest_sha256": "01e99f6605d5af978519fd422f8eaaee41d3e8fdc2d3057c868a6e73d0d76401",
+  "open_mote_audit": {
+    "reviewed": 102,
+    "updated": 80,
+    "bodies_refreshed": 47,
+    "unchanged": 22
+  },
+  "migration_refs": 166,
+  "source_custody": {
+    "valid_original_worktrees_checked": 39,
+    "dirty_worktrees": 12,
+    "drift": []
+  },
+  "object_audit": {
+    "new_objects": 11973,
+    "new_blobs": 3788,
+    "largest": [
+      {
+        "bytes": 22079829,
+        "oid": "68c150a20ab5fbb04962f03c866cc50423daec91",
+        "path": "docs/visual-qa/surface-publication-legends/missing-poster.svg"
+      },
+      {
+        "bytes": 22079493,
+        "oid": "ed50e3c7617f94a3ae2767b83ece320647a5764d",
+        "path": "docs/visual-qa/surface-publication-legends/split-poster.svg"
+      },
+      {
+        "bytes": 22078240,
+        "oid": "4a4bd58fe2e000a0b386e7321782750f3a27f9bc",
+        "path": "docs/visual-qa/surface-publication-legends/asymmetric-poster.svg"
+      },
+      {
+        "bytes": 22077545,
+        "oid": "a67e1fdb259db34546566b1129fe17a2a619eecc",
+        "path": "docs/visual-qa/surface-publication-legends/continuous-poster.svg"
+      },
+      {
+        "bytes": 22054543,
+        "oid": "dd90ee278de0c7b00d7ba64c0ef9fbe31c9b7b10",
+        "path": "docs/visual-qa/surface-publication-legends/categorical-poster.svg"
+      },
+      {
+        "bytes": 22052908,
+        "oid": "80ea82baed121249a07c697e1005e880874b27f9",
+        "path": "docs/visual-qa/surface-publication-legends/manual-poster.svg"
+      },
+      {
+        "bytes": 14074653,
+        "oid": "eb7d4d92683be95361c234bf3b7300b328b2c631",
+        "path": "docs/verification/javafx-stock-metal-20260929-evidence.tar.gz"
+      },
+      {
+        "bytes": 8870645,
+        "oid": "8fabd33fcfa88fb922a6eee4844ba9093ea740ee",
+        "path": "docs/verification/model-authoring-seam-review-20261004/source-snapshot.tar.gz"
+      }
+    ],
+    "over_100MiB": 0
+  },
+  "credential_pattern_audit": {
+    "scanned_blobs": 3788,
+    "scanned_bytes": 357368832,
+    "credential_pattern_hits": []
+  },
+  "excluded": [
+    ".mote/local/",
+    ".mote/tmp/",
+    "runtime installations and caches",
+    "historical temporary evidence not already committed"
+  ],
+  "qualification": "Preservation and portable tracker replay; no new scientific, native, performance or release qualification.",
+  "portable_replay": {
+    "staged_store_byte_hashes_exact": true,
+    "all_issue_projections_equal": true,
+    "all_issues": 1274,
+    "nonclosed": 102,
+    "op_files": 23905,
+    "workstation_settings_excluded": true,
+    "empty_local_directories_initialized": true,
+    "doctor_clean": true
+  },
+  "protected_main": {
+    "status": "publication PR required",
+    "remote_main": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+    "initial_handoff_commit": "24059252dfe4f8765fca83aaa89bda5345a407f4",
+    "handoff_branch": "migration/20261005/handoff",
+    "published_preservation_refs_verified": 166,
+    "required_checks": [
+      "full repository JVM/Scala.js compile and test",
+      "focused first-level JVM/Scala.js gates",
+      "scoped first-level scientific coverage"
+    ],
+    "strict": true,
+    "required_reviews": null
+  },
+  "pull_request_conflict_audit": {
+    "report": "docs/verification/migration-pr-conflicts-20261005.md",
+    "reviewed_open_prs": 12,
+    "drafts_verified": 9,
+    "archival_heads_unchanged": true
+  },
+  "recovery_evidence_ledger": {
+    "original_tips": 146,
+    "remote_preservation_refs": 166,
+    "literal_open_mote_reference_tips": 34,
+    "unassessed_feature_deltas_explicit": true,
+    "report": "docs/verification/migration-recovery-ledger-20261005.md"
+  }
+}

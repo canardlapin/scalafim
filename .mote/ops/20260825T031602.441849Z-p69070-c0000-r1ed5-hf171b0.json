@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim-mvpa-refactor","entity":"bd-01M0SVE2G6V1XFSNVJJVWBZ93C","kind":"note","note_kind":"handoff","op":"20260825T031602.441849Z-p69070-c0000-r1ed5-hf171b0","text":"Outcome: exact OOF typed predictions are now the predictive compiler output; summaries are recomputed from CategoricalPredictions and cannot replace them.","ts":"2026-08-25T03:16:02.441849Z","v":1}

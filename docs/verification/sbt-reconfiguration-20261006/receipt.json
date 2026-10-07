@@ -1,0 +1,645 @@
+{
+  "verified_at_utc": "2026-10-06T10:19:25.740941+00:00",
+  "base_commit": "27a64065411d5157ccb670fb8894723595541b16",
+  "mote": "bd-01M47MBK0K3VPJ490HDJTQ6Y3C",
+  "validation": "Pass",
+  "supported_reconfiguration_profile": {
+    "heap": "4g",
+    "cpus": 4,
+    "idle_minutes": 30,
+    "jdk": "Temurin 21.0.12.1+1",
+    "sbt": "1.11.7",
+    "settings": 350211
+  },
+  "ordinary_default_heap": "3g",
+  "provider_pins_preserved": true,
+  "measured_runs": [
+    {
+      "profile": "3g",
+      "label": "load",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show scalaVersion"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 70.804,
+      "observed_pids": [
+        60850
+      ],
+      "gc_warnings": [],
+      "settings_counts": [
+        350211
+      ]
+    },
+    {
+      "profile": "3g",
+      "label": "reload",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "reload"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 32.268,
+      "observed_pids": [
+        60850
+      ],
+      "gc_warnings": [],
+      "settings_counts": [
+        350211
+      ]
+    },
+    {
+      "profile": "3g",
+      "label": "set-one",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "set atlasJVM / Test / envVars += (\"SCALAFIM_SETTINGS_PROBE\" -> \"one\")"
+      ],
+      "exit_code": 1,
+      "timed_out": false,
+      "seconds": 42.875,
+      "observed_pids": [
+        60850
+      ],
+      "gc_warnings": [
+        "[warn] In the last 10 seconds, 5.909 (61.1%) were spent in GC. [Heap: 0.21GB free of 3.00GB, max 3.00GB] Consider increasing the JVM heap using `-Xmx` or try a different collector, e.g. `-XX:+UseG1GC`, for better performance.",
+        "[warn] In the last 10 seconds, 9.281 (98.0%) were spent in GC. [Heap: 0.06GB free of 3.00GB, max 3.00GB] Consider increasing the JVM heap using `-Xmx` or try a different collector, e.g. `-XX:+UseG1GC`, for better performance.",
+        "[warn] In the last 10 seconds, 9.167 (98.7%) were spent in GC. [Heap: 0.02GB free of 3.00GB, max 3.00GB] Consider increasing the JVM heap using `-Xmx` or try a different collector, e.g. `-XX:+UseG1GC`, for better performance."
+      ],
+      "settings_counts": []
+    },
+    {
+      "profile": "4g",
+      "label": "load",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show scalaVersion"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 31.708,
+      "observed_pids": [
+        67454
+      ],
+      "gc_warnings": [],
+      "settings_counts": [
+        350211
+      ]
+    },
+    {
+      "profile": "4g",
+      "label": "reload",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "reload"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 28.529,
+      "observed_pids": [
+        67454
+      ],
+      "gc_warnings": [],
+      "settings_counts": [
+        350211
+      ]
+    },
+    {
+      "profile": "4g",
+      "label": "set-one",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "set atlasJVM / Test / envVars += (\"SCALAFIM_SETTINGS_PROBE\" -> \"one\")"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 32.118,
+      "observed_pids": [
+        67454
+      ],
+      "gc_warnings": [],
+      "settings_counts": []
+    },
+    {
+      "profile": "4g",
+      "label": "set-two",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "set atlasJVM / Test / envVars += (\"SCALAFIM_SETTINGS_PROBE\" -> \"two\")"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 32.337,
+      "observed_pids": [
+        67454
+      ],
+      "gc_warnings": [],
+      "settings_counts": []
+    },
+    {
+      "profile": "4g",
+      "label": "read-setting",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / Test / envVars"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.647,
+      "observed_pids": [
+        67454
+      ],
+      "gc_warnings": [],
+      "settings_counts": []
+    }
+  ],
+  "gc_summary": [
+    {
+      "pid": 60850,
+      "heap_profile": "3g",
+      "max_heap_flag": "-XX:MaxHeapSize=3221225472",
+      "peak_sampled_rss_kib": 3922912,
+      "logged_gc_pause_seconds": 43.771,
+      "logged_full_gc_pause_seconds": 38.128,
+      "full_gc_count": 33,
+      "max_gc_pause_ms": 1900.915,
+      "logged_last_uptime_seconds": 127.648,
+      "overhead_limit_events": 2
+    },
+    {
+      "pid": 67454,
+      "heap_profile": "4g",
+      "max_heap_flag": "-XX:MaxHeapSize=4294967296",
+      "peak_sampled_rss_kib": 4768384,
+      "logged_gc_pause_seconds": 18.503,
+      "logged_full_gc_pause_seconds": 10.39,
+      "full_gc_count": 7,
+      "max_gc_pause_ms": 1815.641,
+      "logged_last_uptime_seconds": 125.337,
+      "overhead_limit_events": 0
+    }
+  ],
+  "candidate_runs": [
+    {
+      "label": "load-4g",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / scalaVersion"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 32.271,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "reload-4g",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "reload"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 28.567,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "set-one-4g",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "set atlasJVM / Test / envVars += (\"SCALAFIM_SETTINGS_PROBE\" -> \"one\")"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 32.861,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "set-two-4g",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "set atlasJVM / Test / envVars += (\"SCALAFIM_SETTINGS_PROBE\" -> \"two\")"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 34.26,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "read-setting-4g",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / Test / envVars"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.707,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "status-4g",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--status"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.196,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "status-3g-request",
+      "requested_heap": "3g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--status"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.184,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "mismatch-3g-request",
+      "requested_heap": "3g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / scalaVersion"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "seconds": 0.183,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "unknown-startup",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / scalaVersion"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "seconds": 0.205,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "ordinary-read-after-refusals",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / scalaVersion"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.564,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "shutdown-with-3g-request",
+      "requested_heap": "3g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--shutdown"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.664,
+      "observed_pids": [
+        82078
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "hrf-jvm-default",
+      "requested_heap": "3g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/test"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 48.965,
+      "observed_pids": [
+        82078,
+        90655
+      ],
+      "counts": [
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "hrf-js-default",
+      "requested_heap": "3g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/test"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 29.723,
+      "observed_pids": [
+        90655
+      ],
+      "counts": [
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "status-default",
+      "requested_heap": "3g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--status"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.169,
+      "observed_pids": [
+        90655
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "reverse-mismatch-4g-request",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / scalaVersion"
+      ],
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "seconds": 0.173,
+      "observed_pids": [
+        90655
+      ],
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "shutdown-with-4g-request",
+      "requested_heap": "4g",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--shutdown"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.658,
+      "observed_pids": [
+        90655
+      ],
+      "counts": [],
+      "warnings": []
+    }
+  ],
+  "final_runs": [
+    {
+      "label": "hrf-jvm-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/test"
+      ],
+      "heap_override": null,
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 36.533,
+      "counts": [
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "hrf-js-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/test"
+      ],
+      "heap_override": null,
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 18.013,
+      "counts": [
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "matching-status-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--status"
+      ],
+      "heap_override": null,
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.137,
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "malformed-status-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--status"
+      ],
+      "heap_override": null,
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.084,
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "malformed-run-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / scalaVersion"
+      ],
+      "heap_override": null,
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "seconds": 0.09,
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "malformed-shutdown-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--shutdown"
+      ],
+      "heap_override": "4g",
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 1.531,
+      "counts": [],
+      "warnings": []
+    },
+    {
+      "label": "stopped-status-final",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--status"
+      ],
+      "heap_override": null,
+      "source_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "seconds": 0.078,
+      "counts": [],
+      "warnings": []
+    }
+  ],
+  "final_validation": {
+    "validation": "Pass",
+    "final_wrapper_sha256": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+    "passed_tests": 772,
+    "server_pid": 554,
+    "server_exited": true,
+    "server_socket_closed": true,
+    "malformed_active_status_unknown": true,
+    "malformed_active_run_refused": true,
+    "malformed_active_shutdown_recovered_known_base_socket": true,
+    "instrumentation_note": "The executed harness expected active.json to remain after shutdown; sbt correctly deleted it. All command outcomes passed, and final offline checks confirmed closed sockets and process exit. Corrected replay harness handles absent metadata."
+  },
+  "python_tests": {
+    "passed": 57,
+    "failed": 0
+  },
+  "final_scala_tests": {
+    "jvm_passed": 386,
+    "js_passed": 386,
+    "failed": 0,
+    "errors": 0,
+    "compiler_warnings": []
+  },
+  "source_sha256": {
+    "tools/build/sbt-warm": "b0f246f9f4e38a5ee47cd41b62b86478e9a9cd40f86dc9d2cf02b71547c54dc5",
+    "tools/build/test_sbt_warm.py": "96c9aaa39e11d47109f9f3a0debf73341f235421f06c89181ca6ff83675d9e5d",
+    "README.md": "0deb5b28595bbd36db24d0cb352bff59ac30b0d12a2b2d32d1255edd11e03dcc",
+    "build.sbt": "a91b1e35bc80a4380315d2f06172dda0f2e2e071bd63244c0ee21135caf5ed17",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    "project/plugins.sbt": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "fa954561bd020c2d46570dfd8798015d7439942c3b1b63b70e33dad0b290fa3e",
+  "scope_limits": [
+    "Supported profile qualifies the current pinned graph and measured reload/two-set workload, not unlimited settings changes or every memory-intensive test campaign.",
+    "Recorded startup values are requested wrapper knobs, not measurements of actual JVM flags; arbitrary JVM/environment overrides are not tracked.",
+    "Sampled RSS is not a full-lifetime peak or a whole-host memory bound. GC pause totals cover different workload lengths and are not a matched throughput comparison.",
+    "The 3g settings failure is a reproduced negative control; 4g reconfiguration, final default JVM/JS gates, and expected refusal/recovery outcomes are separately retained.",
+    "Initial candidate validation preceded the defensive active.json parser extension; exact final wrapper source was then separately tested through full JVM/JS gates and real malformed-record recovery.",
+    "Host harness post-shutdown process/file assertions required corrections; all candidate/final command outcomes matched expectations, and independent final checks confirmed stopped sockets/processes.",
+    "Cold-start serialization covers wrapper-observed cold starts; external death between guard and client can cause a shared-lock restart, then stale-identity refusal on the next invocation.",
+    "Provider compatibility consolidation remains separate under bd-01M43MQB7S7X8TK76CE391CJPJ."
+  ]
+}

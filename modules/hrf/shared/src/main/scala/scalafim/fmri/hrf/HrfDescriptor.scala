@@ -177,7 +177,7 @@ enum HrfParams:
   case Fourier(nBasis: BasisCount)
   case Daguerre(nBasis: BasisCount, scale: Double)
   case Fir(nBasis: BasisCount)
-  case Bspline(requested: BasisCount, degree: Int)
+  case Bspline(requested: BasisCount, degree: Int, convention: Hrfs.BsplineConvention)
   case Tent(requested: BasisCount)
   case Coefficients(baseName: String, coefficients: Vector[Double])
 

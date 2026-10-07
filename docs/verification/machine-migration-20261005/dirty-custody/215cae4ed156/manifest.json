@@ -1,0 +1,41 @@
+{
+  "worktree": "/private/tmp/scalafim-model-studio-20261002",
+  "head": "b6612f915e5882097fbf60ec05593129ee01de6d",
+  "branch": "refs/heads/work/model-studio-20261002",
+  "files": [
+    {
+      "path": ".agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-final.log.meta.json",
+      "kind": "file",
+      "bytes": 579,
+      "sha256": "95bcc017afcaf9f22ae0d293e8607a61c4ba29f58a32c949dc6ab73a5789a60b"
+    },
+    {
+      "path": ".agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-rerun.log.meta.json",
+      "kind": "file",
+      "bytes": 579,
+      "sha256": "b2eaf5f3d3972809dff2d1ee85b4bd7e86a2358bf1fa427ad602706f11c9ad1b"
+    },
+    {
+      "path": ".agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-retry.log.meta.json",
+      "kind": "file",
+      "bytes": 581,
+      "sha256": "5b998d4c3c5f75cf12c9e0ec0645ce02fae3321d4647afe3f1a5924aa9e14016"
+    },
+    {
+      "path": ".agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js.log.meta.json",
+      "kind": "file",
+      "bytes": 573,
+      "sha256": "09d933c7e3281fbfa202c817ae0872cd0d8da5a5d04d5adf562a61d33b3b4dcf"
+    },
+    {
+      "path": ".agent-work/review_graphics/sf7-trialwise-plan.md",
+      "kind": "file",
+      "bytes": 1327,
+      "sha256": "582f9891d00646ee2a3763e05227995297c5f5ec6f526686f95735f54f83094b"
+    }
+  ],
+  "archive_sha256": "1cb7c7ac5a358084d872bdbbd42c4c7adee80854fde2d2c6bd6d9cd46a384eaa",
+  "archive_bytes": 1607,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

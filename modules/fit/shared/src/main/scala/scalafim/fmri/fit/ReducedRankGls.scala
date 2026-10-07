@@ -138,7 +138,7 @@ object ReducedRankGlsPrepared:
       Left(FitError.InvalidFitAxis("reduced-rank design partition", s"expected ${design.predictors} predictors, got ${partition.predictors}"))
     else Right(())
 
-  private def rankRequest(
+  private[fit] def rankRequest(
       config: ReducedRankGlsConfig,
       targetPredictors: Int,
       voxels: Int
@@ -159,14 +159,14 @@ object ReducedRankGlsPrepared:
       case ReducedRankComponentSpec.ResidualSumsOfSquaresBudget(budget) =>
         Right(ReducedRankRequest.ResidualSumsOfSquaresBudget(budget.value))
 
-  private def isFullRankRequest(
+  private[fit] def isFullRankRequest(
       config: ReducedRankGlsConfig,
       targetPredictors: Int,
       voxels: Int
   ): Boolean =
     config.components.isFull(math.min(targetPredictors, voxels))
 
-private enum ReducedRankRequest:
+private[fit] enum ReducedRankRequest:
   case Full
   case Fixed(rank: Int)
   case EnergyRetained(keep: Double)
@@ -273,7 +273,7 @@ private final class ReducedRankGlsProjection private (
       i += 1
     Right(out.result())
 
-private object ReducedRankGlsProjection:
+private[fit] object ReducedRankGlsProjection:
   def from(
       fullFit: GlsFit,
       design: DesignMatrix,
@@ -316,12 +316,12 @@ private object ReducedRankGlsProjection:
     def basis: DMat = taskFit.basis
     def targetCoefficients: DMat = taskFit.latentCoefficients
 
-  private final case class ReducedTaskFit(
+  private[fit] final case class ReducedTaskFit(
       basis: DMat,
       latentCoefficients: DMat,
-      coefficients: DMat,
       normalizedCovariance: DMat
-  )
+  ):
+    lazy val coefficients: DMat = latentCoefficients * basis.t
 
   private def taskSubspaceFactors(
       design: DesignMatrix,
@@ -360,6 +360,15 @@ private object ReducedRankGlsProjection:
     for
       qr <- fullRankQr(targetDesign)
       qty <- leadingQtRows(qr, response, targetDesign.cols)
+      fit <- fitTaskScores(qr, qty, rankRequest)
+    yield fit
+
+  private[fit] def fitTaskScores(
+      qr: QR,
+      qty: DMat,
+      rankRequest: ReducedRankRequest
+  ): Either[FitError, ReducedTaskFit] =
+    for
       svd <- Svds
         .svd(qty, SingularSelection.All)
         .left
@@ -381,7 +390,6 @@ private object ReducedRankGlsProjection:
     yield ReducedTaskFit(
       basis = basis,
       latentCoefficients = targetCoefficients,
-      coefficients = targetCoefficients * basis.t,
       normalizedCovariance = covariance
     )
 
@@ -528,7 +536,7 @@ private object ReducedRankGlsProjection:
         }
         CoefficientCovariance.voxelwise(matrices)
 
-  private def embedTargetCovariance(
+  private[fit] def embedTargetCovariance(
       target: DMat,
       predictors: Int,
       targetColumns: Vector[Int]
@@ -544,7 +552,7 @@ private object ReducedRankGlsProjection:
       row += 1
     out.result()
 
-  private def sampleIndices(
+  private[fit] def sampleIndices(
       rows: Int,
       blockSize: Int,
       rng: ParkMillerRng
@@ -561,7 +569,7 @@ private object ReducedRankGlsProjection:
         offset += 1
     out
 
-  private def resampledResponse(
+  private[fit] def resampledResponse(
       fitted: DMat,
       residual: DMat,
       indices: Array[Int]
@@ -576,17 +584,17 @@ private object ReducedRankGlsProjection:
       row += 1
     out.result()
 
-  private final class ParkMillerRng private (private var state: Long):
+  private[fit] final class ParkMillerRng private (private var state: Long):
     def nextInt(bound: Int): Int =
       require(bound > 0, "random bound must be positive")
       state = (state * 48271L) % 2147483647L
       ((state - 1L) % bound.toLong).toInt
 
-  private object ParkMillerRng:
+  private[fit] object ParkMillerRng:
     def apply(seed: Int): ParkMillerRng =
       new ParkMillerRng(if seed == 0 then 1L else seed.toLong)
 
-  private def scaleMatrix(matrix: DMat, scale: Double): DMat =
+  private[fit] def scaleMatrix(matrix: DMat, scale: Double): DMat =
     Matrix.tabulate(matrix.rows, matrix.cols) { (row, col) =>
       matrix(row, col) * scale
     }
@@ -671,9 +679,9 @@ private object ReducedRankGlsProjection:
       i += 1
     out.result()
 
-  private final case class ResidualizedTask(targetDesign: DMat, response: DMat)
+  private[fit] final case class ResidualizedTask(targetDesign: DMat, response: DMat)
 
-  private def residualizeAgainstNuisance(
+  private[fit] def residualizeAgainstNuisance(
       targetDesign: DMat,
       response: DMat,
       nuisanceDesign: DMat
@@ -693,7 +701,7 @@ private object ReducedRankGlsProjection:
         response = residualizedResponse
       )
 
-  private def fitNuisance(
+  private[fit] def fitNuisance(
       nuisanceDesign: DMat,
       response: DMat
   ): Either[FitError, DMat] =
@@ -707,7 +715,7 @@ private object ReducedRankGlsProjection:
           .map(FitError.SingularDesign.apply)
       yield coefficients
 
-  private def selectColumns(matrix: DMat, columns: Vector[Int]): DMat =
+  private[fit] def selectColumns(matrix: DMat, columns: Vector[Int]): DMat =
     if columns.isEmpty then Matrix.zeros(matrix.rows, 0)
     else
       val out = Matrix.newBuilder(matrix.rows, columns.length)
@@ -720,19 +728,19 @@ private object ReducedRankGlsProjection:
         row += 1
       out.result()
 
-  private def subtract(left: DMat, right: DMat): DMat =
+  private[fit] def subtract(left: DMat, right: DMat): DMat =
     require(left.rows == right.rows && left.cols == right.cols, "matrix subtraction requires equal shapes")
     Matrix.tabulate(left.rows, left.cols) { (row, col) =>
       left(row, col) - right(row, col)
     }
 
-  private def fullRankQr(design: DMat): Either[FitError, QR] =
+  private[fit] def fullRankQr(design: DMat): Either[FitError, QR] =
     val qr = design.qr(QROptions(QRPivoting.Column, Some(1e-7)))
     val rank = qr.diagnostics.rank.getOrElse(design.cols)
     if rank < design.cols then Left(FitError.SingularDesign(LinAlgError.RankDeficient(rank, design.cols)))
     else Right(qr)
 
-  private def leadingQtRows(qr: QR, response: DMat, rowCount: Int): Either[FitError, DMat] =
+  private[fit] def leadingQtRows(qr: QR, response: DMat, rowCount: Int): Either[FitError, DMat] =
     qr.applyQT(response)
       .left
       .map(FitError.SingularDesign.apply)

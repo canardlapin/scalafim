@@ -48,12 +48,19 @@ final case class BoundHrfTerm(
     raw: HrfCall
 ) extends BoundTerm
 
+/** Fields after `raw` were added later and are appended (with defaults) so the
+  * original positional shape keeps its meaning.
+  */
 final case class BoundTrialwiseTerm(
     id: Option[TermId],
     onset: ColumnRef,
     basis: Option[BasisRef],
     duration: Option[ColumnRef],
-    raw: TrialwiseCall
+    raw: TrialwiseCall,
+    onsetOverride: Option[ColumnRef] = None,
+    identity: Option[ColumnRef] = None,
+    phase: Option[BoundPhaseRef] = None,
+    subsetColumns: Vector[ColumnRef] = Vector.empty
 ) extends BoundTerm
 
 final case class BoundCovariateTerm(
@@ -112,8 +119,12 @@ object BoundFormula:
       case t: TrialwiseCall =>
         for
           basis <- bindOptionalBasis(t.basis)
+          onsetOverride <- bindOptionalColumn(t.onsets, data, argName = "onsets")
           duration <- bindOptionalColumn(t.durations, data, argName = "durations")
-        yield BoundTrialwiseTerm(t.label, onset, basis, duration, t)
+          identity <- bindOptionalColumn(t.id, data, argName = "id")
+          phase <- bindOptionalPhase(t.phase, data)
+          subsetColumns <- bindArgColumns(t.subset.toVector, data)
+        yield BoundTrialwiseTerm(t.label, onset, basis, duration, t, onsetOverride, identity, phase, subsetColumns)
 
       case c: CovariateCall =>
         bindArgColumns(c.vars, data).map(BoundCovariateTerm(c.id.orElse(c.prefix), _, c))
@@ -160,6 +171,10 @@ object BoundFormula:
     value match
       case ArgValue.Ident(id) =>
         ColumnRef.bind(id, data).map(Vector(_))
+      case ArgValue.Call(fun, args) if fun.equalsIgnoreCase("modulator") =>
+        args.headOption match
+          case Some(Arg(None, source)) => collectColumns(source, data)
+          case _ => Right(Vector.empty)
       case ArgValue.Call(_, args) =>
         val out = Vector.newBuilder[ColumnRef]
         var i = 0

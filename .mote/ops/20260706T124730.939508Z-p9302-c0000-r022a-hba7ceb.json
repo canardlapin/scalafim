@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVQAD0WPZ82MS2N4QX98B56","kind":"note","note_kind":"progress","op":"20260706T124730.939508Z-p9302-c0000-r022a-hba7ceb","text":"Added FitPlanExecutor, matrix adapters, FmriFitResult, end-to-end in-memory OLS tests, and fit->model build dependency. Focused JVM/JS fit and model tests pass.","ts":"2026-07-06T12:47:30.939508Z","v":1}

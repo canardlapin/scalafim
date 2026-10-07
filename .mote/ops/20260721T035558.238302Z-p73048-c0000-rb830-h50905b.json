@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXZZ2ENAYNANJ02HDEQT07D4","kind":"reserve_open","mode":"exclusive","op":"20260721T035558.238302Z-p73048-c0000-rb830-h50905b","paths":["modules/inference/shared/src/main/scala/scalafim/inference/Compiler.scala"],"reservation_id":"rv-01KY1D1VCYXJ6EMQ63DS19N864","ts":"2026-07-21T03:55:58.238302Z","ttl_s":3600,"v":1}

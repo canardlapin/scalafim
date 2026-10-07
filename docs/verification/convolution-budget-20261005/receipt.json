@@ -1,0 +1,141 @@
+{
+  "mote": "bd-01M477F67P8ZJKHSCWSPCECG85",
+  "verified_at_utc": "2026-10-06T00:20:16.882689+00:00",
+  "base_commit": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+  "behavior": "Kernel and drive grids are refused above 1,000,001 samples before Int conversion; complete kernel and rendered arrays are refused above 4,000,004 cells before dimension multiplication or allocation. Typed preparation, prepared evaluation and EventResponseConvolution expose ConvolutionError; legacy wrappers throw IllegalArgumentException.",
+  "limitation": "These caps bound sampled allocations, not the direct convolution multiply/add count, which depends on active drive bins and kernel length.",
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/ConvolutionDiscretization.scala": "7f7736fd3e0d5c1b733402dbcb3277c297fdd2a3001aad708cb1b4f097e64291",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala": "aaef96c7fff42afde2959ce4722bf0d2851e51aab972c522da4216081dc22b17",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventTerm.scala": "b1e3f27870a0d08bab241e4b6e4e7557de3edf1749b0a9bfeb8f3e5300820675",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventResponseConvolution.scala": "8dbbf6c0db5052335b1adc6a032eaa482442762490b67d099f7109849450cf40",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/event/EventResponseConvolutionSuite.scala": "72394f7ede39aedb56829654c514ccc4171b3e1ff4ca60dfdb6aeb9ac346cd3b",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/regressor/ConvolutionDiscretizationSuite.scala": "acb5e0da5395da85fc998d092b42fd0b491a271821609f5f50c372a85c39196e"
+  },
+  "mutation": {
+    "change": "Removed only the two finite count cap predicates, retaining input and finite-count validation.",
+    "selector": "Two existing allocation-free count regressions, one for the sample cap and one for the cell cap.",
+    "expected": "Both regressions fail on each platform.",
+    "restored": true,
+    "temporary_selector_removed": true,
+    "observed": {
+      "JVM": {
+        "total": 2,
+        "failed": 2,
+        "errors": 0,
+        "passed": 0
+      },
+      "JS": {
+        "total": 2,
+        "failed": 2,
+        "errors": 0,
+        "passed": 0
+      }
+    }
+  },
+  "runs": [
+    {
+      "name": "focused-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.ConvolutionDiscretizationSuite",
+        "designJVM/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 37.91865787515417
+    },
+    {
+      "name": "focused-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.ConvolutionDiscretizationSuite",
+        "designJS/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 14.202634082641453
+    },
+    {
+      "name": "mutation-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.ConvolutionBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.0228468333370984
+    },
+    {
+      "name": "mutation-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.ConvolutionBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.5630688327364624
+    },
+    {
+      "name": "focused-restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.ConvolutionDiscretizationSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.ConvolutionDiscretizationSuite",
+        "designJVM/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite",
+        "designJS/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 5.1383585832081735
+    }
+  ],
+  "archive_sha256": "d4d25d91c7074184caa6041dcc33760663bbd256e2c092742d40a5e8f6a3df5b",
+  "focused_passed_tests": {
+    "hrfJVM": 11,
+    "hrfJS": 11,
+    "designJVM": 17,
+    "designJS": 17
+  },
+  "warning_clean": true,
+  "allocation_bounds": {
+    "kernel_or_rendered_array_cells": 4000004,
+    "drive_samples": 1000001,
+    "drive_difference_cells": 1000003,
+    "full_fft_convolution_cells": 2000001,
+    "fft_scratch_arrays": 4,
+    "cells_per_fft_scratch_array": 2097152,
+    "total_fft_scratch_bytes": 67108864
+  },
+  "integrated_gates": {
+    "receipt": "docs/verification/scalafim-chunk-20261005/receipt.json",
+    "passed_tests": {
+      "hrfJVM": 321,
+      "hrfJS": 321,
+      "designJVM": 454,
+      "designJS": 453,
+      "fitJVM": 660,
+      "fitJS": 603,
+      "ObservedFamilyAdmissionJVM": 4,
+      "ObservedFamilyAdmissionJS": 4
+    },
+    "compiler_warning_clean": true,
+    "build_diagnostic": "Existing sbt multiple-main diagnostic in law consumer build; recorded separately in integrated receipt."
+  },
+  "mutation_snapshot_source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/ConvolutionDiscretization.scala": "7f7736fd3e0d5c1b733402dbcb3277c297fdd2a3001aad708cb1b4f097e64291",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala": "aaef96c7fff42afde2959ce4722bf0d2851e51aab972c522da4216081dc22b17",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/ConvolutionDiscretizationSuite.scala": "74b7d53b59f856a3d15b6e5d55f07939479a4625a343b3f25f4168e609f788ac",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventTerm.scala": "b1e3f27870a0d08bab241e4b6e4e7557de3edf1749b0a9bfeb8f3e5300820675",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventResponseConvolution.scala": "8dbbf6c0db5052335b1adc6a032eaa482442762490b67d099f7109849450cf40",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/event/EventResponseConvolutionSuite.scala": "72394f7ede39aedb56829654c514ccc4171b3e1ff4ca60dfdb6aeb9ac346cd3b"
+  },
+  "validation_layout_change": {
+    "original_test_path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/ConvolutionDiscretizationSuite.scala",
+    "final_test_path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/regressor/ConvolutionDiscretizationSuite.scala",
+    "original_package": "scalafim.fmri.hrf",
+    "final_package": "scalafim.fmri.hrf.regressor",
+    "unchanged_test_body_sha256": "a0f3eea907f1bf3541756043fc2fe8717fa3f78b196d3784b6105969c4bdbce1",
+    "note": "Only package/import header and path changed after focused mutation proof. Archive retains original proof snapshot and runner. Parent integrated JVM+JS gates validate final package."
+  }
+}

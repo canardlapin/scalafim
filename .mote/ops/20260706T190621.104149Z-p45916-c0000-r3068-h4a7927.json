@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWCYRNF20QVG7K08YZ7JQ3G","kind":"note","note_kind":"progress","op":"20260706T190621.104149Z-p45916-c0000-r3068-h4a7927","text":"Added archive temporal DCT model/manifest support, archive builder, latent DCT archive constructor, and focused tests/docs; starting verification.","ts":"2026-07-06T19:06:21.104149Z","v":1}

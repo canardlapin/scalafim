@@ -1,0 +1,17 @@
+{
+  "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeC",
+  "head": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+  "branch": null,
+  "files": [
+    {
+      "path": "build.sbt",
+      "kind": "file",
+      "bytes": 55479,
+      "sha256": "f0c68f44c2f995af48d20483fb5695e602677a4b69c492f789e27a5f30846982"
+    }
+  ],
+  "archive_sha256": "f058c325fee8baa7df8a2aafa1c559b0e8edc7d81ac39a2994246eb2fd489713",
+  "archive_bytes": 10329,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

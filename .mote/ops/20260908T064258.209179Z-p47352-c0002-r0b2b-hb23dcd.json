@@ -1,0 +1,1 @@
+{"actor":"surface-map-semantics","entity":"bd-01M1Z4FNEQ28YY1BZSWAN6WBER","kind":"note","note_kind":"progress","op":"20260908T064258.209179Z-p47352-c0002-r0b2b-hb23dcd","text":"Fix native black stripe exposed by ellipsoid scalar benchmark: investigate generated display normals and JavaFX tangent frame degeneracy","ts":"2026-09-08T06:42:58.209179Z","v":1}

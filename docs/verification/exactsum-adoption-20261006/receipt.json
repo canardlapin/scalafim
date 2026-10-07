@@ -1,0 +1,69 @@
+{
+  "recorded_at": "2026-10-06T17:01:47.696700+00:00",
+  "scope": "Root production ExactSum adoption using default published immutable Gale source URI",
+  "base_commit": "37a84e990e6e28d1a00cbf6d1be841c56691564c",
+  "gale_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "gale_uri": "https://github.com/canardlapin/gale.git#54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "gale_exactsum_sha256": "850c8ab9b5c74b6cc7510dc54891916495977914255af6f77814d42c41857591",
+  "source_overrides": [],
+  "source_sha256": {
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala": "22b213a29ed09040c4cc50280ce1fac38ab3d404a816d61ad5dd4ddcee7e960d",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala": "335048564f391b47705e31664c92e242f368bc800026a111a83059688e1fcdc8",
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala": "2eb60504fdcd295c28ec02bd71596b9e5d6b838152aecc6375703f65f6440e32"
+  },
+  "deleted_sources": [
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ExactSum.scala",
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ExactSumSuite.scala"
+  ],
+  "build_sbt_sha256": "f0515adac24b61b0d4f53127663594cf61e419a3df69d9bffc017fb0a178eb7f",
+  "qualified_rehearsal_patch_sha256": "6d74ea70f94c011d40bb964ad58f54692da4882d7be05d29102fb34a21ec1c76",
+  "published_default_gate": {
+    "commands": [
+      "show arJVM / Compile / dependencyClasspath",
+      "arJVM/test",
+      "arJS/test",
+      "fitJVM/testOnly scalafim.fmri.fit.PooledGlsPreparationSuite scalafim.fmri.fit.BoundedRobustPreparationSuite scalafim.fmri.fit.GlsSuite scalafim.fmri.fit.TrialReadoutSuite",
+      "fitJS/testOnly scalafim.fmri.fit.PooledGlsPreparationSuite scalafim.fmri.fit.BoundedRobustPreparationSuite scalafim.fmri.fit.GlsSuite scalafim.fmri.fit.TrialReadoutSuite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 261.3318889141083,
+    "source_overrides": [],
+    "requested_heap": "4g",
+    "requested_cpus": 2,
+    "jdk": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+    "node": "v24.21.0"
+  },
+  "passing_counts": {
+    "arJVM": 155,
+    "arJS": 153,
+    "affected_fitJVM": 51,
+    "affected_fitJS": 51
+  },
+  "passing_test_executions": 410,
+  "compiler_warnings": [],
+  "affected_fit_suites": [
+    "PooledGlsPreparationSuite",
+    "BoundedRobustPreparationSuite",
+    "GlsSuite",
+    "TrialReadoutSuite"
+  ],
+  "classpath_proof": {
+    "gale_stage_head": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+    "ar_ravel_core_entries": 0,
+    "fit_ravel_core_entries": 1,
+    "fit_ravel_head": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "optional_gale_interop_ravel_not_in_consumers": true,
+    "existing_transitive_gale_head": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
+  },
+  "cleanup": "Root worktree sbt-warm --shutdown exit0 after all gates",
+  "archive": {
+    "path": "logs-and-sources.tar.gz",
+    "sha256": "ab5d6fc14df13c0d128068c9bd483f406bb57a94c9803b96a43c2cd7aba27ab3"
+  },
+  "limits": [
+    "Local tests ran TemurinJDK21.0.12.1+1 andNode24.21.0; root coordinates separate LinuxJDK17 CIbaseline qualification",
+    "Selected fit suites qualify affected AR consumers; the full fit court was not rerun for this adoption",
+    "No module/API edits beyond the qualified fiveARpaths, no new numerical helpers, and no decoder policy change",
+    "Root owns build.sbt pin/comment edit, Mote history, commits and publication; this agent made none of those mutations"
+  ]
+}

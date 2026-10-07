@@ -1,6 +1,7 @@
 package scalafim.fmri.hrf.family
 
 import scalafim.fmri.hrf.{Hrf, HrfDescriptor, HrfKind, PositiveSeconds, Seconds}
+import scala.util.control.NonFatal
 
 /** A normalisation rule declared over a whole family. The rule is fixed; its
   * numerical scale may vary with shape and then carries derivatives.
@@ -24,6 +25,14 @@ enum RealizationSupport:
   case Unavailable
 
 final case class ShapeSummary(peakLatency: Seconds, fwhm: Seconds, undershootRatio: Option[Double])
+
+object ShapeSummary:
+  private[family] def validate(value: ShapeSummary): Either[FamilySummaryError, ShapeSummary] =
+    if !value.peakLatency.value.isFinite then Left(FamilySummaryError.NonFiniteSummary(ShapeSummaryField.PeakLatency, value.peakLatency.value))
+    else if !value.fwhm.value.isFinite then Left(FamilySummaryError.NonFiniteSummary(ShapeSummaryField.Fwhm, value.fwhm.value))
+    else value.undershootRatio match
+      case Some(ratio) if !ratio.isFinite => Left(FamilySummaryError.NonFiniteSummary(ShapeSummaryField.UndershootRatio, ratio))
+      case _ => Right(value)
 
 /** A constrained scalar HRF family with a parameter chart and analytic jets.
   *
@@ -72,6 +81,21 @@ trait ParametricHrfFamily:
 
   def summaries(point: ShapePoint): ShapeSummary
 
+  /** Allocation-free admission for consumers that emit shape summaries.
+    * Analytic summaries need no sampled grid. Families with sampled summaries
+    * override this capability; consumers returning only coordinates need not call it.
+    */
+  def validateSummaryGrid: Either[FamilySummaryError, Unit] = Right(())
+
+  /** Typed decoded-point validation; structural admission is independent of shape.
+    * Custom or legacy summary callback failures are represented explicitly.
+    */
+  def summariesEither(point: ShapePoint): Either[FamilySummaryError, ShapeSummary] =
+    chart.point(point.coordinates).left.map(FamilySummaryError.Chart.apply).flatMap: checked =>
+      try ShapeSummary.validate(summaries(checked))
+      catch
+        case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+
   /** Structurally unidentified chart coordinates at this shape, independently
     * of any experiment's information or a fitter's conditional uncertainty.
     */
@@ -83,23 +107,37 @@ trait ParametricHrfFamily:
   /** The existing library kernel at `point`, in the [[libraryNormalization]] convention. */
   def toHrf(point: ShapePoint): Hrf
 
-  /** Relative squared-norm mass of the kernel beyond the horizon, by trapezoid
-    * quadrature on `[0, extent * horizon]` at `precision`. A declared bound for
-    * receipts, not a truncation guarantee.
+  /** Allocation-free admission for the tail diagnostic's lag/value arrays. */
+  final def validateTailRelativeEnergyGrid(precision: PositiveSeconds, extent: Double = 4.0): Either[FamilySummaryError, Unit] =
+    FamilySummaryGrid.tail(horizon, precision, extent).map(_ => ())
+
+  /** Relative squared-norm mass beyond the horizon. The requested extent must
+    * be finite and >= 1. The trapezoid grid rounds up to the next precision step
+    * (and has at least two samples), preserving the legacy endpoint semantics.
+    * Extent 1 is accepted; a ceil overshoot can still contribute tail mass.
+    * Requests above [[FamilySummaryGrid.MaxSamples]] are refused, never coarsened.
+    * This is a receipt diagnostic, not a truncation guarantee.
     */
+  def tailRelativeEnergyEither(point: ShapePoint, precision: PositiveSeconds, extent: Double = 4.0): Either[FamilySummaryError, Double] =
+    for
+      checkedPoint <- chart.point(point.coordinates).left.map(FamilySummaryError.Chart.apply)
+      grid <- FamilySummaryGrid.tail(horizon, precision, extent)
+      evaluated <- grid.evaluate(this, checkedPoint)
+      energy <-
+        val (lags, values) = evaluated
+        var total = 0.0
+        var tail = 0.0
+        var i = 0
+        while i < values.length do
+          val w = if i == 0 || i == values.length - 1 then 0.5 else 1.0
+          val v = w * values(i) * values(i)
+          total += v
+          if lags(i) > horizon.value then tail += v
+          i += 1
+        if !total.isFinite || !tail.isFinite then Left(FamilySummaryError.NonFiniteEnergy)
+        else Right(if total > 0.0 then tail / total else 0.0)
+    yield energy
+
+  /** Throwing compatibility facade for [[tailRelativeEnergyEither]]. */
   def tailRelativeEnergy(point: ShapePoint, precision: PositiveSeconds, extent: Double = 4.0): Double =
-    val dt = precision.value
-    val n = math.max(2, math.ceil(extent * horizon.value / dt).toInt + 1)
-    val lags = Array.tabulate(n)(i => i * dt)
-    val values = new Array[Double](n)
-    evalInto(lags, point, values)
-    var total = 0.0
-    var tail = 0.0
-    var i = 0
-    while i < n do
-      val w = if i == 0 || i == n - 1 then 0.5 else 1.0
-      val v = w * values(i) * values(i)
-      total += v
-      if lags(i) > horizon.value then tail += v
-      i += 1
-    if total > 0.0 then tail / total else 0.0
+    tailRelativeEnergyEither(point, precision, extent).fold(error => throw new IllegalArgumentException(error.message), identity)

@@ -230,6 +230,72 @@ object WhiteningTransform:
         case None      => Right(out.result())
     }
 
+  /** Apply the adjoint `Wᵀ` of the linear map `matrix(plan, _)`.
+    *
+    * This is the transpose of the forward recurrence, not inverse whitening:
+    * each segment is reversed independently, with the first-sample scale
+    * applied before MA propagation. A zero precomputed scale gives a singular
+    * forward map, whose adjoint is still well defined. Rows and per-segment
+    * scales are validated exactly as in the forward map, before any output.
+    * The input may be strided and is not modified.
+    */
+  def transposeMatrix(plan: WhiteningPlan, input: DMat): Either[ArError, DMat] =
+    plan.coveredSegments.validateRows(input.rows).flatMap { _ =>
+      val segments = plan.segments
+      val scales = new Array[Double](segments.length)
+      var error: Option[ArError] = None
+      var index = 0
+      while index < segments.length && error.isEmpty do
+        plan.coefficientsFor(segments(index)).firstScale(plan.initialCondition) match
+          case Left(err)    => error = Some(err)
+          case Right(scale) => scales(index) = scale
+        index += 1
+      error match
+        case Some(err) => Left(err)
+        case None =>
+          val out = DMatBuilder.zeros(input.rows, input.cols)
+          val adjointInnovations = new Array[Double](segments.map(_.length).max)
+          index = 0
+          while index < segments.length do
+            val segment = segments(index)
+            transposeSegment(input, out, segment, plan.coefficientsFor(segment), scales(index), adjointInnovations)
+            index += 1
+          Right(out.result())
+    }
+
+  private def transposeSegment(
+      input: DMat,
+      out: DMatBuilder,
+      segment: TimeSegment,
+      coefficients: ArmaCoefficients,
+      firstScale: Double,
+      adjointInnovations: Array[Double]
+  ): Unit =
+    val start = segment.start
+    var col = 0
+    while col < input.cols do
+      var row = start
+      while row < segment.endExclusive do
+        adjointInnovations(row - start) = input(row, col)
+        row += 1
+      row = segment.endExclusive - 1
+      while row >= start do
+        val scaled = if row == start then firstScale * adjointInnovations(0) else adjointInnovations(row - start)
+        out(row, col) = out(row, col) + scaled
+        var lag = 0
+        while lag < coefficients.phi.length do
+          val laggedRow = row - lag - 1
+          if laggedRow >= start then out(laggedRow, col) = out(laggedRow, col) - coefficients.phi(lag) * scaled
+          lag += 1
+        lag = 0
+        while lag < coefficients.theta.length do
+          val laggedRow = row - lag - 1
+          if laggedRow >= start then
+            adjointInnovations(laggedRow - start) -= coefficients.theta(lag) * scaled
+          lag += 1
+        row -= 1
+      col += 1
+
   private def whitenSegment(
       input: DMat,
       out: DMatBuilder,

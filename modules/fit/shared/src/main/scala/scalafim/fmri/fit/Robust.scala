@@ -166,9 +166,9 @@ final case class RobustPrepared(
   require(diagnostics.scaleEstimates.values.cols == selectedVoxelIndices.length, "robust scale components must match selected voxels")
 
 object Robust:
-  private val DefaultTolerance = 1e-8
-  private val Epsilon = 1e-12
-  private val MadScale = 1.4826
+  private[fit] val DefaultTolerance = 1e-8
+  private[fit] val Epsilon = 1e-12
+  private[fit] val MadScale = 1.4826
 
   def fit(
       design: DesignMatrix,
@@ -283,7 +283,7 @@ object Robust:
       initialOlsDiagnostics = firstRobust.initialOlsDiagnostics
     )
 
-  private def validateRobustAutocorrelation(config: AutocorrelationConfig): Either[FitError, Unit] =
+  private[fit] def validateRobustAutocorrelation(config: AutocorrelationConfig): Either[FitError, Unit] =
     if config.voxelwise then
       Left(FitError.UnsupportedRobust("robust AR re-estimation currently requires shared or run-pooled AR"))
     else
@@ -347,7 +347,7 @@ object Robust:
       case Some(plan) =>
         whitenedInput(plan, prepared.design, response)
 
-  private def whitenedInput(
+  private[fit] def whitenedInput(
       plan: WhiteningPlan,
       design: DesignMatrix,
       response: ResponseBlock
@@ -453,11 +453,11 @@ object Robust:
       )
     }
 
-  private def effectivePartitions(timepoints: Int, partitions: Vector[RunPartition]): Vector[RunPartition] =
+  private[fit] def effectivePartitions(timepoints: Int, partitions: Vector[RunPartition]): Vector[RunPartition] =
     if partitions.nonEmpty then partitions
     else Vector(RunPartition(0, rowIndices = (0 until timepoints).toVector, timepoints = (0 until timepoints).toVector))
 
-  private def weightedLeastSquares(
+  private[fit] def weightedLeastSquares(
       design: DesignMatrix,
       response: ResponseBlock,
       weights: DMat
@@ -531,7 +531,7 @@ object Robust:
       row += 1
     out.result()
 
-  private def weight(standardizedResidual: Double, psi: RobustPsi): Double =
+  private[fit] def weight(standardizedResidual: Double, psi: RobustPsi): Double =
     val u = math.abs(standardizedResidual)
     psi match
       case RobustPsi.Disabled =>
@@ -545,7 +545,7 @@ object Robust:
           val inner = 1.0 - scaled * scaled
           inner * inner
 
-  private def scaleEstimates(
+  private[fit] def scaleEstimates(
       residuals: DMat,
       partitions: Vector[RunPartition],
       scope: ScaleScope
@@ -575,7 +575,7 @@ object Robust:
           run += 1
         RobustScaleEstimates(scope, partitions.map(partition => s"run_${partition.runIndex}"), out.result())
 
-  private def scaleFor(
+  private[fit] def scaleFor(
       row: Int,
       voxel: Int,
       scales: RobustScaleEstimates,
@@ -604,10 +604,10 @@ object Robust:
       voxel += 1
     median(values.toIndexedSeq)
 
-  private def robustPositive(value: Double): Double =
+  private[fit] def robustPositive(value: Double): Double =
     if value > Epsilon && value.isFinite then value else Epsilon
 
-  private def median(values: IndexedSeq[Double]): Double =
+  private[fit] def median(values: IndexedSeq[Double]): Double =
     if values.isEmpty then 0.0
     else
       val sorted = values.toVector.sorted
@@ -615,7 +615,7 @@ object Robust:
       if sorted.length % 2 == 1 then sorted(mid)
       else (sorted(mid - 1) + sorted(mid)) / 2.0
 
-  private def residualMatrix(
+  private[fit] def residualMatrix(
       design: DMat,
       response: DMat,
       coefficients: DMat
@@ -697,7 +697,7 @@ object Robust:
       )
     )
 
-  private def maxCoefficientDelta(left: DMat, right: DMat): Double =
+  private[fit] def maxCoefficientDelta(left: DMat, right: DMat): Double =
     require(left.rows == right.rows && left.cols == right.cols, "coefficient matrices must align")
     var max = 0.0
     var row = 0

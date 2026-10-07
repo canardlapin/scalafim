@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T13:55:49.100222+00:00",
+  "finished_utc": "2026-10-01T14:05:56.775928+00:00",
+  "duration_seconds": 607.673401,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fmriWorkflowJVM/test",
+    "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.ConditionMilestoneSuite -- --tests *accuracy*",
+    "firstLevelLawsJVM/Test/runMain scalafim.fmri.laws.profile.LwuConditionDiagnosticMain --historical-dev"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/tangent-jvm-dev-v1.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 1113128
+}

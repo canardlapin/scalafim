@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "scope": "historical frozen PHRF-21 LWU ConditionMilestoneSuite requalification only",
+  "source": {
+    "commit": "327eda76792bcb0e542cb9e9c6f0d1351f45b1ea",
+    "tree": "90a280da0e3c1b39ff1563022b103aaf60bc2eb7",
+    "parent": "fcb0addb91f573196cd1d1b248cb57099b0145e1",
+    "worktree_clean": true,
+    "blobs_sha256": {
+      "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala": "b9f2ed078e2319c76b59bb4978ef2c0033091aed233eb78a1f21c1feabb72a1c",
+      "docs/plans/profile-hrf-condition-milestone.md": "2a459610540e48c1b5ebbff82e4bf19a7888fbb1b1ead4257d07d55642a8a01d",
+      "docs/plans/profile-hrf-cohorts.md": "431c9efb6e7ea74273567c08896d6b898dd98a507efe6c11d4d8625709e641fa",
+      "build.sbt": "83a0f8a63710f7082910e8e593b0b8ee447ca7b584fcb55c49e11a14908e8f36"
+    }
+  },
+  "attempts": [
+    {
+      "name": "r2-name-filter",
+      "exit_code": 1,
+      "valid_test_evidence": false,
+      "reason": "JVM selected zero tests; Scala.js MUnit runner rejects --tests",
+      "raw_sha256": "062af89d9ca8fa84a18a07fe62eb2016bb33cc4442da5befccd2e1b8f3148aee",
+      "meta_sha256": "82e1d6f30531c96a461d0d394c9975d98282e19192bf57327dde1d30be4cb6c2"
+    },
+    {
+      "name": "r3-portable-full-suite",
+      "exit_code": 0,
+      "duration_seconds": 891.144389,
+      "raw_sha256": "1daf7287b88c50bec82ab8e8307e574aaf26685a326d93c441c734467940a35d",
+      "meta_sha256": "036e54cd499caa7a2bad5e44d2aa3abe731e90d30cc881f4dd1a29198b59ba54",
+      "platform_test_counts": {"jvm": 3, "js": 3},
+      "extra_controls": ["Gaussian frozen accuracy", "Gaussian historical 10000-voxel throughput"],
+      "fresh_response_or_100k_run": false
+    }
+  ],
+  "lwu": {
+    "seeds": {"snr_1_0": 111, "snr_0_5": 112},
+    "cohort_voxels_per_snr": 100,
+    "admission_gate": 0.95,
+    "actual_runtime_budget": {"max_newton_steps": 6, "max_jets": 8, "max_exact_evaluations": 2},
+    "outcomes": {
+      "jvm": {"snr_1_0_admission": 0.91, "snr_0_5_admission": 0.81, "admission_gate_met": false},
+      "js": {"snr_1_0_admission": 0.89, "snr_0_5_admission": 0.82, "admission_gate_met": false}
+    },
+    "milestone_status": "unmet; PHRF-21 remains open"
+  }
+}
+

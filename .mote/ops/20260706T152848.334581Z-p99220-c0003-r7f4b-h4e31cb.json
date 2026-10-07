@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWW0QCKQ3NKKE93SB5FKSZEV","kind":"note","note_kind":"progress","op":"20260706T152848.334581Z-p99220-c0003-r7f4b-h4e31cb","text":"Refactor GroupResponse variance invariant into ADT and remove Option.get from weighted engine paths.","ts":"2026-07-06T15:28:48.334581Z","v":1}

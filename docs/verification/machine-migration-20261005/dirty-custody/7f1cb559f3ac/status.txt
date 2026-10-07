@@ -1,0 +1,8 @@
+ M modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala
+ M modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala
+ M modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala
+ M modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala
+ M modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala
+?? modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala
+?? modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala
+?? modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala

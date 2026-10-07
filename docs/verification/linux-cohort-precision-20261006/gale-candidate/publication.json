@@ -1,0 +1,12 @@
+{
+  "current_publication": {
+    "headRefOid": "b56a9dd0b8ad479621a3594880f90c9add8c2824",
+    "isDraft": true,
+    "state": "OPEN",
+    "url": "https://github.com/canardlapin/gale/pull/16"
+  },
+  "production_gale_revision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "merge_performed": false,
+  "historical_candidate_metadata": "candidate.json records the earlier unpublished preparation state",
+  "source_patch_unchanged": true
+}

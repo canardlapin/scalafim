@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01M25Q0ETQHAQ084S6S5MVPXD8","kind":"note","note_kind":"decision","op":"20260910T184521.001910Z-p41696-c0000-rdc73-h95e9e8","text":"Closed: transportPenalty now uses inverse congruence with invariance, round-trip, scalar and zero/non-finite tests; hrf 221 tests pass on JVM and JS. Commit 10e49cf.","ts":"2026-09-10T18:45:21.001910Z","v":1}

@@ -1,6 +1,6 @@
 package scalafim.fmri.fit.profile
 
-import gale.linalg.{BandedCholesky, CholeskyOptions, DMat, DMatBuilder}
+import gale.linalg.{BandedCholesky, DMat, DMatBuilder}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, TrialMembership}
 import scalafim.fmri.hrf.family.{JetLayout, ShapePoint}
@@ -15,6 +15,8 @@ enum TrialBandedError:
   case ReleaseRank(node: Option[Int], columns: Int)
   case InvalidNode(node: Int, count: Int)
   case ReadoutRhs(expected: Int, actual: Int)
+  case ReadoutOutput(expected: Int, actual: Int)
+  case NonFiniteReadoutRhs(index: Int, value: Double)
 
   def message: String =
     this match
@@ -29,6 +31,8 @@ enum TrialBandedError:
         s"the $where nuisance/condition release is rank deficient ($columns columns)"
       case InvalidNode(node, count) => s"reference node $node is outside 0 until $count"
       case ReadoutRhs(expected, actual) => s"trial readout RHS has length $actual; expected $expected"
+      case ReadoutOutput(expected, actual) => s"trial readout output has length $actual; expected $expected"
+      case NonFiniteReadoutRhs(index, value) => s"trial readout RHS entry $index must be finite, got $value"
 
 /** Response-independent accounting for the packed trial geometry. */
 final case class TrialBandedPreparationReceipt(
@@ -54,7 +58,49 @@ final case class TrialBandedWorkSnapshot(
     bandedSolveCalls: Long,
     bandedRightHandSides: Long,
     continuousFactors: Long,
-    exactReadoutFactors: Long)
+    exactReadoutFactors: Long,
+    attempted: TrialBandedAttemptedWorkSnapshot)
+
+/** Bounded reference-build and banded-work accounting for immutable node-bank
+  * setup or one worker. Legacy counters retain their original increment semantics.
+  *
+  * `factorAttempts` and `factorFailures` count reference-build Cholesky calls:
+  * the banded ridge, dense release and dense constrained-determinant factors.
+  * Solve and RHS counters cover banded calls and their requested RHS columns only.
+  * `releaseFailures` counts references returning `ReleaseRank`, including the
+  * constrained determinant. `partialReferenceFailures` currently equals
+  * `referenceFailures`; it does not imply a solve succeeded before refusal.
+  * Exact-readout factor attempts count exact-reference requests, including a
+  * coordinate-dimension refusal before numerical factorisation.
+  * Conditional requests, reference inverses and residual corrections have
+  * separate counters; they do not change legacy readout/amplitude counters.
+  *
+  * Small release solves, profile reduction and curvature checks are excluded.
+  * Failed bank construction returns an error without exposing its setup receipt.
+  */
+final case class TrialBandedAttemptedWorkSnapshot(
+    referenceAttempts: Long,
+    referenceFailures: Long,
+    partialReferenceFailures: Long,
+    releaseFailures: Long,
+    factorAttempts: Long,
+    factorFailures: Long,
+    solveAttempts: Long,
+    solveFailures: Long,
+    rightHandSideAttempts: Long,
+    rightHandSideFailures: Long,
+    jetAttempts: Long,
+    jetFailures: Long,
+    readoutAttempts: Long,
+    readoutFailures: Long,
+    exactReadoutFactorAttempts: Long,
+    exactReadoutFactorFailures: Long,
+    conditionalReadoutAttempts: Long,
+    conditionalReadoutFailures: Long,
+    conditionalInverseAttempts: Long,
+    conditionalInverseFailures: Long,
+    conditionalCorrectionAttempts: Long,
+    conditionalCorrectionFailures: Long)
 
 final class TrialBandedWork private[profile] ():
   private[profile] var voxels: Long = 0L
@@ -66,10 +112,89 @@ final class TrialBandedWork private[profile] ():
   private[profile] var bandedRightHandSides: Long = 0L
   private[profile] var continuousFactors: Long = 0L
   private[profile] var exactReadoutFactors: Long = 0L
+  private[profile] var referenceAttempts: Long = 0L
+  private[profile] var referenceFailures: Long = 0L
+  private[profile] var partialReferenceFailures: Long = 0L
+  private[profile] var releaseFailures: Long = 0L
+  private[profile] var factorAttempts: Long = 0L
+  private[profile] var factorFailures: Long = 0L
+  private[profile] var solveAttempts: Long = 0L
+  private[profile] var solveFailures: Long = 0L
+  private[profile] var rightHandSideAttempts: Long = 0L
+  private[profile] var rightHandSideFailures: Long = 0L
+  private[profile] var jetAttempts: Long = 0L
+  private[profile] var jetFailures: Long = 0L
+  private[profile] var readoutAttempts: Long = 0L
+  private[profile] var readoutFailures: Long = 0L
+  private[profile] var exactReadoutFactorAttempts: Long = 0L
+  private[profile] var exactReadoutFactorFailures: Long = 0L
+  private[profile] var conditionalReadoutAttempts: Long = 0L
+  private[profile] var conditionalReadoutFailures: Long = 0L
+  private[profile] var conditionalInverseAttempts: Long = 0L
+  private[profile] var conditionalInverseFailures: Long = 0L
+  private[profile] var conditionalCorrectionAttempts: Long = 0L
+  private[profile] var conditionalCorrectionFailures: Long = 0L
+  // ML accounting outside the 22-field attempted snapshot (whose schema is unchanged):
+  // N-sized accepted-band factorisations within `factorAttempts`, and legacy scalar
+  // constrained-determinant membership RHS columns within `rightHandSideAttempts`.
+  private[profile] var bandFactorAttempts: Long = 0L
+  private[profile] var bandFactorFailures: Long = 0L
+  private[profile] var membershipRightHandSides: Long = 0L
+  // Determinant-helper work charged where the helper runs, so no caller can hide it.
+  private[profile] var helperSolveAttempts: Long = 0L
+  private[profile] var helperRightHandSides: Long = 0L
+  private[profile] var helperMembershipRightHandSides: Long = 0L
+  private[profile] var helperConditionFactorAttempts: Long = 0L
+  private[profile] var helperLogDetJetAttempts: Long = 0L
+
+  private[profile] def referenceFailed(release: Boolean): Unit =
+    referenceFailures += 1L
+    partialReferenceFailures += 1L
+    if release then releaseFailures += 1L
+
+  private[profile] def solveAttempt(rightHandSides: Int): Unit =
+    solveAttempts += 1L
+    rightHandSideAttempts += rightHandSides.toLong
+
+  private[profile] def solveFailed(rightHandSides: Int): Unit =
+    solveFailures += 1L
+    rightHandSideFailures += rightHandSides.toLong
+
+  private def attemptedSnapshot: TrialBandedAttemptedWorkSnapshot =
+    TrialBandedAttemptedWorkSnapshot(
+      referenceAttempts,
+      referenceFailures,
+      partialReferenceFailures,
+      releaseFailures,
+      factorAttempts,
+      factorFailures,
+      solveAttempts,
+      solveFailures,
+      rightHandSideAttempts,
+      rightHandSideFailures,
+      jetAttempts,
+      jetFailures,
+      readoutAttempts,
+      readoutFailures,
+      exactReadoutFactorAttempts,
+      exactReadoutFactorFailures,
+      conditionalReadoutAttempts,
+      conditionalReadoutFailures,
+      conditionalInverseAttempts,
+      conditionalInverseFailures,
+      conditionalCorrectionAttempts,
+      conditionalCorrectionFailures)
 
   def snapshot: TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(voxels, trialBasisScores, bankValueEvaluations, jetEvaluations, amplitudeCorrections,
-      bandedSolveCalls, bandedRightHandSides, continuousFactors, exactReadoutFactors)
+      bandedSolveCalls, bandedRightHandSides, continuousFactors, exactReadoutFactors, attemptedSnapshot)
+
+/** Immutable work performed while building the shared node bank. Each worker
+  * reports only its own mutable response work through [[TrialBandedWork]].
+  */
+final case class TrialBandedSetupReceipt(
+    nodeReferenceAttempts: Long,
+    work: TrialBandedAttemptedWorkSnapshot)
 
 /** Encoded response in the sufficient statistics consumed by TrialBanded.
   * Construction is tied to one preparation so incompatible geometries cannot
@@ -94,8 +219,12 @@ final case class TrialBandedReadout(
 
 /** Shared, response-independent trial geometry. The `m(m+1)/2` blocks store
   * lower symmetric bands directly; no dense `N x N` Gram is constructed.
+  * The caller's expanded source and basis remain referenced for identity and
+  * readout for this preparation's lifetime (including its banks and workers).
+  * Source storage is shared, not copied or counted once per worker.
   */
 final class TrialBandedPreparation private[profile] (
+    val source: ExpandedTrialDesign,
     val basis: HrfKernelBasis,
     val membership: TrialMembership,
     val rows: Int,
@@ -119,6 +248,17 @@ final class TrialBandedPreparation private[profile] (
   val packedBandSize: Int = trials * bandWidth
   val gramBlockCount: Int = basisRank * (basisRank + 1) / 2
 
+  /** Actual retained expanded-design Double data length, normally T*N*m.
+    * This scoped count excludes the source's basis, membership, event row maps,
+    * convolved-term metadata and object/collection overhead. It is separate
+    * from receipt/engine estimates; it is not total source storage.
+    */
+  val retainedSourceDesignDataValues: Long = source.term.data.data.length.toLong
+  val retainedSourceDesignDataBytes: Long = 8L * retainedSourceDesignDataValues
+
+  /** Preparation-owned packed/sparse array estimate, excluding the retained
+    * caller source, basis, membership and whitening plan.
+    */
   val receipt: TrialBandedPreparationReceipt =
     TrialBandedPreparationReceipt(
       rows,
@@ -360,7 +500,7 @@ object TrialBandedPreparation:
           p += 1
         t += 1
       trial += 1
-    Right(new TrialBandedPreparation(expanded.basis, expanded.membership, rows, whitening, lambda, bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends))
+    Right(new TrialBandedPreparation(expanded, expanded.basis, expanded.membership, rows, whitening, lambda, bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends))
 
   private[profile] def pairIndex(p: Int, q: Int): Int = q * (q + 1) / 2 + p
 
@@ -372,15 +512,51 @@ object TrialBandedPreparation:
       i += 1
     out.result()
 
+/** `accepted` is the stamped bundle: its factor is the Gale factor of exactly
+  * its own frozen copy of the value band, so energy and determinant share it.
+  */
+/** Native ML retains an owned response and evaluates residuals before squaring.
+  * Rounded sufficient statistics cannot recover small residual energies by subtraction.
+  * The encoded-only public objective keeps its existing storage and ownership contract.
+  */
+private[profile] final class TrialMlResidualEnergy(val preparation: TrialBandedPreparation):
+  val response = new Array[Double](preparation.rows)
+  val residual = new Array[Double](preparation.rows)
+  val amplitudes = new Array[Double](preparation.trials)
+  val conditionSums = new Array[Double](preparation.conditions)
+  val scratchValues: Int = response.length + residual.length + amplitudes.length + conditionSums.length
+  var evaluations = 0L
+  var responseCopies = 0L
+  var residualRows = 0L
+  var sourceValues = 0L
+  var coefficientProducts = 0L
+  var nuisanceValues = 0L
+  private var pointed = false
+
+  def invalidate(): Unit = pointed = false
+
+  def pointAt(values: Array[Double]): Unit =
+    require(values.length == response.length, "native ML response length differs from preparation")
+    System.arraycopy(values, 0, response, 0, response.length)
+    responseCopies += response.length
+    pointed = true
+
+  def begin(): Unit =
+    require(pointed, "native ML residual energy needs a successful response epoch")
+    evaluations += 1L
+    System.arraycopy(response, 0, residual, 0, response.length)
+    java.util.Arrays.fill(conditionSums, 0.0)
+
 private final case class TrialBandedReference(
     coefficients: Array[Double],
-    factor: BandedCholesky,
+    accepted: TrialAcceptedTrialBand,
     aJets: Array[Double],
     cJets: Array[Double],
     wcJets: Array[Double],
     hJets: Array[Double],
     releaseLower: Array[Double],
-    logDetK: Double)
+    logDetK: Double):
+  def factor: BandedCholesky = accepted.factor
 
 /** Trial-sized profile objective. Its node factors and releases are immutable
   * and shared; each worker owns only response statistics and primitive scratch.
@@ -388,7 +564,8 @@ private final case class TrialBandedReference(
 final class TrialBandedObjective private (
     val preparation: TrialBandedPreparation,
     val grid: NodeGrid,
-    private val references: Vector[TrialBandedReference]) extends ShapeObjective:
+    private val references: Vector[TrialBandedReference],
+    val setupReceipt: TrialBandedSetupReceipt) extends ShapeObjective:
 
   private val n = preparation.trials
   private val m = preparation.basisRank
@@ -409,6 +586,7 @@ final class TrialBandedObjective private (
   private val jetSolveBuilder = DMatBuilder.zeros(n, 1)
   private val scoreRelease = new Array[Double](k)
   private val scoreSolved = new Array[Double](k)
+  private val conditionalRelease = new Array[Double](k)
   private val releaseReduction = new ProfileReduction(d, k)
   private val releaseOut = new ProfileJetBuffer(d, k)
   private val kernelScratch = new Array[Double](comps * preparation.basis.fineCount)
@@ -416,32 +594,43 @@ final class TrialBandedObjective private (
   private var response: TrialBandedResponse | Null = null
   val work: TrialBandedWork = new TrialBandedWork
 
-  /** Primitive-array accounting for one prepared bank plus this worker. It
-    * excludes VM/object headers and the caller-owned response/output buffers.
+  /** Scoped array estimates for reference factors and the listed objective
+    * arrays, not total retained engine memory or peak memory. They exclude the
+    * retained caller source (its dense data is counted separately on preparation),
+    * basis, membership, whitening plan, grid, encoded response, reduction
+    * workspace, conditional solver/wrapper arrays, transient build/whitening
+    * storage, caller/result buffers and VM/object/collection overhead.
     */
   private def referenceDoubles(components: Int): Long =
     components.toLong * m + components.toLong * bandSize + 2L * components * n * k +
-      components.toLong * k * k + bandSize + k.toLong * k
+      components.toLong * k * k + 2L * bandSize + k.toLong * k
 
   val estimatedReferenceBytes: Long = 8L * referenceDoubles(comps)
   val estimatedValueReferenceBytes: Long = 8L * referenceDoubles(1)
   val estimatedValueBuildBytes: Long = estimatedValueReferenceBytes + 8L * n * (k + c)
 
+  /** Preparation-kernel and node-reference estimate; excludes retained source
+    * and basis. Add preparation.retainedSourceDesignDataBytes once to count
+    * its dense design data, without claiming all shared storage is covered.
+    */
   val estimatedSharedBytes: Long =
     preparation.receipt.estimatedBytes + references.length * estimatedReferenceBytes
 
+  /** Listed objective arrays only; exclusions are stated above. */
   val estimatedWorkerBytes: Long =
     val worker = responseB.length.toLong + zTy.length + wbJets.length +
       s.length + b.length + g.length + n.toLong + n.toLong + n.toLong +
-      scoreRelease.length + scoreSolved.length + comps.toLong * preparation.basis.fineCount + coefficients.length
+      scoreRelease.length + scoreSolved.length + conditionalRelease.length +
+      comps.toLong * preparation.basis.fineCount + coefficients.length
     8L * worker
 
+  /** Scoped shared estimate plus one listed objective-array estimate. */
   val estimatedEngineBytes: Long = estimatedSharedBytes + estimatedWorkerBytes
 
   /** A new mutable worker over the same immutable preparation and reference
     * factors. No Gram block, factor or response-independent jet is rebuilt.
     */
-  def newWorker(): TrialBandedObjective = new TrialBandedObjective(preparation, grid, references)
+  def newWorker(): TrialBandedObjective = new TrialBandedObjective(preparation, grid, references, setupReceipt)
 
   def amplitudeCount: Int = c
 
@@ -462,18 +651,28 @@ final class TrialBandedObjective private (
       scoreReference(references(node), currentResponse, null)
 
   def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
-    if node < 0 || node >= references.length then false
+    work.jetAttempts += 1L
+    if node < 0 || node >= references.length then
+      work.jetFailures += 1L
+      false
     else
       work.jetEvaluations += 1
-      fullJet(references(node), currentResponse, out)
+      val completed = fullJet(references(node), currentResponse, out)
+      if !completed then work.jetFailures += 1L
+      completed
 
   def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+    work.jetAttempts += 1L
     buildReference(coordinates, comps, None) match
-      case Left(_) => false
+      case Left(_) =>
+        work.jetFailures += 1L
+        false
       case Right(reference) =>
         work.continuousFactors += 1
         work.jetEvaluations += 1
-        fullJet(reference, currentResponse, out)
+        val completed = fullJet(reference, currentResponse, out)
+        if !completed then work.jetFailures += 1L
+        completed
 
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
     buildReference(coordinates, 1, None) match
@@ -495,12 +694,98 @@ final class TrialBandedObjective private (
       reference.logDetK
     }
 
+  // ----- Native ML hooks. Each returns raw energy and the determinant from ONE
+  // reference, whose stamped bundle factor both use; they never pair public
+  // jetAt with logDetAt. Raw energy/amplitudes are written to `out`.
+
+  /** Node value from the shared node reference; its determinant is cached by the caller. */
+  private[profile] def mlValueAtNode(node: Int, out: ProfileJetBuffer, energy: TrialMlResidualEnergy): Either[TrialBandedError, Double] =
+    if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
+    else
+      work.bankValueEvaluations += 1
+      Right(mlResidualEnergy(references(node), energy, out))
+
+  /** Node raw full jet from the shared node reference. */
+  private[profile] def mlJetAtNode(node: Int, out: ProfileJetBuffer, energy: TrialMlResidualEnergy): Either[TrialBandedError, Boolean] =
+    work.jetAttempts += 1L
+    if node < 0 || node >= references.length then
+      work.jetFailures += 1L
+      Left(TrialBandedError.InvalidNode(node, references.length))
+    else
+      work.jetEvaluations += 1
+      val completed = fullJet(references(node), currentResponse, out)
+      if !completed then work.jetFailures += 1L
+      else mlResidualEnergy(references(node), energy, out)
+      Right(completed)
+
+  /** Response-independent determinant jet of a node reference, for setup caching. */
+  private[profile] def mlNodeDeterminant(node: Int): Either[TrialBandedError, TrialDeterminantAttempt] =
+    if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
+    else Right(determinantJet(references(node)))
+
+  /** One value-only reference: raw energy into `out` and the scalar constrained
+    * determinant of the same factor. No determinant derivatives are formed.
+    */
+  private[profile] def mlValueAt(coordinates: Array[Double], out: ProfileJetBuffer, energy: TrialMlResidualEnergy): Either[TrialBandedError, (Double, Double)] =
+    buildReference(coordinates, 1, None).map { reference =>
+      work.continuousFactors += 1
+      (mlResidualEnergy(reference, energy, out), reference.logDetK)
+    }
+
+  /** One full reference: raw full jet into `out` and the determinant jet of the
+    * same bundle. The reference and its derivative bands are released on return.
+    */
+  private[profile] def mlJetAt(coordinates: Array[Double], out: ProfileJetBuffer, energy: TrialMlResidualEnergy)
+      : Either[TrialBandedError, (Boolean, TrialDeterminantAttempt)] =
+    work.jetAttempts += 1L
+    buildReference(coordinates, comps, None) match
+      case Left(error) =>
+        work.jetFailures += 1L
+        Left(error)
+      case Right(reference) =>
+        work.continuousFactors += 1
+        work.jetEvaluations += 1
+        val completed = fullJet(reference, currentResponse, out)
+        if !completed then work.jetFailures += 1L
+        else mlResidualEnergy(reference, energy, out)
+        Right((completed, determinantJet(reference)))
+
+  /** Helper input made only from this reference's stamped bundle plus its own
+    * derivative bands (row-packed ScalaFIM second order); no separate factor.
+    */
+  private def determinantJet(reference: TrialBandedReference): TrialDeterminantAttempt =
+    val width = preparation.bandWidth
+    def band(component: Int): DMat =
+      val out = DMatBuilder.zeros(n, width)
+      val base = component * bandSize
+      var i = 0
+      while i < bandSize do
+        out.writeLinear(i, reference.aJets(base + i))
+        i += 1
+      out.result()
+    val first = Vector.tabulate(d)(axis => band(JetLayout.first(axis)))
+    val second = Vector.tabulate(comps - 1 - d)(index => band(1 + d + index))
+    val attempt = TrialDeterminantInput(reference.accepted, first, second) match
+      case Left(error) =>
+        TrialDeterminantAttempt(Left(error), TrialDeterminantWork(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L))
+      case Right(input) => TrialConstrainedLogDetJet.evaluate(input, TrialDeterminantNumerics.Default)
+    val h = attempt.work
+    work.helperSolveAttempts += h.bandedSolveAttempts
+    work.helperRightHandSides += h.rightHandSideAttempts
+    if h.bandedSolveAttempts > 0L then work.helperMembershipRightHandSides += c
+    work.helperConditionFactorAttempts += h.conditionFactorAttempts
+    work.helperLogDetJetAttempts += h.logDetJetAttempts
+    attempt
+
   /** Solve the trial ridge system for later conditional readout. Exact-shape
     * factorisation is deliberately named and counted; PHRF-11 owns the final
     * amplitude/query contract.
     */
   def solveReadoutSystem(mode: TrialReadoutFactorMode, rhs: Array[Double]): Either[TrialBandedError, Vector[Double]] =
-    if rhs.length != n then Left(TrialBandedError.ReadoutRhs(n, rhs.length))
+    work.readoutAttempts += 1L
+    if rhs.length != n then
+      work.readoutFailures += 1L
+      Left(TrialBandedError.ReadoutRhs(n, rhs.length))
     else
       val reference =
         mode match
@@ -508,24 +793,153 @@ final class TrialBandedObjective private (
             if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
             else Right(references(node))
           case TrialReadoutFactorMode.ExactShape(coords) =>
-            if coords.length != d then Left(TrialBandedError.Factorisation(s"${coords.length} coordinates for dimension $d"))
+            work.exactReadoutFactorAttempts += 1L
+            if coords.length != d then
+              work.exactReadoutFactorFailures += 1L
+              Left(TrialBandedError.Factorisation(s"${coords.length} coordinates for dimension $d"))
             else
-              buildReference(coords.toArray, 1, None).map { reference =>
-                work.exactReadoutFactors += 1
-                reference
-              }
-      reference.flatMap { ref =>
-        val builder = DMatBuilder.zeros(n, 1)
-        var i = 0
+              buildReference(coords.toArray, 1, None) match
+                case Left(error) =>
+                  work.exactReadoutFactorFailures += 1L
+                  Left(error)
+                case Right(reference) =>
+                  work.exactReadoutFactors += 1
+                  Right(reference)
+      reference match
+        case Left(error) =>
+          work.readoutFailures += 1L
+          Left(error)
+        case Right(ref) =>
+          val builder = DMatBuilder.zeros(n, 1)
+          var i = 0
+          while i < n do
+            builder.writeLinear(i, rhs(i))
+            i += 1
+          work.solveAttempt(1)
+          ref.factor.solveInPlace(builder) match
+            case Left(error) =>
+              work.solveFailed(1)
+              work.readoutFailures += 1L
+              Left(TrialBandedError.Factorisation(error.getMessage))
+            case Right(_) =>
+              work.bandedSolveCalls += 1
+              work.bandedRightHandSides += 1
+              Right(Vector.tabulate(n)(i => builder(i, 0)))
+
+  /** Apply the original condition-centred trial normal inverse at a prepared
+    * node to an arbitrary `(trial, nuisance)` RHS. The augmented coordinates
+    * are `(v, gamma, beta)` with `a = v + M beta`; the lifted RHS is
+    * `(r_a, r_gamma, M' r_a)`. The reference's ridge factor and release are
+    * reused without constructing another factor or a dense trial inverse.
+    */
+  private[profile] def solveConditionalReference(
+      node: Int,
+      rhs: Array[Double],
+      out: Array[Double]
+  ): Either[TrialBandedError, Unit] =
+    work.conditionalInverseAttempts += 1L
+    if node < 0 || node >= references.length then
+      work.conditionalInverseFailures += 1L
+      Left(TrialBandedError.InvalidNode(node, references.length))
+    else
+      validateConditionalInput(rhs, out) match
+        case Left(error) =>
+          work.conditionalInverseFailures += 1L
+          Left(error)
+        case Right(_) => solveConditionalAgainst(references(node), rhs, out)
+
+  /** An exact actual-shape factor is an explicit, separately charged request.
+    * It never replaces the prepared-node inverses used by corrected mode.
+    */
+  private[profile] def solveConditionalExact(
+      coordinates: Vector[Double],
+      rhs: Array[Double],
+      out: Array[Double]
+  ): Either[TrialBandedError, Unit] =
+    work.conditionalInverseAttempts += 1L
+    validateConditionalInput(rhs, out) match
+      case Left(error) =>
+        work.conditionalInverseFailures += 1L
+        Left(error)
+      case Right(_) =>
+        work.exactReadoutFactorAttempts += 1L
+        preparation.basis.family.chart.point(coordinates) match
+          case Left(error) =>
+            work.exactReadoutFactorFailures += 1L
+            work.conditionalInverseFailures += 1L
+            Left(TrialBandedError.Factorisation(error.message))
+          case Right(_) =>
+            buildReference(coordinates.toArray, 1, None) match
+              case Left(error) =>
+                work.exactReadoutFactorFailures += 1L
+                work.conditionalInverseFailures += 1L
+                Left(error)
+              case Right(reference) =>
+                work.exactReadoutFactors += 1L
+                solveConditionalAgainst(reference, rhs, out)
+
+  private def validateConditionalInput(rhs: Array[Double], out: Array[Double]): Either[TrialBandedError, Unit] =
+    if rhs.length != n + f then Left(TrialBandedError.ReadoutRhs(n + f, rhs.length))
+    else if out.length != n + f then Left(TrialBandedError.ReadoutOutput(n + f, out.length))
+    else
+      var bad = 0
+      while bad < rhs.length do
+        if !rhs(bad).isFinite then return Left(TrialBandedError.NonFiniteReadoutRhs(bad, rhs(bad)))
+        bad += 1
+      Right(())
+
+  private def solveConditionalAgainst(
+      ref: TrialBandedReference,
+      rhs: Array[Double],
+      out: Array[Double]
+  ): Either[TrialBandedError, Unit] =
+    var i = 0
+    while i < n do
+      readoutBuilder.writeLinear(i, rhs(i))
+      i += 1
+    work.solveAttempt(1)
+    ref.factor.solveInPlace(readoutBuilder) match
+      case Left(error) =>
+        work.solveFailed(1)
+        work.conditionalInverseFailures += 1L
+        Left(TrialBandedError.Factorisation(error.getMessage))
+      case Right(_) =>
+        work.bandedSolveCalls += 1L
+        work.bandedRightHandSides += 1L
+        var col = 0
+        while col < f do
+          var value = rhs(n + col)
+          i = 0
+          while i < n do
+            value -= ref.cJets(i * k + col) * readoutBuilder(i, 0)
+            i += 1
+          conditionalRelease(col) = value
+          col += 1
+        col = 0
+        while col < c do
+          var value = 0.0
+          i = 0
+          while i < n do
+            if preparation.membership.conditionOfTrial(i) == col then value += rhs(i)
+            value -= ref.cJets(i * k + f + col) * readoutBuilder(i, 0)
+            i += 1
+          conditionalRelease(f + col) = value
+          col += 1
+        SmallCholesky.solveInPlace(k, ref.releaseLower, conditionalRelease)
+        i = 0
         while i < n do
-          builder.writeLinear(i, rhs(i))
+          var value = readoutBuilder(i, 0) + conditionalRelease(f + preparation.membership.conditionOfTrial(i))
+          col = 0
+          while col < k do
+            value -= ref.wcJets(i * k + col) * conditionalRelease(col)
+            col += 1
+          out(i) = value
           i += 1
-        ref.factor.solveInPlace(builder).left.map(error => TrialBandedError.Factorisation(error.getMessage)).map { _ =>
-          work.bandedSolveCalls += 1
-          work.bandedRightHandSides += 1
-          Vector.tabulate(n)(i => builder(i, 0))
-        }
-      }
+        col = 0
+        while col < f do
+          out(n + col) = conditionalRelease(col)
+          col += 1
+        Right(())
 
   /** Unnormalised conditional trial readout for this backend. The public
     * normalization/query surface remains PHRF-11; this method closes the
@@ -542,7 +956,26 @@ final class TrialBandedObjective private (
     * and counts one value-only reference factor.
     */
   def readoutInto(mode: TrialReadoutFactorMode, trialAmplitudes: Array[Double]): Either[TrialBandedError, Double] =
-    if trialAmplitudes.length != n then Left(TrialBandedError.ReadoutRhs(n, trialAmplitudes.length))
+    readoutCoefficientsInto(mode, trialAmplitudes, includeNuisance = false)
+
+  /** Same exact readout body, with the already solved nuisance block copied
+    * only after the band solve succeeds. The N+F scratch stays caller-owned.
+    */
+  private[profile] def exactSolvedReadoutInto(coordinates: Vector[Double],
+      coefficients: Array[Double], energy: Option[TrialMlResidualEnergy] = None): Either[TrialBandedError, TrialBandedReadout] =
+    val mode = TrialReadoutFactorMode.ExactShape(coordinates)
+    readoutCoefficientsInto(mode, coefficients, includeNuisance = true, nativeEnergy = energy).map: energy =>
+      TrialBandedReadout(energy, Vector.tabulate(c)(i => scoreSolved(f + i)),
+        Vector.tabulate(n)(coefficients(_)), mode)
+
+  private def readoutCoefficientsInto(mode: TrialReadoutFactorMode,
+      trialAmplitudes: Array[Double], includeNuisance: Boolean,
+      nativeEnergy: Option[TrialMlResidualEnergy] = None): Either[TrialBandedError, Double] =
+    work.readoutAttempts += 1L
+    val expected = if includeNuisance then n + f else n
+    if trialAmplitudes.length != expected then
+      work.readoutFailures += 1L
+      Left(TrialBandedError.ReadoutRhs(expected, trialAmplitudes.length))
     else
       work.amplitudeCorrections += 1
       val reference =
@@ -551,39 +984,59 @@ final class TrialBandedObjective private (
             if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
             else Right(references(node))
           case TrialReadoutFactorMode.ExactShape(coords) =>
-            if coords.length != d then Left(TrialBandedError.Factorisation(s"${coords.length} coordinates for dimension $d"))
+            work.exactReadoutFactorAttempts += 1L
+            if coords.length != d then
+              work.exactReadoutFactorFailures += 1L
+              Left(TrialBandedError.Factorisation(s"${coords.length} coordinates for dimension $d"))
             else
-              buildReference(coords.toArray, 1, None).map { reference =>
-                work.exactReadoutFactors += 1
-                reference
-              }
-      reference.flatMap { ref =>
-        val energy = scoreReference(ref, currentResponse, null)
-        if !energy.isFinite then Left(TrialBandedError.Factorisation("nonfinite profiled energy during readout"))
-        else
-          var i = 0
-          while i < n do
-            var value = responseB(i)
-            var j = 0
-            while j < k do
-              value -= ref.cJets(i * k + j) * scoreSolved(j)
-              j += 1
-            readoutBuilder.writeLinear(i, value)
-            i += 1
-          ref.factor.solveInPlace(readoutBuilder).left.map(error => TrialBandedError.Factorisation(error.getMessage)).map { _ =>
-            work.bandedSolveCalls += 1
-            work.bandedRightHandSides += 1
-            i = 0
+              buildReference(coords.toArray, 1, None) match
+                case Left(error) =>
+                  work.exactReadoutFactorFailures += 1L
+                  Left(error)
+                case Right(reference) =>
+                  work.exactReadoutFactors += 1
+                  Right(reference)
+      reference match
+        case Left(error) =>
+          work.readoutFailures += 1L
+          Left(error)
+        case Right(ref) =>
+          val energy = scoreReference(ref, currentResponse, null)
+          if !energy.isFinite then
+            work.readoutFailures += 1L
+            Left(TrialBandedError.Factorisation("nonfinite profiled energy during readout"))
+          else
+            var i = 0
             while i < n do
-              trialAmplitudes(i) = scoreSolved(f + preparation.membership.conditionOfTrial(i)) + readoutBuilder(i, 0)
+              var value = responseB(i)
+              var j = 0
+              while j < k do
+                value -= ref.cJets(i * k + j) * scoreSolved(j)
+                j += 1
+              readoutBuilder.writeLinear(i, value)
               i += 1
-            energy
-          }
-      }
+            work.solveAttempt(1)
+            ref.factor.solveInPlace(readoutBuilder) match
+              case Left(error) =>
+                work.solveFailed(1)
+                work.readoutFailures += 1L
+                Left(TrialBandedError.Factorisation(error.getMessage))
+              case Right(_) =>
+                work.bandedSolveCalls += 1
+                work.bandedRightHandSides += 1
+                i = 0
+                while i < n do
+                  trialAmplitudes(i) = scoreSolved(f + preparation.membership.conditionOfTrial(i)) + readoutBuilder(i, 0)
+                  i += 1
+                if includeNuisance then System.arraycopy(scoreSolved, 0, trialAmplitudes, n, f)
+                val returnedEnergy = nativeEnergy.fold(energy)(workspace =>
+                  residualEnergy(ref, workspace, trialAmplitudes, trialAmplitudes, n))
+                Right(returnedEnergy)
 
   private def buildReference(coordinates: Array[Double], activeComponents: Int, node: Option[Int]): Either[TrialBandedError, TrialBandedReference] =
     preparation.basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coefficients, activeComponents)
-    TrialBandedObjective.reference(preparation, java.util.Arrays.copyOf(coefficients, activeComponents * m), activeComponents, node).map { reference =>
+    TrialBandedObjective.reference(preparation, coordinates.toVector, java.util.Arrays.copyOf(coefficients, activeComponents * m),
+      activeComponents, node, work).map { reference =>
       work.bandedSolveCalls += activeComponents + 1L
       work.bandedRightHandSides += activeComponents.toLong * k + c
       reference
@@ -620,8 +1073,11 @@ final class TrialBandedObjective private (
     while i < n do
       scoreBuilder.writeLinear(i, responseB(i))
       i += 1
+    work.solveAttempt(1)
     ref.factor.solveInPlace(scoreBuilder) match
-      case Left(_) => Double.PositiveInfinity
+      case Left(_) =>
+        work.solveFailed(1)
+        Double.PositiveInfinity
       case Right(_) =>
         work.bandedSolveCalls += 1
         work.bandedRightHandSides += 1
@@ -657,6 +1113,80 @@ final class TrialBandedObjective private (
             j += 1
           out.nn.curvature = CurvatureStatus.Indefinite
         energy
+
+  /** Recover coefficients with this evaluation's factor and release, then use
+    * ||y-Xa-Fgamma||² + lambda ||P a||². The extra response solve is charged by
+    * scoreReference; residual traversal and response storage are reported by ML.
+    * Both value and full calls use this same value path without replacing derivatives.
+    */
+  private def mlResidualEnergy(ref: TrialBandedReference, energy: TrialMlResidualEnergy,
+      out: ProfileJetBuffer): Double =
+    require(energy.preparation eq preparation, "ML energy workspace belongs to a different preparation")
+    val scored = scoreReference(ref, currentResponse, null)
+    if !scored.isFinite then
+      out.energy = Double.PositiveInfinity
+      return out.energy
+    var i = 0
+    while i < n do
+      var amplitude = scoreBuilder(i, 0) + scoreSolved(f + preparation.membership.conditionOfTrial(i))
+      var col = 0
+      while col < k do
+        amplitude -= ref.wcJets(i * k + col) * scoreSolved(col)
+        col += 1
+      energy.amplitudes(i) = amplitude
+      i += 1
+    energy.coefficientProducts += n.toLong * k
+    out.energy = residualEnergy(ref, energy, energy.amplitudes, scoreSolved, 0)
+    var condition = 0
+    while condition < c do
+      out.amplitudes(condition) = scoreSolved(f + condition)
+      condition += 1
+    out.energy
+
+  /** Evaluate the energy of these actual coefficients using the same reference's
+    * basis coefficients. Native readout supplies its independently solved N+F vector.
+    */
+  private def residualEnergy(ref: TrialBandedReference, energy: TrialMlResidualEnergy,
+      amplitudes: Array[Double], nuisance: Array[Double], nuisanceOffset: Int): Double =
+    energy.begin()
+    var i = 0
+    while i < n do
+      val condition = preparation.membership.conditionOfTrial(i)
+      val amplitude = amplitudes(i)
+      energy.conditionSums(condition) += amplitude
+      var row = preparation.starts(i)
+      while row <= preparation.ends(i) do
+        val source = preparation.trialOffsets(i) + (row - preparation.starts(i)) * m
+        var x = 0.0
+        var p = 0
+        while p < m do
+          x += preparation.sparseDesign(source + p) * ref.coefficients(p)
+          p += 1
+        energy.residual(row) -= x * amplitude
+        energy.sourceValues += m
+        row += 1
+      i += 1
+    var result = 0.0
+    var row = 0
+    while row < preparation.rows do
+      var col = 0
+      while col < f do
+        energy.residual(row) -= preparation.whitenedNuisance(row * f + col) * nuisance(nuisanceOffset + col)
+        col += 1
+      result += energy.residual(row) * energy.residual(row)
+      row += 1
+    energy.residualRows += preparation.rows
+    energy.nuisanceValues += preparation.rows.toLong * f
+    var condition = 0
+    while condition < c do
+      energy.conditionSums(condition) /= preparation.membership.trialsOf(condition).length
+      condition += 1
+    i = 0
+    while i < n do
+      val centered = amplitudes(i) - energy.conditionSums(preparation.membership.conditionOfTrial(i))
+      result += preparation.lambda * centered * centered
+      i += 1
+    result
 
   private def fullJet(ref: TrialBandedReference, encoded: TrialBandedResponse, out: ProfileJetBuffer): Boolean =
     contractResponse(ref, encoded, comps)
@@ -724,8 +1254,11 @@ final class TrialBandedObjective private (
           value -= bandVectorProduct(ref.aJets, JetLayout.first(axisQ), wbJets, JetLayout.first(axisP) * n, i)
       jetSolveBuilder.writeLinear(i, value)
       i += 1
+    work.solveAttempt(1)
     ref.factor.solveInPlace(jetSolveBuilder) match
-      case Left(_) => false
+      case Left(_) =>
+        work.solveFailed(1)
+        false
       case Right(_) =>
         work.bandedSolveCalls += 1
         work.bandedRightHandSides += 1
@@ -814,21 +1347,27 @@ object TrialBandedObjective:
       val coefficients = new Array[Double](comps * basis.rank)
       val coords = new Array[Double](grid.dimension)
       val refs = Vector.newBuilder[TrialBandedReference]
+      val setupWork = new TrialBandedWork
       var node = 0
       while node < grid.count do
         grid.coordinatesInto(node, coords)
         basis.coefficientJetInto(ShapePoint.unsafe(coords.toVector), scratch, coefficients, comps)
-        reference(preparation, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node)) match
+        reference(preparation, coords.toVector, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node),
+          setupWork) match
           case Left(error) => return Left(error)
           case Right(ref) => refs += ref
         node += 1
-      Right(new TrialBandedObjective(preparation, grid, refs.result()))
+      val setup = setupWork.snapshot.attempted
+      Right(new TrialBandedObjective(preparation, grid, refs.result(), TrialBandedSetupReceipt(setup.referenceAttempts, setup)))
 
   private def reference(
       prep: TrialBandedPreparation,
+      coordinates: Vector[Double],
       coefficients: Array[Double],
       activeComponents: Int,
-      node: Option[Int]): Either[TrialBandedError, TrialBandedReference] =
+      node: Option[Int],
+      work: TrialBandedWork): Either[TrialBandedError, TrialBandedReference] =
+    work.referenceAttempts += 1L
     val n = prep.trials
     val m = prep.basisRank
     val c = prep.conditions
@@ -880,14 +1419,24 @@ object TrialBandedObjective:
     while i < n do
       aJets(i * width) += prep.lambda
       i += 1
-    val factorBuilder = DMatBuilder.zeros(n, width)
+    val valueBand = DMatBuilder.zeros(n, width)
     i = 0
     while i < bandSize do
-      factorBuilder.writeLinear(i, aJets(i))
+      valueBand.writeLinear(i, aJets(i))
       i += 1
-    factorBuilder.consumeBandedCholesky(CholeskyOptions()) match
-      case Left(error) => Left(TrialBandedError.Factorisation(error.getMessage))
-      case Right(factor) =>
+    // At most one N-sized factorisation, of the bundle's own frozen canonical copy. Charge the
+    // factory's actual receipt: a pre-factor construction refusal attempts no Gale factorisation.
+    val bundle = TrialAcceptedTrialBand.atPreparationLambda(prep, coordinates, valueBand.result())
+    work.factorAttempts += bundle.work.factorAttempts
+    work.bandFactorAttempts += bundle.work.factorAttempts
+    work.factorFailures += bundle.work.factorFailures
+    work.bandFactorFailures += bundle.work.factorFailures
+    bundle.outcome match
+      case Left(error) =>
+        work.referenceFailed(release = false)
+        Left(TrialBandedError.Factorisation(error.message))
+      case Right(accepted) =>
+        val factor = accepted.factor
         val cJets = new Array[Double](activeComponents * n * k)
         val dJets = new Array[Double](activeComponents * k * k)
         var comp = 0
@@ -966,15 +1515,20 @@ object TrialBandedObjective:
               solveC.writeLinear(row * k + col, value)
               col += 1
             row += 1
-          factor.solveInPlace(solveC).left.map(error => TrialBandedError.Factorisation(error.getMessage)).map { _ =>
-            row = 0
-            while row < n do
-              var col = 0
-              while col < k do
-                wcJets(target + row * k + col) = solveC(row, col)
-                col += 1
-              row += 1
-          }
+          work.solveAttempt(k)
+          factor.solveInPlace(solveC) match
+            case Left(error) =>
+              work.solveFailed(k)
+              Left(TrialBandedError.Factorisation(error.getMessage))
+            case Right(_) =>
+              row = 0
+              while row < n do
+                var col = 0
+                while col < k do
+                  wcJets(target + row * k + col) = solveC(row, col)
+                  col += 1
+                row += 1
+              Right(())
         var solveFailure: TrialBandedError | Null = null
         solveCComponent(JetLayout.Value, -1, -1) match
           case Left(error) => solveFailure = error
@@ -996,7 +1550,9 @@ object TrialBandedObjective:
                 case Right(_) => ()
             axisQ += 1
           axis += 1
-        if solveFailure != null then Left(solveFailure.nn)
+        if solveFailure != null then
+          work.referenceFailed(release = false)
+          Left(solveFailure.nn)
         else
           val hJets = java.util.Arrays.copyOf(dJets, dJets.length)
           def subtractCross(outComponent: Int, cComponent: Int, wComponent: Int): Unit =
@@ -1049,14 +1605,22 @@ object TrialBandedObjective:
               axisQ += 1
             axis += 1
           val release = java.util.Arrays.copyOf(hJets, k * k)
-          denseLower(release, k) match
-            case None => Left(TrialBandedError.ReleaseRank(node, k))
+          denseLower(release, k, work) match
+            case None =>
+              work.referenceFailed(release = true)
+              Left(TrialBandedError.ReleaseRank(node, k))
             case Some((releaseLower, _)) =>
-              constrainedLogDet(prep, factor) match
-                case Left(error) => Left(error)
-                case Right(logDet) => Right(TrialBandedReference(coefficients, factor, aJets, cJets, wcJets, hJets, releaseLower, logDet))
+              constrainedLogDet(prep, factor, work) match
+                case Left(error) =>
+                  val releaseFailure = error match
+                    case TrialBandedError.ReleaseRank(_, _) => true
+                    case _ => false
+                  work.referenceFailed(releaseFailure)
+                  Left(error)
+                case Right(logDet) =>
+                  Right(TrialBandedReference(coefficients, accepted, aJets, cJets, wcJets, hJets, releaseLower, logDet))
 
-  private def constrainedLogDet(prep: TrialBandedPreparation, factor: BandedCholesky): Either[TrialBandedError, Double] =
+  private def constrainedLogDet(prep: TrialBandedPreparation, factor: BandedCholesky, work: TrialBandedWork): Either[TrialBandedError, Double] =
     val n = prep.trials
     val c = prep.conditions
     val mSolve = DMatBuilder.zeros(n, c)
@@ -1064,8 +1628,12 @@ object TrialBandedObjective:
     while i < n do
       mSolve(i, prep.membership.conditionOfTrial(i)) = 1.0
       i += 1
+    work.solveAttempt(c)
+    work.membershipRightHandSides += c
     factor.solveInPlace(mSolve) match
-      case Left(error) => Left(TrialBandedError.Factorisation(error.getMessage))
+      case Left(error) =>
+        work.solveFailed(c)
+        Left(TrialBandedError.Factorisation(error.getMessage))
       case Right(_) =>
         val small = new Array[Double](c * c)
         i = 0
@@ -1076,7 +1644,7 @@ object TrialBandedObjective:
             small(row * c + j) += mSolve(i, j)
             j += 1
           i += 1
-        denseLower(small, c) match
+        denseLower(small, c, work) match
           case None => Left(TrialBandedError.ReleaseRank(None, c))
           case Some((_, smallLogDet)) =>
             val membershipLogDet = (0 until c).map(cond => math.log(prep.membership.trialsOf(cond).length.toDouble)).sum
@@ -1085,14 +1653,18 @@ object TrialBandedObjective:
   /** Gale performs the rank decision; the copied lower triangle feeds the
     * allocation-free small release solve used for every voxel.
     */
-  private def denseLower(matrix: Array[Double], size: Int): Option[(Array[Double], Double)] =
-    TrialBandedPreparation.toDMat(size, size, matrix).cholesky.toOption.map { factor =>
-      val lower = new Array[Double](size * size)
-      factor.lower.copyRowMajorTo(lower)
-      var logDet = 0.0
-      var i = 0
-      while i < size do
-        logDet += 2.0 * math.log(lower(i * size + i))
-        i += 1
-      (lower, logDet)
-    }
+  private def denseLower(matrix: Array[Double], size: Int, work: TrialBandedWork): Option[(Array[Double], Double)] =
+    work.factorAttempts += 1L
+    TrialBandedPreparation.toDMat(size, size, matrix).cholesky.toOption match
+      case None =>
+        work.factorFailures += 1L
+        None
+      case Some(factor) =>
+        val lower = new Array[Double](size * size)
+        factor.lower.copyRowMajorTo(lower)
+        var logDet = 0.0
+        var i = 0
+        while i < size do
+          logDet += 2.0 * math.log(lower(i * size + i))
+          i += 1
+        Some((lower, logDet))

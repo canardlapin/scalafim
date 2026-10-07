@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KZ3ZFV2CFN7NJES4PB1FC3KH","kind":"note","note_kind":"progress","op":"20260803T143037.481072Z-p43184-c0003-r2e10-h2e8a51","text":"Implement a dependency-safe focused first-level CI lane and make fixture freshness check local-only; keep external regeneration in a separate explicit mode.","ts":"2026-08-03T14:30:37.481072Z","v":1}

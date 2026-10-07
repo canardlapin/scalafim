@@ -3,18 +3,25 @@ package scalafim.fmri.fit.profile
 import gale.linalg.{DMat, QROptions, QRPivoting}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis}
-import scalafim.fmri.hrf.family.{JetLayout, NormalizationRule, ParametricHrfFamily, ShapePoint, ShapeSummary}
+import scala.util.control.NonFatal
+import scalafim.fmri.hrf.family.{FamilySummaryError, JetLayout, NormalizationRule, ParametricHrfFamily, ShapePoint, ShapeSummary}
 
 enum CompactConditionError:
+  case RuntimePreparation(detail: String)
+  case Summary(error: FamilySummaryError)
   case Whitening(detail: String)
   case RankDeficient(rank: Int, columns: Int)
   case Normalization(rule: NormalizationRule)
+  case Admission(detail: String)
 
   def message: String =
     this match
+      case RuntimePreparation(detail) => s"compact runtime preparation failed: $detail"
+      case Summary(error) => error.message
       case Whitening(detail) => s"whitening failed: $detail"
       case RankDeficient(rank, columns) => s"the projected expanded design has rank $rank of $columns; identify the shape-invariant directions before fitting"
       case Normalization(rule) => s"the family does not support ${rule.label} normalisation"
+      case Admission(detail) => s"observed-family admission refused: $detail"
 
 /** Response-independent preparation of the compact condition backend: the
   * whitened nuisance basis `qF`, and the rank-revealing `U R` of the
@@ -79,10 +86,31 @@ final class CompactConditionPreparation private (
 
 object CompactConditionPreparation:
 
+  /** Opt in when the consumer emits summaries; ordinary preparation is reusable geometry. */
+  def prepareWithSummaries(
+      expanded: ExpandedConditionDesign,
+      admission: ObservedFamilyAdmission,
+      whitening: Option[WhiteningPlan],
+      nuisance: Option[DMat],
+      sourceTerm: scalafim.fmri.design.event.EventTerm,
+      frame: scalafim.fmri.hrf.design.SamplingFrame,
+      precision: scalafim.fmri.hrf.Seconds
+  ): Either[CompactConditionError, CompactConditionPreparation] =
+    val summaryAdmission =
+      try expanded.basis.family.validateSummaryGrid
+      catch
+        case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+    summaryAdmission.left.map(CompactConditionError.Summary.apply)
+      .flatMap(_ => prepare(expanded, admission, whitening, nuisance, sourceTerm, frame, precision))
+
   def prepare(
       expanded: ExpandedConditionDesign,
+      admission: ObservedFamilyAdmission,
       whitening: Option[WhiteningPlan],
-      nuisance: Option[DMat]
+      nuisance: Option[DMat],
+      sourceTerm: scalafim.fmri.design.event.EventTerm,
+      frame: scalafim.fmri.hrf.design.SamplingFrame,
+      precision: scalafim.fmri.hrf.Seconds
   ): Either[CompactConditionError, CompactConditionPreparation] =
     val rows = expanded.rows
     val cm = expanded.columns
@@ -91,7 +119,7 @@ object CompactConditionPreparation:
         case None => Right(m)
         case Some(plan) => WhiteningTransform.matrix(plan, m).left.map(err => CompactConditionError.Whitening(err.toString))
     val options = QROptions(pivoting = QRPivoting.Column, rankTolerance = Some(1e-10))
-    val nuisanceBasis: Either[CompactConditionError, (Array[Double], Int)] =
+    def nuisanceBasis: Either[CompactConditionError, (Array[Double], Int)] =
       nuisance match
         case None => Right((new Array[Double](0), 0))
         case Some(f) =>
@@ -102,63 +130,74 @@ object CompactConditionPreparation:
             qr.q.slice(0, rows, 0, rf).copyRowMajorTo(q)
             (q, rf)
           }
-    for
-      nb <- nuisanceBasis
-      wa <- whitenD(CompactCondition.toDMat(rows, cm, expanded.term.data.data))
-    yield
-      val (qF, rf) = nb
-      val waArr = new Array[Double](rows * cm)
-      wa.copyRowMajorTo(waArr)
-      // A_proj = (I - qF qF') W A
-      val coeffs = new Array[Double](rf * cm)
-      var t = 0
-      while t < rows do
-        var i = 0
-        while i < rf do
-          val q = qF(t * rf + i)
-          var j = 0
-          while j < cm do
-            coeffs(i * cm + j) += q * waArr(t * cm + j)
-            j += 1
-          i += 1
-        t += 1
-      val projected = new Array[Double](rows * cm)
-      t = 0
-      while t < rows do
-        var j = 0
-        while j < cm do
-          var acc = waArr(t * cm + j)
+    admission.admits(expanded, sourceTerm, frame, precision, whitening, nuisance).left.map(err => CompactConditionError.Admission(err.message)).flatMap { _ =>
+      for
+        nb <- nuisanceBasis
+        wa <- whitenD(CompactCondition.toDMat(rows, cm, expanded.term.data.data))
+      yield {
+        val (qF, rf) = nb
+        val waArr = new Array[Double](rows * cm)
+        wa.copyRowMajorTo(waArr)
+        // A_proj = (I - qF qF') W A
+        val coeffs = new Array[Double](rf * cm)
+        var t = 0
+        while t < rows do
           var i = 0
           while i < rf do
-            acc -= qF(t * rf + i) * coeffs(i * cm + j)
+            val q = qF(t * rf + i)
+            var j = 0
+            while j < cm do
+              coeffs(i * cm + j) += q * waArr(t * cm + j)
+              j += 1
             i += 1
-          projected(t * cm + j) = acc
-          j += 1
-        t += 1
-      val qr = CompactCondition.toDMat(rows, cm, projected).qr(options)
-      val k = qr.diagnostics.rank.getOrElse(cm)
-      val u = new Array[Double](rows * k)
-      qr.q.slice(0, rows, 0, k).copyRowMajorTo(u)
-      val rPerm = new Array[Double](k * cm)
-      qr.r.slice(0, k, 0, cm).copyRowMajorTo(rPerm)
-      val perm = qr.columnPermutation.toArray
-      val rHat = new Array[Double](k * cm)
-      var i = 0
-      while i < k do
-        var j = 0
-        while j < cm do
-          rHat(i * cm + perm(j)) = rPerm(i * cm + j)
-          j += 1
-        i += 1
-      new CompactConditionPreparation(expanded, whitening, rows, k, rf, qF, u, rHat)
+          t += 1
+        val projected = new Array[Double](rows * cm)
+        t = 0
+        while t < rows do
+          var j = 0
+          while j < cm do
+            var acc = waArr(t * cm + j)
+            var i = 0
+            while i < rf do
+              acc -= qF(t * rf + i) * coeffs(i * cm + j)
+              i += 1
+            projected(t * cm + j) = acc
+            j += 1
+          t += 1
+        val qr = CompactCondition.toDMat(rows, cm, projected).qr(options)
+        val k = qr.diagnostics.rank.getOrElse(cm)
+        val u = new Array[Double](rows * k)
+        qr.q.slice(0, rows, 0, k).copyRowMajorTo(u)
+        val rPerm = new Array[Double](k * cm)
+        qr.r.slice(0, k, 0, cm).copyRowMajorTo(rPerm)
+        val perm = qr.columnPermutation.toArray
+        val rHat = new Array[Double](k * cm)
+        var i = 0
+        while i < k do
+          var j = 0
+          while j < cm do
+            rHat(i * cm + perm(j)) = rPerm(i * cm + j)
+            j += 1
+          i += 1
+        new CompactConditionPreparation(expanded, whitening, rows, k, rf, qF, u, rHat)
+      }
+    }
 
-/** The compact condition backend as a [[ShapeObjective]]: a node bank of
-  * orthonormal node projectors (for exact node scores) and full design jets
-  * (so the node jet costs only small Gram products), continuous jets and
-  * exact energies through [[CompactConditionJets]] and [[ProfileReduction]].
-  * Point it at a voxel with [[pointAt]]; it holds only `z` and `e`.
+/** The capability is sealed here so arbitrary objective callbacks cannot
+  * introduce comparison evidence unrelated to their returned criterion.
   */
-final class CompactConditionObjective(val prep: CompactConditionPreparation, val grid: NodeGrid) extends ShapeObjective:
+private[profile] sealed trait PairedProfileObjective extends ShapeObjective:
+  private[profile] def enablePairedComparison(): Unit
+  private[profile] def captureAcceptedProfile(coordinates: Array[Double], jet: ProfileJetBuffer): Unit
+  private[profile] def pairedCandidateAvailable(coordinates: Array[Double], jet: ProfileJetBuffer): Boolean
+  private[profile] def comparePairedCandidate(coordinates: Array[Double], jet: ProfileJetBuffer)
+    : Either[CompactComparisonFailure, PairedShapeDecrease]
+
+/** Compact condition energies and jets over an owned response and fixed factor.
+  * Optional owned model snapshots bind paired comparisons to successful full
+  * jets. Response epochs are local to this objective, not global response IDs.
+  */
+final class CompactConditionObjective(val prep: CompactConditionPreparation, val grid: NodeGrid) extends PairedProfileObjective:
   private val family = prep.family
   private val basis = prep.basis
   private val k = prep.rank
@@ -175,8 +214,48 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
   private val bank = new Array[Double](grid.count * jets.designJetSize)
   private val gram = new Array[Double](c * c)
   private val tmp = new Array[Double](c)
-  private var z: Array[Double] = new Array[Double](k)
+  private val z: Array[Double] = new Array[Double](k)
   private var e: Double = 0.0
+  private var responseEpoch: Long = 0L
+  private var evaluationGeneration: Long = 0L
+  private var pairedState: Option[CompactPairedState] = None
+
+  private[profile] def comparisonWorkspaceReceipt(enabled: Boolean): CompactComparisonWorkspaceReceipt =
+    CompactComparisonWorkspaceReceipt.estimate(prep, enabled)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[profile] def enablePairedComparison(): Unit =
+    if pairedState.isEmpty then
+      val receipt = comparisonWorkspaceReceipt(true)
+      require(receipt.enabled, "paired allocation must be admitted")
+      pairedState = Some(new CompactPairedState(k, c, d))
+
+  private[profile] def captureAcceptedProfile(coordinates: Array[Double], jet: ProfileJetBuffer): Unit =
+    pairedState.foreach(_.capture(coordinates, jet, z, e, responseEpoch))
+
+  private[profile] def pairedCandidateAvailable(coordinates: Array[Double], jet: ProfileJetBuffer): Boolean =
+    pairedState.exists(_.available(coordinates, jet, z, e, responseEpoch))
+
+  private[profile] def comparePairedCandidate(coordinates: Array[Double], jet: ProfileJetBuffer)
+      : Either[CompactComparisonFailure, PairedShapeDecrease] =
+    pairedState match
+      case None => Left(CompactComparisonFailure.SnapshotMismatch)
+      case Some(state) => state.compare(coordinates, jet, z, e, responseEpoch)
+
+  private def beginPoint(): Long =
+    pairedState.foreach(_.currentFullJet = false)
+    evaluationGeneration += 1L
+    evaluationGeneration
+
+  private def stampPoint(point: ShapePoint, out: ProfileJetBuffer, epoch: Long, generation: Long, ok: Boolean): Boolean =
+    if responseEpoch != epoch || evaluationGeneration != generation then
+      pairedState.foreach(_.currentFullJet = false)
+      false
+    else
+      if ok then pairedState.foreach: state =>
+        jets.copyValueDesignInto(state.currentDesign)
+        state.stamp(point.coordinates, out, epoch)
+      ok
 
   locally {
     var node = 0
@@ -225,10 +304,17 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
 
   def amplitudeCount: Int = c
 
-  /** Point the objective at a voxel's compact response. */
+  /** Own a compact response for one voxel and invalidate previous comparison
+    * snapshots. Caller arrays cannot change the criterion after this boundary.
+    */
   def pointAt(response: Array[Double], energy: Double): Unit =
-    z = response
+    require(response.length == k, "compact response has the wrong rank")
+    System.arraycopy(response, 0, z, 0, k)
     e = energy
+    responseEpoch += 1L
+    pairedState.foreach: state =>
+      state.previousValid = false
+      state.currentFullJet = false
 
   def scoreNode(node: Int): Double =
     var fit = 0.0
@@ -248,19 +334,38 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
     reduction.reduce(jets.s, jets.b, jets.g, out)
 
   def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+    val epoch = responseEpoch
+    val generation = beginPoint()
+    val point = grid.point(node)
     jets.assembleLoaded(z, e, bank, node * jets.designJetSize, comps)
-    reduceInto(out)
+    stampPoint(point, out, epoch, generation, reduceInto(out))
 
   def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
-    basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coeff, comps)
+    val epoch = responseEpoch
+    val generation = beginPoint()
+    val point = ShapePoint.unsafe(coordinates.toVector)
+    basis.coefficientJetInto(point, kernelScratch, coeff, comps)
     jets.assemble(z, e, coeff, comps)
-    reduceInto(out)
+    val ok = reduceInto(out)
+    var axis = 0
+    while axis < d do
+      if java.lang.Double.doubleToRawLongBits(point(axis)) != java.lang.Double.doubleToRawLongBits(coordinates(axis)) then
+        pairedState.foreach(_.currentFullJet = false)
+        return false
+      axis += 1
+    stampPoint(point, out, epoch, generation, ok)
 
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
-    basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coeff, 1)
+    val epoch = responseEpoch
+    val generation = beginPoint()
+    val point = ShapePoint.unsafe(coordinates.toVector)
+    basis.coefficientJetInto(point, kernelScratch, coeff, 1)
     jets.assemble(z, e, coeff, 1)
     reduceInto(out)
-    out.energy
+    pairedState.foreach(_.currentFullJet = false)
+    if responseEpoch == epoch && evaluationGeneration == generation &&
+      point.coordinates.indices.forall(axis => java.lang.Double.doubleToRawLongBits(point(axis)) ==
+        java.lang.Double.doubleToRawLongBits(coordinates(axis))) then out.energy else Double.PositiveInfinity
 
 /** One voxel's condition fit: decoded shape, signed amplitudes in the
   * requested normalisation, nuisance projections retained for recovery,
@@ -275,15 +380,33 @@ final case class CompactConditionFit(
     noisePlugin: Double,
     summaries: ShapeSummary)
 
+private[profile] final case class CompactConditionReadout(
+    decode: ShapeDecodeResult,
+    amplitudes: Vector[Double],
+    normalization: NormalizationRule,
+    nuisanceProjection: Vector[Double],
+    residualEnergy: Double,
+    noisePlugin: Double):
+  def withSummary(summary: ShapeSummary): CompactConditionFit =
+    CompactConditionFit(decode, amplitudes, normalization, nuisanceProjection, residualEnergy, noisePlugin, summary)
+
 /** Per-voxel driver: project a whitened response, decode, read out. */
-final class CompactConditionRuntime(
+final class CompactConditionRuntime private (
     val prep: CompactConditionPreparation,
     grid: NodeGrid,
     budget: DecodeBudget,
     prior: Option[ShapePrior],
     noiseVariance: Double,
-    normalization: NormalizationRule):
+    normalization: NormalizationRule,
+    emitSummaries: Boolean):
+  def this(prep: CompactConditionPreparation, grid: NodeGrid, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double, normalization: NormalizationRule) =
+    this(prep, grid, budget, prior, noiseVariance, normalization, true)
+
+  if emitSummaries then prep.family.validateSummaryGrid.fold(error => throw new IllegalArgumentException(error.message), identity)
   require(prep.family.supports(normalization), s"family does not support ${normalization.label}")
+  val comparisonWorkspaceReceipt: CompactComparisonWorkspaceReceipt = CompactComparisonWorkspaceReceipt.estimate(prep,
+    CompactComparisonWorkspaceReceipt.enabled(prior, budget))
+    .fold(error => throw new IllegalArgumentException(error.message), identity)
   val objective: CompactConditionObjective = new CompactConditionObjective(prep, grid)
   private val decoder = new ShapeDecoder(objective, budget, prior, noiseVariance)
   private val z = new Array[Double](prep.rank)
@@ -295,21 +418,42 @@ final class CompactConditionRuntime(
   def lastNodeEnergies: Array[Double] = decoder.lastNodeEnergies
 
   /** Fit one voxel from its whitened response column starting at `offset`. */
+  def fitEither(whitened: Array[Double], offset: Int, counters: DecoderCounters): Either[FamilySummaryError, CompactConditionFit] =
+    try
+      val raw = fitRaw(whitened, offset, counters)
+      prep.family.summariesEither(raw.decode.point).map(raw.withSummary)
+    catch
+      case NonFatal(error) => Left(FamilySummaryError.EvaluationFailed(Option(error.getMessage).getOrElse(error.toString)))
+
   def fit(whitened: Array[Double], offset: Int, counters: DecoderCounters): CompactConditionFit =
+    fitEither(whitened, offset, counters).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[profile] def fitRaw(whitened: Array[Double], offset: Int, counters: DecoderCounters): CompactConditionReadout =
     val e = prep.project(whitened, offset, z, qy)
     objective.pointAt(z, e)
     val decode = decoder.decode(counters)
     prep.family.scaleJetInto(normalization, decode.point, scale)
     val amplitudes = decode.amplitudes.map(_ / scale(JetLayout.Value))
-    CompactConditionFit(
+    CompactConditionReadout(
       decode = decode,
       amplitudes = amplitudes,
       normalization = normalization,
       nuisanceProjection = qy.toVector,
       residualEnergy = decode.energy,
-      noisePlugin = if residualDf > 0 then decode.energy / residualDf else Double.NaN,
-      summaries = prep.family.summaries(decode.point)
+      noisePlugin = if residualDf > 0 then decode.energy / residualDf else Double.NaN
     )
+
+object CompactConditionRuntime:
+  def prepare(prep: CompactConditionPreparation, grid: NodeGrid, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double, normalization: NormalizationRule): Either[CompactConditionError, CompactConditionRuntime] =
+    try
+      prep.family.validateSummaryGrid.left.map(CompactConditionError.Summary.apply).flatMap: _ =>
+        if !prep.family.supports(normalization) then Left(CompactConditionError.Normalization(normalization))
+        else Right(new CompactConditionRuntime(prep, grid, budget, prior, noiseVariance, normalization, false))
+    catch
+      case NonFatal(error) => Left(CompactConditionError.RuntimePreparation(Option(error.getMessage).getOrElse(error.toString)))
+
+  private[profile] def raw(prep: CompactConditionPreparation, grid: NodeGrid, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double, normalization: NormalizationRule): CompactConditionRuntime =
+    new CompactConditionRuntime(prep, grid, budget, prior, noiseVariance, normalization, false)
 
 private[profile] object CompactCondition:
   def toDMat(rows: Int, cols: Int, rowMajor: Array[Double]): DMat =

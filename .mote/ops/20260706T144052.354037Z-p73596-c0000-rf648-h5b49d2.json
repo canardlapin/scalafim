@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVWMZ4AKV6QBTTN8F64PE78","kind":"note","note_kind":"note","op":"20260706T144052.354037Z-p73596-c0000-rf648-h5b49d2","text":"JVM-only guardrail suites added for AR whitening, AR estimation, and fixed-AR dense GLS; focused JVM and JS test tasks pass.","ts":"2026-07-06T14:40:52.354037Z","v":1}

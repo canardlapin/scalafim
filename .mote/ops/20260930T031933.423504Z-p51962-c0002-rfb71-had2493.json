@@ -1,0 +1,1 @@
+{"actor":"exec-io","entity":"bd-01KX6G9B8R86MRBZ9S8K8F5G7V","kind":"note","note_kind":"progress","op":"20260930T031933.423504Z-p51962-c0002-rfb71-had2493","text":"Measure gzip stage under direct 64 MiB JVM heap with generated 72 MiB payload","ts":"2026-09-30T03:19:33.423504Z","v":1}

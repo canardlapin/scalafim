@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWW0YN00N72VKYKQ15AJXWHZ","kind":"note","note_kind":"note","op":"20260706T154027.280210Z-p6858-c0000-rec1e-hd45ef4","text":"Implemented LssFitBlockResult.merge plus JVM/JS chunk parity tests proving merged LSS blocks match full response-block fitting.","ts":"2026-07-06T15:40:27.280210Z","v":1}

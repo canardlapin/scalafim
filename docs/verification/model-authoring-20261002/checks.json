@@ -1,0 +1,70 @@
+[
+  {
+    "module": "hrf",
+    "commands": [
+      "hrfJVM/test",
+      "hrfJS/test"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "raw_log_sha256": "a432360c18ceda7179d321547acdd4ea1ccdaa7f434947a389a769e97eed8171",
+    "archive": "hrf.log.gz",
+    "note": "The full log may include a later independent command failure; only the named commands are qualified here."
+  },
+  {
+    "module": "design",
+    "commands": [
+      "designJVM/test",
+      "designJS/test"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "raw_log_sha256": "cd91d0575aadb6a88a6f1d51417a2142b16e5d93c82112d4327e058ccee5a23f",
+    "archive": "design.log.gz",
+    "note": "The full log may include a later independent command failure; only the named commands are qualified here."
+  },
+  {
+    "module": "model",
+    "commands": [
+      "modelJVM/test",
+      "modelJS/test"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "raw_log_sha256": "faa3a28678804d6d95b1e34e35a93184a63a6031b593af7458ca8d8aeaf93294",
+    "archive": "model.log.gz",
+    "note": "The full log may include a later independent command failure; only the named commands are qualified here."
+  },
+  {
+    "module": "fit",
+    "commands": [
+      "fitJVM/test",
+      "fitJS/test"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "raw_log_sha256": "63817e993757b142760e64199215d0c3539922dd7f478845bf54fee20e6162db",
+    "archive": "fit.log.gz",
+    "note": "The full log may include a later independent command failure; only the named commands are qualified here."
+  },
+  {
+    "module": "all",
+    "commands": [
+      "scalafimCompileAll"
+    ],
+    "exit_codes": [
+      0
+    ],
+    "raw_log_sha256": "e6afa4b7c373add31172a24153339c0079c69bd7d0a3e353adf7f06dfaed558c",
+    "archive": "compile.log.gz",
+    "warning_clean": true
+  }
+]

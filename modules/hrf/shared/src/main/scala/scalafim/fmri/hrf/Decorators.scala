@@ -99,8 +99,15 @@ object HrfCombinators:
       * `dt`, so they do not depend on where the caller later samples.
       */
     def normalizeWithTransform(dt: Seconds = 0.1.s): TransformedBasis =
-      require(dt.value.isFinite && dt.value > 0.0, "`dt` must be finite and > 0")
-      val nSamples = math.ceil(hrf.span.value / dt.value).toInt + 1
+      normalizeWithTransformEither(dt).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+    /** Checked legacy peak normalization; keeps the requested ceil grid. */
+    def normalizeWithTransformEither(dt: Seconds = 0.1.s): Either[HrfNormalizationError, TransformedBasis] =
+      val work = NormalizationReferenceGrid.evaluationWork(hrf.descriptor)
+      NormalizationReferenceGrid.stepped(hrf.name, hrf.span, dt, work).map: nSamples =>
+        normalizeWithinBudget(dt, nSamples)
+
+    private def normalizeWithinBudget(dt: Seconds, nSamples: Int): TransformedBasis =
       val maxAbs = Array.fill(hrf.nbasis)(0.0)
       var i = 0
       while i < nSamples do
@@ -143,6 +150,18 @@ object HrfCombinators:
       if width.value <= 0.0 then hrf
       else
         val dt = precision.value
+        val newSpan = hrf.span + width
+        val referenceSamples =
+          if !normalize then
+            if !newSpan.value.isFinite then
+              throw new IllegalArgumentException(HrfNormalizationError.InvalidReferenceSpan(hrf.name, newSpan).message)
+            0
+          else
+            Quadrature.boxIntervalCount(width.value, dt)
+              .fold(error => throw new IllegalArgumentException(error.message), identity)
+            NormalizationReferenceGrid.stepped(hrf.name, newSpan, precision,
+              NormalizationReferenceGrid.blockedSampleWork(hrf.descriptor, width, precision, halfLife, integration))
+              .fold(error => throw new IllegalArgumentException(error.message), identity)
         // Trapezoid quadrature: the blocked kernel is the integral
         // `∫₀^w h(t-u) e^{-ln2 · u / halfLife} du`, so it converges as `dt`
         // shrinks rather than scaling with `w / dt`.
@@ -178,12 +197,10 @@ object HrfCombinators:
               i += 1
             out
 
-        val newSpan = hrf.span + width
-
         val scales =
           if !normalize then Array.fill(hrf.nbasis)(1.0)
           else
-            val nSamples = math.ceil(newSpan.value / dt).toInt + 1
+            val nSamples = referenceSamples
             val maxAbs = Array.fill(hrf.nbasis)(0.0)
             var k = 0
             while k < nSamples do
@@ -294,10 +311,26 @@ object HrfCombinators:
     if normalize && normalization != HrfNormalization.None then
       Left(HrfNormalizationError.ConflictingModes)
     else
+      val blockedSpan = if width.value > 0.0 then base.span + width else base.span
+      val referenceSpan = if lag.value > 0.0 then blockedSpan + lag else blockedSpan
+      if !referenceSpan.value.isFinite || referenceSpan.value < 0.0 then
+        return Left(HrfNormalizationError.InvalidReferenceSpan(base.name, referenceSpan))
+      // Refuse the composite work before even constructing the blocked kernel.
+      val work = if width.value > 0.0 then
+        NormalizationReferenceGrid.blockedSampleWork(base.descriptor, width, precision, halfLife, Integration.Exact)
+        else NormalizationReferenceGrid.evaluationWork(base.descriptor)
+      val admitted =
+        if normalize then NormalizationReferenceGrid.stepped(base.name, referenceSpan, precision, work).map(_ => ())
+        else if normalization != HrfNormalization.None then
+          NormalizationReferenceGrid.fixed(base.name, referenceSpan, normalization, work).map(_ => ())
+        else Right(())
+      admitted match
+        case Left(error) => return Left(error)
+        case Right(_) => ()
       val withBlock = if width.value > 0.0 then base.block(width, precision, halfLife, summate, normalize = false) else base
       val withLag = if lag.value != 0.0 then withBlock.lag(lag) else withBlock
       val normalized =
-        if normalize then Right(withLag.normalize(precision))
+        if normalize then withLag.normalizeWithTransformEither(precision).map(_.basis)
         else withLag.normalize(normalization)
       normalized.map { withNorm =>
         val renamed =

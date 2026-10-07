@@ -1,5 +1,8 @@
 package scalafim.locus
 
+import locus4s.PartialMap
+import locus4s.data.Aggregation
+
 class ParcellationSuite extends munit.FunSuite:
   private val ambientResolution =
     DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:ambient"), 6)
@@ -122,6 +125,77 @@ class ParcellationSuite extends munit.FunSuite:
       parcellation.fiber(parcels.indexOption(0).get)
         .union(parcellation.fiber(parcels.indexOption(1).get))
     assertEquals(firstNetworkFiber, expected)
+
+  test("fromSurjection is total over its source and its fibers are preimages"):
+    val networkResolution =
+      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:surjection-networks"), 2)
+    type Q = networkResolution.S
+    val networks: FiniteSpace[Q] = networkResolution.space
+    val parcelToNetwork =
+      Surjection.validate(
+        TotalMap.fromTargetOrdinals(parcels, networks, Array(1, 0, 1)).toOption.get
+      ).toOption.get
+
+    val quotient = Parcellation.fromSurjection(parcelToNetwork)
+    assert(quotient.ambient.sameIdentityAs(parcels))
+    assert(quotient.parcels.sameIdentityAs(networks))
+    assertEquals(quotient.assignmentOrdinals, Vector(Some(1), Some(0), Some(1)))
+    assertEquals(quotient.support.ordinalsInDomainOrder.toVector, Vector(0, 1, 2))
+    assertEquals(
+      networks.indices.map(quotient.fiber(_).ordinalsInDomainOrder.toVector).toVector,
+      Vector(Vector(1), Vector(0, 2))
+    )
+
+  test("aggregating through fromSurjection fuses with aggregating over coarsen"):
+    val networkResolution =
+      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:fusion-networks"), 2)
+    type Q = networkResolution.S
+    val networks: FiniteSpace[Q] = networkResolution.space
+    val parcelToNetwork =
+      Surjection.validate(
+        TotalMap.fromTargetOrdinals(parcels, networks, Array(0, 0, 1)).toOption.get
+      ).toOption.get
+    def providerMapping[S, T](partition: Parcellation[S, T]): PartialMap[S, T] =
+      PartialMap
+        .fromOptionalTargetOrdinals(
+          partition.ambient,
+          partition.parcels,
+          partition.assignmentOrdinals
+        )
+        .toOption
+        .get
+    val field = IndexedField.tabulate(ambient)(_.ordinal)
+
+    val direct =
+      Aggregation
+        .foldMapByChecked(
+          providerMapping(parcellation.coarsen(parcelToNetwork).toOption.get),
+          field
+        )(Set.empty[Int])(value => Set(value))(_ union _)
+        .toOption
+        .get
+    val parcelValues =
+      Aggregation
+        .foldMapByChecked(providerMapping(parcellation), field)(
+          Set.empty[Int]
+        )(value => Set(value))(_ union _)
+        .toOption
+        .get
+    val hierarchical =
+      Aggregation
+        .foldMapByChecked(
+          providerMapping(Parcellation.fromSurjection(parcelToNetwork)),
+          parcelValues
+        )(Set.empty[Int])(identity)(_ union _)
+        .toOption
+        .get
+
+    assertEquals(
+      networks.indices.map(hierarchical.apply).toVector,
+      Vector(Set(0, 1, 3), Set(4, 5))
+    )
+    networks.indices.foreach: network =>
+      assertEquals(hierarchical(network), direct(network))
 
   test("identity coarsening preserves the label field"):
     val identity = Surjection.validate(TotalMap.identity(parcels)).toOption.get

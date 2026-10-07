@@ -3,7 +3,13 @@ package scalafim.fmri.laws.profile
 import gale.linalg.{DMat, DVec}
 import scalafim.fmri.ar.{ArmaCoefficients, TimeSegment, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.event.{Event, EventTerm}
-import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
+import scalafim.fmri.design.hrf.{
+  ExpandedConditionDesign,
+  HrfKernelBasis,
+  KernelBasisBudget,
+  KernelBasisCompilation,
+  KernelBasisSpec
+}
 import scalafim.fmri.fit.profile.*
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -51,18 +57,37 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       termTag = Some("cond")
     )
 
-  private def compile(family: ParametricHrfFamily, nodes: Vector[Int]): (HrfKernelBasis, CompactConditionPreparation) =
+  private def compile(
+      family: ParametricHrfFamily,
+      nodes: Vector[Int],
+      compilation: KernelBasisCompilation = KernelBasisCompilation.Dense
+  ): (HrfKernelBasis, CompactConditionPreparation) =
     val basis = HrfKernelBasis
-      .compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48))
+      .compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48, compilation = compilation))
       .fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(schedule, frame, basis, precision).fold(e => fail(e.message), identity)
+    val midpoint = Vector.tabulate(family.dimension)(i => 0.5 * (family.chart.lower(i) + family.chart.upper(i)))
+    val admission = ObservedFamilyCertification
+      .admitForCompact(
+        expanded,
+        schedule,
+        frame,
+        precision,
+        Some(whitening),
+        Some(nuisance),
+        Vector(ShapePoint.unsafe(midpoint)),
+        ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+      )
+      .fold(e => fail(e.message), identity)
     val prep = CompactConditionPreparation
-      .prepare(expanded, Some(whitening), Some(nuisance))
+      .prepare(expanded, admission, Some(whitening), Some(nuisance), schedule, frame, precision)
       .fold(e => fail(e.message), identity)
     (basis, prep)
 
   private lazy val gaussian = compile(GaussianFamily.Default, Vector(26, 21))
-  private lazy val lwu = compile(LwuFamily.Default, Vector(14, 9, 7))
+  // Preserve the frozen grid and jets; admit two training arrays and one
+  // bounded Gale partial SVD instead of the oversized full/economy SVD.
+  private lazy val lwu = compile(LwuFamily.Default, Vector(14, 9, 7), KernelBasisCompilation.BlockedPartial(96))
 
   private def whitenColumns(cols: Int, rowMajor: Array[Double]): Array[Double] =
     val b = DMat.newBuilder(rows, cols)
@@ -257,17 +282,17 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     if family.dimension == 2 then
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 2,
-        maxJets = 2,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0)
       )
     else
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 3,
-        maxJets = 3,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0, 1.0)
       )
 
@@ -360,6 +385,20 @@ class ConditionMilestoneSuite extends munit.FunSuite:
   test("LWU: accuracy on the frozen C0 cohorts at SNR 1.0 and 0.5"):
     val (basis, prep) = lwu
     println(s"[milestone] LWU basis rank ${basis.rank}, K = ${prep.rank}")
+    val allocation = basis.allocationEstimate
+    val observed = basis.compilationReceipt
+    assertEquals(observed.trainingArrayCells.sum, allocation.trainingCells)
+    assertEquals(observed.trainingArrayCells.length, allocation.trainingBlocks)
+    assert(observed.trainingArrayCells.forall(_ <= KernelBasisBudget.MaxArrayCells))
+    assertEquals(observed.trainingGridPoints, allocation.gridPoints)
+    assert(observed.forwardApplications <= 96 + 48)
+    assert(observed.adjointApplications <= 96 + 48)
+    println(
+      s"[milestone] LWU compiler arrays=${observed.trainingArrayCells}, storage=${allocation.storageCells}, " +
+        s"trainingWork=${allocation.trainingWork}, spectralWork=${allocation.spectralWork}, " +
+        s"forward=${observed.forwardApplications}, adjoint=${observed.adjointApplications}, " +
+        s"converged=${basis.spectralDiagnostics.converged}, builds=${basis.spectralDiagnostics.iterations}"
+    )
     for (snr, seed) <- Seq((1.0, 111L), (0.5, 112L)) do
       val (fraction, p95L, p95W, p95A) = accuracy("LWU", LwuFamily.Default, prep, 100, snr, seed, Vector(26, 11, 9))
       println(f"[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)")

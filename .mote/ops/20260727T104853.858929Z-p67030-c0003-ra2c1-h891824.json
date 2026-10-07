@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KYHK1W525NF1F3H113A5EXHM","kind":"note","note_kind":"progress","op":"20260727T104853.858929Z-p67030-c0003-ra2c1-h891824","text":"Remove the unused two-method locus-selection bridge and all build/documentation registrations; verify the full JVM and Scala.js matrix.","ts":"2026-07-27T10:48:53.858929Z","v":1}

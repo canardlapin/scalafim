@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYJN7C4DNFB4QGY96S5W6HF","kind":"note","note_kind":"progress","op":"20260804T105652.618220Z-p5060-c0003-rdf62-h5afc91","text":"Finish the sparse/operator cutover: spatial now uses Gale COO, CSR, and DoubleLinearOperator directly; revalidate full consumer scans and focused JVM/JS laws.","ts":"2026-08-04T10:56:52.618220Z","v":1}

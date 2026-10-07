@@ -1,0 +1,1 @@
+The command launched with the historical name red.log remained queued on sbt-warm's three-slot semaphore. RSA was edited before the build acquired its slot. This log is a candidate regression run, NOT a pre-fix failure reproduction. Pre-fix numerical failure is established separately by the exact Gram witness in the audit.

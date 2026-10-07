@@ -1,0 +1,172 @@
+{
+  "scope": "Historical DEV fingerprint agreement, available literal-word comparisons, schema/energy/amplitude/Hessian/counter coherence and accepted recorded-jet algebra on JVM and JS; fingerprints are noncryptographic and do not prove all accepted response words; no fresh or inference/global qualification",
+  "sourceSha256": "42a62029ad1a5770fff75bf44e76994504c6340b072a044ffd616ccbe3f0169e",
+  "platforms": {
+    "JVM": {
+      "oldSha256": "8f335c2792dbb04b6fc2712c90cd5b838f9aa17d954f5245358c96aa3712f4e2",
+      "newSha256": "291b67cb62823ffb69f33b253ba335dd0bbabd8e5ba54629f34373897a6c84e4",
+      "records": 200,
+      "allHistoricalFingerprintsMatch": true,
+      "literalResponsePairsCompared": 28,
+      "allAvailableLiteralWordsMatch": true,
+      "acceptedInputEvidence": "64-bit rotate/XOR fingerprint only; literal words unavailable",
+      "allSchemaEnergyAmplitudeHessianAndCounterControlsPass": true,
+      "acceptedRecordedJetAlgebraChecked": 172,
+      "acceptedRecordedJetSpdAndFreeCorrectionControlsPass": true,
+      "groups": {
+        "1.0": {
+          "before": {
+            "Accepted": 91,
+            "Boundary": 5,
+            "BudgetExceeded": 4
+          },
+          "after": {
+            "Accepted": 91,
+            "Boundary": 5,
+            "BudgetExceeded": 4
+          },
+          "admitted": 91,
+          "95of100GateMet": false
+        },
+        "0.5": {
+          "before": {
+            "Boundary": 15,
+            "Accepted": 81,
+            "CurvatureNotPositive": 1,
+            "BudgetExceeded": 3
+          },
+          "after": {
+            "Boundary": 15,
+            "Accepted": 81,
+            "CurvatureNotPositive": 1,
+            "BudgetExceeded": 3
+          },
+          "admitted": 81,
+          "95of100GateMet": false
+        }
+      },
+      "changes": [
+        {
+          "snr": 0.5,
+          "voxel": 50,
+          "beforeStatus": "Boundary",
+          "afterStatus": "Boundary",
+          "beforeCoordinates": [
+            7.166666666666667,
+            0.6029538486747399,
+            0.0
+          ],
+          "afterCoordinates": [
+            6.9578336798255735,
+            0.5116978145897664,
+            0.0
+          ],
+          "beforeEnergy": 2729.3747249250755,
+          "afterEnergy": 2723.6537939626633,
+          "beforeWork": [
+            157,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "afterWork": [
+            157,
+            6,
+            0,
+            5,
+            0,
+            4,
+            0
+          ],
+          "afterBudgetExit": null
+        }
+      ]
+    },
+    "JS": {
+      "oldSha256": "3728ef0526f1d9c2efbdd65fb55206190d247d4f7e5908fa31cf244b2fddb540",
+      "newSha256": "4b5e909162d8198eb5a5d66b9a24dd8d5a6e72e335bd06dca858e4d8f5fbe1b8",
+      "records": 200,
+      "allHistoricalFingerprintsMatch": true,
+      "literalResponsePairsCompared": 29,
+      "allAvailableLiteralWordsMatch": true,
+      "acceptedInputEvidence": "64-bit rotate/XOR fingerprint only; literal words unavailable",
+      "allSchemaEnergyAmplitudeHessianAndCounterControlsPass": true,
+      "acceptedRecordedJetAlgebraChecked": 171,
+      "acceptedRecordedJetSpdAndFreeCorrectionControlsPass": true,
+      "groups": {
+        "1.0": {
+          "before": {
+            "Accepted": 89,
+            "Boundary": 5,
+            "BudgetExceeded": 6
+          },
+          "after": {
+            "Accepted": 89,
+            "Boundary": 5,
+            "BudgetExceeded": 6
+          },
+          "admitted": 89,
+          "95of100GateMet": false
+        },
+        "0.5": {
+          "before": {
+            "Boundary": 16,
+            "Accepted": 82,
+            "CurvatureNotPositive": 1,
+            "BudgetExceeded": 1
+          },
+          "after": {
+            "Boundary": 16,
+            "Accepted": 82,
+            "CurvatureNotPositive": 1,
+            "BudgetExceeded": 1
+          },
+          "admitted": 82,
+          "95of100GateMet": false
+        }
+      },
+      "changes": [
+        {
+          "snr": 0.5,
+          "voxel": 50,
+          "beforeStatus": "Boundary",
+          "afterStatus": "Boundary",
+          "beforeCoordinates": [
+            7.166666666666667,
+            0.6029538486747399,
+            0
+          ],
+          "afterCoordinates": [
+            6.957833679825566,
+            0.5116978145897916,
+            0
+          ],
+          "beforeEnergy": 2729.3747249250705,
+          "afterEnergy": 2723.6537939626587,
+          "beforeWork": [
+            157,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "afterWork": [
+            157,
+            6,
+            0,
+            5,
+            0,
+            4,
+            0
+          ],
+          "afterBudgetExit": null
+        }
+      ]
+    }
+  }
+}

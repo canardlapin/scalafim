@@ -1,0 +1,31 @@
+//| mill-version: 1.1.10
+//| mill-jvm-version: system
+//| mill-jvm-opts: ["-Xmx3g", "-XX:ActiveProcessorCount=4"]
+package build
+import mill.*, scalalib.*, scalajslib.*
+
+trait HrfModule extends ScalaModule:
+  def platform: String
+  def scalaVersion = "3.7.4"
+  def scalacOptions = Seq("-deprecation", "-feature", "-unchecked", "-Xmax-inlines:64", "-release:17", "-Werror", "-Wunused:all", "-Wvalue-discard")
+  def sources = Task.Sources(
+    mill.api.BuildCtx.workspaceRoot / "hrf/shared/src/main/scala",
+    mill.api.BuildCtx.workspaceRoot / "hrf" / platform / "src/main/scala"
+  )
+  def mvnDeps = Seq(mvn"org.typelevel::cats-core::2.12.0", mvn"org.typelevel::spire::0.18.0")
+  trait HrfTests extends TestModule.Munit:
+    def munitVersion = "1.2.1"
+    def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scalameta::munit-scalacheck::1.1.0")
+
+object hrfJVM extends HrfModule:
+  def platform = "jvm"
+  def mvnDeps = super.mvnDeps() ++ Seq(mvn"com.github.wendykierp:JTransforms:3.1")
+  object test extends ScalaTests, HrfTests:
+    def sources = Task.Sources(mill.api.BuildCtx.workspaceRoot / "hrf/shared/src/test/scala")
+
+object hrfJS extends HrfModule, ScalaJSModule:
+  def platform = "js"
+  def scalaJSVersion = "1.22.0"
+  def moduleKind = mill.scalajslib.api.ModuleKind.CommonJSModule
+  object test extends ScalaJSTests, HrfTests:
+    def sources = Task.Sources(mill.api.BuildCtx.workspaceRoot / "hrf/shared/src/test/scala")

@@ -1,0 +1,35 @@
+[
+  {
+    "repository": "canardlapin/locus4s",
+    "branch": "feature/region-overlap",
+    "local_commit": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+    "tracking_commit": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+    "remote_commit": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+    "clean": true,
+    "merged": false,
+    "pull_request": 6,
+    "release": false
+  },
+  {
+    "repository": "canardlapin/image4s",
+    "branch": "feature/locus-overlap-pin",
+    "local_commit": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+    "tracking_commit": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+    "remote_commit": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+    "clean": true,
+    "merged": false,
+    "pull_request": 14,
+    "release": false
+  },
+  {
+    "repository": "canardlapin/reframe4s",
+    "branch": "feature/locus-overlap-pin",
+    "local_commit": "221f46163f5039e62c74e042e1c50f0762757fc0",
+    "tracking_commit": "221f46163f5039e62c74e042e1c50f0762757fc0",
+    "remote_commit": "221f46163f5039e62c74e042e1c50f0762757fc0",
+    "clean": true,
+    "merged": false,
+    "pull_request": 2,
+    "release": false
+  }
+]

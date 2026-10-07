@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWTXF6RB51JC7KZK7R0SXKK","kind":"note","note_kind":"progress","op":"20260706T231340.641125Z-p4753-c0000-rbd8c-h66793c","text":"implemented selection-aware LNA latent dataset backends for temporal/explicit and shared-basis archives; sparse shared-basis masks now validate and materialize","ts":"2026-07-06T23:13:40.641125Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"plsneuro-workbench-ui","entity":"bd-01M1Z1WZTJM6F37TWPBQC7NWG9","kind":"note","note_kind":"progress","op":"20260908T000847.502887Z-p27155-c0003-r508a-hfeda83","text":"Defer response source opening until bounded reads while preserving declared shape/domain validation and ordinary eager access.","ts":"2026-09-08T00:08:47.502887Z","v":1}

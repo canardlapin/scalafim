@@ -1,0 +1,1 @@
+{"actor":"phrf-claude-20260929","entity":"bd-01M3VSVVE466AR8BBX1SK8FC2J","kind":"reserve_open","mode":"exclusive","op":"20261001T131851.525772Z-p52874-c0000-r354d-h2c7486","paths":["modules/phrf-comparison/","build.sbt","docs/verification/phrf-cmp-s1-20261001.md"],"reservation_id":"rv-01M3VSW945A1YM3VESEZTP7AND","ts":"2026-10-01T13:18:51.525772Z","ttl_s":28800,"v":2}

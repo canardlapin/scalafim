@@ -1,0 +1,224 @@
+ M build.sbt
+ M examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/AtlasExampleData.scala
+ M examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/ReduceByParcel.scala
+ M examples/atlas-jvm/src/test/scala/scalafim/examples/atlas/AtlasExamplesSmokeSuite.scala
+ M examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala
+ M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala
+ M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala
+ M modules/atlas/README.md
+ M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala
+ M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala
+ M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala
+ M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala
+ M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoader.scala
+ M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AsegLoaderSuite.scala
+ M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AtlasIoSuite.scala
+ M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/BrainnetomeLoaderSuite.scala
+ M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoaderSuite.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasError.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRealization.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala
+ D modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelData.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/Provenance.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/Query.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/Reduce.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/Region.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/Spaces.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/StandardAtlases.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlas.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateFlowBridge.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/VolumeAtlas.scala
+ M modules/atlas/shared/src/main/scala/scalafim/atlas/syntax.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoreSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoverageSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasParityCorpusSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasProvenanceSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasPublicationSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasQuotientSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasRealizationSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/GraphDifferentialSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/SpaceTransformGraphSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasSuite.scala
+ M modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasParityFixtures.scala
+ M modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala
+ M modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala
+ M modules/fit/README.md
+ M modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala
+ M modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala
+ M modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala
+ M modules/fit/shared/src/test/scala/scalafim/fmri/fit/CompactFixedEffectsSuite.scala
+ M modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala
+ M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala
+ M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala
+ M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfIdentity.scala
+ M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfIdentitySuite.scala
+ M modules/image/shared/src/main/scala/scalafim/image/VolumeParcellation.scala
+ M modules/image/shared/src/test/scala/scalafim/image/VolumeParcellationSuite.scala
+ M modules/locus-data/README.md
+ D modules/locus-data/shared/src/main/scala/scalafim/locus/Aggregation.scala
+ D modules/locus-data/shared/src/test/scala/scalafim/locus/AggregationSuite.scala
+ M modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala
+ M modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlans.scala
+ M modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlansSuite.scala
+ M modules/surface-view-raster/README.md
+ M modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala
+ M modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceRasterizerSuite.scala
+ M modules/surface-view/README.md
+ M modules/surface/README.md
+ M modules/surface/js/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala
+ M modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala
+ M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiModel.scala
+ M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPayloadDecoder.scala
+ M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiSurfaceCodec.scala
+?? .agent-work/fit-preparation/fit-all-01.log.meta.json
+?? .agent-work/fit-preparation/focused-jvm-01.log.meta.json
+?? .agent-work/fit-preparation/focused-jvm-02.log.meta.json
+?? .agent-work/gls-artifact/compile-01.log.meta.json
+?? .agent-work/gls-artifact/fit-all-01.log.meta.json
+?? .agent-work/gls-artifact/focused-01.log.meta.json
+?? .agent-work/gls-artifact/focused-02.log.meta.json
+?? .agent-work/gls-artifact/focused-03.log.meta.json
+?? .agent-work/pooled-ar/ar-js-01.log.meta.json
+?? .agent-work/pooled-ar/compile-01.log.meta.json
+?? .agent-work/pooled-ar/fit-all-01.log.meta.json
+?? .agent-work/pooled-ar/fit-all-02.log.meta.json
+?? .agent-work/pooled-ar/fit-focused-02.log.meta.json
+?? .agent-work/pooled-ar/fit-focused-03.log.meta.json
+?? .agent-work/pooled-ar/fit-focused-04.log.meta.json
+?? atlas-workflows.sbt
+?? modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala
+?? modules/atlas-workflows/README.md
+?? modules/atlas-workflows/shared/src/main/scala/scalafim/atlas/workflows/AtlasTransport.scala
+?? modules/atlas-workflows/shared/src/main/scala/scalafim/atlas/workflows/ParcelWorkflows.scala
+?? modules/atlas-workflows/shared/src/test/scala/scalafim/atlas/workflows/AtlasWorkflowsSuite.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/FslAtlasLoader.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/HcpExLoader.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/JulichVisualLoader.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/OlsenMtlLoader.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/ParcelMetricFiles.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/PinnedVolumeLoader.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/StandardSurfaceAtlasLoader.scala
+?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SubcorticalAtlasLoader.scala
+?? modules/atlas/jvm/src/test/resources/scalafim/atlas/io/figshare-glasser/MANIFEST.txt
+?? modules/atlas/jvm/src/test/resources/scalafim/atlas/io/figshare-glasser/lh.annot
+?? modules/atlas/jvm/src/test/resources/scalafim/atlas/io/figshare-glasser/rh.annot
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/FslAtlasLoaderSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/GlasserIdentityIoSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/HcpExLoaderSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/JulichVisualLoaderSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/OlsenMtlLoaderSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/ParcelMetricFilesSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/PinnedAtlasQualificationSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/StandardSurfaceAtlasLoaderSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasLoaderSuite.scala
+?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasQualificationSuite.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasCompose.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasDilation.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasExpand.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasGrouping.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/FslAtlasRequest.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/HcpExRequest.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/JulichVisualRequest.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/OlsenMtlRequest.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelFields.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelIdentity.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetric.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetricJson.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/PinnedAtlasAsset.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/StandardSurfaceAcquisition.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/SubcorticalAtlasRequest.scala
+?? modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlasFields.scala
+?? modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-alignment.json
+?? modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-alignment.tsv
+?? modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-composition.json
+?? modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-composition.tsv
+?? modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-expansion.json
+?? modules/atlas/shared/src/test/resources/scalafim/atlas/oracle/parcel-expansion.tsv
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasComposeSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasDilationSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasExpandSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasGroupingSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasInvariantSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasReductionSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/FslAtlasRequestSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/HcpExRequestSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/JulichVisualSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/OlsenMtlRequestSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelFieldsSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelIdentitySuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricInteropSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/SubcorticalAtlasRequestSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasFieldsSuite.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasCompositionFixture.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelAlignmentFixture.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelExpansionFixture.scala
+?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelMetricInteropFixture.scala
+?? modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReview.scala
+?? modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReviewGraphics.scala
+?? modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisGraphics.scala
+?? modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisReview.scala
+?? modules/design/shared/src/test/scala/scalafim/fmri/design/DesignReviewSuite.scala
+?? modules/design/shared/src/test/scala/scalafim/fmri/design/ResponseBasisReviewSuite.scala
+?? modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelStatusAllocationSuite.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala
+?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelStatusLookupSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ConditionProfileProvenanceSuite.scala
+?? modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/CompleteBsplineSuite.scala
+?? modules/image-view/README.md
+?? modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerModelUpdateSuite.scala
+?? modules/image/shared/src/main/scala/scalafim/image/VolumeDilation.scala
+?? modules/image/shared/src/test/scala/scalafim/image/VolumeDilationSuite.scala
+?? modules/locus-data/shared/src/test/scala/scalafim/locus/ProviderAggregationSuite.scala
+?? modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala
+?? modules/surface-view/jvm/src/test/scala/scalafim/surface/view/SurfaceWorldIndexBenchmark.scala
+?? modules/surface/js/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderJsSuite.scala
+?? modules/surface/js/src/test/scala/scalafim/surface/io/GiftiPlacementReaderJsSuite.scala
+?? modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferAnnotationReader.scala
+?? modules/surface/jvm/src/test/scala/scalafim/surface/io/FreeSurferAnnotationReaderSuite.scala
+?? modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderSuite.scala
+?? modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiPlacementReaderSuite.scala
+?? modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPlacement.scala
+?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Fixtures.scala
+?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Suite.scala
+?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementFixtures.scala
+?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementSuite.scala
+?? modules/transform/jvm/src/test/scala/scalafim/transform/qualification/P312FreshFlirtSuite.scala
+?? tools/r-parity/check_glasser_parcel_identity.R
+?? tools/r-parity/generate_atlas_composition.R
+?? tools/r-parity/generate_atlas_parcel_alignment.R
+?? tools/r-parity/generate_atlas_parcel_expansion.R
+?? tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R
+?? tools/r-parity/verify_voxelwise_ar_rrg_design.R

@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX2BC2NVATAFC4SXB7AWA7TD","kind":"reserve_open","mode":"exclusive","op":"20260709T023222.999666Z-p47031-c0000-raa9f-h2ab9b8","paths":["modules/latent/shared/src/test/scala/scalafim/latent/LatentRoundtripMatrixSuite.scala"],"reservation_id":"rv-01KX2BG5PQA8PCB9003R2JW1NY","ts":"2026-07-09T02:32:22.999666Z","ttl_s":3600,"v":1}

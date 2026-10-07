@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim-mvpa-refactor","entity":"bd-01M0SVK9B1A1JEM5T40DX4X1YH","kind":"reserve_open","mode":"exclusive","op":"20260825T101024.067741Z-p2934-c0000-r4349-h876622","paths":["tools/verify-mvpa-legacy-surface.sh","build.sbt"],"reservation_id":"rv-01M0W6CKP3CVQQVNG5J9R4AMQC","ts":"2026-08-25T10:10:24.067741Z","ttl_s":3600,"v":1}

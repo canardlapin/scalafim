@@ -1,0 +1,1 @@
+{"actor":"stp-finish-20260929","entity":"bd-01M3GGKMX4MH9PYPZ2MKANM7W5","kind":"reserve_open","mode":"exclusive","op":"20260930T020944.039238Z-p6083-c0000-r18a3-h71a102","paths":["modules/image/jvm/src/test/scala/scalafim/image/io/NiftiSuite.scala"],"reservation_id":"rv-01M3R16BK7SGZS8W8JGD4ZZJER","ts":"2026-09-30T02:09:44.039238Z","ttl_s":7200,"v":2}

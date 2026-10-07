@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX94HRCENFWHEW56YN922X0G","kind":"note","note_kind":"note","op":"20260720T211347.408827Z-p18412-c0000-r37bf-h5e690a","text":"Removed inert group gp field and placebo call sites; documented explicit leaf styling. JVM and Scala.js graphics suites pass 118/118. Committed as 6d5fe9b.","ts":"2026-07-20T21:13:47.408827Z","v":1}

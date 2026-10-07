@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVSG6F3B5384DCDHSD0TY5C","kind":"note","note_kind":"progress","op":"20260706T132629.610330Z-p22166-c0000-rd2b8-ha64d3f","text":"Added FitImageMaps plus coefficient, standard-error, t-statistic, and F-statistic image-space mapping helpers with selected-voxel placement tests on JVM/JS.","ts":"2026-07-06T13:26:29.610330Z","v":1}

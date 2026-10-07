@@ -1,0 +1,189 @@
+{
+  "verified_at_utc": "2026-10-06T00:36:12.852497+00:00",
+  "base_commit": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+  "motes_completed": [
+    "bd-01M477F67P8ZJKHSCWSPCECG85",
+    "bd-01M43ZTQCPH834TY936D7YYGKD",
+    "bd-01M44E76ZC0J12GACBSGXAV6GA"
+  ],
+  "related_prior_fix": "bd-01M43S7GV3M4E6AC1W35DPF17C",
+  "validation": {
+    "hrfJVM": 321,
+    "hrfJS": 321,
+    "designJVM": 454,
+    "designJS": 453,
+    "fitJVM": 660,
+    "fitJS": 603,
+    "admission_consumerJVM": 4,
+    "admission_consumerJS": 4
+  },
+  "final_passed_tests": 2820,
+  "compiler_warning_clean": true,
+  "sbt_diagnostics": [
+    {
+      "gate": "admission-consumers",
+      "message": "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+    }
+  ],
+  "receipt_checker_note": "The runner initially treated a known sbt multiple-main-class discovery diagnostic as a compiler warning. Raw test commands all exited0; the diagnostic was inspected and recorded separately. No compiler warning was suppressed.",
+  "integration_repair": {
+    "initial_fitJVM": {
+      "total": 660,
+      "passed": 658,
+      "failed": 2
+    },
+    "finding": "Public corrected readout declarations strip the final legacy exact-readout marker. Adding ML identity after that marker prevented its removal.",
+    "fix": "Keep structural ML evidence before the final exact-readout field; preserve the existing public consumer and its strict assertions.",
+    "final_full_fit_and_consumers_passed": true
+  },
+  "runs": [
+    {
+      "label": "hrf-design",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/test",
+        "hrfJS/test",
+        "designJVM/test",
+        "designJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 77.81,
+      "summaries": [
+        {
+          "total": 321,
+          "failed": 0,
+          "errors": 0,
+          "passed": 321
+        },
+        {
+          "total": 321,
+          "failed": 0,
+          "errors": 0,
+          "passed": 321
+        },
+        {
+          "total": 454,
+          "failed": 0,
+          "errors": 0,
+          "passed": 454
+        },
+        {
+          "total": 453,
+          "failed": 0,
+          "errors": 0,
+          "passed": 453
+        }
+      ],
+      "compiler_warnings": false,
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "fit",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/test",
+        "fitJS/test"
+      ],
+      "exit_code": 1,
+      "seconds": 34.655,
+      "summaries": [],
+      "compiler_warnings": false,
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "fit-retry",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/test",
+        "fitJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 106.548,
+      "summaries": [
+        {
+          "total": 660,
+          "failed": 0,
+          "errors": 0,
+          "passed": 660
+        },
+        {
+          "total": 603,
+          "failed": 0,
+          "errors": 0,
+          "passed": 603
+        }
+      ],
+      "compiler_warnings": false,
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "admission-consumers",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite",
+        "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 32.964,
+      "summaries": [
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4
+        }
+      ],
+      "compiler_warnings": false,
+      "sbt_diagnostics": [
+        "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+      ]
+    }
+  ],
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Pulse.scala": "b55eb8d9af9792e2d9fadba8d7b3faafd305b78d8bc5bad45d21791027979bf0",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfSpec.scala": "f3ce400ed4b913692823220617b34761c11741a696c2293d0f40e11ceccdb363",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/QuadratureSuite.scala": "6db8e42a95aecfa1ec3d6477921ba861205222eb979b2404fde766de9115ce02",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "775f7aeb21f929925fa5ec98d2d0c90d925ff24184d89d3a1e49da4a07e37d6a",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/ConvolutionDiscretization.scala": "7f7736fd3e0d5c1b733402dbcb3277c297fdd2a3001aad708cb1b4f097e64291",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala": "aaef96c7fff42afde2959ce4722bf0d2851e51aab972c522da4216081dc22b17",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventTerm.scala": "b1e3f27870a0d08bab241e4b6e4e7557de3edf1749b0a9bfeb8f3e5300820675",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventResponseConvolution.scala": "8dbbf6c0db5052335b1adc6a032eaa482442762490b67d099f7109849450cf40",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/event/EventResponseConvolutionSuite.scala": "72394f7ede39aedb56829654c514ccc4171b3e1ff4ca60dfdb6aeb9ac346cd3b",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/regressor/ConvolutionDiscretizationSuite.scala": "acb5e0da5395da85fc998d092b42fd0b491a271821609f5f50c372a85c39196e",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "6696a09020d249118837339d508fb48ca69af36869f3a22359e14df5f9a2dec9",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ResultArtifactsSuite.scala": "394ba0522404af7e56cc60fbecf4180f9b76d96a58ba40a4ccd5bd346a7f5fbf",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/ResultArtifactsAllocationSuite.scala": "03937270458a2ac035999722f405e9c7a6c6af8200254ee18379e89e8dfdd28f",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ObservedFamilyCertification.scala": "972eaa9da31b378a6d06054fbd87e9a09bb688cd76b61aabfa4818921e3cc91c",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "345acd5634f40a3f04b77c0e8c1099f60e82057ebb871afa709f257e89eefa1d",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala": "bc5578d2dc82c3a3cdfc91b9a36b091f30ac33e71caf57b0e2c31ab03cf8aad0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileFitIdentitySuite.scala": "c24641007eaea78e0489c7d1a6dba217f006e8109f5e31923ff31667e8cff393",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileHrfFitSuite.scala": "c45d0d17815a40087f2ddc07e61b3057b1d55133f794a7d23f0980287403b3b6"
+  },
+  "feature_receipts": [
+    "docs/verification/quadrature-budget-20261005/receipt.json",
+    "docs/verification/convolution-budget-20261005/receipt.json",
+    "docs/verification/export-allocation-20261005/receipt.json",
+    "docs/verification/profile-identity-20261005/receipt.json"
+  ],
+  "evidence_archive": "logs-and-sources.tar.gz",
+  "evidence_archive_sha256": "d8bb9d945d2c52858536d9b3da40d3777c9aa23faad897fe7bb385b1f1cbfc6b",
+  "follow_up_motes": [
+    "bd-01M478XB9V86YE7SR8BGH457ND",
+    "bd-01M479NBKJ8S6216HXD787MANK"
+  ],
+  "scope_limits": [
+    "Convolution limits bound allocation, not every direct-convolution arithmetic operation.",
+    "Export allocation bytes were measured on the JVM for the documented1024/4096-voxel fixtures; JS gates validate behavior.",
+    "New identity versions require regenerating admissions/prepared profiles; exact numeric bits remain identity inputs and custom-family/ephemeral-frame limitations remain as recorded in feature receipt."
+  ]
+}

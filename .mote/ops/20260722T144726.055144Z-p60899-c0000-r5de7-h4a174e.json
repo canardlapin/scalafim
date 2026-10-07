@@ -1,0 +1,1 @@
+{"actor":"codex-halfflow","entity":"bd-01KY51743TJET8YEPKT8PQBVHA","kind":"reserve_open","mode":"exclusive","op":"20260722T144726.055144Z-p60899-c0000-r5de7-h4a174e","paths":["modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpointExport.scala"],"reservation_id":"rv-01KY54QE37JVWR0GDEZCYTT93Q","ts":"2026-07-22T14:47:26.055144Z","ttl_s":14400,"v":1}

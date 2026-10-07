@@ -39,8 +39,12 @@ final case class ContinuousEvent(
       * An empty vector preserves the legacy single-source interpretation. A
       * populated vector is exact: one identity for every numerical column.
       */
-    columnModulators: Vector[ModulatorId] = Vector.empty
+    columnModulators: Vector[ModulatorId] = Vector.empty,
+    /** Optional unit-amplitude stream paired with this modulator family. */
+    mainEffectColumn: Option[Int] = None
 ) extends Event:
+  require(mainEffectColumn.forall(i => i >= 0 && i < value.cols), "main-effect column must exist")
+
   require(
     columnModulators.isEmpty || columnModulators.length == value.cols,
     "continuous-event modulator identities must align with numerical columns"

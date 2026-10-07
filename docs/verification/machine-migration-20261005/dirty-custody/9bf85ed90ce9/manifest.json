@@ -1,0 +1,29 @@
+{
+  "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/jdk17",
+  "head": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+  "branch": "refs/heads/fix/jdk17-api-20261004",
+  "files": [
+    {
+      "path": "build.sbt",
+      "kind": "file",
+      "bytes": 56016,
+      "sha256": "b0b5913652209f4cba0d0605385654d7726e5dd6741d362439a7fb20dd109660"
+    },
+    {
+      "path": "modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/ReleaseNegativeControl.scala",
+      "kind": "file",
+      "bytes": 110,
+      "sha256": "d7b1e226fb36cf725eeac4b7128c5c5cc7ebe426ebbac0aec587f88381cdc450"
+    },
+    {
+      "path": "modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/RsaAllocationProbe.scala",
+      "kind": "file",
+      "bytes": 2075,
+      "sha256": "2213d79e0bd1ee09ef7720b084bce561dde5f55a028ccaaa519d8ad0e3a415bf"
+    }
+  ],
+  "archive_sha256": "7c0bde1279225777fe1e8584fc9d76b5b586d1ad22379320c49e72ef3693e4ef",
+  "archive_bytes": 11704,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

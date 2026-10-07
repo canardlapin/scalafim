@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWX6Q1AMRZ7358V932QBZWC6","kind":"note","note_kind":"note","op":"20260707T110451.872875Z-p20121-c0000-r74cc-h0a6314","text":"Committed motion API shape refactor as 4a4958f; verified sbt motionJVM/test motionJS/test, sbt compileAll, and sbt testAll.","ts":"2026-07-07T11:04:51.872875Z","v":1}

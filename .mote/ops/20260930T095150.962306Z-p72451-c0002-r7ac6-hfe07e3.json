@@ -1,0 +1,1 @@
+{"actor":"exec-trial-executor","entity":"bd-01M26A285YAQ3H8TGS26BK9T7J","kind":"note","note_kind":"progress","op":"20260930T095150.962306Z-p72451-c0002-r7ac6-hfe07e3","text":"Start bounded native ML executor routing on clean 0edf75c2; exact seven paths, no kernel/provider/policy changes or whole-issue closure.","ts":"2026-09-30T09:51:50.962306Z","v":1}

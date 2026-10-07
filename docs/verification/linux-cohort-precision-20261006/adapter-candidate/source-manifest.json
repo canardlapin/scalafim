@@ -1,0 +1,16 @@
+{
+  "base": "0a99c49949b1d1f48e1bb53e97acb65745dd2bc7",
+  "cohort_sha256": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb",
+  "root": "/private/tmp/scalafim-compact-paired-repair-20261006",
+  "sources": {
+    "build.sbt": "149f195a387a5edced0d2bbb243b3eaeef9e9b5824b9a954f124560a5d3692f4",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala": "3900220acc32c609f2e57327131220d5a514b1a410ea2b18cb6851de30b28a31",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactConditionJets.scala": "1f0b9dbe95e0b8e0981f59b96a34249bf1d559f4bdc8681b9fd6a2e454270a87",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactPairedComparison.scala": "2cb1b68d0e3f60e8d4cbba1243997361cb190423110a4d62f91cb23660bf8c5b",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala": "a00a48defa08b5ed6e25991b48b4be6a59debedf7cf7c517390556044c329361",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "fd9815b6c3b337e837b2318e2ee320152afdd7176937eba0c8e262763041fac4",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "2112483c212b2c1a65282e647a3ac538590ee4629a1aca7eeacb97e27fff9dcc",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/CompactPairedComparisonSuite.scala": "b3b18f853dc65cc947bec24fdcb5623f0307ced1437fb82638038cb8e255b0a2"
+  },
+  "status": "final-source-frozen-full-regressions-running"
+}

@@ -1,0 +1,1 @@
+{"actor":"core-workflow-estimates","entity":"bd-01KX6G9B8R86MRBZ9S8K8F5G7V","kind":"note","note_kind":"progress","op":"20260930T173559.903910Z-p56761-c0002-r59da-h73a660","text":"Implement typed planned-output and sealed estimate-reference workflow handoff in private clone core-workflow-estimates; build.sbt remains root-owned.","ts":"2026-09-30T17:35:59.903910Z","v":1}

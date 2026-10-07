@@ -255,7 +255,12 @@ object HrfFunctions:
       p += 1
     prev
 
-  /** R-parity B-spline basis used by `hrf_bspline` / `splines::bs` in the original package.
+  /** With [[Hrfs.BsplineConvention.Complete]], a complete clamped B-spline
+    * basis with uniformly spaced knots over the actual span and zero outside
+    * support. [[Hrfs.BsplineConvention.EndpointAnchored]] drops both boundary
+    * columns of a complete basis of width `nBasis + 2`, matching fmrihrf
+    * commit `18d418f`. With [[Hrfs.BsplineConvention.LegacyR]], the R-parity B-spline
+    * basis used by `hrf_bspline` / `splines::bs` in fmrihrf 0.4.0:
     *
     * - Interior knots are equally spaced quantiles of `seq(0, span)` (step 1),
     *   i.e. on `[0, floor(span)]`.
@@ -263,7 +268,35 @@ object HrfFunctions:
     * - The intercept column from `splineDesign` is dropped (so columns = max(nBasis, degree+1)).
     * - Times outside `[0, span]` are clamped to `0` (matching R wrapper).
     */
-  def bsplineBasis(lag: Lag, span: Seconds = 24.s, nBasis: Int = 5, degree: Int = 3): Array[Double] =
+  def bsplineBasis(lag: Lag, span: Seconds = 24.s, nBasis: Int = 5, degree: Int = 3,
+      convention: Hrfs.BsplineConvention = Hrfs.BsplineConvention.LegacyR): Array[Double] =
+    convention match
+      case Hrfs.BsplineConvention.LegacyR => legacyBsplineBasis(lag, span, nBasis, degree)
+      case Hrfs.BsplineConvention.Complete => completeBsplineBasis(lag, span, nBasis, degree)
+      case Hrfs.BsplineConvention.EndpointAnchored =>
+        val full = completeBsplineBasis(lag, span, endpointAnchoredWidth(nBasis, degree), degree)
+        full.slice(1, full.length - 1)
+
+  private[hrf] def endpointAnchoredWidth(nBasis: Int, degree: Int): Int =
+    require(degree >= 1, "Endpoint-anchored B-spline degree must be positive")
+    require(nBasis >= math.max(1, degree - 1),
+      s"Endpoint-anchored B-spline basis count must be at least ${math.max(1, degree - 1)} for degree $degree")
+    require(nBasis <= Int.MaxValue - 2, "Endpoint-anchored B-spline basis count is too large")
+    nBasis + 2
+
+  private def completeBsplineBasis(lag: Lag, span: Seconds, nBasis: Int, degree: Int): Array[Double] =
+    require(degree >= 0, "B-spline degree must be nonnegative")
+    require(nBasis > 0, "B-spline basis count must be positive")
+    require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
+    val width = math.max(nBasis, degree + 1)
+    if lag.value < 0.0 || lag.value > span.value then new Array[Double](width)
+    else
+      val breaks = bsplineBreaks(span, nBasis, degree, Hrfs.BsplineConvention.Complete).map(_.value)
+      val knots = Array.fill(degree + 1)(0.0) ++ breaks.slice(1, breaks.length - 1) ++
+        Array.fill(degree + 1)(span.value)
+      bsplineAt(lag.value, knots, degree)
+
+  private def legacyBsplineBasis(lag: Lag, span: Seconds, nBasis: Int, degree: Int): Array[Double] =
     val w = span.value
     val x0 = lag.value
     val x = if x0 < 0.0 || x0 > w then 0.0 else x0
@@ -291,7 +324,17 @@ object HrfFunctions:
     * is what lets it be integrated exactly piece by piece. Kept next to
     * `bsplineBasis` so the two knot computations cannot drift apart.
     */
-  private[hrf] def bsplineBreaks(span: Seconds, nBasis: Int, degree: Int): Vector[Seconds] =
+  private[hrf] def bsplineBreaks(span: Seconds, nBasis: Int, degree: Int,
+      convention: Hrfs.BsplineConvention = Hrfs.BsplineConvention.LegacyR): Vector[Seconds] =
+    convention match
+      case Hrfs.BsplineConvention.Complete =>
+        val intervals = math.max(nBasis, degree + 1) - degree
+        Vector.tabulate(intervals + 1)(i => Seconds(span.value * i.toDouble / intervals.toDouble))
+      case Hrfs.BsplineConvention.LegacyR => legacyBsplineBreaks(span, nBasis, degree)
+      case Hrfs.BsplineConvention.EndpointAnchored =>
+        bsplineBreaks(span, endpointAnchoredWidth(nBasis, degree), degree, Hrfs.BsplineConvention.Complete)
+
+  private def legacyBsplineBreaks(span: Seconds, nBasis: Int, degree: Int): Vector[Seconds] =
     val w = span.value
     val ord = degree + 1
     val nIknots0 = nBasis - ord + 1
@@ -317,6 +360,30 @@ object Hrfs:
 
   enum WeightedMethod:
     case Constant, Linear
+
+  /** Knot and column convention of [[bspline]]. */
+  enum BsplineConvention:
+    /** fmrihrf 0.4.0 `hrf_bspline`: `splines::bs(intercept = FALSE)` with
+      * interior knots at quantiles of `seq(0, span)`, i.e. on `[0, floor(span)]`,
+      * and the first spline dropped. With interior knots the basis is zero at
+      * onset and cannot represent a constant; at the minimum width
+      * (`nBasis <= degree + 1`) it is the full Bernstein basis.
+      */
+    case LegacyR
+
+    /** The full clamped basis: `max(nBasis, degree + 1)` columns, interior
+      * knots uniform over the actual span, a partition of unity on
+      * `[0, span]` and zero outside it.
+      */
+    case Complete
+
+    /** fmrihrf `18d418f` `hrf_bspline`: exactly `nBasis` columns from a
+      * complete basis of width `nBasis + 2`, with both boundary columns
+      * removed. Knots are uniform over the actual span; values are zero at
+      * both endpoints and outside support. Requires `degree >= 1` and
+      * `nBasis >= max(1, degree - 1)`. Constants are not representable.
+      */
+    case EndpointAnchored
 
   def gamma(shape: Double = 6.0, rate: Double = 1.0, span: Seconds = 24.s): Hrf =
     val params = HrfParams.Gamma(shape, rate)
@@ -412,38 +479,59 @@ object Hrfs:
       normalize: HrfFunctions.LwuNormalize = HrfFunctions.LwuNormalize.None,
       span: Seconds = 24.s
   ): Hrf =
-    val raw = (l: Lag) => HrfFunctions.lwu(l, tau, sigma, rho, HrfFunctions.LwuNormalize.None)
-    // Both normalizations are properties of the whole causal kernel, not of a
-    // single lag, so they are resolved once here against `[0, span]` rather
-    // than against whatever grid a caller later supplies.
-    val dt = 0.005
-    val nSamples = math.ceil(span.value / dt).toInt + 1
-    val scale =
-      normalize match
-        case HrfFunctions.LwuNormalize.None => 1.0
-        case HrfFunctions.LwuNormalize.Height =>
-          var m = 0.0
-          var i = 0
-          while i < nSamples do
-            val a = math.abs(raw(Lag(i * dt)))
-            if a > m then m = a
-            i += 1
-          if m > 1e-10 then m else 1.0
-        case HrfFunctions.LwuNormalize.Area =>
-          // Trapezoid over the causal support; `Area` used to be a silent
-          // no-op, so an area-normalized LWU was quietly unnormalized.
-          var acc = 0.0
-          var i = 0
-          while i < nSamples do
-            val w = if i == 0 || i == nSamples - 1 then 0.5 else 1.0
-            acc += w * raw(Lag(i * dt))
-            i += 1
-          val area = acc * dt
-          if math.abs(area) > 1e-10 then area else 1.0
-    val params = HrfParams.Lwu(LwuParams(tau, sigma, rho), normalize)
-    Hrf.of("lwu", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Lwu, span, params))) { t =>
-      Vec.unsafe(Array(raw(t) / scale))
-    }
+    lwuValidated(tau, sigma, rho, normalize, span)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  /** Typed constructor admission; `None` requires no calibration samples. */
+  def lwuValidated(
+      tau: Double = 6.0,
+      sigma: Double = 2.5,
+      rho: Double = 0.35,
+      normalize: HrfFunctions.LwuNormalize = HrfFunctions.LwuNormalize.None,
+      span: Seconds = 24.s
+  ): Either[HrfConstructorError, Hrf] =
+    HrfConstructorCalibration.lwu(tau, sigma, rho, normalize, span).flatMap: nSamples =>
+      val raw = (l: Lag) => HrfFunctions.lwu(l, tau, sigma, rho, HrfFunctions.LwuNormalize.None)
+      calibrateLwu(raw, normalize, nSamples).map: scale =>
+        val params = HrfParams.Lwu(LwuParams(tau, sigma, rho), normalize)
+        Hrf.of("lwu", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Lwu, span, params))) { t =>
+          Vec.unsafe(Array(raw(t) / scale))
+        }
+
+  private def calibrateLwu(
+      raw: Lag => Double,
+      normalize: HrfFunctions.LwuNormalize,
+      nSamples: Int
+  ): Either[HrfConstructorError, Double] =
+    // Resolve both modes once against the causal ceil grid, never a query grid.
+    val dt = HrfConstructorCalibration.LwuStep.value
+    val factor = normalize match
+      case HrfFunctions.LwuNormalize.None => 1.0
+      case HrfFunctions.LwuNormalize.Height =>
+        var m = 0.0
+        var i = 0
+        while i < nSamples do
+          val value = raw(Lag(i * dt))
+          if !value.isFinite then
+            return Left(HrfConstructorError.NonFiniteCalibrationValue("lwu", i, 0, value))
+          val a = math.abs(value)
+          if a > m then m = a
+          i += 1
+        m
+      case HrfFunctions.LwuNormalize.Area =>
+        var acc = 0.0
+        var i = 0
+        while i < nSamples do
+          val value = raw(Lag(i * dt))
+          if !value.isFinite then
+            return Left(HrfConstructorError.NonFiniteCalibrationValue("lwu", i, 0, value))
+          val w = if i == 0 || i == nSamples - 1 then 0.5 else 1.0
+          acc += w * value
+          i += 1
+        acc * dt
+    if !factor.isFinite then
+      Left(HrfConstructorError.NonFiniteCalibrationScale("lwu", 0, factor))
+    else Right(if math.abs(factor) > 1e-10 then factor else 1.0)
 
   def boxcar(width: Seconds, amplitude: Double = 1.0, normalize: Boolean = false): Hrf =
     require(width.value.isFinite && width.value > 0.0, "`width` must be > 0")
@@ -610,27 +698,41 @@ object Hrfs:
     }
 
   def daguerre(nBasis: Int = 3, scale: Double = 4.0, span: Seconds = 24.s): Hrf =
-    val basis = BasisCount(nBasis)
-    val dt = 0.1
-    val nSamples = math.ceil(span.value / dt).toInt + 1
-    val maxAbs = Array.fill(basis.value)(0.0)
+    daguerreValidated(nBasis, scale, span)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  /** Typed admission for the fixed peak-calibration grid and basis work. */
+  def daguerreValidated(nBasis: Int = 3, scale: Double = 4.0, span: Seconds = 24.s): Either[HrfConstructorError, Hrf] =
+    HrfConstructorCalibration.daguerre(nBasis, scale, span).flatMap: nSamples =>
+      val basis = BasisCount(nBasis)
+      calibrateDaguerre(basis.value, scale, nSamples).map: scales =>
+        val descriptor = HrfDescriptor.known(HrfKind.Daguerre, basis.value, span, HrfParams.Daguerre(basis, scale), penalty = PenaltyPolicy.DaguerreDecay)
+        Hrf.of("daguerre", nbasis = basis.value, span = span, descriptor = Some(descriptor)) { t =>
+          val raw = HrfFunctions.daguerreBasis(t, basis.value, scale)
+          val normed = raw.zip(scales).map(_ / _)
+          Vec.unsafe(normed)
+        }
+
+  private def calibrateDaguerre(
+      nBasis: Int,
+      scale: Double,
+      nSamples: Int
+  ): Either[HrfConstructorError, Array[Double]] =
+    val dt = HrfConstructorCalibration.DaguerreStep.value
+    val maxAbs = Array.fill(nBasis)(0.0)
     var i = 0
     while i < nSamples do
-      val t = Lag(i * dt)
-      val raw = HrfFunctions.daguerreBasis(t, basis.value, scale)
+      val raw = HrfFunctions.daguerreBasis(Lag(i * dt), nBasis, scale)
       var j = 0
-      while j < basis.value do
-        val a = math.abs(raw(j))
+      while j < nBasis do
+        val value = raw(j)
+        if !value.isFinite then
+          return Left(HrfConstructorError.NonFiniteCalibrationValue("daguerre", i, j, value))
+        val a = math.abs(value)
         if a > maxAbs(j) then maxAbs(j) = a
         j += 1
       i += 1
-    val scales = maxAbs.map(m => if m > 1e-10 then m else 1.0)
-    val descriptor = HrfDescriptor.known(HrfKind.Daguerre, basis.value, span, HrfParams.Daguerre(basis, scale), penalty = PenaltyPolicy.DaguerreDecay)
-    Hrf.of("daguerre", nbasis = basis.value, span = span, descriptor = Some(descriptor)) { t =>
-      val raw = HrfFunctions.daguerreBasis(t, basis.value, scale)
-      val normed = raw.zip(scales).map(_ / _)
-      Vec.unsafe(normed)
-    }
+    Right(maxAbs.map(m => if m > 1e-10 then m else 1.0))
 
   def fir(nBasis: Int = 12, span: Seconds = 24.s): Hrf =
     val basis = BasisCount(nBasis)
@@ -654,23 +756,44 @@ object Hrfs:
       Vec.unsafe(out)
     }
 
-  def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3): Hrf =
+  /** B-spline response basis. Use [[BsplineConvention.Complete]] for a complete,
+    * partition-of-unity basis that can represent a constant on `[0, span]`.
+    * This mode returns `max(nBasis, degree + 1)` columns and spaces interior
+    * knots uniformly over the actual span, including noninteger spans.
+    *
+    * [[BsplineConvention.EndpointAnchored]] matches fmrihrf commit `18d418f`:
+    * exactly `nBasis` columns, zero at both endpoints, with uniform knots over
+    * the actual span. Requires `degree >= 1` and `nBasis >= max(1, degree - 1)`.
+    *
+    * The default, [[BsplineConvention.LegacyR]], is frozen to fmrihrf 0.4.0. With
+    * interior knots it omits the first spline, forces zero at onset and cannot
+    * represent a constant. No convention applies column normalization.
+    */
+  def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3,
+      convention: BsplineConvention = BsplineConvention.LegacyR): Hrf =
+    require(degree >= 0, "B-spline degree must be nonnegative")
+    require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
     val requested = BasisCount(nBasis)
     val ord = degree + 1
-    val effective = BasisCount(math.max(requested.value, ord))
+    val effective = convention match
+      case BsplineConvention.EndpointAnchored =>
+        HrfFunctions.endpointAnchoredWidth(requested.value, degree)
+        requested
+      case BsplineConvention.LegacyR | BsplineConvention.Complete =>
+        BasisCount(math.max(requested.value, ord))
     val descriptor = HrfDescriptor.known(
       HrfKind.Bspline,
       effective.value,
       span,
-      HrfParams.Bspline(requested, degree),
+      HrfParams.Bspline(requested, degree, convention),
       penalty = PenaltyPolicy.Roughness,
       integration = IntegrationPolicy.PiecewisePolynomial(
-        HrfFunctions.bsplineBreaks(span, requested.value, degree),
+        HrfFunctions.bsplineBreaks(span, requested.value, degree, convention),
         degree
       )
     )
     Hrf.of("bspline", nbasis = effective.value, span = span, descriptor = Some(descriptor), support = Support.Compact(span)) { t =>
-      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree))
+      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree, convention))
     }
 
   def tent(nBasis: Int = 5, span: Seconds = 24.s): Hrf =

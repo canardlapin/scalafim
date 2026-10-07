@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYNB5MYQWCNMDCAB3VP6QD5","kind":"note","note_kind":"progress","op":"20260720T055753.740122Z-p19825-c0003-rc2b9-h544bd9","text":"Implementing pure pre-execution explanation, recorded post-execution lineage/QC, and deterministic cross-platform tests without source IO.","ts":"2026-07-20T05:57:53.740122Z","v":1}

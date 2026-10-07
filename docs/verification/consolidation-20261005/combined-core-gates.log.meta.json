@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-05T18:26:30.942913+00:00",
+  "finished_utc": "2026-10-05T18:36:09.849209+00:00",
+  "duration_seconds": 578.920345,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "hrfJVM/test",
+    "hrfJS/test",
+    "hrfLawsJVM/test",
+    "hrfLawsJS/test",
+    "designJVM/test",
+    "designJS/test",
+    "modelJVM/test",
+    "modelJS/test",
+    "fitJVM/test",
+    "fitJS/test",
+    "scalafimCompileAll",
+    "examplesCompile"
+  ],
+  "cwd": "/private/tmp/scalafim-consolidation-20261005/candidate",
+  "log": "/private/tmp/scalafim-consolidation-20261005/combined-core-gates.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 5400.0,
+  "log_bytes": 295786
+}

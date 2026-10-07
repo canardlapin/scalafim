@@ -1,0 +1,652 @@
+{
+  "scope": "Nine JVM saved-input reproductions; exact rational linear LS at exported binary64 D and z. This does not establish exact continuous-kernel energy or JS callback behavior.",
+  "rawSha256": "64934a30cd5c032d3830fa33040c59d7592b41fcc010f399c8c86ec1c18dc9c3",
+  "records": 9,
+  "statusWorkCoordinatesReproduced": 9,
+  "candidateCaps": 7,
+  "capsWithRejectedStationaryRepresentedDecrease": 3,
+  "details": [
+    {
+      "case": "jvm-snr1.0-v30.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        166,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 4,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.f16a76b4216abp1",
+            "0x1.588d8814a66c1p-1",
+            "0x1.368703bf08ba8p-2"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 2.0,
+          "exactRepresentedDesignEnergyChange": -9.755321200562277e-16,
+          "exactChangeInUlps": -0.008580871274166362,
+          "newtonCorrection": 3.3542014284070716e-16,
+          "stationary": true
+        },
+        {
+          "ordinal": 5,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.f16a76b887039p1",
+            "0x1.588d88233dcb7p-1",
+            "0x1.368703e74bb9dp-2"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 2.0,
+          "exactRepresentedDesignEnergyChange": -3.0090859789782757e-15,
+          "exactChangeInUlps": -0.02646820018291474,
+          "newtonCorrection": 2.3435400356542145e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.f16a76bab9dp1",
+            "0x1.588d882a897b2p-1",
+            "0x1.368703fb6d398p-2"
+          ],
+          "roundedEnergyChange": 1.1368683772161603e-13,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": -1.2615171602510846e-14,
+          "exactChangeInUlps": -0.11096422290680216,
+          "newtonCorrection": 3.515309696903933e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.f16a76bbd3364p1",
+            "0x1.588d882e2f52fp-1",
+            "0x1.368704057df96p-2"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 1.6229867025295907e-14,
+          "exactChangeInUlps": 0.14275942009256903,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 8,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.f16a76bbd3364p1",
+            "0x1.588d882e2f52fp-1",
+            "0x1.368704057df96p-2"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 1.6229867025295907e-14,
+          "exactChangeInUlps": 0.14275942009256903,
+          "newtonCorrection": 4.101194343089898e-09,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": true
+    },
+    {
+      "case": "jvm-snr1.0-v33.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        157,
+        8,
+        2,
+        9,
+        0,
+        4,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.7171a1bb3a3c1p2",
+            "0x1.47ddb8c0cce47p-5",
+            "0x1.95a2f4d6d1381p-4"
+          ],
+          "roundedEnergyChange": 2.8421709430404007e-13,
+          "roundedChangeInUlps": 5.0,
+          "exactRepresentedDesignEnergyChange": 7.182422496723065e-16,
+          "exactChangeInUlps": 0.012635451281195103,
+          "newtonCorrection": 2.0280590036932886e-16,
+          "stationary": true
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.7171a1bb5195fp2",
+            "0x1.47ddb9b04f58cp-5",
+            "0x1.95a2f573dc6bap-4"
+          ],
+          "roundedEnergyChange": 1.1368683772161603e-13,
+          "roundedChangeInUlps": 2.0,
+          "exactRepresentedDesignEnergyChange": -1.9137861121278177e-14,
+          "exactChangeInUlps": -0.3366768133377215,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 8,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.7171a1bb5d42ep2",
+            "0x1.47ddba281092ep-5",
+            "0x1.95a2f5c262056p-4"
+          ],
+          "roundedEnergyChange": 1.7053025658242404e-13,
+          "roundedChangeInUlps": 3.0,
+          "exactRepresentedDesignEnergyChange": -2.1491338365698584e-15,
+          "exactChangeInUlps": -0.03780796228728648,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 9,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.7171a1bb63196p2",
+            "0x1.47ddba63f13p-5",
+            "0x1.95a2f5e9a4d25p-4"
+          ],
+          "roundedEnergyChange": 1.7053025658242404e-13,
+          "roundedChangeInUlps": 3.0,
+          "exactRepresentedDesignEnergyChange": -2.0383033662107518e-14,
+          "exactChangeInUlps": -0.35858212033338943,
+          "newtonCorrection": 3.999252729382324e-09,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": false
+    },
+    {
+      "case": "jvm-snr1.0-v49.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        166,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 4,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.3dc76e4c747f7p2",
+            "0x1.98a3bcc4e888p-1",
+            "0x1.3c887af74d74bp-1"
+          ],
+          "roundedEnergyChange": 5.684341886080802e-14,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": -2.539370820894205e-14,
+          "exactChangeInUlps": -0.4467308391693223,
+          "newtonCorrection": 3.8908986288423443e-16,
+          "stationary": true
+        },
+        {
+          "ordinal": 5,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.3dc76e499ecd2p2",
+            "0x1.98a3bcc91ea0ep-1",
+            "0x1.3c887ae2aeb75p-1"
+          ],
+          "roundedEnergyChange": 1.1368683772161603e-13,
+          "roundedChangeInUlps": 2.0,
+          "exactRepresentedDesignEnergyChange": -8.245071536167506e-15,
+          "exactChangeInUlps": -0.14504883241377758,
+          "newtonCorrection": 2.640069497090169e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.3dc76e4833f4p2",
+            "0x1.98a3bccb39ad4p-1",
+            "0x1.3c887ad85f58bp-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 1.040590971872939e-14,
+          "exactChangeInUlps": 0.183062699733284,
+          "newtonCorrection": 3.960102064621112e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.3dc76e477e876p2",
+            "0x1.98a3bccc47338p-1",
+            "0x1.3c887ad337a95p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": -1.0565328439324351e-14,
+          "exactChangeInUlps": -0.18586722352495333,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 8,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.3dc76e477e876p2",
+            "0x1.98a3bccc47338p-1",
+            "0x1.3c887ad337a95p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": -1.0565328439324351e-14,
+          "exactChangeInUlps": -0.18586722352495333,
+          "newtonCorrection": 4.620120531815734e-09,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": true
+    },
+    {
+      "case": "jvm-snr1.0-v76.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        157,
+        7,
+        1,
+        7,
+        0,
+        3,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 4,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.81fc054a42e4fp2",
+            "0x1.7456a54121f4fp-1",
+            "0x1.7843f9ed04fdep-1"
+          ],
+          "roundedEnergyChange": 1.1368683772161603e-13,
+          "roundedChangeInUlps": 4.0,
+          "exactRepresentedDesignEnergyChange": 8.822740798290188e-16,
+          "exactChangeInUlps": 0.031042259509036066,
+          "newtonCorrection": 1.3550490592050424e-15,
+          "stationary": true
+        },
+        {
+          "ordinal": 5,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.81fc0548a14dfp2",
+            "0x1.7456a54403d83p-1",
+            "0x1.7843f9d3ecf16p-1"
+          ],
+          "roundedEnergyChange": 1.9895196601282805e-13,
+          "roundedChangeInUlps": 7.0,
+          "exactRepresentedDesignEnergyChange": -9.681506573638611e-15,
+          "exactChangeInUlps": -0.3406377296673739,
+          "newtonCorrection": 2.921319232822603e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.81fc0547d0828p2",
+            "0x1.7456a54574c9dp-1",
+            "0x1.7843f9c760eb1p-1"
+          ],
+          "roundedEnergyChange": 1.4210854715202004e-13,
+          "roundedChangeInUlps": 5.0,
+          "exactRepresentedDesignEnergyChange": 7.565698871420033e-17,
+          "exactChangeInUlps": 0.0026619436420409876,
+          "newtonCorrection": 4.38197855549083e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.81fc0547681ccp2",
+            "0x1.7456a5462d42ap-1",
+            "0x1.7843f9c11ae7fp-1"
+          ],
+          "roundedEnergyChange": 1.9895196601282805e-13,
+          "roundedChangeInUlps": 7.0,
+          "exactRepresentedDesignEnergyChange": -3.911991768376059e-15,
+          "exactChangeInUlps": -0.13764097398699116,
+          "newtonCorrection": null,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": false
+    },
+    {
+      "case": "jvm-snr0.5-v11.hex",
+      "status": "CurvatureNotPositive",
+      "work": [
+        157,
+        2,
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "reproducedStatusWorkCoordinates": true
+    },
+    {
+      "case": "jvm-snr0.5-v27.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        166,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 4,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.9dd280aadf414p2",
+            "0x1.f9fa486e3e8ccp-3",
+            "0x1.2ff9d26b9b037p-1"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": 2.0149613506138813e-14,
+          "exactChangeInUlps": 0.08861893738076784,
+          "newtonCorrection": 1.4069789538928888e-15,
+          "stationary": true
+        },
+        {
+          "ordinal": 5,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.9dd280ae3aea8p2",
+            "0x1.f9fa4840a918ap-3",
+            "0x1.2ff9d26b4a2f4p-1"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": 3.0188539526864314e-14,
+          "exactChangeInUlps": 0.1327706009414508,
+          "newtonCorrection": 3.127429924147543e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.9dd280afe8bf3p2",
+            "0x1.f9fa4829de5e9p-3",
+            "0x1.2ff9d26b21c53p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 2.6408605240729832e-14,
+          "exactChangeInUlps": 0.11614627414211465,
+          "newtonCorrection": 4.691145043165678e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.9dd280b0bfa98p2",
+            "0x1.f9fa481e79018p-3",
+            "0x1.2ff9d26b0d903p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 3.146215108881939e-14,
+          "exactChangeInUlps": 0.13837200382800904,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 8,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.9dd280b0bfa98p2",
+            "0x1.f9fa481e79018p-3",
+            "0x1.2ff9d26b0d903p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 3.146215108881939e-14,
+          "exactChangeInUlps": 0.13837200382800904,
+          "newtonCorrection": 5.473002222779337e-09,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": false
+    },
+    {
+      "case": "jvm-snr0.5-v31.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        157,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 4,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.7be4183d5cd35p2",
+            "0x1.7e2b0e8f0b0bep-1",
+            "0x1.93c44edefe972p-1"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": -3.561299986103705e-15,
+          "exactChangeInUlps": -0.015662762978878125,
+          "newtonCorrection": 1.820281123174604e-15,
+          "stationary": true
+        },
+        {
+          "ordinal": 5,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.7be4183b5a392p2",
+            "0x1.7e2b0e8d8fb74p-1",
+            "0x1.93c44e9cf97dbp-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": -2.665008441448731e-14,
+          "exactChangeInUlps": -0.117208310779763,
+          "newtonCorrection": 7.685729421509798e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.7be4183a58ec1p2",
+            "0x1.7e2b0e8cd20cfp-1",
+            "0x1.93c44e7bf6f0fp-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": -3.695374305413763e-14,
+          "exactChangeInUlps": -0.16252428071148367,
+          "newtonCorrection": 1.1528594623161074e-08,
+          "stationary": false
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.7be41839d8458p2",
+            "0x1.7e2b0e8c7337cp-1",
+            "0x1.93c44e6b75aa9p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": -2.2426646652658213e-14,
+          "exactChangeInUlps": -0.09863343506648566,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 8,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.7be41839d8458p2",
+            "0x1.7e2b0e8c7337cp-1",
+            "0x1.93c44e6b75aa9p-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": -2.2426646652658213e-14,
+          "exactChangeInUlps": -0.09863343506648566,
+          "newtonCorrection": 1.3450027055939384e-08,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": true
+    },
+    {
+      "case": "jvm-snr0.5-v50.hex",
+      "status": "Boundary",
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true
+    },
+    {
+      "case": "jvm-snr0.5-v76.hex",
+      "status": "BudgetExceeded",
+      "work": [
+        157,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ],
+      "reproducedStatusWorkCoordinates": true,
+      "rejectedEvents": [
+        {
+          "ordinal": 4,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.2f8f1a77b4057p2",
+            "0x1.a8ad4bc036142p-1",
+            "0x1.999999999999ap-1"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": 1.8435227070989144e-14,
+          "exactChangeInUlps": 0.08107898610097382,
+          "newtonCorrection": 1.2946275411954208e-15,
+          "stationary": true
+        },
+        {
+          "ordinal": 5,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.2f8f1a7288ce4p2",
+            "0x1.a8ad4bd00eb4dp-1",
+            "0x1.999999999999ap-1"
+          ],
+          "roundedEnergyChange": 2.2737367544323206e-13,
+          "roundedChangeInUlps": 1.0,
+          "exactRepresentedDesignEnergyChange": 6.76516019079092e-14,
+          "exactChangeInUlps": 0.29753489174167674,
+          "newtonCorrection": 4.81383377710292e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 6,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.2f8f1a6ff332ap2",
+            "0x1.a8ad4bd7fb053p-1",
+            "0x1.999999999999ap-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 8.252513566211232e-14,
+          "exactChangeInUlps": 0.36294938497713736,
+          "newtonCorrection": 7.220749545888368e-09,
+          "stationary": false
+        },
+        {
+          "ordinal": 7,
+          "event": "energy",
+          "coordinatesHex": [
+            "0x1.2f8f1a6ea864dp2",
+            "0x1.a8ad4bdbf12d6p-1",
+            "0x1.999999999999ap-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 4.96756912966289e-14,
+          "exactChangeInUlps": 0.21847600079381807,
+          "newtonCorrection": null,
+          "stationary": false
+        },
+        {
+          "ordinal": 8,
+          "event": "jet",
+          "coordinatesHex": [
+            "0x1.2f8f1a6ea864dp2",
+            "0x1.a8ad4bdbf12d6p-1",
+            "0x1.999999999999ap-1"
+          ],
+          "roundedEnergyChange": 0.0,
+          "roundedChangeInUlps": 0.0,
+          "exactRepresentedDesignEnergyChange": 4.96756912966289e-14,
+          "exactChangeInUlps": 0.21847600079381807,
+          "newtonCorrection": 8.424205279246947e-09,
+          "stationary": false
+        }
+      ],
+      "stationaryRejectedDespiteRepresentedDecrease": false
+    }
+  ]
+}

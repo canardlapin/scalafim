@@ -1,0 +1,1195 @@
+{
+  "main": "92033261fd82eb003b556c2b4a7af2c87551996d",
+  "worktrees": [
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim",
+      "HEAD": "92033261fd82eb003b556c2b4a7af2c87551996d",
+      "branch": "refs/heads/main",
+      "status": "M NEWS.md\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfIdentity.scala\n M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/BsplineParitySuite.scala\n M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfIdentitySuite.scala\n M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfRParitySuite.scala\n M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/PrimitiveSuite.scala\n M tools/r-parity/generate_fmrihrf_r_parity_fixtures.R\n?? docs/verification/hrf-endpoint-anchored-bspline-20261005.md\n?? docs/verification/hrf-endpoint-anchored-bspline-20261005/\n?? modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/EndpointAnchoredBsplineSuite.scala\n?? modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/EndpointAnchoredBsplineRFixtures.scala",
+      "dirty_count": 12
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/atlasfix",
+      "HEAD": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "branch": "refs/heads/fix/atlas-int8-followup-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c0base",
+      "HEAD": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "detached": "",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c0ulp",
+      "HEAD": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "branch": "refs/heads/fix/c0-ulp-stationarity-20261004",
+      "status": "M modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala\n M modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala\n?? modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionPlatformParitySuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderUnresolvableDecreaseSuite.scala",
+      "dirty_count": 5
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c2",
+      "HEAD": "c114cc3b556e6b70d9c651baef1d15dd1fa919d0",
+      "branch": "refs/heads/review/c2-provenance-v2-20261004",
+      "status": "M modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala",
+      "dirty_count": 1
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c4",
+      "HEAD": "3ddc8693102bc9d1541286e10e4b9aa4c47081e3",
+      "branch": "refs/heads/review/c4-voxel-status-lookup-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c5",
+      "HEAD": "54d4528e30faf2c196c79040b91b26b7c88220e9",
+      "branch": "refs/heads/review/c5-hrf-complete-bspline-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c7",
+      "HEAD": "7e1f989f0b1894c8161ec65e34e73eb1ef918ad8",
+      "branch": "refs/heads/review/c7-viewer-leftovers-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c8",
+      "HEAD": "3f261adde7fb716cb997e290516fa49379121c81",
+      "branch": "refs/heads/review/c8-locus-aggregation-removal-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/fit-replay",
+      "HEAD": "10d59c82d9b0a597a3eb71538b60f6c03302c911",
+      "branch": "refs/heads/fix/fit-replay-review-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/fix-ar",
+      "HEAD": "7ed4876c1aef51f6f3fc29e6eef9bc9aa606ee21",
+      "branch": "refs/heads/fix/laws-chunk-ar-determinism-20261003",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/jdk17",
+      "HEAD": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "branch": "refs/heads/fix/jdk17-api-20261004",
+      "status": "M build.sbt\n M modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/RsaAllocationProbe.scala\n?? modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/ReleaseNegativeControl.scala",
+      "dirty_count": 3
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/jdk17b",
+      "HEAD": "780661c51b91eb25f01563108b2e675baed836a6",
+      "branch": "refs/heads/fix/jdk17-api-guard-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/pr19ci",
+      "HEAD": "29a76fdeb62b289ab95ecb6763edc3e26583e071",
+      "branch": "refs/heads/fix/pr19-ci-20261004",
+      "status": "M modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala\n?? modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionPlatformParitySuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderUnresolvableDecreaseSuite.scala",
+      "dirty_count": 4
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/prereqs",
+      "HEAD": "36240e396de9906a11fd31e6aa7a151f9162d017",
+      "branch": "refs/heads/land/phrf-prereqs-20261003",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeA",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "status": "M build.sbt\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala\n M modules/fit/jvm/src/main/scala/scalafim/fmri/fit/profile/ParallelBlockExecutor.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/BlockExecutor.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CriterionJet.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ObservedFamilyCertification.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/OutputRequest.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala\n?? build.sbt.rej\n?? modules/fit/jvm/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFitParallel.scala\n?? modules/fit/jvm/src/test/scala/scalafim/fmri/fit/phrfspike/\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/RidgeLss.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputs.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileTrialReadout.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBandedMlBackend.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConditionalSolve.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConstrainedLogDetJet.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialHeldOutPrediction.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialMlObjective.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/RidgeLssSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialHeldOutPredictionSuite.scala\n?? modules/model/shared/src/main/scala/scalafim/fmri/model/ProfileHrfPlan.scala\n?? modules/phrf-comparison/\n?? tools/phrf-comparison/",
+      "dirty_count": 28
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeB",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "status": "M build.sbt\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/BlockExecutor.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CriterionJet.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ObservedFamilyCertification.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/OutputRequest.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala\n?? build.sbt.rej\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/RidgeLss.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputs.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileTrialReadout.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBandedMlBackend.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConditionalSolve.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConstrainedLogDetJet.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialHeldOutPrediction.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialMlObjective.scala\n?? modules/model/shared/src/main/scala/scalafim/fmri/model/ProfileHrfPlan.scala\n?? modules/phrf-comparison/\n?? tools/phrf-comparison/",
+      "dirty_count": 22
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeC",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "status": "M build.sbt",
+      "dirty_count": 1
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeM",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/reconcile",
+      "HEAD": "b8e83fc42a851f19b65c2895c2652487913d039d",
+      "branch": "refs/heads/reconcile/origin-main-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/sbtwarm",
+      "HEAD": "ce2c6d803499942f94e79f8115e2eb0d798b47ff",
+      "branch": "refs/heads/fix/sbt-warm-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/seam",
+      "HEAD": "e275bffc56c38f1d3536da7198cf18cf9af9f325",
+      "branch": "refs/heads/fix/model-authoring-seam-20261004",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-ar-bias-20261001",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "branch": "refs/heads/ar/bias-correction-20261001",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-atlas-native-candidate",
+      "HEAD": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "detached": "",
+      "status": "M README.md\n M build.sbt\n M docs/module-relations.md\n M docs/plans/atlas.md\n M examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/AtlasExampleData.scala\n M examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/ReduceByParcel.scala\n M examples/atlas-jvm/src/test/scala/scalafim/examples/atlas/AtlasExamplesSmokeSuite.scala\n M examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala\n M modules/atlas/README.md\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoader.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AsegLoaderSuite.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AtlasIoSuite.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/BrainnetomeLoaderSuite.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoaderSuite.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasError.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRealization.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala\n D modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelData.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Provenance.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Query.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Reduce.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Region.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Spaces.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/StandardAtlases.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlas.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateFlowBridge.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/VolumeAtlas.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/syntax.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoreSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoverageSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasParityCorpusSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasProvenanceSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasPublicationSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasQuotientSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasRealizationSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/GraphDifferentialSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/SpaceTransformGraphSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasParityFixtures.scala\n M modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala\n M modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala\n M modules/fit/README.md\n M modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala\n M modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/CompactFixedEffectsSuite.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfIdentity.scala\n M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfIdentitySuite.scala\n M modules/image/shared/src/main/scala/scalafim/image/VolumeParcellation.scala\n M modules/image/shared/src/test/scala/scalafim/image/VolumeParcellationSuite.scala\n M modules/locus-data/README.md\n D modules/locus-data/shared/src/main/scala/scalafim/locus/Aggregation.scala\n D modules/locus-data/shared/src/test/scala/scalafim/locus/AggregationSuite.scala\n M modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala\n M modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlans.scala\n M modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlansSuite.scala\n M modules/surface-view-raster/README.md\n M modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala\n M modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceRasterizerSuite.scala\n M modules/surface-view/README.md\n M modules/surface/README.md\n M modules/surface/js/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala\n M modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala\n M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiModel.scala\n M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPayloadDecoder.scala\n M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiSurfaceCodec.scala\n?? docs/verification/atlas-workflows-build-integration.patch\n?? modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala\n?? modules/atlas-workflows/\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/FslAtlasLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/HcpExLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/JulichVisualLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/OlsenMtlLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/ParcelMetricFiles.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/PinnedVolumeLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/StandardSurfaceAtlasLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SubcorticalAtlasLoader.scala\n?? modules/atlas/jvm/src/test/resources/scalafim/atlas/io/\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/FslAtlasLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/GlasserIdentityIoSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/HcpExLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/JulichVisualLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/OlsenMtlLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/ParcelMetricFilesSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/PinnedAtlasQualificationSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/StandardSurfaceAtlasLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasQualificationSuite.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasCompose.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasDilation.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasExpand.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasGrouping.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/FslAtlasRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/HcpExRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/JulichVisualRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/OlsenMtlRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelFields.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelIdentity.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetric.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetricJson.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/PinnedAtlasAsset.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/StandardSurfaceAcquisition.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/SubcorticalAtlasRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlasFields.scala\n?? modules/atlas/shared/src/test/resources/\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasComposeSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasDilationSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasExpandSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasGroupingSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasInvariantSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasReductionSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/FslAtlasRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/HcpExRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/JulichVisualSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/OlsenMtlRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelFieldsSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelIdentitySuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricInteropSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/SubcorticalAtlasRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasFieldsSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasCompositionFixture.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelAlignmentFixture.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelExpansionFixture.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelMetricInteropFixture.scala\n?? modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelStatusAllocationSuite.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelStatusLookupSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ConditionProfileProvenanceSuite.scala\n?? modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/CompleteBsplineSuite.scala\n?? modules/image-view/README.md\n?? modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerModelUpdateSuite.scala\n?? modules/image/shared/src/main/scala/scalafim/image/VolumeDilation.scala\n?? modules/image/shared/src/test/scala/scalafim/image/VolumeDilationSuite.scala\n?? modules/locus-data/shared/src/test/scala/scalafim/locus/ProviderAggregationSuite.scala\n?? modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala\n?? modules/surface-view/jvm/\n?? modules/surface/js/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderJsSuite.scala\n?? modules/surface/js/src/test/scala/scalafim/surface/io/GiftiPlacementReaderJsSuite.scala\n?? modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferAnnotationReader.scala\n?? modules/surface/jvm/src/test/scala/scalafim/surface/io/FreeSurferAnnotationReaderSuite.scala\n?? modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderSuite.scala\n?? modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiPlacementReaderSuite.scala\n?? modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPlacement.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Fixtures.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Suite.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementFixtures.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementSuite.scala\n?? modules/transform/jvm/src/test/scala/scalafim/transform/qualification/",
+      "dirty_count": 187
+    },
+    {
+      "worktree": "/private/tmp/scalafim-bootstrap-harness-20260930",
+      "HEAD": "b06c4b1e91212563d5b7d68e020ffdebea42b619",
+      "branch": "refs/heads/group/bootstrap-harness-20260930",
+      "prunable": "gitdir file points to non-existent location",
+      "error": "Command '('git', '-C', '/private/tmp/scalafim-bootstrap-harness-20260930', 'status', '--porcelain')' returned non-zero exit status 128.",
+      "admin": "/Users/bbuchsbaum/code/scala/scalafim/.git/worktrees/scalafim-bootstrap-harness-20260930"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-cpu-ties-20260930",
+      "HEAD": "d462806e8c223029fe1572834f5ad4a994cc1ab8",
+      "branch": "refs/heads/surface/cpu-tie-regressions-20260930",
+      "prunable": "gitdir file points to non-existent location",
+      "error": "Command '('git', '-C', '/private/tmp/scalafim-cpu-ties-20260930', 'status', '--porcelain')' returned non-zero exit status 128.",
+      "admin": "/Users/bbuchsbaum/code/scala/scalafim/.git/worktrees/scalafim-cpu-ties-20260930"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-fit-landing-20261003",
+      "HEAD": "fa6bd6a9f7d773144885c57849cd298521c1772c",
+      "detached": "",
+      "status": "M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala\n M modules/fit/README.md\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala\n?? modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala",
+      "dirty_count": 20
+    },
+    {
+      "worktree": "/private/tmp/scalafim-fit-preparation-20261002",
+      "HEAD": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "detached": "",
+      "status": "M build.sbt\n M examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/AtlasExampleData.scala\n M examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/ReduceByParcel.scala\n M examples/atlas-jvm/src/test/scala/scalafim/examples/atlas/AtlasExamplesSmokeSuite.scala\n M examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala\n M modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala\n M modules/atlas/README.md\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala\n M modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoader.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AsegLoaderSuite.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AtlasIoSuite.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/BrainnetomeLoaderSuite.scala\n M modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoaderSuite.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasError.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRealization.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala\n D modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelData.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Provenance.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Query.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Reduce.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Region.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/Spaces.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/StandardAtlases.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlas.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateFlowBridge.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/VolumeAtlas.scala\n M modules/atlas/shared/src/main/scala/scalafim/atlas/syntax.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoreSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoverageSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasParityCorpusSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasProvenanceSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasPublicationSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasQuotientSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasRealizationSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/GraphDifferentialSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/SpaceTransformGraphSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasSuite.scala\n M modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasParityFixtures.scala\n M modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala\n M modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala\n M modules/fit/README.md\n M modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala\n M modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/CompactFixedEffectsSuite.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala\n M modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfIdentity.scala\n M modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfIdentitySuite.scala\n M modules/image/shared/src/main/scala/scalafim/image/VolumeParcellation.scala\n M modules/image/shared/src/test/scala/scalafim/image/VolumeParcellationSuite.scala\n M modules/locus-data/README.md\n D modules/locus-data/shared/src/main/scala/scalafim/locus/Aggregation.scala\n D modules/locus-data/shared/src/test/scala/scalafim/locus/AggregationSuite.scala\n M modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala\n M modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlans.scala\n M modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/SpatialFeatureSetPlansSuite.scala\n M modules/surface-view-raster/README.md\n M modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala\n M modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceRasterizerSuite.scala\n M modules/surface-view/README.md\n M modules/surface/README.md\n M modules/surface/js/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala\n M modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala\n M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiModel.scala\n M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPayloadDecoder.scala\n M modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiSurfaceCodec.scala\n?? .agent-work/\n?? atlas-workflows.sbt\n?? modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala\n?? modules/atlas-workflows/\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/FslAtlasLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/HcpExLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/JulichVisualLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/OlsenMtlLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/ParcelMetricFiles.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/PinnedVolumeLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/StandardSurfaceAtlasLoader.scala\n?? modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SubcorticalAtlasLoader.scala\n?? modules/atlas/jvm/src/test/resources/scalafim/atlas/io/\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/FslAtlasLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/GlasserIdentityIoSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/HcpExLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/JulichVisualLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/OlsenMtlLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/ParcelMetricFilesSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/PinnedAtlasQualificationSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/StandardSurfaceAtlasLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasLoaderSuite.scala\n?? modules/atlas/jvm/src/test/scala/scalafim/atlas/io/SubcorticalAtlasQualificationSuite.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasCompose.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasDilation.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasExpand.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasGrouping.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/FslAtlasRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/HcpExRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/JulichVisualRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/OlsenMtlRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelFields.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelIdentity.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetric.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelMetricJson.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/PinnedAtlasAsset.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/StandardSurfaceAcquisition.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/SubcorticalAtlasRequest.scala\n?? modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlasFields.scala\n?? modules/atlas/shared/src/test/resources/\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasComposeSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasDilationSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasExpandSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasGroupingSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasInvariantSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasReductionSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/FslAtlasRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/HcpExRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/JulichVisualSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/OlsenMtlRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelFieldsSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelIdentitySuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricInteropSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/ParcelMetricSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/SubcorticalAtlasRequestSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/SurfaceAtlasFieldsSuite.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/AtlasCompositionFixture.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelAlignmentFixture.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelExpansionFixture.scala\n?? modules/atlas/shared/src/test/scala/scalafim/atlas/fixtures/ParcelMetricInteropFixture.scala\n?? modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReview.scala\n?? modules/design/shared/src/main/scala/scalafim/fmri/design/DesignReviewGraphics.scala\n?? modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisGraphics.scala\n?? modules/design/shared/src/main/scala/scalafim/fmri/design/ResponseBasisReview.scala\n?? modules/design/shared/src/test/scala/scalafim/fmri/design/DesignReviewSuite.scala\n?? modules/design/shared/src/test/scala/scalafim/fmri/design/ResponseBasisReviewSuite.scala\n?? modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelStatusAllocationSuite.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala\n?? modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelStatusLookupSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala\n?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ConditionProfileProvenanceSuite.scala\n?? modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/CompleteBsplineSuite.scala\n?? modules/image-view/README.md\n?? modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerModelUpdateSuite.scala\n?? modules/image/shared/src/main/scala/scalafim/image/VolumeDilation.scala\n?? modules/image/shared/src/test/scala/scalafim/image/VolumeDilationSuite.scala\n?? modules/locus-data/shared/src/test/scala/scalafim/locus/ProviderAggregationSuite.scala\n?? modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala\n?? modules/surface-view/jvm/\n?? modules/surface/js/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderJsSuite.scala\n?? modules/surface/js/src/test/scala/scalafim/surface/io/GiftiPlacementReaderJsSuite.scala\n?? modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferAnnotationReader.scala\n?? modules/surface/jvm/src/test/scala/scalafim/surface/io/FreeSurferAnnotationReaderSuite.scala\n?? modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderSuite.scala\n?? modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiPlacementReaderSuite.scala\n?? modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPlacement.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Fixtures.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Suite.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementFixtures.scala\n?? modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementSuite.scala\n?? modules/transform/jvm/src/test/scala/scalafim/transform/qualification/\n?? tools/r-parity/check_glasser_parcel_identity.R\n?? tools/r-parity/generate_atlas_composition.R\n?? tools/r-parity/generate_atlas_parcel_alignment.R\n?? tools/r-parity/generate_atlas_parcel_expansion.R\n?? tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R\n?? tools/r-parity/verify_voxelwise_ar_rrg_design.R",
+      "dirty_count": 200
+    },
+    {
+      "worktree": "/private/tmp/scalafim-fslr-reconcile-20261001/work",
+      "HEAD": "c603045413faef00ebb0b55b1decca5b3b55de6c",
+      "branch": "refs/heads/work/fslr-reconcile-20261001",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-merge-20261003/fir",
+      "HEAD": "8f967b619c9648d1d7e0587838ce18976912b8c0",
+      "branch": "refs/heads/integrate/fir-reviewed-20261003",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-model-studio-20261002",
+      "HEAD": "b6612f915e5882097fbf60ec05593129ee01de6d",
+      "branch": "refs/heads/work/model-studio-20261002",
+      "status": "?? .agent-work/",
+      "dirty_count": 1
+    },
+    {
+      "worktree": "/private/tmp/scalafim-mote-queue-20261004",
+      "HEAD": "9b29fcd303879c31d0e4cf0d2984c95730f19411",
+      "branch": "refs/heads/work/mote-queue-20261004",
+      "status": "M modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala\n M modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala\n M modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala\n M modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala\n M modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala\n?? modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala\n?? modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala\n?? modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala",
+      "dirty_count": 8
+    },
+    {
+      "worktree": "/private/tmp/scalafim-numerical-ownership-20261003",
+      "HEAD": "8f5ac7c241fdfe114b3764fa7a4a0cb2164ea789",
+      "branch": "refs/heads/work/numerical-ownership-20261003",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-response-r4-review-20260930",
+      "HEAD": "aef31a29c238079de9050fb5fb68643291c3af15",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location",
+      "error": "Command '('git', '-C', '/private/tmp/scalafim-response-r4-review-20260930', 'status', '--porcelain')' returned non-zero exit status 128.",
+      "admin": "/Users/bbuchsbaum/code/scala/scalafim/.git/worktrees/scalafim-response-r4-review-20260930"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-response-review-20260930",
+      "HEAD": "134dea0df858000bdb3a2860d4c0f703ff1aef87",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location",
+      "error": "Command '('git', '-C', '/private/tmp/scalafim-response-review-20260930', 'status', '--porcelain')' returned non-zero exit status 128.",
+      "admin": "/Users/bbuchsbaum/code/scala/scalafim/.git/worktrees/scalafim-response-review-20260930"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-review-graphics-check-20261002",
+      "HEAD": "fa6bd6a9f7d773144885c57849cd298521c1772c",
+      "detached": "",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-umvpa-component-20261003",
+      "HEAD": "785726b93609fd41c37411f211ea6dd543772772",
+      "branch": "refs/heads/work/umvpa-component-20261003",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/private/tmp/scalafim-umvpa-five-20261001",
+      "HEAD": "48453314884f0109c03721fa4ffcab5412a1ccdd",
+      "branch": "refs/heads/work/umvpa-five-20261001",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-pr",
+      "HEAD": "81a0408d91f3a8471e7136c11261eb21a234e493",
+      "branch": "refs/heads/integration/mvpa-on-exact-spatial",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-spike-face",
+      "HEAD": "73775e299a75263a786f80ececd80d8cb3911436",
+      "branch": "refs/heads/spike/face-texel",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-spike-lut",
+      "HEAD": "d7b0293bc461fe2bbe0aed6c40552cb46a2cc33c",
+      "branch": "refs/heads/spike/lut-encoding",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-spike-raster",
+      "HEAD": "a89b2994adeb10293b434bd6680338d7bdc2b4be",
+      "branch": "refs/heads/spike/raster-figures",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim/.claude/worktrees/agent-a3ebf3564cf9328f3",
+      "HEAD": "0282f0aa3d1b16e4313fcecdeb2f8a03e66fae9b",
+      "branch": "refs/heads/worktree-agent-a3ebf3564cf9328f3",
+      "status": "",
+      "dirty_count": 0
+    },
+    {
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim/.claude/worktrees/agent-a6daa1f0970060d9c",
+      "HEAD": "8be020efd3d49aba1d1ac4a07356781a43f67f8e",
+      "branch": "refs/heads/worktree-agent-a6daa1f0970060d9c",
+      "status": "",
+      "dirty_count": 0
+    }
+  ],
+  "branches": [
+    {
+      "name": "ar/bias-correction-20261001",
+      "sha": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "behind": 170,
+      "unique": 0
+    },
+    {
+      "name": "atlas/nearest-boundary-20260912",
+      "sha": "535977a86270bd3cc5c033eda165a0370870dd22",
+      "behind": 443,
+      "unique": 28
+    },
+    {
+      "name": "backup/main-local-20260923",
+      "sha": "ac219509b85f798a2d4f12a4e639848c77c55f10",
+      "behind": 354,
+      "unique": 0
+    },
+    {
+      "name": "bridge-noreadme",
+      "sha": "419fccf8a083addc76dded9a27a07a48c261137f",
+      "behind": 281,
+      "unique": 0
+    },
+    {
+      "name": "c5/compatible-layer-transaction-20260921",
+      "sha": "01ed86f439bb1c989b5f2c5db2ac6f4048657611",
+      "behind": 443,
+      "unique": 29
+    },
+    {
+      "name": "candidate/fir-reviewed-20261003",
+      "sha": "9a34371225d4d732f1b3b67f62ecc9a99a28c35c",
+      "behind": 277,
+      "unique": 81
+    },
+    {
+      "name": "codex-first-level-integration",
+      "sha": "ab4edae9e3b440b36c94c86294554ba3f25e8f89",
+      "behind": 341,
+      "unique": 0
+    },
+    {
+      "name": "codex/atlas-domain-realizations",
+      "sha": "143e6ae7f038b9e014f399a2b38df9c4480e954a",
+      "behind": 444,
+      "unique": 1
+    },
+    {
+      "name": "codex/extract-bids4s",
+      "sha": "c7f213a363dcb4185a311c3771707f3949adfdce",
+      "behind": 460,
+      "unique": 2
+    },
+    {
+      "name": "codex/extract-bids4s-current",
+      "sha": "7b0daa4081a87ad3b0c30ffad61a87e4e4ccc92f",
+      "behind": 456,
+      "unique": 0
+    },
+    {
+      "name": "codex/image-native-ravel",
+      "sha": "10d14666edd06813cd909727f6b9a04b4ed41ba2",
+      "behind": 397,
+      "unique": 0
+    },
+    {
+      "name": "codex/intaglio-cutover",
+      "sha": "b1e3cc114fb4c8f788307dfb37f7796e9d72eab0",
+      "behind": 458,
+      "unique": 0
+    },
+    {
+      "name": "codex/mesh4s-surfaces",
+      "sha": "81c34fb38e616643a1cb603a0e06512f87097cd2",
+      "behind": 443,
+      "unique": 11
+    },
+    {
+      "name": "codex/neuropublish-clear-compat-20260824",
+      "sha": "d89076763f23f45723fe0a76b132dd59ddfb9d00",
+      "behind": 446,
+      "unique": 3
+    },
+    {
+      "name": "codex/neuropublish-viewer-prereqs-20260824",
+      "sha": "5495ea3ebcd0e34ae5c1c7f7306f6c431ae3986d",
+      "behind": 399,
+      "unique": 0
+    },
+    {
+      "name": "codex/scalajs-gifti-ingestion",
+      "sha": "887a5ce4a88e3f219dad99bce46aaf6853126d1d",
+      "behind": 443,
+      "unique": 14
+    },
+    {
+      "name": "codex/selected-evidence-20260921",
+      "sha": "f7b3a5ee08421b128d21cce25656c35ff96b19eb",
+      "behind": 443,
+      "unique": 29
+    },
+    {
+      "name": "dataset/exact-companions-20260924",
+      "sha": "5d95334d2957a874cfda0449f0a67506a14c5507",
+      "behind": 443,
+      "unique": 42
+    },
+    {
+      "name": "design-hardening",
+      "sha": "97c7ff16ff24739a147fd43d7a5477d1024071ea",
+      "behind": 446,
+      "unique": 0
+    },
+    {
+      "name": "estimates/response-action-evidence-v1",
+      "sha": "aef31a29c238079de9050fb5fb68643291c3af15",
+      "behind": 277,
+      "unique": 65
+    },
+    {
+      "name": "extract-multivar",
+      "sha": "373e5b5b758efb3deef2c63e1b9f0f7fbf3748a4",
+      "behind": 463,
+      "unique": 1
+    },
+    {
+      "name": "extract-multivar-current",
+      "sha": "bb02026e09747e7de8d7762ace42a7b8cda18a9e",
+      "behind": 461,
+      "unique": 0
+    },
+    {
+      "name": "fit/estimate-description-policy-20260914",
+      "sha": "51035bd324d4a279700d88a090fcc549cac12b1a",
+      "behind": 443,
+      "unique": 29
+    },
+    {
+      "name": "fix/atlas-int8-followup-20261004",
+      "sha": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "behind": 123,
+      "unique": 0
+    },
+    {
+      "name": "fix/c0-ulp-stationarity-20261004",
+      "sha": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "behind": 3,
+      "unique": 0
+    },
+    {
+      "name": "fix/fit-replay-review-20261004",
+      "sha": "10d59c82d9b0a597a3eb71538b60f6c03302c911",
+      "behind": 115,
+      "unique": 0
+    },
+    {
+      "name": "fix/jdk17-api-20261004",
+      "sha": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "behind": 123,
+      "unique": 0
+    },
+    {
+      "name": "fix/jdk17-api-guard-20261004",
+      "sha": "780661c51b91eb25f01563108b2e675baed836a6",
+      "behind": 121,
+      "unique": 0
+    },
+    {
+      "name": "fix/laws-chunk-ar-determinism-20261003",
+      "sha": "7ed4876c1aef51f6f3fc29e6eef9bc9aa606ee21",
+      "behind": 125,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-authoring-seam-20261004",
+      "sha": "e275bffc56c38f1d3536da7198cf18cf9af9f325",
+      "behind": 113,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-studio-diag",
+      "sha": "cbab2ee20a21916f10b2a5ac200f1efae557afd1",
+      "behind": 174,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-studio-formula",
+      "sha": "dcf66cea7d2c5fa5a6f27f2873c2648af59936dd",
+      "behind": 174,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-studio-r2-guards",
+      "sha": "6b3ebffd359a543f343f82851961db33b6d20c4d",
+      "behind": 163,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-studio-r2-response",
+      "sha": "37a0ca07c9e0b08bf34c67bd8e2d39f0b977a255",
+      "behind": 163,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-studio-response",
+      "sha": "6c16a10440761ebbb6b458f427b9bd4308c6a5c9",
+      "behind": 174,
+      "unique": 0
+    },
+    {
+      "name": "fix/model-studio-trials",
+      "sha": "ad870cc4af37fa8895740dc61e290ab514d0a937",
+      "behind": 174,
+      "unique": 0
+    },
+    {
+      "name": "fix/pr19-ci-20261004",
+      "sha": "29a76fdeb62b289ab95ecb6763edc3e26583e071",
+      "behind": 14,
+      "unique": 2
+    },
+    {
+      "name": "fix/sbt-warm-20261004",
+      "sha": "ce2c6d803499942f94e79f8115e2eb0d798b47ff",
+      "behind": 118,
+      "unique": 0
+    },
+    {
+      "name": "group/bootstrap-harness-20260930",
+      "sha": "b06c4b1e91212563d5b7d68e020ffdebea42b619",
+      "behind": 261,
+      "unique": 15
+    },
+    {
+      "name": "group/bootstrap-timing-probe-20260930",
+      "sha": "d3bbc43dae37b714ed01fad67c864076a0096f1c",
+      "behind": 261,
+      "unique": 1
+    },
+    {
+      "name": "integrate/fir-reviewed-20261003",
+      "sha": "8f967b619c9648d1d7e0587838ce18976912b8c0",
+      "behind": 163,
+      "unique": 0
+    },
+    {
+      "name": "integration/engine-parity-20260930",
+      "sha": "aa2af56253cac8c2a5f31bc6ed22ae11e82fb1be",
+      "behind": 218,
+      "unique": 0
+    },
+    {
+      "name": "integration/gifti-main-20260909",
+      "sha": "a2d6f95f2a7703b015c156262699138db1d8b70c",
+      "behind": 393,
+      "unique": 0
+    },
+    {
+      "name": "integration/main-catchup-20260923",
+      "sha": "206243b37adff1ab3dc67f7ee4dda44a9d42e547",
+      "behind": 341,
+      "unique": 39
+    },
+    {
+      "name": "integration/main-design-hardening",
+      "sha": "cc86e6c95e7b8632400466b59457587945f58b2b",
+      "behind": 401,
+      "unique": 0
+    },
+    {
+      "name": "integration/merge-local-main-20261003",
+      "sha": "7ff8e6096c7fba7467c4740ad8ced3f948550842",
+      "behind": 134,
+      "unique": 0
+    },
+    {
+      "name": "integration/mvpa-on-exact-spatial",
+      "sha": "81a0408d91f3a8471e7136c11261eb21a234e493",
+      "behind": 393,
+      "unique": 2
+    },
+    {
+      "name": "integration/scalajs-gifti-main",
+      "sha": "3b7daa8f88c9a1deb7e3182757bc55cf735c8a02",
+      "behind": 411,
+      "unique": 0
+    },
+    {
+      "name": "land/evidence-contract-and-ties-20261001",
+      "sha": "adaac06a095a8cdfd0b297b58caff879c4bee032",
+      "behind": 211,
+      "unique": 0
+    },
+    {
+      "name": "land/fslr-pointwise-20261002",
+      "sha": "2179acea5aa233451fdfc9ea2fa03697ed20d402",
+      "behind": 181,
+      "unique": 0
+    },
+    {
+      "name": "land/phrf-prereqs-20261003",
+      "sha": "36240e396de9906a11fd31e6aa7a151f9162d017",
+      "behind": 134,
+      "unique": 0
+    },
+    {
+      "name": "land/sbt-warm-20261001",
+      "sha": "73f9a7cf86a3e752cb2fdedf801635bc41d18085",
+      "behind": 222,
+      "unique": 0
+    },
+    {
+      "name": "land/sphere-timeout-20261003",
+      "sha": "34b707b298e5305a9a1bc186d7e706b91de27247",
+      "behind": 179,
+      "unique": 0
+    },
+    {
+      "name": "land/umvpa-20261001",
+      "sha": "43a6525ae4f1009f7c61babaa1b0375f745ffb39",
+      "behind": 190,
+      "unique": 0
+    },
+    {
+      "name": "land/umvpa-20261003",
+      "sha": "03085d1083ae15ca2854bb10fce8ea8ab5f765c1",
+      "behind": 98,
+      "unique": 0
+    },
+    {
+      "name": "land/umvpa-wave2-20261003",
+      "sha": "4bf21ab5de37b01efccc0cff70db0e00026b7a4c",
+      "behind": 153,
+      "unique": 1
+    },
+    {
+      "name": "linked-roots/compiler-20260921",
+      "sha": "85d2060a2d0cdb93f0bb1c64452281c3f14ca026",
+      "behind": 443,
+      "unique": 35
+    },
+    {
+      "name": "linked-roots/final-20260921",
+      "sha": "8c186832f38704ee8d1f7b188895e76c0ab40cfb",
+      "behind": 443,
+      "unique": 39
+    },
+    {
+      "name": "linked-roots/scalafim-20260921",
+      "sha": "38cf957df56f2639a8945eb51e5c96e46527871b",
+      "behind": 354,
+      "unique": 1
+    },
+    {
+      "name": "linked-roots/scalafim-pinned-20260921",
+      "sha": "535977a86270bd3cc5c033eda165a0370870dd22",
+      "behind": 443,
+      "unique": 28
+    },
+    {
+      "name": "main",
+      "sha": "92033261fd82eb003b556c2b4a7af2c87551996d",
+      "behind": 0,
+      "unique": 0
+    },
+    {
+      "name": "motion/relative-huber-20260930",
+      "sha": "1ec266a007bc97c6ef260c547d656875168d82da",
+      "behind": 258,
+      "unique": 0
+    },
+    {
+      "name": "motion/scale-invariant-solve-20260930",
+      "sha": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+      "behind": 261,
+      "unique": 0
+    },
+    {
+      "name": "neuropublish/lifecycle-dispose",
+      "sha": "ac545e651f5c92bf5113b84945aa74f4a000abe8",
+      "behind": 454,
+      "unique": 2
+    },
+    {
+      "name": "neuropublish/lifecycle-dispose-on-97c7ff1",
+      "sha": "2a64eba2e21ce6510d6bf9cf4eaeb3a71e6bba6e",
+      "behind": 446,
+      "unique": 2
+    },
+    {
+      "name": "p309-noreadme",
+      "sha": "2826539c0a9f2293ec7196de9ff95c63bb2ae8c8",
+      "behind": 313,
+      "unique": 0
+    },
+    {
+      "name": "p7-nodoc",
+      "sha": "91838227c07d0e7a90f4b6e3fedd3e16a43ec408",
+      "behind": 315,
+      "unique": 0
+    },
+    {
+      "name": "p801-noreadme",
+      "sha": "3a0b5ab9218e371a641d97a01790656d187fa716",
+      "behind": 310,
+      "unique": 0
+    },
+    {
+      "name": "perf/build-throughput-20261001",
+      "sha": "debdf34b821e6bf34103dc596dc815f55509b541",
+      "behind": 196,
+      "unique": 0
+    },
+    {
+      "name": "preserve/dirty-provenance-20261004",
+      "sha": "df539b6b7dd818a2b8330592e32f94c46c8937bf",
+      "behind": 139,
+      "unique": 2
+    },
+    {
+      "name": "reconcile/origin-main-20261004",
+      "sha": "b8e83fc42a851f19b65c2895c2652487913d039d",
+      "behind": 14,
+      "unique": 0
+    },
+    {
+      "name": "recovery/javafx-affine-atlas-20260909",
+      "sha": "066be6c11960de26a8825811f12241af6e5120a1",
+      "behind": 443,
+      "unique": 15
+    },
+    {
+      "name": "rehearsal/approved-slices-20261001",
+      "sha": "19d7c800f840f89a546f56fa463ce73b2a97dfcc",
+      "behind": 200,
+      "unique": 0
+    },
+    {
+      "name": "release/locus4s-0.1-consumer",
+      "sha": "1328f6eea2d5374aefd8b52574203e0d3599686c",
+      "behind": 404,
+      "unique": 0
+    },
+    {
+      "name": "review/c2-provenance-v2-20261004",
+      "sha": "c114cc3b556e6b70d9c651baef1d15dd1fa919d0",
+      "behind": 3,
+      "unique": 4
+    },
+    {
+      "name": "review/c4-voxel-status-lookup-20261004",
+      "sha": "3ddc8693102bc9d1541286e10e4b9aa4c47081e3",
+      "behind": 104,
+      "unique": 0
+    },
+    {
+      "name": "review/c5-hrf-complete-bspline-20261004",
+      "sha": "54d4528e30faf2c196c79040b91b26b7c88220e9",
+      "behind": 108,
+      "unique": 0
+    },
+    {
+      "name": "review/c7-viewer-leftovers-20261004",
+      "sha": "7e1f989f0b1894c8161ec65e34e73eb1ef918ad8",
+      "behind": 130,
+      "unique": 0
+    },
+    {
+      "name": "review/c8-locus-aggregation-removal-20261004",
+      "sha": "3f261adde7fb716cb997e290516fa49379121c81",
+      "behind": 8,
+      "unique": 0
+    },
+    {
+      "name": "review/phrf-tangent-original-20261001",
+      "sha": "8afdd4a13976ddeba37871edb17691cbca7c5bd9",
+      "behind": 277,
+      "unique": 75
+    },
+    {
+      "name": "spike/face-texel",
+      "sha": "73775e299a75263a786f80ececd80d8cb3911436",
+      "behind": 443,
+      "unique": 23
+    },
+    {
+      "name": "spike/lut-encoding",
+      "sha": "d7b0293bc461fe2bbe0aed6c40552cb46a2cc33c",
+      "behind": 443,
+      "unique": 20
+    },
+    {
+      "name": "spike/raster-figures",
+      "sha": "a89b2994adeb10293b434bd6680338d7bdc2b4be",
+      "behind": 443,
+      "unique": 21
+    },
+    {
+      "name": "surface/cpu-tie-regressions-20260930",
+      "sha": "d462806e8c223029fe1572834f5ad4a994cc1ab8",
+      "behind": 213,
+      "unique": 0
+    },
+    {
+      "name": "surface/engine-parity-20260930",
+      "sha": "9ba0f367a5156c679b9b7c00504c08217c49e099",
+      "behind": 257,
+      "unique": 0
+    },
+    {
+      "name": "surface/fslr-court-20260924",
+      "sha": "1f269edf91c2a6688e20632fcb2b379d37ce6f6d",
+      "behind": 341,
+      "unique": 36
+    },
+    {
+      "name": "surface/group-fslr-qualification-20260923",
+      "sha": "d741dff3e5084cdbe681a8749ae8f662036f14a0",
+      "behind": 443,
+      "unique": 35
+    },
+    {
+      "name": "surface/inflated-smoothing-20260922",
+      "sha": "81c34fb38e616643a1cb603a0e06512f87097cd2",
+      "behind": 443,
+      "unique": 11
+    },
+    {
+      "name": "surface/metal-admission-20260912",
+      "sha": "2216d7eb62603409bf414cb819b7056997e050c7",
+      "behind": 443,
+      "unique": 30
+    },
+    {
+      "name": "surface/paired-responsive-20260910",
+      "sha": "a3ee73b3be2da9eb00240e6b95eb652d733d7ca2",
+      "behind": 443,
+      "unique": 19
+    },
+    {
+      "name": "surface/sampling-tally-20260930",
+      "sha": "fa2193ab07251161bd4f97b02fb8fa4579f266a9",
+      "behind": 263,
+      "unique": 0
+    },
+    {
+      "name": "surface/scene-geometry-20260912",
+      "sha": "4d00cc0db589516a1683c0cce28dae7235ec29cc",
+      "behind": 443,
+      "unique": 21
+    },
+    {
+      "name": "surface/strip-raster-20260912",
+      "sha": "e071e83b3a23bc6f304b1e72625d6281d9cfc9ba",
+      "behind": 368,
+      "unique": 0
+    },
+    {
+      "name": "surface/strip-raster-qualified-20260912",
+      "sha": "452acac8e0e816fc40a32f495de71aeeda1f5002",
+      "behind": 443,
+      "unique": 30
+    },
+    {
+      "name": "surface/very-inflated-20260930",
+      "sha": "c0443d4ac38327c6418a363477f89e7824aa54ea",
+      "behind": 259,
+      "unique": 0
+    },
+    {
+      "name": "surface/warm-update-20260921",
+      "sha": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+      "behind": 443,
+      "unique": 33
+    },
+    {
+      "name": "threshold/decision-scale-20260930",
+      "sha": "20e17d7e4643e990b384a9b523b05955d7187c36",
+      "behind": 273,
+      "unique": 0
+    },
+    {
+      "name": "threshold/hierscan-alignment-20260930",
+      "sha": "2f45e8bad7afdcde8cd8f7f88bcb867c1c195f1d",
+      "behind": 266,
+      "unique": 0
+    },
+    {
+      "name": "threshold/null-calibration-20260930",
+      "sha": "aa011329434f82bbc388a7db9a71857c3b3be093",
+      "behind": 270,
+      "unique": 0
+    },
+    {
+      "name": "threshold/null-reference-20260930",
+      "sha": "6c3cb4fbf1c0881460d94239f2adee037cc49d4e",
+      "behind": 275,
+      "unique": 0
+    },
+    {
+      "name": "threshold/pside-df-20260930",
+      "sha": "2ce87f4e60955a93d952e0e4b4de112a47b98348",
+      "behind": 259,
+      "unique": 0
+    },
+    {
+      "name": "threshold/unused-surface-20260930",
+      "sha": "d9c08120de34eb5effff1488930313c3fd3bfc42",
+      "behind": 265,
+      "unique": 0
+    },
+    {
+      "name": "umvpa/canonical-alder-admission-20260930",
+      "sha": "22eafac801f781b2501e9e2c5241c5027a613cb0",
+      "behind": 345,
+      "unique": 0
+    },
+    {
+      "name": "umvpa/foundation-20260929",
+      "sha": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+      "behind": 363,
+      "unique": 0
+    },
+    {
+      "name": "umvpa/frontier-core-20260930",
+      "sha": "e298315304ee2fd44a3bd5516f0b21c648601b3e",
+      "behind": 362,
+      "unique": 1
+    },
+    {
+      "name": "umvpa/frontier-local-alder-20260930",
+      "sha": "723268a8516518801e9c98c9ac9f354551c36532",
+      "behind": 360,
+      "unique": 0
+    },
+    {
+      "name": "umvpa/queries-core-20260930",
+      "sha": "ca97a00cc9012fc86cd49ccdc0c5e195fbfd1283",
+      "behind": 362,
+      "unique": 4
+    },
+    {
+      "name": "umvpa/queries-read-policy-20260930",
+      "sha": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+      "behind": 354,
+      "unique": 0
+    },
+    {
+      "name": "wip/atlas-typed-20261004",
+      "sha": "7b32f6e02d5de1f2e59f95eacc5054aff174f7bc",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/core-triage-docs-20261004",
+      "sha": "6dcd94e2947f9477fad7a03ef7cf5124fb1b64db",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/gifti-float64-placement-20261004",
+      "sha": "8242a97e6dcf0113918b29280f1e758a46abe0df",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/hrf-complete-bspline-20261004",
+      "sha": "c5d6b0553d91b3781adedba8d519c2adc1528187",
+      "behind": 138,
+      "unique": 0
+    },
+    {
+      "name": "wip/junk-agent-work-20261004",
+      "sha": "984ae76a2bb444a8c0a37ab5e72ec0e984013950",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/locus-aggregation-removal-20261004",
+      "sha": "fce38df81585b2c631e23b0c724570f711546712",
+      "behind": 138,
+      "unique": 0
+    },
+    {
+      "name": "wip/misc-docs-20261004",
+      "sha": "26bac2eff8dd18ad6efae50fd496fb77b93d7d84",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/model-authoring-seam-review-20261004",
+      "sha": "97445bde103710803dc4f1f6a0bb8be68b35117e",
+      "behind": 138,
+      "unique": 0
+    },
+    {
+      "name": "wip/rrg-main-port-20261004",
+      "sha": "a9dd09cb757cd90ca6c12cd2355fd402cf30c2c7",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/umvpa-evidence-20261004",
+      "sha": "507e8f0fcdc8935ca7d0f4a373844791b35d9003",
+      "behind": 139,
+      "unique": 1
+    },
+    {
+      "name": "wip/viewer-leftovers-20261004",
+      "sha": "5675d776ec86532779955d612d5cd21e467ddfe5",
+      "behind": 138,
+      "unique": 0
+    },
+    {
+      "name": "wip/voxel-status-lookup-20261004",
+      "sha": "6a08e8f288263a6c9013871ebfd58a032ca3e44a",
+      "behind": 138,
+      "unique": 0
+    },
+    {
+      "name": "work/cascade-overlap-20260930",
+      "sha": "8b274c049bf60e7dff9271e70a710e873384b2f1",
+      "behind": 260,
+      "unique": 2
+    },
+    {
+      "name": "work/fslr-lattice-inverse-20261001",
+      "sha": "58e8792c7db18435e4dac840ff9bf610497a1fa4",
+      "behind": 181,
+      "unique": 2
+    },
+    {
+      "name": "work/fslr-reconcile-20261001",
+      "sha": "c603045413faef00ebb0b55b1decca5b3b55de6c",
+      "behind": 181,
+      "unique": 1
+    },
+    {
+      "name": "work/model-studio-20261002",
+      "sha": "b6612f915e5882097fbf60ec05593129ee01de6d",
+      "behind": 140,
+      "unique": 0
+    },
+    {
+      "name": "work/mote-queue-20261004",
+      "sha": "9b29fcd303879c31d0e4cf0d2984c95730f19411",
+      "behind": 3,
+      "unique": 6
+    },
+    {
+      "name": "work/numerical-ownership-20261003",
+      "sha": "8f5ac7c241fdfe114b3764fa7a4a0cb2164ea789",
+      "behind": 168,
+      "unique": 6
+    },
+    {
+      "name": "work/phrf-land-20261001",
+      "sha": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "behind": 178,
+      "unique": 0
+    },
+    {
+      "name": "work/umvpa-component-20261003",
+      "sha": "785726b93609fd41c37411f211ea6dd543772772",
+      "behind": 96,
+      "unique": 0
+    },
+    {
+      "name": "work/umvpa-finish-20261001",
+      "sha": "9874069cad54953fc7c51432467d16bcb6e0d90a",
+      "behind": 161,
+      "unique": 0
+    },
+    {
+      "name": "work/umvpa-five-20261001",
+      "sha": "48453314884f0109c03721fa4ffcab5412a1ccdd",
+      "behind": 189,
+      "unique": 0
+    },
+    {
+      "name": "work/voxelwise-rrg-calibration",
+      "sha": "98280dd4ae4dfc495009a53176881ab355ad3f82",
+      "behind": 277,
+      "unique": 3
+    },
+    {
+      "name": "work/voxelwise-rrg-qualified",
+      "sha": "8a18961a059be5b0339cefb51fd4d86958f83e00",
+      "behind": 277,
+      "unique": 2
+    },
+    {
+      "name": "worktree-agent-a00495fc01ee55aa8",
+      "sha": "0f7867fecd4bba694f870ee9077ed3b17bf4cb85",
+      "behind": 318,
+      "unique": 3
+    },
+    {
+      "name": "worktree-agent-a2bfa629d70a591aa",
+      "sha": "c14b7be8866d0c555ddb7014d52aedc7d4497150",
+      "behind": 302,
+      "unique": 0
+    },
+    {
+      "name": "worktree-agent-a31ceb204dea3849c",
+      "sha": "2bef587801a02ed1c035ba0b5067970803c78cde",
+      "behind": 284,
+      "unique": 3
+    },
+    {
+      "name": "worktree-agent-a3ebf3564cf9328f3",
+      "sha": "0282f0aa3d1b16e4313fcecdeb2f8a03e66fae9b",
+      "behind": 280,
+      "unique": 3
+    },
+    {
+      "name": "worktree-agent-a636d459f88b36020",
+      "sha": "47e56b8c2708f23d0d3fc46ea4fc7525535f7a7d",
+      "behind": 348,
+      "unique": 2
+    },
+    {
+      "name": "worktree-agent-a6658a6b86e45ec2b",
+      "sha": "5218910096c925d2131ce6578e584f242ca08cb0",
+      "behind": 314,
+      "unique": 1
+    },
+    {
+      "name": "worktree-agent-a6daa1f0970060d9c",
+      "sha": "8be020efd3d49aba1d1ac4a07356781a43f67f8e",
+      "behind": 284,
+      "unique": 2
+    },
+    {
+      "name": "worktree-agent-a8fd1e83f56eecc94",
+      "sha": "434513d0cbd81035af68f8b4fbc999ba58cdb9ed",
+      "behind": 284,
+      "unique": 0
+    },
+    {
+      "name": "worktree-agent-a924a9dd3f3c2393e",
+      "sha": "fa57e6f135bbe06770bae57ebcb084478ea741b6",
+      "behind": 287,
+      "unique": 0
+    },
+    {
+      "name": "worktree-agent-ab13a92291e044c52",
+      "sha": "70c3552712ed61f2c81c7484443e64bdae997121",
+      "behind": 331,
+      "unique": 3
+    },
+    {
+      "name": "worktree-agent-ac664c1c0f1706610",
+      "sha": "51ab59630070bcc8ce61fcb8727b8148427cbb78",
+      "behind": 299,
+      "unique": 0
+    },
+    {
+      "name": "worktree-agent-ad0c7c091a97bb400",
+      "sha": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+      "behind": 277,
+      "unique": 0
+    },
+    {
+      "name": "worktree-agent-ae486c0ea1fa541a0",
+      "sha": "3c6eca8878a5f4a94bda293ce02cc1ef96be205f",
+      "behind": 290,
+      "unique": 0
+    },
+    {
+      "name": "worktree-agent-af1cb90d240e6706e",
+      "sha": "e1d8f3ce88f3891cfce1f29887fa2bf844e73d22",
+      "behind": 314,
+      "unique": 2
+    }
+  ]
+}

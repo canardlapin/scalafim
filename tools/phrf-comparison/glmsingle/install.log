@@ -1,0 +1,111 @@
+Processing ./src
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting numpy (from GLMsingle==1.2)
+  Downloading numpy-2.5.3-cp312-cp312-macosx_14_0_arm64.whl.metadata (6.6 kB)
+Collecting scipy (from GLMsingle==1.2)
+  Downloading scipy-1.18.1-cp312-cp312-macosx_14_0_arm64.whl.metadata (62 kB)
+Collecting scikit-learn (from GLMsingle==1.2)
+  Downloading scikit_learn-1.9.1-cp312-cp312-macosx_12_0_arm64.whl.metadata (9.3 kB)
+Collecting matplotlib (from GLMsingle==1.2)
+  Downloading matplotlib-3.11.2-cp312-cp312-macosx_11_0_arm64.whl.metadata (80 kB)
+Collecting tqdm (from GLMsingle==1.2)
+  Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+Collecting fracridge (from GLMsingle==1.2)
+  Downloading fracridge-3.0-py3-none-any.whl.metadata (3.1 kB)
+Collecting nibabel (from GLMsingle==1.2)
+  Using cached nibabel-5.4.2-py3-none-any.whl.metadata (8.9 kB)
+Collecting h5py (from GLMsingle==1.2)
+  Downloading h5py-3.16.0-cp312-cp312-macosx_11_0_arm64.whl.metadata (3.0 kB)
+Collecting pandas (from GLMsingle==1.2)
+  Downloading pandas-3.0.6-cp312-cp312-macosx_11_0_arm64.whl.metadata (79 kB)
+Collecting numba (from fracridge->GLMsingle==1.2)
+  Downloading numba-0.68.0-cp312-cp312-macosx_12_0_arm64.whl.metadata (2.8 kB)
+Collecting setuptools_scm (from fracridge->GLMsingle==1.2)
+  Downloading setuptools_scm-10.3.4-py3-none-any.whl.metadata (6.7 kB)
+Collecting pillow (from fracridge->GLMsingle==1.2)
+  Downloading pillow-12.3.0-cp312-cp312-macosx_11_0_arm64.whl.metadata (9.1 kB)
+Collecting joblib>=1.4.0 (from scikit-learn->GLMsingle==1.2)
+  Downloading joblib-1.6.0-py3-none-any.whl.metadata (6.5 kB)
+Collecting narwhals>=2.0.1 (from scikit-learn->GLMsingle==1.2)
+  Downloading narwhals-2.26.0-py3-none-any.whl.metadata (15 kB)
+Collecting threadpoolctl>=3.5.0 (from scikit-learn->GLMsingle==1.2)
+  Downloading threadpoolctl-3.7.0-py3-none-any.whl.metadata (24 kB)
+Collecting cloudpickle>=3.0 (from joblib>=1.4.0->scikit-learn->GLMsingle==1.2)
+  Downloading cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+Collecting contourpy>=1.0.1 (from matplotlib->GLMsingle==1.2)
+  Downloading contourpy-1.4.0-cp312-cp312-macosx_11_0_arm64.whl.metadata (3.8 kB)
+Collecting cycler>=0.10 (from matplotlib->GLMsingle==1.2)
+  Using cached cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+Collecting fonttools>=4.28.2 (from matplotlib->GLMsingle==1.2)
+  Downloading fonttools-4.66.1-cp312-cp312-macosx_10_13_universal2.whl.metadata (130 kB)
+Collecting kiwisolver>=1.3.1 (from matplotlib->GLMsingle==1.2)
+  Downloading kiwisolver-1.5.1-cp312-cp312-macosx_11_0_arm64.whl.metadata (5.2 kB)
+Collecting packaging>=20.0 (from matplotlib->GLMsingle==1.2)
+  Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pyparsing>=3 (from matplotlib->GLMsingle==1.2)
+  Using cached pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+Collecting python-dateutil>=2.7 (from matplotlib->GLMsingle==1.2)
+  Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting six>=1.5 (from python-dateutil>=2.7->matplotlib->GLMsingle==1.2)
+  Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Collecting typing-extensions>=4.6 (from nibabel->GLMsingle==1.2)
+  Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting llvmlite<0.51,>=0.50.0dev0 (from numba->fracridge->GLMsingle==1.2)
+  Downloading llvmlite-0.50.0-cp312-cp312-macosx_12_0_arm64.whl.metadata (5.1 kB)
+Collecting vcs-versioning<3,>=2.5.0.dev0 (from setuptools_scm->fracridge->GLMsingle==1.2)
+  Downloading vcs_versioning-2.5.0-py3-none-any.whl.metadata (1.7 kB)
+Collecting setuptools (from setuptools_scm->fracridge->GLMsingle==1.2)
+  Using cached setuptools-84.0.0-py3-none-any.whl.metadata (6.6 kB)
+Downloading fracridge-3.0-py3-none-any.whl (13 kB)
+Downloading scikit_learn-1.9.1-cp312-cp312-macosx_12_0_arm64.whl (8.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.3/8.3 MB 35.3 MB/s  0:00:00
+Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Downloading narwhals-2.26.0-py3-none-any.whl (474 kB)
+Downloading numpy-2.5.3-cp312-cp312-macosx_14_0_arm64.whl (5.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 37.2 MB/s  0:00:00
+Downloading scipy-1.18.1-cp312-cp312-macosx_14_0_arm64.whl (20.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.5/20.5 MB 37.5 MB/s  0:00:00
+Downloading threadpoolctl-3.7.0-py3-none-any.whl (26 kB)
+Downloading h5py-3.16.0-cp312-cp312-macosx_11_0_arm64.whl (3.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 32.5 MB/s  0:00:00
+Downloading matplotlib-3.11.2-cp312-cp312-macosx_11_0_arm64.whl (9.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.3/9.3 MB 17.4 MB/s  0:00:00
+Downloading contourpy-1.4.0-cp312-cp312-macosx_11_0_arm64.whl (284 kB)
+Using cached cycler-0.12.1-py3-none-any.whl (8.3 kB)
+Downloading fonttools-4.66.1-cp312-cp312-macosx_10_13_universal2.whl (3.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 35.7 MB/s  0:00:00
+Downloading kiwisolver-1.5.1-cp312-cp312-macosx_11_0_arm64.whl (64 kB)
+Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Downloading pillow-12.3.0-cp312-cp312-macosx_11_0_arm64.whl (4.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 32.6 MB/s  0:00:00
+Using cached pyparsing-3.3.3-py3-none-any.whl (126 kB)
+Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+Using cached nibabel-5.4.2-py3-none-any.whl (3.3 MB)
+Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Downloading numba-0.68.0-cp312-cp312-macosx_12_0_arm64.whl (2.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.8/2.8 MB 35.1 MB/s  0:00:00
+Downloading llvmlite-0.50.0-cp312-cp312-macosx_12_0_arm64.whl (40.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.5/40.5 MB 41.2 MB/s  0:00:00
+Downloading pandas-3.0.6-cp312-cp312-macosx_11_0_arm64.whl (10.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.1/10.1 MB 38.6 MB/s  0:00:00
+Downloading setuptools_scm-10.3.4-py3-none-any.whl (33 kB)
+Downloading vcs_versioning-2.5.0-py3-none-any.whl (122 kB)
+Using cached setuptools-84.0.0-py3-none-any.whl (818 kB)
+Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+Building wheels for collected packages: GLMsingle
+  Building wheel for GLMsingle (pyproject.toml): started
+  Building wheel for GLMsingle (pyproject.toml): finished with status 'done'
+  Created wheel for GLMsingle: filename=glmsingle-1.2-py3-none-any.whl size=118057 sha256=af74628bfde45293bf2b85ebb667b9a64a6e278f570396ee5578bf519f4e7566
+  Stored in directory: /private/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/pip-ephem-wheel-cache-q__4uhbm/wheels/59/fa/62/04fab7c0c9da0f0ada01c3d4eaa74685aa19596793f5f8832e
+Successfully built GLMsingle
+Installing collected packages: typing-extensions, tqdm, threadpoolctl, six, setuptools, pyparsing, pillow, packaging, numpy, narwhals, llvmlite, kiwisolver, fonttools, cycler, cloudpickle, vcs-versioning, scipy, python-dateutil, numba, nibabel, joblib, h5py, contourpy, setuptools_scm, scikit-learn, pandas, matplotlib, fracridge, GLMsingle
+
+Successfully installed GLMsingle-1.2 cloudpickle-3.1.2 contourpy-1.4.0 cycler-0.12.1 fonttools-4.66.1 fracridge-3.0 h5py-3.16.0 joblib-1.6.0 kiwisolver-1.5.1 llvmlite-0.50.0 matplotlib-3.11.2 narwhals-2.26.0 nibabel-5.4.2 numba-0.68.0 numpy-2.5.3 packaging-26.3 pandas-3.0.6 pillow-12.3.0 pyparsing-3.3.3 python-dateutil-2.9.0.post0 scikit-learn-1.9.1 scipy-1.18.1 setuptools-84.0.0 setuptools_scm-10.3.4 six-1.17.0 threadpoolctl-3.7.0 tqdm-4.70.1 typing-extensions-4.16.0 vcs-versioning-2.5.0
+.venv/bin/pip install ./src  12.80s user 3.27s system 70% cpu 22.842 total

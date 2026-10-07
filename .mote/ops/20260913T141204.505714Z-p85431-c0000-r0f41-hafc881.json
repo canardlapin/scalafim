@@ -1,0 +1,1 @@
+{"actor":"codex-first-level-closeout","entity":"bd-01M2DERZ859NP6T3ZC7S90BE81","kind":"reserve_open","mode":"exclusive","op":"20260913T141204.505714Z-p85431-c0000-r0f41-hafc881","paths":["tools/scenarios/validate_manifest.py","tools/scenarios/test_validate_manifest.py"],"reservation_id":"rv-01M2DHRS8S6VK2M5Z98JSZ4TAS","ts":"2026-09-13T14:12:04.505714Z","ttl_s":3600,"v":2}

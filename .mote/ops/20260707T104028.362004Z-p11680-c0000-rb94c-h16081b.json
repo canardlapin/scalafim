@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY2FGHQBQGHB2GND394D2RQ","kind":"note","note_kind":"progress","op":"20260707T104028.362004Z-p11680-c0000-rb94c-h16081b","text":"added LatentEncodingSpec/LatentEncoder shared factory plus JVM/JS shared tests for DCT, provided basis, and shared-basis archive paths","ts":"2026-07-07T10:40:28.362004Z","v":1}

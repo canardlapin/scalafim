@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX2235NET9MKQG6B481Y1F2N","kind":"note","note_kind":"note","op":"20260708T235435.867287Z-p69152-c0000-r8991-h1c1158","text":"added paired latent ADTs and shared tests: sbt \"multivarJVM/testOnly scalafim.multivar.PairedLatentSuite\" \"multivarJS/testOnly scalafim.multivar.PairedLatentSuite\"","ts":"2026-07-08T23:54:35.867287Z","v":1}

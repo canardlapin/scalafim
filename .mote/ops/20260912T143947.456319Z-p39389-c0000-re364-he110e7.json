@@ -1,0 +1,1 @@
+{"actor":"codex-boundary-rfe-review","entity":"bd-01KX6G9BP68XVCN41XZTG73GVC","expect":{"title":"20260912T143427.211006Z-p37923-c0000-rf73f-hc5bbc3"},"kind":"patch","op":"20260912T143947.456319Z-p39389-c0000-re364-he110e7","set":{"title":"[DEFERRED] Connect bounded resumable study execution when native workflows require it"},"ts":"2026-09-12T14:39:47.456319Z","v":1}

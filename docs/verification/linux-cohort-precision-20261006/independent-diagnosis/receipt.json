@@ -1,0 +1,15 @@
+{
+  "scope": "Independent diagnosis only; no production repair or admission-count increase claimed",
+  "archive": {
+    "path": "linux-diagnostic-packet.tar.gz",
+    "sha256": "f76edf17f80049226950e79342dd673c97aa00a05df14c3230bd64cd67fa2776"
+  },
+  "includes": [
+    "both hosted runs and separate unchanged baseline",
+    "100-digit MP refits of captured binary64 designs",
+    "outward returned-model and profile difference bounds",
+    "actual replay callback and evaluation-quota binding",
+    "13 bit-exact numeric witnesses and analysis scripts"
+  ],
+  "scientific_outcome": "LinuxJS baseline21/24; V2stored-model increase refused; V15/V17 strict profile descents eligible for counted comparison"
+}

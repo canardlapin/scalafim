@@ -37,6 +37,11 @@ run_batch() {
   sbt "${sbt_args[@]}" "$@"
 }
 
+# Run comparative compiler and platform controls first for prompt portability feedback.
+# Keep the comparative court separate: its real synthetic trial arm is expensive.
+run_batch phrf-comparison-jvm phrfComparisonJVM/test
+run_batch phrf-comparison-js phrfComparisonJS/test
+
 # Start a fresh sbt JVM for each bounded group. Scala.js linking and Node test
 # runners otherwise accumulate enough heap to exhaust ordinary CI runners.
 run_batch core-jvm \

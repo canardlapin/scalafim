@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY2D1PXGA1QY0JD4HKY9PZX","kind":"note","note_kind":"note","op":"20260707T105005.736896Z-p16304-c0000-r5762-h3b2c2a","text":"Committed HRF typed descriptor/refactor slice as f7572ad; verified SBT_OPTS=-Xmx3G sbt hrfJVM/test hrfJS/test and SBT_OPTS=-Xmx3G sbt compileAll.","ts":"2026-07-07T10:50:05.736896Z","v":1}

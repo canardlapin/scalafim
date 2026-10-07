@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","entity":"bd-01M24MQABKEBQXW89VZ8XWBB8H","kind":"note","note_kind":"progress","op":"20260930T051106.120823Z-p12699-c0002-rac97-h817f22","text":"Reserve two remaining evidence paths for local ledger commit; reuse existing own seven-path ledger and Stage1 archive reservations rather than double-reserving them.","ts":"2026-09-30T05:11:06.120823Z","v":1}

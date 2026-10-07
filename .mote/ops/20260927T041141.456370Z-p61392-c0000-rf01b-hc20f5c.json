@@ -1,0 +1,1 @@
+{"actor":"scalafim-stp-impl","entity":"bd-01M39Q4EE5HV4ENNMMWKXKFQ81","kind":"note","note_kind":"note","op":"20260927T041141.456370Z-p61392-c0000-rf01b-hc20f5c","text":"ConversionContext and Conversion.convert landed with P5.02 (50c4070d); framework otherwise at 08fe698e. Verified on main: transform JVM 144 / JS 119.","ts":"2026-09-27T04:11:41.456370Z","v":1}

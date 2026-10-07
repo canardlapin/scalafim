@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T12:15:05.225427+00:00",
+  "finished_utc": "2026-09-30T12:19:19.591821+00:00",
+  "duration_seconds": 254.364549,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dsbt.global.staging=/private/tmp/scalafim-phrf-push-20260930/staging",
+    "hrfJS/testOnly scalafim.fmri.hrf.family.GaussianFamilySuite",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite scalafim.fmri.laws.profile.ConditionC0QualificationSuite",
+    "set firstLevelLawsJS / Test / scalaJSUseMainModuleInitializer := true",
+    "set firstLevelLawsJS / Test / scalaJSUseTestModuleInitializer := false",
+    "set firstLevelLawsJS / Test / mainClass := Some(\"scalafim.fmri.laws.profile.ConditionC0QualificationMain\")",
+    "firstLevelLawsJS/Test/fastLinkJS"
+  ],
+  "cwd": "/private/tmp/scalafim-phrf-push-20260930/work",
+  "log": "/private/tmp/scalafim-phrf-push-20260930/evidence/final-js.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 53108
+}

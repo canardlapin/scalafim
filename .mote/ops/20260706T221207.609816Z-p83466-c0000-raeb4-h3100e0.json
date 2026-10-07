@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWQH69CRNPPDZSER3ZSMNCQ","kind":"note","note_kind":"progress","op":"20260706T221207.609816Z-p83466-c0000-raeb4-h3100e0","text":"Added mvpa-dataset bridge module with typed sample metadata, feature-space references, dataset-to-pattern conversion, and shared tests; starting verification.","ts":"2026-07-06T22:12:07.609816Z","v":1}

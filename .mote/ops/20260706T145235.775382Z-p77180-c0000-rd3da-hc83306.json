@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVYAAN4WHTN3ZQTXR9D9KPA","kind":"note","note_kind":"progress","op":"20260706T145235.775382Z-p77180-c0000-rd3da-hc83306","text":"added FeatureSetPlan, ROI payloads, RDM/RSA analyses, label-aligned model RDM scoring, tests, and docs; mvpa JVM/JS tests, compileAll, and testAll passed","ts":"2026-07-06T14:52:35.775382Z","v":1}

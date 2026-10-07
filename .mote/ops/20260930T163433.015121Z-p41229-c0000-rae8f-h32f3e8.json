@@ -1,0 +1,1 @@
+{"actor":"exec-hdf5-probe","candidate_id":"cand-5J7HZVN7774400DJT5AF59KDYV","expect_phase":"20260930T154948.572705Z-p89891-c0000-r9ee5-hb4ac6a","idempotency_key":"physical-3bac-superseded-by-9edc63a4","kind":"candidate_supersede","op":"20260930T163433.015121Z-p41229-c0000-rae8f-h32f3e8","successor_id":"cand-1MC9K0E0FVVD6MXFGZ16MQQ89T","ts":"2026-09-30T16:34:33.015121Z","v":1}

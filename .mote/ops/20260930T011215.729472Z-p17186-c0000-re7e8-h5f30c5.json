@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01M3QWEYR7925NAFZDCH60Q6R8","kind":"reserve_open","mode":"exclusive","op":"20260930T011215.729472Z-p17186-c0000-re7e8-h5f30c5","paths":["modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala"],"reservation_id":"rv-01M3QXX43HPX754CKG852SYV44","ts":"2026-09-30T01:12:15.729472Z","ttl_s":3600,"v":2}

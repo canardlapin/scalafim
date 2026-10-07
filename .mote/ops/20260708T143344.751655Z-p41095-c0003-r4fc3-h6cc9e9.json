@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX118KM0Z7X5ASVCCTCR8JFZ","kind":"note","note_kind":"progress","op":"20260708T143344.751655Z-p41095-c0003-r4fc3-h6cc9e9","text":"Starting explicit decode/reconstruction semantics: distinguish linear coefficient decode, offsets, residual events, and full materialization.","ts":"2026-07-08T14:33:44.751655Z","v":1}

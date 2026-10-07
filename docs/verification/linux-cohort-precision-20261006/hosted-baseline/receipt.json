@@ -1,0 +1,34 @@
+{
+  "status": "diagnosis_only_no_production_precision_change",
+  "base_commit": "37a84e990e6e28d1a00cbf6d1be841c56691564c",
+  "controlled_run": 37505102238,
+  "first_run": 37503330869,
+  "scientific_status": "JVM24/24passes;JS21/24fails unchanged >=0.9*24 threshold",
+  "collector_conclusion": "success does not indicate scientific JS success",
+  "exit_codes": {
+    "first-observation/jvm": 0,
+    "first-observation/js": 1,
+    "controlled-baseline-and-observation/baseline-jvm": 0,
+    "controlled-baseline-and-observation/baseline-js": 1,
+    "controlled-baseline-and-observation/jvm": 0,
+    "controlled-baseline-and-observation/js": 1
+  },
+  "baseline_suite_sha256": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb",
+  "matching_observation_records": {
+    "jvm": 114,
+    "js": 185
+  },
+  "actual_runtime": "Ubuntu24.04.5x86_64,Temurin17.0.20.1+1,Node24.21.0/V8 13.6.233.17-node.53",
+  "first_baseline_capture_error": "checkout depth1 omitted37a84e99; corrected withfetch-depth0 in secondrun",
+  "nonperturbation_limit": "matching observations in these hosted runs do not prove all runtimes nonperturbing; earlier Darwin observation changed admission counts",
+  "source_sha256": {
+    ".github/workflows/first-level-laws-calibration.yml": "75387471786eee551f7b346cdab96e3cbeb0b3a99b39e1fb65d8651f5582bcb0",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala": "8ab81e998c742d7387ec7d4eb8bca7e7fe06bff1b915f691d9a798e7c150c79f",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionPrecisionDiagnostic.scala": "b49676c601bdd5ea4182e385a7de16180c013a6ac0331f48e80a416c557d29e0",
+    "tools/diagnostics/compact-precision-replay.py": "b7741569183b9a9adac30510c40e093bd0281b22b7bcaf43417300b2f530d5d9"
+  },
+  "archive": {
+    "path": "logs-and-sources.tar.gz",
+    "sha256": "0311bbfe754c97d636633d4bbb9d32aaa238937170cfdf5f246160560fd77f37"
+  }
+}

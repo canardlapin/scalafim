@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWVRJ6MJ3G2PETMTYKNVM88","kind":"note","note_kind":"note","op":"20260706T232901.691025Z-p16233-c0000-r5b38-he935ba","text":"Completed samplewise RSA support for rMVPA vector_rsa semantics. Added typed design/payload/kernel/docs and verified on JVM and Scala.js: sbt mvpaJVM/test; sbt mvpaJS/test.","ts":"2026-07-06T23:29:01.691025Z","v":1}

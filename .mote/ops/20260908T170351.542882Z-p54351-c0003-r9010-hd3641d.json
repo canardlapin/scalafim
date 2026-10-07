@@ -1,0 +1,1 @@
+{"actor":"scalafim-group-signflip","entity":"bd-01M20ZKKKKVAH6TPTYR05V53CX","kind":"note","note_kind":"progress","op":"20260908T170351.542882Z-p54351-c0003-r9010-hd3641d","text":"Predeclare bounded symmetry contract and held-out calibration, implement using Multivar actions, then test on JVM and JS.","ts":"2026-09-08T17:03:51.542882Z","v":1}

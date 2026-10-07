@@ -1,0 +1,1 @@
+{"actor":"surface-map-semantics","entity":"bd-01M1Z4FNEQ28YY1BZSWAN6WBER","kind":"note","note_kind":"progress","op":"20260908T074406.163538Z-p58517-c0002-rd063-h8e9693","text":"Use existing JVM readers to transport pinned external cortex to browser tests without introducing a new public codec.","ts":"2026-09-08T07:44:06.163538Z","v":1}

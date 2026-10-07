@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-04T00:00:26.728340+00:00",
+  "finished_utc": "2026-10-04T00:02:57.365331+00:00",
+  "duration_seconds": 150.639445,
+  "command": [
+    "sbt",
+    "-J-Xmx8g",
+    "-J-XX:ActiveProcessorCount=8",
+    "-Dsbt.global.base=/private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505",
+    "-Dsbt.supershell=false",
+    "-Dsbt.color=false",
+    "imageJS/test",
+    "atlasJS/test",
+    "atlasWorkflowsJS/test",
+    "mvpaSpatialJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/scalafim-js-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3000.0,
+  "log_bytes": 70913
+}

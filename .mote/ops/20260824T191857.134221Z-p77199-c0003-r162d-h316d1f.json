@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim-mvpa-refactor","entity":"bd-01KZ6BCM78K85JDV4A2ESXEZ0R","kind":"note","note_kind":"progress","op":"20260824T191857.134221Z-p77199-c0003-r162d-h316d1f","text":"Replacing structural searchlight storage with compact locus4s NeighborhoodSystem and migrating image, surface, and MVPA consumers in one breaking slice.","ts":"2026-08-24T19:18:57.134221Z","v":1}

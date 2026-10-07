@@ -1,0 +1,17 @@
+{
+  "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c2",
+  "head": "c114cc3b556e6b70d9c651baef1d15dd1fa919d0",
+  "branch": "refs/heads/review/c2-provenance-v2-20261004",
+  "files": [
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala",
+      "kind": "file",
+      "bytes": 16253,
+      "sha256": "1e8ff7b8d64f8524d8d30797a243454d671606c6828ec83644af841c17ccdc72"
+    }
+  ],
+  "archive_sha256": "5f2ad877ed1577a3a54fbea2c4291c21e64b31f8e12ec5c6e062266e5b7173cb",
+  "archive_bytes": 4625,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

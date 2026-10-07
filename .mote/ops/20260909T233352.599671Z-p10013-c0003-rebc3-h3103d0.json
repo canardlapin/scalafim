@@ -1,0 +1,1 @@
+{"actor":"plsneuro-surface-atlas","entity":"bd-01M241Y5FPND8TPHTJQVHJWW7K","kind":"note","note_kind":"progress","op":"20260909T233352.599671Z-p10013-c0003-rebc3-h3103d0","text":"Implement opt-in opaque affine midpoint atlas; preserve original picking and geometry updates; independently sample encoded texture and benchmark before adoption","ts":"2026-09-09T23:33:52.599671Z","v":1}

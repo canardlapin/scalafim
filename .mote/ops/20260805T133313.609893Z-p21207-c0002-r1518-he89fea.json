@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KZ3ZPJ89W7W86084JQRDV7JD","kind":"note","note_kind":"progress","op":"20260805T133313.609893Z-p21207-c0002-r1518-he89fea","text":"Fix zero-job GitHub Actions validation failures by moving runner.temp expressions to step scope","ts":"2026-08-05T13:33:13.609893Z","v":1}

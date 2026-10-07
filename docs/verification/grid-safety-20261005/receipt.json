@@ -1,0 +1,157 @@
+{
+  "verified_at_utc": "2026-10-06T01:12:09.805751+00:00",
+  "base_commit": "fe3edc18e29dccb5fb71f4f87bfead1c7951f338",
+  "motes_completed": [
+    "bd-01M478XB9V86YE7SR8BGH457ND",
+    "bd-01M479NBKJ8S6216HXD787MANK"
+  ],
+  "validation": {
+    "hrfJVM": 352,
+    "hrfJS": 352,
+    "designJVM": 455,
+    "designJS": 454,
+    "fitJVM": 660,
+    "fitJS": 603,
+    "admission_consumerJVM": 4,
+    "admission_consumerJS": 4
+  },
+  "total_final_passed_tests": 2884,
+  "compiler_warning_clean": true,
+  "sbt_diagnostics": [
+    {
+      "gate": "admission-consumers",
+      "message": "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+    }
+  ],
+  "runs": [
+    {
+      "label": "hrf-design",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/test",
+        "hrfJS/test",
+        "designJVM/test",
+        "designJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 68.859,
+      "counts": [
+        {
+          "total": 352,
+          "failed": 0,
+          "errors": 0,
+          "passed": 352
+        },
+        {
+          "total": 352,
+          "failed": 0,
+          "errors": 0,
+          "passed": 352
+        },
+        {
+          "total": 455,
+          "failed": 0,
+          "errors": 0,
+          "passed": 455
+        },
+        {
+          "total": 454,
+          "failed": 0,
+          "errors": 0,
+          "passed": 454
+        }
+      ],
+      "compiler_warnings": [],
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "fit",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/test",
+        "fitJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 77.644,
+      "counts": [
+        {
+          "total": 660,
+          "failed": 0,
+          "errors": 0,
+          "passed": 660
+        },
+        {
+          "total": 603,
+          "failed": 0,
+          "errors": 0,
+          "passed": 603
+        }
+      ],
+      "compiler_warnings": [],
+      "sbt_diagnostics": []
+    },
+    {
+      "label": "admission-consumers",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite",
+        "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 14.927,
+      "counts": [
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4
+        }
+      ],
+      "compiler_warnings": [],
+      "sbt_diagnostics": [
+        "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+      ]
+    }
+  ],
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala": "daf5f2c4a6c5be20d74d6e7d8dc87a38cc9bb5a8664c0bfcf09df6dfc3ce47c9",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfNormalization.scala": "b2fe41b1bfda3c3bed493e8a58ffb35304bd6c203778266b153ac91792291bee",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "0f9ab4e15537ef4660a44445af1af62ee22136a9d8c9afe2bcf63a2e1a68c27c",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/NormalizationReferenceGridSuite.scala": "676e4176efb849fd832927cf012138a4232be0fc36f61078b0cebee2481a4372",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "99ae80274855d0a41d8d778ef42c487a3a247b7874df27b73173f52a94925754",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/NeuralInput.scala": "86d233dbe6cd54c15d74dee4955cdc4559cb88e5308bfe47db33a5ba7b3b0f1e",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/regressor/NeuralInputSuite.scala": "66b00ba7fc58f83cef866b146860663dc1c2a899a331593df24efdf02e21a403",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala": "1538cd22e1f174a7c7d9efcda66f241792f2be161a303f8eb2a7536b3201852d"
+  },
+  "feature_receipts": [
+    "docs/verification/normalization-budget-20261005/receipt.json",
+    "docs/verification/neural-input-budget-20261005/receipt.json"
+  ],
+  "review_repairs": [
+    "Removed duplicate recursive descriptor traversal.",
+    "Accounted for exact piecewise integration work and actual known closed primitives.",
+    "Floored work at returned basis width, including empty exact pieces and incomplete component metadata."
+  ],
+  "mutation_evidence": "Feature receipts and archives retain sample-cap, work-cap, output-width-floor and old neural count mutants, detected on both platforms. Sources restored; temporary selectors removed.",
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "ce995268ffd2cf8b6a494ac4ad385d69cab55a8a05f853646c0f58679b193422",
+  "follow_up_motes": [
+    "bd-01M47BDP95QPW2SZEV7TF52RQX",
+    "bd-01M47BDR7J7FKGXESZFY9J370P",
+    "bd-01M47BDT7PT73Z82RK6EETWDZ7"
+  ],
+  "scope_limits": [
+    "Normalization budget counts declared scalar basis/primitive endpoint evaluations; custom kernel internals and Gauss rule construction arithmetic are outside this count.",
+    "Neural preview clipping bounds each event to the admitted grid; total work scales with event count and occupied bins.",
+    "Constructor calibration, parametric family summary/tail grids and composed EventResponse normalization remain separate tracked follow-ups."
+  ]
+}

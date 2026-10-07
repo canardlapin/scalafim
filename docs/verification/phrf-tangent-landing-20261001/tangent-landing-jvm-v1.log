@@ -1,0 +1,715 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project work-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-phrf-land-20261001/work/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (322631 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-phrf-land-20261001/work/)
+[success] Total time: 0 s, completed Oct 1, 2026, 3:11:31 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:11:32 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:11:32 p.m.
+[success] Total time: 1 s, completed Oct 1, 2026, 3:11:33 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:11:33 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:11:33 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/response-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Oct 1, 2026, 3:11:38 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/response-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 2 s, completed Oct 1, 2026, 3:11:40 p.m.
+[info] compiling 12 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 14 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/latent/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 22 s, completed Oct 1, 2026, 3:12:03 p.m.
+[info] compiling 17 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/latent/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 8 s, completed Oct 1, 2026, 3:12:10 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/ar/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Oct 1, 2026, 3:12:11 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:12:12 p.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:15 p.m.
+[success] Total time: 1 s, completed Oct 1, 2026, 3:12:16 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:12:16 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:12:16 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:12:16 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:12:16 p.m.
+[info] compiling 8 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Oct 1, 2026, 3:12:22 p.m.
+[success] Total time: 1 s, completed Oct 1, 2026, 3:12:23 p.m.
+[success] Total time: 3 s, completed Oct 1, 2026, 3:12:26 p.m.
+[success] Total time: 3 s, completed Oct 1, 2026, 3:12:29 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/provider-spike/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Oct 1, 2026, 3:12:30 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/provider-spike/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Oct 1, 2026, 3:12:32 p.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/image-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:36 p.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/image-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:40 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/image-view-canvas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:44 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/image-view-java2d/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:48 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/image-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:52 p.m.
+[info] compiling 12 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/threshold/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:12:56 p.m.
+[info] compiling 12 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/threshold/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:12:59 p.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/motion/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:13:01 p.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/motion/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:13:04 p.m.
+[info] compiling 33 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:13:07 p.m.
+[info] compiling 31 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:13:11 p.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:13:15 p.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Oct 1, 2026, 3:13:21 p.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:13:25 p.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view-raster/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:13:29 p.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 7 s, completed Oct 1, 2026, 3:13:36 p.m.
+[info] compiling 5 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view-three/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 7 s, completed Oct 1, 2026, 3:13:44 p.m.
+[info] compiling 21 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/connectivity/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view-connectivity/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 8 s, completed Oct 1, 2026, 3:13:52 p.m.
+[info] compiling 21 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/connectivity/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/surface-view-connectivity/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 10 s, completed Oct 1, 2026, 3:14:01 p.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/examples/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 7 s, completed Oct 1, 2026, 3:14:09 p.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/examples/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Oct 1, 2026, 3:14:15 p.m.
+[info] compiling 28 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/transform/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 11 s, completed Oct 1, 2026, 3:14:26 p.m.
+[info] compiling 25 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/transform/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 10 s, completed Oct 1, 2026, 3:14:36 p.m.
+[info] compiling 30 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 13 s, completed Oct 1, 2026, 3:14:49 p.m.
+[info] compiling 25 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 8 s, completed Oct 1, 2026, 3:14:57 p.m.
+[info] compiling 29 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 7 s, completed Oct 1, 2026, 3:15:04 p.m.
+[info] compiling 20 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 8 s, completed Oct 1, 2026, 3:15:12 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:15:12 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:15:12 p.m.
+[info] compiling 9 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Oct 1, 2026, 3:15:18 p.m.
+[info] compiling 9 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 7 s, completed Oct 1, 2026, 3:15:26 p.m.
+[info] compiling 5 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/estimates-io/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 9 s, completed Oct 1, 2026, 3:15:35 p.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/estimates-io/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 9 s, completed Oct 1, 2026, 3:15:44 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] compiling 14 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 14 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/fit-estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 20 s, completed Oct 1, 2026, 3:16:04 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-phrf-land-20261001/work/modules/group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/fit-estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 12 s, completed Oct 1, 2026, 3:16:16 p.m.
+[info] compiling 14 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/archive-lna/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 10 s, completed Oct 1, 2026, 3:16:26 p.m.
+[info] compiling 10 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/archive-lna/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 12 s, completed Oct 1, 2026, 3:16:37 p.m.
+[info] compiling 10 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/archive-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/interop-archived-response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 10 s, completed Oct 1, 2026, 3:16:47 p.m.
+[info] compiling 9 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/archive-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 24 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/interop-archived-response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 9 s, completed Oct 1, 2026, 3:16:57 p.m.
+[success] Total time: 5 s, completed Oct 1, 2026, 3:17:02 p.m.
+[success] Total time: 6 s, completed Oct 1, 2026, 3:17:08 p.m.
+[success] Total time: 8 s, completed Oct 1, 2026, 3:17:16 p.m.
+[success] Total time: 12 s, completed Oct 1, 2026, 3:17:29 p.m.
+[success] Total time: 10 s, completed Oct 1, 2026, 3:17:38 p.m.
+[success] Total time: 17 s, completed Oct 1, 2026, 3:17:56 p.m.
+[success] Total time: 6 s, completed Oct 1, 2026, 3:18:01 p.m.
+[success] Total time: 6 s, completed Oct 1, 2026, 3:18:07 p.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:18:11 p.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:18:14 p.m.
+[info] compiling 8 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa-fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 8 s, completed Oct 1, 2026, 3:18:22 p.m.
+[info] compiling 8 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa-fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Oct 1, 2026, 3:18:28 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:18:29 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:18:29 p.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Oct 1, 2026, 3:18:34 p.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa-dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:18:39 p.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Oct 1, 2026, 3:18:44 p.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/mvpa-spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Oct 1, 2026, 3:18:48 p.m.
+[success] Total time: 1 s, completed Oct 1, 2026, 3:18:48 p.m.
+[success] Total time: 1 s, completed Oct 1, 2026, 3:18:49 p.m.
+[success] Total time: 2 s, completed Oct 1, 2026, 3:18:51 p.m.
+[success] Total time: 2 s, completed Oct 1, 2026, 3:18:53 p.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:18:56 p.m.
+[success] Total time: 2 s, completed Oct 1, 2026, 3:18:58 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:18:58 p.m.
+[success] Total time: 0 s, completed Oct 1, 2026, 3:18:58 p.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/dataset-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:19:01 p.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/dataset-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Oct 1, 2026, 3:19:05 p.m.
+[info] compiling 73 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite:
+  + mixed-TR public fixed-effects fit preserves run grids and semantic axes 0.529s
+  + fixed effects omit one invalid run-voxel contribution without failing healthy voxels 0.016s
+scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite:
+  + S12 combines sustained blocks, transient events, and variable epochs 0.112s
+  + S15 sampled nuisance preserves task inference against an R direct fit 0.114s
+scalafim.fmri.fit.profile.ShapeDecoderTangentSuite:
+  + coupled lower-bound Newton direction follows feasible descent to the exact constrained optimum 0.01s
+  + coupled upper-bound Newton direction follows feasible descent to the mirrored optimum 0.001s
+  + tangent correction handles a third independent coordinate 0.0s
+  + a genuine constrained stationary bank point needs no candidate 0.001s
+  + a tiny representable clipped step is evaluated rather than called stationary 0.0s
+  + an unrepresentable raw nonstationary correction preserves terminal state without an evaluation 0.001s
+  + halving to an unchanged coordinate stalls only before the attempt cap is exhausted 0.002s
+  + a finite jet whose Newton solve overflows stalls without an objective callback 0.0s
+scalafim.fmri.fit.PreparedManovaGeometrySuite:
+  + multi-contrast preparation yields a design-normalized effect basis 0.017s
+  + invertible changes of contrast basis preserve the hypothesis projector 0.001s
+  + rank-deficient contrast rows are rejected as non-estimable 0.002s
+scalafim.fmri.fit.ResultArtifactsSuite:
+  + ResultManifest from dense fit preserves parameter metadata and provenance 0.016s
+  + ContrastMap preserves statistic kind and degrees of freedom 0.007s
+  + StatMap rejects value and voxel-space mismatches 0.002s
+  + CoefficientCovarianceArtifact preserves voxelwise covariance and rejects shape mismatches 0.002s
+  + restricted inference exports only inferable standard errors and covariance 0.003s
+scalafim.fmri.fit.PreparedContrastGeometrySuite:
+  + moment geometry equals explicit dense effect and residual projectors 0.003s
+  + rescaling a one-row contrast preserves the effect matrix 0.0s
+  + invertible nuisance basis changes preserve effect and residual geometry 0.001s
+  + fixed AR whitening and censor resets match the first-level transform 0.031s
+  + rank-deficient prepared designs are rejected 0.002s
+  + held-out responses cannot alter a training-scoped whitening geometry 0.002s
+scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite:
+  + one public model and semantic hypotheses express delayed match to sample 0.236s
+scalafim.fmri.fit.FirstLevelEstimatesSuite:
+  + public preparation performs no reads and streams only selected identified products 0.03s
+  + selected time and voxel ordering are preserved across block sizes 0.006s
+  + cancellation and sink failure prevent subsequent response reads 0.004s
+  + invalid identities and unsupported scientific engines fail before reads 0.004s
+  + the caller's backend receives exactly the selected block products 0.003s
+  + native FIR selection preserves physical bin coordinates and requested order 0.007s
+scalafim.fmri.fit.ContrastReprojectionSuite:
+  + reprojection equals an independent direct OLS refit on the collapsed design 0.007s
+  + a second kernel from the same product also matches its refit 0.0s
+  + the product constructor refuses malformed retention 0.002s
+  + reprojection refuses malformed and degenerate requests 0.001s
+scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite:
+  + name-keyed contrasts survive reordered public design columns 0.011s
+scalafim.fmri.fit.PipelineFitWorkflowSuite:
+  + in-memory fMRI OLS workflow runs through the pipeline graph and matches direct execution 0.184s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.0s
+scalafim.fmri.fit.profile.ParallelBlockExecutorSuite:
+  + parallel receipts equal the sequential run and arrive in block order 0.161s
+  + a refusing sink stops the parallel run with a typed error 0.013s
+scalafim.fmri.fit.scenarios.ScenarioHarnessSuite:
+  + clean observations produce a CI-passable scenario 0.001s
+  + failed observations force ScenarioStatus.Fail even without caveats 0.0s
+  + non-blocking caveats require explicit policy to pass CI 0.004s
+  + blocking caveats force ScenarioStatus.Fail 0.0s
+  + policies cannot declare failures acceptable 0.0s
+scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite:
+  + pipeline-backed first-level workflow returns one scenario verdict 0.025s
+scalafim.fmri.fit.profile.ShapeEvidencePoolSuite:
+  + pooled node energies sum, ignore unscanned nodes and pick a fully scanned best node 0.002s
+  + merging in a fixed order reproduces a single accumulation exactly 0.0s
+  + the regional prior sits at the pooled best node with a floored spread 0.002s
+scalafim.fmri.fit.OlsSuite:
+  + OLS fits multiple response columns with one prepared factorization 0.001s
+  + basis reparameterization transports fit covariance and linear hypotheses 0.003s
+  + OLS reports residual variance per voxel 0.0s
+  + OLS matches independent Gaussian oracle on overdetermined multivoxel data 0.001s
+  + OLS matches independent oracle for scaled full-rank predictors 0.0s
+  + scale-aware rank detection is invariant to uniform predictor scaling 0.001s
+  + OLS rejects non-finite dense inputs at construction 0.001s
+  + OLS default QR solver agrees with normal equations on well-conditioned designs 0.001s
+  + OLS coefficients are invariant to design column permutation 0.001s
+  + OLS rejects singular designs 0.0s
+  + OLS rank policy makes strict full-rank rejection explicit 0.001s
+  + OLS reports unsupported rank policies explicitly 0.001s
+  + OLS rejects nearly collinear designs at the QR rank tolerance boundary 0.0s
+  + OLS rejects saturated fits before residual inference is represented 0.0s
+  + OLS remains finite for extreme but well-conditioned predictor scales 0.001s
+  + OLS rejects row mismatches at fit time 0.0s
+scalafim.fmri.fit.DctDriftFitSuite:
+  + native selected betas and contrasts equal independent FWL on complete and censored original rows 0.016s
+scalafim.fmri.fit.FixedEffectsEstimatesSuite:
+  + selected pooling matches independent rational inverse-precision calculations 0.005s
+  + only requested pooled covariance and standard errors are propagated 0.003s
+  + pooled coefficient reorder and disjoint run order preserve selected estimates 0.002s
+  + missing pooled coefficients and foreign design identity fail explicitly 0.002s
+  + public selected run combination preserves mixed-TR R estimates and native exclusions 0.007s
+scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite:
+  + S07 2x2 public design supports semantic simple and interaction hypotheses 0.063s
+  + S08 3x3 public design supports unequal-score trends and interaction 0.018s
+  + S09 public design supports heterogeneous HRF bases by structural cell 0.021s
+  + S06 public model preserves factor/modulator scope and missing-value policy 0.028s
+  + S10 reconstructed basis responses use explicit functional weights 0.013s
+  + S16 rank-deficient structural hypotheses report row-space evidence 0.028s
+  + S18 public WLS agrees with an independent base-R receipt 0.045s
+scalafim.fmri.fit.GlsPerformanceGuardrailSuite:
+  + fixed AR(1) dense GLS stays within the JVM guardrail 0.061s
+scalafim.fmri.fit.RunwiseOlsSuite:
+  + RunwiseLeastSquares fits separate coefficients per sampling-frame block 0.004s
+  + RunwiseOls reports singular run designs with run identity 0.001s
+scalafim.fmri.fit.profile.OutputRequestSuite:
+  + queries validate labels, weights and tolerances 0.003s
+  + requests validate against the condition axis and refuse trial outputs on the condition backend 0.005s
+  + query evaluation keeps signs and audits float32 conversion per query tolerance 0.001s
+scalafim.fmri.fit.BasisExpandedRetentionSuite:
+  + preparation reads nothing and the retained product reprojects to the collapsed refit 0.012s
+  + a second kernel from the same retained product matches its own refit 0.001s
+  + streamed blocks carry the same panel as the assembled product 0.001s
+  + structure and preparation refuse malformed input before any read 0.002s
+  + cancellation yields no partial assembled product 0.0s
+scalafim.fmri.fit.RobustSuite:
+  + disabled robust options are equivalent to OLS 0.009s
+  + Huber robust fit downweights an outlying observation 0.002s
+  + Bisquare robust fit can reject a severe outlier 0.002s
+  + RobustLeastSquares executes through FitPlanExecutor 0.007s
+  + chunked robust fit uses full-selection prepared row weights 0.006s
+  + fmrireg row-wise Huber fixture matches run-scope robust IRLS semantics 0.002s
+  + fmrireg voxel scale scope keeps per-voxel scale components with row-wise weights 0.001s
+  + robust-triggered AR re-estimation exposes shared AR diagnostics 0.024s
+  + future chunked robust AR reuses full-selection whitening and row weights 0.019s
+scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite:
+  + P3.4 row-deleted censor gaps bound public AR/GLS whitening 0.022s
+scalafim.fmri.fit.FitPlanBuilderSuite:
+  + builder-created FitPlan runs OLS and recovers known coefficients 0.002s
+  + builder-created FitPlan recovers task effects after nuisance adjustment 0.002s
+scalafim.fmri.fit.LssSuite:
+  + LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors 0.016s
+  + LeastSquaresSeparate handles a single trial as residualized simple regression 0.0s
+  + LeastSquaresSeparate prepared design reuses fixed projection and trial workspace 0.001s
+  + LeastSquaresSeparate reports zero trial and degenerate other regressors 0.0s
+  + LeastSquaresSeparate returns typed metadata errors from safe constructors 0.0s
+  + LeastSquaresSeparate reports trials absorbed by fixed regressors without inventing betas 0.0s
+  + LeastSquaresSeparate rejects collinear trial and other-trial regressors 0.001s
+  + LeastSquaresSeparate rejects non-finite matrix inputs 0.0s
+  + LeastSquaresSeparate validates row alignment 0.0s
+scalafim.fmri.fit.RunwiseGlsSuite:
+  + runwise GLS is an explicit run-specific estimand and refuses across-run AR pooling 0.01s
+  + fixed AR(1) runwise GLS matches an independent segmented GLS reference 0.009s
+  + structural FIR axes, selected gaps and fixed AR covariance survive public and chunked execution 0.011s
+  + estimated voxelwise AR is chunk invariant and fixed effects consume every covariance matrix 0.02s
+scalafim.fmri.fit.GlsSuite:
+  + GeneralizedLeastSquares runs AR(1) whitening and reports diagnostics 0.003s
+  + GeneralizedLeastSquares can estimate an AR(1) rho from initial residuals 0.002s
+  + estimated AR(2) GLS matches the fmriAR 0.3.3 end-to-end receipt 0.004s
+  + GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals 0.007s
+  + GeneralizedLeastSquares supports fixed AR(2) coefficients 0.002s
+  + GeneralizedLeastSquares keeps finite diagnostics under extreme predictor scales 0.002s
+  + GeneralizedLeastSquares resets AR whitening after censored timepoints 0.001s
+  + estimated GLS excludes explicit censor rows only from noise estimation 0.0s
+  + GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset 0.003s
+  + GeneralizedLeastSquares rejects censored timepoints outside selected partitions 0.001s
+  + GeneralizedLeastSquares resets at run and censor boundaries for multivoxel data 0.001s
+  + GeneralizedLeastSquares distinguishes run-specific and global estimated AR pooling 0.006s
+  + GeneralizedLeastSquares supports voxelwise estimated AR with explicit non-shared covariance 0.008s
+  + voxelwise GLS retains degenerate voxel status and isolates contrast inference 0.002s
+  + GeneralizedLeastSquares rejects unsupported AR configurations explicitly 0.002s
+  + GeneralizedLeastSquares rejects non-stationary fixed AR coefficients 0.008s
+  + GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries 0.001s
+  + row-deleted whitening matches independent segmented L X and L Y 0.002s
+scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite:
+  + censored multi-run concatenated fit row-deletes design and response consistently 0.007s
+scalafim.fmri.fit.StructuralHypothesisDslSuite:
+  + cell and basis references compile without column bookkeeping 0.002s
+  + weighted semantic rows compose T trends and F omnibus hypotheses 0.002s
+  + response functionals and modulators remain semantic 0.0s
+  + response functionals transport through explicit scan-space scaling 0.006s
+  + basis omnibus supports an explicit non-canonical scope 0.0s
+  + semantic omnibus blocks compose without exposing column rows 0.001s
+  + an empty basis scope reports a typed selection failure 0.0s
+  + a basis role absent from one heterogeneous cell is a typed basis failure 0.003s
+  + named response lowering composes with selected estimates without losing scientific metadata 0.001s
+  + named F lowering preserves row order and typed failures before design binding 0.005s
+  + only a named hypothesis exposes compile 0.0s
+  + validated domain ids remain first-class DSL inputs 0.0s
+  + sampled regressors compose as semantic coefficients 0.001s
+scalafim.fmri.fit.FirstLevelFixedEffectsEstimatesSuite:
+  + preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts 0.02s
+  + run-local nuisance projection preserves joint task pooling and selected voxel order 0.004s
+  + entirely excluded blocks preserve identities and do not stop subsequent healthy voxels 0.005s
+  + cancellation, sink failure and incompatible engines fail without excess reads 0.003s
+  + pooled execution dispatches only prepared run statistics and requested voxel products 0.014s
+  + FIR pooling retains physical bins and planted estimates through reversed gapped scan selection 0.006s
+  + explicit retained run coefficients match independent R values without changing pooled products 0.025s
+  + retained run coefficients preserve excluded input voxels and continue to healthy blocks 0.004s
+  + unsupported run retention cannot be silently discarded by shared or pooling-only entry points 0.003s
+  + retention obeys the same cancellation and failed-sink read boundary 0.003s
+scalafim.fmri.fit.profile.ShapeDecoderSuite:
+  + node grid indexing round-trips 0.0s
+  + an interior optimum is found to high precision within the budget 0.001s
+  + an optimum outside the box lands on the boundary with a projected step 0.001s
+  + indefinite curvature is reported and the parabolic fallback still improves on the node 0.0s
+  + a prior pulls the estimate and both curvatures are reported 0.001s
+  + weak identification and ambiguity are separate statuses 0.0s
+  + three-dimensional charts decode with a hierarchical scan 0.001s
+  + an exact accepted point without a terminal jet cannot use stale curvature for admission 0.001s
+  + an accepted jet binds both reported curvatures to the returned point 0.0s
+  + a reserved terminal jet verifies an energy-only move before admission 0.0s
+  + a final full jet reaches a stationary candidate when exact evaluation is unavailable 0.001s
+  + a rejected final full candidate preserves accepted state and caps 0.0s
+  + terminal verification retains a nonstationary budget refusal and current curvature 0.0s
+  + equal rounded energy accepts a stationary candidate through either jet route 0.001s
+  + equal rounded quartic energy refuses a nonstationary move and preserves halving 0.001s
+  + equal energy candidate requires a finite positive and matching full jet 0.001s
+  + equal energy stationarity uses prior augmentation and retains identification gates 0.0s
+  + exhausted refinement and rejected candidate caps are explicit and counted 0.001s
+  + budget exits reset per decode and observation delegates exactly once 0.0s
+  + node ranking, ambiguity inputs and fallback use the data-plus-prior objective 0.001s
+  + fallback terminal verification reports curvature at its returned point 0.0s
+  + nonfinite and refused node banks return typed empty results without stale worker state 0.448s
+scalafim.fmri.fit.StructuralHypothesisSuite:
+  + semantic selectors resolve to structural identities and carry estimability evidence 0.001s
+  + hypothesis estimability uses the same scale-aware convention as fitting 0.001s
+  + semantic resolution is invariant to rendered labels and coefficient order 0.002s
+  + structural identity permits repeated rendered labels across run-scoped regressors 0.0s
+  + a compiled hypothesis rejects a result from a different design fingerprint 0.002s
+  + unknown structural components produce typed failures 0.0s
+  + declared-but-empty cells are distinguished from unknown levels 0.0s
+  + invalid structural weights are reported during compilation 0.0s
+  + rendered labels cannot become structural authority 0.001s
+  + rank-deficient designs reject non-estimable T contrasts and reduce F numerator rank 0.001s
+  + response-level functionals expand over semantic basis elements 0.0s
+  + reduced fixed-effects axes reject missing T, F, and response-functional components 0.002s
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.008s
+  + shared retention requests describe and deliver actual native uncertainty 0.006s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.004s
+scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite:
+  + run-local nuisance axes and missing shared cells preserve structural identity 0.023s
+scalafim.fmri.fit.OlsEstimatesSuite:
+  + compiled estimator preserves selected functionals and removes nuisance contributions 0.001s
+  + selected estimates and joint uncertainty match an independent exact-rational oracle 0.001s
+  + marginal uncertainty agrees with joint readout without a joint covariance product 0.0s
+  + uncertainty execution reuses residual coordinates for its only selected product 0.001s
+  + column reordering and scaling preserve the same estimand 0.0s
+  + strided response blocks and repeated execution preserve input and output ownership 0.0s
+  + fixed row selection and temporal transform fuse through the readout adjoint 0.0s
+  + exactly determined coefficients do not require residual degrees of freedom 0.001s
+  + invalid readouts, incompatible rows, rank defects and unsupported solve policies fail explicitly 0.0s
+scalafim.fmri.fit.FitBlockSuite:
+  + dense OLS block results merge to the same result as a full voxel block 0.002s
+  + dense blocks tolerate scale-aware cutoff differences with the same rank partition 0.001s
+  + fixed AR(1) GLS block results merge with identical diagnostics 0.001s
+  + LSS block results merge to the same result as a full voxel block 0.003s
+  + dense block merge rejects incompatible execution context 0.0s
+  + dense block merge preserves and validates the structural coefficient axis 0.001s
+  + LSS block merge rejects incompatible trial names 0.0s
+scalafim.fmri.fit.CompactFixedEffectsSuite:
+  + public run combination retains compact statistics and agrees with independent correlated mixed-TR R oracle 0.007s
+  + structured storage grows with voxel scales, preserves off-diagonal precision, and refuses malformed fields 0.008s
+  + unstructured legacy contributions, disjoint folding and availability rules remain usable 0.004s
+  + compact concatenation refuses logical voxel count overflow without dense materialization 0.002s
+scalafim.fmri.fit.ChunkedFitExecutorSuite:
+  + ChunkProgram rejects non-contiguous generic work ordinals 0.001s
+  + SequentialChunkProgramInterpreter wraps failures with chunk identity 0.0s
+  + FutureChunkProgramInterpreter preserves ordinal order with bounded execution 0.001s
+  + FitChunkPlan exposes repeatable ordered voxel chunks 0.002s
+  + FitChunkProgram exposes a repeatable scheduler-neutral work stream 0.001s
+  + ChunkedFitExecutor matches unchunked OLS while preserving selected voxel order 0.002s
+  + single-voxel chunks preserve propagated non-finite exclusions 0.002s
+  + chunked voxel-specific row omission matches whole patterned OLS 0.013s
+  + future single-voxel chunks preserve propagated non-finite exclusions 0.002s
+  + future chunking preserves voxel-specific observation patterns 0.003s
+  + all-excluded and partially-excluded chunks preserve source exclusion order 0.002s
+  + ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses 0.002s
+  + ChunkedFitExecutor estimates DVARS once from the whole selected response 0.002s
+  + FutureChunkedFitExecutor matches sequential chunked OLS with bounded parallelism 0.002s
+  + FutureChunkedFitExecutor matches unchunked full-rank LatentSketch 0.01s
+  + FutureChunkedFitExecutor reuses one compressed LatentSketch across chunks 0.003s
+  + FutureChunkedFitExecutor reuses one principal-component LatentSketch across chunks 0.006s
+  + ChunkedFitExecutor matches unchunked LSS 0.014s
+  + ChunkedFitExecutor matches unchunked fixed-AR GLS 0.003s
+  + FutureChunkedFitExecutor prepares estimated-AR GLS once across bounded parallel chunks 0.003s
+  + FutureChunkedFitExecutor matches unchunked full-rank ReducedRankGls 0.023s
+  + FutureChunkedFitExecutor reuses one compressed ReducedRankGls basis across chunks 0.006s
+  + FutureChunkedFitExecutor reuses deterministic ReducedRankGls bootstrap inference 0.011s
+  + full-rank voxelwise-AR ReducedRankGls fallback remains event-only across chunks 0.005s
+  + compressed voxelwise-AR ReducedRankGls remains an explicit design boundary 0.002s
+  + FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks 0.005s
+  + chunk interpreters agree from the same prepared GLS chunk program 0.004s
+  + ChunkedFitExecutor matches unchunked runwise OLS 0.002s
+  + FitChunkPlan rejects non-contiguous ordinals 0.0s
+  + FitChunkPlan rejects mixed timepoint chunks 0.0s
+  + runwise preparation preserves bounded response reads and censored axes 0.003s
+  + runwise future preparation preserves bounded response reads 0.002s
+  + fixed preparation preserves bounded response reads and censored axes 0.003s
+  + fixed future preparation preserves bounded response reads 0.002s
+  + LSS preparation preserves bounded response reads and censored axes 0.003s
+  + LSS future preparation preserves bounded response reads 0.003s
+scalafim.fmri.fit.ImageMapsSuite:
+  + Dense fit coefficient and SE maps preserve full voxel placement 0.049s
+  + image maps place selected voxels into their original image locations 0.001s
+  + typed result manifest coefficient maps adapt to existing image maps 0.004s
+  + image map adapters retain source identity and reject another world with identical geometry 0.004s
+  + standard-error image maps omit coefficients outside the inference scope 0.002s
+  + t and F contrast statistics map into image space 0.001s
+scalafim.fmri.fit.ResponsePreparationSuite:
+  + default plan is inspectable and preserves block input identity 0.001s
+  + non-default plan distinguishes applied, rejected, and deferred surfaces 0.004s
+  + fixed volume weights apply by full-model timepoint index 0.0s
+  + fixed weights equal OLS on square-root weighted design and response 0.001s
+  + multiresponse WLS agrees with independently fitted response columns 0.001s
+  + estimated DVARS weighting is executable and records its source and normalization 0.001s
+  + zero fixed weights exclude rows before rank and residual-df calculation 0.001s
+  + Tukey DVARS estimation gives exact-zero artifacts lawful exclusion semantics 0.002s
+  + negative and non-finite fixed weights are explicit preparation errors 0.001s
+  + selected-row fixed alignment is exact rather than length-heuristic 0.001s
+  + DVARS resets at selection gaps instead of differencing across censored timepoints 0.0s
+  + within-run DVARS normalization does not cross acquisition boundaries 0.001s
+  + all DVARS transformations match the independent base-R receipt 0.002s
+  + nuisance projection rows must align with selected timepoints 0.001s
+scalafim.fmri.fit.MatrixFileFitSuite:
+  + matrix-file dataset backend runs through builder-created OLS plan 0.011s
+scalafim.fmri.fit.profile.ProfileReductionSuite:
+  + the reduction matches finite differences of the exact energy, including energy-term derivatives 0.006s
+  + omitting the energy-term derivatives is detected 0.001s
+  + a non-positive-definite Gram is reported, not inverted 0.0s
+  + compact condition jets agree with finite differences of the direct compact energy and are sign-invariant 0.003s
+  + criterion assembly scales the energy jet and demands a determinant for trial ML 0.005s
+scalafim.fmri.fit.InferenceSuite:
+  + Dense OLS results expose standard errors and diagnostics 0.003s
+  + T contrasts align weights by column name 0.001s
+  + T contrasts can evaluate an explicitly inference-ready dense fit 0.0s
+  + T contrasts reject unknown columns 0.001s
+  + F contrasts evaluate single-df statistics, df, and voxel alignment 0.001s
+  + F contrasts evaluate multi-df tests 0.0s
+  + contrasts use voxelwise coefficient covariance when supplied 0.007s
+  + contrasts reject zero residual variance instead of emitting non-finite statistics 0.0s
+  + mixed fits retain typed voxel status and isolate T/F inference 0.001s
+  + F contrasts reject unknown and non-estimable columns explicitly 0.001s
+  + DesignContrasts evaluates attached t contrasts and generated F contrasts 0.023s
+scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite:
+  + chunked runwise regression preserves chunk order, run partitions, and coefficients 0.016s
+scalafim.examples.SelectedEstimatesExampleSuite:
+  + condition and contrast guide executes the declared pooled engine against the R reference 0.006s
+  + FIR guide preserves structural bin identities and bounded metadata-only preparation 0.003s
+  + optional uncertainty and nuisance helpers preserve the requested shared-model estimates 0.004s
+  + run-local nuisance maps are explicitly unavailable as pooled estimates 0.003s
+  + run retention guide composes with output and uncertainty choices without changing pooling 0.006s
+  + semantic response guide keeps full derivative-basis readout and propagated uncertainty 0.006s
+scalafim.fmri.fit.io.ResultManifestWriterSuite:
+  + ResultManifestWriter writes BIDS-style NIfTI, covariance TSV, and sidecar artifacts 0.092s
+  + ResultManifestWriter can write one named NIfTI per parameter and contrast map 0.007s
+  + ResultManifestWriter persists voxel status and contrast exclusions 0.003s
+  + ResultManifestWriter rejects unsafe stems and colliding named-map paths before writing 0.002s
+  + ResultManifestWriter reports unsupported HDF5 and GDS formats explicitly 0.002s
+  + ResultManifestWriter persists restricted inference provenance 0.003s
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.003s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.005s
+  + missing-data propagation reports an all-excluded selection explicitly 0.0s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.008s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.002s
+  + row omission preserves an explicitly reordered OLS time selection 0.002s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.004s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.003s
+  + row omission subsets selected-row weights by original observation position 0.001s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.001s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.001s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.001s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.003s
+  + fitDense rejects engines with a different result shape 0.001s
+  + public fit failures name aliased structural columns 0.002s
+  + GLS retains structural rank evidence and explains preview differences 0.002s
+  + every supported dense engine preserves the same structural coefficient axis 0.005s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 0.155s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.001s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.001s
+  + FitInterpreters exposes executable built-ins 0.0s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.001s
+  + LatentSketch principal components recovers rank-one response coefficients 0.002s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.003s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.001s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.002s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.004s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.009s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.005s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.005s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.004s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.004s
+scalafim.fmri.fit.profile.BlockExecutorSuite:
+  + blocks partition the voxel range with the last block shorter 0.0s
+  + sequential execution delivers receipts in block order and retains no payloads 0.002s
+  + budget, sink failure and cancellation are typed outcomes 0.002s
+scalafim.fmri.fit.TrialReadoutSuite:
+  + LSS trial readout matches the independent fMRILSS fixture and owns coefficient identity 0.001s
+  + readout folds fixed nuisance projection into both forward and adjoint maps 0.001s
+  + readout satisfies the Frobenius adjoint law 0.0s
+  + readout commutes with downstream feature mixing 0.0s
+  + one prepared readout is cached and applies a response batch columnwise 0.0s
+  + zero trial regressors produce a zero readout row and zero adjoint contribution 0.001s
+  + trial readout and trial coefficient axes reject malformed inputs with typed errors 0.0s
+scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite:
+  + public LSS path recovers metadata-selected trialwise estimates 0.011s
+scalafim.fmri.fit.OlsPerformanceGuardrailSuite:
+  + default QR dense OLS stays within the JVM guardrail 0.012s
+scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite:
+  + public fit path preserves design semantics for T and F contrasts 0.003s
+scalafim.fmri.fit.DesignMatrixOwnershipSuite:
+  + a compiled hypothesis and ordinary or chunked fits share an immutable design 0.003s
+  + LSS uses the canonical design after event and baseline arrays are mutated 0.004s
+  + model construction rejects a matrix changed without rebuilding its schema 0.002s
+[info] Passed: Total 350, Failed 0, Errors 0, Passed 350
+[success] Total time: 12 s, completed Oct 1, 2026, 3:19:17 p.m.
+[info] compiling 24 Scala sources to /private/tmp/scalafim-phrf-land-20261001/work/modules/first-level-laws/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[compact-condition] admitted 0/24, max |tau - oracle| = NaN, max rel amp = NaN, per voxel: nodes 71.875, jets 2.0, exact 1.0
+scalafim.fmri.laws.profile.CompactConditionRuntimeSuite:
+==> X scalafim.fmri.laws.profile.CompactConditionRuntimeSuite.decoded shapes and amplitudes agree with the dense oracle on a synthetic cohort  2.624s munit.FailException: modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala:266 admitted 0 of 24
+265:    )
+266:    assert(admitted >= 0.9 * voxels, s"admitted $admitted of $voxels")
+267:    assert(te.last <= 0.02, s"max latency error ${te.last}")
+    at munit.FunSuite.assert(FunSuite.scala:13)
+    at scalafim.fmri.laws.profile.CompactConditionRuntimeSuite.$init$$$anonfun$7(CompactConditionRuntimeSuite.scala:266)
+  + readout converts amplitudes into the requested normalisation 0.011s
+scalafim.fmri.laws.profile.ProfileReductionLawsSuite:
+  + compact energy, amplitudes and jets equal the direct time-domain fit at alpha = 0 1.189s
+scalafim.fmri.laws.profile.ConditionProfileFitSuite:
+  + the structure maps the plan's task columns by condition and basis 1.491s
+==> X scalafim.fmri.laws.profile.ConditionProfileFitSuite.the Gram route agrees with the compact route and the direct oracle, streaming blocks in order  0.155s munit.FailException: modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala:199 accepted 0 of 20
+198:      v += 1
+199:    assert(accepted >= 0.8 * voxels, s"accepted $accepted of $voxels")
+200:
+    at munit.FunSuite.assert(FunSuite.scala:13)
+    at scalafim.fmri.laws.profile.ConditionProfileFitSuite.$init$$$anonfun$7(ConditionProfileFitSuite.scala:199)
+  + trial outputs and mismatched structures are refused before any response is read 0.003s
+[error] Failed: Total 6, Failed 2, Errors 0, Passed 4
+[error] Failed tests:
+[error] 	scalafim.fmri.laws.profile.ConditionProfileFitSuite
+[error] 	scalafim.fmri.laws.profile.CompactConditionRuntimeSuite
+[error] (firstLevelLawsJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 10 s, completed Oct 1, 2026, 3:19:28 p.m.

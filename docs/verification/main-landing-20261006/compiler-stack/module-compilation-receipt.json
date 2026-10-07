@@ -1,0 +1,32 @@
+{
+  "base_head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12",
+  "java": "Temurin 21.0.12.1 Darwin arm64",
+  "scala": "3.7.4",
+  "sbt": "1.11.7",
+  "jvmopts_sha256": "1fff2856fee580af6c5ed868b9f832f144afb23694c2a796ee3577ead5f7f4a7",
+  "controlled_1m": {
+    "command": "JAVA_TOOL_OPTIONS=-Xss1m SBT_WARM_HEAP=4g SBT_WARM_CPUS=2 python3 tools/build/sbt-warm phrfComparisonJVM/Test/compile",
+    "exit_code": 1,
+    "effective_stack_kib": 1024,
+    "failure": "Recursion limit exceeded while pickling AdapterGoldenBytes.hex"
+  },
+  "fixed_4m": {
+    "command": "SBT_WARM_HEAP=4g SBT_WARM_CPUS=2 python3 tools/build/sbt-warm phrfComparisonJVM/Test/compile phrfComparisonJS/Test/compile",
+    "exit_code": 0,
+    "effective_stack_kib": 4096,
+    "compiled_test_sources": {
+      "JVM": 52,
+      "JS": 31
+    }
+  },
+  "logs": {
+    "standalone-receipt.json": "730ba06e7e07ff101ca6b28b8f21b024e016c727ab7fb4ccbad506581e36662f",
+    "compile-1m.log.gz": "65c52888636fc659f6f73cd34eda42a968372ca8ba22bba0e435b36a502a7b0b",
+    "scalafim-phrf-stack-1m.log.gz": "e8e38a5c0b6fb818bf362ce6fb9a4e1a01b08355b02bcf7038acde00a5268822",
+    "effective-4m-flags.txt": "a112aacfc3cb220dc2faad8d21a5258f38e0681c9135c99855d9ba5d53d2c2af",
+    "scalafim-phrf-stack-4m.log.gz": "c50a228831aeb1fd3cb07a747e8c9fda56f870b0e95c0eee18681fc6f29c306d",
+    "compile-4m.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  "native_protected_requalification": "required; previous full run failed, focused and coverage passed",
+  "preserved_fixture_sha256": "89c197f537f98c937506e188bcf05b2662b47fdda260cf8c52302ff69b2083c2"
+}

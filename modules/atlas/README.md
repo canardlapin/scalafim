@@ -35,24 +35,32 @@ import scalafim.atlas.io.*
 
 ## Shared Model
 
-- `AtlasRef`, `AtlasArtifact`, and `AtlasHistoryStep` describe atlas identity,
-  source files, citations, and transform/load provenance.
+- `AtlasRef` is `AtlasRefOf[R]` indexed by representation kind.
+  `AtlasRef.volume`, `AtlasRef.surface`, and `AtlasRef.derived` return
+  `VolumeAtlasRef`, `SurfaceAtlasRef`, and `DerivedAtlasRef`; their space
+  parameters are typed by space kind (`VolumeOrUnknownSpaceId`,
+  `SurfaceOrUnknownSpaceId`).
 - `AtlasProvenance` is the typed audit trail behind `AtlasRef`: identity,
   spatial support, label schema, source artifacts, derivation steps, citations,
   confidence, and validation issues.
 - `RegionId`, `Hemisphere`, `NetworkId`, `AtlasRegionMetadata`, and
-  `RegionIndex` replace ad hoc atlas list fields with typed metadata. The old
-  atlas `Region` name is a deprecated compatibility alias; extensional regions
-  are `scalafim.locus.Region`.
-- `VolumeAtlas` wraps a `ClusteredNeuroVol`, enforces that metadata region IDs
-  match the non-zero payload IDs, and exposes its labels as a typed
-  `Parcellation`.
-- `SurfaceAtlas` wraps bilateral `LabeledSurface` payloads from
-  `scalafim-surface` and enforces that non-zero vertex labels match the region
-  metadata IDs. It exposes the same quotient-level API as `VolumeAtlas`.
-- Every atlas `quotient` carries parcel-indexed metadata, an explicit display
-  `Selection`, and an optional validated parcel-to-network `Surjection`.
-  Network regions are derived from quotient composition.
+  `RegionIndex` describe typed metadata. `AtlasRegionMetadata.checked` admits
+  raw strings with typed `AtlasError`s; `typedLabel`, `typedFullLabel`, and
+  `typedAttributes` expose the checked `RegionLabel` and `RegionAttributes`
+  views. Extensional regions are `locus4s.Region`.
+- `VolumeAtlas` owns one exact `VolumeAtlasRealization` and its spatial-to-parcel
+  assignment. `labelVolume` is a derived dense materialization; source region
+  IDs must match the non-zero payload IDs. `subset` keeps a non-empty set of
+  regions and rebuilds the atlas on the same grid.
+- `SurfaceAtlas` owns one bilateral `SurfaceAtlasRealization`, with retained
+  geometry and label-table metadata. Vertex labels derive from its assignment.
+  Single-side access takes `scalafim.surface.Hemisphere` and accepts only
+  `Left` or `Right`.
+- Every atlas `realization` carries a `parcelAssignment` (the only retained
+  membership truth), parcel-indexed `metadata` and `parcelKeys`, an explicit
+  display `Selection` (`displayOrder`), and an optional `networkAssignment`
+  whose parcel-to-network map is a validated `Surjection`. Network regions are
+  derived by composing the two maps.
 - `AtlasRegistry` and `AtlasSpec` provide immutable discovery for known atlas
   families and aliases.
 - `Schaefer2018`, `GlasserHcpMmp1`, `Schaefer2018Surface`, and
@@ -76,6 +84,16 @@ import scalafim.atlas.io.*
   `tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym` file pulls the same way as the
   forward file (measured, see `TemplateFlowXfm`), so it is refused rather than
   used as the inverse. `TemplateGrids` holds the stock MNI res-01/res-02 grids.
+
+The direct query functions and extension methods interpret points in
+`atlas.ref.coordSpace` unless the caller supplies `fromSpace`.
+
+```scala
+val ref: VolumeAtlasRef = Schaefer2018.default.atlasRef()
+val metadata: Either[AtlasError, AtlasRegionMetadata] =
+  AtlasRegionMetadata.checked(RegionId(1), "V1", labelFull = Some("L_V1_ROI"))
+val label: Either[AtlasError, RegionLabel] = RegionLabel.from("V1")
+```
 
 ## Standard Atlas Descriptors
 
@@ -108,6 +126,20 @@ val hcpMmpSurface = registry("hcp-mmp-surface")
 Descriptors are pure values. They do not download or parse atlas payloads until
 you call a JVM loader or supply already-loaded surface labels.
 
+## Parcel Identity
+
+`RegionId` is a source integer label. `realization.parcelKeys` identifies parcels
+on the exact persistent parcel domain. Each key combines a namespace (atlas
+family, model, parcel variant, and release) with the integer `RegionId`, and
+the domain is restored from a finite-indexed publication descriptor whose
+fingerprint covers those keys.
+
+`realization.assignmentAlignedTo(target)` retargets the assignment only through
+exact persistent ordered domain identity; equal cardinality is not enough.
+Different domains require an explicit locus4s `Bijection`
+(`assignmentRetargeted`). `neuropublishProjection` and
+`validateNeuropublishProjection` export and check the publication form.
+
 ## Runnable Examples
 
 Compiled examples live in [`../../examples/atlas-jvm`](../../examples/atlas-jvm).
@@ -139,7 +171,7 @@ The typed layer replaces stringly provenance conventions with ADTs:
   label tables, network tables, transforms, geometry, documentation, and
   descriptor-only sources.
 - `SpatialSupport` distinguishes volume, surface, and derived atlas support,
-  including template space, coordinate space, voxel size, surface density, and
+  including separate template and coordinate spaces, voxel size, surface density, and
   hemisphere coverage.
 - `LabelSchema` records integer label encoding, background value, region IDs,
   and the label-table artifact when known.
@@ -178,7 +210,7 @@ Surface atlas payloads are shared, cross-platform values built from the surface
 module:
 
 ```scala
-import scalafim.surface.{Hemisphere as SurfaceHemisphere, *}
+import scalafim.surface.{Hemisphere as SurfaceHemisphere, VertexId}
 
 val surfaceAtlas =
   SurfaceAtlas.fromLabeledSurfaces(
@@ -327,30 +359,27 @@ val labels =
 
 ## Parcel Reduction
 
-`VolumeAtlas` can summarize a 3D map or a 4D time series by parcel. The shared
-core keeps all atlas regions in the output. If a mask removes every voxel from a
-region, the region is retained and its value is `NaN`.
+`VolumeAtlas` summarizes a 3D map or a 4D time series by parcel. Inputs must be
+on the atlas's exact grid. Every atlas region is kept in the output.
 
 ```scala
+import scalafim.atlas.syntax.*
 import scalafim.image.*
 
-val values: ParcelValues =
-  atlas.reduce(statMap)
+val values: ParcelValues = atlas.reduce(statMap)
+val checked: Either[AtlasError, ParcelValues] = atlas.reduceEither(statMap)
+val summed: ParcelValues = atlas.reduce(statMap, Reducers.sum)
 
-val series: ClusteredNeuroVec[Double] =
-  atlas.reduce(boldSeries)
-
+val series: SomeScalarParcelSeries[Double] = atlas.reduce(boldSeries)
 val maskedSeries =
-  AtlasReduce.reduceVec(atlas, boldSeries, mask = Some(brainMask))
+  AtlasReduce.reduceSeries(atlas, boldSeries, mask = Some(brainMask))
 ```
 
-The standard mean and sum reducers use a one-pass quotient aggregation. Custom
-compatibility reducers remain plain functions over parcel voxels:
-
-```scala
-val summed =
-  atlas.reduce(statMap, reducer = Reducers.sum)
-```
+`Reducers.mean` and `Reducers.sum` use a one-pass aggregation and skip NaN
+samples; an all-NaN mean is NaN and an all-NaN sum is zero. Other reducers are
+plain `Array[Double] => Double` functions over each parcel's samples. For
+series, a parcel with no samples after masking follows
+`EmptyParcelPolicy.Fill(Double.NaN)` (the default) or `EmptyParcelPolicy.Reject`.
 
 ## Overlap And Adjacency
 
@@ -398,11 +427,22 @@ Rscript tools/r-parity/check_neuroatlas_atlas_parity.R
 The script expects `pkgload`, `neuroim2`, and `~/code/neuroatlas` by default.
 Set `NEUROATLAS_R=/path/to/neuroatlas` to use another checkout.
 
+## Signed INT8 Label Volumes
+
+The pinned image4s revision (`2c0638fb`) decodes NIfTI datatype 256 (signed
+INT8) as signed bytes; datatype 2 (UInt8) stays unsigned. `AtlasLabelMaps.readIntVolume`
+therefore reads INT8 label volumes with 0 as background and 1..127 as region
+IDs, and rejects a negative stored label with `IllegalArgumentException`.
+`AtlasIoSuite` covers this on a synthetic INT8 file; `NiftiSuite` covers the
+signed storage, boundaries, and scaling in the image adapter.
+
 ## Tests
 
 ```sh
 sbt atlasJVM/test
 sbt atlasJS/test
+sbt imageJVM/test
+sbt imageJS/test
 sbt surfaceJVM/test
 sbt surfaceJS/test
 ```

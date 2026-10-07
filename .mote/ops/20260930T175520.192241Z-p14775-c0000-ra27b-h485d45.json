@@ -1,0 +1,1 @@
+{"actor":"core-legacy-removal-20260930-r3","entity":"bd-01KX6G9B8R86MRBZ9S8K8F5G7V","kind":"reserve_open","mode":"exclusive","op":"20260930T175520.192241Z-p14775-c0000-ra27b-h485d45","paths":["modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitProvenanceSuite.scala"],"reservation_id":"rv-01M3SQ9T002BQQH6K2S9D2JTZP","ts":"2026-09-30T17:55:20.192241Z","ttl_s":7200,"v":2}

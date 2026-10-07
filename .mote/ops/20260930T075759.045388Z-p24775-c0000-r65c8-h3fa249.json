@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","entity":"bd-01M26A285YAQ3H8TGS26BK9T7J","expect":{"assignee":"20260930T065839.865964Z-p92049-c0000-r1576-h886f09"},"kind":"patch","op":"20260930T075759.045388Z-p24775-c0000-r65c8-h3fa249","set":{"assignee":"exec-trial-executor"},"ts":"2026-09-30T07:57:59.045388Z","v":1}

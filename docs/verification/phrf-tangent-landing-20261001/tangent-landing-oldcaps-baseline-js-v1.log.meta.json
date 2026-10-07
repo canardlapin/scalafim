@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T19:19:28.211345+00:00",
+  "finished_utc": "2026-10-01T19:21:08.182100+00:00",
+  "duration_seconds": 99.969625,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ConditionProfileFitSuite scalafim.fmri.laws.profile.CompactConditionRuntimeSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-phrf-land-20261001/baseline",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/tangent-landing-oldcaps-baseline-js-v1.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 10628
+}

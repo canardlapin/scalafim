@@ -1,0 +1,12 @@
+**ACCEPT — integration source, evidence and revised local landing protocol.**
+
+Bound to:
+
+- Source: `e6eb79d0912fcf8a4e43cc0aecf3e92f0acf9697`
+- Report: `5c504e6c99a70c158177a32f44bf4ead0d45ad14eb268f78a2e7f113c600e0c0`
+- Payload index: `b8da1f87c8988e7fb1006306e4d7bcb4dcd2081e2fbb42116a84c5a424f3015b`
+- Landing helper: `36da3b69d8dbcdfbb1976331425e52a04157e8e513d1db901ecd31ec7ea7b791`
+
+All **26 payload hashes match**. Both previously identified protocol defects are corrected. The archived synthetic fast-forward covers all eight expected outside states and preserves unrelated staging; unexpected changes now withhold preservation verification without unsupported attribution.
+
+No required corrections remain. Actual user-checkout landing and its preservation receipt are still pending. This acceptance does not establish fresh PHRF qualification, boundary inference or remote publication.

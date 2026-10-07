@@ -1,0 +1,1 @@
+{"actor":"surface-map-semantics","entity":"bd-01M1Z4FNEQ28YY1BZSWAN6WBER","kind":"note","note_kind":"progress","op":"20260908T083432.461165Z-p66731-c0002-r18c4-h1b5139","text":"Fail closed on demonstrated native multisample depth failure using an independent small framebuffer admission fixture, instead of a driver-name blacklist.","ts":"2026-09-08T08:34:32.461165Z","v":1}

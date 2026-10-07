@@ -1,0 +1,1174 @@
+{
+  "baseline": "92033261fd82eb003b556c2b4a7af2c87551996d",
+  "tested_candidate": "e40e36157dd308617a029f5247c2251d37f1b0ad",
+  "branches": [
+    {
+      "name": "ar/bias-correction-20261001",
+      "sha": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "behind": 170,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "atlas/nearest-boundary-20260912",
+      "sha": "535977a86270bd3cc5c033eda165a0370870dd22",
+      "behind": 443,
+      "unique": 28,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): c5/compatible-layer-transaction-20260921, codex/selected-evidence-20260921, dataset/exact-companions-20260924, fit/estimate-description-policy-20260914, linked-roots/compiler-20260921, linked-roots/final-20260921, linked-roots/scalafim-pinned-20260921, surface/group-fslr-qualification-20260923, surface/metal-admission-20260912, surface/strip-raster-qualified-20260912, surface/warm-update-20260921"
+    },
+    {
+      "name": "backup/main-local-20260923",
+      "sha": "ac219509b85f798a2d4f12a4e639848c77c55f10",
+      "behind": 354,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "bridge-noreadme",
+      "sha": "419fccf8a083addc76dded9a27a07a48c261137f",
+      "behind": 281,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "c5/compatible-layer-transaction-20260921",
+      "sha": "01ed86f439bb1c989b5f2c5db2ac6f4048657611",
+      "behind": 443,
+      "unique": 29,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): surface/group-fslr-qualification-20260923, surface/warm-update-20260921"
+    },
+    {
+      "name": "candidate/fir-reviewed-20261003",
+      "sha": "9a34371225d4d732f1b3b67f62ecc9a99a28c35c",
+      "behind": 277,
+      "unique": 81,
+      "disposition": "selectively-integrated",
+      "reason": "FIR adaptations adcccf0f/d10c6c21 were reviewed and integrated per reconciliation receipt; remainder is the deferred alternative integration lineage."
+    },
+    {
+      "name": "codex-first-level-integration",
+      "sha": "ab4edae9e3b440b36c94c86294554ba3f25e8f89",
+      "behind": 341,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "codex/atlas-domain-realizations",
+      "sha": "143e6ae7f038b9e014f399a2b38df9c4480e954a",
+      "behind": 444,
+      "unique": 1,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "codex/extract-bids4s",
+      "sha": "c7f213a363dcb4185a311c3771707f3949adfdce",
+      "behind": 460,
+      "unique": 2,
+      "disposition": "superseded",
+      "reason": "Current module map/build consumes standalone bids4s; obsolete extraction snapshot and older IO differences retained."
+    },
+    {
+      "name": "codex/extract-bids4s-current",
+      "sha": "7b0daa4081a87ad3b0c30ffad61a87e4e4ccc92f",
+      "behind": 456,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "codex/image-native-ravel",
+      "sha": "10d14666edd06813cd909727f6b9a04b4ed41ba2",
+      "behind": 397,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "codex/intaglio-cutover",
+      "sha": "b1e3cc114fb4c8f788307dfb37f7796e9d72eab0",
+      "behind": 458,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "codex/mesh4s-surfaces",
+      "sha": "81c34fb38e616643a1cb603a0e06512f87097cd2",
+      "behind": 443,
+      "unique": 11,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): surface/inflated-smoothing-20260922"
+    },
+    {
+      "name": "codex/neuropublish-clear-compat-20260824",
+      "sha": "d89076763f23f45723fe0a76b132dd59ddfb9d00",
+      "behind": 446,
+      "unique": 3,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "codex/neuropublish-viewer-prereqs-20260824",
+      "sha": "5495ea3ebcd0e34ae5c1c7f7306f6c431ae3986d",
+      "behind": 399,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "codex/scalajs-gifti-ingestion",
+      "sha": "887a5ce4a88e3f219dad99bce46aaf6853126d1d",
+      "behind": 443,
+      "unique": 14,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): atlas/nearest-boundary-20260912, c5/compatible-layer-transaction-20260921, codex/selected-evidence-20260921, dataset/exact-companions-20260924, fit/estimate-description-policy-20260914, linked-roots/compiler-20260921, linked-roots/final-20260921, linked-roots/scalafim-pinned-20260921, recovery/javafx-affine-atlas-20260909, spike/face-texel, spike/lut-encoding, spike/raster-figures, surface/group-fslr-qualification-20260923, surface/metal-admission-20260912, surface/paired-responsive-20260910, surface/scene-geometry-20260912, surface/strip-raster-qualified-20260912, surface/warm-update-20260921"
+    },
+    {
+      "name": "codex/selected-evidence-20260921",
+      "sha": "f7b3a5ee08421b128d21cce25656c35ff96b19eb",
+      "behind": 443,
+      "unique": 29,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "dataset/exact-companions-20260924",
+      "sha": "5d95334d2957a874cfda0449f0a67506a14c5507",
+      "behind": 443,
+      "unique": 42,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "design-hardening",
+      "sha": "97c7ff16ff24739a147fd43d7a5477d1024071ea",
+      "behind": 446,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "estimates/response-action-evidence-v1",
+      "sha": "aef31a29c238079de9050fb5fb68643291c3af15",
+      "behind": 277,
+      "unique": 65,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "extract-multivar",
+      "sha": "373e5b5b758efb3deef2c63e1b9f0f7fbf3748a4",
+      "behind": 463,
+      "unique": 1,
+      "disposition": "superseded",
+      "reason": "Current build/module map consumes standalone multivar; obsolete extraction snapshot retained."
+    },
+    {
+      "name": "extract-multivar-current",
+      "sha": "bb02026e09747e7de8d7762ace42a7b8cda18a9e",
+      "behind": 461,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fit/estimate-description-policy-20260914",
+      "sha": "51035bd324d4a279700d88a090fcc549cac12b1a",
+      "behind": 443,
+      "unique": 29,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "fix/atlas-int8-followup-20261004",
+      "sha": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "behind": 123,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/c0-ulp-stationarity-20261004",
+      "sha": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "behind": 3,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/fit-replay-review-20261004",
+      "sha": "10d59c82d9b0a597a3eb71538b60f6c03302c911",
+      "behind": 115,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/jdk17-api-20261004",
+      "sha": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "behind": 123,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/jdk17-api-guard-20261004",
+      "sha": "780661c51b91eb25f01563108b2e675baed836a6",
+      "behind": 121,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/laws-chunk-ar-determinism-20261003",
+      "sha": "7ed4876c1aef51f6f3fc29e6eef9bc9aa606ee21",
+      "behind": 125,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-authoring-seam-20261004",
+      "sha": "e275bffc56c38f1d3536da7198cf18cf9af9f325",
+      "behind": 113,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-studio-diag",
+      "sha": "cbab2ee20a21916f10b2a5ac200f1efae557afd1",
+      "behind": 174,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-studio-formula",
+      "sha": "dcf66cea7d2c5fa5a6f27f2873c2648af59936dd",
+      "behind": 174,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-studio-r2-guards",
+      "sha": "6b3ebffd359a543f343f82851961db33b6d20c4d",
+      "behind": 163,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-studio-r2-response",
+      "sha": "37a0ca07c9e0b08bf34c67bd8e2d39f0b977a255",
+      "behind": 163,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-studio-response",
+      "sha": "6c16a10440761ebbb6b458f427b9bd4308c6a5c9",
+      "behind": 174,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/model-studio-trials",
+      "sha": "ad870cc4af37fa8895740dc61e290ab514d0a937",
+      "behind": 174,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "fix/pr19-ci-20261004",
+      "sha": "29a76fdeb62b289ab95ecb6763edc3e26583e071",
+      "behind": 14,
+      "unique": 2,
+      "disposition": "superseded",
+      "reason": "Current main contains formatting updates and equivalent ten-minute parallel-test deadline; preserve original branch."
+    },
+    {
+      "name": "fix/sbt-warm-20261004",
+      "sha": "ce2c6d803499942f94e79f8115e2eb0d798b47ff",
+      "behind": 118,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "group/bootstrap-harness-20260930",
+      "sha": "b06c4b1e91212563d5b7d68e020ffdebea42b619",
+      "behind": 261,
+      "unique": 15,
+      "disposition": "research-retained",
+      "reason": "Test-only research protocol; all three scientific candidates Decline under frozen confirmation rule."
+    },
+    {
+      "name": "group/bootstrap-timing-probe-20260930",
+      "sha": "d3bbc43dae37b714ed01fad67c864076a0096f1c",
+      "behind": 261,
+      "unique": 1,
+      "disposition": "research-retained",
+      "reason": "Contained by research harness; timing experiments are separate from production admission."
+    },
+    {
+      "name": "integrate/fir-reviewed-20261003",
+      "sha": "8f967b619c9648d1d7e0587838ce18976912b8c0",
+      "behind": 163,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "integration/engine-parity-20260930",
+      "sha": "aa2af56253cac8c2a5f31bc6ed22ae11e82fb1be",
+      "behind": 218,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "integration/gifti-main-20260909",
+      "sha": "a2d6f95f2a7703b015c156262699138db1d8b70c",
+      "behind": 393,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "integration/main-catchup-20260923",
+      "sha": "206243b37adff1ab3dc67f7ee4dda44a9d42e547",
+      "behind": 341,
+      "unique": 39,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "integration/main-design-hardening",
+      "sha": "cc86e6c95e7b8632400466b59457587945f58b2b",
+      "behind": 401,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "integration/merge-local-main-20261003",
+      "sha": "7ff8e6096c7fba7467c4740ad8ced3f948550842",
+      "behind": 134,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "integration/mvpa-on-exact-spatial",
+      "sha": "81a0408d91f3a8471e7136c11261eb21a234e493",
+      "behind": 393,
+      "unique": 2,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "integration/scalajs-gifti-main",
+      "sha": "3b7daa8f88c9a1deb7e3182757bc55cf735c8a02",
+      "behind": 411,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/evidence-contract-and-ties-20261001",
+      "sha": "adaac06a095a8cdfd0b297b58caff879c4bee032",
+      "behind": 211,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/fslr-pointwise-20261002",
+      "sha": "2179acea5aa233451fdfc9ea2fa03697ed20d402",
+      "behind": 181,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/phrf-prereqs-20261003",
+      "sha": "36240e396de9906a11fd31e6aa7a151f9162d017",
+      "behind": 134,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/sbt-warm-20261001",
+      "sha": "73f9a7cf86a3e752cb2fdedf801635bc41d18085",
+      "behind": 222,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/sphere-timeout-20261003",
+      "sha": "34b707b298e5305a9a1bc186d7e706b91de27247",
+      "behind": 179,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/umvpa-20261001",
+      "sha": "43a6525ae4f1009f7c61babaa1b0375f745ffb39",
+      "behind": 190,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/umvpa-20261003",
+      "sha": "03085d1083ae15ca2854bb10fce8ea8ab5f765c1",
+      "behind": 98,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "land/umvpa-wave2-20261003",
+      "sha": "4bf21ab5de37b01efccc0cff70db0e00026b7a4c",
+      "behind": 153,
+      "unique": 1,
+      "disposition": "merge-only-history",
+      "reason": "No unmatched non-merge commits; production differences from newer main are retained historical dependency pins."
+    },
+    {
+      "name": "linked-roots/compiler-20260921",
+      "sha": "85d2060a2d0cdb93f0bb1c64452281c3f14ca026",
+      "behind": 443,
+      "unique": 35,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): dataset/exact-companions-20260924, linked-roots/final-20260921"
+    },
+    {
+      "name": "linked-roots/final-20260921",
+      "sha": "8c186832f38704ee8d1f7b188895e76c0ab40cfb",
+      "behind": 443,
+      "unique": 39,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): dataset/exact-companions-20260924"
+    },
+    {
+      "name": "linked-roots/scalafim-20260921",
+      "sha": "38cf957df56f2639a8945eb51e5c96e46527871b",
+      "behind": 354,
+      "unique": 1,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "linked-roots/scalafim-pinned-20260921",
+      "sha": "535977a86270bd3cc5c033eda165a0370870dd22",
+      "behind": 443,
+      "unique": 28,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): atlas/nearest-boundary-20260912, c5/compatible-layer-transaction-20260921, codex/selected-evidence-20260921, dataset/exact-companions-20260924, fit/estimate-description-policy-20260914, linked-roots/compiler-20260921, linked-roots/final-20260921, surface/group-fslr-qualification-20260923, surface/metal-admission-20260912, surface/strip-raster-qualified-20260912, surface/warm-update-20260921"
+    },
+    {
+      "name": "main",
+      "sha": "92033261fd82eb003b556c2b4a7af2c87551996d",
+      "behind": 0,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "motion/relative-huber-20260930",
+      "sha": "1ec266a007bc97c6ef260c547d656875168d82da",
+      "behind": 258,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "motion/scale-invariant-solve-20260930",
+      "sha": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+      "behind": 261,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "neuropublish/lifecycle-dispose",
+      "sha": "ac545e651f5c92bf5113b84945aa74f4a000abe8",
+      "behind": 454,
+      "unique": 2,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "neuropublish/lifecycle-dispose-on-97c7ff1",
+      "sha": "2a64eba2e21ce6510d6bf9cf4eaeb3a71e6bba6e",
+      "behind": 446,
+      "unique": 2,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): codex/neuropublish-clear-compat-20260824"
+    },
+    {
+      "name": "p309-noreadme",
+      "sha": "2826539c0a9f2293ec7196de9ff95c63bb2ae8c8",
+      "behind": 313,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "p7-nodoc",
+      "sha": "91838227c07d0e7a90f4b6e3fedd3e16a43ec408",
+      "behind": 315,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "p801-noreadme",
+      "sha": "3a0b5ab9218e371a641d97a01790656d187fa716",
+      "behind": 310,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "perf/build-throughput-20261001",
+      "sha": "debdf34b821e6bf34103dc596dc815f55509b541",
+      "behind": 196,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "preserve/dirty-provenance-20261004",
+      "sha": "df539b6b7dd818a2b8330592e32f94c46c8937bf",
+      "behind": 139,
+      "unique": 2,
+      "disposition": "superseded-snapshot",
+      "reason": "The clean reviewed provenance c114cc3b is integrated; snapshot also contains unrelated build hunks."
+    },
+    {
+      "name": "reconcile/origin-main-20261004",
+      "sha": "b8e83fc42a851f19b65c2895c2652487913d039d",
+      "behind": 14,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "recovery/javafx-affine-atlas-20260909",
+      "sha": "066be6c11960de26a8825811f12241af6e5120a1",
+      "behind": 443,
+      "unique": 15,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): atlas/nearest-boundary-20260912, c5/compatible-layer-transaction-20260921, codex/selected-evidence-20260921, dataset/exact-companions-20260924, fit/estimate-description-policy-20260914, linked-roots/compiler-20260921, linked-roots/final-20260921, linked-roots/scalafim-pinned-20260921, spike/face-texel, spike/lut-encoding, spike/raster-figures, surface/group-fslr-qualification-20260923, surface/metal-admission-20260912, surface/paired-responsive-20260910, surface/scene-geometry-20260912, surface/strip-raster-qualified-20260912, surface/warm-update-20260921"
+    },
+    {
+      "name": "rehearsal/approved-slices-20261001",
+      "sha": "19d7c800f840f89a546f56fa463ce73b2a97dfcc",
+      "behind": 200,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "release/locus4s-0.1-consumer",
+      "sha": "1328f6eea2d5374aefd8b52574203e0d3599686c",
+      "behind": 404,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "review/c2-provenance-v2-20261004",
+      "sha": "c114cc3b556e6b70d9c651baef1d15dd1fa919d0",
+      "behind": 3,
+      "unique": 4,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "review/c4-voxel-status-lookup-20261004",
+      "sha": "3ddc8693102bc9d1541286e10e4b9aa4c47081e3",
+      "behind": 104,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "review/c5-hrf-complete-bspline-20261004",
+      "sha": "54d4528e30faf2c196c79040b91b26b7c88220e9",
+      "behind": 108,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "review/c7-viewer-leftovers-20261004",
+      "sha": "7e1f989f0b1894c8161ec65e34e73eb1ef918ad8",
+      "behind": 130,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "review/c8-locus-aggregation-removal-20261004",
+      "sha": "3f261adde7fb716cb997e290516fa49379121c81",
+      "behind": 8,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "review/phrf-tangent-original-20261001",
+      "sha": "8afdd4a13976ddeba37871edb17691cbca7c5bd9",
+      "behind": 277,
+      "unique": 75,
+      "disposition": "selectively-integrated",
+      "reason": "PHRF prerequisites and repaired current runtime landed through 06ecaac9; preserve original alternate lineage."
+    },
+    {
+      "name": "spike/face-texel",
+      "sha": "73775e299a75263a786f80ececd80d8cb3911436",
+      "behind": 443,
+      "unique": 23,
+      "disposition": "experiment-retained",
+      "reason": "Experimental native/raster runtime lineage; no automatic product admission or dependency change."
+    },
+    {
+      "name": "spike/lut-encoding",
+      "sha": "d7b0293bc461fe2bbe0aed6c40552cb46a2cc33c",
+      "behind": 443,
+      "unique": 20,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): spike/face-texel"
+    },
+    {
+      "name": "spike/raster-figures",
+      "sha": "a89b2994adeb10293b434bd6680338d7bdc2b4be",
+      "behind": 443,
+      "unique": 21,
+      "disposition": "experiment-retained",
+      "reason": "Experimental native/raster runtime lineage; no automatic product admission or dependency change."
+    },
+    {
+      "name": "surface/cpu-tie-regressions-20260930",
+      "sha": "d462806e8c223029fe1572834f5ad4a994cc1ab8",
+      "behind": 213,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "surface/engine-parity-20260930",
+      "sha": "9ba0f367a5156c679b9b7c00504c08217c49e099",
+      "behind": 257,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "surface/fslr-court-20260924",
+      "sha": "1f269edf91c2a6688e20632fcb2b379d37ce6f6d",
+      "behind": 341,
+      "unique": 36,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): integration/main-catchup-20260923"
+    },
+    {
+      "name": "surface/group-fslr-qualification-20260923",
+      "sha": "d741dff3e5084cdbe681a8749ae8f662036f14a0",
+      "behind": 443,
+      "unique": 35,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "surface/inflated-smoothing-20260922",
+      "sha": "81c34fb38e616643a1cb603a0e06512f87097cd2",
+      "behind": 443,
+      "unique": 11,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): codex/mesh4s-surfaces"
+    },
+    {
+      "name": "surface/metal-admission-20260912",
+      "sha": "2216d7eb62603409bf414cb819b7056997e050c7",
+      "behind": 443,
+      "unique": 30,
+      "disposition": "experiment-retained",
+      "reason": "Experimental native/raster runtime lineage; no automatic product admission or dependency change."
+    },
+    {
+      "name": "surface/paired-responsive-20260910",
+      "sha": "a3ee73b3be2da9eb00240e6b95eb652d733d7ca2",
+      "behind": 443,
+      "unique": 19,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): atlas/nearest-boundary-20260912, c5/compatible-layer-transaction-20260921, codex/selected-evidence-20260921, dataset/exact-companions-20260924, fit/estimate-description-policy-20260914, linked-roots/compiler-20260921, linked-roots/final-20260921, linked-roots/scalafim-pinned-20260921, spike/face-texel, spike/lut-encoding, spike/raster-figures, surface/group-fslr-qualification-20260923, surface/metal-admission-20260912, surface/scene-geometry-20260912, surface/strip-raster-qualified-20260912, surface/warm-update-20260921"
+    },
+    {
+      "name": "surface/sampling-tally-20260930",
+      "sha": "fa2193ab07251161bd4f97b02fb8fa4579f266a9",
+      "behind": 263,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "surface/scene-geometry-20260912",
+      "sha": "4d00cc0db589516a1683c0cce28dae7235ec29cc",
+      "behind": 443,
+      "unique": 21,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): atlas/nearest-boundary-20260912, c5/compatible-layer-transaction-20260921, codex/selected-evidence-20260921, dataset/exact-companions-20260924, fit/estimate-description-policy-20260914, linked-roots/compiler-20260921, linked-roots/final-20260921, linked-roots/scalafim-pinned-20260921, surface/group-fslr-qualification-20260923, surface/metal-admission-20260912, surface/strip-raster-qualified-20260912, surface/warm-update-20260921"
+    },
+    {
+      "name": "surface/strip-raster-20260912",
+      "sha": "e071e83b3a23bc6f304b1e72625d6281d9cfc9ba",
+      "behind": 368,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "surface/strip-raster-qualified-20260912",
+      "sha": "452acac8e0e816fc40a32f495de71aeeda1f5002",
+      "behind": 443,
+      "unique": 30,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "surface/very-inflated-20260930",
+      "sha": "c0443d4ac38327c6418a363477f89e7824aa54ea",
+      "behind": 259,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "surface/warm-update-20260921",
+      "sha": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+      "behind": 443,
+      "unique": 33,
+      "disposition": "contained-by-retained",
+      "reason": "Exact tip is reachable from retained branch(es): surface/group-fslr-qualification-20260923"
+    },
+    {
+      "name": "threshold/decision-scale-20260930",
+      "sha": "20e17d7e4643e990b384a9b523b05955d7187c36",
+      "behind": 273,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "threshold/hierscan-alignment-20260930",
+      "sha": "2f45e8bad7afdcde8cd8f7f88bcb867c1c195f1d",
+      "behind": 266,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "threshold/null-calibration-20260930",
+      "sha": "aa011329434f82bbc388a7db9a71857c3b3be093",
+      "behind": 270,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "threshold/null-reference-20260930",
+      "sha": "6c3cb4fbf1c0881460d94239f2adee037cc49d4e",
+      "behind": 275,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "threshold/pside-df-20260930",
+      "sha": "2ce87f4e60955a93d952e0e4b4de112a47b98348",
+      "behind": 259,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "threshold/unused-surface-20260930",
+      "sha": "d9c08120de34eb5effff1488930313c3fd3bfc42",
+      "behind": 265,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "umvpa/canonical-alder-admission-20260930",
+      "sha": "22eafac801f781b2501e9e2c5241c5027a613cb0",
+      "behind": 345,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "umvpa/foundation-20260929",
+      "sha": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+      "behind": 363,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "umvpa/frontier-core-20260930",
+      "sha": "e298315304ee2fd44a3bd5516f0b21c648601b3e",
+      "behind": 362,
+      "unique": 1,
+      "disposition": "evidence-retained",
+      "reason": "Novel paths are historical qualification receipts and bundles; production source blobs are already represented."
+    },
+    {
+      "name": "umvpa/frontier-local-alder-20260930",
+      "sha": "723268a8516518801e9c98c9ac9f354551c36532",
+      "behind": 360,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "umvpa/queries-core-20260930",
+      "sha": "ca97a00cc9012fc86cd49ccdc0c5e195fbfd1283",
+      "behind": 362,
+      "unique": 4,
+      "disposition": "evidence-retained",
+      "reason": "Novel paths are historical qualification receipts/bundles; two code patches equivalent, other production blobs represented in history."
+    },
+    {
+      "name": "umvpa/queries-read-policy-20260930",
+      "sha": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+      "behind": 354,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "wip/atlas-typed-20261004",
+      "sha": "7b32f6e02d5de1f2e59f95eacc5054aff174f7bc",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "integration-deferred",
+      "reason": "Preserved typed-atlas cluster; requires current JVM/JS, atlas workflows, examples and spatial consumer integration."
+    },
+    {
+      "name": "wip/core-triage-docs-20261004",
+      "sha": "6dcd94e2947f9477fad7a03ef7cf5124fb1b64db",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "snapshot-retained",
+      "reason": "Old planning/NEWS snapshot; land statements only with their implemented clusters."
+    },
+    {
+      "name": "wip/gifti-float64-placement-20261004",
+      "sha": "8242a97e6dcf0113918b29280f1e758a46abe0df",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "integration-deferred",
+      "reason": "Reconcile with current GiftiCoordinateDeclaration/DeclaredGiftiSurface before landing; no current integration qualification."
+    },
+    {
+      "name": "wip/hrf-complete-bspline-20261004",
+      "sha": "c5d6b0553d91b3781adedba8d519c2adc1528187",
+      "behind": 138,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "wip/junk-agent-work-20261004",
+      "sha": "984ae76a2bb444a8c0a37ab5e72ec0e984013950",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "snapshot-retained",
+      "reason": "Historical agent scratch/evidence; preserved, not shipped as production code."
+    },
+    {
+      "name": "wip/locus-aggregation-removal-20261004",
+      "sha": "fce38df81585b2c631e23b0c724570f711546712",
+      "behind": 138,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "wip/misc-docs-20261004",
+      "sha": "26bac2eff8dd18ad6efae50fd496fb77b93d7d84",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "snapshot-retained",
+      "reason": "Includes unrelated bibliography and old planning note; retained outside main."
+    },
+    {
+      "name": "wip/model-authoring-seam-review-20261004",
+      "sha": "97445bde103710803dc4f1f6a0bb8be68b35117e",
+      "behind": 138,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "wip/rrg-main-port-20261004",
+      "sha": "a9dd09cb757cd90ca6c12cd2355fd402cf30c2c7",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "integration-deferred",
+      "reason": "Prior source triage identifies mixed-era partial port; use qualified calibration branch as source, not this snapshot."
+    },
+    {
+      "name": "wip/umvpa-evidence-20261004",
+      "sha": "507e8f0fcdc8935ca7d0f4a373844791b35d9003",
+      "behind": 139,
+      "unique": 1,
+      "disposition": "evidence-retained",
+      "reason": "Unique UMVPA source/evidence snapshot; preserve without turning historical receipts into current claims."
+    },
+    {
+      "name": "wip/viewer-leftovers-20261004",
+      "sha": "5675d776ec86532779955d612d5cd21e467ddfe5",
+      "behind": 138,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "wip/voxel-status-lookup-20261004",
+      "sha": "6a08e8f288263a6c9013871ebfd58a032ca3e44a",
+      "behind": 138,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/cascade-overlap-20260930",
+      "sha": "8b274c049bf60e7dff9271e70a710e873384b2f1",
+      "behind": 260,
+      "unique": 2,
+      "disposition": "selectively-integrated",
+      "reason": "Exact qualified Cascade34 implementation, fixtures and generator included; overlap consumer and provider-pin experiment retained separately."
+    },
+    {
+      "name": "work/fslr-lattice-inverse-20261001",
+      "sha": "58e8792c7db18435e4dac840ff9bf610497a1fa4",
+      "behind": 181,
+      "unique": 2,
+      "disposition": "patch-equivalent",
+      "reason": "Both commits match patches already in main; B4 qualification refusal remains."
+    },
+    {
+      "name": "work/fslr-reconcile-20261001",
+      "sha": "c603045413faef00ebb0b55b1decca5b3b55de6c",
+      "behind": 181,
+      "unique": 1,
+      "disposition": "patch-equivalent",
+      "reason": "Its only unique commit matches a patch already in main."
+    },
+    {
+      "name": "work/model-studio-20261002",
+      "sha": "b6612f915e5882097fbf60ec05593129ee01de6d",
+      "behind": 140,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/mote-queue-20261004",
+      "sha": "9b29fcd303879c31d0e4cf0d2984c95730f19411",
+      "behind": 3,
+      "unique": 6,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/numerical-ownership-20261003",
+      "sha": "8f5ac7c241fdfe114b3764fa7a4a0cb2164ea789",
+      "behind": 168,
+      "unique": 6,
+      "disposition": "dependency-blocked",
+      "reason": "Profile Cholesky changes require unpublished Gale override; S0 baseline is evidence, not S4/S5 admission."
+    },
+    {
+      "name": "work/phrf-land-20261001",
+      "sha": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "behind": 178,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/umvpa-component-20261003",
+      "sha": "785726b93609fd41c37411f211ea6dd543772772",
+      "behind": 96,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/umvpa-finish-20261001",
+      "sha": "9874069cad54953fc7c51432467d16bcb6e0d90a",
+      "behind": 161,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/umvpa-five-20261001",
+      "sha": "48453314884f0109c03721fa4ffcab5412a1ccdd",
+      "behind": 189,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "work/voxelwise-rrg-calibration",
+      "sha": "98280dd4ae4dfc495009a53176881ab355ad3f82",
+      "behind": 277,
+      "unique": 3,
+      "disposition": "integration-deferred",
+      "reason": "Qualified isolated algorithm/calibration; re-port onto current fit contracts and adjudicate legacy result exports before landing."
+    },
+    {
+      "name": "work/voxelwise-rrg-qualified",
+      "sha": "8a18961a059be5b0339cefb51fd4d86958f83e00",
+      "behind": 277,
+      "unique": 2,
+      "disposition": "contained-by-retained",
+      "reason": "Superseded by work/voxelwise-rrg-calibration; preserve original qualification lineage."
+    },
+    {
+      "name": "worktree-agent-a00495fc01ee55aa8",
+      "sha": "0f7867fecd4bba694f870ee9077ed3b17bf4cb85",
+      "behind": 318,
+      "unique": 3,
+      "disposition": "source-represented",
+      "reason": "Every changed source blob matches candidate baseline or occurs in main history; original ref retained."
+    },
+    {
+      "name": "worktree-agent-a2bfa629d70a591aa",
+      "sha": "c14b7be8866d0c555ddb7014d52aedc7d4497150",
+      "behind": 302,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "worktree-agent-a31ceb204dea3849c",
+      "sha": "2bef587801a02ed1c035ba0b5067970803c78cde",
+      "behind": 284,
+      "unique": 3,
+      "disposition": "source-represented",
+      "reason": "Every changed source blob matches candidate baseline or occurs in main history; original ref retained."
+    },
+    {
+      "name": "worktree-agent-a3ebf3564cf9328f3",
+      "sha": "0282f0aa3d1b16e4313fcecdeb2f8a03e66fae9b",
+      "behind": 280,
+      "unique": 3,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "worktree-agent-a636d459f88b36020",
+      "sha": "47e56b8c2708f23d0d3fc46ea4fc7525535f7a7d",
+      "behind": 348,
+      "unique": 2,
+      "disposition": "patch-equivalent",
+      "reason": "All non-merge branch patches are present in candidate; original ref retained."
+    },
+    {
+      "name": "worktree-agent-a6658a6b86e45ec2b",
+      "sha": "5218910096c925d2131ce6578e584f242ca08cb0",
+      "behind": 314,
+      "unique": 1,
+      "disposition": "source-represented",
+      "reason": "Every changed source blob matches candidate baseline or occurs in main history; original ref retained."
+    },
+    {
+      "name": "worktree-agent-a6daa1f0970060d9c",
+      "sha": "8be020efd3d49aba1d1ac4a07356781a43f67f8e",
+      "behind": 284,
+      "unique": 2,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    },
+    {
+      "name": "worktree-agent-a8fd1e83f56eecc94",
+      "sha": "434513d0cbd81035af68f8b4fbc999ba58cdb9ed",
+      "behind": 284,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "worktree-agent-a924a9dd3f3c2393e",
+      "sha": "fa57e6f135bbe06770bae57ebcb084478ea741b6",
+      "behind": 287,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "worktree-agent-ab13a92291e044c52",
+      "sha": "70c3552712ed61f2c81c7484443e64bdae997121",
+      "behind": 331,
+      "unique": 3,
+      "disposition": "patch-equivalent",
+      "reason": "All non-merge branch patches are present in candidate; original ref retained."
+    },
+    {
+      "name": "worktree-agent-ac664c1c0f1706610",
+      "sha": "51ab59630070bcc8ce61fcb8727b8148427cbb78",
+      "behind": 299,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "worktree-agent-ad0c7c091a97bb400",
+      "sha": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+      "behind": 277,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "worktree-agent-ae486c0ea1fa541a0",
+      "sha": "3c6eca8878a5f4a94bda293ce02cc1ef96be205f",
+      "behind": 290,
+      "unique": 0,
+      "disposition": "integrated-ancestor",
+      "reason": "Exact branch tip is an ancestor of the tested consolidation candidate."
+    },
+    {
+      "name": "worktree-agent-af1cb90d240e6706e",
+      "sha": "e1d8f3ce88f3891cfce1f29887fa2bf844e73d22",
+      "behind": 314,
+      "unique": 2,
+      "disposition": "unqualified-for-current-main",
+      "reason": "Retained distinct historical/alternative lineage; source comparison alone is not current landing qualification. Preserve; no blanket merge."
+    }
+  ]
+}

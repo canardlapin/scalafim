@@ -475,6 +475,9 @@ already a type-level `X × T`.
 
 ### 5.7 Fiberwise aggregation
 
+> Superseded (2026-10-04): `foldMapBy` moved to `locus4s.data.Aggregation`;
+> the `locus-data` `scalafim.locus.Aggregation` / Cats Kernel API is removed.
+
 Generic aggregation belongs in `locus-data`:
 
 ```scala
@@ -529,6 +532,8 @@ locus-laws
 `locus-kernel` has no internal or external production dependencies.
 `locus-data` depends only on `locus-kernel` internally and Cats Kernel
 externally. `locus-laws` depends on both locus artifacts and test libraries.
+(Superseded 2026-10-04: aggregation moved to `locus4s.data.Aggregation`, and
+`locus-data` no longer depends on Cats Kernel.)
 
 Modules whose public APIs mention a locus type declare a direct dependency;
 they do not rely only on a transitive edge.
@@ -627,7 +632,7 @@ update it if new overlapping types appear before their phase begins.
 | `surface.ParcelUnit` | A topology-aware parcel or connected fragment | Retain as geometry output. A disconnected parcellation fiber remains valid; fragmentation policy is not a core quotient invariant. |
 | `atlas.Region` and `RegionIndex` | Parcel metadata and lookup | Rename to `AtlasRegionMetadata` and `ParcelMetadataIndex` or equivalent. Provide deprecated aliases during migration. Never use them for extensional equality. |
 | `atlas.VolumeAtlas` and `SurfaceAtlas` | Atlas identity, metadata, provenance, and concrete label payload | Retain as neuroimaging wrappers over typed parcellations. |
-| `atlas.AtlasReduce` | Per-parcel reductions with temporary allocations | Rebase on one-pass `foldMapBy`; preserve reducer convenience through explicit missing-value policies. |
+| `atlas.AtlasReduce` | Per-parcel reductions with temporary allocations | Rebase on one-pass `foldMapBy`; preserve reducer convenience through explicit missing-value policies. (Superseded 2026-10-04: `foldMapBy` is now `locus4s.data.Aggregation`; the `locus-data` / Cats Kernel API is removed.) |
 | `atlas.AtlasOverlap` | Pairwise overlap with optional implicit nearest resampling | Remove the Boolean resample switch from the new API. Require same-space evidence or an explicit alignment plan and receipt. |
 | `atlas.RegionGraph` | Weighted parcel contact scan and graph construction | Keep the optimized contact-count scan. Differentially test its Boolean support against quotient-relation composition after removing self edges. |
 | `spatial.Domain` and `SamplingGeometry` | Runtime semantic domain, sampled geometry, masks, and hybrid parts | Retain. Every finite sampled domain exposes a locus space package. Surface compatibility must use topology identity, not vertex count alone. |
@@ -770,7 +775,8 @@ Add `locus-data` with:
 - partition equality up to relabeling;
 - surjective coarsening and network composition;
 - `Searchlight[S]` and centered evidence;
-- one-pass `foldMapBy`;
+- one-pass `foldMapBy` (superseded 2026-10-04: moved to
+  `locus4s.data.Aggregation`; the `locus-data` / Cats Kernel API is removed);
 - exact and tolerant aggregation test policies.
 
 The first release includes common refinement if it can be implemented through

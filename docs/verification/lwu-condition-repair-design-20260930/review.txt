@@ -1,0 +1,21 @@
+Independent mathematical review: /root/lwu_repair_review (lean_expert)
+Verdict: ACCEPT -- design handoff only; no required corrections.
+Report SHA256: 910b5db2c9ffac904bf83b352474258cae4083d85d00609793536f70b90c7ec9
+Payload-index SHA256: 522dd01fbcfbec9d793a69318570f4adf7fee57cd1d2099ff1dd7d563a6e51fd
+All 61 indexed payload hashes match.
+
+The report correctly distinguishes the proven clipping defect, rounded-design
+versus smooth-objective energy changes, and boundary inference. The tangent
+projection rationale and exact LS difference identity are sound under their
+stated assumptions. Numerical counts and final receipt results match the
+artifacts; the earlier helper concerns are corrected or explicitly scoped.
+
+This verdict does not approve a production energy comparator, boundary admission,
+or qualification. Paired-change error bounds, genuine-increase controls,
+independent Hessian checks, JVM/JS implementation tests, and fresh qualification
+remain outstanding as stated.
+
+Parent verification: production modules/build unchanged vs checkout base;
+canonical local author/account verified; 300 Java schedule words match Python;
+six final raw-log execution receipts exit0; all 11,695 frozen classpath file hashes
+verified. No sbt run or production feature claim in this documentation phase.

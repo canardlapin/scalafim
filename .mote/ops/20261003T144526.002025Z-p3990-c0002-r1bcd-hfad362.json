@@ -1,0 +1,1 @@
+{"actor":"umvpa-finish-20261001","entity":"bd-01M2BMGRP4MSM0RRRKNTHM0H4K","kind":"note","note_kind":"progress","op":"20261003T144526.002025Z-p3990-c0002-r1bcd-hfad362","text":"Repair hosted JDK17 Thread.threadId test compilation failures using the existing current-thread allocation counter API; preserve measurement semantics.","ts":"2026-10-03T14:45:26.002025Z","v":1}

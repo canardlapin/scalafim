@@ -176,22 +176,26 @@ object AnalysisProvenance:
               .map(VoxelFitStatusRecord.apply)
           case runwise: RunwiseFmriFitResult =>
             runwise.voxelIndices.zipWithIndex.map { case (voxelIndex, position) =>
-              val statuses = runwise.runs.map(_.resolvedVoxelStatuses(position))
-              VoxelFitStatusRecord(voxelIndex, VoxelFitStatus.aggregate(statuses))
+              VoxelFitStatusRecord(voxelIndex, runwiseStatus(runwise, position))
             }
           case fixed: FixedEffectsFmriFitResult =>
             fixed.voxelIndices.map(VoxelFitStatusRecord(_, VoxelFitStatus.Estimable))
           case patterned: PatternedFmriFitResult =>
-            patterned.voxelIndices.map { voxelIndex =>
-              val status = patterned.resultForVoxel(voxelIndex) match
-                case Some(dense: DenseFmriFitResult) =>
-                  dense.voxelStatus(voxelIndex).getOrElse(VoxelFitStatus.Estimable)
-                case Some(runwise: RunwiseFmriFitResult) =>
-                  val position = runwise.voxelIndices.indexOf(voxelIndex)
-                  VoxelFitStatus.aggregate(runwise.runs.map(_.resolvedVoxelStatuses(position)))
-                case _ => VoxelFitStatus.Estimable
-              VoxelFitStatusRecord(voxelIndex, status)
-            }
+            // Child voxel axes are disjoint and cover the outer axis. Index
+            // them once so export retains outer order without rescanning the
+            // child axes or expanding default statuses for each lookup.
+            val statuses = scala.collection.mutable.HashMap.empty[Int, VoxelFitStatus]
+            patterned.patternResults.foreach: child =>
+              child.result.voxelIndices.zipWithIndex.foreach: (voxelIndex, position) =>
+                val status = child.result match
+                  case dense: DenseFmriFitResult =>
+                    dense.voxelStatuses.fold(VoxelFitStatus.Estimable)(_(position))
+                  case runwise: RunwiseFmriFitResult =>
+                    runwiseStatus(runwise, position)
+                  case _ => VoxelFitStatus.Estimable
+                statuses.update(voxelIndex, status)
+            patterned.voxelIndices.map: voxelIndex =>
+              VoxelFitStatusRecord(voxelIndex, statuses(voxelIndex))
           case _: LssFmriFitResult =>
             Vector.empty
       val records = retained ++ result.fitExclusions.map(_.statusRecord)
@@ -208,6 +212,11 @@ object AnalysisProvenance:
       responsePreparation = result.preparationProvenance,
       rankReports = rankReports,
       voxelStatuses = voxelStatuses
+    )
+
+  private def runwiseStatus(result: RunwiseFmriFitResult, position: Int): VoxelFitStatus =
+    VoxelFitStatus.aggregate(
+      result.runs.map(_.voxelStatuses.fold(VoxelFitStatus.Estimable)(_(position)))
     )
 
 final case class StatMap private (

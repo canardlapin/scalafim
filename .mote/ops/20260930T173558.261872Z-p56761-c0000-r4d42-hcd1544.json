@@ -1,0 +1,1 @@
+{"actor":"core-workflow-estimates","entity":"bd-01KX6G9B8R86MRBZ9S8K8F5G7V","kind":"reserve_open","mode":"exclusive","op":"20260930T173558.261872Z-p56761-c0000-r4d42-hcd1544","paths":["modules/fmri-workflow/shared","modules/fmri-workflow/jvm","modules/fmri-workflow/README.md"],"reservation_id":"rv-01M3SP6B9N35BAF6R7GYK8JAZX","ts":"2026-09-30T17:35:58.261872Z","ttl_s":3600,"v":2}

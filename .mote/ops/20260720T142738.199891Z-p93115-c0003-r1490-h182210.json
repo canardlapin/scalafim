@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXZWXCDJ6SZ505BYGB5XWDP7","kind":"note","note_kind":"progress","op":"20260720T142738.199891Z-p93115-c0003-r1490-h182210","text":"Unifying synchronous and asynchronous codec runtimes, migrating readers/writer, and adapting NeuroArchive consumers to the new program values.","ts":"2026-07-20T14:27:38.199891Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX94K30NTDE7QME3MF8S2V1Y","kind":"note","note_kind":"progress","op":"20260722T131103.200985Z-p75687-c0003-r7333-h80210d","text":"Replacing fixed npc origins and decrements with a TextMetrics-driven solver plan for legend/colorbar stacks, including typed overflow and mixed-guide tests.","ts":"2026-07-22T13:11:03.200985Z","v":1}

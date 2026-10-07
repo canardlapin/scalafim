@@ -1,0 +1,9 @@
+{
+  "existingEntries": 54,
+  "absentEntries": 1,
+  "filesVerified": 11695,
+  "allHashesMatch": true,
+  "manifestSha256": "3cec3bc8c94c1b9d41bbf1108e8931cdd24282079072ecba4c4e15e696097b74",
+  "absentOriginalClasspathEntry": "modules/first-level-laws/jvm/target/scala-3.7.4/classes (no main source)",
+  "snapshotArchivedInGit": false
+}

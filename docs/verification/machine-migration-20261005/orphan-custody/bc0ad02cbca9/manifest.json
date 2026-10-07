@@ -1,0 +1,58 @@
+{
+  "worktree": "/private/tmp/scalafim-bootstrap-harness-20260930",
+  "original_head": "b06c4b1e91212563d5b7d68e020ffdebea42b619",
+  "admin": "/Users/bbuchsbaum/code/scala/scalafim/.git/worktrees/scalafim-bootstrap-harness-20260930",
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "kind": "symlink",
+      "target": "AGENTS.md"
+    },
+    {
+      "path": "build.sbt",
+      "kind": "file",
+      "bytes": 52153,
+      "sha256": "57d69a18e8c9c7373a48ff8ab3979f4338cb31939330082b2a0a9dc8449b4d58"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala",
+      "kind": "file",
+      "bytes": 53706,
+      "sha256": "656128674a29688dd33292da0e2d1226b426ca39641fe9f59b8620b938a2050b"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala",
+      "kind": "file",
+      "bytes": 36947,
+      "sha256": "bd040155c807098e1422ab4410afcdc7b19bdcb7120095c1f06676f5ef9f1c31"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala",
+      "kind": "file",
+      "bytes": 33723,
+      "sha256": "145f1fa1680ddd4b5c52bad0541c0da179bc74b542386ac7e2489fb25cfee821"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 42181,
+      "sha256": "848442545c4ff32bfa4d7a9fec3ae5924007296ed7822b434c527924b8639401"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 62263,
+      "sha256": "e46c1677697135101e791177c4100941132037b31029486cca0a07120c25f4d1"
+    },
+    {
+      "path": "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "kind": "file",
+      "bytes": 54617,
+      "sha256": "43cae0863055b510be7ef8c47d85a549176abb480718060625b05d2c93040af7"
+    }
+  ],
+  "tracked_present": 8,
+  "tracked_absent": 2091,
+  "archive_sha256": "23ab17e56decc48e195c0a62c744abf723a0afb52839a2067a7b0e291f6f2f7a",
+  "archive_bytes": 57612
+}

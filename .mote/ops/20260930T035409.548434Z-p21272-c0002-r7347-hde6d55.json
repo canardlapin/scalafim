@@ -1,0 +1,1 @@
+{"actor":"exec-trial-executor","entity":"bd-01M26A285YAQ3H8TGS26BK9T7J","kind":"note","note_kind":"progress","op":"20260930T035409.548434Z-p21272-c0002-r7347-hde6d55","text":"Correct owned-pool lifecycle after exact 2c22772e review; deterministic JVM and JS regression gates; no publication or closure.","ts":"2026-09-30T03:54:09.548434Z","v":1}

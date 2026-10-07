@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","kind":"reserve_close","op":"20260930T011719.272704Z-p35405-c0000-r466d-h1a27b5","paths":["modules/design/shared/src/test/scala/scalafim/fmri/design/hrf/KernelBasisDesignSuite.scala"],"reservation_id":"rv-01M3QY5NZZEP55JCGS0VP3QTM4","ts":"2026-09-30T01:17:19.272704Z","v":1}

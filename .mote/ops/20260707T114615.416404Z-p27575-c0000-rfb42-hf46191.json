@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWX6QE4NYEWX7CESR04WFYSB","kind":"note","note_kind":"progress","op":"20260707T114615.416404Z-p27575-c0000-rfb42-hf46191","text":"finished RigidSpline layering over rigid estimate and amended spline commit to c71554a; verified sbt motionJVM/test motionJS/test compileAll","ts":"2026-07-07T11:46:15.416404Z","v":1}

@@ -1,0 +1,330 @@
+{
+  "recorded_at": "2026-10-06T18:01:46.319289+00:00",
+  "scope": "Integrated published provider-pin adoption; fresh default-URI CompileAll and affected consumer JVM/JS courts",
+  "base_commit": "1825d121730920b0ad5bc9c5a9795d4f42bbcf11",
+  "pins": {
+    "galeRevision": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+    "image4sRevision": "20c9515495e43dff9d17bc1283a8ca1d56355c4a",
+    "reframe4sRevision": "292c9bc7e0c026d893a4101560aa9a46e0fbcf04",
+    "locus4sRevision": "a67bc87c33b5da8a5dc2cad49919c015b59f3050"
+  },
+  "build_sbt_sha256": "149f195a387a5edced0d2bbb243b3eaeef9e9b5824b9a954f124560a5d3692f4",
+  "source_overrides": [],
+  "affected_modules": [
+    "locusData",
+    "image",
+    "transform",
+    "spatial",
+    "surface",
+    "motion",
+    "atlas",
+    "mvpaSpatial"
+  ],
+  "gates": {
+    "compile-all": {
+      "commands": [
+        "scalafimCompileAll"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 535.3238899707794,
+      "source_overrides": [],
+      "requested_heap": "4g",
+      "requested_cpus": 2,
+      "templateflow_home": "/private/tmp/scalafim-templateflow-20261006",
+      "jdk": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+      "node": "v24.21.0",
+      "totals": [],
+      "log_sha256": "b5ef66fab9c2fd8d428656555a75ece2d4839fa9f8203f12fc018dd326798874",
+      "compiler_warnings": []
+    },
+    "consumers-jvm": {
+      "commands": [
+        "show atlasJVM / Test / fullClasspath",
+        "show atlasJS / Test / fullClasspath",
+        "locusDataJVM/test",
+        "imageJVM/test",
+        "transformJVM/test",
+        "spatialJVM/test",
+        "surfaceJVM/test",
+        "motionJVM/test",
+        "atlasJVM/test",
+        "mvpaSpatialJVM/test"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 253.55158400535583,
+      "source_overrides": [],
+      "requested_heap": "4g",
+      "requested_cpus": 2,
+      "templateflow_home": "/private/tmp/scalafim-templateflow-20261006",
+      "jdk": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+      "node": "v24.21.0",
+      "totals": [
+        {
+          "total": 26,
+          "failed": 0,
+          "errors": 0,
+          "passed": 26,
+          "skipped": 0
+        },
+        {
+          "total": 385,
+          "failed": 0,
+          "errors": 0,
+          "passed": 385,
+          "skipped": 0
+        },
+        {
+          "total": 177,
+          "failed": 0,
+          "errors": 0,
+          "passed": 177,
+          "skipped": 0
+        },
+        {
+          "total": 227,
+          "failed": 0,
+          "errors": 0,
+          "passed": 227,
+          "skipped": 0
+        },
+        {
+          "total": 280,
+          "failed": 0,
+          "errors": 0,
+          "passed": 268,
+          "skipped": 12
+        },
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 116,
+          "failed": 0,
+          "errors": 0,
+          "passed": 116,
+          "skipped": 0
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20,
+          "skipped": 0
+        }
+      ],
+      "log_sha256": "561ccde83c8df99c576438b72215949e13f07c074e73858797a73000dd5d5acb",
+      "compiler_warnings": []
+    },
+    "consumers-js-a": {
+      "commands": [
+        "locusDataJS/test",
+        "imageJS/test",
+        "transformJS/test"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 108.09237718582153,
+      "source_overrides": [],
+      "requested_heap": "4g",
+      "requested_cpus": 2,
+      "templateflow_home": "/private/tmp/scalafim-templateflow-20261006",
+      "jdk": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+      "node": "v24.21.0",
+      "totals": [
+        {
+          "total": 26,
+          "failed": 0,
+          "errors": 0,
+          "passed": 26,
+          "skipped": 0
+        },
+        {
+          "total": 355,
+          "failed": 0,
+          "errors": 0,
+          "passed": 355,
+          "skipped": 0
+        },
+        {
+          "total": 147,
+          "failed": 0,
+          "errors": 0,
+          "passed": 147,
+          "skipped": 0
+        }
+      ],
+      "log_sha256": "8c179803249b6ababf441bbfa48f9bc062e1603e8c3890a400615227fbb9cbe5",
+      "compiler_warnings": []
+    },
+    "consumers-js-b": {
+      "commands": [
+        "spatialJS/test",
+        "surfaceJS/test",
+        "motionJS/test"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 96.65436911582947,
+      "source_overrides": [],
+      "requested_heap": "4g",
+      "requested_cpus": 2,
+      "templateflow_home": "/private/tmp/scalafim-templateflow-20261006",
+      "jdk": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+      "node": "v24.21.0",
+      "totals": [
+        {
+          "total": 202,
+          "failed": 0,
+          "errors": 0,
+          "passed": 202,
+          "skipped": 0
+        },
+        {
+          "total": 225,
+          "failed": 0,
+          "errors": 0,
+          "passed": 223,
+          "skipped": 2
+        },
+        {
+          "total": 92,
+          "failed": 0,
+          "errors": 0,
+          "passed": 92,
+          "skipped": 0
+        }
+      ],
+      "log_sha256": "c3c5d4ce6e2175677de4ae57e790b71ec8cf99440ca0a7759a3219271e013a73",
+      "compiler_warnings": []
+    },
+    "consumers-js-c": {
+      "commands": [
+        "atlasJS/test",
+        "mvpaSpatialJS/test"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 75.7601490020752,
+      "source_overrides": [],
+      "requested_heap": "4g",
+      "requested_cpus": 2,
+      "templateflow_home": "/private/tmp/scalafim-templateflow-20261006",
+      "jdk": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+      "node": "v24.21.0",
+      "totals": [
+        {
+          "total": 79,
+          "failed": 0,
+          "errors": 0,
+          "passed": 79,
+          "skipped": 0
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20,
+          "skipped": 0
+        }
+      ],
+      "log_sha256": "b166475b161ce9185a28754f771747bb607ee8be658057a14ea9bb82f7601e53",
+      "compiler_warnings": []
+    }
+  },
+  "passing_test_executions": 2468,
+  "declared_skips": 14,
+  "jvm_passed": 1324,
+  "js_passed": 1144,
+  "jvm_external_asset_skips": 12,
+  "js_opt_in_timing_skips": 2,
+  "native_mni_oracle": {
+    "test_count": 8,
+    "passed": 8,
+    "skipped": 0,
+    "cases": [
+      "the committed oracle matches its manifest and pins the inspected composites",
+      "the image evidence backs each composite's measured direction",
+      "the composite pulls MNI152NLin2009cAsym points to MNI152NLin6Asym exactly as ITK TransformPoint does",
+      "resampling 6Asym data onto a 2009c grid samples it through the composite",
+      "installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing",
+      "TemplateFlow's reverse composite is refused with its measured direction",
+      "in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back",
+      "a qualified numerical inverse gives the forward map and an executable reverse route"
+    ],
+    "assets": [
+      {
+        "path": "/private/tmp/scalafim-templateflow-20261006/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5",
+        "sha256": "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe",
+        "bytes": 204735104
+      },
+      {
+        "path": "/private/tmp/scalafim-templateflow-20261006/tpl-MNI152NLin6Asym/tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5",
+        "sha256": "2a19853bc99ebd1d711d230ea4a4dc4db3b9a60f8b50b9181f93b44036dfbd0f",
+        "bytes": 204735104
+      }
+    ]
+  },
+  "native_int8_cases": [
+    "signed INT8 storage and volume reads preserve boundaries and scaling",
+    "stored UInt8 retains one native Ravel owner and explicit affine scaling",
+    "AtlasLabelMaps reads signed INT8 NIfTI labels and rejects negative region ids"
+  ],
+  "classpath_proof": "atlas-classpaths.json retained: exactly one image4s20/locus4sa67/reframe4s292/Ravel9c source root on both JVM and JS test/fullClasspath",
+  "staged_provider_heads": {
+    "image4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/995ff8e011f5a5221e44/image4s",
+      "head": "20c9515495e43dff9d17bc1283a8ca1d56355c4a",
+      "origin": "https://github.com/canardlapin/image4s.git"
+    },
+    "reframe4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/1541cf1125bbd1a3cbc8/reframe4s",
+      "head": "292c9bc7e0c026d893a4101560aa9a46e0fbcf04",
+      "origin": "https://github.com/canardlapin/reframe4s.git"
+    },
+    "locus4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/b51ea69c1c3a30e37df3/locus4s",
+      "head": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "origin": "https://github.com/canardlapin/locus4s.git"
+    }
+  },
+  "source_fingerprints": {
+    "path": "source-fingerprints.json (inside archive)",
+    "sha256": "405986928c55c0d12a56a1f5456da463fde2f50657d769e88b4ad7b57aaae2db",
+    "source_file_count": 1723
+  },
+  "js_batches": [
+    [
+      "locusData",
+      "image",
+      "transform"
+    ],
+    [
+      "spatial",
+      "surface",
+      "motion"
+    ],
+    [
+      "atlas",
+      "mvpaSpatial"
+    ]
+  ],
+  "shutdowns": {
+    "after-compile-shutdown": 0,
+    "after-jvm-shutdown": 0,
+    "after-js-a-shutdown": 0,
+    "after-js-b-shutdown": 0,
+    "after-js-c-shutdown": 0
+  },
+  "archive": {
+    "path": "logs-and-sources.tar.gz",
+    "sha256": "63cf73ad4cfa12120642d97cb11bba0539da634e1bb9bfb695c7029ec9138a66"
+  },
+  "limits": [
+    "These fresh integrated consumer results include Gale54 and committed AR adoption1825d121; historical3206 executions are not reused",
+    "Compiler/test gates ran macOS ARM64 TemurinJDK21.0.12.1+1,Scala3.7.4,sbt1.11.7,Node24.21.0; separate Linux/JDK17/remoteCI gates remain root-owned",
+    "Twelve native surface checks need external assets absent here; two JS timing checks require explicit opt-in; neither is represented as an executed clean Pass",
+    "Native MNI bridge oracle is asset-backed8/8 with preserved scientific grids/tolerances; no broad timing or memory-performance claim",
+    "No ScalaFIM consumer API/code edit or README migration correction was required; agent made no production edits, Mote mutations, commits or publication in this task"
+  ]
+}

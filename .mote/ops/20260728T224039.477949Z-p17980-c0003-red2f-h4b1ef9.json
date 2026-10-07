@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY5Y970A8EADVT816M7JBMF0","kind":"note","note_kind":"progress","op":"20260728T224039.477949Z-p17980-c0003-red2f-h4b1ef9","text":"Reopening after f7ecd01 rollback; restore the already-proven Scala 3.7.4 release line on current main","ts":"2026-07-28T22:40:39.477949Z","v":1}

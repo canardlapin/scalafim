@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","entity":"bd-01M24MQABKEBQXW89VZ8XWBB8H","kind":"reserve_open","mode":"exclusive","op":"20260930T173321.415341Z-p50580-c0000-r663b-hf62874","paths":["build.sbt"],"reservation_id":"rv-01M3SP1J47YHSG79Z29836X6X7","ts":"2026-09-30T17:33:21.415341Z","ttl_s":7200,"v":2}

@@ -1,0 +1,1 @@
+{"actor":"codex-pooled-ar-20261002","entity":"bd-01KX6G9B1ZT10A3214DPA096RZ","kind":"reserve_open","mode":"exclusive","op":"20261002T125030.185541Z-p90296-c0000-r21d6-h1c8ebc","paths":["modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala"],"reservation_id":"rv-01M3YAN2N9N81KGJDTBNYC1AX2","ts":"2026-10-02T12:50:30.185541Z","ttl_s":7200,"v":2}

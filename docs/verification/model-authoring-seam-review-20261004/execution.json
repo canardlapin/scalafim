@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "status": "review complete; execution limited by host semaphore",
+  "completed_at": "2026-10-04T12:19:52.505878+00:00",
+  "environment": {
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "jdk": "Homebrew Java 25.0.1 (first sbt startup log)",
+    "node": "v26.7.0",
+    "scala_js_plugin": "1.22.0",
+    "numpy": "2.4.3",
+    "scipy": "1.17.1"
+  },
+  "qualified_jvm_test_count": 61,
+  "qualified_js_test_count": 0,
+  "runs": [
+    {
+      "schema_version": 1,
+      "started_utc": "2026-10-04T11:43:41.641791+00:00",
+      "finished_utc": "2026-10-04T12:01:37.799322+00:00",
+      "duration_seconds": 1076.197512,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.TemporalDerivativeConventionSuite scalafim.fmri.hrf.ResponseFunctionalSuite",
+        "designJVM/testOnly scalafim.fmri.design.ConvolvedBasisOrthogonalizationSuite scalafim.fmri.design.FormulaResponsePolicySuite scalafim.fmri.design.HrfKernelBasisSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.ConvolvedBasisReadoutSuite scalafim.fmri.fit.StructuralHypothesisDslSuite scalafim.fmri.fit.StructuralHypothesisSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-seam-review-20261004",
+      "log": "/private/tmp/scalafim-seam-evidence-20261004/jvm.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 19422,
+      "purpose": "existing JVM seam suites",
+      "archive": "jvm.log.gz",
+      "raw_log_sha256": "3d07ab0aa8c6c1223c4f8f26cf52cd517b2b290be62b485ea5be198174f8ed31",
+      "archive_sha256": "8ba31372207da2a1be374560381031754199e66ccc0e3d7a567f55815072cfd4"
+    },
+    {
+      "schema_version": 1,
+      "started_utc": "2026-10-04T12:01:56.346112+00:00",
+      "finished_utc": "2026-10-04T12:06:56.534064+00:00",
+      "duration_seconds": 300.192837,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.BasisGeometrySuite scalafim.fmri.hrf.ReviewDiscretizationProbeSuite",
+        "designJVM/testOnly scalafim.fmri.design.SpmInformedDesignColumnSuite scalafim.fmri.design.ReviewBasisNormProbeSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-seam-review-20261004",
+      "log": "/private/tmp/scalafim-seam-evidence-20261004/supplement.log",
+      "exit_code": 124,
+      "child_returncode": -15,
+      "reason": "timeout",
+      "detail": null,
+      "timeout_seconds": 300.0,
+      "log_bytes": 45,
+      "purpose": "first supplemental JVM attempt; timeout waiting for slot, no tests ran",
+      "archive": "supplement.log.gz",
+      "raw_log_sha256": "50e54e86a0b39d79489476fc64404488a1609f6f443c1f362c1d27b4e30a5dd8",
+      "archive_sha256": "c2fc371abc67c65662e492519ee7d4c154ea266fcc0bcf6860eafa59194cd16d"
+    },
+    {
+      "schema_version": 1,
+      "started_utc": "2026-10-04T12:08:32.147608+00:00",
+      "finished_utc": "2026-10-04T12:16:33.908331+00:00",
+      "duration_seconds": 481.762303,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.BasisGeometrySuite scalafim.fmri.hrf.ReviewDiscretizationProbeSuite",
+        "designJVM/testOnly scalafim.fmri.design.SpmInformedDesignColumnSuite scalafim.fmri.design.ReviewBasisNormProbeSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.TemporalDerivativeConventionSuite scalafim.fmri.hrf.BasisGeometrySuite scalafim.fmri.hrf.ReviewDiscretizationProbeSuite",
+        "designJS/testOnly scalafim.fmri.design.ConvolvedBasisOrthogonalizationSuite scalafim.fmri.design.FormulaResponsePolicySuite scalafim.fmri.design.SpmInformedDesignColumnSuite scalafim.fmri.design.ReviewBasisNormProbeSuite",
+        "fitJS/testOnly scalafim.fmri.fit.ConvolvedBasisReadoutSuite scalafim.fmri.fit.StructuralHypothesisDslSuite scalafim.fmri.fit.StructuralHypothesisSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-seam-review-20261004",
+      "log": "/private/tmp/scalafim-seam-evidence-20261004/js.log",
+      "exit_code": 143,
+      "child_returncode": -15,
+      "reason": "signaled",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 45,
+      "purpose": "final supplemental JVM + JS batch; cancelled only owned queued warm process after 481.76s, with no build child started",
+      "archive": "js.log.gz",
+      "raw_log_sha256": "50e54e86a0b39d79489476fc64404488a1609f6f443c1f362c1d27b4e30a5dd8",
+      "archive_sha256": "c2fc371abc67c65662e492519ee7d4c154ea266fcc0bcf6860eafa59194cd16d"
+    },
+    {
+      "schema_version": 1,
+      "started_utc": "2026-10-04T11:54:07.757525+00:00",
+      "finished_utc": "2026-10-04T11:54:08.864150+00:00",
+      "duration_seconds": 1.106649,
+      "command": [
+        "python3",
+        "/private/tmp/scalafim-seam-evidence-20261004/oracle_check.py",
+        "/private/tmp/scalafim-seam-review-20261004"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+      "log": "/private/tmp/scalafim-seam-evidence-20261004/oracle-replay.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 60.0,
+      "log_bytes": 421,
+      "purpose": "NumPy SPM fixture reproducibility; not MATLAB execution",
+      "archive": "oracle.log.gz",
+      "raw_log_sha256": "41f3a803394287d0f450942f1190401e96b1f4452c6026db1a0a8b2d76365a6b",
+      "archive_sha256": "c297946fe978fe3456fcdd5f29df051f3765ea0a0341e5586c77d7e2c8dc27b7"
+    },
+    {
+      "schema_version": 1,
+      "started_utc": "2026-10-04T12:18:09.587670+00:00",
+      "finished_utc": "2026-10-04T12:18:09.887739+00:00",
+      "duration_seconds": 0.298481,
+      "command": [
+        "python3",
+        "/private/tmp/scalafim-seam-evidence-20261004/boundary_analysis.py"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+      "log": "/private/tmp/scalafim-seam-evidence-20261004/boundary-analysis.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 60.0,
+      "log_bytes": 675,
+      "purpose": "independent bounded arithmetic and NumPy toy analysis; not Scala or Gale execution",
+      "archive": "boundary-analysis.log.gz",
+      "raw_log_sha256": "fe5520a2aa092a963a68ef1456446539634f2c0d8a1bfc3ec575d6c853d7e5ce",
+      "archive_sha256": "3f11640a2a0be29bb24162f7480c6aa321b5c446cc428b9fd41dfa2d7ae30f88"
+    }
+  ],
+  "jvm_checks": [
+    {
+      "command": "hrfJVM/testOnly scalafim.fmri.hrf.TemporalDerivativeConventionSuite scalafim.fmri.hrf.ResponseFunctionalSuite",
+      "exit_code": 0,
+      "tests": 11,
+      "failed": 0,
+      "errors": 0,
+      "passed": 11,
+      "duration_seconds": 321.0
+    },
+    {
+      "command": "designJVM/testOnly scalafim.fmri.design.ConvolvedBasisOrthogonalizationSuite scalafim.fmri.design.FormulaResponsePolicySuite scalafim.fmri.design.HrfKernelBasisSuite",
+      "exit_code": 0,
+      "tests": 21,
+      "failed": 0,
+      "errors": 0,
+      "passed": 21,
+      "duration_seconds": 82.4
+    },
+    {
+      "command": "fitJVM/testOnly scalafim.fmri.fit.ConvolvedBasisReadoutSuite scalafim.fmri.fit.StructuralHypothesisDslSuite scalafim.fmri.fit.StructuralHypothesisSuite",
+      "exit_code": 0,
+      "tests": 29,
+      "failed": 0,
+      "errors": 0,
+      "passed": 29,
+      "duration_seconds": 77.2
+    }
+  ],
+  "supplemental_probes": [
+    {
+      "suite": "ReviewDiscretizationProbeSuite",
+      "jvm_compilation_confirmed": true,
+      "execution": "unrun; blocked by semaphore"
+    },
+    {
+      "suite": "ReviewBasisNormProbeSuite",
+      "jvm_compilation_confirmed": true,
+      "execution": "unrun; blocked by semaphore"
+    }
+  ],
+  "artifact_validation": {
+    "archive_files_verified": 2300,
+    "reviewed_live_hashes_verified": 26,
+    "original_review_hash_verified": true
+  },
+  "selection_note": "First HRF selector also named nonexistent ResponseFunctionalSuite; only TemporalDerivativeConventionSuite matched. Actual BasisGeometrySuite selection was attempted in supplemental batches but remained unrun.",
+  "source_overlay_note": "Two retained supplemental test suites were added only to the temporary source snapshot. They compiled on JVM during the initial gates, but no probe test was run. Archived production inputs were unchanged.",
+  "cleanup": {
+    "schema_version": 1,
+    "started_utc": "2026-10-04T12:17:04.086907+00:00",
+    "finished_utc": "2026-10-04T12:17:05.692012+00:00",
+    "duration_seconds": 1.604902,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "--shutdown"
+    ],
+    "cwd": "/private/tmp/scalafim-seam-review-20261004",
+    "log": "/private/tmp/scalafim-seam-evidence-20261004/shutdown.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 60.0,
+    "log_bytes": 32,
+    "log_text": "[\u001b[0minfo\u001b[0m] disconnected\n\u001b[0J",
+    "scratch_active_marker_present_after_shutdown": false
+  }
+}

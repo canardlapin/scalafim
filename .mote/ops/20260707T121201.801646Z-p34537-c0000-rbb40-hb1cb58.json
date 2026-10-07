@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY6JSJ56W033TE1J8X6ZR9K","kind":"note","note_kind":"note","op":"20260707T121201.801646Z-p34537-c0000-rbb40-hb1cb58","text":"Done: total DesignExports APIs implemented with DesignExportError and Either variants, compatibility wrappers preserved, and JVM/JS design tests pass.","ts":"2026-07-07T12:12:01.801646Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"codex-threshold","entity":"bd-01KWVZZC3C3QVKE86CC0H6S21M","kind":"note","note_kind":"note","op":"20260706T152250.645488Z-p94238-c0000-r1445-h9dfa14","text":"Hardened LSS core and FitPlan wiring; JVM fit suite passes, JS LSS suite passes, JS executor suite currently blocked by unrelated archive Quant.scala compile error.","ts":"2026-07-06T15:22:50.645488Z","v":1}

@@ -160,12 +160,13 @@ adjacent checkout is selected automatically during extraction; an explicit
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
-| `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, searchlights, and one-pass commutative aggregation. | standalone locus4s core and data | Generic finite-domain algebra or laws, image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
+| `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, and searchlights. | standalone locus4s core and data | Generic finite-domain algebra or laws, a second aggregation loop (use `locus4s.data.Aggregation`), image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph4s-delegated deterministic DAG staging, local pure execution, and structured receipts. | standalone graph4s | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, provenance, axis-keyed locality capabilities, and read receipts. | Nothing internal; Cats Core and Cats Effect externally. | General tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | standalone Gale | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, standalone Gale, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
+| `phrf-comparison` | Unpublished comparative-evaluation preparation/scoring and JVM runners/custody. | `model`, `ar`, `hrf`, `fit`, standalone Gale | Production workflow orchestration or claims of completed S10 rehearsal/pilot qualification. |
 | `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, affine math, low-level coordinate transforms, morphisms, resampling, clustering, and metric searchlight construction. | `locus-data` | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
 | `provider-spike` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
 | `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
@@ -261,7 +262,8 @@ standalone locus4s -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spa
 Standalone locus4s is the sole owner of generic finite spaces, points, regions,
 ordered selections, exact maps, relations, indexed fields, sections, and their
 laws. `locus-data` owns ScalaFIM-specific domain construction and compatibility
-adapters plus parcellations, searchlights, and aggregation. Domain modules add
+adapters plus parcellations and searchlights; parcellation aggregation uses
+locus4s-data `Aggregation`. Domain modules add
 geometry, metadata, storage, provenance, or algorithm policy through checked
 adapters; they do not reproduce the generic algebra. Zarr's package-local
 `Geometry.Region` remains an array chunk/slice rectangle, not a spatial ROI,
@@ -393,8 +395,8 @@ There are intentionally two layers:
   connectivity semantics in `connectivity`.
 - Put generic finite semantic domains, points, regions, selections, exact maps,
   relations, indexed fields, sections, and reusable laws in standalone
-  locus4s. Put only ScalaFIM domain adapters, parcellations, searchlights, and
-  commutative aggregation in `locus-data`. Geometry, storage, metadata, and
+  locus4s, including aggregation (`locus4s.data.Aggregation`). Put only
+  ScalaFIM domain adapters, parcellations, and searchlights in `locus-data`. Geometry, storage, metadata, and
   algorithm policy remain in their domain modules.
 - Put primitive matrix/vector/operator math, solver contracts, portable
   eigensolver/SVD/QR/Cholesky/SPD-inverse implementations, and backend adapter

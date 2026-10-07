@@ -1,0 +1,109 @@
+{
+  "scope": "historical DEV LWU diagnosis only",
+  "parent": "bd-01M25Q0JY8GA7CJRKZF2934PJ0",
+  "child": "bd-01M3SVJZTKKVMV8774NC2NNPKE",
+  "sourceId": "lwu-dev-87237a3c3163ccca571ec6ef33ae53c2f63c6d1272d58035de08e5b6f226ad5a",
+  "baseCommit": "327eda76792bcb0e542cb9e9c6f0d1351f45b1ea",
+  "reportSha256": "60ac1c71f7580dab74def70f09259edf9c9625d93c3b6cd0ebb24c79b426ceba",
+  "independentVerdict": "ACCEPT",
+  "independentReviewSha256": "e35f7cb18d8a6b4a5b9cd54dbcee0e9d7951c04818066eb3bd798bed72d2ebd0",
+  "cells": [
+    {
+      "snr": 1.0,
+      "seed": 111,
+      "attempts": 100,
+      "admitted": 91,
+      "statuses": {
+        "Accepted": 91,
+        "Boundary": 5,
+        "BudgetExceeded": 4
+      },
+      "budgetExits": {
+        "CandidateAttemptCap": 4
+      },
+      "postfitTerminalChecks": {
+        "positiveCurvature": 100,
+        "stationary": 96,
+        "weakSd": 0,
+        "boundary": 5,
+        "returnedCurvatureUnavailable": 0
+      },
+      "admissionGateMet": false,
+      "platform": "JVM"
+    },
+    {
+      "snr": 0.5,
+      "seed": 112,
+      "attempts": 100,
+      "admitted": 81,
+      "statuses": {
+        "Boundary": 15,
+        "Accepted": 81,
+        "CurvatureNotPositive": 1,
+        "BudgetExceeded": 3
+      },
+      "budgetExits": {
+        "CandidateAttemptCap": 3
+      },
+      "postfitTerminalChecks": {
+        "positiveCurvature": 99,
+        "stationary": 95,
+        "weakSd": 0,
+        "boundary": 17,
+        "returnedCurvatureUnavailable": 0
+      },
+      "admissionGateMet": false,
+      "platform": "JVM"
+    },
+    {
+      "snr": 1.0,
+      "seed": 111,
+      "attempts": 100,
+      "admitted": 89,
+      "statuses": {
+        "Accepted": 89,
+        "Boundary": 5,
+        "BudgetExceeded": 6
+      },
+      "budgetExits": {
+        "CandidateAttemptCap": 6
+      },
+      "postfitTerminalChecks": {
+        "positiveCurvature": 100,
+        "stationary": 94,
+        "weakSd": 0,
+        "boundary": 5,
+        "returnedCurvatureUnavailable": 0
+      },
+      "admissionGateMet": false,
+      "platform": "JS"
+    },
+    {
+      "snr": 0.5,
+      "seed": 112,
+      "attempts": 100,
+      "admitted": 82,
+      "statuses": {
+        "Boundary": 16,
+        "Accepted": 82,
+        "CurvatureNotPositive": 1,
+        "BudgetExceeded": 1
+      },
+      "budgetExits": {
+        "CandidateAttemptCap": 1
+      },
+      "postfitTerminalChecks": {
+        "positiveCurvature": 99,
+        "stationary": 97,
+        "weakSd": 0,
+        "boundary": 17,
+        "returnedCurvatureUnavailable": 0
+      },
+      "admissionGateMet": false,
+      "platform": "JS"
+    }
+  ],
+  "qualification": false,
+  "productionNumericChanged": false,
+  "freshStreamsUsed": false
+}

@@ -1,0 +1,696 @@
+{
+  "source_commit": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Basis.scala": "91c8e5beeddf04fccb89be0024604618b3c4a6d4cfb583d13272648fd650e731",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Cascade34.scala": "35bde4e126a2cee954cb7e151761b9806ecabe25a4101cc864eb9dd8cfd757aa",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala": "c9e22bbd901a8fdd8122b4889b76edc5d74fa22b3a147625403a239097097779",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Deriv.scala": "f62cbd474be6cc423e970488640e6ecf25d7129e57bec7c4a2ac2a6e0f777390",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Evaluate.scala": "87239a8b7dbe43f1d2aed9e66e26e3631b9fcf0d66bd9139cd9cc1fcfb1be599",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/EventResponseNormalization.scala": "deb0b2053954ded71c1630f3ce3d805ef1a226d28761cc81ffdf8b31756ab131",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Hrf.scala": "8f8c0ce2149ec600ea76c2a5846813a6a5442f5a7c78a5bc7d072a52a66a623a",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDerivation.scala": "14c0de90497d422a7d3d96c024a9f8966b3d0c18646b3680d8a5f213fa07a1c5",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala": "4ce4ff35fa55c24bbb84555c74645355cf2a284492277eca1f61af0ac079cfe1",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala": "273c6fa59af8d7a5f604c4abca361e16afa345ef1a81b01c0f305dd041bb7584",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfIdentity.scala": "f3692145d08ac50e066e4dd23656a1fd911fd0dc5348e3e92726a6a1a2bfc85e",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfNormalization.scala": "95bd9db3d44f644153d8c43f18a827643a4e9eb6bea1f9c890733ebb420f7f51",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfSpec.scala": "ffb2f5e56feeeea93b08af16266c1b59aaee72b2c2aa3331122a4a694f4d2f43",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Library.scala": "2e1d5e2a9c1361faabdb646a1406c0ab9f252da9d4192b1f0a2d358c3725c330",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/LwuBasis.scala": "85ca9df7071896ecb38d5c9ecf88c992b812073f8040d53e8783706fba19a422",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Penalty.scala": "58930b50b6c41ad1da7ac1c577006069922578ec1010fc8c15f610abd08b4a42",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Primitive.scala": "eab63d63a7b4682f5bff54023208b55d7a4d0bf5cbbb6ae443c86717814cdddc",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Pulse.scala": "0603335a9cfe657563988cb6f98147afa1bbe74d9047e602e0843fef7511aefd",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Reconstruction.scala": "2487b646bb5615aeee7bb0939a9fa285a8f42edbe1c5592cbbb20eb22276c8fb",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Registry.scala": "dd9b01b1869dfdc0bab8d91c9ec9b385625fa70d022c8b60084ced0d4b4acb1d",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Seconds.scala": "cb9e10e7f6fd9b54fc9c38f3c44a0f634a7b9814ea2af767fc13bf2f67dcf620",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/TemporalDerivativeConvention.scala": "c5b280d4395e519e10b42a1d9ef0fa1723272999f7dc4208ed2690e17b97e009",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Toeplitz.scala": "b330c0150e0e08966fd327be7234cf7e157f7c85a25891c14a02772a9d686ac9",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/compat/RNames.scala": "d7cc873772b0855507d66b6e3ea9ea1a6620b896a40ad95f70ecffc1e1f8ff99",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/design/Design.scala": "16141aab72ca9e77fe1e8b3653ae00a684feb2446e316b7c017249e0ad1e2ca4",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/design/SamplingFrame.scala": "58377184a8507635c59df33ee9a916e8b6b77dde7a7a47657d337c37268ab1b3",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/design/SamplingFrameTypes.scala": "8a8672af98260893e7afea3387ba35fb674f8ca055ac33f58cc9da2a9e810943",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/Cascade34Family.scala": "af82e20c0b81c0d108198d656021b4633be805117145286b47491559fa62e08d",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/Cascade34Realization.scala": "c0103821928dadcc2bc8fc04d19945924e43ecacf5d3843ab3fababfecc6e229",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala": "6d804f5266839e545d309a1b9249674567c1712f17948466f336f969f08bfb90",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/LwuFamily.scala": "60b7be431279b1ebf00dc54025a76a9e986aec0136beea0fb644c856c4d61aba",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/ParametricHrfFamily.scala": "34c648e705b39ed5f2b2fda1fce9b9c8e6cea3b13560fd98ce4476e678b42b84",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/ShapeChart.scala": "2bedc1274a99a2968d0a13df7c76b9cc2fb9507dd524737142d085af24029a51",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/linalg/Complex.scala": "0391272f4902594b99b0502d1a68c6b00d9f2595b32427fbed1ef9794c7bae0e",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/linalg/Fft.scala": "99fe4ed6d535ab1afaf810bb9f7e2bef78ba2ad46b9c8718bb68744e34a35997",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/linalg/Mat.scala": "4bf6df167a92dfe0c3273aeb1463aa69d51b751407648ce93e0af57f9f90601e",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/linalg/Vec.scala": "ef4c65095de8703ced13dcf75ac92b9c4a8d2423fcd862612d8bb06bdc81e8f9",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/package.scala": "876716e010e37924ac18fd64c14fcc2669b75f89f555ea211bf4873f35ccaf5e",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/NeuralInput.scala": "be83234d64ad8ae1ed2158d7ed2a81e7bc533872094ced9c5087ca376fea3a0a",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala": "c98c7f3c21394eb9c0aae575f9c786bb48c3646a253b65c81dc8b80fd6d176e8",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/RegressorSet.scala": "bf21e0f1138c76b6c84cf97cc2691d17fb7c82938a6b1301e121473642380c18",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/BasisGeometrySuite.scala": "6a1f597b0461ebce46adead242acbcd57fe2caffe02b73e241d7db425e9c7219",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/BoxcarWeightedSuite.scala": "c9a2a66390ee3a544db171f96eaf82552c403167aefe47f7f416f36777c51d72",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/BsplineParitySuite.scala": "49dcbdeddeef9796116ea58c6205422779d373b2259093456bf847d8bc430dd3",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/Cascade34Suite.scala": "b1b14d80510ff11bc887d0630d89c4e9767748c8ee836e5a3f3a92793de8b611",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/CompleteBsplineSuite.scala": "4a8f85e084f969a6516e4e504f9ce9881bdd105057261fa499deae1f2e11d229",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/DerivSuite.scala": "93786896bb298bbd4d502380419846064f8faaf45ca0e4167a6614afa372b378",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/DesignSuite.scala": "f7355d1fa28b013e72f45e1d57fd2766a25f6118585d6a2c16a55bbd0037d7f3",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/DurationQuadratureSuite.scala": "d8b99b7cd06791f3c88aefaa1f00b13e4a6fc93174977b97a023e51bb0d5801d",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/EndpointAnchoredBsplineSuite.scala": "81602dc5d69f3384727c2f3ead13f792b9163934927c8a412e4b3d64849ceca4",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/EventResponseNormalizationSuite.scala": "63886d9f02db4f70088f4f2b5399bdb50dd7fcbcaa3b5ac6e1aace0d50f0625d",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/FftSuite.scala": "e3ab788f577e22042b4e69f1668cf1c32faef86398e9ad9342650277079d5375",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfBasicsSuite.scala": "5f4246eede249e968d650d33b8919a46631ddf9ec440ac0a5b7c92672f97db51",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfCausalitySuite.scala": "1a319dc19dd971af31187c455128057eb3ea025ec944f5bb378b59faf7074e9d",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfIdentitySuite.scala": "ca5faa07e1dbaf481cb5f374eb57ebd03725dc9689618551dfbe77db9c7d6d82",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfNormalizationSuite.scala": "5261b7b0e6e7770bbede3766162d5fe8eea781299d2fc836e146dbcfa6599f2b",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfRParitySuite.scala": "913bb33ef2aaaeb3c8eca544b4460b4bebb956d2b6f30a7d3aa4ecc5b3b78002",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfSuite.scala": "fcefc52f97dfc739f6eacf895d902d12626035d3dd30e8c8b3a61bb2f5198a3a",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfTypedRefactorSuite.scala": "9089b4dd8c8c6aa0d77777dea5f772431e689593bbbac279e5b6fa893850abae",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/LagSuite.scala": "2ef0de4c324e67abad84bd0903bbf72707379265951b83ce665c3b54d8b9c485",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/LibraryParitySuite.scala": "c0aaa4d815f1f6b3851da890332d6b5947712814aede3ed149883b86bb515095",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/LwuSuite.scala": "ea14c37386205b44977d774b0cde8168a9b1337a9cd01024bfa88513aa744edf",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/PenaltySuite.scala": "52087278b0c77e4a34b0284ed72c222b85ac9346829645fc1bc713eb411f8ef4",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/PrimitiveSuite.scala": "c636513a9ee5a71a1254b76217a09e1de2cedb9954799cf0c8d5847d9f7fe9e3",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/RegressorMethodAccuracySuite.scala": "eee0383e730db816896eb0c94961372f7c0c41e854be4ece6d2624129e674595",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/RegressorParitySuite.scala": "ae9b75d376fecc9c5a243ab486af286ba89887c6ef939db06808b85f7e403d91",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/RegressorSetSuite.scala": "000f40ea25584b4f3dbe276f976a70c7b00eeb0d27a809f69744dcdabe953521",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/RegressorSuite.scala": "01335b4fefd452c7ab46bc6be74e02ab5803cd9764b25ae3e37189c7171ddce9",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/RunBoundarySuite.scala": "653c0be88fb800aa8e314888274e9ad20f779e7c03bd31f121dbaf92f93011fc",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/SamplingFrameSuite.scala": "4b97e8a380293d77f4d870a68568142778e6514a14d3f1aec3def9a6b99fe539",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/SpmgCorrectnessSuite.scala": "b97a41ca3fbef42262817c1d2d4dd3692fe3fc11afe23cc4a50560aaafbc39a1",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/TemporalDerivativeConventionSuite.scala": "e8294e0d26b7d7927bec7b5449b164c0a09701461f9c8d4938d984b8e6404669",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/TestUtils.scala": "1f0f1a309967e1f39cea1a3e1b53b1b90a19df1a0cba2187cdfa263223e36a58",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/ToeplitzSuite.scala": "5a3f5679e5f3d21847fbb378344f43f21ffee5d125cd0247650c89c0672def8d",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/Cascade34FamilySuite.scala": "83be5aaad661bb0ce19be789dd46622b17f30bf08102c85d98b88aa7c792d7e0",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/Cascade34RealizationFixtures.scala": "2cffa9110241ee348bab00c9fc25ae35788e545b6d68ac8f04e57a9c6c924853",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/Cascade34RealizationSuite.scala": "5dd183ced30fe4f1705f988a8a9f75438f9c1b8130154e5bb495a8018bbc2295",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/GaussianFamilySuite.scala": "4bd02c98ecb85ecf31da3354396bf5722481e6a432f94883a8c27cf8ceae6c2b",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/GaussianPrecisionFixtures.scala": "43b1f9b6b652c16414d070b25dae9b301750d4b726db982d058f03be4d1066f0",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/LwuFamilySuite.scala": "cf071e1349a3498562c5b19b587f23d495c6dce32c517380a634cd58468623b5",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/Cascade34Reference.scala": "5155fe72144c00b8ec554ab2d22712849525d38f488370ea25de9cd3470069c7",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/CompleteBsplineRFixtures.scala": "873ab96a14d7caf6199ef2562ca6dd3446f955485f42dda6c5664f901cdbceb2",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/EndpointAnchoredBsplineRFixtures.scala": "62ab554c755f48b3820bfdd5961ecf9fad4744edfdb0f4da9289800df623a028",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/HrfRParityFixtures.scala": "cd1f3082664e7afa9cd0286fcdd1adf0e18df40f84c4c62cd98fb24a83938941",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/SpmInformedBasisFixture.scala": "e37943db3ef7f09a47f574cd639b324a4911f0c55f916da001b5a98032c982c4"
+  },
+  "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+  "node": "v24.1.0",
+  "host": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+  "repetitions": 3,
+  "scope": "HRF only, JVM + Scala.js; dependencies already cached; sequential tools",
+  "build_template_sha256": {
+    "build.mill": "e7ccbe1c83dffd2b4b92d0ffeaae0659febeb2f23907e121ee136cd68a554c3e",
+    "build.sbt": "6a14449d390d88d046b657af02563c7fe0fce65b7df47ef81e73953a254bb048"
+  },
+  "test_counts": {
+    "sbt-1.11.7": {
+      "jvm": 301,
+      "js": 301
+    },
+    "sbt-1.13.0": {
+      "jvm": 301,
+      "js": 301
+    },
+    "mill-1.1.10": {
+      "jvm": 301,
+      "js": 301
+    }
+  },
+  "rows": [
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "warm-noop",
+      "seconds": 0.43611245788633823,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-warm-noop-0.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "warm-noop",
+      "seconds": 0.441983041819185,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-warm-noop-1.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "warm-noop",
+      "seconds": 0.41675949981436133,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-warm-noop-2.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "incremental-edit",
+      "seconds": 0.9420744166709483,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-incremental-edit-0.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "incremental-edit",
+      "seconds": 0.9682185840792954,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-incremental-edit-1.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "incremental-edit",
+      "seconds": 0.8649009172804654,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-incremental-edit-2.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "warm-tests",
+      "seconds": 18.75435079075396,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/test;hrfJS/test"
+      ],
+      "log": "sbt-1.11.7-warm-tests-0.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "warm-tests",
+      "seconds": 18.796708583831787,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/test;hrfJS/test"
+      ],
+      "log": "sbt-1.11.7-warm-tests-1.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "warm-tests",
+      "seconds": 19.14637270802632,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/test;hrfJS/test"
+      ],
+      "log": "sbt-1.11.7-warm-tests-2.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "clean-compile",
+      "seconds": 6.728624625131488,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-clean-compile-0.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "clean-compile",
+      "seconds": 3.9083262081258,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-clean-compile-1.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "clean-compile",
+      "seconds": 3.6037101252004504,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-clean-compile-2.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "cold-noop",
+      "seconds": 2.7037973748520017,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-cold-noop-0.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "cold-noop",
+      "seconds": 2.753837625030428,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-cold-noop-1.log"
+    },
+    {
+      "tool": "sbt-1.11.7",
+      "workload": "cold-noop",
+      "seconds": 2.6739291669800878,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.11.7-cold-noop-2.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "warm-noop",
+      "seconds": 0.5799992908723652,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-warm-noop-0.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "warm-noop",
+      "seconds": 0.5282819587737322,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-warm-noop-1.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "warm-noop",
+      "seconds": 0.7341781673021615,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-warm-noop-2.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "incremental-edit",
+      "seconds": 1.1237048748880625,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-incremental-edit-0.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "incremental-edit",
+      "seconds": 0.9407777921296656,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-incremental-edit-1.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "incremental-edit",
+      "seconds": 1.0127893332391977,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-incremental-edit-2.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "warm-tests",
+      "seconds": 19.387724042404443,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/test;hrfJS/test"
+      ],
+      "log": "sbt-1.13.0-warm-tests-0.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "warm-tests",
+      "seconds": 18.85500583285466,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/test;hrfJS/test"
+      ],
+      "log": "sbt-1.13.0-warm-tests-1.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "warm-tests",
+      "seconds": 18.894413833040744,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/test;hrfJS/test"
+      ],
+      "log": "sbt-1.13.0-warm-tests-2.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "clean-compile",
+      "seconds": 7.269202083349228,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-clean-compile-0.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "clean-compile",
+      "seconds": 4.910752166993916,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-clean-compile-1.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "clean-compile",
+      "seconds": 3.963080750312656,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "--client",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-clean-compile-2.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "cold-noop",
+      "seconds": 3.471985791809857,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-cold-noop-0.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "cold-noop",
+      "seconds": 3.066205915994942,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-cold-noop-1.log"
+    },
+    {
+      "tool": "sbt-1.13.0",
+      "workload": "cold-noop",
+      "seconds": 2.8616475416347384,
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        ";hrfJVM/compile;hrfJS/compile"
+      ],
+      "log": "sbt-1.13.0-cold-noop-2.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "warm-noop",
+      "seconds": 0.16316020814701915,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-warm-noop-0.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "warm-noop",
+      "seconds": 0.17133933305740356,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-warm-noop-1.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "warm-noop",
+      "seconds": 0.14939116733148694,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-warm-noop-2.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "incremental-edit",
+      "seconds": 4.624845082871616,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-incremental-edit-0.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "incremental-edit",
+      "seconds": 4.178028958849609,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-incremental-edit-1.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "incremental-edit",
+      "seconds": 4.384449041914195,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-incremental-edit-2.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "warm-tests",
+      "seconds": 21.621739582624286,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.test"
+      ],
+      "log": "mill-1.1.10-warm-tests-0.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "warm-tests",
+      "seconds": 21.92153862537816,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.test"
+      ],
+      "log": "mill-1.1.10-warm-tests-1.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "warm-tests",
+      "seconds": 21.521759875118732,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.test"
+      ],
+      "log": "mill-1.1.10-warm-tests-2.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "clean-compile",
+      "seconds": 21.735411709174514,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-clean-compile-0.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "clean-compile",
+      "seconds": 15.932459792122245,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-clean-compile-1.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "clean-compile",
+      "seconds": 14.062586833257228,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-clean-compile-2.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "cold-noop",
+      "seconds": 1.2951543750241399,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "--no-daemon",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-cold-noop-0.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "cold-noop",
+      "seconds": 1.3628558749333024,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "--no-daemon",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-cold-noop-1.log"
+    },
+    {
+      "tool": "mill-1.1.10",
+      "workload": "cold-noop",
+      "seconds": 1.3700019591487944,
+      "exit_code": 0,
+      "command": [
+        "/private/tmp/scalafim-toolchain-20261005/comparison/mill-1.1.10/mill",
+        "--no-daemon",
+        "-j",
+        "1",
+        "{hrfJVM,hrfJS}.compile"
+      ],
+      "log": "mill-1.1.10-cold-noop-2.log"
+    }
+  ],
+  "medians": {
+    "mill-1.1.10": {
+      "clean-compile": 15.932459792122245,
+      "cold-noop": 1.3628558749333024,
+      "incremental-edit": 4.384449041914195,
+      "warm-noop": 0.16316020814701915,
+      "warm-tests": 21.621739582624286
+    },
+    "sbt-1.11.7": {
+      "clean-compile": 3.9083262081258,
+      "cold-noop": 2.7037973748520017,
+      "incremental-edit": 0.9420744166709483,
+      "warm-noop": 0.43611245788633823,
+      "warm-tests": 18.796708583831787
+    },
+    "sbt-1.13.0": {
+      "clean-compile": 4.910752166993916,
+      "cold-noop": 3.066205915994942,
+      "incremental-edit": 1.0127893332391977,
+      "warm-noop": 0.5799992908723652,
+      "warm-tests": 18.894413833040744
+    }
+  }
+}

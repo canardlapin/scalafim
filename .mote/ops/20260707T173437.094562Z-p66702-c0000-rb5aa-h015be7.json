@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY9VTEBBNRKZ5ZWV6CVAD49","kind":"note","note_kind":"progress","op":"20260707T173437.094562Z-p66702-c0000-rb5aa-h015be7","text":"Fixed RowMetric constructor visibility so the in-progress multivar dependency compiles while verifying connectivity.","ts":"2026-07-07T17:34:37.094562Z","v":1}

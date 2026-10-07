@@ -230,6 +230,16 @@ enum FunctionalDiscretization:
   case Exact
   case Trapezoid(maxStep: PositiveSeconds)
 
+object FunctionalDiscretization:
+  /** Work limit for [[Trapezoid]]: the largest number of intervals (two kernel
+    * evaluations each) a window may require. A request whose
+    * `ceil(width / maxStep)` exceeds it is refused with
+    * [[BasisError.InvalidDiscretization]] instead of being clamped, so an
+    * accepted receipt always honours the declared `maxStep` and reports a
+    * representable sample count (`intervals + 1`).
+    */
+  val MaxTrapezoidIntervals: Int = 1_000_000
+
 final case class FunctionalDiscretizationReceipt(
     policy: FunctionalDiscretization,
     samples: Int,
@@ -312,13 +322,15 @@ trait ResponseBasis:
         if !lag.value.isFinite || lag.value < 0.0 then
           Left(BasisError.InvalidFunctional(s"point lag must be finite and >= 0, got ${lag.value}"))
         else
+          // A point functional is one exact kernel evaluation whatever window
+          // rule was declared, so its receipt records what was actually done.
           val values = kernel(Lag.ofSeconds(lag)).data
           finiteWeights(values).map { vector =>
             ResponseFunctionalWeights(
               functional,
               BasisCoefficients.unsafe(vector),
               ResponseUnits.ResponseValue,
-              FunctionalDiscretizationReceipt(discretization, samples = 1, effectiveStep = None)
+              FunctionalDiscretizationReceipt(FunctionalDiscretization.Exact, samples = 1, effectiveStep = None)
             )
           }
 
@@ -359,30 +371,49 @@ trait ResponseBasis:
           if !maxStep.value.isFinite || maxStep.value <= 0.0 then
             Left(BasisError.InvalidDiscretization(s"trapezoid maxStep must be finite and > 0, got ${maxStep.value}"))
           else
-            val intervals = math.max(1, math.ceil(width / maxStep.value).toInt)
-            val dt = width / intervals.toDouble
-            val integral = Array.fill(dimension)(0.0)
-            var i = 0
-            while i < intervals do
-              val left = Lag(from.value + i.toDouble * dt)
-              val right = Lag(from.value + (i + 1).toDouble * dt)
-              val y0 = kernel(left).data
-              val y1 = kernel(right).data
-              var j = 0
-              while j < dimension do
-                integral(j) += 0.5 * dt * (y0(j) + y1(j))
-                j += 1
-              i += 1
-            val scaled = if divideByWidth then integral.map(_ / width).toVector else integral.toVector
-            finiteWeights(scaled).map { values =>
-              ResponseFunctionalWeights(
-                if divideByWidth then ResponseFunctional.WindowMean(from, until)
-                else ResponseFunctional.WindowIntegral(from, until),
-                BasisCoefficients.unsafe(values),
-                if divideByWidth then ResponseUnits.ResponseValue else ResponseUnits.ResponseIntegral,
-                FunctionalDiscretizationReceipt(policy, samples = intervals + 1, effectiveStep = Some(Seconds(dt)))
-              )
-            }
+            // Decide representability in Double before any Int conversion:
+            // `toInt` saturates, which would silently coarsen the grid.
+            val ceiling = math.max(1.0, math.ceil(width / maxStep.value))
+            // Guard the last-ulp case where `width / ceil(width / maxStep)` rounds above maxStep.
+            val requested = if ceiling.isFinite && width / ceiling > maxStep.value then ceiling + 1.0 else ceiling
+            if !requested.isFinite || requested > FunctionalDiscretization.MaxTrapezoidIntervals.toDouble then
+              Left(BasisError.InvalidDiscretization(
+                s"trapezoid maxStep ${maxStep.value} over a window of width $width needs $requested intervals, " +
+                  s"more than the limit of ${FunctionalDiscretization.MaxTrapezoidIntervals}"
+              ))
+            else trapezoidWeights(policy, from, until, requested.toInt, divideByWidth)
+
+  private def trapezoidWeights(
+      policy: FunctionalDiscretization,
+      from: Seconds,
+      until: Seconds,
+      intervals: Int,
+      divideByWidth: Boolean
+  ): Either[BasisError, ResponseFunctionalWeights[Space]] =
+    val width = until.value - from.value
+    val dt = width / intervals.toDouble
+    val integral = Array.fill(dimension)(0.0)
+    var i = 0
+    while i < intervals do
+      val left = Lag(from.value + i.toDouble * dt)
+      val right = Lag(from.value + (i + 1).toDouble * dt)
+      val y0 = kernel(left).data
+      val y1 = kernel(right).data
+      var j = 0
+      while j < dimension do
+        integral(j) += 0.5 * dt * (y0(j) + y1(j))
+        j += 1
+      i += 1
+    val scaled = if divideByWidth then integral.map(_ / width).toVector else integral.toVector
+    finiteWeights(scaled).map { values =>
+      ResponseFunctionalWeights(
+        if divideByWidth then ResponseFunctional.WindowMean(from, until)
+        else ResponseFunctional.WindowIntegral(from, until),
+        BasisCoefficients.unsafe(values),
+        if divideByWidth then ResponseUnits.ResponseValue else ResponseUnits.ResponseIntegral,
+        FunctionalDiscretizationReceipt(policy, samples = intervals + 1, effectiveStep = Some(Seconds(dt)))
+      )
+    }
 
   private def finiteWeights(values: Array[Double]): Either[BasisError, Vector[Double]] =
     finiteWeights(values.toVector)

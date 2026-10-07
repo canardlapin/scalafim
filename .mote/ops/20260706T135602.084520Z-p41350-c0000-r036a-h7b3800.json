@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVV4SWEK2RM2BTSB0HEBYW6","kind":"note","note_kind":"progress","op":"20260706T135602.084520Z-p41350-c0000-r036a-h7b3800","text":"Implemented portable QR residualization and typed LeastSquaresSeparate matrix estimator; linalgJVM/test, fitJVM/test, linalgJS/test, and fitJS/test are green.","ts":"2026-07-06T13:56:02.084520Z","v":1}

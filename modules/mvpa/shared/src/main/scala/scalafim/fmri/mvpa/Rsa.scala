@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, Matrix, QROptions, QRPivoting}
 
 enum RdmMethod:
   case SquaredEuclidean(normalizeByFeatures: Boolean = false)
@@ -164,6 +164,12 @@ object RdmScorer:
         value <- pearsonValues(observedRanks, modelRanks, name)
       yield value
 
+  /** Partial correlation after projecting out the centered control RDMs.
+    * Controls are normalized before pivoted QR; diagonal pivots at most 1e-12
+    * are refused as rank deficient. Residual norms at most 1e-12 relative to
+    * the centered outcome are refused as numerically zero. Units do not set
+    * either threshold, and no control is silently dropped.
+    */
   final class PartialPearson private (val controls: Vector[RdmModel]) extends RdmScorer:
     override val name: String = "PartialPearson"
 
@@ -236,163 +242,106 @@ object RdmScorer:
         i += 1
 
       for
-        observedCentered <- centered(observed.values, "partial Pearson observed")
-        modelCentered <- centered(model.values, "partial Pearson model")
+        observedCentered <- normalizedCentered(observed.values, "partial Pearson observed")
+        modelCentered <- normalizedCentered(model.values, "partial Pearson model")
         controlMatrix <- centeredControlMatrix(controls, observed.values.length)
-        observedResidual <- residualize(observedCentered, controlMatrix, observed.values.length, controls.length)
-        modelResidual <- residualize(modelCentered, controlMatrix, observed.values.length, controls.length)
-        value <- pearsonCentered(observedResidual, modelResidual, "PartialPearson")
+        value <- partialCorrelation(observedCentered, modelCentered, controlMatrix)
       yield value
 
-  private def centered(values: Vector[Double], label: String): Either[MvpaError, Array[Double]] =
-    var sum = 0.0
+  // Rank is assessed after each centered column has unit Euclidean norm.
+  // This cutoff is therefore independent of RDM units; unresolved directions
+  // are refused rather than silently removed from the requested control set.
+  private val PartialRankTolerance = 1e-12
+  private val PartialResidualTolerance = 1e-12
+
+  private def normalizedCentered(values: Vector[Double], label: String): Either[MvpaError, Array[Double]] =
+    var maximum = 0.0
     var i = 0
     while i < values.length do
       val value = values(i)
       if !value.isFinite then
         return Left(MvpaError.InvalidRdmInput(s"$label contains non-finite distances"))
-      sum += value
+      maximum = math.max(maximum, math.abs(value))
       i += 1
-    val mean = sum / values.length
     val out = new Array[Double](values.length)
-    i = 0
-    while i < values.length do
-      out(i) = values(i) - mean
-      i += 1
+    if maximum > 0.0 then
+      // Scale before centering so neither the mean nor the squared norm
+      // overflows or underflows solely because of the choice of units.
+      var sum = 0.0
+      i = 0
+      while i < values.length do
+        out(i) = values(i) / maximum
+        sum += out(i)
+        i += 1
+      val mean = sum / values.length
+      var squaredNorm = 0.0
+      i = 0
+      while i < values.length do
+        out(i) -= mean
+        squaredNorm += out(i) * out(i)
+        i += 1
+      if squaredNorm > 0.0 then
+        val norm = math.sqrt(squaredNorm)
+        i = 0
+        while i < values.length do
+          out(i) /= norm
+          i += 1
     Right(out)
 
   private def centeredControlMatrix(
       controls: Vector[RdmVector],
       distances: Int
-  ): Either[MvpaError, Array[Double]] =
-    val matrix = new Array[Double](distances * controls.length)
+  ): Either[MvpaError, DMat] =
+    val matrix = Matrix.newBuilder(distances, controls.length)
     var control = 0
     while control < controls.length do
-      centered(controls(control).values, "partial Pearson control") match
+      normalizedCentered(controls(control).values, "partial Pearson control") match
         case Right(centeredControl) =>
           var i = 0
           while i < distances do
-            matrix(i * controls.length + control) = centeredControl(i)
+            matrix(i, control) = centeredControl(i)
             i += 1
         case Left(error) =>
           return Left(error)
       control += 1
-    Right(matrix)
+    Right(matrix.result())
 
-  private def residualize(
-      values: Array[Double],
-      controls: Array[Double],
-      distances: Int,
-      controlCount: Int
-  ): Either[MvpaError, Array[Double]] =
-    val gram = new Array[Double](controlCount * controlCount)
-    val rhs = new Array[Double](controlCount)
-    var row = 0
-    while row < controlCount do
-      var col = 0
-      while col < controlCount do
-        var sum = 0.0
-        var i = 0
-        while i < distances do
-          sum += controls(i * controlCount + row) * controls(i * controlCount + col)
-          i += 1
-        gram(row * controlCount + col) = sum
-        col += 1
-
-      var rhsSum = 0.0
-      var i = 0
-      while i < distances do
-        rhsSum += controls(i * controlCount + row) * values(i)
-        i += 1
-      rhs(row) = rhsSum
-      row += 1
-
-    solveLinearSystem(gram, rhs, controlCount).map { coefficients =>
-      val out = values.clone()
-      var i = 0
-      while i < distances do
-        var fitted = 0.0
-        var control = 0
-        while control < controlCount do
-          fitted += controls(i * controlCount + control) * coefficients(control)
-          control += 1
-        out(i) -= fitted
-        i += 1
-      out
-    }
-
-  private def solveLinearSystem(
-      matrix: Array[Double],
-      rhs: Array[Double],
-      size: Int
-  ): Either[MvpaError, Array[Double]] =
-    val a = matrix.clone()
-    val b = rhs.clone()
-    val tolerance = 1e-12
-    var pivot = 0
-    while pivot < size do
-      var pivotRow = pivot
-      var pivotAbs = math.abs(a(pivot * size + pivot))
-      var row = pivot + 1
-      while row < size do
-        val candidate = math.abs(a(row * size + pivot))
-        if candidate > pivotAbs then
-          pivotAbs = candidate
-          pivotRow = row
-        row += 1
-
-      if pivotAbs <= tolerance then
-        return Left(MvpaError.InvalidRdmInput("partial Pearson control RDMs are rank deficient"))
-
-      if pivotRow != pivot then
-        var col = 0
-        while col < size do
-          val tmp = a(pivot * size + col)
-          a(pivot * size + col) = a(pivotRow * size + col)
-          a(pivotRow * size + col) = tmp
-          col += 1
-        val tmp = b(pivot)
-        b(pivot) = b(pivotRow)
-        b(pivotRow) = tmp
-
-      val scale = a(pivot * size + pivot)
-      var col = 0
-      while col < size do
-        a(pivot * size + col) /= scale
-        col += 1
-      b(pivot) /= scale
-
-      row = 0
-      while row < size do
-        if row != pivot then
-          val factor = a(row * size + pivot)
-          col = 0
-          while col < size do
-            a(row * size + col) -= factor * a(pivot * size + col)
-            col += 1
-          b(row) -= factor * b(pivot)
-        row += 1
-      pivot += 1
-    Right(b)
-
-  private def pearsonCentered(
+  private def partialCorrelation(
       observed: Array[Double],
       model: Array[Double],
-      scorerName: String
+      controls: DMat
   ): Either[MvpaError, Double] =
-    var numerator = 0.0
-    var observedSs = 0.0
-    var modelSs = 0.0
-    var i = 0
-    while i < observed.length do
-      numerator += observed(i) * model(i)
-      observedSs += observed(i) * observed(i)
-      modelSs += model(i) * model(i)
-      i += 1
-
-    val denom = math.sqrt(observedSs * modelSs)
-    if denom <= 0.0 then Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer is undefined for zero-variance residual distances"))
-    else Right(numerator / denom)
+    val qr = controls.qr(QROptions(QRPivoting.Column, Some(PartialRankTolerance)))
+    if !qr.diagnostics.rank.contains(controls.cols) then
+      Left(MvpaError.InvalidRdmInput("partial Pearson control RDMs are rank deficient"))
+    else
+      val responses = Matrix.tabulate(controls.rows, 2)((row, col) => if col == 0 then observed(row) else model(row))
+      qr.applyQT(responses)
+        .left.map(error => MvpaError.InvalidRdmInput(s"partial Pearson projection failed: ${error.getMessage}"))
+        .flatMap { transformed =>
+          // The trailing Q-transformed coordinates are the residuals in an
+          // orthonormal basis. Their dot product/norms equal those in the
+          // original coordinates; forming X'X or solving for beta is unnecessary.
+          var numerator = 0.0
+          var observedSs = 0.0
+          var modelSs = 0.0
+          var row = controls.cols
+          while row < controls.rows do
+            val x = transformed(row, 0)
+            val y = transformed(row, 1)
+            numerator += x * y
+            observedSs += x * x
+            modelSs += y * y
+            row += 1
+          val minimumSs = PartialResidualTolerance * PartialResidualTolerance
+          if !observedSs.isFinite || !modelSs.isFinite || !numerator.isFinite then
+            Left(MvpaError.InvalidRdmInput("partial Pearson projection produced non-finite residual distances"))
+          else if observedSs <= minimumSs || modelSs <= minimumSs then
+            Left(MvpaError.InvalidRdmInput("PartialPearson RDM scorer is undefined for zero-variance residual distances (relative norm <= 1e-12)"))
+          else
+            val correlation = numerator / (math.sqrt(observedSs) * math.sqrt(modelSs))
+            Right(math.max(-1.0, math.min(1.0, correlation)))
+        }
 
 private def checkedRsaId(kind: String, value: String): Either[MvpaError, String] =
   val trimmed = value.trim

@@ -32,7 +32,10 @@ for the module map; this file is the working contract.
   project loading. Commands run in order and the first failure's exit code is
   returned. Worktrees share no mutable build state, so these runs need no host-wide
   sbt lock; a three-slot host semaphore bounds concurrency. Servers stop after 30
-  idle minutes; `--status` and `--shutdown` inspect or stop this worktree's server.
+  idle minutes; `--status` and `--shutdown` inspect or stop this worktree's server
+  (`--shutdown` refuses while sbt-warm commands are running there), and `--gc`
+  (dry run; `--gc --apply` deletes) lists bases whose worktree is gone.
+  Pass sbt arguments that start with `-` after `--`; other unknown flags are rejected.
 
 ## Scala 3 style
 
@@ -103,6 +106,11 @@ construction points, but the core model should express its invariants in types.
 - Keep `README.md` module blurbs and `build.sbt` aggregates/aliases in sync when you add a module.
 
 ## GitHub identity and publication
+
+- Mote history is versioned in `.mote/FORMAT.json` and `.mote/ops/*.json` for
+  development across machines. Commit new immutable operations with related
+  work; leave `.mote/local/` and `.mote/tmp/` ignored. See
+  [`docs/development-machine-handoff.md`](docs/development-machine-handoff.md).
 
 - The canonical GitHub repository is `canardlapin/scalafim`. Do not publish this
   checkout through the machine's default `bbuchsbaum` GitHub account.

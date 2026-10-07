@@ -254,8 +254,54 @@ object Primitive:
   )
 
   private def pointsFor(degree: Int): Int =
-    val needed = (degree + 2) / 2
-    if needed < 1 then 1 else if needed > 4 then 4 else needed
+    // n points are exact through degree 2n - 1. Divide before adding so
+    // selecting the order does not overflow for a large degree.
+    math.max(1, degree / 2 + 1)
+
+  /** P_n(x) and its derivative from the three-term Legendre recurrence. */
+  private def legendre(n: Int, x: Double): (Double, Double) =
+    var previous = 1.0
+    var value = x
+    var k = 2
+    while k <= n do
+      val next = ((2.0 * k - 1.0) * x * value - (k - 1.0) * previous) / k
+      previous = value
+      value = next
+      k += 1
+    (value, n * (x * value - previous) / (x * x - 1.0))
+
+  /** Retain the small tabulated rules; compute higher orders from the roots
+    * of P_n. Symmetry supplies the other half of the nodes and weights.
+    * See https://dlmf.nist.gov/3.5#v for Gauss–Legendre quadrature.
+    */
+  private def gaussLegendre(n: Int): (Array[Double], Array[Double]) =
+    if n <= glNodes.length then (glNodes(n - 1), glWeights(n - 1))
+    else
+      val nodes = new Array[Double](n)
+      val weights = new Array[Double](n)
+      var i = 0
+      while i < (n + 1) / 2 do
+        var x = math.cos(math.Pi * (i + 0.75) / (n + 0.5))
+        var iteration = 0
+        var converged = false
+        while iteration < 32 && !converged do
+          val (value, derivative) = legendre(n, x)
+          val step = value / derivative
+          x -= step
+          converged = math.abs(step) <= 4e-16
+          iteration += 1
+        require(converged, s"Gauss–Legendre root $i of order $n did not converge")
+        if i == n - 1 - i then x = 0.0
+        // Evaluate at the final root, rather than using the derivative from
+        // the preceding Newton step, to keep the weights accurate too.
+        val (_, derivative) = legendre(n, x)
+        val weight = 2.0 / ((1.0 - x * x) * derivative * derivative)
+        nodes(i) = -x
+        nodes(n - 1 - i) = x
+        weights(i) = weight
+        weights(n - 1 - i) = weight
+        i += 1
+      (nodes, weights)
 
   private def piecewise(
       hrf: Hrf,
@@ -275,8 +321,7 @@ object Primitive:
     if !(hi > lo) then return out
 
     val n = pointsFor(degree)
-    val nodes = glNodes(n - 1)
-    val weights = glWeights(n - 1)
+    val (nodes, weights) = gaussLegendre(n)
 
     var b = 0
     while b < breaks.length - 1 do

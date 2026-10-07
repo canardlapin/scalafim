@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYJMPFS7X726WC82SKKKEED","kind":"note","note_kind":"progress","op":"20260720T040309.113202Z-p6873-c0000-ra80c-hfd9e8e","text":"Design QR facade now delegates to Gale QR with ownership-safe row-major construction; designJVM/test and designJS/test both pass (145 tests each).","ts":"2026-07-20T04:03:09.113202Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"exec-calibration","entity":"bd-01M21VA8DYMNJS9PZ8076SBWWJ","kind":"reserve_open","mode":"exclusive","op":"20260929T230618.938959Z-p75071-c0000-rda94-hf8b13b","paths":["modules/group/shared/src/test/scala/scalafim/fmri/group/NativePmCalibrationSuite.scala"],"reservation_id":"rv-01M3QPPGDTW8D0KKGWE0RNFFGN","ts":"2026-09-29T23:06:18.938959Z","ttl_s":3600,"v":2}

@@ -1,0 +1,25 @@
+{
+  "tested_production_commit": "1825d121",
+  "head_sha": "958ae4dcb8f12b81a043d7c637fa8b664b1c9848",
+  "run_id": 37505457633,
+  "run_url": "https://github.com/canardlapin/scalafim/actions/runs/37505457633",
+  "conclusion": "success",
+  "source_overrides": [],
+  "counts": {
+    "arJVM": 155,
+    "kernel_basis_JVM": 25
+  },
+  "total": 180,
+  "actual_runtime": "Ubuntu24.04.5x86_64,Temurin17.0.20.1+1,Node24.21.0",
+  "requested_historical_jdk": "17.0.20+1",
+  "runtime_limit": "setup-java toolcache path says17.0.20-1, but java -version reports17.0.20.1+1; actual fingerprint is authoritative",
+  "warnings": [
+    "existing linops4s build.sbt lint atline82",
+    "sbt-github-actions metadata warnings from diagnostic workflow shape; no production Scala compilation warning"
+  ],
+  "partial_emulation": "cancelled143 after155AR+15budget tests; fullgate achieved independently on nativehost",
+  "archive": {
+    "path": "logs-and-sources.tar.gz",
+    "sha256": "1eb57e43437fd80bec309358197566fa5c4b1c2d3f3b2f377c8249acfb996baf"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "review": "Independent read-only scientific seam review",
+  "status": "superseded",
+  "superseded_by": "docs/verification/model-authoring-seam-review-20261004/review.json",
+  "supersession_reason": "Fresh independent review of frozen current sources and expanded numerical scope; original verdict and source hashes retained as historical evidence.",
+  "verdict": "bounded pass",
+  "scope": [
+    "Global transform Z = Xscaled A = Xraw D^-1 A, effective HRFs, scale reset, original-basis identity rejection",
+    "Explicit rejection of event-specific kernels and event-dependent normalization; complete original scaling provenance",
+    "Declared response-window discretization propagated through structural and compiled T/F metadata without fallback"
+  ],
+  "qualification": "Window invariance is under the declared quadrature, not exact analytic integration. Execution evidence is recorded separately.",
+  "sources": [
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/ConvolvedBasisOrthogonalization.scala",
+      "sha256": "e64ea429cce9fcead4498397ea0dc0c6926452190835240a17ec7021a0972ddf"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+      "sha256": "b8e941f1ec6dac77266141bd5f3164b2d9f765963e5271c69d202039bba067fc"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypothesisDsl.scala",
+      "sha256": "3bc7a96424ad02a293644be177e4a893973a62f5ef6ee7a9df0adc9760b344fe"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala",
+      "sha256": "e2d6a86ae57c849ac76d93dd98bcba93fb0e959c2545a95fbbd5e33db25cfa8f"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ConvolvedBasisReadoutSuite.scala",
+      "sha256": "ff494d20c21b204669d66fa04fcde1ff85beebe730478d0d9341dc0190252b83"
+    }
+  ]
+}

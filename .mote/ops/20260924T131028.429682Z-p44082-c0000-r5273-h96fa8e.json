@@ -1,0 +1,1 @@
+{"actor":"scalafim-stp-impl","entity":"bd-01M39Q457RDC60GJZN7NVX67BZ","kind":"reserve_open","mode":"exclusive","op":"20260924T131028.429682Z-p44082-c0000-r5273-h96fa8e","paths":["modules/image/shared/src/main/scala/scalafim/image/space","modules/spatial"],"reservation_id":"rv-01M39RKWTD2KWJETT2FNVSQDKR","ts":"2026-09-24T13:10:28.429682Z","ttl_s":3600,"v":2}

@@ -1,0 +1,1 @@
+{"actor":"scalafim-event-roles","entity":"bd-01M20VF8G2828C1BHZ7PWRKMJK","kind":"note","note_kind":"progress","op":"20260908T155331.744193Z-p39848-c0003-rdfa8-hc78eee","text":"Implement checked explicit categorical/continuous event roles, preserving declared levels, identities and raw amplitudes; verify native JVM/JS APIs.","ts":"2026-09-08T15:53:31.744193Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWW0YMZH9J1G6PF443D2CJN9","kind":"note","note_kind":"note","op":"20260706T154027.212744Z-p6857-c0000-r6f34-hde0524","text":"Implemented LssPreparedDesign, LssTrialWorkspace, typed trial statuses, prepared fitting, and FitPlanExecutor prepared LSS wiring. Verified with fitJVM/test and fitJS/test.","ts":"2026-07-06T15:40:27.212744Z","v":1}

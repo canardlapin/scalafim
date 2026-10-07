@@ -1,0 +1,1 @@
+{"actor":"exec-trial-executor","entity":"bd-01M26A285YAQ3H8TGS26BK9T7J","kind":"note","note_kind":"progress","op":"20260930T050557.497113Z-p9625-c0002-r646a-hb7c311","text":"Update only nonexpiring latch-control cleanup deadlines after frozen gate exited; preserve 40ms expiry controls and production lifecycle.","ts":"2026-09-30T05:05:57.497113Z","v":1}

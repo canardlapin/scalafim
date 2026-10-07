@@ -1,0 +1,456 @@
+[
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:35:27.550469+00:00",
+    "finished_utc": "2026-09-30T10:36:21.543323+00:00",
+    "duration_seconds": 53.992229,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "scalafmtAll",
+      "checkAll",
+      "testFullOptJS",
+      "docsCheck"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/locus4s",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/locus-check-02.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 16694,
+    "raw_sha256": "9778de6956c74992734de5f9da5bd449d798ef551de39e716a9578cca1ee88f1",
+    "compressed_sha256": "2197e91bd843bdef5e2307a6f5be813e4c4b4b833c67b4442b5bb4a25c193c58",
+    "passed_totals": [
+      23,
+      10,
+      54,
+      24,
+      53,
+      10,
+      53,
+      24,
+      10
+    ],
+    "warnings": [
+      "[warn] Flag -classpath set repeatedly",
+      "[warn] one warning found",
+      "[warn] Flag -classpath set repeatedly",
+      "[warn] one warning found",
+      "[warn] Flag -classpath set repeatedly",
+      "[warn] one warning found"
+    ],
+    "errors": [],
+    "artifact": "checks/locus-check-02.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:49:23.509575+00:00",
+    "finished_utc": "2026-09-30T10:50:16.147582+00:00",
+    "duration_seconds": 52.637427,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "fmtCheck",
+      "image4s-locusJVM/test",
+      "image4s-locusJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/image4s",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/image4s-pin.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 9260,
+    "classification": "pre-existing formatting failures; see image4s-format-baseline.json",
+    "raw_sha256": "0e6dfc5e0a408ee3532b07a7ca7e144ce04cc93ab972cd119b4d8ded7e6f578f",
+    "compressed_sha256": "7426bda7902b8ad4a0e0be252433f2e816a5fd0a558546712f1e8bcdb94ba260",
+    "passed_totals": [],
+    "warnings": [
+      "[warn] scalafmt: /private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/shared/src/test/scala/image4s/geometry/GeometrySuite.scala isn't formatted properly!",
+      "[warn] scalafmt: /private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/shared/src/main/scala/image4s/geometry/Affine.scala isn't formatted properly!",
+      "[warn] scalafmt: /private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/shared/src/main/scala/image4s/geometry/Affine.scala isn't formatted properly!",
+      "[warn] scalafmt: /private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/shared/src/test/scala/image4s/geometry/GeometrySuite.scala isn't formatted properly!",
+      "[warn] scalafmt: /private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/shared/src/main/scala/image4s/geometry/Grid.scala isn't formatted properly!",
+      "[warn] scalafmt: /private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/shared/src/main/scala/image4s/geometry/Grid.scala isn't formatted properly!"
+    ],
+    "errors": [
+      "[error] scalafmt: 2 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/jvm)",
+      "[error] scalafmt: 1 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/jvm)",
+      "[error] scalafmt: 2 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/js)",
+      "[error] scalafmt: 1 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/js)",
+      "[error] (image4s-geometryJVM / Compile / scalafmtCheck) scalafmt: 2 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/jvm)",
+      "[error] (image4s-geometryJVM / Test / scalafmtCheck) scalafmt: 1 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/jvm)",
+      "[error] (image4s-geometryJS / Compile / scalafmtCheck) scalafmt: 2 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/js)",
+      "[error] (image4s-geometryJS / Test / scalafmtCheck) scalafmt: 1 files must be formatted (/private/tmp/scalafim-cascade-overlap-20260930/image4s/modules/image4s-geometry/js)",
+      "[error] Total time: 13 s, completed Sep 30, 2026, 6:50:15 a.m."
+    ],
+    "artifact": "checks/image4s-pin.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:37:53.507121+00:00",
+    "finished_utc": "2026-09-30T10:42:24.310080+00:00",
+    "duration_seconds": 270.800341,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "locusDataJVM/test",
+      "atlasJVM/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/consumer-jvm.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 22757,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "reframe4s": "9a4508351d74567147b8ea3221d82db89e5892b0"
+    },
+    "final_aligned_graph": false,
+    "raw_sha256": "afc07f3c633db0eb6e0f783c6bfb5d4f257eb2ce6891ca0c856a28d0aecba7cc",
+    "compressed_sha256": "1dcbff7d88bdf6b9c16af03b330be37841c0d16480006697e70ffc6e2336669a",
+    "passed_totals": [
+      27,
+      115
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/consumer-jvm.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:44:32.801977+00:00",
+    "finished_utc": "2026-09-30T10:46:58.953324+00:00",
+    "duration_seconds": 146.149727,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "locusDataJS/test",
+      "atlasJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/consumer-js.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 18460,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "reframe4s": "9a4508351d74567147b8ea3221d82db89e5892b0"
+    },
+    "final_aligned_graph": false,
+    "raw_sha256": "fb74b13a1f3f503f860994a5f71047b7c2b3c8afe4e53f2637017909843964cf",
+    "compressed_sha256": "bdc38aea8a8a3f11d24d91421b85ccf3f05850bfb7eeae9d7e43ce603f65cf76",
+    "passed_totals": [
+      27,
+      79
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/consumer-js.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:42:53.066878+00:00",
+    "finished_utc": "2026-09-30T10:43:52.079435+00:00",
+    "duration_seconds": 59.011848,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "hrfJVM/test",
+      "hrfLawsJVM/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/hrf-jvm.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 26277,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "reframe4s": "9a4508351d74567147b8ea3221d82db89e5892b0"
+    },
+    "final_aligned_graph": false,
+    "raw_sha256": "69faf39cb3ac38f0e72e1fa975c14cfe0992a65ac0e2b1fe5504f32ae1c58b44",
+    "compressed_sha256": "e8ae8baa34dfb7ef8530ffe79b0856c953c443b3efe6e9de762852437a2c2e0b",
+    "passed_totals": [
+      259,
+      82
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/hrf-jvm.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:47:35.655891+00:00",
+    "finished_utc": "2026-09-30T10:48:50.823952+00:00",
+    "duration_seconds": 75.167244,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "hrfJVM/testOnly scalafim.fmri.hrf.family.Cascade34RealizationSuite",
+      "hrfJS/test",
+      "hrfLawsJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/hrf-final.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 27868,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "reframe4s": "9a4508351d74567147b8ea3221d82db89e5892b0"
+    },
+    "final_aligned_graph": false,
+    "raw_sha256": "4110b767e9aa7d6066f38288c976e6754b521d76569d320b3ef5deba06f7e294",
+    "compressed_sha256": "4754a246d6caedd659ed39a48ab85b59c4d8774981091a4ec989c63a99820de9",
+    "passed_totals": [
+      9,
+      259,
+      82
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/hrf-final.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:50:38.894074+00:00",
+    "finished_utc": "2026-09-30T10:51:23.291186+00:00",
+    "duration_seconds": 44.396501,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "scalafmtSbtCheck",
+      "image4s-locusJVM/test",
+      "image4s-locusJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/image4s",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/image4s-pin-02.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 5469,
+    "raw_sha256": "efae4d5aefb45d008b820cbe433e0208dc9b862aed54416ce73d80c97c57f474",
+    "compressed_sha256": "442d36fd0c9e15a39e3c70bcec6712dd2b1ff440180556e6e9c469ca58665672",
+    "passed_totals": [
+      38,
+      36
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/image4s-pin-02.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:56:49.631301+00:00",
+    "finished_utc": "2026-09-30T10:57:38.431868+00:00",
+    "duration_seconds": 48.800035,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "reframe4s-resampleJVM/test",
+      "reframe4s-resampleJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/reframe4s",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/reframe4s-pin-02.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 3625,
+    "raw_sha256": "611541e456c85c227e4eeb9271d193f7d0a33818ab1b8e02a5f83958158a6d35",
+    "compressed_sha256": "6455d4e675921de531e31735e34a2168726cf1fc4705b9c60ee1fe9910274e95",
+    "passed_totals": [
+      1,
+      1
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/reframe4s-pin-02.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:52:11.864900+00:00",
+    "finished_utc": "2026-09-30T10:57:34.870346+00:00",
+    "duration_seconds": 323.005486,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "show atlasJVM/Compile/fullClasspath",
+      "show atlasJS/Compile/fullClasspath",
+      "locusDataJVM/test",
+      "atlasJVM/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/integration-final-jvm.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 34199,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+      "reframe4s": "9a4508351d74567147b8ea3221d82db89e5892b0"
+    },
+    "final_aligned_graph": false,
+    "raw_sha256": "0371583dc20f0a4af37188afffd42cdcd46e70eaa07aff9a288610e5c5cbcbfe",
+    "compressed_sha256": "f6e022e9e2b7f68af74f9ed3c3dab5333029ada5f715118422b28027728830d4",
+    "passed_totals": [
+      27,
+      115
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/integration-final-jvm.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:59:21.465538+00:00",
+    "finished_utc": "2026-09-30T11:00:55.060402+00:00",
+    "duration_seconds": 93.593874,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "show atlasJVM/Compile/fullClasspath",
+      "show atlasJS/Compile/fullClasspath",
+      "locusDataJVM/test",
+      "atlasJVM/testOnly scalafim.atlas.AtlasCoverageSuite scalafim.atlas.AtlasQuotientSuite scalafim.atlas.AtlasParityCorpusSuite scalafim.atlas.AtlasCoreSuite"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/integration-final-jvm-02.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 24494,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+      "reframe4s": "221f46163f5039e62c74e042e1c50f0762757fc0"
+    },
+    "final_aligned_graph": true,
+    "raw_sha256": "2ad627fd479f281f62bb59da63c44e76c54de466cdfb2f3a25540cae15789bbe",
+    "compressed_sha256": "dda7e15b48cd541ec370b5936a690b4c1f40d5fd0dab24c2a63e94eec6488d9b",
+    "passed_totals": [
+      27,
+      33
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/integration-final-jvm-02.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T11:01:11.144267+00:00",
+    "finished_utc": "2026-09-30T11:02:23.290062+00:00",
+    "duration_seconds": 72.144872,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "locusDataJS/test",
+      "atlasJS/testOnly scalafim.atlas.AtlasCoverageSuite scalafim.atlas.AtlasQuotientSuite scalafim.atlas.AtlasParityCorpusSuite scalafim.atlas.AtlasCoreSuite"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/integration-final-js.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 8372,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+      "reframe4s": "221f46163f5039e62c74e042e1c50f0762757fc0"
+    },
+    "final_aligned_graph": true,
+    "raw_sha256": "c8edabdda81247bec30c8e6bf932c319c9a934273ebce1ef8685d39fd4b96748",
+    "compressed_sha256": "b930cd4e72a6ad1028fd1f86ce24b204fa35a884ad85a229df5ba0f7abd9dbdf",
+    "passed_totals": [
+      27,
+      33
+    ],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/integration-final-js.log.gz"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T11:02:52.293742+00:00",
+    "finished_utc": "2026-09-30T11:09:00.557142+00:00",
+    "duration_seconds": 368.259487,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "scalafimCompileAll"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/work",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/compile-all.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 23620,
+    "source_pins": {
+      "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "image4s": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+      "reframe4s": "221f46163f5039e62c74e042e1c50f0762757fc0"
+    },
+    "final_aligned_graph": true,
+    "raw_sha256": "ccb571bd725a49929c549cccf05c7cdf375536ee14c422c98edbd9bf359c64ee",
+    "compressed_sha256": "7d77c7010ed02657f4b7d151803cecbd0e903dc35c8735ff48f8d6695fdca7fb",
+    "passed_totals": [],
+    "warnings": [],
+    "errors": [],
+    "artifact": "checks/compile-all.log.gz"
+  }
+]

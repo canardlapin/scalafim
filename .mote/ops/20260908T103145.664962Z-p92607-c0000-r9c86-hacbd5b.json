@@ -1,0 +1,1 @@
+{"actor":"scalafim-selective-estimation","entity":"bd-01M2092J4Y3D9FRS9VRCKG2EAK","kind":"reserve_open","mode":"exclusive","op":"20260908T103145.664962Z-p92607-c0000-r9c86-hacbd5b","paths":["modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiStagingCacheSuite.scala"],"reservation_id":"rv-01M2095S80K4N1BV97V9N7718C","ts":"2026-09-08T10:31:45.664962Z","ttl_s":10800,"v":2}
