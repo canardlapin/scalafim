@@ -66,7 +66,13 @@ an AR(1) transform with `phi = 0.3`, the six C0 nuisance columns, a 2 x 2 x 2
 prepared node bank, response seed 20260911, eight shared-factor workers and a
 256-voxel input block. Trial output is converted to Float32 and streamed. See
 [the PHRF-07 evidence](profile-hrf-trial-banded-evidence.md) for exact workload
-definitions and receipts.
+definitions and receipts. Those historical receipts measure components, not
+decoding at the returned shape plus certification. The
+[2026-10-07 public-path diagnostic](../verification/phrf-checkpoint-20261007/README.md)
+records that default dense compilation now exceeds the two-million-cell cap;
+`BlockedPartial(96)` admits the same rank-10 basis. It reports that compilation
+change, any node-bank/budget experiment, and the smaller attempted sample
+explicitly; none silently replaces the frozen B0 acceptance cell.
 
 ## Rank and conditioning tolerances
 

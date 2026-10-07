@@ -1,0 +1,28 @@
+{
+  "format": "phrf-decoded-diagnostic/1",
+  "source": "9ba2c57f+checkpoint",
+  "qualification": "not-admitted",
+  "geometry": "B0Dense",
+  "voxels": 4,
+  "trials": 300,
+  "workersRequested": 1,
+  "criterion": "PenalizedProfile(1.0)",
+  "readout": "ExactShape",
+  "java": "21.0.12.1+1-LTS",
+  "os": "Mac OS X",
+  "arch": "aarch64",
+  "decodeBudget": "DecodeBudget(2,2,2,6,Vector(),0.0,4,1.0E-9)",
+  "nodesPerAxis": 2,
+  "budgetProfile": "baseline",
+  "compilation": "Dense",
+  "limitations": [
+    "original-family certification unavailable",
+    "no measured engine peak",
+    "single diagnostic run, no warmup",
+    "no scientific calibration",
+    "input block recycled"
+  ],
+  "failure": "java.lang.IllegalArgumentException: kernel compiler requests 2727270.0 training matrix cells, maximum is 2000000",
+  "totalSeconds": 0.029636333,
+  "heapUsedAtEndBytes": 3532021720
+}
