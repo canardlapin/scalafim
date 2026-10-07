@@ -1,0 +1,117 @@
+{
+  "ticket": "bd-01M2BNHY1PTWTMYZR1VQYBVRPJ",
+  "recorded_utc": "2026-10-07T20:03:16.375532+00:00",
+  "base_revision": "69c034042c419fb8e166685458367b4474664629",
+  "head_revision": "69c034042c419fb8e166685458367b4474664629",
+  "source_state": "new M5.03 files uncommitted; exact file hashes authoritative; concurrent PHRF changes excluded",
+  "provider_pins": {
+    "galeRevision": "d03eb99bde389ce9bce21b8e0fc59bec9ac9b4aa",
+    "multivarRevision": "ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+    "resample4sRevision": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+    "alderRevision": "e555bad92307af1c2cbc104aef398cb9d9de88f0"
+  },
+  "commands": [
+    {
+      "command": "python3 tools/build/sbt-warm mvpaGroupJVM/test",
+      "exit_code": 0,
+      "passed": 27,
+      "skipped": 0,
+      "wrapper_seconds": 29.4,
+      "log": "logs/adapter.log"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm mvpaGroupJS/test",
+      "exit_code": 0,
+      "passed": 27,
+      "skipped": 0,
+      "wrapper_seconds": 14.4,
+      "log": "logs/adapter.log"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm mvpaJVM/test",
+      "exit_code": 0,
+      "passed": 456,
+      "skipped": 1,
+      "wrapper_seconds": 9.5,
+      "log": "logs/core-jvm.log"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm mvpaJS/test",
+      "exit_code": 0,
+      "passed": 456,
+      "skipped": 1,
+      "wrapper_seconds": 23.4,
+      "log": "logs/core-js.log"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm groupJVM/test",
+      "exit_code": 0,
+      "passed": 75,
+      "skipped": 0,
+      "wrapper_seconds": 7.6,
+      "log": "logs/core-jvm.log"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm groupJS/test",
+      "exit_code": 0,
+      "passed": 74,
+      "skipped": 0,
+      "wrapper_seconds": 17.8,
+      "log": "logs/core-js.log"
+    }
+  ],
+  "passed_total": 1115,
+  "skipped_total": 2,
+  "scope": "engineering and deterministic independent numerical fixtures; no scientific calibration or independent review claim",
+  "sources": {
+    "build.sbt": "f96aac20a2d2b26cf82c5d55be3eb343be6c8918c438f6db7395e3426f879498",
+    "docs/verification/umvpa-group-summaries-20261007/R-session.txt": "cbd4f8441218763e283867b860de33cbd949399f49235c63749599394962fb65",
+    "docs/verification/umvpa-group-summaries-20261007/README.md": "a94ded9f4f33fa71a0b7db2bb16abf1ab119377b8b49d9d06f8e793affb21268",
+    "docs/verification/umvpa-group-summaries-20261007/expected.tsv": "c3f5ce8fb34fe7221a7aa5fd2e72260c7e466e84e1e15abe3162aa0c71f642e5",
+    "docs/verification/umvpa-group-summaries-20261007/oracle.R": "60651c86c068418980361a07748c963739c6c1dcc5f2982747469796bb6e94a7",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/Distributions.scala": "5331eaec83cbbb27ed6fa65fc4a5468f91f9b2aa2d39bd2133301269bd219209",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/EstimateGroup.scala": "6ede10639adef395eee3a0fec188d91147574ac6e15760e05b94a8f43f1343bb",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/Fdr.scala": "56bb271dc98eb25b0f804ad8c4ba1f047b80296eca8ea90a45d4d2e1f7b2e8d5",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupContrast.scala": "2c8ff22a9a7cd306a4463ccad0f1dbe1fbae8d44677ec4fa759b0a699a3fe09b",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupData.scala": "1041051ae06fd8e868d34a7ec3a6f3067efd94d91c923c862456ed7e29cd590d",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupDesign.scala": "eb8a0961724fadad0c1ad30114ff127d498981b2bc29d8be85d6fb713c32d17d",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupEngine.scala": "c0378a032c12c90c21a186dd0ed2c7892e8be7a89ecae7c995e6c44bf33cdbb8",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupError.scala": "9dd93c3efa80c0a4c0482bb1e81506111b0012f210acea6eb70d779bc1f8e457",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupGlm.scala": "50c7b7f703717b8192ae4f3c658a1215e044d3423a05819e358f337c5076171f",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupModel.scala": "60ecc24030ca56dbdfa3b83e126bfca5af4fa2f55ec64cf1c1193463f3e1f797",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupResponse.scala": "a271e2323b82aff591dc7928001e1c5f0839fbfed93b2f679757d2771b2319c7",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupResult.scala": "83f6141cf2d26c737e5d398012178517687b63a15784b047a5a932e32ab846bb",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupSpace.scala": "67dee4453737d91458748f1ebeef0a3b440c459a984ce42aa378a32e87c2952c",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupStatistic.scala": "5bb979ed36127a86a78878e62fbef0b4dac2d342100d6d6778d7241977049541",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupTypes.scala": "c0d0fd1507e940ef20e4970eeaf067447494491d51aef69f8e616465de0d6fe6",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupUncertainty.scala": "fb6c4337327febf2b1dcdbaad458046a7e7a8c62e8a41f08737fef7dfb254f8b",
+    "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupWeighting.scala": "6be5cf6501cec1d13f4503e643ef72f16cd48eb900c1ac18563fc056ec398829",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Column.scala": "117e9ebf24800ed8a062c320ff26051bfd39be5513ffbe08d8e9d641519678d4",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala": "804a46352b2b7d155d3c72bee1c1818492f6e35491a58bbaf1d87ac39b8a080a",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentConfirmation.scala": "3f9ea8658754ced1bd8372b549cbe430a7c2d35f699c2fcb284ce946e1972325",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentInference.scala": "31ed07db6356111817df362fd79e4d875505ffe0a83326d2f257a7b256ecfc3d",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ConfirmationDesign.scala": "ddf17f75e76c87277e75d04211baa4c998533ee4a56239faadf0175c49de43fb",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala": "5dac8b1bfa75da7b98b7164b630cecb2525bf1cc13c5b244ef6193b7b85e4387",
+    "modules/mvpa-group/README.md": "c7ba60349a5124d9630551c32cb6670d7040095850cb4af5cdf020e7f2682529",
+    "modules/mvpa-group/shared/src/main/scala/scalafim/fmri/mvpa/group/HeldOutSubjectPrediction.scala": "03e23cd84c25aa0111b84bf4979f1d098b98b27efebfc44f73ae7255e36b57aa",
+    "modules/mvpa-group/shared/src/main/scala/scalafim/fmri/mvpa/group/SubjectGroupBridge.scala": "84267786eb51734833cc5625f1d727a2be8311ed2961c225fe326a607703d2f3",
+    "modules/mvpa-group/shared/src/main/scala/scalafim/fmri/mvpa/group/SubjectGroupSummary.scala": "0693b3405ad602e6ee135cc23707420d80f731060452a33097acb9292d780bb4",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/HeldOutSubjectPredictionSuite.scala": "a39b99102fdc4dc123c138cce47d30b708df195e84195343b1b29d3a1fc4bb33",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupBridgeSuite.scala": "7bbcf5105cf6e93cbbc0d531e7c56073f6779f9bf3a9d24d9e5d92ebda6efe53",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupSummarySuite.scala": "7561a806420f7947a27be1054fd64f699078615dd347dc51423fef9070b2d4f8",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    "project/plugins.sbt": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10"
+  },
+  "logs": {
+    "logs/adapter.log": "3efb93cfc6a0e300826449360de8247c062234aece7faece139902630143e262",
+    "logs/core-js.log": "56b9dc2351216e87f4ee643b982068c01e3a77dad1043b1efa8bb5393cc2df3d",
+    "logs/core-jvm.log": "50fc37f23331c43582cdc97b07e78a521f3e43fd5422210c8c5420db80302815",
+    "logs/initial-tau-tolerance-failure.log": "37a6aaaaed9ce8b95b655ca73380e4de65abec8d2e9a296320fb4701493dc8a4",
+    "logs/initial-tau-tolerance-failure.xml": "d75e88052caf4441139c08737d1bd72dbb58c61310d66668e316f38720c4e2f8",
+    "logs/oracle.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "notes": [
+    "Warm clients queue on one sbt server; extra adapter output echoed in the core JS log is not counted twice.",
+    "Initial expanded absolute tau tolerance failed; retained raw log/XML. Final relative tau tolerance matches native Q stop and is checked against the defining equation."
+  ]
+}
