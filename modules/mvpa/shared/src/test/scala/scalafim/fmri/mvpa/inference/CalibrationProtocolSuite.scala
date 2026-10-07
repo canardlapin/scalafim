@@ -83,3 +83,22 @@ class CalibrationProtocolSuite extends FunSuite:
   test("initial statistic adapter refuses confirmation before any matrix payload parsing"):
     val header = "case\tconfirmation\tunlocked\t0\t1\t1999\t80\n"
     assert(CalibrationProtocolSupport.readCase(header).left.toOption.exists(_.contains("refuses simulator/confirmation")))
+
+  test("raw partial-null rejection remains visible when an earlier stage closes it off"):
+    val metrics = right(CalibrationProtocolSupport.rankMetrics(Vector(.10, .02, .05, .01),
+      Vector(.10, .10, .10, .10), Vector(19, 3, 9, 1), 199))
+    assertEquals(metrics.rawReject, Vector(false, true, true, true))
+    assertEquals(metrics.closedReject, Vector.fill(4)(false))
+    assert(metrics.jsonFields.contains("\"raw_exceedances\":[19,3,9,1]"))
+    assert(metrics.jsonFields.contains("\"p_value_scope\":\"closed-sequential\""))
+    assert(CalibrationProtocolSupport.rankMetrics(Vector(.02, .10), Vector(.02, .02), Vector(3, 19), 199).isLeft)
+    assert(CalibrationProtocolSupport.rankMetrics(Vector(.02), Vector(.02), Vector(4), 199).isLeft)
+    assert(CalibrationProtocolSupport.rankMetrics(Vector(Double.NaN), Vector(.02), Vector(3), 199).isLeft)
+
+  test("record strings escape control characters and failed outputs retain no partial raw metrics"):
+    assertEquals(CalibrationProtocolSupport.jsonString("a\"b\nc\\d"), "\"a\\\"b\\u000ac\\\\d\"")
+    val failed = CalibrationProtocolSupport.retainEvaluation("{\"dataset_index\":0"):
+      Left("partial computation")
+    assert(failed.contains("\"raw_p_values\":null"))
+    assert(failed.contains("\"closed_p_values\":null"))
+    assert(failed.contains("\"record_schema\":2"))

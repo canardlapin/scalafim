@@ -35,6 +35,98 @@ class ProtocolError(ValueError):
     pass
 
 
+RANK_SCOPES = {"raw-stage": "raw_reject", "closed-sequential": "closed_reject"}
+INFERENTIAL_FIELDS = ("p_values", "reject", "raw_p_values", "closed_p_values",
+                      "raw_reject", "closed_reject", "raw_exceedances")
+
+
+def validate_rank_record(row: dict[str, Any]) -> None:
+    """Check actual stage counts and closure; never reconstruct missing raw tests."""
+    if row.get("record_schema") != 2 or row.get("p_value_scope") != "closed-sequential":
+        raise ProtocolError("rank records require schema 2 with explicit closed aliases")
+    members = row.get("member_ids")
+    if not isinstance(members, list) or not members or members != [f"rank-{i+1}" for i in range(len(members))]:
+        raise ProtocolError("rank family must retain every ordered stage")
+    size = len(members)
+    draws = row.get("completed_draws")
+    if type(draws) is not int or draws <= 0:
+        raise ProtocolError("rank records require actual positive integer draws")
+    for name in INFERENTIAL_FIELDS:
+        values = row.get(name)
+        if not isinstance(values, list) or len(values) != size:
+            raise ProtocolError("missing or incomplete rank field: " + name)
+    for name in ("raw_p_values", "closed_p_values", "p_values"):
+        if any(type(p) not in (int, float) or not math.isfinite(p) or not 0 < p <= 1 for p in row[name]):
+            raise ProtocolError("invalid rank probability: " + name)
+    counts = row["raw_exceedances"]
+    if any(type(n) is not int or not 0 <= n <= draws for n in counts):
+        raise ProtocolError("invalid raw exceedance counts")
+    if row["raw_p_values"] != [(n + 1) / (draws + 1) for n in counts]:
+        raise ProtocolError("raw probabilities disagree with actual plus-one counts")
+    maximum = 0.0
+    for raw, closed in zip(row["raw_p_values"], row["closed_p_values"]):
+        maximum = max(maximum, raw)
+        if closed != maximum:
+            raise ProtocolError("closed probabilities are not cumulative raw maxima")
+    for name, probabilities in (("raw_reject", "raw_p_values"), ("closed_reject", "closed_p_values")):
+        if any(type(value) is not bool for value in row[name]) or row[name] != [p <= CRITERIA["alpha"] for p in row[probabilities]]:
+            raise ProtocolError("rank decisions disagree with the fixed alpha: " + name)
+    if row["p_values"] != row["closed_p_values"] or any(type(v) is not bool for v in row["reject"]) or row["reject"] != row["closed_reject"]:
+        raise ProtocolError("historical aliases must preserve closed sequential meaning")
+    for name in ("declared_population_null", "actual_conditional_null"):
+        values = row.get(name)
+        if not isinstance(values, list) or len(values) != size or any(type(v) is not bool for v in values):
+            raise ProtocolError("rank records need complete boolean truth vectors")
+
+
+def validate_metric_bindings(cell: dict[str, Any], required: bool = False) -> None:
+    """A binding is declared before confirmation, never chosen from its outcomes."""
+    bindings = cell.get("metric_bindings", [])
+    if not isinstance(bindings, list) or (required and not bindings):
+        raise ProtocolError("rank confirmation needs explicit frozen metric bindings")
+    seen = set()
+    members = cell.get("members", [])
+    for binding in bindings:
+        name = binding.get("id")
+        selected = binding.get("members")
+        metric = binding.get("metric")
+        scope = binding.get("p_value_scope")
+        if not isinstance(name, str) or not name or name in seen:
+            raise ProtocolError("metric binding identifiers must be nonempty and unique")
+        seen.add(name)
+        if scope not in RANK_SCOPES or metric not in ("type-i", "fwer", "standard-power"):
+            raise ProtocolError("unknown rank metric or decision scope")
+        if not isinstance(selected, list) or not selected or len(set(selected)) != len(selected) or any(m not in members for m in selected):
+            raise ProtocolError("metric binding names absent or duplicate family members")
+        if metric == "fwer":
+            if binding.get("aggregation") != "any" or scope != "closed-sequential":
+                raise ProtocolError("family error uses any closed sequential true-null rejection")
+        elif binding.get("aggregation") != "single" or len(selected) != 1:
+            raise ProtocolError("pointwise rates require one explicitly named member")
+        if metric == "standard-power" and scope != "closed-sequential":
+            raise ProtocolError("detectable-rank power requires closed sequential decisions")
+
+
+def rank_metric_counts(cell: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Counts for the independent R adjudicator; incomplete denominators stay fixed."""
+    validate_metric_bindings(cell)
+    results = []
+    for binding in cell.get("metric_bindings", []):
+        successes = 0
+        for row in rows:
+            if row["status"] != "evaluated":
+                continue
+            validate_rank_record(row)
+            indices = [row["member_ids"].index(m) for m in binding["members"]]
+            nulls = row["declared_population_null"]
+            if any(nulls[i] != (binding["metric"] != "standard-power") for i in indices):
+                raise ProtocolError("metric binding contradicts the retained population truth")
+            decisions = row[RANK_SCOPES[binding["p_value_scope"]]]
+            successes += int(any(decisions[i] for i in indices))
+        results.append(dict(binding, successes=successes))
+    return results
+
+
 def canonical(value: Any) -> bytes:
     return (json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode()
 
@@ -144,12 +236,17 @@ def validate_manifest(manifest: dict[str, Any], repository: Path, phase: str, op
     for cell in cells:
         dataset_count(phase, cell)
         actual_draws(phase, cell)
+        if cell.get("procedure") == "rank":
+            validate_metric_bindings(cell)
         if cell.get("claim") == "C2" and cell.get("availability") != "unsupported":
             raise ProtocolError("complete selection-aware inference is not implemented")
     locks = manifest.get("source_locks", {})
     if phase == "confirmation" and operation != "plan":
         if manifest.get("status") != "frozen-confirmation-ready":
             raise ProtocolError("confirmation is quarantined until explicitly frozen")
+        for cell in cells:
+            if cell.get("procedure") == "rank" and cell.get("availability") != "unsupported":
+                validate_metric_bindings(cell, required=True)
         if not locks or file_locks(repository, list(locks)) != locks:
             raise ProtocolError("confirmation sources differ from the frozen lock")
         prerequisites = manifest.get("prerequisites", {})
@@ -167,6 +264,11 @@ def validate_manifest(manifest: dict[str, Any], repository: Path, phase: str, op
     if operation == "execute" and phase in ("simulator", "pilot"):
         if not locks or file_locks(repository, list(locks)) != locks:
             raise ProtocolError("simulator/pilot source lock is absent or changed")
+        if any(c.get("procedure") == "rank" for c in cells):
+            required = {"tools/mvpa-inference/rank_population.R", "tools/mvpa-inference/generate_known_truth.R",
+                        "docs/plans/unified-mvpa-rank-population-v1.md"}
+            if not required.issubset(locks):
+                raise ProtocolError("rank generator source closure is incomplete")
 
 
 def summarize(cell: dict[str, Any], phase: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -180,6 +282,10 @@ def summarize(cell: dict[str, Any], phase: str, rows: list[dict[str, Any]]) -> d
             raise ProtocolError("dataset index outside the fixed population")
         if row.get("root_seed64") != str(protocol_seed(phase, cell["id"], ordinal)[1]):
             raise ProtocolError("dataset seed does not match its immutable assignment")
+        if row.get("record_schema") == 2 and (row.get("phase") != phase or row.get("scenario_id") != cell["id"]):
+            raise ProtocolError("record phase/scenario disagrees with its assignment")
+        if phase == "confirmation" and cell.get("procedure") == "rank" and row.get("record_schema") != 2:
+            raise ProtocolError("historical rank records cannot stand in for confirmation records")
         if ordinal in unique:
             if canonical(unique[ordinal]) != canonical(row):
                 raise ProtocolError("conflicting retry")
@@ -195,7 +301,7 @@ def summarize(cell: dict[str, Any], phase: str, rows: list[dict[str, Any]]) -> d
             raise ProtocolError("unknown dataset status")
         statuses[status] += 1
         if status != "evaluated":
-            if row.get("p_values") is not None or row.get("reject") is not None:
+            if any(row.get(name) is not None for name in INFERENTIAL_FIELDS):
                 raise ProtocolError("failed/refused/incomplete records cannot carry inferential outputs")
             if not row.get("reason"):
                 raise ProtocolError("unavailable records need a retained reason")
@@ -209,6 +315,8 @@ def summarize(cell: dict[str, Any], phase: str, rows: list[dict[str, Any]]) -> d
             raise ProtocolError("evaluated family membership/order changed")
         if members is not None and len(row.get("reject", [])) != len(members):
             raise ProtocolError("evaluated decision vector omits a family member")
+        if cell.get("procedure") == "rank" and row.get("record_schema") == 2:
+            validate_rank_record(row)
         probabilities = row.get("p_values")
         if probabilities is not None and any(type(x) not in (int, float) or not math.isfinite(x) or not 0 < x <= 1 for x in probabilities):
             raise ProtocolError("nonfinite or invalid reference probabilities")
@@ -237,6 +345,7 @@ def summarize(cell: dict[str, Any], phase: str, rows: list[dict[str, Any]]) -> d
         "original_population_labels_preserved": True, "primary_denominator": expected,
         "outcome": outcome,
         "scientific_release": "not-adjudicated",
+        "metric_counts": rank_metric_counts(cell, list(unique.values())) if cell.get("metric_bindings") else [],
     }
 
 
@@ -256,9 +365,12 @@ def proposal() -> dict[str, Any]:
                             "id": f"rank.{family}.n{n}.p{p}.q{q}.{nuisance}.{rate}",
                             "procedure": "rank", "claim": "C1", "rate_class": rate,
                             "reference_mechanism": "fixed-nonidentity-randomization",
-                            "availability": "candidate", "definition_status": "frozen" if nuisance == "intercept" else "unresolved",
+                            "availability": "candidate", "definition_status": "frozen",
                             "parameters": {"n": n, "p": p, "q": q, "correlations": correlations, "nuisance": nuisance},
-                            "gap": None if nuisance == "intercept" else "freeze nuisance-correlation meaning and exact population covariance before pilot",
+                            "members": [f"rank-{i+1}" for i in range(min(p, q))],
+                            "population_specification": "docs/plans/unified-mvpa-rank-population-v1.md",
+                            "metric_bindings": [],
+                            "gap": "primary metric binding, source-bound QA/pilot/oracle and campaign admission remain pending",
                         })
     for family in roots:
         cells.append({

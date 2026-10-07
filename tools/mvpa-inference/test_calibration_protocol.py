@@ -7,11 +7,78 @@ from pathlib import Path
 
 from calibration_protocol import (
     ProtocolError, child_seed, dataset_count, protocol_seed, proposal,
-    seed_record, summarize, validate_manifest,
+    seed_record, summarize, validate_manifest, validate_rank_record, validate_metric_bindings,
 )
 
 
 class CalibrationProtocolTests(unittest.TestCase):
+    def rank_case(self):
+        members = ["rank-1", "rank-2", "rank-3", "rank-4"]
+        cell = {"id": "rank.cell", "procedure": "rank", "rate_class": "null", "members": members,
+                "reference_mechanism": "fixed-nonidentity-randomization", "fixture_nonidentity_draws": 199,
+                "metric_bindings": [
+                    {"id": "raw-h3", "metric": "type-i", "p_value_scope": "raw-stage", "members": ["rank-3"], "aggregation": "single"},
+                    {"id": "closed-h3", "metric": "type-i", "p_value_scope": "closed-sequential", "members": ["rank-3"], "aggregation": "single"},
+                    {"id": "closed-family", "metric": "fwer", "p_value_scope": "closed-sequential", "members": members[2:], "aggregation": "any"}]}
+        row = {"record_schema": 2, "phase": "fixture", "scenario_id": cell["id"], "dataset_index": 0,
+               "root_seed64": str(protocol_seed("fixture", cell["id"], 0)[1]), "status": "evaluated",
+               "completed_draws": 199, "family_complete": True, "member_ids": members,
+               "p_value_scope": "closed-sequential", "raw_exceedances": [19, 3, 9, 1],
+               "raw_p_values": [.1, .02, .05, .01], "closed_p_values": [.1]*4, "p_values": [.1]*4,
+               "raw_reject": [False, True, True, True], "closed_reject": [False]*4, "reject": [False]*4,
+               "declared_population_null": [False, False, True, True],
+               "actual_conditional_null": [False, False, True, True]}
+        return cell, row
+
+    def test_raw_stage_and_closed_decisions_remain_distinct(self):
+        cell, row = self.rank_case()
+        result = summarize(cell, "fixture", [row])
+        self.assertEqual([r["successes"] for r in result["metric_counts"]], [1, 0, 0])
+        self.assertEqual(result["scientific_release"], "not-adjudicated")
+
+    def test_rank_record_rejects_incomplete_or_inconsistent_observations(self):
+        _, row = self.rank_case()
+        for change in ({"raw_p_values": None}, {"raw_exceedances": [19, 3, 8, 1]},
+                       {"raw_exceedances": [True, 3, 9, 1]}, {"closed_p_values": [.1, .1, .05, .1]},
+                       {"raw_reject": [False]*4}, {"closed_reject": [0]*4},
+                       {"p_values": [.01]*4}, {"raw_p_values": [float("nan")]*4},
+                       {"member_ids": ["rank-2", "rank-1", "rank-3", "rank-4"]},
+                       {"actual_conditional_null": [False, False, True]}):
+            with self.subTest(change=change), self.assertRaises(ProtocolError):
+                validate_rank_record(dict(row, **change))
+
+    def test_new_records_bind_identity_and_cannot_hide_failed_metrics(self):
+        cell, row = self.rank_case()
+        for change in ({"scenario_id": "another"}, {"phase": "pilot"},
+                       {"status": "failed", "reason": "crashed", "p_values": None, "reject": None}):
+            with self.subTest(change=change), self.assertRaises(ProtocolError):
+                summarize(cell, "fixture", [dict(row, **change)])
+
+    def test_historical_closed_records_cannot_be_used_as_raw_or_confirmation(self):
+        cell, row = self.rank_case()
+        row.pop("record_schema")
+        for field in ("raw_p_values", "raw_reject", "raw_exceedances", "closed_p_values", "closed_reject"):
+            row.pop(field)
+        with self.assertRaisesRegex(ProtocolError, "schema 2"):
+            summarize(cell, "fixture", [row])
+        cell.pop("metric_bindings")
+        self.assertEqual(summarize(cell, "fixture", [row])["metric_counts"], [])
+        row["root_seed64"] = str(protocol_seed("confirmation", cell["id"], 0)[1])
+        with self.assertRaisesRegex(ProtocolError, "historical"):
+            summarize(cell, "confirmation", [row])
+
+    def test_binding_cannot_substitute_raw_power_or_wrong_truth(self):
+        cell, row = self.rank_case()
+        for change in ({"metric": "standard-power"}, {"metric": "fwer", "aggregation": "any"},
+                       {"members": ["rank-5"]}, {"members": ["rank-3", "rank-3"]}):
+            altered = copy.deepcopy(cell)
+            altered["metric_bindings"] = [dict(cell["metric_bindings"][0], **change)]
+            with self.subTest(change=change), self.assertRaises(ProtocolError):
+                validate_metric_bindings(altered)
+        cell["metric_bindings"][0]["members"] = ["rank-1"]
+        with self.assertRaisesRegex(ProtocolError, "population truth"):
+            summarize(cell, "fixture", [row])
+
     def test_published_child_derivation_reference(self):
         self.assertEqual(child_seed(90210, [(1, 17), (2, 3)]), -3497511708555549203)
 

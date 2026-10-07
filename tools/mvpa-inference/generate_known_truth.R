@@ -12,6 +12,7 @@ option <- function(name, default = NULL) {
 script_arg <- grep("^--file=", commandArgs(), value = TRUE)
 script <- normalizePath(sub("^--file=", "", script_arg[[1L]]))
 repo <- dirname(dirname(dirname(script)))
+source(file.path(repo, "tools/mvpa-inference/rank_population.R"))
 seed_fixture <- option("--seed-fixture", file.path(repo, "docs/scenarios/fixtures/mvpa.inference-known-truth.v1.r.json"))
 output <- option("--out-dir", file.path(repo, "docs/verification/umvpa-inference-calibration-20261007/fixture"))
 namespace <- "scalafim/umvpa/inference-calibration/v1"
@@ -129,35 +130,25 @@ init_noise <- function(state) {
   assign(".Random.seed", c(10407L, as.integer(state)), envir = .GlobalEnv)
 }
 
-rank_population <- function(n, p, q, rho) {
-  stopifnot(length(rho) == min(p, q), all(rho >= 0 & rho < 1))
-  x <- matrix(rnorm(n * p), n, p)
-  innovation <- matrix(rnorm(n * q), n, q)
-  y <- innovation
-  for (j in seq_along(rho)) y[, j] <- rho[[j]] * x[, j] + sqrt(1 - rho[[j]]^2) * innovation[, j]
-  covariance <- diag(p + q)
-  for (j in seq_along(rho)) covariance[j, p+j] <- covariance[p+j, j] <- rho[[j]]
-  list(x = x, y = y, joint = cbind(x, y), covariance = covariance)
-}
-
 simulator_qa <- function() {
   manifest <- option("--manifest"); cell <- option("--cell"); seeds <- option("--seed-records")
   if (is.null(manifest) || is.null(cell) || is.null(seeds)) stop("QA needs manifest, cell and fixed seed-records TSV")
   fields <- read_cell(manifest, cell, "simulator")
-  if (fields[[1L]] != "rank" || fields[[2L]] != "frozen" || fields[[7L]] != "intercept")
-    stop("this generator implements only frozen intercept-only projected Gaussian rank populations; other definitions remain explicit gaps")
+  if (fields[[1L]] != "rank" || fields[[2L]] != "frozen" || !fields[[7L]] %in% c("intercept", "three-column"))
+    stop("this generator implements only the declared independent-row Gaussian rank populations")
   records <- read.delim(seeds, colClasses = "character", check.names = FALSE)
   stopifnot(nrow(records) == 10000L, identical(as.integer(records$dataset_index), 0:9999))
   stopifnot(all(records$phase == "simulator"), all(records$scenario_id == cell))
   stopifnot(!anyDuplicated(records$root_seed64))
   n <- as.integer(fields[[3L]]); p <- as.integer(fields[[4L]]); q <- as.integer(fields[[5L]])
   rho <- as.numeric(strsplit(fields[[6L]], ",", fixed = TRUE)[[1L]])
-  total <- numeric(p+q); squares <- matrix(0, p+q, p+q)
+  width <- p + q + if (fields[[7L]] == "three-column") 2L else 0L
+  total <- numeric(width); squares <- matrix(0, width, width)
   started <- proc.time()
   for (i in seq_len(10000L)) {
     state <- as.integer(records[i, paste0("r_state", 1:6)])
     init_noise(state)
-    generated <- rank_population(n, p, q, rho)
+    generated <- rank_population(n, p, q, rho, fields[[7L]])
     total <- total + colSums(generated$joint)
     squares <- squares + crossprod(generated$joint)
   }
@@ -169,8 +160,8 @@ simulator_qa <- function() {
   # A separate noiseless linear construction validates the declared coefficients.
   truth <- matrix(0,p,q)
   for (j in seq_along(rho)) truth[j,j] <- rho[[j]]
-  signal <- generated$x %*% truth
-  recovered <- qr.coef(qr(generated$x), signal)
+  signal <- generated$residual_x %*% truth
+  recovered <- qr.coef(qr(generated$residual_x), signal)
   noiseless_error <- max(abs(recovered-truth))
   qa <- data.frame(
     key = c("independent_datasets", "rows_per_dataset", "mean_absolute_error", "covariance_absolute_error",
@@ -195,8 +186,8 @@ emit_case_batch <- function() {
   if (!is.finite(draws) || draws <= 0 || (phase == "pilot" && draws != 199L))
     stop("pilot B is exactly199; fixture cost counts must be explicitly supplied")
   fields <- read_cell(manifest,cell,phase)
-  if (fields[[1L]] != "rank" || fields[[2L]] != "frozen" || fields[[7L]] != "intercept")
-    stop("only frozen projected Gaussian intercept rank cells are implemented")
+  if (fields[[1L]] != "rank" || fields[[2L]] != "frozen" || !fields[[7L]] %in% c("intercept", "three-column"))
+    stop("only the declared independent-row Gaussian rank cells are implemented")
   records <- read.delim(seeds,colClasses="character",check.names=FALSE)
   expected <- if (phase == "pilot") 200L else 1L
   stopifnot(nrow(records)==expected,identical(as.integer(records$dataset_index),0:(expected-1L)))
@@ -209,12 +200,12 @@ emit_case_batch <- function() {
   files <- character(expected)
   for (i in seq_len(expected)) {
     init_noise(as.integer(records[i,paste0("r_state",1:6)]))
-    generated <- rank_population(n,p,q,rho)
+    generated <- rank_population(n,p,q,rho,fields[[7L]])
     path <- file.path(output,sprintf("dataset-%05d.tsv",i-1L))
     if (file.exists(path)) stop("case output already exists; retain prior emission")
     header <- paste("case",phase,cell,i-1L,records$root_seed64[[i]],draws,n,sep="\t")
     writeLines(c(header,matrix_line("X",generated$x),matrix_line("Y",generated$y),
-                 matrix_line("Z",matrix(1,n,1)),paste("rho",number_text(rho),sep="\t")),path,useBytes=TRUE)
+                 matrix_line("Z",generated$nuisance),paste("rho",number_text(rho),sep="\t")),path,useBytes=TRUE)
     files[[i]] <- normalizePath(path)
   }
   writeLines(files,file.path(output,"case-files.txt"))

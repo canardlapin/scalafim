@@ -13,6 +13,39 @@ object CalibrationProtocolSupport:
   val alternativeDatasets: Int = 5000
   val confirmationDraws: Int = 1999
 
+  def jsonString(value: String): String =
+    val escaped = value.flatMap:
+      case '\\' => "\\\\"
+      case '"' => "\\\""
+      case character if character < ' ' => f"\\u${character.toInt}%04x"
+      case character => character.toString
+    "\"" + escaped + "\""
+
+  /** Keep raw stage tests and closed operational decisions separately. Closed
+    * values cannot reconstruct raw values, even with the complete null vector. */
+  final class RankMetrics private[CalibrationProtocolSupport] (
+      val raw: Vector[Double], val closed: Vector[Double], val exceedances: Vector[Int], val draws: Int
+  ):
+    val rawReject: Vector[Boolean] = raw.map(_ <= .05)
+    val closedReject: Vector[Boolean] = closed.map(_ <= .05)
+    def jsonFields: String =
+      ",\"record_schema\":2,\"p_value_scope\":\"closed-sequential\"" +
+        ",\"raw_p_values\":[" + raw.mkString(",") + "],\"closed_p_values\":[" + closed.mkString(",") +
+        "],\"raw_reject\":[" + rawReject.mkString(",") + "],\"closed_reject\":[" + closedReject.mkString(",") +
+        "],\"raw_exceedances\":[" + exceedances.mkString(",") + "],\"p_values\":[" + closed.mkString(",") +
+        "],\"reject\":[" + closedReject.mkString(",") + "]"
+
+  def rankMetrics(raw: Vector[Double], closed: Vector[Double], exceedances: Vector[Int], draws: Int): Either[String, RankMetrics] =
+    if draws <= 0 || raw.isEmpty || raw.size != closed.size || raw.size != exceedances.size then
+      Left("rank metric dimensions or completed draw count")
+    else if raw.exists(p => !p.isFinite || p <= 0.0 || p > 1.0) || closed.exists(p => !p.isFinite || p <= 0.0 || p > 1.0) then
+      Left("rank metric probabilities must be finite in (0,1]")
+    else if exceedances.exists(n => n < 0 || n > draws) || raw.indices.exists(i => raw(i) != (1.0 + exceedances(i)) / (draws + 1.0)) then
+      Left("raw probabilities must equal actual plus-one exceedance fractions")
+    else if raw.scanLeft(0.0)(math.max).tail != closed then
+      Left("closed probabilities must be the cumulative maximum of raw stages")
+    else Right(new RankMetrics(raw, closed, exceedances, draws))
+
   /** Internal identifier syntax must not normalize scientific scenario names. */
   def bindingIdentity(scenario: String, ordinal: Int, rootSeed: Long): Either[String, String] =
     if scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then Left("invalid case binding identity")
@@ -26,12 +59,9 @@ object CalibrationProtocolSupport:
     result match
       case Right(record) => record
       case Left(reason) =>
-        val escaped = reason.flatMap:
-          case '\\' => "\\\\"
-          case '"' => "\\\""
-          case character if character < ' ' => f"\\u${character.toInt}%04x"
-          case character => character.toString
-        prefix + ",\"status\":\"failed\",\"reason\":\"" + escaped + "\",\"p_values\":null,\"reject\":null}\n"
+        prefix + ",\"record_schema\":2,\"status\":\"failed\",\"reason\":" + jsonString(reason) +
+          ",\"p_values\":null,\"reject\":null,\"raw_p_values\":null,\"closed_p_values\":null," +
+          "\"raw_reject\":null,\"closed_reject\":null,\"raw_exceedances\":null}\n"
 
   def seed(phase: String, scenario: String, ordinal: Int): Either[String, Long] =
     if !phases.contains(phase) || scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then
