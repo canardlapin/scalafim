@@ -7,14 +7,7 @@ import scalafim.fmri.model.ProfileCriterion
 /** Reference agreement and actual public outputs; boundary solutions remain refusals. */
 class TrialRefinementSuite extends munit.FunSuite:
   override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(10, "min")
-  private val budget = DecodeBudget(
-    maxNewtonSteps = 16,
-    maxJets = 901,
-    maxExactEvaluations = 40,
-    maxCandidateAttempts = 30,
-    stationarityStepTolerance = 1e-6,
-    initialization = DecodeInitialization.BoundedMultistart
-  )
+  private val budget = DecodedTrialCheckpoint.repairedBudget
   private lazy val f = DecodedTrialCheckpoint.fixture(
     DecodedTrialCheckpoint.Config(
       DecodedTrialCheckpoint.Geometry.B0Dense,

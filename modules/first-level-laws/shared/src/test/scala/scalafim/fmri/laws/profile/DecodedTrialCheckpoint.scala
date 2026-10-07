@@ -27,6 +27,15 @@ import scalafim.image.SampleSpaces
   * the decoder.
   */
 object DecodedTrialCheckpoint:
+  val repairedBudget: DecodeBudget = DecodeBudget(
+    maxNewtonSteps = 16,
+    maxJets = 901,
+    maxExactEvaluations = 40,
+    maxCandidateAttempts = 30,
+    stationarityStepTolerance = 1e-6,
+    initialization = DecodeInitialization.BoundedMultistart
+  )
+
   enum Geometry:
     case Tiny, B0Dense, B0Regular
 
@@ -41,11 +50,13 @@ object DecodedTrialCheckpoint:
       criterion: ProfileCriterion = ProfileCriterion.PenalizedProfile(1.0),
       mode: ProfileTrialReadoutMode = ProfileTrialReadoutMode.ExactShape,
       budget: DecodeBudget = DecodeBudget(),
-      trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy()
+      trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy(),
+      noiseRatio: Option[Double] = None
   ):
     require(voxels > 0 && trials >= 3 && trials % 3 == 0)
     require(gridAxisNodes >= 2)
     require(blockSize >= 1 && blockSize <= 256 && workers >= 1 && workers <= 8)
+    require(noiseRatio.forall(x => x.isFinite && x >= 0.0))
 
   final case class Fixture(
       config: Config,
@@ -79,12 +90,16 @@ object DecodedTrialCheckpoint:
             .resolve(selection)
             .flatMap: selected =>
               calls += 1
-              val count = selected.timepoints.length.toLong * selected.voxels.length
+              // These accessors materialize vectors. Resolve them once per
+              // block, rather than allocating both again for every matrix cell.
+              val selectedTimes = selected.timepoints
+              val selectedVoxels = selected.voxels
+              val count = selectedTimes.length.toLong * selectedVoxels.length
               values += count
               largestSeriesValues = math.max(largestSeriesValues, count)
               FmriSeries.make(
-                DMat.tabulate(selected.timepoints.length, selected.voxels.length)((t, v) =>
-                  rawBlock(selected.timepoints(t) * inputBlockVoxels + selected.voxels(v) % inputBlockVoxels)
+                DMat.tabulate(selectedTimes.length, selectedVoxels.length)((t, v) =>
+                  rawBlock(selectedTimes(t) * inputBlockVoxels + selectedVoxels(v) % inputBlockVoxels)
                 ),
                 selected.voxelIndexValues,
                 selected.timepointIndices,
@@ -110,7 +125,10 @@ object DecodedTrialCheckpoint:
       * same-model evidence, not a certificate against the original HRF family. The penalty is sqrt(lambda) (I - P_M).
       */
     def oracle(voxel: Int, coordinates: Vector[Double]): Vector[Double] =
-      val x = designAt(expanded, coordinates)
+      oracleDesign(voxel, designAt(expanded, coordinates))
+
+    def oracleDesign(voxel: Int, x: Array[Double]): Vector[Double] =
+      require(x.length == rows * trials)
       val design = DMat.tabulate(rows, trials + nuisance)((t, j) =>
         if j < trials then x(t * trials + j) else baseline.designMatrix(t, j - trials)
       )
@@ -303,7 +321,7 @@ object DecodedTrialCheckpoint:
         signal2 += signal * signal
         t += 1
       val signalSd = math.sqrt(signal2 / rows)
-      val noiseSd = (if tiny then 0.01 else 2.0) * signalSd
+      val noiseSd = config.noiseRatio.getOrElse(if tiny then 0.01 else 2.0) * signalSd
       val innovationSd = noiseSd * math.sqrt(1.0 - 0.3 * 0.3)
       var noise = rng.nextGaussian() * noiseSd
       t = 0
@@ -314,7 +332,7 @@ object DecodedTrialCheckpoint:
       v += 1
     Fixture(config, dataset, plan, baseline, expanded, ar, raw, blockVoxels, basisNanos, System.nanoTime() - started)
 
-  private def designAt(expanded: TrialBasisDesign, coordinates: Vector[Double]): Array[Double] =
+  private[profile] def designAt(expanded: TrialBasisDesign, coordinates: Vector[Double]): Array[Double] =
     val coefficients = new Array[Double](expanded.rank)
     expanded.basis.coefficientsInto(
       ShapePoint.unsafe(coordinates),

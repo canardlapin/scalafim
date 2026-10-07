@@ -1189,7 +1189,7 @@ lazy val firstLevelLaws =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/first-level-laws"))
-    .dependsOn(fit, hrfLaws)
+    .dependsOn(fit, hrfLaws, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(
