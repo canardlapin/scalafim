@@ -36,6 +36,7 @@ class ProtocolError(ValueError):
 
 
 RANK_SCOPES = {"raw-stage": "raw_reject", "closed-sequential": "closed_reject"}
+POWER_METRICS = ("standard-power", "descriptive-power")
 INFERENTIAL_FIELDS = ("p_values", "reject", "raw_p_values", "closed_p_values",
                       "raw_reject", "closed_reject", "raw_exceedances")
 
@@ -94,7 +95,7 @@ def validate_metric_bindings(cell: dict[str, Any], required: bool = False) -> No
         if not isinstance(name, str) or not name or name in seen:
             raise ProtocolError("metric binding identifiers must be nonempty and unique")
         seen.add(name)
-        if scope not in RANK_SCOPES or metric not in ("type-i", "fwer", "standard-power"):
+        if scope not in RANK_SCOPES or metric not in ("type-i", "fwer") + POWER_METRICS:
             raise ProtocolError("unknown rank metric or decision scope")
         if not isinstance(selected, list) or not selected or len(set(selected)) != len(selected) or any(m not in members for m in selected):
             raise ProtocolError("metric binding names absent or duplicate family members")
@@ -103,7 +104,7 @@ def validate_metric_bindings(cell: dict[str, Any], required: bool = False) -> No
                 raise ProtocolError("family error uses any closed sequential true-null rejection")
         elif binding.get("aggregation") != "single" or len(selected) != 1:
             raise ProtocolError("pointwise rates require one explicitly named member")
-        if metric == "standard-power" and scope != "closed-sequential":
+        if metric in POWER_METRICS and scope != "closed-sequential":
             raise ProtocolError("detectable-rank power requires closed sequential decisions")
 
 
@@ -119,7 +120,7 @@ def rank_metric_counts(cell: dict[str, Any], rows: list[dict[str, Any]]) -> list
             validate_rank_record(row)
             indices = [row["member_ids"].index(m) for m in binding["members"]]
             nulls = row["declared_population_null"]
-            if any(nulls[i] != (binding["metric"] != "standard-power") for i in indices):
+            if any(nulls[i] != (binding["metric"] not in POWER_METRICS) for i in indices):
                 raise ProtocolError("metric binding contradicts the retained population truth")
             decisions = row[RANK_SCOPES[binding["p_value_scope"]]]
             successes += int(any(decisions[i] for i in indices))
@@ -349,6 +350,28 @@ def summarize(cell: dict[str, Any], phase: str, rows: list[dict[str, Any]]) -> d
     }
 
 
+def rank_metric_bindings(correlations: list[float], rate: str) -> list[dict[str, Any]]:
+    """Metric clarification v1: raw pointwise calibration, closed family/power."""
+    rank = sum(rho > 0 for rho in correlations)
+    members = [f"rank-{i+1}" for i in range(len(correlations))]
+    def binding(name, metric, scope, selected, role, aggregation="single"):
+        return dict(id=name, metric=metric, p_value_scope=scope, members=selected,
+                    aggregation=aggregation, role=role)
+    if rate == "null":
+        family = binding("closed-null-family", "fwer", "closed-sequential",
+                         members[rank:], "primary" if rank == 0 else "secondary", "any")
+        if rank == 0:
+            return [family]
+        return [binding("raw-first-null", "type-i", "raw-stage", [members[rank]], "primary"),
+                binding("closed-first-null", "type-i", "closed-sequential", [members[rank]], "secondary"),
+                family]
+    if rate != "alternative" or rank == 0:
+        raise ProtocolError("rank metric binding requires a null or nonzero alternative")
+    standard = correlations[rank - 1] == .20
+    return [binding("closed-new-root", "standard-power" if standard else "descriptive-power",
+                    "closed-sequential", [members[rank - 1]], "primary" if standard else "descriptive")]
+
+
 def proposal() -> dict[str, Any]:
     """Declare all mandatory families; unresolved population details stay visible."""
     cells = []
@@ -369,8 +392,9 @@ def proposal() -> dict[str, Any]:
                             "parameters": {"n": n, "p": p, "q": q, "correlations": correlations, "nuisance": nuisance},
                             "members": [f"rank-{i+1}" for i in range(min(p, q))],
                             "population_specification": "docs/plans/unified-mvpa-rank-population-v1.md",
-                            "metric_bindings": [],
-                            "gap": "primary metric binding, source-bound QA/pilot/oracle and campaign admission remain pending",
+                            "metric_binding_specification": "docs/plans/unified-mvpa-rank-metric-bindings-v1.md",
+                            "metric_bindings": rank_metric_bindings(correlations, rate),
+                            "gap": "source-bound QA/pilot/oracle and campaign admission remain pending",
                         })
     for family in roots:
         cells.append({

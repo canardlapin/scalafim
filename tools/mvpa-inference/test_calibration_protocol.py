@@ -36,6 +36,31 @@ class CalibrationProtocolTests(unittest.TestCase):
         self.assertEqual([r["successes"] for r in result["metric_counts"]], [1, 0, 0])
         self.assertEqual(result["scientific_release"], "not-adjudicated")
 
+    def test_frozen_rank_bindings_separate_primary_calibration_and_closed_power(self):
+        cells = [c for c in proposal()["cells"] if c["procedure"] == "rank" and c["availability"] == "candidate"]
+        self.assertEqual(len(cells), 64)
+        for cell in cells:
+            validate_metric_bindings(cell, required=True)
+            rank = sum(r > 0 for r in cell["parameters"]["correlations"])
+            first = cell["metric_bindings"][0]
+            if cell["rate_class"] == "null":
+                self.assertEqual(first["metric"], "fwer" if rank == 0 else "type-i")
+                self.assertEqual(first["p_value_scope"], "closed-sequential" if rank == 0 else "raw-stage")
+                self.assertEqual(first["members"], cell["members"] if rank == 0 else [f"rank-{rank+1}"])
+            else:
+                self.assertEqual(first["metric"], "standard-power" if rank == 3 else "descriptive-power")
+                self.assertEqual(first["p_value_scope"], "closed-sequential")
+                self.assertEqual(first["members"], [f"rank-{rank}"])
+
+    def test_descriptive_power_uses_alternative_truth_and_closed_decisions(self):
+        cell, row = self.rank_case()
+        cell["metric_bindings"] = [dict(id="power", metric="descriptive-power", p_value_scope="closed-sequential",
+                                        members=["rank-2"], aggregation="single")]
+        self.assertEqual(summarize(cell, "fixture", [row])["metric_counts"][0]["successes"], 0)
+        cell["metric_bindings"][0]["p_value_scope"] = "raw-stage"
+        with self.assertRaisesRegex(ProtocolError, "closed sequential"):
+            validate_metric_bindings(cell)
+
     def test_rank_record_rejects_incomplete_or_inconsistent_observations(self):
         _, row = self.rank_case()
         for change in ({"raw_p_values": None}, {"raw_exceedances": [19, 3, 8, 1]},
