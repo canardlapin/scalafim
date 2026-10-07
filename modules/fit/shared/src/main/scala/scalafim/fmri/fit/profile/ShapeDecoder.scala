@@ -1,6 +1,7 @@
 package scalafim.fmri.fit.profile
 
 import scalafim.fmri.hrf.family.{ShapeChart, ShapePoint}
+import gale.optim.{BoxBounds, BoxDifferentiableObjective, BoxOptimizationError, BoxOptimizationResult, BoxQuasiNewton, BoxQuasiNewtonConfig}
 
 /** A regular grid of reference nodes over a chart, `d <= 3`, axis 0 fastest. */
 final case class NodeGrid(chart: ShapeChart, nodesPerAxis: Vector[Int]):
@@ -78,6 +79,21 @@ enum DecodeInitialization:
     * Retain it only if the data-plus-prior objective improves on the selected bank node.
     */
   case ChartCenterProbe
+  /** Independently refine the center and all quarter/three-quarter chart points using Gale,
+    * then verify/polish the lowest objective point with the ordinary terminal decoder.
+    * Each search receives maxJets / (2 + 2^dimension) evaluations; the remainder is reserved
+    * for terminal work. Search gradients use unit-chart coordinates and a fixed per-voxel
+    * energy scale, with projected-gradient tolerance 1e-10. Within 1e-12 scaled energy
+    * of the lowest trajectory, prefer the smallest projected gradient. Every call spends a jet.
+    */
+  case BoundedMultistart
+
+final case class ShapeSearchTrajectory(initialUnitCoordinates: Vector[Double], result: BoxOptimizationResult)
+
+/** Explicit search coverage and stopping reasons; never a global-optimality certificate. */
+final case class ShapeSearchReceipt(
+    requestedStarts: Int, objectiveScale: Double, trajectories: Vector[ShapeSearchTrajectory],
+    energyTieToleranceScaled: Double = 1e-12)
 
 /** Per-voxel work caps; every cap is a counter with a reported actual.
   * `stationarityStepTolerance` is the largest raw free Newton correction (in
@@ -133,6 +149,7 @@ enum DecodeBudgetExit:
   case NewtonStepCap
   case FallbackExactEvaluationQuota
   case FallbackTerminalJetQuota
+  case SearchStartJetQuota
 
 final case class ShapeDecodeResult(
     coordinates: Vector[Double],
@@ -146,7 +163,8 @@ final case class ShapeDecodeResult(
     conditionalSd: Vector[Double],
     ambiguityGap: Double,
     budgetExit: Option[DecodeBudgetExit] = None,
-    pairedDecrease: Option[PairedShapeDecrease] = None):
+    pairedDecrease: Option[PairedShapeDecrease] = None,
+    search: Option[ShapeSearchReceipt] = None):
   def point: ShapePoint = ShapePoint.unsafe(coordinates)
 
 private enum NewtonDirectionStatus:
@@ -452,11 +470,84 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     )
 
   def decode(counters: DecoderCounters): ShapeDecodeResult =
-    counters.voxels += 1
+    budget.initialization match
+      case DecodeInitialization.BoundedMultistart => decodeMultistart(counters)
+      case _ => decodeInitial(counters, None, budget)
+
+  private def decodeMultistart(counters: DecoderCounters): ShapeDecodeResult =
     val best = scan(counters)
+    if best < 0 then
+      counters.voxels += 1
+      return refused(best, Double.NaN)
+    val starts = 1 + (1 << d)
+    val perStart = budget.maxJets / (starts + 1)
+    val scale = math.max(1.0, math.abs(nodeObjectiveEnergy(best)))
+    if perStart == 0 then
+      val result = decodeInitial(counters, None,
+        budget.copy(maxNewtonSteps = 0, initialization = DecodeInitialization.BankNode), Some(best))
+      return result.copy(status = DecodeStatus.BudgetExceeded, budgetExit = Some(DecodeBudgetExit.SearchStartJetQuota),
+        search = Some(ShapeSearchReceipt(starts, scale, Vector.empty)))
+    val before = counters.jets
+    val coordinates = new Array[Double](d)
+    val searchObjective = new BoxDifferentiableObjective:
+      val dimension = d
+      def evaluate(unit: Array[Double], gradient: Array[Double]): Either[BoxOptimizationError, Double] =
+        var axis = 0
+        while axis < d do
+          coordinates(axis) = grid.chart.clamp(axis, grid.chart.lower(axis) + grid.chart.width(axis) * unit(axis))
+          axis += 1
+        counters.jets += 1
+        counters.candidateAttempts += 1
+        clearJet()
+        if !objective.jetAt(coordinates, jet) || !finiteJet() then
+          Left(BoxOptimizationError.OracleFailure("shape objective refused a full jet"))
+        else
+          System.arraycopy(jet.gradient, 0, gradient, 0, d)
+          System.arraycopy(jet.hessian, 0, candidateHess, 0, d * d)
+          augment(coordinates, gradient, candidateHess)
+          axis = 0
+          while axis < d do
+            gradient(axis) *= grid.chart.width(axis) / scale
+            axis += 1
+          Right((jet.energy + priorEnergy(coordinates)) / scale)
+    val bounds = BoxBounds.from(Vector.fill(d)(0.0), Vector.fill(d)(1.0)).toOption.get
+    val config = BoxQuasiNewtonConfig.from(perStart - 1, perStart, budget.maxCandidateAttempts, 1e-10).toOption.get
+    val trajectories = Vector.newBuilder[ShapeSearchTrajectory]
+    var lowest = Double.PositiveInfinity
+    var start = 0
+    while start < starts do
+      val initial = Vector.tabulate(d)(axis =>
+        if start == 0 then 0.5 else if ((start - 1) & (1 << axis)) == 0 then 0.25 else 0.75)
+      val result = BoxQuasiNewton.minimize(searchObjective, bounds, initial, config).toOption.get
+      trajectories += ShapeSearchTrajectory(initial, result)
+      result.point.foreach: point =>
+        lowest = math.min(lowest, point.value)
+      start += 1
+    val receipt = ShapeSearchReceipt(starts, scale, trajectories.result())
+    // Anchor the tie window at the true minimum of all observed values; pairwise
+    // ties could otherwise accumulate drift as successive trajectories are ranked.
+    val selected = receipt.trajectories.flatMap(_.result.point)
+      .filter(_.value <= lowest + receipt.energyTieToleranceScaled)
+      .minByOption(_.projectedGradientNorm)
+      .map(point => point.coordinates.indices.map(axis =>
+        grid.chart.clamp(axis, grid.chart.lower(axis) + grid.chart.width(axis) * point.coordinates(axis))).toVector)
+    val remaining = budget.maxJets - (counters.jets - before).toInt
+    val terminalBudget = budget.copy(maxJets = remaining, initialization = DecodeInitialization.BankNode)
+    if selected.nonEmpty then counters.terminalVerifications += 1
+    val terminal = decodeInitial(counters, selected, terminalBudget, Some(best))
+    terminal.copy(status = if selected.isEmpty then DecodeStatus.NoAdmissibleNode else terminal.status,
+      budgetExit = if selected.isEmpty then None else terminal.budgetExit,
+      pairedDecrease = if selected.isEmpty then None else terminal.pairedDecrease,
+      search = Some(receipt))
+
+  private def decodeInitial(counters: DecoderCounters, initial: Option[Vector[Double]],
+      budget: DecodeBudget, scannedBest: Option[Int] = None): ShapeDecodeResult =
+    counters.voxels += 1
+    val best = scannedBest.getOrElse(scan(counters))
     if best < 0 then return refused(best, Double.NaN)
     val gap = ambiguity(best)
     grid.coordinatesInto(best, x)
+    initial.foreach(coords => coords.copyToArray(x))
     var jetsUsed = 0
     var exactUsed = 0
     var steps = 0
@@ -469,7 +560,11 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     var terminalCurvature = true
     var terminalPairedDecrease: Option[PairedShapeDecrease] = None
     clearJet()
-    val nodeOk = objective.jetAtNode(best, jet) && finiteJet()
+    val nodeOk = initial match
+      case None => objective.jetAtNode(best, jet) && finiteJet()
+      case Some(_) =>
+        counters.candidateAttempts += 1
+        objective.jetAt(x, jet) && finiteJet()
     jetsUsed += 1
     counters.jets += 1
     if !nodeOk then return refused(best, gap)
@@ -479,8 +574,9 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     val probeCount = budget.initialization match
       case DecodeInitialization.BankNode => 0
       case DecodeInitialization.ChartCenterProbe => 1
+      case DecodeInitialization.BoundedMultistart => 0
     var probe = 0
-    while probe < probeCount && jetsUsed < budget.maxJets do
+    while initial.isEmpty && probe < probeCount && jetsUsed < budget.maxJets do
       var differs = false
       var axis = 0
       while axis < d do
@@ -628,7 +724,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           exhaust(DecodeBudgetExit.CandidateAttemptCap)
           continue = false
     if directionStatus == NewtonDirectionStatus.Direction && steps >= budget.maxNewtonSteps then exhaust(DecodeBudgetExit.NewtonStepCap)
-    if initialCurvatureNotPositive then
+    if initialCurvatureNotPositive && initial.isEmpty then
       // derivative-free fallback: parabolic interpolation along each axis of the node grid
       fallback = true
       counters.fallbacks += 1

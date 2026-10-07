@@ -633,6 +633,13 @@ records attempted/refused outputs and a same-model oracle without claiming
 original-family, scientific, or performance qualification.
 PHRF-11/14/15/29 retain their stated acceptance boundaries.
 
+The [bounded refinement follow-up](../verification/phrf-refinement-20261007/README.md)
+repairs the retained strong-signal refusal and worse-local-minimum selection
+with an opt-in Gale multistart route. It agrees with all 80 matched reference
+objectives while retaining boundary refusals, but uses hundreds of full jets
+per voxel. This is a correctness checkpoint, not the complete performance or
+scientific gate; default budgets and PHRF-10's deferred status are unchanged.
+
 ### PHRF-29: Add `ProfileHrfPlan` and attach the trial backend to the executor
 
 Owner: `model` and `fit`. Acceptance:

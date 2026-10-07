@@ -74,6 +74,13 @@ records that default dense compilation now exceeds the two-million-cell cap;
 change, any node-bank/budget experiment, and the smaller attempted sample
 explicitly; none silently replaces the frozen B0 acceptance cell.
 
+The subsequent [bounded refinement diagnostic](../verification/phrf-refinement-20261007/README.md)
+uses opt-in nine-start Gale search on 16 matched voxels at five noise levels.
+It repairs both retained search counterexamples and agrees with all 80 reference
+objectives, emitting the 60 interior fits and refusing the 20 boundary fits.
+Its 901-jet diagnostic budget and one generating HRF do not qualify frozen B0,
+original-family accuracy or the scientific cohorts below.
+
 ## Rank and conditioning tolerances
 
 | Item | Value |

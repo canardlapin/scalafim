@@ -20,6 +20,15 @@ also expose the current dense basis compiler's array-cap refusal and an
 explicit blocked-compilation alternative without reducing the domain, rank
 budget, or held-out tolerance.
 
+The [bounded refinement follow-up](../verification/phrf-refinement-20261007/README.md)
+adds an opt-in nine-start search through the merged Gale provider. All 80 matched
+noise-ladder objectives agree with the independent reference; 60 interior fits
+emit and 20 boundary-preferred fits remain refused. Both earlier search
+counterexamples are repaired. This substantially more expensive diagnostic
+route preserves default behavior and does not qualify the full workload;
+PHRF-33 remains open for cost reduction, preparation/certification prerequisites
+and the complete measurement.
+
 ## Estimand and implementation
 
 For trial design `X(theta)`, nuisance `F`, one-hot trial-to-condition map `M`,

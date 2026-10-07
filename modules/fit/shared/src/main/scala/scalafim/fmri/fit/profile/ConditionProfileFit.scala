@@ -127,6 +127,7 @@ object ConditionProfileProvenance:
         val initializationSuffix = initialization match
           case DecodeInitialization.BankNode => "|initialization=bank-node"
           case DecodeInitialization.ChartCenterProbe => "|initialization=chart-center-probe"
+          case DecodeInitialization.BoundedMultistart => "|initialization=bounded-multistart/v1"
         s"decode-budget/v2|coarseStride=$coarseStride|maxNewtonSteps=$maxNewtonSteps|" +
           s"maxJets=$maxJets|maxExactEvaluations=$maxExactEvaluations|" +
           s"weakSdLimit=${numbers(weakSdLimit)}|" +

@@ -1,0 +1,340 @@
+{
+  "qualification": "not-admitted",
+  "format": "phrf-js-sample/1",
+  "seconds": 20.150875,
+  "samples": 13341,
+  "noiseRatio": 0.5,
+  "samplingIntervalMicroseconds": 1000,
+  "note": "Live fastopt test process; one bounded sample, not a whole-sweep attribution. Profiler was attached only after the uninstrumented noise 0 and 0.1 tests passed. Timings from later JS tests include sampling overhead.",
+  "selfTime": [
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__addBlock$1__I__AD__Lscalafim_fmri_fit_profile_TrialBandedPreparation__I__I__I__D__V",
+      "line": 89837,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 6686659,
+      "percent": 33.18297096279938
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__bandMatrixProduct$1__Lscalafim_fmri_fit_profile_TrialBandedPreparation__I__I__AD__I__I__AD__I__I__I__I__D",
+      "line": 89849,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 6623351,
+      "percent": 32.86880098258761
+    },
+    {
+      "function": "",
+      "line": 90085,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1681169,
+      "percent": 8.342908186369078
+    },
+    {
+      "function": "$p_Lgale_linalg_BandedCholesky__run__sjs_js_typedarray_Float64Array__I__I__I__I__Lgale_linalg_BandedSolve__s_util_Either",
+      "line": 133838,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1311210,
+      "percent": 6.506963097135981
+    },
+    {
+      "function": "",
+      "line": 837,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 955888,
+      "percent": 4.7436550521999665
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__subtractCross$1__I__I__AD__AD__AD__I__I__I__V",
+      "line": 89914,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 672490,
+      "percent": 3.337274435973624
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__bandVectorProduct__AD__I__AD__I__I__D",
+      "line": 129464,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 609580,
+      "percent": 3.0250795560986807
+    },
+    {
+      "function": "",
+      "line": 375947,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 460666,
+      "percent": 2.2860843511758175
+    },
+    {
+      "function": "",
+      "line": 843,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 274743,
+      "percent": 1.3634296277456934
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__solveCComponent$1__I__I__AD__Lgale_linalg_DMatBuilder__Lscalafim_fmri_fit_profile_TrialBandedWork__Lgale_linalg_BandedCholesky__AD__Lscalafim_fmri_fit_profile_TrialBandedPreparation__AD__I__I__I__I__I__s_util_Either",
+      "line": 89869,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 149583,
+      "percent": 0.742315160011662
+    },
+    {
+      "function": "$uI",
+      "line": 534,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 131793,
+      "percent": 0.6540311524933781
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__buildReference__AD__I__s_Option__s_util_Either",
+      "line": 129015,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 89995,
+      "percent": 0.4466059166165241
+    },
+    {
+      "function": "",
+      "line": 2608,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 83083,
+      "percent": 0.41230467659592945
+    },
+    {
+      "function": "",
+      "line": 588,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 66665,
+      "percent": 0.33082930641969643
+    },
+    {
+      "function": "",
+      "line": 60136,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 51960,
+      "percent": 0.25785480779370623
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__contractResponse__Lscalafim_fmri_fit_profile_TrialBandedReference__Lscalafim_fmri_fit_profile_TrialBandedResponse__I__V",
+      "line": 129072,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 43458,
+      "percent": 0.21566309155309632
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__assembleReducedComponent__Lscalafim_fmri_fit_profile_TrialBandedReference__Lscalafim_fmri_fit_profile_TrialBandedResponse__I__I__I__I__I__I__I__I__I__I__V",
+      "line": 129484,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 37250,
+      "percent": 0.18485549634941412
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__responseReleaseDot__Lscalafim_fmri_fit_profile_TrialBandedReference__I__I__I__D",
+      "line": 129526,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 34582,
+      "percent": 0.1716153765035017
+    },
+    {
+      "function": "(garbage collector)",
+      "line": 0,
+      "url": "",
+      "microseconds": 31543,
+      "percent": 0.15653414553958575
+    },
+    {
+      "function": "",
+      "line": 89004,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 28541,
+      "percent": 0.1416365294311041
+    },
+    {
+      "function": "$ac_D",
+      "line": 825,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 28499,
+      "percent": 0.14142810175736786
+    },
+    {
+      "function": "",
+      "line": 3427,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 16624,
+      "percent": 0.08249765829027275
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__solveResponseComponent__Lscalafim_fmri_fit_profile_TrialBandedReference__I__I__I__Z",
+      "line": 129412,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 15959,
+      "percent": 0.07919755345611543
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__responseSolutionDot__I__I__D",
+      "line": 129515,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 9001,
+      "percent": 0.04466803550714299
+    },
+    {
+      "function": "$n",
+      "line": 66,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 9000,
+      "percent": 0.0446630729434826
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__constrainedLogDet__Lscalafim_fmri_fit_profile_TrialBandedPreparation__Lgale_linalg_BandedCholesky__Lscalafim_fmri_fit_profile_TrialBandedWork__s_util_Either",
+      "line": 89719,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 6083,
+      "percent": 0.030187274746133853
+    },
+    {
+      "function": "",
+      "line": 94046,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 6041,
+      "percent": 0.0299788470723976
+    },
+    {
+      "function": "",
+      "line": 2597,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 4542,
+      "percent": 0.022539964145477553
+    },
+    {
+      "function": "",
+      "line": 849,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 3042,
+      "percent": 0.01509611865489712
+    },
+    {
+      "function": "",
+      "line": 131977,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 3000,
+      "percent": 0.014887690981160868
+    },
+    {
+      "function": "",
+      "line": 88889,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1542,
+      "percent": 0.007652273164316686
+    },
+    {
+      "function": "",
+      "line": 2216,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1542,
+      "percent": 0.007652273164316686
+    },
+    {
+      "function": "",
+      "line": 3484,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1542,
+      "percent": 0.007652273164316686
+    },
+    {
+      "function": "",
+      "line": 126940,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1542,
+      "percent": 0.007652273164316686
+    },
+    {
+      "function": "",
+      "line": 371318,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1542,
+      "percent": 0.007652273164316686
+    },
+    {
+      "function": "",
+      "line": 371315,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1542,
+      "percent": 0.007652273164316686
+    },
+    {
+      "function": "",
+      "line": 88920,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1541,
+      "percent": 0.007647310600656299
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__symmetrise$1__I__AD__I__V",
+      "line": 89935,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1541,
+      "percent": 0.007647310600656299
+    },
+    {
+      "function": "$p_sci_VectorBuilder__advance1__I__I__V",
+      "line": 249821,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1500,
+      "percent": 0.007443845490580434
+    },
+    {
+      "function": "",
+      "line": 168553,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1500,
+      "percent": 0.007443845490580434
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__fullJet__Lscalafim_fmri_fit_profile_TrialBandedReference__Lscalafim_fmri_fit_profile_TrialBandedResponse__Lscalafim_fmri_fit_profile_ProfileJetBuffer__Z",
+      "line": 129341,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1500,
+      "percent": 0.007443845490580434
+    },
+    {
+      "function": "$p_Lgale_linalg_BandedCholesky__inPlace__Lgale_linalg_DMatBuilder__Lgale_linalg_BandedSolve__s_util_Either",
+      "line": 133824,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1500,
+      "percent": 0.007443845490580434
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_ProfileReduction__quadratic__AD__I__AD__D",
+      "line": 85995,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1500,
+      "percent": 0.007443845490580434
+    },
+    {
+      "function": "",
+      "line": 86040,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1458,
+      "percent": 0.007235417816844182
+    },
+    {
+      "function": "$p_Lscalafim_fmri_fit_profile_TrialConditionalSolve__normalAction__AD__AD__AD__AD__Z__V",
+      "line": 91548,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1458,
+      "percent": 0.007235417816844182
+    },
+    {
+      "function": "",
+      "line": 3411,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1084,
+      "percent": 0.00537941900785946
+    },
+    {
+      "function": "",
+      "line": 18228,
+      "url": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+      "microseconds": 1041,
+      "percent": 0.005166028770462821
+    }
+  ]
+}

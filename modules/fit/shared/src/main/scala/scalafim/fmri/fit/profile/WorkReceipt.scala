@@ -81,6 +81,7 @@ final case class WorkReceipt(
     val initializationAttempts = budget.initialization match
       case DecodeInitialization.BankNode => 0L
       case DecodeInitialization.ChartCenterProbe => 1L
+      case DecodeInitialization.BoundedMultistart => budget.maxJets.toLong
     val maxCandidates = budget.maxNewtonSteps.toLong * budget.maxCandidateAttempts + 1L + initializationAttempts
     if perVoxel(candidateAttempts) > maxCandidates + 1e-9 then out += f"candidate attempts ${perVoxel(candidateAttempts)}%.2f > $maxCandidates"
     out.result()
