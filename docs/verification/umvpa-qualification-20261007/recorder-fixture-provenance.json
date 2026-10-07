@@ -1,0 +1,7 @@
+{
+  "scope": "Re-execution of one unchanged historical fixture on JVM and JS; no study or pilot rerun",
+  "archive_sha256": "1a1654ad922797b47a03ee64e9e69cdd53a50318f1cc0f419646063ab35256f4",
+  "archive_member": "target/umvpa-calibration/fixture-B1999-locked/dataset-00000.tsv",
+  "input_sha256": "8bc4759673b2cb3a00c8367e283f236c8ba3a1e0d808c636beac6fc69f67ec2e",
+  "completed_nonidentity_draws_expected_per_platform": 1999
+}
