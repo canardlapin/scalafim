@@ -1,0 +1,43 @@
+{
+  "source": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala": "02c3a664e007516e6c70035f223d248f832dba1df71a4c9690ab163d1dc7d4a5",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinatesSuite.scala": "d51ff8050378b090d5261d76094bec366415e86d17ffe23009c603e768d64509"
+  },
+  "runner": "Root executed sbt gates; the implementation agent generated the independent base-R oracle.",
+  "gates": [
+    {
+      "command": "python3 tools/build/sbt-warm 'mvpaJVM/testOnly *SubjectCoordinatesSuite'",
+      "passed": 17,
+      "exit": 0,
+      "reported_task_seconds": 9,
+      "reported_warm_seconds": 9.6,
+      "sbt_task": "mvpaJVM/testOnly *SubjectCoordinatesSuite"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm 'mvpaJS/testOnly *SubjectCoordinatesSuite'",
+      "passed": 17,
+      "exit": 0,
+      "reported_task_seconds": 23,
+      "reported_warm_seconds": 23.6,
+      "sbt_task": "mvpaJS/testOnly *SubjectCoordinatesSuite"
+    }
+  ],
+  "raw_logs": {
+    "initial-test-package-compile-failure": {
+      "path": "/private/tmp/umvpa-subject-jvm-focused-20261007.log",
+      "sha256": "8e0006c72eae3559f88ecabfa1ac6abda5c61f0a9d1c7f8bf5e90ccdb93557d2",
+      "retained_path": "logs/focused-jvm-initial.log"
+    },
+    "focused-jvm": {
+      "path": "/private/tmp/umvpa-subject-jvm-focused-retry-20261007.log",
+      "sha256": "a212c10ffa1de755c0f62432b79eebddf11d7b328f6b597ebf8a1496f262c54d",
+      "retained_path": "logs/focused-jvm.log"
+    },
+    "focused-js": {
+      "path": "/private/tmp/umvpa-subject-js-focused-20261007.log",
+      "sha256": "b71dc226fa3c6fcdd62017b19de2f190c8c8da4d7fc7041e5c3d51b2c2c24abd",
+      "retained_path": "logs/focused-js.log"
+    }
+  },
+  "remaining": "Focused archives and full integration gates complete; group-model admission and calibration remain M5.02/M5.04."
+}
