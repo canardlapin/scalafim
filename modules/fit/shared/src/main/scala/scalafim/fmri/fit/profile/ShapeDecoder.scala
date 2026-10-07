@@ -71,6 +71,14 @@ final case class ShapePrior(mean: Vector[Double], precision: Vector[Double]):
   def dimension: Int = mean.length
   require(precision.length == dimension * dimension, "precision must be d x d row-major")
 
+/** Optional search initialization; the full chart and final admission checks are unchanged. */
+enum DecodeInitialization:
+  case BankNode
+  /** Try one full jet at the chart center, charged to the existing jet/candidate counters.
+    * Retain it only if the data-plus-prior objective improves on the selected bank node.
+    */
+  case ChartCenterProbe
+
 /** Per-voxel work caps; every cap is a counter with a reported actual.
   * `stationarityStepTolerance` is the largest raw free Newton correction (in
   * chart coordinates) that counts as a budget-qualified approximation rather
@@ -84,7 +92,8 @@ final case class DecodeBudget(
     weakSdLimit: Vector[Double] = Vector.empty,
     ambiguityEnergy: Double = 0.0,
     maxCandidateAttempts: Int = 4,
-    stationarityStepTolerance: Double = 1e-9):
+    stationarityStepTolerance: Double = 1e-9,
+    initialization: DecodeInitialization = DecodeInitialization.BankNode):
   require(
     coarseStride >= 1 && maxNewtonSteps >= 0 && maxJets >= 1 && maxExactEvaluations >= 0 &&
       maxCandidateAttempts >= 1 && stationarityStepTolerance > 0.0 && !stationarityStepTolerance.isInfinite
@@ -467,6 +476,30 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     var current = jet.energy + priorEnergy(x)
     copyJetState(x)
     pairedObjective.foreach(_.captureAcceptedProfile(x, jet))
+    val probeCount = budget.initialization match
+      case DecodeInitialization.BankNode => 0
+      case DecodeInitialization.ChartCenterProbe => 1
+    var probe = 0
+    while probe < probeCount && jetsUsed < budget.maxJets do
+      var differs = false
+      var axis = 0
+      while axis < d do
+        trial(axis) = grid.chart.lower(axis) + 0.5 * grid.chart.width(axis)
+        differs = differs || trial(axis) != x(axis)
+        axis += 1
+      if differs then
+        counters.candidateAttempts += 1
+        counters.jets += 1
+        jetsUsed += 1
+        clearJet()
+        if objective.jetAt(trial, jet) && finiteJet() then
+          val candidate = jet.energy + priorEnergy(trial)
+          if finite(candidate) && candidate < current then
+            current = candidate
+            System.arraycopy(trial, 0, x, 0, d)
+            copyJetState(x)
+            pairedObjective.foreach(_.captureAcceptedProfile(x, jet))
+      probe += 1
     var directionStatus = newtonDirection(x, grad, hess, delta)
     val initialCurvatureNotPositive = directionStatus == NewtonDirectionStatus.CurvatureNotPositive
     var continue = directionStatus == NewtonDirectionStatus.Direction

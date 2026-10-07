@@ -121,14 +121,18 @@ object ConditionProfileProvenance:
             weakSdLimit,
             ambiguityEnergy,
             maxCandidateAttempts,
-            stationarityStepTolerance
+            stationarityStepTolerance,
+            initialization
           ) =>
-        s"decode-budget/v1|coarseStride=$coarseStride|maxNewtonSteps=$maxNewtonSteps|" +
+        val initializationSuffix = initialization match
+          case DecodeInitialization.BankNode => "|initialization=bank-node"
+          case DecodeInitialization.ChartCenterProbe => "|initialization=chart-center-probe"
+        s"decode-budget/v2|coarseStride=$coarseStride|maxNewtonSteps=$maxNewtonSteps|" +
           s"maxJets=$maxJets|maxExactEvaluations=$maxExactEvaluations|" +
           s"weakSdLimit=${numbers(weakSdLimit)}|" +
           s"ambiguityEnergy=${KernelBasisProvenance.number(ambiguityEnergy)}|" +
           s"maxCandidateAttempts=$maxCandidateAttempts|" +
-          s"stationarityStepTolerance=${KernelBasisProvenance.number(stationarityStepTolerance)}"
+          s"stationarityStepTolerance=${KernelBasisProvenance.number(stationarityStepTolerance)}" + initializationSuffix
 
   private[profile] def priorCanonical(prior: Option[ShapePrior]): String =
     KernelBasisProvenance.option(prior.map { case ShapePrior(mean, precision) =>

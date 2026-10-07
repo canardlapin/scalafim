@@ -638,3 +638,72 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assert(valid.status != DecodeStatus.NoAdmissibleNode)
     assert(valid.coordinates.forall(value => !value.isNaN && !value.isInfinite))
     assert(valid.amplitudes.forall(value => !value.isNaN && !value.isInfinite))
+
+  private final class CornerTrap(refuseCenter: Boolean = false) extends ShapeObjective:
+    val grid = NodeGrid(ShapeChart(("x", -3.0, 3.0)), Vector(2))
+    val amplitudeCount = 1
+    var continuousJets = 0
+    def scoreNode(node: Int): Double = 1.0 - math.cos(grid.point(node)(0) - 0.2)
+    private def fill(x: Double, out: ProfileJetBuffer): Unit =
+      out.energy = 1.0 - math.cos(x - 0.2)
+      out.gradient(0) = math.sin(x - 0.2)
+      out.hessian(0) = math.cos(x - 0.2)
+      out.amplitudes(0) = x
+      out.curvature = CurvatureStatus.PositiveDefinite
+    def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+      fill(grid.point(node)(0), out)
+      true
+    def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+      continuousJets += 1
+      fill(coordinates(0), out)
+      !(refuseCenter && coordinates(0) == 0.0)
+    def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+      fill(coordinates(0), out)
+      out.energy
+
+  test("an opt-in center probe escapes corner curvature and remains charged and terminally verified"):
+    val old = new ShapeDecoder(new CornerTrap, DecodeBudget(maxNewtonSteps = 6, maxJets = 8), None, 1.0)
+      .decode(new DecoderCounters)
+    assertEquals(old.status, DecodeStatus.CurvatureNotPositive)
+    val objective = new CornerTrap
+    val budget = DecodeBudget(maxNewtonSteps = 6, maxJets = 8, initialization = DecodeInitialization.ChartCenterProbe)
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective, budget, None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assertEqualsDouble(result.coordinates.head, 0.2, 1e-9)
+    assertEqualsDouble(result.amplitudes.head, result.coordinates.head, 1e-15)
+    assertEqualsDouble(result.dataHessian.head, math.cos(result.coordinates.head - 0.2), 1e-15)
+    assertEquals(counters.nodeScores, 2L)
+    assertEquals(counters.jets, 1L + objective.continuousJets)
+    assertEquals(counters.candidateAttempts, objective.continuousJets.toLong)
+    assert(counters.jets <= budget.maxJets)
+    assertEquals(counters.fallbacks, 0L)
+
+  test("center initialization cannot spend an exhausted jet budget or turn a failed probe into acceptance"):
+    val exhausted = new CornerTrap
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(exhausted,
+      DecodeBudget(maxJets = 1, initialization = DecodeInitialization.ChartCenterProbe), None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.CurvatureNotPositive)
+    assertEquals(exhausted.continuousJets, 0)
+    assertEquals(counters.jets, 1L)
+    val refusing = new CornerTrap(refuseCenter = true)
+    val refused = new ShapeDecoder(refusing,
+      DecodeBudget(maxJets = 2, initialization = DecodeInitialization.ChartCenterProbe), None, 1.0).decode(new DecoderCounters)
+    assertEquals(refused.status, DecodeStatus.CurvatureNotPositive)
+    assertEqualsDouble(refused.coordinates.head, 3.0, 1e-15)
+    assertEqualsDouble(refused.amplitudes.head, 3.0, 1e-15)
+
+  test("center probe selection includes the prior and has distinct reproducible policy provenance"):
+    val objective = new CornerTrap
+    val prior = ShapePrior(Vector(3.0), Vector(20.0))
+    val base = DecodeBudget(maxNewtonSteps = 0, maxJets = 2)
+    val probed = base.copy(initialization = DecodeInitialization.ChartCenterProbe)
+    val result = new ShapeDecoder(objective, probed, Some(prior), 1.0).decode(new DecoderCounters)
+    assertEqualsDouble(result.coordinates.head, 3.0, 1e-15)
+    assertEqualsDouble(result.amplitudes.head, 3.0, 1e-15)
+    assertEqualsDouble(result.dataHessian.head, math.cos(2.8), 1e-15)
+    val original = ConditionProfileProvenance.budgetCanonical(base)
+    assert(original.startsWith("decode-budget/v2|"))
+    assert(original.endsWith("|initialization=bank-node"))
+    assertEquals(ConditionProfileProvenance.budgetCanonical(probed), original.stripSuffix("|initialization=bank-node") + "|initialization=chart-center-probe")

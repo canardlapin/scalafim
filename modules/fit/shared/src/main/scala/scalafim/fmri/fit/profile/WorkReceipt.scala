@@ -78,7 +78,10 @@ final case class WorkReceipt(
     if perVoxel(nodeScores) > maxNodeScores + 1e-9 then out += f"node scores ${perVoxel(nodeScores)}%.2f > $maxNodeScores"
     if perVoxel(jets) > budget.maxJets + 1e-9 then out += f"jets ${perVoxel(jets)}%.2f > ${budget.maxJets}"
     if perVoxel(exactEvaluations) > budget.maxExactEvaluations + 1e-9 then out += f"exact evaluations ${perVoxel(exactEvaluations)}%.2f > ${budget.maxExactEvaluations}"
-    val maxCandidates = budget.maxNewtonSteps.toLong * budget.maxCandidateAttempts + 1L
+    val initializationAttempts = budget.initialization match
+      case DecodeInitialization.BankNode => 0L
+      case DecodeInitialization.ChartCenterProbe => 1L
+    val maxCandidates = budget.maxNewtonSteps.toLong * budget.maxCandidateAttempts + 1L + initializationAttempts
     if perVoxel(candidateAttempts) > maxCandidates + 1e-9 then out += f"candidate attempts ${perVoxel(candidateAttempts)}%.2f > $maxCandidates"
     out.result()
 
