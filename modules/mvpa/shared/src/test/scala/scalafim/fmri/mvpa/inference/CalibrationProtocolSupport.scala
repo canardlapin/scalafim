@@ -3,6 +3,7 @@ package scalafim.fmri.mvpa.inference
 import gale.linalg.DMat
 import resample4s.kernel.{Seed, StreamDomain, StreamPath}
 import resample4s.kernel.derive
+import scala.util.control.NonFatal
 
 /** Test-only stream/input contract. It never promotes a numeric result to release. */
 object CalibrationProtocolSupport:
@@ -11,6 +12,26 @@ object CalibrationProtocolSupport:
   val nullDatasets: Int = 10000
   val alternativeDatasets: Int = 5000
   val confirmationDraws: Int = 1999
+
+  /** Internal identifier syntax must not normalize scientific scenario names. */
+  def bindingIdentity(scenario: String, ordinal: Int, rootSeed: Long): Either[String, String] =
+    if scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then Left("invalid case binding identity")
+    else Right("case-" + CalibrationPlatform.sha256Utf8(
+      "scalafim/calibration-binding/v1\u0000" + scenario + "\u0000" + ordinal.toString + "\u0000" + rootSeed.toString))
+
+  /** An exception evaluating an assigned case is a retained failed dataset. */
+  def retainEvaluation(prefix: => String)(evaluate: => Either[String, String]): String =
+    val result: Either[String, String] = try evaluate
+      catch case NonFatal(error) => Left(error.getClass.getName + ": " + Option(error.getMessage).getOrElse(""))
+    result match
+      case Right(record) => record
+      case Left(reason) =>
+        val escaped = reason.flatMap:
+          case '\\' => "\\\\"
+          case '"' => "\\\""
+          case character if character < ' ' => f"\\u${character.toInt}%04x"
+          case character => character.toString
+        prefix + ",\"status\":\"failed\",\"reason\":\"" + escaped + "\",\"p_values\":null,\"reject\":null}\n"
 
   def seed(phase: String, scenario: String, ordinal: Int): Either[String, Long] =
     if !phases.contains(phase) || scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then

@@ -48,6 +48,38 @@ class CalibrationProtocolSuite extends FunSuite:
     assertEquals(CalibrationProtocolSupport.alternativeDatasets, 5000)
     assertEquals(CalibrationProtocolSupport.confirmationDraws, 1999)
 
+  test("full dotted scenario and ordinal have a portable collision-resistant internal binding"):
+    val scenario = "rank.R0.n80.p6.q4.intercept.null"
+    val binding = right(CalibrationProtocolSupport.bindingIdentity(scenario, 17, 39251L))
+    // Independently computed by Python hashlib over the exact raw UTF-8 framing.
+    assertEquals(binding, "case-25fd8a0c46bc0616f8155e0b7e87b4a224d8d05b090c5159e6e4754cbaa4f854")
+    assertNotEquals(binding, right(CalibrationProtocolSupport.bindingIdentity(scenario.replace('.', '-'), 17, 39251L)))
+    assertNotEquals(binding, right(CalibrationProtocolSupport.bindingIdentity(scenario, 18, 39251L)))
+    assertNotEquals(binding, right(CalibrationProtocolSupport.bindingIdentity(scenario, 17, 39252L)))
+    val fixtureRoot = right(CalibrationProtocolSupport.seed("fixture", scenario, 17))
+    val pilotRoot = right(CalibrationProtocolSupport.seed("pilot", scenario, 17))
+    assertNotEquals(right(CalibrationProtocolSupport.bindingIdentity(scenario, 17, fixtureRoot)),
+      right(CalibrationProtocolSupport.bindingIdentity(scenario, 17, pilotRoot)))
+    assert(scalafim.response.SourceId.fromString(binding + "-brain-source").isRight)
+    assert(scalafim.response.ProvenanceId.fromString(binding + "-brain-source-root").isRight)
+    assert(multivar.core.ValueId(binding + "-X").isRight)
+    assert(CalibrationProtocolSupport.bindingIdentity("bad\u0000name", 0, 39251L).isLeft)
+
+  test("a thrown assigned-case evaluation becomes one failed record and later cases still run"):
+    val prefix = "{\"dataset_index\":17"
+    val failed = CalibrationProtocolSupport.retainEvaluation(prefix):
+      throw new IllegalArgumentException("real dotted scenario\nfailed")
+    val evaluated = CalibrationProtocolSupport.retainEvaluation("{\"dataset_index\":18"):
+      Right("{\"dataset_index\":18,\"status\":\"evaluated\"}\n")
+    val records = Vector(failed, evaluated)
+    assertEquals(records.size, 2)
+    assert(records.head.contains("\"status\":\"failed\""))
+    assert(records.head.contains("IllegalArgumentException"))
+    assert(records.head.contains("\\u000a"))
+    assert(records.head.contains("\"p_values\":null,\"reject\":null"))
+    assertEquals(records.head.linesIterator.size, 1)
+    assert(records.last.contains("\"status\":\"evaluated\""))
+
   test("initial statistic adapter refuses confirmation before any matrix payload parsing"):
     val header = "case\tconfirmation\tunlocked\t0\t1\t1999\t80\n"
     assert(CalibrationProtocolSupport.readCase(header).left.toOption.exists(_.contains("refuses simulator/confirmation")))

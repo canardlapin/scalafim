@@ -15,7 +15,10 @@ class FixedRepresentationInferenceSuite extends FunSuite:
       if j == 0 then .8 * walsh(i, 1) + .6 * walsh(i, 8)
       else .3 * walsh(i, 2) + math.sqrt(.91) * walsh(i, 3))
     val z = DMat.tabulate(16, 2)((i, j) => if j == 0 then 1.0 else walsh(i, 12))
-    val result = right(CalibrationBindings.rank(x, y, z, 39251L, 39, "independent-rank-oracle"))
+    // Exercise the real dotted identifier through the production adapter on a
+    // small syntax-regression fixture; this is not a dataset from that study.
+    val result = right(CalibrationBindings.rank(x, y, z, 39251L, 39,
+      "rank.R0.n80.p6.q4.intercept.null", 17))
     assertEqualsDouble(result.candidateArithmetic.correlations(0), .8, 1e-10)
     assertEqualsDouble(result.candidateArithmetic.correlations(1), .3, 1e-10)
     assertEquals(result.residualRows, 14)

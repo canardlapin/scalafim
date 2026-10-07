@@ -25,18 +25,14 @@ class RankConfirmationSuite extends FunSuite:
       val started = System.nanoTime()
       val resamplingSeed = CalibrationProtocolSupport.child(input.rootSeed, 103, 0)
         .fold(error => fail(error), identity)
-      val result = CalibrationBindings.rank(input.x, input.y, input.nuisance, input.rootSeed, input.draws,
-        input.scenario + "-" + input.ordinal)
-      val elapsed = (System.nanoTime() - started) / 1e9
+      def elapsed = (System.nanoTime() - started) / 1e9
       val output = CalibrationPlatform.environment("SCALAFIM_CALIBRATION_OUTPUT").getOrElse(fail("case output path is required"))
-      val prefix = "{\"phase\":\"" + input.phase + "\",\"scenario_id\":\"" + input.scenario +
+      def prefix = "{\"phase\":\"" + input.phase + "\",\"scenario_id\":\"" + input.scenario +
         "\",\"dataset_index\":" + input.ordinal + ",\"root_seed64\":\"" + input.rootSeed +
         "\",\"resampling_seed64\":\"" + resamplingSeed + "\",\"child_seed_algorithm\":\"seed-path/v1\",\"elapsed_seconds\":" + elapsed
-      result match
-        case Left(reason) =>
-          val escaped = reason.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-          CalibrationPlatform.appendText(output, prefix + ",\"status\":\"failed\",\"reason\":\"" + escaped + "\",\"p_values\":null,\"reject\":null}\n")
-        case Right(value) =>
+      val record = CalibrationProtocolSupport.retainEvaluation(prefix):
+        CalibrationBindings.rank(input.x, input.y, input.nuisance, input.rootSeed, input.draws,
+          input.scenario, input.ordinal).map: value =>
           val arithmetic = value.candidateArithmetic
           assert(arithmetic.receipts.forall(_.consumed.value == input.draws))
           val p = arithmetic.adjustedPValues.map(_.value)
@@ -48,4 +44,5 @@ class RankConfirmationSuite extends FunSuite:
             "],\"reject\":[" + decisions.mkString(",") + "],\"declared_population_null\":[" + nulls.mkString(",") +
             "],\"actual_conditional_null\":[" + nulls.mkString(",") + "],\"completed_compact_fits\":" +
             arithmetic.completedCompactFits + ",\"planned_owned_cells\":" + value.plannedOwnedCells + "}\n"
-          CalibrationPlatform.appendText(output, line)
+          line
+      CalibrationPlatform.appendText(output, record)

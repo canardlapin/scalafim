@@ -35,6 +35,20 @@ The three pilot lists each contain exactly 200 datasets with B=199. The separate
 `fixture-B1999-locked` list contains one fixture dataset with B=1999 for cost
 measurement. No production statistic results were generated during preparation.
 
+The first committed B=1999 cost invocation failed before statistic computation:
+the test adapter passed a dotted scenario name to `EstimandId`, which admits only
+letters, digits, hyphens, and underscores. Its worker log and resource receipt
+are retained; it produced zero numeric records. The corrected test-only adapter
+uses a domain-separated SHA-256 of the complete original scenario, ordinal, and
+actual protocol root seed for
+internal identifiers, while output retains the unchanged scientific scenario.
+Nonfatal evaluation exceptions become failed dataset records, with null
+inferential outputs, and do not erase later assigned cases. Small portable
+regressions cover the real dotted identifier and that failure boundary. These
+corrections require parent JVM/JS qualification and a follow-up source commit
+before retrying with a fresh output path. Simulator QA and all prepared input
+values remain unchanged.
+
 Protocol section 3 requires the portable fixture to be committed before a pilot.
 Root owns that commit and each actual run. From this isolated worktree, after the
 commit and a fresh server with `SBT_WARM_HEAP=2g`, the fixture invocation is:

@@ -23,7 +23,7 @@
   },
   "integrationGateReceipt": {
     "path": "integration-gates.json",
-    "sha256": "36f6c65a6b771c88cf863a43d24c53cb8a4751183f3437cb05af9d74ab724450"
+    "sha256": "a722a9db8830f89aeb07c4ffafd81027efe4f73a099f69a134f7f56f3dbbe737"
   },
   "availability": {
     "supported": "conditional fixed-discovery complete voxel omnibus max-statistic candidate",

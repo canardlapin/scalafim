@@ -12,11 +12,11 @@
     "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/FamilyThresholdSuite.scala": "efbde63e4023b704c1889b1bd03b6169a8e4cc68ad86574e22c2d93f6c6edc2f",
     "modules/mvpa-group/shared/src/main/scala/scalafim/fmri/mvpa/group/SubjectGroupBridge.scala": "84267786eb51734833cc5625f1d727a2be8311ed2961c225fe326a607703d2f3",
     "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupBridgeSuite.scala": "7bbcf5105cf6e93cbbc0d531e7c56073f6779f9bf3a9d24d9e5d92ebda6efe53",
-    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala": "5a60ef17608362cc238b2d0a3a25f993d610fd1cd9b5ddec67b926c220f8b724",
-    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala": "60cb2da95dc4136e0c544297e97df62f7c91534d536d071b9f080963429a0beb",
-    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/FixedRepresentationInferenceSuite.scala": "7bbe5799f4cef2e25de82d4d42efd43ec164e94d9e406fe875305f8975694e9e",
-    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala": "8bd6a69ce2eddd5a118efaad0310d8ca0c6204b0861d9d79957ec97a06ebba64",
-    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala": "07748868d288c8ee320f6e00ca2e418d65a1c1d045d6d4f9c9ca4fc8d208849c",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala": "68198e20db31039c607451432584b96ae629eef5545aa979b7073740e88177c7",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala": "1e25495bc7a2264012d11a4e8e5c077278b7822533530b6ee9459ef2a7bdbf63",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/FixedRepresentationInferenceSuite.scala": "9a18f105e2ac4dc0550b8f1e9dfc1c9e5f8d1dc856fa3f8e4fd9664106da9a45",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala": "b1107e7bf1cd71f9cf612f1b9d33ee54a9dc54a6ec8943e7cf38899894370474",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala": "08bcf094a170138d2fb4cf31d42af9d7f0b041ef0a02d78b4f4bcfbf7a35f039",
     "modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationPlatform.scala": "4ca971e480354aa4e207a2a873195953b3991685494655a7b0f808346d32a2c0",
     "modules/mvpa/js/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationPlatform.scala": "402541c2de4355d6d0233897bce01ea9aa03384b00ef2cb9068111529038373c"
   },
@@ -231,5 +231,32 @@
     "warnings": 0,
     "raw_log": "docs/verification/umvpa-inference-calibration-20261007/logs/eof-fixture-gates.log",
     "sha256": "1efcf7836c95dd87c430421006ca7f59886112fb7337008f3f25b8b663032f90"
+  },
+  "identifier_adapter_amendment": {
+    "scope": "Test-only real dotted scenario identifiers now use safe digest including original scenario, ordinal and root seed. Evaluation exceptions retain failed records. Production methods unchanged.",
+    "previous_sources": {
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala": "5a60ef17608362cc238b2d0a3a25f993d610fd1cd9b5ddec67b926c220f8b724",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala": "60cb2da95dc4136e0c544297e97df62f7c91534d536d071b9f080963429a0beb",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/FixedRepresentationInferenceSuite.scala": "7bbe5799f4cef2e25de82d4d42efd43ec164e94d9e406fe875305f8975694e9e",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala": "8bd6a69ce2eddd5a118efaad0310d8ca0c6204b0861d9d79957ec97a06ebba64",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala": "07748868d288c8ee320f6e00ca2e418d65a1c1d045d6d4f9c9ca4fc8d208849c"
+    },
+    "current_sources": {
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala": "68198e20db31039c607451432584b96ae629eef5545aa979b7073740e88177c7",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala": "1e25495bc7a2264012d11a4e8e5c077278b7822533530b6ee9459ef2a7bdbf63",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/FixedRepresentationInferenceSuite.scala": "9a18f105e2ac4dc0550b8f1e9dfc1c9e5f8d1dc856fa3f8e4fd9664106da9a45",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala": "b1107e7bf1cd71f9cf612f1b9d33ee54a9dc54a6ec8943e7cf38899894370474",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala": "08bcf094a170138d2fb4cf31d42af9d7f0b041ef0a02d78b4f4bcfbf7a35f039"
+    },
+    "each_passed": 9,
+    "failed": 0,
+    "errors": 0,
+    "warnings": 0,
+    "commands": [
+      "SBT_WARM_HEAP=2g python3 tools/build/sbt-warm 'mvpaJVM/testOnly *CalibrationProtocolSuite *FixedRepresentationInferenceSuite'",
+      "SBT_WARM_HEAP=2g python3 tools/build/sbt-warm 'mvpaJS/testOnly *CalibrationProtocolSuite *FixedRepresentationInferenceSuite'"
+    ],
+    "raw_log": "docs/verification/umvpa-inference-calibration-20261007/logs/identifier-repair-gates.log",
+    "sha256": "840ffc785d7d88513c646224a1b01c97eb6b444c826b82108c1b5a049577a13a"
   }
 }

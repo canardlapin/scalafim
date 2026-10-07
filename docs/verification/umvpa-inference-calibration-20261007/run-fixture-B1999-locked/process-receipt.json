@@ -1,0 +1,29 @@
+{
+  "phase": "fixture",
+  "batch": "fixture-B1999-locked",
+  "source_commit": "06948508ed4b191cc702c51000b2db6b0ca3f505",
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankConfirmationSuite"
+  ],
+  "input_list": "target/umvpa-calibration/fixture-B1999-locked/case-files.txt",
+  "input_sha256": "51300c8a3ef49ea8146dc09ccf77fac1ad01facbc95fff4b5aa740856b954acb",
+  "supervisor_sha256": "12a1976d9ec5925ec858da02418904fac2b73442172fa294d52acb7dad66b9a1",
+  "elapsed_seconds": 34.838299208,
+  "server_pid": 28758,
+  "rss_samples": 13,
+  "observed_peak_rss_bytes": 2802450432,
+  "worker_exit": 1,
+  "resource_limits": {
+    "heap": "2g",
+    "cpus": 4,
+    "max_rss_bytes": 3221225472,
+    "max_wall_seconds": 900,
+    "worker_processes": 1
+  },
+  "resource_refusal": null,
+  "records_written": 0,
+  "scientific_release": "unavailable",
+  "status": "failed_or_resource_inconclusive"
+}

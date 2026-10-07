@@ -20,10 +20,10 @@ object CalibrationBindings:
     adapt(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(name + "-root"), id)))
   private def values(name: String) = ValueIdentity.source(ValueId.unsafe(name))
 
-  def rank(x: DMat, y: DMat, nuisance: DMat, rootSeed: Long, draws: Int, identity: String): Either[String, RankConfirmationResult] =
+  def rank(x: DMat, y: DMat, nuisance: DMat, rootSeed: Long, draws: Int, scenario: String, ordinal: Int = 0): Either[String, RankConfirmationResult] =
     val p = x.cols; val q = y.cols; val k = math.min(p, q)
     if x.rows != y.rows || nuisance.rows != x.rows || k <= 0 then Left("rank input shape")
-    else
+    else CalibrationProtocolSupport.bindingIdentity(scenario, ordinal, rootSeed).flatMap: identity =>
       val plan = PlanId.derived(EstimandId("calibration-" + identity),
         Vector(AxisSignature.unsafe("0" * 64)), AxisSignature.unsafe("1" * 64), AxisSignature.unsafe("2" * 64),
         "independent-input", "fixed-discovery", "rank", "remaining-roots", Vector.empty, Vector.empty, "closed", Vector.empty, Set.empty)
