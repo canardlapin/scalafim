@@ -1,0 +1,653 @@
+{
+  "phase": "simulator",
+  "cells": 64,
+  "datasets": 640000,
+  "all_passed": true,
+  "maximum_mean_error": 0.00414885923737302,
+  "maximum_covariance_error": 0.0054876100541098,
+  "maximum_noiseless_error": 5.55111512312578e-16,
+  "maximum_worker_rss_bytes": 165707776,
+  "scientific_release": "not-adjudicated",
+  "rows": [
+    {
+      "cell": "rank.R0.n160.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00128929630846455,
+      "covariance_absolute_error": 0.00371343676572455,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 153206784,
+      "elapsed_seconds": 3.3921595
+    },
+    {
+      "cell": "rank.R0.n160.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00150301456864513,
+      "covariance_absolute_error": 0.00256612591259209,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 158433280,
+      "elapsed_seconds": 3.160740333
+    },
+    {
+      "cell": "rank.R0.n160.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00105659010051885,
+      "covariance_absolute_error": 0.00199062244495751,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 153649152,
+      "elapsed_seconds": 4.2394120420000005
+    },
+    {
+      "cell": "rank.R0.n160.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00102350905167065,
+      "covariance_absolute_error": 0.00292482771476532,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 160890880,
+      "elapsed_seconds": 4.1959865
+    },
+    {
+      "cell": "rank.R0.n80.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00198026815498165,
+      "covariance_absolute_error": 0.00518727323320822,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 117768192,
+      "elapsed_seconds": 1.939507667
+    },
+    {
+      "cell": "rank.R0.n80.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.000977144706842816,
+      "covariance_absolute_error": 0.00311415034433354,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 129826816,
+      "elapsed_seconds": 2.6460795
+    },
+    {
+      "cell": "rank.R0.n80.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00269979767301045,
+      "covariance_absolute_error": 0.00248832384725629,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 111509504,
+      "elapsed_seconds": 3.6843341670000003
+    },
+    {
+      "cell": "rank.R0.n80.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00263067862636876,
+      "covariance_absolute_error": 0.00261931727714915,
+      "noiseless_coefficient_error": 0.0,
+      "peak_rss_bytes": 132546560,
+      "elapsed_seconds": 3.247671208
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00185590516338295,
+      "covariance_absolute_error": 0.00238347049012821,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 140525568,
+      "elapsed_seconds": 1.7992275
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00186424173475417,
+      "covariance_absolute_error": 0.00240388455509333,
+      "noiseless_coefficient_error": 4.48243132394223e-18,
+      "peak_rss_bytes": 147685376,
+      "elapsed_seconds": 2.0613954999999997
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.000754454150203993,
+      "covariance_absolute_error": 0.00220449792654587,
+      "noiseless_coefficient_error": 5.55111512312578e-17,
+      "peak_rss_bytes": 147275776,
+      "elapsed_seconds": 2.041210375
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00111469271998314,
+      "covariance_absolute_error": 0.00295522180086083,
+      "noiseless_coefficient_error": 5.55111512312578e-17,
+      "peak_rss_bytes": 153862144,
+      "elapsed_seconds": 2.0395108339999997
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00168503839861614,
+      "covariance_absolute_error": 0.00197134852236447,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 148488192,
+      "elapsed_seconds": 3.639768792
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00109096589782368,
+      "covariance_absolute_error": 0.00180852571329915,
+      "noiseless_coefficient_error": 5.55111512312578e-16,
+      "peak_rss_bytes": 150552576,
+      "elapsed_seconds": 4.402913042
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00140583140096175,
+      "covariance_absolute_error": 0.00156343423886424,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 164118528,
+      "elapsed_seconds": 4.284149
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00127938298628191,
+      "covariance_absolute_error": 0.0022482287532235,
+      "noiseless_coefficient_error": 5.55111512312578e-16,
+      "peak_rss_bytes": 162463744,
+      "elapsed_seconds": 5.0961113330000005
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00144118597127638,
+      "covariance_absolute_error": 0.00519339633741611,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 116228096,
+      "elapsed_seconds": 4.336571083
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00186398310641935,
+      "covariance_absolute_error": 0.00419583550529845,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 116162560,
+      "elapsed_seconds": 4.248873458
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.0012849647807634,
+      "covariance_absolute_error": 0.00221306268902588,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 129318912,
+      "elapsed_seconds": 3.612336917
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00209673984653921,
+      "covariance_absolute_error": 0.00376293502475078,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 131104768,
+      "elapsed_seconds": 3.696051
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00242273482473604,
+      "covariance_absolute_error": 0.0054876100541098,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 114966528,
+      "elapsed_seconds": 3.468841625
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.001985761224522,
+      "covariance_absolute_error": 0.00472916251500566,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 116244480,
+      "elapsed_seconds": 4.726531583
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00173564134342847,
+      "covariance_absolute_error": 0.00435226341793904,
+      "noiseless_coefficient_error": 3.92756238120209e-18,
+      "peak_rss_bytes": 125878272,
+      "elapsed_seconds": 4.0734625829999995
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00156117799354838,
+      "covariance_absolute_error": 0.0028494846341669,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 125894656,
+      "elapsed_seconds": 3.445945083
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.0015298122441226,
+      "covariance_absolute_error": 0.00229033000761725,
+      "noiseless_coefficient_error": 4.44089209850063e-16,
+      "peak_rss_bytes": 132448256,
+      "elapsed_seconds": 1.767944042
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00133358734434121,
+      "covariance_absolute_error": 0.0026815382634493,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 148701184,
+      "elapsed_seconds": 1.687334417
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00218084441441342,
+      "covariance_absolute_error": 0.00190019937298602,
+      "noiseless_coefficient_error": 2.77555756156289e-16,
+      "peak_rss_bytes": 145833984,
+      "elapsed_seconds": 2.0154738329999997
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00191409794941622,
+      "covariance_absolute_error": 0.00265129483477267,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 146784256,
+      "elapsed_seconds": 2.021760333
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00212217534052171,
+      "covariance_absolute_error": 0.00231416886099245,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 151650304,
+      "elapsed_seconds": 4.524057792000001
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00114185524653933,
+      "covariance_absolute_error": 0.00242399988639808,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 147128320,
+      "elapsed_seconds": 4.146538
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00190597500858122,
+      "covariance_absolute_error": 0.00250024228385781,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 160825344,
+      "elapsed_seconds": 4.940549833
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00103540152166366,
+      "covariance_absolute_error": 0.0020037545835756,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 163315712,
+      "elapsed_seconds": 4.345181375
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00204440075836295,
+      "covariance_absolute_error": 0.00313883211531719,
+      "noiseless_coefficient_error": 4.44089209850063e-16,
+      "peak_rss_bytes": 114966528,
+      "elapsed_seconds": 3.580891667
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00114801295497696,
+      "covariance_absolute_error": 0.00459347812728461,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 114950144,
+      "elapsed_seconds": 3.090335708
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00228878097987919,
+      "covariance_absolute_error": 0.00269630240912422,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 126795776,
+      "elapsed_seconds": 4.606602959000001
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00183319142536905,
+      "covariance_absolute_error": 0.00255404715378238,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 131121152,
+      "elapsed_seconds": 5.6448089580000005
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00123131423342699,
+      "covariance_absolute_error": 0.0049157328617554,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 115589120,
+      "elapsed_seconds": 3.049060958
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.0025094508097667,
+      "covariance_absolute_error": 0.00369773065838308,
+      "noiseless_coefficient_error": 5.55111512312578e-17,
+      "peak_rss_bytes": 116572160,
+      "elapsed_seconds": 3.041744
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00200761706349503,
+      "covariance_absolute_error": 0.0030926416569732,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 123666432,
+      "elapsed_seconds": 9.437059375
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00258445502290864,
+      "covariance_absolute_error": 0.00439625669099852,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 124993536,
+      "elapsed_seconds": 5.384387083
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00109999766298309,
+      "covariance_absolute_error": 0.00201423117129886,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 152272896,
+      "elapsed_seconds": 1.797236917
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00121886052537859,
+      "covariance_absolute_error": 0.00189742919839132,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 145342464,
+      "elapsed_seconds": 1.778518958
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.000818584056190523,
+      "covariance_absolute_error": 0.00180942411885132,
+      "noiseless_coefficient_error": 5.55111512312578e-16,
+      "peak_rss_bytes": 152223744,
+      "elapsed_seconds": 2.167391083
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00176959287073745,
+      "covariance_absolute_error": 0.0021343708885912,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 145883136,
+      "elapsed_seconds": 2.314805417
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00158218041405017,
+      "covariance_absolute_error": 0.00215556412067441,
+      "noiseless_coefficient_error": 4.44089209850063e-16,
+      "peak_rss_bytes": 143654912,
+      "elapsed_seconds": 5.363030458
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00100084703621263,
+      "covariance_absolute_error": 0.00225216806181554,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 144293888,
+      "elapsed_seconds": 3.9153685
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00113539479777492,
+      "covariance_absolute_error": 0.00176235452481099,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 165019648,
+      "elapsed_seconds": 3.843057667
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00199031457469629,
+      "covariance_absolute_error": 0.00207289711504455,
+      "noiseless_coefficient_error": 2.77555756156289e-16,
+      "peak_rss_bytes": 165707776,
+      "elapsed_seconds": 4.994125875
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.001271895779876,
+      "covariance_absolute_error": 0.00225902964661406,
+      "noiseless_coefficient_error": 2.77555756156289e-16,
+      "peak_rss_bytes": 118521856,
+      "elapsed_seconds": 3.857024833
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00207445725043773,
+      "covariance_absolute_error": 0.00345985560166784,
+      "noiseless_coefficient_error": 2.77555756156289e-17,
+      "peak_rss_bytes": 113606656,
+      "elapsed_seconds": 3.556388083
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00218053280579576,
+      "covariance_absolute_error": 0.00330322650618209,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 125698048,
+      "elapsed_seconds": 4.063532416
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00204872589135386,
+      "covariance_absolute_error": 0.00275787439064024,
+      "noiseless_coefficient_error": 2.77555756156289e-16,
+      "peak_rss_bytes": 131956736,
+      "elapsed_seconds": 3.395040291
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00414885923737302,
+      "covariance_absolute_error": 0.00340748886397479,
+      "noiseless_coefficient_error": 1.94289029309402e-16,
+      "peak_rss_bytes": 109248512,
+      "elapsed_seconds": 4.9987460409999995
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.intercept.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00124018744619722,
+      "covariance_absolute_error": 0.00291967749508882,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 111689728,
+      "elapsed_seconds": 5.790608958
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00140986777617199,
+      "covariance_absolute_error": 0.00313423500345,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 122028032,
+      "elapsed_seconds": 3.054940208
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.three-column.null",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00188405782676618,
+      "covariance_absolute_error": 0.00399430943922052,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 119767040,
+      "elapsed_seconds": 2.659661375
+    },
+    {
+      "cell": "rank.R4.n160.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00146127737445443,
+      "covariance_absolute_error": 0.00189580357998343,
+      "noiseless_coefficient_error": 1.66533453693773e-16,
+      "peak_rss_bytes": 154746880,
+      "elapsed_seconds": 1.8126886670000002
+    },
+    {
+      "cell": "rank.R4.n160.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.000785076154947275,
+      "covariance_absolute_error": 0.00264267836016208,
+      "noiseless_coefficient_error": 6.93889390390723e-17,
+      "peak_rss_bytes": 149274624,
+      "elapsed_seconds": 2.768074334
+    },
+    {
+      "cell": "rank.R4.n160.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00202180969435256,
+      "covariance_absolute_error": 0.00330231841909012,
+      "noiseless_coefficient_error": 3.33066907387547e-16,
+      "peak_rss_bytes": 145702912,
+      "elapsed_seconds": 3.6424218749999997
+    },
+    {
+      "cell": "rank.R4.n160.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.000878125189312968,
+      "covariance_absolute_error": 0.00242826746250741,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 154419200,
+      "elapsed_seconds": 3.563242084
+    },
+    {
+      "cell": "rank.R4.n80.p4.q6.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.0021053174284244,
+      "covariance_absolute_error": 0.0047799462179503,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 117538816,
+      "elapsed_seconds": 3.415249875
+    },
+    {
+      "cell": "rank.R4.n80.p4.q6.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00206148755997856,
+      "covariance_absolute_error": 0.00354078510727618,
+      "noiseless_coefficient_error": 2.22044604925031e-16,
+      "peak_rss_bytes": 131743744,
+      "elapsed_seconds": 3.10819425
+    },
+    {
+      "cell": "rank.R4.n80.p6.q4.intercept.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00247586945117576,
+      "covariance_absolute_error": 0.00482034310545654,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 106594304,
+      "elapsed_seconds": 2.4707017089999996
+    },
+    {
+      "cell": "rank.R4.n80.p6.q4.three-column.alternative",
+      "status": "simulator_qa_passed",
+      "datasets": 10000,
+      "mean_absolute_error": 0.00334842857448007,
+      "covariance_absolute_error": 0.00285878107671189,
+      "noiseless_coefficient_error": 1.11022302462516e-16,
+      "peak_rss_bytes": 128811008,
+      "elapsed_seconds": 3.358649375
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "mvpaJVM/test",
+    "mvpaJS/test",
+    "groupJVM/test",
+    "groupJS/test"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 133.120680809021
+}

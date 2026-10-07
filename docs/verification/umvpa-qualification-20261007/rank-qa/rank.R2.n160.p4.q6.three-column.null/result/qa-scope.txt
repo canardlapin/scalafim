@@ -1,0 +1,2 @@
+SIMULATOR QA ONLY: no permutation/p-value/coverage/power procedure was run
+cell: rank.R2.n160.p4.q6.three-column.null

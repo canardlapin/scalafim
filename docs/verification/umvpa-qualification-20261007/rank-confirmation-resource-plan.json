@@ -1,0 +1,266 @@
+{
+  "scope": "rank subset only; planning arithmetic, no confirmation executed",
+  "cells": {
+    "rank.R0.n80.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n80.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n80.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n80.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n80.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n80.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n80.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n80.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n80.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n80.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n80.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n160.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n160.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p6.q4.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p6.q4.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n160.p6.q4.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n160.p6.q4.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n160.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R0.n160.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R1.n160.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R2.n160.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p4.q6.intercept.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p4.q6.three-column.null": {
+      "datasets": 10000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R3.n160.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n160.p4.q6.intercept.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    },
+    "rank.R4.n160.p4.q6.three-column.alternative": {
+      "datasets": 5000,
+      "nonidentity_draws_per_dataset": 1999
+    }
+  },
+  "datasets": 480000,
+  "nonidentity_draws": 959520000,
+  "whole_campaign_inventory_complete": false,
+  "empirical_runtime_bound": null,
+  "resource_admission": "pending complete inventory, metric binding and measured feasibility"
+}
