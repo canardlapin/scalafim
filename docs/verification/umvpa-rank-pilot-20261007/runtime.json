@@ -1,0 +1,62 @@
+{
+  "platform": "macOS-15.1.1-arm64-arm-64bit",
+  "commands": [
+    {
+      "command": [
+        "uname",
+        "-a"
+      ],
+      "exit": 0,
+      "stdout": "Darwin BUC-GW01.local 24.1.0 Darwin Kernel Version 24.1.0: Thu Oct 10 21:03:11 PDT 2024; root:xnu-11215.41.3~2/RELEASE_ARM64_T6020 arm64\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "sw_vers"
+      ],
+      "exit": 0,
+      "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t15.1.1\nBuildVersion:\t\t24B91\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.model",
+        "hw.physicalcpu",
+        "hw.memsize"
+      ],
+      "exit": 0,
+      "stdout": "Mac14,12\n10\n34359738368\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "java",
+        "-version"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n"
+    },
+    {
+      "command": [
+        "node",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "v24.21.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/local/bin/Rscript",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Rscript (R) version 4.3.3 (2024-02-29)\n",
+      "stderr": ""
+    }
+  ],
+  "scope": "Observed host; not the frozen M3 Max reference profile."
+}
