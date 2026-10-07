@@ -29,6 +29,12 @@ route preserves default behavior and does not qualify the full workload;
 PHRF-33 remains open for cost reduction, preparation/certification prerequisites
 and the complete measurement.
 
+The [first-order search follow-up](../verification/phrf-gradient-20261007/README.md)
+removes unused second-order band/reference work during the penalized-profile
+search. Full jets still govern terminal admission. It preserves the search
+budget and records first-order attempts separately; its fixed-call timing and
+public recovery receipts remain diagnostic evidence, not B0 qualification.
+
 ## Estimand and implementation
 
 For trial design `X(theta)`, nuisance `F`, one-hot trial-to-condition map `M`,

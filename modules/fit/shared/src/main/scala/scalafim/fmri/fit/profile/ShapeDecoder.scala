@@ -64,6 +64,10 @@ trait ShapeObjective:
   /** Exact energy at a continuous shape, amplitudes into `out`. */
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double
 
+/** Optional backend capability for search. Full jets still own terminal admission. */
+trait FirstOrderShapeObjective extends ShapeObjective:
+  def gradientAt(coordinates: Array[Double], out: ProfileGradientBuffer): Boolean
+
 /** Gaussian prior on chart coordinates in energy units: the decoder minimises
   * `E(theta) + (theta - mean)' precision (theta - mean)`, so `precision` is
   * the prior precision times the frozen noise variance.
@@ -84,7 +88,8 @@ enum DecodeInitialization:
     * Each search receives maxJets / (2 + 2^dimension) evaluations; the remainder is reserved
     * for terminal work. Search gradients use unit-chart coordinates and a fixed per-voxel
     * energy scale, with projected-gradient tolerance 1e-10. Within 1e-12 scaled energy
-    * of the lowest trajectory, prefer the smallest projected gradient. Every call spends a jet.
+    * of the lowest trajectory, prefer the smallest projected gradient. Every call spends one
+    * jet-budget slot; capable backends evaluate only value/gradient.
     */
   case BoundedMultistart
 
@@ -118,7 +123,9 @@ final case class DecodeBudget(
 final class DecoderCounters:
   var voxels: Long = 0L
   var nodeScores: Long = 0L
+  /** Total derivative requests, including firstOrderAttempts; governed by maxJets. */
   var jets: Long = 0L
+  var firstOrderAttempts: Long = 0L
   var exactEvaluations: Long = 0L
   var candidateAttempts: Long = 0L
   var terminalVerifications: Long = 0L
@@ -188,6 +195,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val nodeEnergy = new Array[Double](grid.count)
   private val nodeObjectiveEnergy = new Array[Double](grid.count)
   private val jet = new ProfileJetBuffer(d, c)
+  private val firstOrder = new ProfileGradientBuffer(d, c)
   private val x = new Array[Double](d)
   private val trial = new Array[Double](d)
   private val delta = new Array[Double](d)
@@ -259,20 +267,26 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           i += 1
         acc
 
-  /** Add the prior's gradient and Hessian to the supplied jet at `coords`. */
-  private def augment(coords: Array[Double], gradient: Array[Double], hessian: Array[Double]): Unit =
-    prior.foreach { p =>
+  private def augmentGradient(coords: Array[Double], gradient: Array[Double]): Unit =
+    prior.foreach: p =>
       var i = 0
       while i < d do
         var g = 0.0
         var j = 0
         while j < d do
           g += 2.0 * p.precision(i * d + j) * (coords(j) - p.mean(j))
-          hessian(i * d + j) += 2.0 * p.precision(i * d + j)
           j += 1
         gradient(i) += g
         i += 1
-    }
+
+  /** Add the prior's gradient and Hessian to the supplied jet at `coords`. */
+  private def augment(coords: Array[Double], gradient: Array[Double], hessian: Array[Double]): Unit =
+    augmentGradient(coords, gradient)
+    prior.foreach: p =>
+      var i = 0
+      while i < d * d do
+        hessian(i) += 2.0 * p.precision(i)
+        i += 1
 
   private def scan(counters: DecoderCounters): Int =
     java.util.Arrays.fill(nodeEnergy, Double.NaN)
@@ -498,18 +512,28 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           axis += 1
         counters.jets += 1
         counters.candidateAttempts += 1
-        clearJet()
-        if !objective.jetAt(coordinates, jet) || !finiteJet() then
-          Left(BoxOptimizationError.OracleFailure("shape objective refused a full jet"))
-        else
-          System.arraycopy(jet.gradient, 0, gradient, 0, d)
-          System.arraycopy(jet.hessian, 0, candidateHess, 0, d * d)
-          augment(coordinates, gradient, candidateHess)
-          axis = 0
-          while axis < d do
-            gradient(axis) *= grid.chart.width(axis) / scale
-            axis += 1
-          Right((jet.energy + priorEnergy(coordinates)) / scale)
+        val value = objective match
+          case capable: FirstOrderShapeObjective =>
+            counters.firstOrderAttempts += 1L
+            firstOrder.energy = Double.NaN
+            java.util.Arrays.fill(firstOrder.gradient, Double.NaN)
+            java.util.Arrays.fill(firstOrder.amplitudes, Double.NaN)
+            if capable.gradientAt(coordinates, firstOrder) && finite(firstOrder.energy) &&
+                finiteValues(firstOrder.gradient) && finiteValues(firstOrder.amplitudes) then Some(firstOrder)
+            else None
+          case _ =>
+            clearJet()
+            if objective.jetAt(coordinates, jet) && finiteJet() then Some(jet) else None
+        value match
+          case None => Left(BoxOptimizationError.OracleFailure("shape objective refused search derivatives"))
+          case Some(evaluated) =>
+            System.arraycopy(evaluated.gradient, 0, gradient, 0, d)
+            augmentGradient(coordinates, gradient)
+            axis = 0
+            while axis < d do
+              gradient(axis) *= grid.chart.width(axis) / scale
+              axis += 1
+            Right((evaluated.energy + priorEnergy(coordinates)) / scale)
     val bounds = BoxBounds.from(Vector.fill(d)(0.0), Vector.fill(d)(1.0)).toOption.get
     val config = BoxQuasiNewtonConfig.from(perStart - 1, perStart, budget.maxCandidateAttempts, 1e-10).toOption.get
     val trajectories = Vector.newBuilder[ShapeSearchTrajectory]

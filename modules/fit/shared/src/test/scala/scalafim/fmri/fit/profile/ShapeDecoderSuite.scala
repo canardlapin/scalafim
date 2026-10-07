@@ -728,7 +728,7 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assert(counters.jets <= budget.maxJets)
     assert(counters.newtonSteps <= budget.maxNewtonSteps)
     assert(counters.terminalVerifications >= 1)
-    assert(ConditionProfileProvenance.budgetCanonical(budget).endsWith("|initialization=bounded-multistart/v1"))
+    assert(ConditionProfileProvenance.budgetCanonical(budget).endsWith("|initialization=bounded-multistart/v2"))
 
   test("a jet budget too small for independent starts remains a coherent charged refusal"):
     val counters = new DecoderCounters
@@ -796,3 +796,45 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assert(result.coordinates.head < -1.0)
     assert(result.energy < -0.2)
     assert(result.search.get.trajectories.exists(_.result.point.exists(_.coordinates.head > 0.5)))
+
+  test("first-order search includes prior, charges failures and always requires a full terminal jet"):
+    for behavior <- Vector("valid", "refused", "incomplete", "terminal-refused") do
+      var gradients = 0L
+      var fullJets = 0L
+      val objective = new FirstOrderShapeObjective:
+        val grid = NodeGrid(ShapeChart(("x", -1.0, 1.0)), Vector(2))
+        val amplitudeCount = 1
+        def scoreNode(node: Int): Double = math.pow(grid.point(node)(0) - 0.2, 2)
+        def gradientAt(x: Array[Double], out: ProfileGradientBuffer): Boolean =
+          gradients += 1L
+          out.energy = math.pow(x(0) - 0.2, 2)
+          if behavior != "incomplete" then out.gradient(0) = 2.0 * (x(0) - 0.2)
+          out.amplitudes(0) = x(0)
+          behavior != "refused"
+        def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean = jetAt(grid.point(node).coordinates.toArray, out)
+        def jetAt(x: Array[Double], out: ProfileJetBuffer): Boolean =
+          fullJets += 1L
+          out.energy = math.pow(x(0) - 0.2, 2)
+          out.gradient(0) = 2.0 * (x(0) - 0.2)
+          out.hessian(0) = 2.0
+          out.amplitudes(0) = x(0)
+          out.curvature = CurvatureStatus.PositiveDefinite
+          behavior != "terminal-refused"
+        def energyAt(x: Array[Double], out: ProfileJetBuffer): Double =
+          jetAt(x, out)
+          out.energy
+      val counters = new DecoderCounters
+      val result = new ShapeDecoder(objective,
+        DecodeBudget(maxNewtonSteps = 4, maxJets = 81, initialization = DecodeInitialization.BoundedMultistart),
+        Some(ShapePrior(Vector(0.6), Vector(1.0))), 1.0).decode(counters)
+      assertEquals(counters.firstOrderAttempts, gradients)
+      assertEquals(counters.jets, gradients + fullJets)
+      assert(counters.jets <= 81L)
+      assert(fullJets >= 1L)
+      assertEquals(result.search.get.trajectories.map(_.result.work.evaluations.toLong).sum, gradients)
+      if behavior == "valid" then
+        assertEquals(result.status, DecodeStatus.Accepted)
+        assertEqualsDouble(result.coordinates.head, 0.4, 1e-9)
+        assertEqualsDouble(result.dataHessian.head, 2.0, 0.0)
+        assertEqualsDouble(result.augmentedHessian.head, 4.0, 0.0)
+      else assert(result.status != DecodeStatus.Accepted)

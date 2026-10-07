@@ -75,6 +75,7 @@ final case class TrialBandedWorkSnapshot(
   * Conditional requests, reference inverses and residual corrections have
   * separate counters; they do not change legacy readout/amplitude counters.
   *
+  * First-order search requests/failures are separate from full-jet counters.
   * Small release solves, profile reduction and curvature checks are excluded.
   * Failed bank construction returns an error without exposing its setup receipt.
   */
@@ -100,7 +101,9 @@ final case class TrialBandedAttemptedWorkSnapshot(
     conditionalInverseAttempts: Long,
     conditionalInverseFailures: Long,
     conditionalCorrectionAttempts: Long,
-    conditionalCorrectionFailures: Long)
+    conditionalCorrectionFailures: Long,
+    firstOrderAttempts: Long = 0L,
+    firstOrderFailures: Long = 0L)
 
 final class TrialBandedWork private[profile] ():
   private[profile] var voxels: Long = 0L
@@ -134,7 +137,9 @@ final class TrialBandedWork private[profile] ():
   private[profile] var conditionalInverseFailures: Long = 0L
   private[profile] var conditionalCorrectionAttempts: Long = 0L
   private[profile] var conditionalCorrectionFailures: Long = 0L
-  // ML accounting outside the 22-field attempted snapshot (whose schema is unchanged):
+  private[profile] var firstOrderAttempts: Long = 0L
+  private[profile] var firstOrderFailures: Long = 0L
+  // Additional ML accounting outside the attempted snapshot:
   // N-sized accepted-band factorisations within `factorAttempts`, and legacy scalar
   // constrained-determinant membership RHS columns within `rightHandSideAttempts`.
   private[profile] var bandFactorAttempts: Long = 0L
@@ -183,7 +188,9 @@ final class TrialBandedWork private[profile] ():
       conditionalInverseAttempts,
       conditionalInverseFailures,
       conditionalCorrectionAttempts,
-      conditionalCorrectionFailures)
+      conditionalCorrectionFailures,
+      firstOrderAttempts,
+      firstOrderFailures)
 
   def snapshot: TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(voxels, trialBasisScores, bankValueEvaluations, jetEvaluations, amplitudeCorrections,
@@ -565,7 +572,7 @@ final class TrialBandedObjective private (
     val preparation: TrialBandedPreparation,
     val grid: NodeGrid,
     private val references: Vector[TrialBandedReference],
-    val setupReceipt: TrialBandedSetupReceipt) extends ShapeObjective:
+    val setupReceipt: TrialBandedSetupReceipt) extends FirstOrderShapeObjective:
 
   private val n = preparation.trials
   private val m = preparation.basisRank
@@ -606,6 +613,7 @@ final class TrialBandedObjective private (
       components.toLong * k * k + 2L * bandSize + k.toLong * k
 
   val estimatedReferenceBytes: Long = 8L * referenceDoubles(comps)
+  val estimatedFirstOrderReferenceBytes: Long = 8L * referenceDoubles(1 + d)
   val estimatedValueReferenceBytes: Long = 8L * referenceDoubles(1)
   val estimatedValueBuildBytes: Long = estimatedValueReferenceBytes + 8L * n * (k + c)
 
@@ -673,6 +681,17 @@ final class TrialBandedObjective private (
         val completed = fullJet(reference, currentResponse, out)
         if !completed then work.jetFailures += 1L
         completed
+
+  /** Search-only oracle: no second-order bands or solves, and no curvature checks. */
+  def gradientAt(coordinates: Array[Double], out: ProfileGradientBuffer): Boolean =
+    work.firstOrderAttempts += 1L
+    val completed = buildReference(coordinates, 1 + d, None) match
+      case Left(_) => false
+      case Right(reference) =>
+        work.continuousFactors += 1L
+        reducedJet(reference, currentResponse, out, full = false)
+    if !completed then work.firstOrderFailures += 1L
+    completed
 
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
     buildReference(coordinates, 1, None) match
@@ -1189,7 +1208,12 @@ final class TrialBandedObjective private (
     result
 
   private def fullJet(ref: TrialBandedReference, encoded: TrialBandedResponse, out: ProfileJetBuffer): Boolean =
-    contractResponse(ref, encoded, comps)
+    reducedJet(ref, encoded, out, full = true)
+
+  private def reducedJet(ref: TrialBandedReference, encoded: TrialBandedResponse,
+      out: ProfileGradientBuffer, full: Boolean): Boolean =
+    val active = if full then comps else 1 + d
+    contractResponse(ref, encoded, active)
     java.util.Arrays.fill(wbJets, 0.0)
     if !solveResponseComponent(ref, JetLayout.Value, -1, -1) then return false
     var p = 0
@@ -1197,7 +1221,7 @@ final class TrialBandedObjective private (
       if !solveResponseComponent(ref, JetLayout.first(p), p, -1) then return false
       p += 1
     p = 0
-    while p < d do
+    while full && p < d do
       var q = p
       while q < d do
         if !solveResponseComponent(ref, JetLayout.second(d, p, q), p, q) then return false
@@ -1205,7 +1229,7 @@ final class TrialBandedObjective private (
       p += 1
     java.util.Arrays.fill(s, 0.0)
     java.util.Arrays.fill(b, 0.0)
-    System.arraycopy(ref.hJets, 0, g, 0, g.length)
+    System.arraycopy(ref.hJets, 0, g, 0, active * k * k)
     assembleReducedComponent(ref, encoded, JetLayout.Value, 1,
       JetLayout.Value, JetLayout.Value, 0, 0, 0, 0, 0, 0)
     p = 0
@@ -1216,7 +1240,7 @@ final class TrialBandedObjective private (
         0, 0, 0, 0)
       p += 1
     p = 0
-    while p < d do
+    while full && p < d do
       var q = p
       while q < d do
         assembleReducedComponent(ref, encoded, JetLayout.second(d, p, q), 4,
@@ -1226,19 +1250,27 @@ final class TrialBandedObjective private (
           JetLayout.Value, JetLayout.second(d, p, q))
         q += 1
       p += 1
-    if !releaseReduction.reduce(s, b, g, releaseOut) then
+    val completed =
+      if full then releaseReduction.reduce(s, b, g, releaseOut)
+      else releaseReduction.reduceGradient(s, b, g, releaseOut)
+    if !completed then
       out.energy = Double.PositiveInfinity
-      out.curvature = CurvatureStatus.GramNotPositiveDefinite
+      out match
+        case jet: ProfileJetBuffer => jet.curvature = CurvatureStatus.GramNotPositiveDefinite
+        case _ => ()
       false
     else
       out.energy = releaseOut.energy
       System.arraycopy(releaseOut.gradient, 0, out.gradient, 0, d)
-      System.arraycopy(releaseOut.hessian, 0, out.hessian, 0, d * d)
       var i = 0
       while i < c do
         out.amplitudes(i) = releaseOut.amplitudes(f + i)
         i += 1
-      out.curvature = releaseOut.curvature
+      out match
+        case jet: ProfileJetBuffer if full =>
+          System.arraycopy(releaseOut.hessian, 0, jet.hessian, 0, d * d)
+          jet.curvature = releaseOut.curvature
+        case _ => ()
       true
 
   /** Solve the differentiated `A w = b` system for one response RHS. */

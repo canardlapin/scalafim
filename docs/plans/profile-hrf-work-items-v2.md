@@ -640,6 +640,12 @@ objectives while retaining boundary refusals, but uses hundreds of full jets
 per voxel. This is a correctness checkpoint, not the complete performance or
 scientific gate; default budgets and PHRF-10's deferred status are unchanged.
 
+The [first-order search follow-up](../verification/phrf-gradient-20261007/README.md)
+removes unused second-order band/reference work during the penalized-profile
+search. Full jets still govern terminal admission. It preserves the search
+budget and records first-order attempts separately; its fixed-call timing and
+public recovery receipts remain diagnostic evidence, not B0 qualification.
+
 ### PHRF-29: Add `ProfileHrfPlan` and attach the trial backend to the executor
 
 Owner: `model` and `fit`. Acceptance:

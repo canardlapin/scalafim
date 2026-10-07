@@ -19,12 +19,16 @@ final case class ProfileJet(
     curvature: CurvatureStatus):
   def dimension: Int = gradient.length
 
-/** Reusable, allocation-free buffer for [[ProfileReduction]] output. */
-final class ProfileJetBuffer(val dimension: Int, val amplitudeCount: Int):
+/** First-order profile output; carries no curvature or Hessian evidence. */
+sealed class ProfileGradientBuffer(val dimension: Int, val amplitudeCount: Int):
   var energy: Double = Double.NaN
   val gradient: Array[Double] = new Array[Double](dimension)
-  val hessian: Array[Double] = new Array[Double](dimension * dimension)
   val amplitudes: Array[Double] = new Array[Double](amplitudeCount)
+
+/** Full second-order output required for terminal admission. */
+final class ProfileJetBuffer(dimension: Int, amplitudeCount: Int)
+    extends ProfileGradientBuffer(dimension, amplitudeCount):
+  val hessian: Array[Double] = new Array[Double](dimension * dimension)
   var curvature: CurvatureStatus = CurvatureStatus.GramNotPositiveDefinite
 
   def toJet: ProfileJet =
@@ -57,12 +61,11 @@ final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
   private val t = new Array[Double](d * c)
   private val tmp = new Array[Double](c)
 
-  /** Reduce one shape. Returns false (and marks the buffer) when `G` is not positive definite. */
-  def reduce(s: Array[Double], b: Array[Double], g: Array[Double], out: ProfileJetBuffer): Boolean =
+  /** Reduce only value and first derivatives. Only `1 + dimension` input components are read. */
+  def reduceGradient(s: Array[Double], b: Array[Double], g: Array[Double], out: ProfileGradientBuffer): Boolean =
     System.arraycopy(g, 0, factor, 0, c * c)
     if !SmallCholesky.factorInPlace(c, factor) then
       out.energy = Double.PositiveInfinity
-      out.curvature = CurvatureStatus.GramNotPositiveDefinite
       return false
     System.arraycopy(b, 0, w, 0, c)
     SmallCholesky.solveInPlace(c, factor, w)
@@ -83,6 +86,18 @@ final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
         i += 1
       grad += quadratic(g, comp * c * c, w)
       out.gradient(p) = grad
+      p += 1
+    true
+
+  /** Full jet, including the terminal curvature classification. */
+  def reduce(s: Array[Double], b: Array[Double], g: Array[Double], out: ProfileJetBuffer): Boolean =
+    if !reduceGradient(s, b, g, out) then
+      out.curvature = CurvatureStatus.GramNotPositiveDefinite
+      return false
+    var p = 0
+    var i = 0
+    while p < d do
+      val comp = JetLayout.first(p)
       i = 0
       while i < c do
         var acc = b(comp * c + i)

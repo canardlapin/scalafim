@@ -23,6 +23,7 @@ final case class ProfileDecodePolicy(
     execution: ExecutionBudget = ExecutionBudget(),
     observedAdmission: Option[ObservedFamilyAdmission] = None)
 
+/** `jets` counts all derivative requests; `firstOrderAttempts` is its search-only subset. */
 final case class ProfileDecoderWork(
     voxels: Long,
     nodeScores: Long,
@@ -31,12 +32,13 @@ final case class ProfileDecoderWork(
     candidateAttempts: Long,
     terminalVerifications: Long,
     newtonSteps: Long,
-    fallbacks: Long)
+    fallbacks: Long,
+    firstOrderAttempts: Long = 0L)
 
 object ProfileDecoderWork:
   def from(counters: DecoderCounters): ProfileDecoderWork =
     ProfileDecoderWork(counters.voxels, counters.nodeScores, counters.jets, counters.exactEvaluations,
-      counters.candidateAttempts, counters.terminalVerifications, counters.newtonSteps, counters.fallbacks)
+      counters.candidateAttempts, counters.terminalVerifications, counters.newtonSteps, counters.fallbacks, counters.firstOrderAttempts)
 
 final case class ProfileRunProgress(
     deliveredBlocks: Int,
@@ -580,7 +582,7 @@ final class PreparedProfileHrf private[profile] (
         ProfileDecoderWork(sum.voxels + c.voxels, sum.nodeScores + c.nodeScores, sum.jets + c.jets,
           sum.exactEvaluations + c.exactEvaluations, sum.candidateAttempts + c.candidateAttempts,
           sum.terminalVerifications + c.terminalVerifications, sum.newtonSteps + c.newtonSteps,
-          sum.fallbacks + c.fallbacks)
+          sum.fallbacks + c.fallbacks, sum.firstOrderAttempts + c.firstOrderAttempts)
       }
       val statuses = live.flatMap(_.statuses).groupMapReduce(_._1)(_._2)(_ + _)
       val snapshots = live.flatMap(worker => worker.trial.map(_.numericalWork).toVector ++
@@ -691,7 +693,8 @@ object ProfileHrfFit:
         a.conditionalInverseAttempts + b.conditionalInverseAttempts,
         a.conditionalInverseFailures + b.conditionalInverseFailures,
         a.conditionalCorrectionAttempts + b.conditionalCorrectionAttempts,
-        a.conditionalCorrectionFailures + b.conditionalCorrectionFailures)
+        a.conditionalCorrectionFailures + b.conditionalCorrectionFailures,
+        a.firstOrderAttempts + b.firstOrderAttempts, a.firstOrderFailures + b.firstOrderFailures)
     }
     parts.foldLeft(TrialBandedWorkSnapshot(0, 0, 0, 0, 0, 0, 0, 0, 0, attempted)) { (a, b) =>
       TrialBandedWorkSnapshot(a.voxels + b.voxels, a.trialBasisScores + b.trialBasisScores,

@@ -286,6 +286,10 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     finally
       Array.copy(originalGram, 0, prepared.gramBlocksData, 0, originalGram.length)
 
+    // Include distinct failed/successful first-order requests in worker aggregation.
+    first.work.firstOrderAttempts = 2L
+    first.work.firstOrderFailures = 1L
+    second.work.firstOrderAttempts = 3L
     val parts = Vector(first.work.snapshot, second.work.snapshot)
     val total = ProfileHrfFit.sumTrialWork(parts)
     val attempted = total.attempted
@@ -300,7 +304,9 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     def fields(value: TrialBandedAttemptedWorkSnapshot): Vector[Long] =
       value.productIterator.map(_.asInstanceOf[Long]).toVector
     val expected = fields(parts(0).attempted).zip(fields(parts(1).attempted)).map((a, b) => a + b)
-    assertEquals(expected.length, 22)
+    assertEquals(attempted.firstOrderAttempts, 5L)
+    assertEquals(attempted.firstOrderFailures, 1L)
+    assertEquals(expected.length, 24)
     assertEquals(fields(attempted), expected)
     assertEquals(ProfileHrfFit.sumTrialWork(parts.reverse), total)
     assertEquals(ProfileHrfFit.sumTrialWork(Vector.empty).attempted,

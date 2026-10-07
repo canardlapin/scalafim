@@ -81,6 +81,12 @@ objectives, emitting the 60 interior fits and refusing the 20 boundary fits.
 Its 901-jet diagnostic budget and one generating HRF do not qualify frozen B0,
 original-family accuracy or the scientific cohorts below.
 
+The [first-order search follow-up](../verification/phrf-gradient-20261007/README.md)
+removes unused second-order band/reference work during the penalized-profile
+search. Full jets still govern terminal admission. It preserves the search
+budget and records first-order attempts separately; its fixed-call timing and
+public recovery receipts remain diagnostic evidence, not B0 qualification.
+
 ## Rank and conditioning tolerances
 
 | Item | Value |

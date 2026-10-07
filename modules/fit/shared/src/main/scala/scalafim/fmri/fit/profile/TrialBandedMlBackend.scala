@@ -275,7 +275,9 @@ private[profile] object TrialBandedMlBackend:
         after.attempted.conditionalInverseAttempts - before.attempted.conditionalInverseAttempts,
         after.attempted.conditionalInverseFailures - before.attempted.conditionalInverseFailures,
         after.attempted.conditionalCorrectionAttempts - before.attempted.conditionalCorrectionAttempts,
-        after.attempted.conditionalCorrectionFailures - before.attempted.conditionalCorrectionFailures))
+        after.attempted.conditionalCorrectionFailures - before.attempted.conditionalCorrectionFailures,
+        after.attempted.firstOrderAttempts - before.attempted.firstOrderAttempts,
+        after.attempted.firstOrderFailures - before.attempted.firstOrderFailures))
 
   private[profile] final case class NodeDeterminant(reference: CriterionReference, determinant: DeterminantJet)
 

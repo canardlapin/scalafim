@@ -1,0 +1,242 @@
+[
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__addBlock$1__I__AD__Lscalafim_fmri_fit_profile_TrialBandedPreparation__I__I__I__D__V",
+    "generatedLine": 65549,
+    "generatedColumn": 146,
+    "percent": 36.63080275332385,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1413
+  },
+  {
+    "function": "$p_Lgale_linalg_BandedCholesky__run__sjs_js_typedarray_Float64Array__I__I__I__I__Lgale_linalg_BandedSolve__s_util_Either",
+    "generatedLine": 97245,
+    "generatedColumn": 130,
+    "percent": 15.736468513258307,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/BandedCholesky.scala",
+    "line": 102
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__solveCComponent$1__I__I__AD__Lgale_linalg_DMatBuilder__Lscalafim_fmri_fit_profile_TrialBandedWork__Lgale_linalg_BandedCholesky__AD__Lscalafim_fmri_fit_profile_TrialBandedPreparation__AD__I__I__I__I__I__s_util_Either",
+    "generatedLine": 65581,
+    "generatedColumn": 278,
+    "percent": 12.31413624767843,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1536
+  },
+  {
+    "function": "",
+    "generatedLine": 65700,
+    "generatedColumn": 19,
+    "percent": 10.141559586708595,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1402
+  },
+  {
+    "function": "$p_Lgale_linalg_BandedCholesky__run__sjs_js_typedarray_Float64Array__I__I__I__I__Lgale_linalg_BandedSolve__s_util_Either",
+    "generatedLine": 97245,
+    "generatedColumn": 130,
+    "percent": 5.075869392713188,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/BandedCholesky.scala",
+    "line": 102
+  },
+  {
+    "function": "",
+    "generatedLine": 295979,
+    "generatedColumn": 17,
+    "percent": 4.120180082176612,
+    "source": "https://raw.githubusercontent.com/scala/scala/v2.13.18/src/library/scala/collection/immutable/Vector.scala",
+    "line": 456
+  },
+  {
+    "function": "",
+    "generatedLine": 2069,
+    "generatedColumn": 19,
+    "percent": 3.226820933651644,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/BandedCholesky.scala",
+    "line": 238
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__subtractCross$1__I__I__AD__AD__AD__I__I__I__V",
+    "generatedLine": 65621,
+    "generatedColumn": 108,
+    "percent": 2.3499656327542313,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1591
+  },
+  {
+    "function": "$p_Lgale_linalg_BandedCholesky__run__sjs_js_typedarray_Float64Array__I__I__I__I__Lgale_linalg_BandedSolve__s_util_Either",
+    "generatedLine": 97245,
+    "generatedColumn": 130,
+    "percent": 1.726439910905119,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/BandedCholesky.scala",
+    "line": 102
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__solveResponseComponent__Lscalafim_fmri_fit_profile_TrialBandedReference__I__I__I__Z",
+    "generatedLine": 119490,
+    "generatedColumn": 145,
+    "percent": 1.2939584264393034,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1278
+  },
+  {
+    "function": "",
+    "generatedLine": 2758,
+    "generatedColumn": 17,
+    "percent": 0.7133855367530328,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/MutableMatrix.scala",
+    "line": 22
+  },
+  {
+    "function": "$ac_D",
+    "generatedLine": 605,
+    "generatedColumn": 15,
+    "percent": 0.6154580594602654,
+    "source": null,
+    "line": null
+  },
+  {
+    "function": "",
+    "generatedLine": 295979,
+    "generatedColumn": 17,
+    "percent": 0.4648218545603657,
+    "source": "https://raw.githubusercontent.com/scala/scala/v2.13.18/src/library/scala/collection/immutable/Vector.scala",
+    "line": 456
+  },
+  {
+    "function": "",
+    "generatedLine": 295979,
+    "generatedColumn": 17,
+    "percent": 0.45048432368537195,
+    "source": "https://raw.githubusercontent.com/scala/scala/v2.13.18/src/library/scala/collection/immutable/Vector.scala",
+    "line": 456
+  },
+  {
+    "function": "",
+    "generatedLine": 64789,
+    "generatedColumn": 19,
+    "percent": 0.4355591482660054,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConstrainedLogDetJet.scala",
+    "line": 109
+  },
+  {
+    "function": "(garbage collector)",
+    "generatedLine": 0,
+    "generatedColumn": 0,
+    "percent": 0.39754651430670446,
+    "source": null,
+    "line": null
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__bandMatrixProduct$1__Lscalafim_fmri_fit_profile_TrialBandedPreparation__I__I__AD__I__I__AD__I__I__I__I__D",
+    "generatedLine": 65561,
+    "generatedColumn": 168,
+    "percent": 0.38408547020975825,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1524
+  },
+  {
+    "function": "",
+    "generatedLine": 2774,
+    "generatedColumn": 18,
+    "percent": 0.3793345134696596,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/MutableMatrix.scala",
+    "line": 37
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__addBlock$1__I__AD__Lscalafim_fmri_fit_profile_TrialBandedPreparation__I__I__I__D__V",
+    "generatedLine": 65549,
+    "generatedColumn": 146,
+    "percent": 0.29983815870844893,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1413
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__assembleReducedComponent__Lscalafim_fmri_fit_profile_TrialBandedReference__Lscalafim_fmri_fit_profile_TrialBandedResponse__I__I__I__I__I__I__I__I__I__I__V",
+    "generatedLine": 119557,
+    "generatedColumn": 216,
+    "percent": 0.2988023106980291,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1334
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective__contractResponse__Lscalafim_fmri_fit_profile_TrialBandedReference__Lscalafim_fmri_fit_profile_TrialBandedResponse__I__V",
+    "generatedLine": 119156,
+    "generatedColumn": 181,
+    "percent": 0.29362805068444153,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1065
+  },
+  {
+    "function": "",
+    "generatedLine": 45360,
+    "generatedColumn": 18,
+    "percent": 0.2234792282095676,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala",
+    "line": 201
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__solveCComponent$1__I__I__AD__Lgale_linalg_DMatBuilder__Lscalafim_fmri_fit_profile_TrialBandedWork__Lgale_linalg_BandedCholesky__AD__Lscalafim_fmri_fit_profile_TrialBandedPreparation__AD__I__I__I__I__I__s_util_Either",
+    "generatedLine": 65581,
+    "generatedColumn": 278,
+    "percent": 0.1635145844909848,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1536
+  },
+  {
+    "function": "",
+    "generatedLine": 95841,
+    "generatedColumn": 19,
+    "percent": 0.15189117460483145,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/Cascade34Family.scala",
+    "line": 36
+  },
+  {
+    "function": "",
+    "generatedLine": 126960,
+    "generatedColumn": 18,
+    "percent": 0.11868925784776879,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/Matrix.scala",
+    "line": 270
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__bandMatrixProduct$1__Lscalafim_fmri_fit_profile_TrialBandedPreparation__I__I__AD__I__I__AD__I__I__I__I__D",
+    "generatedLine": 65561,
+    "generatedColumn": 168,
+    "percent": 0.11392336099213522,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1524
+  },
+  {
+    "function": "",
+    "generatedLine": 2065,
+    "generatedColumn": 19,
+    "percent": 0.11206082658878418,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/BandedCholesky.scala",
+    "line": 204
+  },
+  {
+    "function": "$p_Lgale_linalg_BandedCholesky__run__sjs_js_typedarray_Float64Array__I__I__I__I__Lgale_linalg_BandedSolve__s_util_Either",
+    "generatedLine": 97245,
+    "generatedColumn": 130,
+    "percent": 0.11081083692236408,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/BandedCholesky.scala",
+    "line": 102
+  },
+  {
+    "function": "",
+    "generatedLine": 2774,
+    "generatedColumn": 18,
+    "percent": 0.10210074956551654,
+    "source": "https://raw.githubusercontent.com/canardlapin/gale/0a981febc163e539b019aa9379935e21d8987a20/core/shared/src/main/scala/gale/linalg/MutableMatrix.scala",
+    "line": 37
+  },
+  {
+    "function": "$p_Lscalafim_fmri_fit_profile_TrialBandedObjective$__constrainedLogDet__Lscalafim_fmri_fit_profile_TrialBandedPreparation__Lgale_linalg_BandedCholesky__Lscalafim_fmri_fit_profile_TrialBandedWork__s_util_Either",
+    "generatedLine": 65450,
+    "generatedColumn": 219,
+    "percent": 0.08839568358150027,
+    "source": "file:///private/tmp/scalafim-phrf-checkpoint-20261007/modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+    "line": 1656
+  }
+]
