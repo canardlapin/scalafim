@@ -1,0 +1,855 @@
+{
+  "scope": "Independent Gaussian rank grid only; planning estimates, not admission or a runtime bound",
+  "confirmation_execution_enabled": false,
+  "inventory_complete": false,
+  "cells": 64,
+  "datasets": 480000,
+  "nonidentity_draws": 959520000,
+  "compact_fits": 3838080000,
+  "mean_scaled_hours": 19.866719913899146,
+  "p95_scaled_hours": 48.22941463075098,
+  "scaling": "Whole measured dataset evaluation at B199 multiplied by1999/199. Includes fixed preparation in scaled cost; excludes build, input generation, receipts and bootstrap/adjudication.",
+  "limitations": [
+    "Observed shared Mac14,12 host differs from frozen M3 Max benchmark hardware.",
+    "B1999 has one sizing observation per shape, not a replicate distribution across all truth cells; neither projection is an upper bound.",
+    "Resident sbt RSS includes build state but excludes generator/thin client; it is not standalone application RSS.",
+    "Cold-start RSS before the server socket identifies its PID is unobserved; sampled peaks are not whole-lifetime maxima.",
+    "B1999 retains ten times the null draws and permutation keys; B199 RSS cannot certify that footprint.",
+    "Complete voxel/component/refusal and group campaign definitions and resources remain separate prerequisites.",
+    "A strong-versus-weak same-rank power contrast is not defined by R1 versus R4."
+  ],
+  "admission": "quarantined: complete inventory, full-B sizing and source/runtime/resource approval still required",
+  "projections": [
+    {
+      "cell": "rank.R0.n80.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p6.q4.intercept.alternative",
+        "rank.R2.n80.p6.q4.intercept.alternative",
+        "rank.R3.n80.p6.q4.intercept.alternative",
+        "rank.R3.n80.p6.q4.intercept.null",
+        "rank.R4.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "maximum same-shape donor mean",
+      "pilot_mean_dataset_seconds": 0.01515385787,
+      "mean_scaled_seconds": 1522.2392905592965,
+      "p95_scaled_seconds": 3863.5195351758794
+    },
+    {
+      "cell": "rank.R0.n80.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n80.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.015646957285,
+      "mean_scaled_seconds": 1571.7722418449746,
+      "p95_scaled_seconds": 2995.0009463819097
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p6.q4.intercept.alternative",
+        "rank.R2.n80.p6.q4.intercept.alternative",
+        "rank.R3.n80.p6.q4.intercept.alternative",
+        "rank.R3.n80.p6.q4.intercept.null",
+        "rank.R4.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "maximum same-shape donor mean",
+      "pilot_mean_dataset_seconds": 0.01515385787,
+      "mean_scaled_seconds": 1522.2392905592965,
+      "p95_scaled_seconds": 3863.5195351758794
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.010680029155,
+      "mean_scaled_seconds": 536.4165397197236,
+      "p95_scaled_seconds": 1108.340025125628
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.029792083165,
+      "mean_scaled_seconds": 2992.6821229565326,
+      "p95_scaled_seconds": 10309.373789748743
+    },
+    {
+      "cell": "rank.R1.n80.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.018872021015,
+      "mean_scaled_seconds": 947.8685931905779,
+      "p95_scaled_seconds": 3247.0356197738693
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p6.q4.intercept.alternative",
+        "rank.R2.n80.p6.q4.intercept.alternative",
+        "rank.R3.n80.p6.q4.intercept.alternative",
+        "rank.R3.n80.p6.q4.intercept.null",
+        "rank.R4.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "maximum same-shape donor mean",
+      "pilot_mean_dataset_seconds": 0.01515385787,
+      "mean_scaled_seconds": 1522.2392905592965,
+      "p95_scaled_seconds": 3863.5195351758794
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.008948095355,
+      "mean_scaled_seconds": 449.4282063981155,
+      "p95_scaled_seconds": 1045.9172822613066
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.02882780191,
+      "mean_scaled_seconds": 2895.817890356281,
+      "p95_scaled_seconds": 12435.194669195978
+    },
+    {
+      "cell": "rank.R2.n80.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.02445568165,
+      "mean_scaled_seconds": 1228.314261767588,
+      "p95_scaled_seconds": 4788.4776790201
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p6.q4.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.013486201425,
+      "mean_scaled_seconds": 1354.7194295766333,
+      "p95_scaled_seconds": 3489.7032202512564
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.008987679135,
+      "mean_scaled_seconds": 451.4163465041456,
+      "p95_scaled_seconds": 913.8309464070351
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01440008288,
+      "mean_scaled_seconds": 1446.5208882974873,
+      "p95_scaled_seconds": 4032.584909949748
+    },
+    {
+      "cell": "rank.R3.n80.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.0208842581,
+      "mean_scaled_seconds": 1048.9354759271355,
+      "p95_scaled_seconds": 4302.34317942211
+    },
+    {
+      "cell": "rank.R4.n80.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n80.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01515385787,
+      "mean_scaled_seconds": 761.1196452796482,
+      "p95_scaled_seconds": 1931.7597675879397
+    },
+    {
+      "cell": "rank.R4.n80.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n80.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.010452774405,
+      "mean_scaled_seconds": 525.0024129546482,
+      "p95_scaled_seconds": 1105.7324351005025
+    },
+    {
+      "cell": "rank.R0.n80.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n80.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.015152555845,
+      "mean_scaled_seconds": 1522.1084992037688,
+      "p95_scaled_seconds": 4828.237939698492
+    },
+    {
+      "cell": "rank.R0.n80.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n80.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01297157022,
+      "mean_scaled_seconds": 1303.0235612954773,
+      "p95_scaled_seconds": 2949.801547336683
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.009729442725,
+      "mean_scaled_seconds": 977.3445229786432,
+      "p95_scaled_seconds": 2524.645688894472
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.011422940005,
+      "mean_scaled_seconds": 573.7300771355527,
+      "p95_scaled_seconds": 1287.7059254522612
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.00988582814,
+      "mean_scaled_seconds": 993.0537915507538,
+      "p95_scaled_seconds": 1900.8958103015073
+    },
+    {
+      "cell": "rank.R1.n80.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n80.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.010092793325,
+      "mean_scaled_seconds": 506.92195619786423,
+      "p95_scaled_seconds": 945.5508574120602
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.0105875942,
+      "mean_scaled_seconds": 1063.5477791859296,
+      "p95_scaled_seconds": 2669.502068693467
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01593288183,
+      "mean_scaled_seconds": 800.247004476633,
+      "p95_scaled_seconds": 1933.1870435427134
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.008776793315,
+      "mean_scaled_seconds": 881.648735511809,
+      "p95_scaled_seconds": 2517.17465241206
+    },
+    {
+      "cell": "rank.R2.n80.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n80.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.00896838337,
+      "mean_scaled_seconds": 450.44719489020093,
+      "p95_scaled_seconds": 828.1975031407035
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01218984707,
+      "mean_scaled_seconds": 1224.4977031623116,
+      "p95_scaled_seconds": 2296.9539635678393
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01430178337,
+      "mean_scaled_seconds": 718.3232401163315,
+      "p95_scaled_seconds": 2333.294678592965
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.00894600142,
+      "mean_scaled_seconds": 898.6460722904523,
+      "p95_scaled_seconds": 1676.8244849246228
+    },
+    {
+      "cell": "rank.R3.n80.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n80.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.00819665522,
+      "mean_scaled_seconds": 411.6862759994974,
+      "p95_scaled_seconds": 979.5957862311557
+    },
+    {
+      "cell": "rank.R4.n80.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n80.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.019233630245,
+      "mean_scaled_seconds": 966.0308256219848,
+      "p95_scaled_seconds": 3580.0349162311554
+    },
+    {
+      "cell": "rank.R4.n80.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n80.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.00682480062,
+      "mean_scaled_seconds": 342.78332762261306,
+      "p95_scaled_seconds": 699.5223251758794
+    },
+    {
+      "cell": "rank.R0.n160.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n160.p6.q4.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01393374834,
+      "mean_scaled_seconds": 1399.6765292291457,
+      "p95_scaled_seconds": 2514.6172382914574
+    },
+    {
+      "cell": "rank.R0.n160.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n160.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.014774487685,
+      "mean_scaled_seconds": 1484.1306976037688,
+      "p95_scaled_seconds": 3291.2053329145724
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p6.q4.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01476274952,
+      "mean_scaled_seconds": 1482.9515723859295,
+      "p95_scaled_seconds": 2762.9017776381907
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01155114769,
+      "mean_scaled_seconds": 580.1694530731155,
+      "p95_scaled_seconds": 853.7270435427135
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01177635827,
+      "mean_scaled_seconds": 1182.961818177387,
+      "p95_scaled_seconds": 2152.7170728643214
+    },
+    {
+      "cell": "rank.R1.n160.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.012972406215,
+      "mean_scaled_seconds": 651.553769441834,
+      "p95_scaled_seconds": 1160.979069321608
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p6.q4.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01769554621,
+      "mean_scaled_seconds": 1777.5576318487435,
+      "p95_scaled_seconds": 2423.2015619597987
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.012312894605,
+      "mean_scaled_seconds": 618.4290531506281,
+      "p95_scaled_seconds": 1221.2860364321607
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.012917041685,
+      "mean_scaled_seconds": 1297.546046648995,
+      "p95_scaled_seconds": 2789.4797382914567
+    },
+    {
+      "cell": "rank.R2.n160.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.011084156685,
+      "mean_scaled_seconds": 556.7143018420854,
+      "p95_scaled_seconds": 953.1559474371859
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p6.q4.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.014884337705,
+      "mean_scaled_seconds": 1495.1653805173366,
+      "p95_scaled_seconds": 2794.3056658291457
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.013034540025,
+      "mean_scaled_seconds": 654.6745103008792,
+      "p95_scaled_seconds": 1167.2008814824121
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p6.q4.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.017852543915,
+      "mean_scaled_seconds": 1793.3284063359297,
+      "p95_scaled_seconds": 4216.081859296482
+    },
+    {
+      "cell": "rank.R3.n160.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.013147727525,
+      "mean_scaled_seconds": 660.3594804641958,
+      "p95_scaled_seconds": 1103.1939562311557
+    },
+    {
+      "cell": "rank.R4.n160.p6.q4.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n160.p6.q4.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.015859858995,
+      "mean_scaled_seconds": 796.5793500252512,
+      "p95_scaled_seconds": 1975.0630799748742
+    },
+    {
+      "cell": "rank.R4.n160.p6.q4.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n160.p6.q4.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01610837376,
+      "mean_scaled_seconds": 809.0612850814068,
+      "p95_scaled_seconds": 1336.5236149497487
+    },
+    {
+      "cell": "rank.R0.n160.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n160.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01496268497,
+      "mean_scaled_seconds": 1503.0355404537688,
+      "p95_scaled_seconds": 2339.4829396984924
+    },
+    {
+      "cell": "rank.R0.n160.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R0.n160.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.02379663359,
+      "mean_scaled_seconds": 2390.4256555984925,
+      "p95_scaled_seconds": 5712.280621859296
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.014834461045,
+      "mean_scaled_seconds": 1490.1551572339195,
+      "p95_scaled_seconds": 3406.783997085427
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.016554494795,
+      "mean_scaled_seconds": 831.4682184724874,
+      "p95_scaled_seconds": 2334.9668069346735
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01663809794,
+      "mean_scaled_seconds": 1671.3345619125628,
+      "p95_scaled_seconds": 3514.7659589949744
+    },
+    {
+      "cell": "rank.R1.n160.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R1.n160.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01914288018,
+      "mean_scaled_seconds": 961.4728010005023,
+      "p95_scaled_seconds": 2202.8594765577886
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01359348558,
+      "mean_scaled_seconds": 1365.4963655487436,
+      "p95_scaled_seconds": 3140.9957516582913
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01803218315,
+      "mean_scaled_seconds": 905.6867868555275,
+      "p95_scaled_seconds": 2278.9499549999996
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01988378584,
+      "mean_scaled_seconds": 1997.371250962814,
+      "p95_scaled_seconds": 5726.364832512562
+    },
+    {
+      "cell": "rank.R2.n160.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R2.n160.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.013986345455,
+      "mean_scaled_seconds": 702.4800141845477,
+      "p95_scaled_seconds": 1205.6657097989948
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.intercept.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p4.q6.intercept.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01363462854,
+      "mean_scaled_seconds": 1369.6292689175878,
+      "p95_scaled_seconds": 2554.1452031155777
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.01578452002,
+      "mean_scaled_seconds": 792.7953648236181,
+      "p95_scaled_seconds": 1631.1835981909544
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.three-column.null",
+      "datasets": 10000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p4.q6.three-column.null"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.013588548785,
+      "mean_scaled_seconds": 1365.0004533273868,
+      "p95_scaled_seconds": 2440.3118969849243
+    },
+    {
+      "cell": "rank.R3.n160.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R3.n160.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.02018935731,
+      "mean_scaled_seconds": 1014.0332980575376,
+      "p95_scaled_seconds": 2248.6887112814065
+    },
+    {
+      "cell": "rank.R4.n160.p4.q6.intercept.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n160.p4.q6.intercept.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.014491701045,
+      "mean_scaled_seconds": 727.8620700742462,
+      "p95_scaled_seconds": 1697.913181532663
+    },
+    {
+      "cell": "rank.R4.n160.p4.q6.three-column.alternative",
+      "datasets": 5000,
+      "draws": 1999,
+      "timing_donors": [
+        "rank.R4.n160.p4.q6.three-column.alternative"
+      ],
+      "method": "cell mean",
+      "pilot_mean_dataset_seconds": 0.015535998745,
+      "mean_scaled_seconds": 780.3131027953517,
+      "p95_scaled_seconds": 1227.915885678392
+    }
+  ],
+  "full_b_sizing": {
+    "datasets": 8,
+    "draws_per_dataset": 1999,
+    "nonidentity_draws": 15992,
+    "observed_peak_server_rss_bytes": 2799042560,
+    "total_worker_wall_seconds": 46.609021708,
+    "one_fixture_per_shape_scaled_hours": 15.26184306666667,
+    "scope": "One independently seeded R3 fixture per shape. Multiplication by60000 datasets/shape is illustrative, with no uncertainty bound or warmup correction.",
+    "per_shape": [
+      {
+        "scenario_id": "rank.R3.n80.p6.q4.intercept.alternative",
+        "elapsed_seconds": 0.3823785,
+        "planned_owned_cells": 298160
+      },
+      {
+        "scenario_id": "rank.R3.n80.p6.q4.three-column.alternative",
+        "elapsed_seconds": 0.108277417,
+        "planned_owned_cells": 302576
+      },
+      {
+        "scenario_id": "rank.R3.n80.p4.q6.intercept.alternative",
+        "elapsed_seconds": 0.088707625,
+        "planned_owned_cells": 298160
+      },
+      {
+        "scenario_id": "rank.R3.n80.p4.q6.three-column.alternative",
+        "elapsed_seconds": 0.078157083,
+        "planned_owned_cells": 302576
+      },
+      {
+        "scenario_id": "rank.R3.n160.p6.q4.intercept.alternative",
+        "elapsed_seconds": 0.066190917,
+        "planned_owned_cells": 797280
+      },
+      {
+        "scenario_id": "rank.R3.n160.p6.q4.three-column.alternative",
+        "elapsed_seconds": 0.068026042,
+        "planned_owned_cells": 805536
+      },
+      {
+        "scenario_id": "rank.R3.n160.p4.q6.intercept.alternative",
+        "elapsed_seconds": 0.063045208,
+        "planned_owned_cells": 797280
+      },
+      {
+        "scenario_id": "rank.R3.n160.p4.q6.three-column.alternative",
+        "elapsed_seconds": 0.060927792,
+        "planned_owned_cells": 805536
+      }
+    ]
+  }
+}
