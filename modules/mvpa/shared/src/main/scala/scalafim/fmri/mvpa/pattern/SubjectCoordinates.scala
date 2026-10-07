@@ -42,6 +42,23 @@ enum SubjectCoordinateDf:
   case Unknown(reason: String)
   case NotApplicable(reason: String)
 
+enum SubjectCoordinateDfRole:
+  case Residual, Effective, Reference, Unspecified
+
+/** Covariance origin is immutable source metadata, independently of df.
+  * Knowing n-r residual df never makes an estimated variance known. */
+enum SubjectCovarianceOrigin:
+  case Known(method: String)
+  case Estimated(method: String)
+  case Approximate(method: String)
+  case Unknown(reason: String)
+
+  private[pattern] def valid: Boolean = this match
+    case Known(method) => method.trim.nonEmpty
+    case Estimated(method) => method.trim.nonEmpty
+    case Approximate(method) => method.trim.nonEmpty
+    case Unknown(reason) => reason.trim.nonEmpty
+
 /** Stability is an explicitly declared discovery diagnostic, not inferred from
   * the apparent agreement of confirmation maps. */
 enum SubjectStabilityKind:
@@ -169,6 +186,8 @@ final class SubjectCoefficientEstimate private (
     val brainEvidence: EvidenceIdentity, val targetEvidence: EvidenceIdentity,
     val coefficientSource: ValueIdentity, val covarianceSource: ValueIdentity,
     val degreesOfFreedom: SubjectCoordinateDf, val uncertaintyReceipt: String,
+    val covarianceOrigin: SubjectCovarianceOrigin,
+    val degreesOfFreedomRole: SubjectCoordinateDfRole,
     val stability: SubjectAxisStability, val valueUnits: SubjectCoordinateValueUnits, val identity: String
 )
 
@@ -179,7 +198,7 @@ object SubjectCoefficientEstimate:
       brainEvidence: EvidenceIdentity, targetEvidence: EvidenceIdentity,
       coefficientSource: ValueIdentity, covarianceSource: ValueIdentity,
       degreesOfFreedom: SubjectCoordinateDf, uncertaintyReceipt: String, stability: SubjectAxisStability,
-      valueUnits: SubjectCoordinateValueUnits,
+      valueUnits: SubjectCoordinateValueUnits, covarianceOrigin: SubjectCovarianceOrigin, degreesOfFreedomRole: SubjectCoordinateDfRole,
       policy: SubjectCoordinatePolicy = SubjectCoordinatePolicy()
   ): Either[SubjectCoordinateError, SubjectCoefficientEstimate] =
     val components = design.discovery.targetProjection.output.descriptor
@@ -194,8 +213,10 @@ object SubjectCoefficientEstimate:
           targetEvidence.columns == design.discovery.targetProjection.input.descriptor then Right(())
         else Left(SubjectCoordinateError.AxisMismatch("confirmation brain/target evidence rows, features or ordered task keys"))
       _ <- if stability.discoveryIdentity == design.discovery.identity then Right(()) else Left(SubjectCoordinateError.AxisMismatch("subject stability discovery"))
-      _ <- if uncertaintyReceipt.trim.nonEmpty && validDf(degreesOfFreedom) then Right(())
+      _ <- if uncertaintyReceipt.trim.nonEmpty && validDf(degreesOfFreedom) && covarianceOrigin.valid then Right(())
         else Left(SubjectCoordinateError.Invalid("uncertainty, df or discovery stability receipt"))
+      _ <- if !degreesOfFreedom.isInstanceOf[SubjectCoordinateDf.Approximate] || degreesOfFreedomRole == SubjectCoordinateDfRole.Effective then Right(())
+        else Left(SubjectCoordinateError.Invalid("approximate df must be identified as effective"))
       _ <- if coefficients.rows == features.size && coefficients.cols == components.size &&
           fullJointCovariance.rows == n && fullJointCovariance.cols == n && n > 0 then Right(())
         else Left(SubjectCoordinateError.Invalid("coefficient/full joint covariance dimensions"))
@@ -206,17 +227,19 @@ object SubjectCoefficientEstimate:
       val mean = DMat.tabulate(coefficients.rows, coefficients.cols)(coefficients.apply)
       val joint = DMat.tabulate(fullJointCovariance.rows, fullJointCovariance.cols)(fullJointCovariance.apply)
       val identity = AxisDigest.sha256Hex: writer =>
-        writer.string("scalafim.subject-coefficient-estimate.v1")
+        writer.string("scalafim.subject-coefficient-estimate.v2")
         writer.string(subjects.values.head.value)
         writer.string(subjects.identity.toString)
         writer.string(design.identity)
         brainEvidence.writeFramed(writer); targetEvidence.writeFramed(writer)
         writer.string(coefficientSource.toString); writer.string(covarianceSource.toString)
         writer.string(degreesOfFreedom.toString); writer.string(uncertaintyReceipt); writer.string(stability.identity)
+        writer.string(covarianceOrigin.toString)
+        writer.string(degreesOfFreedomRole.toString)
         valueUnits.writeFramed(writer)
         SubjectCoordinates.writeMatrix(writer, mean); SubjectCoordinates.writeMatrix(writer, joint)
       new SubjectCoefficientEstimate(subjects.values.head, subjects.identity, features.descriptor, components, design, mean, joint,
-        brainEvidence, targetEvidence, coefficientSource, covarianceSource, degreesOfFreedom, uncertaintyReceipt, stability, valueUnits, identity)
+        brainEvidence, targetEvidence, coefficientSource, covarianceSource, degreesOfFreedom, uncertaintyReceipt, covarianceOrigin, degreesOfFreedomRole, stability, valueUnits, identity)
 
   private def validDf(value: SubjectCoordinateDf): Boolean = value match
     case SubjectCoordinateDf.Known(df, method) => df.isFinite && df > 0.0 && method.trim.nonEmpty
@@ -240,6 +263,8 @@ final class SubjectCoordinates private (
 ):
   val subject: SubjectCoordinateKey = source.subject
   val degreesOfFreedom: SubjectCoordinateDf = source.degreesOfFreedom
+  val covarianceOrigin: SubjectCovarianceOrigin = source.covarianceOrigin
+  val degreesOfFreedomRole: SubjectCoordinateDfRole = source.degreesOfFreedomRole
   val brainEvidence: EvidenceIdentity = source.brainEvidence
   val targetEvidence: EvidenceIdentity = source.targetEvidence
   val coefficientUnits: String = if kind == SubjectComparisonKind.SharedComponentCoefficients then source.valueUnits.coefficients else source.valueUnits.taskOperator

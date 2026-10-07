@@ -84,11 +84,11 @@ run_batch analysis-js \
 
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
-  mvpaFoundationAdmissionJVM/test groupJVM/test \
+  mvpaFoundationAdmissionJVM/test groupJVM/test mvpaGroupJVM/test \
   fmriWorkflowJVM/test archiveZarrJVM/test datasetZarrJVM/test
 run_batch downstream-js \
   connectivityJS/test mvpaDatasetJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
-  mvpaFoundationAdmissionJS/test groupJS/test \
+  mvpaFoundationAdmissionJS/test groupJS/test mvpaGroupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 
 # The JavaFX host tests require a display and are intentionally absent. Their

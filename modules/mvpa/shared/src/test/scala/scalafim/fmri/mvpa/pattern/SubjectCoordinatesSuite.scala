@@ -111,9 +111,11 @@ class SubjectCoordinatesSuite extends munit.FunSuite:
       right(SubjectSpatialAlignment.freeze(localDiscovery, sharedCoordinates, leg, spatialExposure(leg.descriptor)))
     def estimate(mean: DMat = originalMean, covariance: DMat = originalCovariance,
         df: SubjectCoordinateDf = SubjectCoordinateDf.Known(6.0, "Gaussian residual df"),
-        stability: SubjectStabilityKind = SubjectStabilityKind.StableAxes) =
+        stability: SubjectStabilityKind = SubjectStabilityKind.StableAxes,
+        origin: SubjectCovarianceOrigin = SubjectCovarianceOrigin.Estimated("declared joint covariance fixture"),
+        dfRole: SubjectCoordinateDfRole = SubjectCoordinateDfRole.Residual) =
       SubjectCoefficientEstimate.bind(subjects, neural, design, mean, covariance, brain.identity, target.identity,
-        value("coefficients"), value("joint-covariance"), df, "joint component and feature covariance provider", declaredStability(localDiscovery, stability), physicalUnits)
+        value("coefficients"), value("joint-covariance"), df, "joint component and feature covariance provider", declaredStability(localDiscovery, stability), physicalUnits, origin, dfRole)
     def transport(estimate: SubjectCoefficientEstimate, kind: SubjectComparisonKind = SubjectComparisonKind.SharedComponentCoefficients,
         policy: SubjectCoordinatePolicy = SubjectCoordinatePolicy()) = SubjectCoordinates.transport(estimate, shared, selected(), kind, policy)
 
@@ -210,10 +212,36 @@ class SubjectCoordinatesSuite extends munit.FunSuite:
     val f = new Fixture
     for df <- Vector(SubjectCoordinateDf.Known(6, "known"), SubjectCoordinateDf.Estimated(5.5, "Satterthwaite"),
         SubjectCoordinateDf.Approximate(5, "approximation"), SubjectCoordinateDf.Unknown("not supplied"), SubjectCoordinateDf.NotApplicable("operator arithmetic")) do
-      val input = right(f.estimate(df = df))
+      val role = df match
+        case _: SubjectCoordinateDf.Estimated | _: SubjectCoordinateDf.Approximate => SubjectCoordinateDfRole.Effective
+        case _: SubjectCoordinateDf.Known => SubjectCoordinateDfRole.Residual
+        case _ => SubjectCoordinateDfRole.Unspecified
+      val input = right(f.estimate(df = df, dfRole = role))
       val out = right(f.transport(input))
       assertEquals(out.degreesOfFreedom, df)
       assert(out.source eq input)
+
+  test("covariance origin is independent of known df and is immutable transport identity metadata"):
+    val f = new Fixture
+    val origins = Vector(SubjectCovarianceOrigin.Known("known covariance"), SubjectCovarianceOrigin.Estimated("estimated covariance"),
+      SubjectCovarianceOrigin.Approximate("approximate covariance"), SubjectCovarianceOrigin.Unknown("unadmitted covariance"))
+    val outputs = origins.map(origin => right(f.transport(right(f.estimate(origin = origin)))))
+    outputs.zip(origins).foreach: (out, origin) =>
+      assertEquals(out.covarianceOrigin, origin)
+      assertEquals(out.degreesOfFreedom, SubjectCoordinateDf.Known(6.0, "Gaussian residual df"))
+      close(out.covariance, expectedCovariance)
+    assertEquals(outputs.map(_.identity).distinct.size, origins.size)
+    assert(f.estimate(origin = SubjectCovarianceOrigin.Known(" ")).isLeft)
+
+  test("df role is explicit immutable transport metadata and approximate df requires an effective role"):
+    val f = new Fixture
+    val roles = Vector(SubjectCoordinateDfRole.Residual, SubjectCoordinateDfRole.Effective, SubjectCoordinateDfRole.Reference, SubjectCoordinateDfRole.Unspecified)
+    val outputs = roles.map(role => right(f.transport(right(f.estimate(dfRole = role)))))
+    outputs.zip(roles).foreach: (out, role) =>
+      assertEquals(out.degreesOfFreedomRole, role)
+      close(out.covariance, expectedCovariance)
+    assertEquals(outputs.map(_.identity).distinct.size, roles.size)
+    assert(f.estimate(df = SubjectCoordinateDf.Approximate(5, "approximate df"), dfRole = SubjectCoordinateDfRole.Residual).isLeft)
 
   test("subject differences remain visible under the same admitted coordinates"):
     val f = new Fixture
@@ -255,7 +283,7 @@ class SubjectCoordinatesSuite extends munit.FunSuite:
     assert(SubjectSpatialAlignment.freeze(f.localDiscovery, f.shared, f.leg, f.exposure(f.localDiscovery)).isLeft)
     assert(SubjectAxisStability.freeze(f.localDiscovery, exposedHoldout(f.exposure(f.localDiscovery)), SubjectStabilityKind.StableAxes, "selected using confirmation").isLeft)
     assert(SubjectCoefficientEstimate.bind(f.subjects, f.neural, f.design, originalMean, originalCovariance, f.brain.identity, f.target.identity,
-      value("coefficients"), value("covariance"), SubjectCoordinateDf.Known(6, "df"), "joint", declaredStability(f.globalDiscovery), physicalUnits).isLeft)
+      value("coefficients"), value("covariance"), SubjectCoordinateDf.Known(6, "df"), "joint", declaredStability(f.globalDiscovery), physicalUnits, SubjectCovarianceOrigin.Estimated("declared covariance"), SubjectCoordinateDfRole.Residual).isLeft)
 
   test("physical value units must match independently of anatomical coordinate units"):
     val f = new Fixture
@@ -276,11 +304,11 @@ class SubjectCoordinatesSuite extends munit.FunSuite:
     val f = new Fixture
     val mixed = right(Column.fromValues(f.rows, Vector.tabulate(8)(i => right(SubjectCoordinateKey(if i < 4 then "A" else "B"))), value("mixed-subjects")))
     assert(SubjectCoefficientEstimate.bind(mixed, f.neural, f.design, originalMean, originalCovariance, f.brain.identity, f.target.identity,
-      value("coefficients"), value("covariance"), SubjectCoordinateDf.Known(6, "df"), "joint", declaredStability(f.localDiscovery), physicalUnits).isLeft)
+      value("coefficients"), value("covariance"), SubjectCoordinateDf.Known(6, "df"), "joint", declaredStability(f.localDiscovery), physicalUnits, SubjectCovarianceOrigin.Estimated("declared covariance"), SubjectCoordinateDfRole.Residual).isLeft)
     val foreignRows = axis("foreign-confirmation-rows", 8)
     val labels = right(Column.fromValues(foreignRows, Vector.fill(8)(right(SubjectCoordinateKey("A"))), value("foreign-labels")))
     assert(SubjectCoefficientEstimate.bind(labels, f.neural, f.design, originalMean, originalCovariance, f.brain.identity, f.target.identity,
-      value("coefficients"), value("covariance"), SubjectCoordinateDf.Known(6, "df"), "joint", declaredStability(f.localDiscovery), physicalUnits).isLeft)
+      value("coefficients"), value("covariance"), SubjectCoordinateDf.Known(6, "df"), "joint", declaredStability(f.localDiscovery), physicalUnits, SubjectCovarianceOrigin.Estimated("declared covariance"), SubjectCoordinateDfRole.Residual).isLeft)
 
   test("ill-conditioned, different task subspaces, invalid covariance and budgets fail closed"):
     val bad = new Fixture(sharedMatrix = Some(DMat.dense(2, 2, Vector(1.0, 0.0, 0.0, 1e-12))))

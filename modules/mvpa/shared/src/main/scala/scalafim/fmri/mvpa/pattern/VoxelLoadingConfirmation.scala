@@ -27,10 +27,16 @@ enum LoadingCalibrationStatus:
   * A coverage/probability claim needs a separately qualified reference. */
 final case class LoadingIntervals(lower: DMat, upper: DMat, criticalMultiplier: Double)
 
+/** The normalized component covariance is the inverse target Gram after
+  * nuisance adjustment and known row-shape whitening. Multiplying it by a
+  * voxel's estimated residual variance gives its component covariance.
+  * Cross-voxel covariance requires a separate identified residual-feature
+  * covariance; marginal errors never imply independence. */
 final class VoxelLoadingResult private[pattern] (
     val neuralAxis: AxisDescriptor, val componentAxis: AxisDescriptor,
     val confirmationRows: AxisDescriptor, val independentUnits: AxisDescriptor, val rowUnitOrdinals: Vector[Int],
     val estimates: DMat, val standardErrors: DMat, val tStatistics: DMat,
+    val normalizedComponentCovariance: DMat,
     val omnibusF: Vector[Double], val residualScales: Vector[Double],
     val residualDegreesOfFreedom: Int, val componentDegreesOfFreedom: Int,
     val designIdentity: String, val brainEvidenceIdentity: EvidenceIdentity, val targetEvidenceIdentity: EvidenceIdentity,
@@ -171,6 +177,6 @@ object VoxelLoadingConfirmation:
           failure match
             case Some(error) => Left(error)
             case None => Right(new VoxelLoadingResult(observations.neuralAxis, frozen.output.descriptor, rows, design.confirmation.samples.units.descriptor, design.confirmation.samples.rowUnitOrdinals,
-              estimates.result(), errors.result(), statistics.result(), fValues.result(), scales.result(), n - m, r,
+              estimates.result(), errors.result(), statistics.result(), targetCovariance, fValues.result(), scales.result(), n - m, r,
               design.identity, observations.identity, targets.identity, reads, cells.toLong, design.errorLaw, z > nuisance.cols, z, tolerance))
       yield result

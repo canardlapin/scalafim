@@ -1,0 +1,36 @@
+{
+  "status": "full-affected-owning-module-engineering-qualified-both-platforms",
+  "scientificRelease": "PendingFrozenProtocol",
+  "sources": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala": "37b75046460d21b5efa6985a7b0621f1b681f9e2a8ccd32c6ec4786a66e17814",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomizationSuite.scala": "249543cb0f6477072fe93ecde9dc15e4a848d3728a43b632cbc6aabfb17648aa",
+    "modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/FamilyThreshold.scala": "cb4875e198c6d36424bef3ef91bd5ee1eb94ffc336cafaa9ae628e920f79bd36",
+    "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/FamilyThresholdSuite.scala": "efbde63e4023b704c1889b1bd03b6169a8e4cc68ad86574e22c2d93f6c6edc2f"
+  },
+  "newControlsPerPlatform": {
+    "voxelFamily": 12,
+    "familyThreshold": 4
+  },
+  "fullAffectedModuleCounts": {
+    "JVM": {
+      "passed": 662,
+      "declaredScientificCampaignSkips": 1
+    },
+    "JS": {
+      "passed": 661,
+      "declaredScientificCampaignSkips": 1
+    }
+  },
+  "integrationGateReceipt": {
+    "path": "integration-gates.json",
+    "sha256": "36f6c65a6b771c88cf863a43d24c53cb8a4751183f3437cb05af9d74ab724450"
+  },
+  "availability": {
+    "supported": "conditional fixed-discovery complete voxel omnibus max-statistic candidate",
+    "releasedC1": "Unavailable",
+    "mixed2r": "Unavailable",
+    "FDR": "Unavailable",
+    "exactSourceEnumeration": "Unavailable",
+    "nativeM4.08": "Doing; M4.07 prerequisite and unsupported mixed2r remain"
+  }
+}
