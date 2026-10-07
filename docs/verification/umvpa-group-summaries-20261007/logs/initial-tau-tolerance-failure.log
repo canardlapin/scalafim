@@ -1,0 +1,10 @@
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-group/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[error] Failed: Total 26, Failed 1, Errors 0, Passed 25
+[error] Failed tests:
+[error] 	scalafim.fmri.mvpa.analysis.SubjectGroupSummarySuite
+[error] elapsed time: 13 s
+[error] (mvpaGroupJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[0J[sbt-warm] mvpaGroupJVM/test: exit 1 in 13.9s
