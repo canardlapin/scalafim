@@ -1,4 +1,4 @@
-# M4.09 calibration infrastructure and simulator QA
+# M4.09 calibration infrastructure, simulator QA, and pilots
 
 This packet qualifies engineering controls and the declared simulator subset. It
 does not release statistical claims, complete the frozen confirmation campaign,
@@ -23,6 +23,17 @@ or close M4.09. No final audit archive has been created.
   identified in `pilot-inputs-ready.json`. A subsequent full MVPA run passed
   454 tests with one explicit campaign skip on each platform; the additive
   source-bound proof is in `integration-gates.json`.
+- The corrected adapter was qualified on JVM and JS and committed as
+  `3b8d35e6aa989e2c6a5dadebabb2db608fc478cd` before execution. The B=1999 cost
+  fixture then succeeded, followed by three pilots of exactly 200 datasets each
+  at B=199. All 600 pilot records are evaluated; none failed or disappeared.
+  Raw records, process receipts, worker logs, and independent descriptive
+  analysis are retained. See [pilot-summary.md](pilot-summary.md).
+- Closed pilot errors are R0 8/200, R1/H2 6/200, and R2/H3 2/200. R2's
+  descriptive CP90 upper bound .03114 is below the frozen near-nominal lower
+  bound .035. This warning remains visible. Raw stage p-values were not
+  recorded; [preconfirmation-metrics.md](preconfirmation-metrics.md) documents
+  the required metric binding before confirmation.
 
 Simulator QA does not test type I error, confidence coverage, power, FWER, or FDP.
 The R0/R1/R2 subset does not replace the full frozen scenario inventory.
@@ -45,13 +56,16 @@ internal identifiers, while output retains the unchanged scientific scenario.
 Nonfatal evaluation exceptions become failed dataset records, with null
 inferential outputs, and do not erase later assigned cases. Small portable
 regressions cover the real dotted identifier and that failure boundary. These
-corrections require parent JVM/JS qualification and a follow-up source commit
-before retrying with a fresh output path. Simulator QA and all prepared input
-values remain unchanged.
+corrections passed parent JVM/JS qualification and were committed before retrying
+with a fresh output path. Simulator QA and all prepared input values remain
+unchanged. The successful retry is in `run-fixture-B1999-locked-identifier-v2`;
+the original failed invocation remains in `run-fixture-B1999-locked`.
 
 Protocol section 3 requires the portable fixture to be committed before a pilot.
-Root owns that commit and each actual run. From this isolated worktree, after the
-commit and a fresh server with `SBT_WARM_HEAP=2g`, the fixture invocation is:
+Root owns that commit and each actual run. The actual four successful runs used
+the retained `resource-supervisor-identifier-v2.py`; their process receipts bind
+its hash and limits. The underlying fixture selector is shown below for
+reference; it does not independently enforce the process resource limits:
 
 ```sh
 SCALAFIM_CALIBRATION_CASE_LIST="$PWD/target/umvpa-calibration/fixture-B1999-locked/case-files.txt" \
