@@ -2,10 +2,22 @@ package scalafim.fmri.fit.profile
 
 import gale.linalg.{BandedCholesky, DMat, DMatBuilder}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
-import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, TrialMembership}
+import scalafim.fmri.design.hrf.{HrfKernelBasis, TrialBasisDesign, TrialDesignLowering, TrialMembership}
 import scalafim.fmri.hrf.family.{JetLayout, ShapePoint}
 
+/** Bounds preparation-owned numeric storage, counting Int entries as Doubles
+  * conservatively. Excludes the caller's source, basis, whitening metadata,
+  * convolution/whitening scratch and later node-bank/worker allocations.
+  */
+final case class TrialPreparationPolicy(
+    lowering: TrialDesignLowering = TrialDesignLowering.Dense,
+    maxRetainedValues: Long = 16000000L):
+  require(maxRetainedValues > 0L && maxRetainedValues <= Int.MaxValue.toLong,
+    "trial preparation limit must be positive and fit an array index")
+
 enum TrialBandedError:
+  case Lowering(detail: String)
+  case StorageLimit(required: Long, limit: Long)
   case InvalidLambda(value: Double)
   case NuisanceRows(expected: Int, actual: Int)
   case ResponseLength(expectedAtLeast: Int, actual: Int)
@@ -20,6 +32,8 @@ enum TrialBandedError:
 
   def message: String =
     this match
+      case Lowering(detail) => s"trial lowering failed: $detail"
+      case StorageLimit(required, limit) => s"trial preparation needs $required retained numeric values; limit is $limit"
       case InvalidLambda(value) => s"lambda must be finite and > 0, got $value"
       case NuisanceRows(expected, actual) => s"nuisance has $actual rows; expected $expected"
       case ResponseLength(expected, actual) => s"response storage has $actual entries; expected at least $expected"
@@ -43,7 +57,9 @@ final case class TrialBandedPreparationReceipt(
     nuisanceColumns: Int,
     bandwidth: Int,
     gramBlocks: Int,
-    retainedDoubles: Long):
+    retainedDoubles: Long,
+    loweredBlocks: Int,
+    maxLoweredBlockValues: Long):
   def estimatedBytes: Long = retainedDoubles * 8L
 
 /** Per-worker counters. Shared node factors are preparation, while continuous
@@ -231,7 +247,7 @@ final case class TrialBandedReadout(
   * Source storage is shared, not copied or counted once per worker.
   */
 final class TrialBandedPreparation private[profile] (
-    val source: ExpandedTrialDesign,
+    val source: TrialBasisDesign,
     val basis: HrfKernelBasis,
     val membership: TrialMembership,
     val rows: Int,
@@ -245,7 +261,8 @@ final class TrialBandedPreparation private[profile] (
     private[profile] val basisNuisanceCross: Array[Double],
     private[profile] val nuisanceGram: Array[Double],
     private[profile] val starts: Array[Int],
-    private[profile] val ends: Array[Int]):
+    private[profile] val ends: Array[Int],
+    maxLoweredBlockValues: Long):
 
   val trials: Int = membership.trials
   val basisRank: Int = basis.rank
@@ -255,12 +272,13 @@ final class TrialBandedPreparation private[profile] (
   val packedBandSize: Int = trials * bandWidth
   val gramBlockCount: Int = basisRank * (basisRank + 1) / 2
 
-  /** Actual retained expanded-design Double data length, normally T*N*m.
+  /** Actual retained source-design Double data length: T*N*m for dense sources,
+    * zero for schedule-backed blocked sources.
     * This scoped count excludes the source's basis, membership, event row maps,
     * convolved-term metadata and object/collection overhead. It is separate
     * from receipt/engine estimates; it is not total source storage.
     */
-  val retainedSourceDesignDataValues: Long = source.term.data.data.length.toLong
+  val retainedSourceDesignDataValues: Long = source.retainedDesignDataValues
   val retainedSourceDesignDataBytes: Long = 8L * retainedSourceDesignDataValues
 
   /** Preparation-owned packed/sparse array estimate, excluding the retained
@@ -276,7 +294,9 @@ final class TrialBandedPreparation private[profile] (
       bandwidth,
       gramBlockCount,
       gramBlocksData.length.toLong + sparseDesign.length + whitenedNuisance.length +
-        basisNuisanceCross.length + nuisanceGram.length + trialOffsets.length + starts.length + ends.length
+        basisNuisanceCross.length + nuisanceGram.length + trialOffsets.length + starts.length + ends.length,
+      source.blockCount,
+      maxLoweredBlockValues
     )
 
   /** Copy one cross-basis Gram block as `bands(i,d)=B(i,i-d)`. */
@@ -356,73 +376,105 @@ final class TrialBandedPreparation private[profile] (
 object TrialBandedPreparation:
 
   def prepare(
-      expanded: ExpandedTrialDesign,
+      expanded: TrialBasisDesign,
       whitening: Option[WhiteningPlan],
       nuisance: Option[DMat],
-      lambda: Double
-  ): Either[TrialBandedError, TrialBandedPreparation] =
-    if !(lambda > 0.0 && lambda.isFinite) then Left(TrialBandedError.InvalidLambda(lambda))
-    else if nuisance.exists(_.rows != expanded.rows) then
-      Left(TrialBandedError.NuisanceRows(expanded.rows, nuisance.map(_.rows).getOrElse(0)))
-    else
-      val rows = expanded.rows
-      val n = expanded.trials
-      val m = expanded.rank
-      val rawDesign = expanded.term.data.data
-      val f = nuisance.map(_.cols).getOrElse(0)
-      val rawNuisance = nuisance.fold(new Array[Double](0)) { matrix =>
-        val out = new Array[Double](rows * f)
-        matrix.copyRowMajorTo(out)
-        out
-      }
-      def whiten(cols: Int, values: Array[Double]): Either[TrialBandedError, Array[Double]] =
-        if cols == 0 then Right(new Array[Double](0))
-        else
-          whitening match
-            case None => Right(java.util.Arrays.copyOf(values, values.length))
-            case Some(plan) =>
-              WhiteningTransform.matrix(plan, toDMat(rows, cols, values)) match
-                case Left(error) => Left(TrialBandedError.Whitening(error.toString))
-                case Right(matrix) =>
-                  val out = new Array[Double](values.length)
-                  matrix.copyRowMajorTo(out)
-                  Right(out)
-      for
-        x <- whiten(n * m, rawDesign)
-        nuisanceData <- whiten(f, rawNuisance)
-        prepared <- build(expanded, whitening, lambda, x, nuisanceData)
-      yield prepared
-
-  private def build(
-      expanded: ExpandedTrialDesign,
-      whitening: Option[WhiteningPlan],
       lambda: Double,
-      x: Array[Double],
-      nuisance: Array[Double]): Either[TrialBandedError, TrialBandedPreparation] =
+      maxRetainedValues: Long = TrialPreparationPolicy().maxRetainedValues
+  ): Either[TrialBandedError, TrialBandedPreparation] =
+    require(maxRetainedValues > 0L && maxRetainedValues <= Int.MaxValue.toLong,
+      "trial preparation limit must be positive and fit an array index")
+    if !(lambda > 0.0 && lambda.isFinite) then return Left(TrialBandedError.InvalidLambda(lambda))
+    if nuisance.exists(_.rows != expanded.rows) then
+      return Left(TrialBandedError.NuisanceRows(expanded.rows, nuisance.map(_.rows).getOrElse(0)))
     val rows = expanded.rows
     val n = expanded.trials
     val m = expanded.rank
-    val cols = n * m
-    val f = if rows == 0 then 0 else nuisance.length / rows
+    val f = nuisance.map(_.cols).getOrElse(0)
+    val fixedCount = 3.0 * n + 1.0 + rows.toDouble * f + m.toDouble * n * f + f.toDouble * f
+    if fixedCount > maxRetainedValues then return Left(TrialBandedError.StorageLimit(fixedCount.toLong, maxRetainedValues))
+    val fixedValues = fixedCount.toLong
+    def whiten(cols: Int, values: Array[Double]): Either[TrialBandedError, Array[Double]] =
+      if cols == 0 then Right(Array.emptyDoubleArray)
+      else whitening match
+        case None => Right(values)
+        case Some(plan) =>
+          WhiteningTransform.matrix(plan, toDMat(rows, cols, values)) match
+            case Left(error) => Left(TrialBandedError.Whitening(error.toString))
+            case Right(matrix) =>
+              val out = new Array[Double](values.length)
+              matrix.copyRowMajorTo(out)
+              Right(out)
+    val rawNuisance = new Array[Double](rows * f)
+    nuisance.foreach(_.copyRowMajorTo(rawNuisance))
+    val nuisanceData = whiten(f, rawNuisance) match
+      case Left(error) => return Left(error)
+      case Right(values) => values
     val starts = Array.fill(n)(rows)
     val ends = Array.fill(n)(-1)
+    val offsets = new Array[Int](n + 1)
+    val chunks = Array.fill(n)(Array.emptyDoubleArray)
+    var packedValues = 0L
+    var largestBlock = 0L
+    var block = 0
+    while block < expanded.blockCount do
+      val raw = expanded.block(block) match
+        case Left(error) => return Left(TrialBandedError.Lowering(error.message))
+        case Right(matrix) => matrix
+      largestBlock = math.max(largestBlock, raw.data.length.toLong)
+      val x = whiten(raw.cols, raw.data) match
+        case Left(error) => return Left(error)
+        case Right(values) => values
+      val count = expanded.trialsInBlock(block)
+      var local = 0
+      while local < count do
+        val trial = block * expanded.trialsPerBlock + local
+        var t = 0
+        while t < rows do
+          var p = 0
+          while p < m do
+            if x(t * raw.cols + p * count + local) != 0.0 then
+              starts(trial) = math.min(starts(trial), t)
+              ends(trial) = t
+            p += 1
+          t += 1
+        if ends(trial) < 0 then return Left(TrialBandedError.UnobservedTrial(trial))
+        val values = (ends(trial) - starts(trial) + 1).toLong * m
+        packedValues += values
+        if fixedValues + packedValues > maxRetainedValues then
+          return Left(TrialBandedError.StorageLimit(fixedValues + packedValues, maxRetainedValues))
+        val chunk = new Array[Double](values.toInt)
+        t = starts(trial)
+        while t <= ends(trial) do
+          var p = 0
+          while p < m do
+            chunk((t - starts(trial)) * m + p) = x(t * raw.cols + p * count + local)
+            p += 1
+          t += 1
+        chunks(trial) = chunk
+        offsets(trial + 1) = packedValues.toInt
+        local += 1
+      block += 1
+    build(expanded, whitening, lambda, chunks, offsets, starts, ends, nuisanceData,
+      fixedValues, maxRetainedValues, largestBlock)
+
+  private def build(
+      expanded: TrialBasisDesign,
+      whitening: Option[WhiteningPlan],
+      lambda: Double,
+      chunks: Array[Array[Double]],
+      offsets: Array[Int],
+      starts: Array[Int],
+      ends: Array[Int],
+      nuisance: Array[Double],
+      fixedValues: Long,
+      maxRetainedValues: Long,
+      largestBlock: Long): Either[TrialBandedError, TrialBandedPreparation] =
+    val rows = expanded.rows
+    val n = expanded.trials
+    val m = expanded.rank
+    val f = if rows == 0 then 0 else nuisance.length / rows
     var t = 0
-    while t < rows do
-      var p = 0
-      while p < m do
-        val base = t * cols + p * n
-        var trial = 0
-        while trial < n do
-          if x(base + trial) != 0.0 then
-            starts(trial) = math.min(starts(trial), t)
-            ends(trial) = math.max(ends(trial), t)
-          trial += 1
-        p += 1
-      t += 1
-    var trial = 0
-    while trial < n do
-      if ends(trial) < 0 then return Left(TrialBandedError.UnobservedTrial(trial))
-      trial += 1
     var bandwidth = 0
     var i = 0
     while i < n do
@@ -432,9 +484,22 @@ object TrialBandedPreparation:
         j += 1
       i += 1
     val width = bandwidth + 1
+    val blockCountLong = m.toLong * (m + 1L) / 2L
+    // Check in Double before narrowing: hostile dimensions must not wrap Long
+    // products. Every admitted count is <= Int.MaxValue and exactly represented.
+    val gramCount = blockCountLong.toDouble * n * width
+    val retainedCount = fixedValues.toDouble + offsets(n) + gramCount
+    if retainedCount > maxRetainedValues then
+      return Left(TrialBandedError.StorageLimit(retainedCount.toLong, maxRetainedValues))
+    val gramValues = gramCount.toInt
     val bandSize = n * width
-    val blockCount = m * (m + 1) / 2
-    val blocks = new Array[Double](blockCount * bandSize)
+    val sparse = new Array[Double](offsets(n))
+    var trial = 0
+    while trial < n do
+      System.arraycopy(chunks(trial), 0, sparse, offsets(trial), chunks(trial).length)
+      chunks(trial) = Array.emptyDoubleArray
+      trial += 1
+    val blocks = new Array[Double](gramValues)
     var q = 0
     while q < m do
       var p = 0
@@ -450,11 +515,12 @@ object TrialBandedPreparation:
             var sum = 0.0
             t = from
             while t <= until do
-              val row = t * cols
-              if p == q then sum += x(row + p * n + i) * x(row + p * n + other)
+              val row = offsets(i) + (t - starts(i)) * m
+              val otherRow = offsets(other) + (t - starts(other)) * m
+              if p == q then sum += sparse(row + p) * sparse(otherRow + p)
               else
-                sum += x(row + p * n + i) * x(row + q * n + other) +
-                  x(row + q * n + i) * x(row + p * n + other)
+                sum += sparse(row + p) * sparse(otherRow + q) +
+                  sparse(row + q) * sparse(otherRow + p)
               t += 1
             blocks(blockOffset + i * width + delta) = sum
             delta += 1
@@ -471,7 +537,7 @@ object TrialBandedPreparation:
           var sum = 0.0
           t = starts(i)
           while t <= ends(i) do
-            sum += x(t * cols + p * n + i) * nuisance(t * f + nuisanceCol)
+            sum += sparse(offsets(i) + (t - starts(i)) * m + p) * nuisance(t * f + nuisanceCol)
             t += 1
           xf((p * n + i) * f + nuisanceCol) = sum
           nuisanceCol += 1
@@ -491,23 +557,8 @@ object TrialBandedPreparation:
         ff(j * f + i) = sum
         j += 1
       i += 1
-    val offsets = new Array[Int](n + 1)
-    trial = 0
-    while trial < n do
-      offsets(trial + 1) = offsets(trial) + (ends(trial) - starts(trial) + 1) * m
-      trial += 1
-    val sparse = new Array[Double](offsets(n))
-    trial = 0
-    while trial < n do
-      t = starts(trial)
-      while t <= ends(trial) do
-        p = 0
-        while p < m do
-          sparse(offsets(trial) + (t - starts(trial)) * m + p) = x(t * cols + p * n + trial)
-          p += 1
-        t += 1
-      trial += 1
-    Right(new TrialBandedPreparation(expanded, expanded.basis, expanded.membership, rows, whitening, lambda, bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends))
+    Right(new TrialBandedPreparation(expanded, expanded.basis, expanded.membership, rows, whitening, lambda,
+      bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends, largestBlock))
 
   private[profile] def pairIndex(p: Int, q: Int): Int = q * (q + 1) / 2 + p
 

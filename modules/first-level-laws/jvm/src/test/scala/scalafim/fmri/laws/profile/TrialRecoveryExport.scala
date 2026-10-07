@@ -52,10 +52,12 @@ object TrialRecoveryExport:
           r += 1
       finally stream.close()
       arrays(name) = ujson.Arr(matrix.rows, matrix.cols)
+    require(f.expanded.blockCount == 1, "dense reference export requires a single trial design block")
+    val denseSource = f.expanded.block(0).fold(e => throw new IllegalArgumentException(e.message), identity)
     write(
       "expanded",
       WhiteningTransform
-        .matrix(f.whitening, gale(f.expanded.term.data))
+        .matrix(f.whitening, gale(denseSource))
         .fold(e => throw new IllegalArgumentException(e.toString), identity)
     )
     write(

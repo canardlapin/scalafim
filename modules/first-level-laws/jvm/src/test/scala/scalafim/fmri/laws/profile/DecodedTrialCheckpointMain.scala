@@ -4,13 +4,13 @@ import java.lang.management.ManagementFactory
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.util.control.NonFatal
-import scalafim.fmri.design.hrf.KernelBasisCompilation
+import scalafim.fmri.design.hrf.{KernelBasisCompilation, TrialDesignLowering}
 import scalafim.fmri.fit.profile.*
 import scalafim.fmri.fit.profile.ProfileHrfTrialOutputsParallel.*
 import scalafim.fmri.model.ProfileCriterion
 
 /** Explicit opt-in diagnostic: Test/runMain ... <output.json> <dense|regular|tiny> <voxels> <trials> <workers>
-  * <penalized|ml> <exact|corrected> <source-id> [nodes-per-axis] [baseline|expanded]. Writes non-admitted evidence even
+  * <penalized|ml> <exact|corrected> <source-id> [nodes-per-axis] [baseline|expanded] [trial-block-size]. Writes non-admitted evidence even
   * when the public execution returns a refusal.
   */
 object DecodedTrialCheckpointMain:
@@ -18,8 +18,8 @@ object DecodedTrialCheckpointMain:
 
   def main(args: Array[String]): Unit =
     require(
-      args.length >= 8 && args.length <= 10,
-      "output.json geometry voxels trials workers criterion mode source-id [nodes-per-axis] [baseline|expanded]"
+      args.length >= 8 && args.length <= 11,
+      "output.json geometry voxels trials workers criterion mode source-id [nodes-per-axis] [baseline|expanded] [trial-block-size]"
     )
     val budget = args.lift(9).getOrElse("baseline") match
       case "baseline" => DecodeBudget()
@@ -45,6 +45,8 @@ object DecodedTrialCheckpointMain:
       workers = args(4).toInt,
       gridAxisNodes = args.lift(8).map(_.toInt).getOrElse(2),
       budget = budget,
+      trialPreparation = TrialPreparationPolicy(args.lift(10)
+        .fold[TrialDesignLowering](TrialDesignLowering.Dense)(s => TrialDesignLowering.Blocked(s.toInt))),
       criterion = criterion,
       mode = mode,
       compilation =
@@ -68,6 +70,7 @@ object DecodedTrialCheckpointMain:
       "nodesPerAxis" -> config.gridAxisNodes,
       "budgetProfile" -> args.lift(9).getOrElse("baseline"),
       "compilation" -> config.compilation.toString,
+      "trialPreparation" -> config.trialPreparation.toString,
       "limitations" -> ujson.Arr(
         "original-family certification unavailable",
         "no measured engine peak",
@@ -92,6 +95,9 @@ object DecodedTrialCheckpointMain:
         case Left(error)  => receipt("preparationError") = error.message
         case Right(value) =>
           receipt("setup") = value.setup.toString
+          receipt("trialPreparationReceipt") = value.setup.trial.fold[ujson.Value](ujson.Null)(product)
+          receipt("retainedSourceDesignValues") = value.setup.expandedTrialLoweringDoubles
+            .fold[ujson.Value](ujson.Null)(v => ujson.Num(v.toDouble))
           value.trialOutputs match
             case Left(error)    => receipt("outputPreparationError") = error.message
             case Right(outputs) =>

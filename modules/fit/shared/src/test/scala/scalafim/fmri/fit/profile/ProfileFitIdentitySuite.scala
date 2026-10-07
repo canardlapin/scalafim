@@ -150,7 +150,9 @@ class ProfileFitIdentitySuite extends munit.FunSuite:
       policy.copy(nodesPerAxis = Vector(3)), policy.copy(prior = None),
       policy.copy(prior = Some(ShapePrior(Vector(0.0), Vector(1e-6)))),
       policy.copy(prior = Some(ShapePrior(Vector(-0.0), Vector(0.1)))),
-      policy.copy(execution = ExecutionBudget(4, 1)), policy.copy(execution = ExecutionBudget(3, 2)))
+      policy.copy(execution = ExecutionBudget(4, 1)), policy.copy(execution = ExecutionBudget(3, 2)),
+      policy.copy(trialPreparation = TrialPreparationPolicy(scalafim.fmri.design.hrf.TrialDesignLowering.Blocked(1))),
+      policy.copy(trialPreparation = TrialPreparationPolicy(maxRetainedValues = 10000L)))
     policies.foreach(p => assertNotEquals(original, prepared(requested = p).provenance))
     val otherAmplitude = ProfileHrfPlan.fromTrialEvents(dataset, drive, baseline, FitConfig(), basis, 0.1)
       .fold(error => fail(error.message), identity)

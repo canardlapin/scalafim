@@ -2,7 +2,7 @@ package scalafim.fmri.fit.profile
 
 import scalafim.fmri.ar.WhiteningTransform
 import scalafim.fmri.design.{ColumnId, ConditionId, ScanIndex, TrialId}
-import scalafim.fmri.design.hrf.ExpandedTrialDesign
+import scalafim.fmri.design.hrf.TrialBasisDesign
 import scalafim.fmri.hrf.family.{JetLayout, NormalizationRule}
 
 enum ProfileTrialAxisError:
@@ -35,7 +35,7 @@ enum ProfileTrialAxisError:
   * The column and selected-row identities must be supplied by the caller.
   */
 final class ProfileTrialAxis private (
-    val source: ExpandedTrialDesign,
+    val source: TrialBasisDesign,
     val preparation: TrialBandedPreparation,
     val trialIds: Vector[TrialId],
     val conditionIds: Vector[ConditionId],
@@ -52,7 +52,7 @@ final class ProfileTrialAxis private (
 
 object ProfileTrialAxis:
   def make(
-      source: ExpandedTrialDesign,
+      source: TrialBasisDesign,
       preparation: TrialBandedPreparation,
       trialIds: Vector[TrialId],
       conditionIds: Vector[ConditionId],

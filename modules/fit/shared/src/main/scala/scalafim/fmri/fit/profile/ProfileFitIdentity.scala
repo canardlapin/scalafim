@@ -180,4 +180,13 @@ private[profile] object ProfileFitIdentity:
       s"criterion=${criterion(plan.criterion)}|grid=${ints(policy.nodesPerAxis)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
       s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +
-      compactComparisonMarker(route, policy) + s"|exact-readout=$exactReadout"
+      compactComparisonMarker(route, policy) + trialPreparationMarker(route, policy) + s"|exact-readout=$exactReadout"
+
+  private def trialPreparationMarker(route: String, policy: ProfileDecodePolicy): String =
+    val preparation = policy.trialPreparation
+    if !route.startsWith("trial-banded") || preparation == TrialPreparationPolicy() then ""
+    else
+      val lowering = preparation.lowering match
+        case scalafim.fmri.design.hrf.TrialDesignLowering.Dense => record("dense")
+        case scalafim.fmri.design.hrf.TrialDesignLowering.Blocked(size) => record("blocked", size.toString)
+      s"|trial-preparation=${record("trial-preparation/v1", lowering, preparation.maxRetainedValues.toString)}"

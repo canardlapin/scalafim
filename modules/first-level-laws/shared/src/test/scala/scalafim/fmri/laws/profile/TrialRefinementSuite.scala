@@ -107,6 +107,8 @@ class TrialRefinementSuite extends munit.FunSuite:
     assert(result.progress.decoder.jets <= 2L * budget.maxJets)
 
   test("first-order B0 oracle agrees across additional generating shapes and finite differences"):
+    assertEquals(f.expanded.blockCount, 1, "this derivative oracle uses the dense fixture")
+    val denseSource = f.expanded.block(0).fold(e => fail(e.message), identity)
     val nuisance = gale.linalg.DMat.tabulate(f.rows, f.nuisance)((t, j) => f.baseline.designMatrix(t, j))
     val prep = TrialBandedPreparation.prepare(f.expanded, Some(f.whitening), Some(nuisance), 1.0)
       .fold(e => fail(e.message), identity)
@@ -128,7 +130,7 @@ class TrialRefinementSuite extends munit.FunSuite:
         while trial < f.trials do
           var p = 0
           while p < coefficients.length do
-            signal += f.expanded.term.data(t, p * f.trials + trial) * coefficients(p) *
+            signal += denseSource(t, p * f.trials + trial) * coefficients(p) *
               (1.0 + 0.3 * (trial % 3))
             p += 1
           trial += 1

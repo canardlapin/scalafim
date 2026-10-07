@@ -546,3 +546,28 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
         case other => fail(s"expected failed measurement, got $other")
     finally Array.copy(saved, 0, gram, 0, gram.length)
     assertEquals(values.size, 0)
+
+  test("blocked sources bind physical axes and preserve exact and corrected public outputs"):
+    import scalafim.fmri.design.hrf.TrialDesignLowering
+    val dense = parallelChecked(outputPrepared(2).trialOutputs)
+    val prepared = parallelChecked(ProfileHrfFit.prepare(plan(0.4), selection, parallelWhitening,
+      outputPolicy(2).copy(trialPreparation = TrialPreparationPolicy(TrialDesignLowering.Blocked(2)))))
+    val blocked = parallelChecked(prepared.trialOutputs)
+    assert(blocked.axis.source eq blocked.axis.preparation.source)
+    assertEquals(blocked.axis.trialIds, dense.axis.trialIds)
+    assertEquals(blocked.axis.source.canonicalToInput, dense.axis.source.canonicalToInput)
+    for mode <- Vector(ProfileTrialReadoutMode.ExactShape, ProfileTrialReadoutMode.CorrectedReference) do
+      val request = OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised)
+      val (_, expected) = execute(dense, request, mode)
+      val (summary, actual) = execute(blocked, request, mode)
+      assertEquals(actual.length, expected.length)
+      assertEquals(summary.progress.publicReadout.map(_.successes), Some(3L))
+      actual.zip(expected).foreach: (voxel, other) =>
+        assertEquals(voxel.voxelId, other.voxelId)
+        val (_, value) = emitted(voxel)
+        val (_, reference) = emitted(other)
+        value.trialAmplitudes.get.zip(reference.trialAmplitudes.get)
+          .foreach((a, b) => assertEqualsDouble(a, b, 1e-10))
+        value.nuisanceCoefficients.zip(reference.nuisanceCoefficients)
+          .foreach((a, b) => assertEqualsDouble(a, b, 1e-10))
+        assert(value.axis eq blocked.axis)

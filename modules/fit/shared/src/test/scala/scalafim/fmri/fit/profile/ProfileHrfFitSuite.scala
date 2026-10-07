@@ -868,3 +868,31 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     assertEquals(worker.numericalWork, beforeStale)
     assert(next.mlReadout.get().isRight)
     assertEquals(worker.numericalWork.attempted.readoutAttempts, 2L)
+
+  test("public blocked preparation preserves decoded outputs and reports actual retained source storage"):
+    import scalafim.fmri.design.hrf.TrialDesignLowering
+    val dense = checked(ProfileHrfFit.prepare(plan(0.4), selection,
+      CanonicalTemporalWhitening.Shared(arPlan), policy()))
+    val blockedPolicy = policy().copy(trialPreparation = TrialPreparationPolicy(TrialDesignLowering.Blocked(2)))
+    val blocked = checked(ProfileHrfFit.prepare(plan(0.4), selection,
+      CanonicalTemporalWhitening.Shared(arPlan), blockedPolicy))
+    val expected = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    val actual = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    checked(dense.run(reader, sink(expected)))
+    val result = checked(blocked.run(reader, sink(actual)))
+    assertEquals(actual.map(_.voxelIds).toVector, expected.map(_.voxelIds).toVector)
+    actual.zip(expected).foreach: (block, reference) =>
+      assertEquals(block.voxelIds, reference.voxelIds)
+      block.results.zip(reference.results).foreach: (fit, other) =>
+        assertEquals(fit.status, other.status)
+        fit.coordinates.zip(other.coordinates).foreach((a, b) => assertEqualsDouble(a, b, 1e-12))
+        assertEqualsDouble(fit.penalizedEnergy, other.penalizedEnergy, 1e-12)
+        val (_, _, oracleTrials) = denseAt(fit.voxelId, fit.coordinates)
+        fit.readout match
+          case ProfileAmplitudeReadout.AdaptiveTrial(backend) =>
+            backend.trialAmplitudes.zip(oracleTrials).foreach((a, b) => assertEqualsDouble(a, b, 5e-7))
+          case other => fail(s"expected trial readout, got $other")
+    assertEquals(result.setup.expandedTrialLoweringDoubles, Some(0L))
+    assertEquals(result.setup.trial.map(_.loweredBlocks), Some(3))
+    assertNotEquals(blocked.provenance, dense.provenance)
+    assert(blocked.provenance.contains("trial-preparation/v1"))

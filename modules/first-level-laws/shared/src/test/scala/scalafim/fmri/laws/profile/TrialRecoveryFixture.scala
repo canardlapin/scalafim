@@ -32,18 +32,25 @@ object TrialRecoveryFixture:
     val coefficients = new Array[Double](f.expanded.rank)
     f.plan.basis.coefficientsInto(ShapePoint.unsafe(truth), new Array[Double](f.plan.basis.fineCount), coefficients)
     val conditions = new Array[Double](f.rows * 3)
+    var block = 0
+    while block < f.expanded.blockCount do
+      val source = f.expanded.block(block).fold(e => throw new IllegalArgumentException(e.message), identity)
+      val count = f.expanded.trialsInBlock(block)
+      var t = 0
+      while t < f.rows do
+        var local = 0
+        while local < count do
+          val trial = block * f.expanded.trialsPerBlock + local
+          var value = 0.0
+          var p = 0
+          while p < coefficients.length do
+            value += source(t, p * count + local) * coefficients(p)
+            p += 1
+          conditions(t * 3 + trial % 3) += value
+          local += 1
+        t += 1
+      block += 1
     var t = 0
-    while t < f.rows do
-      var trial = 0
-      while trial < f.trials do
-        var value = 0.0
-        var p = 0
-        while p < coefficients.length do
-          value += f.expanded.term.data(t, p * f.trials + trial) * coefficients(p)
-          p += 1
-        conditions(t * 3 + trial % 3) += value
-        trial += 1
-      t += 1
     val clean = new Array[Double](f.rawBlock.length)
     val rms = new Array[Double](f.inputBlockVoxels)
     val rng = new scala.util.Random(20260911L)

@@ -7,7 +7,7 @@ import scalafim.dataset.{DataSelection, DatasetSeriesReader, FmriDataset, Resolv
 import scalafim.fmri.ar.{InitialConditionPolicy, NoisePooling}
 import scalafim.fmri.design.{FactorId, FactorLevelSet}
 import scalafim.fmri.design.event.{Event, EventTerm}
-import scalafim.fmri.design.hrf.{ExpandedConditionDesign, ExpandedTrialDesign}
+import scalafim.fmri.design.hrf.{ExpandedConditionDesign, TrialBasisDesign}
 import scalafim.fmri.fit.{CanonicalTemporalWhitening, DesignMatrix, EstimateExecutionOutcome, Gls, PreparedContrastGeometry, ResponsePreparationPlan, RunPartition, TemporalPreparationScope}
 import scalafim.fmri.model.{AmplitudeStructure, ArStructure, FitConfig, FitEngine, LssConfig, MissingDataPolicy, NuisanceProjection, ProfileHrfPlan, ProfileHrfSource, RobustOptions, VolumeWeighting}
 
@@ -21,7 +21,8 @@ final case class ProfileDecodePolicy(
     budget: DecodeBudget,
     prior: Option[ShapePrior],
     execution: ExecutionBudget = ExecutionBudget(),
-    observedAdmission: Option[ObservedFamilyAdmission] = None)
+    observedAdmission: Option[ObservedFamilyAdmission] = None,
+    trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy())
 
 /** `jets` counts all derivative requests; `firstOrderAttempts` is its search-only subset. */
 final case class ProfileDecoderWork(
@@ -736,7 +737,7 @@ object ProfileHrfFit:
         case ProfileBackend.Trial(prepared, criterion) =>
           val bank = criterion.objectiveBank
           ProfileSetupReceipt(route, Some(prepared.receipt), Some(bank.estimatedSharedBytes),
-            Some(prepared.rows.toLong * prepared.trials * prepared.basisRank), None, Some(bank.setupReceipt), criterion.mlSetup,
+            Some(prepared.retainedSourceDesignDataValues), None, Some(bank.setupReceipt), criterion.mlSetup,
             criterion match
               case TrialCriterionFacade.Ml(_, bundle, _) => Some(bundle.energyScratchValues)
               case _ => None)
@@ -824,11 +825,13 @@ object ProfileHrfFit:
               yield (ProfileBackend.Compact(compact), "direct-condition-compact")
             case AmplitudeStructure.ConditionCenteredTrials(alpha) =>
               for
-                expanded <- ExpandedTrialDesign.lower(drive.schedule.onsets, drive.schedule.blockIds,
+                expanded <- TrialBasisDesign.lower(drive.schedule.onsets, drive.schedule.blockIds,
                   drive.schedule.durations, drive.membership, dataset.samplingFrame, plan.basis,
-                  plan.basis.spec.fineStep.seconds).left.map(error => ProfileFitError.Preparation(error.message))
+                  plan.basis.spec.fineStep.seconds, policy.trialPreparation.lowering)
+                  .left.map(error => ProfileFitError.Preparation(error.message))
                 trial <- TrialBandedPreparation.prepare(expanded, whiteningOption(whitening),
-                  nuisance(baseline.designMatrix), alpha.lambda).left.map(error => ProfileFitError.Preparation(error.message))
+                  nuisance(baseline.designMatrix), alpha.lambda, policy.trialPreparation.maxRetainedValues)
+                  .left.map(error => ProfileFitError.Preparation(error.message))
                 bank <- trial.objective(NodeGrid(plan.basis.family.chart, policy.nodesPerAxis))
                   .left.map(error => ProfileFitError.Preparation(error.message))
                 criterion <-

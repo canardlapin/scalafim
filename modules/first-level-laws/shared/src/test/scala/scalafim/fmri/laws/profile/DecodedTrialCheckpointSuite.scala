@@ -111,3 +111,22 @@ class DecodedTrialCheckpointSuite extends munit.FunSuite:
     assert(summary.setup.mlSetup.get.logDetRecursionAttempts > 0)
     assertEquals(summary.progress.publicReadout.get.successes, sink.emitted)
     assert(outputs.executionDeclaration(request, ProfileTrialReadoutMode.CorrectedReference).isLeft)
+
+  test("blocked diagnostic fixtures retain the same inputs, decoded statuses and Float32 outputs"):
+    import scalafim.fmri.design.hrf.TrialDesignLowering
+    val blocked = fixture(tiny.config.copy(trialPreparation = TrialPreparationPolicy(TrialDesignLowering.Blocked(5))))
+    assertEquals(blocked.rawBlock.length, tiny.rawBlock.length)
+    blocked.rawBlock.zip(tiny.rawBlock).foreach((a, b) => assertEqualsDouble(a, b, 1e-14))
+    def run(f: DecodedTrialCheckpoint.Fixture): Sink =
+      val prepared = f.prepare.fold(e => fail(e.message), identity)
+      val outputs = prepared.trialOutputs.fold(e => fail(e.message), identity)
+      val sink = new Sink(f.trials)
+      outputs.run(new f.Reader, request, ProfileTrialReadoutMode.ExactShape, sink).fold(e => fail(e.message), identity)
+      sink
+    val actual = run(blocked)
+    val expected = run(tiny)
+    assertEquals(actual.statuses.toMap, expected.statuses.toMap)
+    assertEquals(actual.emitted, expected.emitted)
+    assert(actual.emitted > 0L)
+    assertEquals(actual.outputValues, expected.outputValues)
+    assertEqualsDouble(actual.outputChecksum, expected.outputChecksum, 1e-12)

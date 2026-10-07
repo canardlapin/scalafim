@@ -7,7 +7,7 @@ import scalafim.fmri.design.{ConditionId, TrialId}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NuisanceCheck}
 import scalafim.fmri.design.event.EventSchedule
 import scalafim.fmri.design.hrf.{
-  ExpandedTrialDesign,
+  TrialBasisDesign,
   HrfKernelBasis,
   KernelBasisCompilation,
   KernelBasisSpec,
@@ -40,7 +40,8 @@ object DecodedTrialCheckpoint:
       compilation: KernelBasisCompilation = KernelBasisCompilation.Dense,
       criterion: ProfileCriterion = ProfileCriterion.PenalizedProfile(1.0),
       mode: ProfileTrialReadoutMode = ProfileTrialReadoutMode.ExactShape,
-      budget: DecodeBudget = DecodeBudget()
+      budget: DecodeBudget = DecodeBudget(),
+      trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy()
   ):
     require(voxels > 0 && trials >= 3 && trials % 3 == 0)
     require(gridAxisNodes >= 2)
@@ -51,7 +52,7 @@ object DecodedTrialCheckpoint:
       dataset: FmriDataset,
       plan: ProfileHrfPlan,
       baseline: BaselineModel,
-      expanded: ExpandedTrialDesign,
+      expanded: TrialBasisDesign,
       whitening: WhiteningPlan,
       rawBlock: Array[Double],
       inputBlockVoxels: Int,
@@ -100,7 +101,8 @@ object DecodedTrialCheckpoint:
           Vector.fill(plan.basis.family.dimension)(config.gridAxisNodes),
           config.budget,
           None,
-          ExecutionBudget(config.blockSize, config.workers)
+          ExecutionBudget(config.blockSize, config.workers),
+          trialPreparation = config.trialPreparation
         )
       )
 
@@ -236,8 +238,8 @@ object DecodedTrialCheckpoint:
         membership.conditionOfTrial.map(labels)
       )
       .fold(e => throw new IllegalArgumentException(e.message), identity)
-    val expanded = ExpandedTrialDesign
-      .lower(onsets, schedule.blockIds, schedule.durations, membership, frame, basis, Seconds(0.1))
+    val expanded = TrialBasisDesign
+      .lower(onsets, schedule.blockIds, schedule.durations, membership, frame, basis, Seconds(0.1), config.trialPreparation.lowering)
       .fold(e => throw new IllegalArgumentException(e.message), identity)
     val nuisanceValues = Array.tabulate(rows * 5): index =>
       val t = index / 5
@@ -312,20 +314,29 @@ object DecodedTrialCheckpoint:
       v += 1
     Fixture(config, dataset, plan, baseline, expanded, ar, raw, blockVoxels, basisNanos, System.nanoTime() - started)
 
-  private def designAt(expanded: ExpandedTrialDesign, coordinates: Vector[Double]): Array[Double] =
+  private def designAt(expanded: TrialBasisDesign, coordinates: Vector[Double]): Array[Double] =
     val coefficients = new Array[Double](expanded.rank)
     expanded.basis.coefficientsInto(
       ShapePoint.unsafe(coordinates),
       new Array[Double](expanded.basis.fineCount),
       coefficients
     )
-    val source = expanded.term.data
-    Array.tabulate(expanded.rows * expanded.trials): index =>
-      val t = index / expanded.trials
-      val trial = index % expanded.trials
-      var value = 0.0
-      var p = 0
-      while p < expanded.rank do
-        value += source(t, p * expanded.trials + trial) * coefficients(p)
-        p += 1
-      value
+    val out = new Array[Double](expanded.rows * expanded.trials)
+    var block = 0
+    while block < expanded.blockCount do
+      val source = expanded.block(block).fold(e => throw new IllegalArgumentException(e.message), identity)
+      val count = expanded.trialsInBlock(block)
+      var t = 0
+      while t < expanded.rows do
+        var local = 0
+        while local < count do
+          var value = 0.0
+          var p = 0
+          while p < expanded.rank do
+            value += source(t, p * count + local) * coefficients(p)
+            p += 1
+          out(t * expanded.trials + block * expanded.trialsPerBlock + local) = value
+          local += 1
+        t += 1
+      block += 1
+    out
