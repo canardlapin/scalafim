@@ -4,14 +4,12 @@ package scalafim.fmri.group
   * test statistics into p-values. Pure Scala (no Breeze), so the group core
   * cross-compiles to JVM and Scala.js.
   *
-  * Accuracy targets ~1e-7, sufficient for parity with R's `pnorm`/`pt`/`p.adjust`
-  * at the tolerances used in tests.
+  * Normal tails use converged incomplete-gamma expansions; Student-t tails
+  * retain the incomplete-beta implementation and its independently tested scope.
   */
 object Distributions:
 
-  /** Two-sided p-value for a standard normal statistic `z`. Clamped to `[0, 1]`
-    * so the `erfc` approximation error cannot push a p-value above one.
-    */
+  /** Two-sided p-value for a standard normal statistic `z`. */
   def normalTwoSidedP(z: Double): Double =
     if z.isNaN then Double.NaN
     else math.min(1.0, erfc(math.abs(z) / math.sqrt(2.0)))
@@ -36,24 +34,52 @@ object Distributions:
 
   /** Complementary error function, `erfc(x) = 1 - erf(x)`.
     *
-    * Numerical Recipes rational Chebyshev approximation; fractional error < 1.2e-7.
+    * For nonnegative x this is Q(1/2,x²). Evaluate the lower-gamma series
+    * near zero and the upper-gamma continued fraction in the tail, avoiding
+    * cancellation there. DLMF 8.7.1 and 8.9.2 (contracted fraction).
+    * https://dlmf.nist.gov/8.7.E1 ; https://dlmf.nist.gov/8.9.E2
     */
   def erfc(x: Double): Double =
-    val z = math.abs(x)
-    val tt = 1.0 / (1.0 + 0.5 * z)
-    val ans = tt * math.exp(
-      -z * z - 1.26551223 +
-        tt * (1.00002368 +
-          tt * (0.37409196 +
-            tt * (0.09678418 +
-              tt * (-0.18628806 +
-                tt * (0.27886807 +
-                  tt * (-1.13520398 +
-                    tt * (1.48851587 +
-                      tt * (-0.82215223 +
-                        tt * 0.17087277))))))))
-    )
-    if x >= 0.0 then ans else 2.0 - ans
+    if x.isNaN then Double.NaN
+    else if x == 0.0 then 1.0
+    else
+      val z = x * x
+      val epsilon = 2e-16
+      val tail =
+        if z.isInfinity then 0.0
+        else if z < 1.5 then
+          var term = 2.0
+          var sum = term
+          var k = 1
+          while k <= 200 && math.abs(term) > epsilon * math.abs(sum) do
+            term *= z / (k + .5)
+            sum += term
+            k += 1
+          // abs(x), rather than sqrt(z), preserves subnormal inputs.
+          1.0 - sum * math.abs(x) * math.exp(-z) / math.sqrt(math.Pi)
+        else
+          val tiny = 1e-300
+          var b = z + .5
+          var c = 1.0 / tiny
+          var d = 1.0 / b
+          var h = d
+          var k = 1
+          var converged = false
+          while k <= 2000 && !converged do
+            val a = -k.toDouble * (k - .5)
+            b += 2.0
+            d = a * d + b
+            if math.abs(d) < tiny then d = tiny
+            c = b + a / c
+            if math.abs(c) < tiny then c = tiny
+            d = 1.0 / d
+            val delta = d * c
+            h *= delta
+            converged = math.abs(delta - 1.0) <= epsilon
+            k += 1
+          if !converged then Double.NaN
+          else math.exp(-z + .5 * math.log(z) - .5 * math.log(math.Pi)) * h
+      if x >= 0.0 then tail else 2.0 - tail
 
   /** Natural log of the gamma function (Lanczos approximation). */
   def logGamma(x: Double): Double =

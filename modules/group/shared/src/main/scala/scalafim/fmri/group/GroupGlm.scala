@@ -285,6 +285,9 @@ object GroupGlm:
         case TauEstimator.PauleMandel =>
           if fixed.q <= df then Right(0.0 -> fixed)
           else
+            // The fitted coefficients and uncertainty must meet the 1e-10
+            // combined oracle gate; a 1e-9 Q residual could stop too early.
+            val qTolerance = 1e-12 * df
             var tau = 0.0
             var current: Either[GroupError, SampleSolution] = Right(fixed)
             var iterations = 0
@@ -292,7 +295,7 @@ object GroupGlm:
             while iterations < 64 && current.isRight && !converged do
               val fit = current.toOption.get
               val error = fit.q - df
-              if math.abs(error) <= 1e-9 * df then converged = true
+              if math.abs(error) <= qTolerance then converged = true
               else if !fit.derivative.isFinite || fit.derivative <= 0.0 then
                 current = Left(GroupError.NumericalFailure("Paule-Mandel derivative is unavailable"))
               else
@@ -304,7 +307,7 @@ object GroupGlm:
                   current = solve(s, tau)
               iterations += 1
             current.flatMap { fit =>
-              if converged || math.abs(fit.q - df) <= 1e-9 * df then Right(tau -> fit)
+              if converged || math.abs(fit.q - df) <= qTolerance then Right(tau -> fit)
               else Left(GroupError.NumericalFailure("Paule-Mandel did not converge in 64 iterations"))
             }
 
