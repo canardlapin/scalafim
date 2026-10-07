@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/usr/local/bin/Rscript",
+    "tools/mvpa-inference/diagnose_rank.R",
+    "/private/tmp/scalafim-umvpa-qualification-20261007/docs/verification/umvpa-rank-diagnosis-20261007/case-index.tsv",
+    "/private/tmp/scalafim-umvpa-qualification-20261007/docs/verification/umvpa-rank-diagnosis-20261007/oracle-power-bound.tsv",
+    "/private/tmp/scalafim-umvpa-qualification-20261007/docs/verification/umvpa-rank-diagnosis-20261007"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 57.607569217681885,
+  "wall_limit_seconds": 600,
+  "child_max_rss": 238452736,
+  "child_max_rss_unit": "bytes",
+  "new_datasets": 0,
+  "new_random_draws": 0
+}
