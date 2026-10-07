@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "set firstLevelLawsJS / Test / unmanagedSources += file(\"/private/tmp/scalafim-lwu-capacity-gates-20261006/LwuAccuracyOnlySuite.scala\")",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.LwuAccuracyOnlySuite"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "exit_code": 0,
+  "seconds": 749.5593369007111,
+  "heap": "4g",
+  "cpus": 2,
+  "gale_override": null,
+  "node": "v24.21.0"
+}

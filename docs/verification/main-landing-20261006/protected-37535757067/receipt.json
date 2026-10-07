@@ -1,0 +1,315 @@
+{
+  "run_id": 37535757067,
+  "head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12",
+  "url": "https://github.com/canardlapin/scalafim/actions/runs/37535757067",
+  "conclusion": "failure",
+  "checks": {
+    "scoped first-level scientific coverage": "success",
+    "focused first-level JVM/Scala.js gates": "success",
+    "full repository JVM/Scala.js compile and test": "failure"
+  },
+  "coverage": {
+    "passed": 1842,
+    "failed": 0,
+    "errors": 0,
+    "all_module_floors_passed": true
+  },
+  "focused": {
+    "run_id": 37535757067,
+    "head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12",
+    "job_id": 112516623454,
+    "conclusion": "success",
+    "counts": {
+      "JVM": {
+        "batches": [
+          {
+            "total": 5,
+            "failed": 0,
+            "errors": 0,
+            "passed": 5
+          },
+          {
+            "total": 155,
+            "failed": 0,
+            "errors": 0,
+            "passed": 155
+          },
+          {
+            "total": 386,
+            "failed": 0,
+            "errors": 0,
+            "passed": 386
+          },
+          {
+            "total": 82,
+            "failed": 0,
+            "errors": 0,
+            "passed": 82
+          },
+          {
+            "total": 478,
+            "failed": 0,
+            "errors": 0,
+            "passed": 478
+          },
+          {
+            "total": 53,
+            "failed": 0,
+            "errors": 0,
+            "passed": 53
+          },
+          {
+            "total": 686,
+            "failed": 0,
+            "errors": 0,
+            "passed": 686
+          },
+          {
+            "total": 84,
+            "failed": 0,
+            "errors": 0,
+            "passed": 84
+          }
+        ],
+        "total": 1929,
+        "passed": 1929,
+        "failed": 0,
+        "errors": 0
+      },
+      "JS": {
+        "batches": [
+          {
+            "total": 5,
+            "failed": 0,
+            "errors": 0,
+            "passed": 5
+          },
+          {
+            "total": 153,
+            "failed": 0,
+            "errors": 0,
+            "passed": 153
+          },
+          {
+            "total": 386,
+            "failed": 0,
+            "errors": 0,
+            "passed": 386
+          },
+          {
+            "total": 82,
+            "failed": 0,
+            "errors": 0,
+            "passed": 82
+          },
+          {
+            "total": 477,
+            "failed": 0,
+            "errors": 0,
+            "passed": 477
+          },
+          {
+            "total": 53,
+            "failed": 0,
+            "errors": 0,
+            "passed": 53
+          },
+          {
+            "total": 629,
+            "failed": 0,
+            "errors": 0,
+            "passed": 629
+          },
+          {
+            "total": 84,
+            "failed": 0,
+            "errors": 0,
+            "passed": 84
+          }
+        ],
+        "total": 1869,
+        "passed": 1869,
+        "failed": 0,
+        "errors": 0
+      }
+    },
+    "lwu_accuracy_lines": {
+      "JVM": [
+        "2026-10-06T21:59:16.9108646Z [milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.37 exact 0.09; oracle beaten under the exact kernel in 91/93 admitted voxels",
+        "2026-10-06T21:59:16.9116227Z [milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+        "2026-10-06T22:00:44.2569168Z [milestone] LWU SNR 0.50: admitted 82.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.49 exact 0.10; oracle beaten under the exact kernel in 79/82 admitted voxels",
+        "2026-10-06T22:00:44.2572678Z [milestone] LWU admission 82.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+      ],
+      "JS": [
+        "2026-10-06T22:26:45.4766697Z [milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.39 exact 0.10; oracle beaten under the exact kernel in 91/93 admitted voxels",
+        "2026-10-06T22:26:45.4771441Z [milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+        "2026-10-06T22:30:36.2234062Z [milestone] LWU SNR 0.50: admitted 81.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.51 exact 0.08; oracle beaten under the exact kernel in 78/81 admitted voxels",
+        "2026-10-06T22:30:36.2237459Z [milestone] LWU admission 81.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+      ]
+    },
+    "lwu_context_lines": {
+      "JVM": [
+        "2026-10-06T21:57:42.5514282Z [milestone] LWU basis rank 23, K = 69",
+        "2026-10-06T21:57:42.5560287Z [milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+        "2026-10-06T21:59:16.9110936Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "2026-10-06T22:00:44.2571529Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)"
+      ],
+      "JS": [
+        "2026-10-06T22:22:50.7632435Z [milestone] LWU basis rank 23, K = 69",
+        "2026-10-06T22:22:50.7634829Z [milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+        "2026-10-06T22:26:45.4769787Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "2026-10-06T22:30:36.2236185Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)"
+      ]
+    },
+    "caveat": "LWU admission below 95% remains the original reported rho-weak gap; successful accuracy assertions do not establish clean 95% admission.",
+    "log_sha256": "90fb9a46f4b0f99c2ff835a266ff9aa621aefa7821cfc9b2aba134196b5531c8",
+    "lwu_source_context": {
+      "basis_training_grid": [
+        14,
+        9,
+        7
+      ],
+      "decode_bank_grid": [
+        13,
+        9,
+        7
+      ],
+      "oracle_grid": [
+        26,
+        11,
+        9
+      ],
+      "actual_decoder_budget": {
+        "maxNewtonSteps": 6,
+        "maxJetEvaluations": 8,
+        "maxExactEnergies": 2
+      },
+      "raw_diagnostic_note": "The printed 3 Newton steps / 3 jets line is stale reporting. Preserve it as raw historical evidence; actual configured values above are established by exact published source. Different training/decode/oracle grids do not imply conflicting fixtures.",
+      "source_sha256": "a04bd332674d8fd0686892adf2b4fdc9ca2516f31118e41f0520587929146ad2",
+      "source_path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala",
+      "source_head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12"
+    }
+  },
+  "full": {
+    "run_id": 37535757067,
+    "head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12",
+    "job_id": 112516623909,
+    "conclusion": "failure",
+    "failed_batch": "phrf-comparison-jvm",
+    "batch_ordinal": 11,
+    "batch_count": 16,
+    "failure": "Scala3.7.4 compiler java.lang.StackOverflowError in phrfComparisonJVM/Test/compileIncremental while compiling52 test sources; no test results in the failed batch",
+    "batches": {
+      "core-jvm": {
+        "total": 1232,
+        "passed": 1232,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "core-js": {
+        "total": 1228,
+        "passed": 1228,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "image-surface-jvm": {
+        "total": 985,
+        "passed": 973,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 12
+      },
+      "image-surface-js": {
+        "total": 911,
+        "passed": 909,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 2
+      },
+      "data-jvm": {
+        "total": 778,
+        "passed": 773,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 5
+      },
+      "data-js": {
+        "total": 625,
+        "passed": 625,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "estimates-jvm": {
+        "total": 37,
+        "passed": 37,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "estimates-js": {
+        "total": 27,
+        "passed": 27,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "analysis-jvm": {
+        "total": 1269,
+        "passed": 1269,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "analysis-js": {
+        "total": 1212,
+        "passed": 1212,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "phrf-comparison-jvm": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "completed_platform_totals": {
+      "JVM": {
+        "total": 4301,
+        "passed": 4284,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 17
+      },
+      "JS": {
+        "total": 4003,
+        "passed": 4001,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    "stack_configuration": "Published .jvmopts contains only -Xmx6g; published full-repository-tests.sh and workflow do not explicitly set -Xss. Actual effective thread stack size is not fingerprinted by this log.",
+    "log_sha256": "a6739c32c135e35be526b216238a929ef4810f1e45da433d995d5208286135ff"
+  },
+  "archive_sha256": "d588b3f310465aaf2a7f378c8a0ad69d36c1e156f28c59f3767830c947fa9579",
+  "files": {
+    "run.json": "c34f166d693b40c2f330030c68b2fcb8e11db7d2c31b6ad8cf2e7adef2eee8f8",
+    "jobs.json": "f030ac0d74315700baba27560f3cc33794cc5157a9114100ad8d0cf0a6168ef1",
+    "coverage.log": "23d6da29c2176f895fba8ff0976c4ab749ff6ca9f8e83ce53a8870733d8627a9",
+    "focused.log": "90fb9a46f4b0f99c2ff835a266ff9aa621aefa7821cfc9b2aba134196b5531c8",
+    "full.log": "a6739c32c135e35be526b216238a929ef4810f1e45da433d995d5208286135ff",
+    "focused-receipt.json": "651f8cbf48dab00d99de166c66a3cbf8fca759634ed2e291f6e7cdaa3a8b77c7",
+    "full-receipt.json": "2e729e263be2d84eb96f99f10defb5727fbaaf890852ff7241652ff413376279",
+    "published-lwu-source.json": "108ace70267314c76edddd68592253431af37e11c6ed3c3ff12402e750912b32",
+    "published-ConditionMilestoneSuite.scala": "a04bd332674d8fd0686892adf2b4fdc9ca2516f31118e41f0520587929146ad2",
+    "full-live-log-attempt.stderr": "6c5ec582d3b25e97273d17fd4088d0e13837c8384ee94aba555afc35856ec3ae",
+    "full-live-log-attempt.txt": "e1cfb7a015c73d1177709b74dac9bd730b857073bb4c5d745a538ce9bf48fdf6"
+  },
+  "scope": "Read-only observation and evidence packaging. No repository source changes, merges, pushes, or scientific policy changes."
+}

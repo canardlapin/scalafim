@@ -1,0 +1,23 @@
+{
+  "root": "/Users/bbuchsbaum/code/scala/scalafim",
+  "sources": {
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisBudget.scala": "03a709fd58cb4492712c38475b60c817a2e157149cdadac1336c866648780c16",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": "43d003e5452ca2ba6de5d62297aca246ace207a5a01f0e0ad3106b50fa025009",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/hrf/KernelBasisBudgetSuite.scala": "6fd9c254225593893a56511d5d18c2f99997b4a6c81218b9d8f01c729c6fbf80",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala": "1c458e6d1aa89bab25e2aeebf9d89a5fe337941b7da2166a6c790305f1a0e31b"
+  },
+  "unchanged_compact_cohort_sha256": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb",
+  "status": "source-frozen-local-mandatory-gates-passed-native-evidence-in-sibling-native",
+  "LWU_selector_sha256": "db8ca9b16b6e74454207ec45f2aa4ca96d2adc3f8e7b984b6a0dfc6724bfa925",
+  "integration_sources": {
+    "build.sbt": "78b09642afae2dcd05ecd0a13454191681ca4069d985e42d6293bb6391e77163",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala": "3900220acc32c609f2e57327131220d5a514b1a410ea2b18cb6851de30b28a31",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactConditionJets.scala": "1f0b9dbe95e0b8e0981f59b96a34249bf1d559f4bdc8681b9fd6a2e454270a87",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactPairedComparison.scala": "2cb1b68d0e3f60e8d4cbba1243997361cb190423110a4d62f91cb23660bf8c5b",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala": "a00a48defa08b5ed6e25991b48b4be6a59debedf7cf7c517390556044c329361",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "fd9815b6c3b337e837b2318e2ee320152afdd7176937eba0c8e262763041fac4",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "2112483c212b2c1a65282e647a3ac538590ee4629a1aca7eeacb97e27fff9dcc",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/CompactPairedComparisonSuite.scala": "b3b18f853dc65cc947bec24fdcb5623f0307ced1437fb82638038cb8e255b0a2",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb"
+  }
+}

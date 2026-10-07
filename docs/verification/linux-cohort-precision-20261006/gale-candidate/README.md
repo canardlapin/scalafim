@@ -5,10 +5,10 @@ published Gale `54e73f8e` revision. Its documentation correction is preserved
 in commit `b56a9dd0b8ad479621a3594880f90c9add8c2824` and the corrected bundle;
 the numeric source patch is unchanged.
 
-The corrected candidate is published as [draft Gale PR 16](https://github.com/canardlapin/gale/pull/16).
-No merge was performed, and ScalaFIM's production pin remains the published
-54e73f8e revision. `publication.json` records this current state; `candidate.json`
-retains the earlier unpublished preparation metadata.
+The corrected candidate was published as [Gale PR 16](https://github.com/canardlapin/gale/pull/16),
+then externally merged at d03eb99b. This task observed that merge and adopted the
+tested b56a9dd0 revision. `merge-observation.json` records the observation;
+`publication.json` and `candidate.json` retain the earlier draft/preparation states.
 
 Full core gates passed 786 JVM and 774 Scala.js tests, including 23 new tests
 on each platform. Formatting gates passed and compiler warnings were zero.
