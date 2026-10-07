@@ -11,6 +11,55 @@ import scalafim.fmri.model.{FitConfig, ProfileHrfPlan}
 import scala.collection.mutable.ArrayBuffer
 
 class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
+  test("declared residual limits refuse individual readouts and retain complete blocks and charged work"):
+    val view = parallelChecked(outputPrepared(block = 2).trialOutputs)
+    val request = OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised)
+    val (_, unchecked) = execute(view, request, ProfileTrialReadoutMode.CorrectedReference)
+    val residuals = unchecked.map(v => emitted(v)._2.evidence.preparedBasisNormalResidualNorm).sorted
+    assert(residuals.head > 0.0 && residuals.last > residuals.head)
+    val maximum = (residuals.head + residuals.last) * 0.5
+    val evidence = ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(ProfileTrialResidualLimit(maximum))
+    val blocks = ArrayBuffer.empty[ProfileTrialOutputBlock]
+    val summary = parallelChecked(view.run(reader, request,
+      ProfileTrialReadoutMode.CorrectedReference, outputSink(blocks), evidence = evidence))
+    val values = blocks.toVector.flatMap(_.results)
+    assertEquals(values.map(_.voxelId).toVector, unchecked.map(_.voxelId))
+    assertEquals(values.map(_.selection).toVector, unchecked.map(_.selection))
+    val refusals = values.count(_.output.isInstanceOf[ProfileTrialOutputOutcome.ReadoutRefused])
+    assert(refusals > 0 && refusals < values.length)
+    values.zip(unchecked).foreach: (actual, prior) =>
+      val (_, original) = emitted(prior)
+      actual.output match
+        case ProfileTrialOutputOutcome.ReadoutRefused(error) =>
+          assertEqualsDouble(error.measured, original.evidence.preparedBasisNormalResidualNorm, 0.0)
+          assertEqualsDouble(error.maximum, maximum, 0.0)
+          assert(error.measured > maximum)
+        case ProfileTrialOutputOutcome.Emitted(_, accepted) =>
+          assertEquals(accepted, original)
+        case other => fail(s"unexpected $other")
+    val work = summary.progress.publicReadout.get
+    assertEquals(work.attempts, values.length.toLong)
+    assertEquals(work.failures, refusals.toLong)
+    assertEquals(work.residualGateRefusals, refusals.toLong)
+    assertEquals(work.residualGateNormalActions, 3L * refusals)
+    assertEquals(work.residualGateResponseRowsEncoded, rows.toLong * refusals)
+    assertEquals(work.successes, (values.length - refusals).toLong)
+    assertEquals(work.numerical.attempted.conditionalInverseAttempts, 3L * values.length)
+    assertEquals(work.numerical.attempted.exactReadoutFactorAttempts, 0L)
+    assertEquals(summary.publicExecution.get.evidence, evidence)
+    assertNotEquals(summary.publicExecution.get,
+      parallelChecked(view.executionDeclaration(request, ProfileTrialReadoutMode.CorrectedReference)))
+    val exact = ArrayBuffer.empty[ProfileTrialOutputBlock]
+    parallelChecked(view.run(reader, request, ProfileTrialReadoutMode.ExactShape,
+      outputSink(exact), evidence = ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(ProfileTrialResidualLimit(1e-8))))
+    assert(exact.flatMap(_.results).forall(_.output.isInstanceOf[ProfileTrialOutputOutcome.Emitted]))
+    val (reference, _) = emitted(unchecked.head)
+    val frozen = ProfileTrialReadout.freeze(view.bank, view.axis, reference.actualCoordinates,
+      reference.index, request.rule, ProfileTrialReadoutMode.CorrectedReference, evidence).fold(e => fail(e.message), identity)
+    val query = ProfileTrialSignedQuery.make("signed", view.axis, Vector(1.0, -1.0, 0.0, 0.0, 0.0, 0.0), 1e-6)
+      .fold(e => fail(e.message), identity)
+    assertEquals(frozen.newWorker().transposeWhitened(query), Left(ProfileTrialReadoutError.ResponseDependentResidualGate))
+
   protected def outputPolicy(block: Int = 1, workers: Int = 1): ProfileDecodePolicy =
     parallelPolicy(block, workers).copy(budget = DecodeBudget(maxNewtonSteps = 16, maxJets = 20,
       maxExactEvaluations = 40, maxCandidateAttempts = 12, stationarityStepTolerance = 1e-8))

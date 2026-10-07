@@ -51,12 +51,16 @@ object DecodedTrialCheckpoint:
       mode: ProfileTrialReadoutMode = ProfileTrialReadoutMode.ExactShape,
       budget: DecodeBudget = DecodeBudget(),
       trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy(),
-      noiseRatio: Option[Double] = None
+      noiseRatio: Option[Double] = None,
+      horizonSeconds: Option[Double] = None,
+      basisMaxRank: Int = 32
   ):
     require(voxels > 0 && trials >= 3 && trials % 3 == 0)
     require(gridAxisNodes >= 2)
+    require(basisMaxRank >= 1 && basisMaxRank <= 32)
     require(blockSize >= 1 && blockSize <= 256 && workers >= 1 && workers <= 8)
     require(noiseRatio.forall(x => x.isFinite && x >= 0.0))
+    require(horizonSeconds.forall(x => x.isFinite && x > 0.0))
 
   final case class Fixture(
       config: Config,
@@ -158,6 +162,7 @@ object DecodedTrialCheckpoint:
   final class Sink(val trials: Int) extends BlockSink[ProfileTrialOutputBlock, ProfileFitReceipt]:
     var attempted: Long = 0L
     var emitted: Long = 0L
+    var readoutRefused: Long = 0L
     var outputValues: Long = 0L
     var outputChecksum: Double = 0.0
     var maxFloatError: Double = 0.0
@@ -184,6 +189,10 @@ object DecodedTrialCheckpoint:
             voxel.output match
               case ProfileTrialOutputOutcome.DecodeRefused(status) =>
                 if status == DecodeStatus.Accepted || status != selected.status then error = Some("incoherent refusal")
+              case ProfileTrialOutputOutcome.ReadoutRefused(refusal) =>
+                readoutRefused += 1
+                if selected.status != DecodeStatus.Accepted || refusal.measured <= refusal.maximum then
+                  error = Some("incoherent readout refusal")
               case ProfileTrialOutputOutcome.Emitted(reference, value) =>
                 if selected.status != DecodeStatus.Accepted || value.actualCoordinates != selected.coordinates then
                   error = Some("readout does not belong to accepted decoded coordinates")
@@ -217,7 +226,9 @@ object DecodedTrialCheckpoint:
     val tiny = config.geometry == Geometry.Tiny
     val rows = if tiny then 120 else 600
     val trials = if tiny then 12 else config.trials
-    val family = if tiny then GaussianFamily.Default else Cascade34Family.Default
+    val family = if tiny then GaussianFamily.Default else
+      config.horizonSeconds.fold(Cascade34Family.Default)(h =>
+        Cascade34Family.make(horizon = Seconds(h)).fold(e => throw new IllegalArgumentException(e.message), identity))
     val frame = SamplingFrame(blockLens = Seq(rows), tr = Seq(1.0))
     val step = PositiveSeconds.unsafe(Seconds(0.1))
     val basisStarted = System.nanoTime()
@@ -228,14 +239,15 @@ object DecodedTrialCheckpoint:
           step,
           if tiny then Vector(26, 21) else Vector(9, 9, 7),
           tolerance = 1e-3,
-          maxRank = 32,
+          maxRank = config.basisMaxRank,
           compilation = config.compilation
         )
       )
       .fold(e => throw new IllegalArgumentException(e.message), identity)
     val basisNanos = System.nanoTime() - basisStarted
     val onsetRng = new scala.util.Random(20260910L)
-    val lastOnset = rows - family.horizon.value - 1.0
+    // Horizon experiments preserve the original schedule.
+    val lastOnset = rows - (if tiny then GaussianFamily.Default.horizon.value else Cascade34Family.Default.horizon.value) - 1.0
     val onsets =
       if config.geometry == Geometry.B0Dense then
         Vector.fill(trials)(math.floor(onsetRng.nextDouble() * lastOnset * 10.0) / 10.0).sorted.map(Seconds(_))

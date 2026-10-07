@@ -99,6 +99,10 @@ private object ProfileTrialReference:
 enum ProfileTrialOutputOutcome:
   case Emitted(reference: ProfileTrialReference, value: ProfileTrialReadoutResult)
   case DecodeRefused(status: DecodeStatus)
+  /** Shape selection succeeded, but the explicit empirical readout limit did
+    * not. Keep this attempted voxel in its block without emitting coefficients.
+    */
+  case ReadoutRefused(error: ProfileTrialReadoutError.PreparedResidualExceeded)
 
 /** Selection is the full, raw decoder result, including both Hessians and exit.
   * Conditional coefficients never replace its amplitudes or objective energy.
@@ -132,6 +136,8 @@ final case class ProfileTrialOutputStorage(
 /** `numerical` overlaps `ProfileRunProgress.trial`: never add it to that total.
   * The local actions/row visits below describe completed results only; failed
   * operations retain their actual numerical attempted/failure counters instead.
+  * Residual-limit refusals occur after a complete numerical solve; their local
+  * actions/row visits are counted separately from emitted-result work.
   */
 final case class ProfileTrialOutputProgress(
     attempts: Long,
@@ -146,7 +152,10 @@ final case class ProfileTrialOutputProgress(
     storage: ProfileTrialOutputStorage,
     residualMeasurementAttempts: Long = 0L,
     residualMeasurementFailures: Long = 0L,
-    residualMeasurementNormalActions: Long = 0L)
+    residualMeasurementNormalActions: Long = 0L,
+    residualGateRefusals: Long = 0L,
+    residualGateNormalActions: Long = 0L,
+    residualGateResponseRowsEncoded: Long = 0L)
 
 private[profile] final class ProfileTrialOutputWork:
   var attempts = 0L
@@ -166,6 +175,14 @@ private[profile] final class ProfileTrialOutputWork:
   var measurementActions = 0L
   var measurementScratch = 0
   var memoizedRawTrials = 0L
+  var gateRefusals = 0L
+  var gateNormalActions = 0L
+  var gateRowsEncoded = 0L
+
+  def refusedByResidual(work: ProfileTrialReadoutWork): Unit =
+    gateRefusals += 1L
+    gateNormalActions += work.normalActionApplications
+    gateRowsEncoded += work.responseRowsEncoded
 
   def completed(work: ProfileTrialReadoutWork): Unit =
     successes += 1
@@ -183,7 +200,8 @@ object ProfileTrialOutputProgress:
       parts.map(_.rowsEncoded).sum, parts.map(_.forwardRows).sum, parts.map(_.transposeRows).sum,
       ProfileTrialOutputStorage(parts.map(_.coefficientHighWater), parts.map(_.adjointHighWater),
         parts.map(_.retainedTrials).sum, emitted, parts.map(_.measurementScratch), parts.map(_.memoizedRawTrials).sum),
-      parts.map(_.measurementAttempts).sum, parts.map(_.measurementFailures).sum, parts.map(_.measurementActions).sum)
+      parts.map(_.measurementAttempts).sum, parts.map(_.measurementFailures).sum, parts.map(_.measurementActions).sum,
+      parts.map(_.gateRefusals).sum, parts.map(_.gateNormalActions).sum, parts.map(_.gateRowsEncoded).sum)
 
 /** Checked public output over one exact prepared bank and physical axis.
   * PenalizedProfile freezes an ephemeral conditional worker; native ML reuses
@@ -309,11 +327,15 @@ final class PreparedProfileTrialOutputs private (
                       finally work.numerical = ProfileHrfFit.sumTrialWork(Vector(work.numerical, worker.workSnapshot))
                   yield value
                 result.map(value => reference -> value)
-              evaluated.map { (reference, value) =>
-                work.completed(value.work)
-                succeeded = true
-                ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.Emitted(reference, value))
-              }.left.map(ProfileWorkFailure.TrialReadout.apply)
+              evaluated match
+                case Right((reference, value)) =>
+                  work.completed(value.work)
+                  succeeded = true
+                  Right(ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.Emitted(reference, value)))
+                case Left(error: ProfileTrialReadoutError.PreparedResidualExceeded) =>
+                  work.refusedByResidual(error.work)
+                  Right(ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.ReadoutRefused(error)))
+                case Left(error) => Left(ProfileWorkFailure.TrialReadout(error))
             catch case NonFatal(error) => Left(ProfileWorkFailure.TrialReadout(ProfileTrialReadoutError.Conditional(error.toString)))
             finally if !succeeded then work.failures += 1
         def block(ordinal: Int, ids: Vector[Int], values: Vector[ProfileTrialOutputVoxel]): ProfileTrialOutputBlock =

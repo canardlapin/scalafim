@@ -136,9 +136,9 @@ class TrialRefinementSuite extends munit.FunSuite:
       val point = truth.indices.map(i => chart.lower(i) + (0.9 * unit(i) + 0.04) * chart.width(i)).toArray
       assert(objective.jetAt(point, full))
       assert(objective.gradientAt(point, first))
-      assertEqualsDouble(first.energy, full.energy, 0.0)
-      first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 0.0))
-      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 0.0))
+      assertEqualsDouble(first.energy, full.energy, 1e-10 * math.max(1.0, math.abs(full.energy)))
+      first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
+      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
       point.indices.foreach: axis =>
         val h = 1e-4 * chart.width(axis)
         val plus = point.clone()

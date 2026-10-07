@@ -135,6 +135,8 @@ object TrialQualificationAudit:
               val s = voxel.selection
               val shapeError = truth.indices.map(i => math.abs(s.coordinates(i) - truth(i)) / chart.width(i)).max
               voxel.output match
+                case ProfileTrialOutputOutcome.ReadoutRefused(error) =>
+                  throw new IllegalStateException(s"unguarded audit unexpectedly refused: ${error.message}")
                 case ProfileTrialOutputOutcome.DecodeRefused(_) =>
                   records += Record(cell.label, voxel.voxelId, mode, s.status,
                     truth, s.coordinates, s.energy, shapeError, false, None, None, None, None, None, None,

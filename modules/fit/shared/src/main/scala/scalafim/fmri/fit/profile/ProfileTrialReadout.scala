@@ -101,6 +101,8 @@ enum ProfileTrialReadoutError:
   case Conditional(detail: String)
   case Whitening(error: TrialBandedError)
   case CertificateUnavailable
+  case PreparedResidualExceeded(measured: Double, maximum: Double, work: ProfileTrialReadoutWork)
+  case ResponseDependentResidualGate
 
   def message: String =
     this match
@@ -118,6 +120,9 @@ enum ProfileTrialReadoutError:
       case Conditional(detail) => detail
       case Whitening(error) => error.message
       case CertificateUnavailable => "an original-family equation certificate is unavailable"
+      case PreparedResidualExceeded(measured, maximum, _) =>
+        s"prepared-basis normal residual $measured exceeds the declared native-unit limit $maximum"
+      case ResponseDependentResidualGate => "a response-dependent residual gate has no unconditional linear adjoint"
 
 /** A copied response with an explicit physical row declaration. */
 final class ProfileTrialResponse private (
@@ -146,7 +151,14 @@ enum ProfileTrialReadoutMode:
 
 enum ProfileTrialEvidenceRequest:
   case PreparedBasisResidual
+  case PreparedBasisResidualAtMost(limit: ProfileTrialResidualLimit)
   case CertifiedOriginalEquations
+
+/** Explicit empirical equation tolerance, in native normal-equation coordinates. It is
+  * neither a coefficient-error bound nor original-family certification.
+  */
+final case class ProfileTrialResidualLimit(maximumNorm: Double):
+  require(maximumNorm.isFinite && maximumNorm >= 0.0, "residual limit must be finite and nonnegative")
 
 /** Only a directly computed prepared-basis normal residual is available. */
 final case class ProfileTrialReadoutEvidence(preparedBasisNormalResidualNorm: Double)
@@ -233,6 +245,7 @@ final class ProfileTrialReadout private (
     val actualCoordinates: Vector[Double],
     val referenceNode: Int,
     val mode: ProfileTrialReadoutMode,
+    val evidenceRequest: ProfileTrialEvidenceRequest,
     val normalization: NormalizationRule,
     val normalizationScale: Double,
     val equivalentNormalizedLambda: Double):
@@ -279,6 +292,13 @@ final class ProfileTrialReadout private (
         mode = conditionalMode) match
         case Left(error) => return Left(ProfileTrialReadoutError.Conditional(error.message))
         case Right(value) => value
+      evidenceRequest match
+        case ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(limit)
+            if summary.preparedBasisResidualNorm > limit.maximumNorm =>
+          return Left(ProfileTrialReadoutError.PreparedResidualExceeded(summary.preparedBasisResidualNorm, limit.maximumNorm,
+            ProfileTrialReadoutWork.from(summary.work, 0, coefficients.length, adjointRows.length,
+              responseRowsEncoded = axis.preparation.rows, whiteningForwardRowsVisited = whiteningRows)))
+        case _ => ()
       Right(ProfileTrialReadout.assemble(axis, actualCoordinates, referenceNode, mode,
         normalization, normalizationScale, equivalentNormalizedLambda, request, coefficients(_), summary,
         ProfileTrialReadoutWork.from(summary.work,
@@ -291,6 +311,10 @@ final class ProfileTrialReadout private (
       */
     def transposeWhitened(query: ProfileTrialSignedQuery): Either[ProfileTrialReadoutError, ProfileTrialAdjointResult] =
       if !query.axis.sameBinding(axis) then return Left(ProfileTrialReadoutError.ForeignAxis)
+      evidenceRequest match
+        case ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(_) =>
+          return Left(ProfileTrialReadoutError.ResponseDependentResidualGate)
+        case _ => ()
       java.util.Arrays.fill(coefficients, 0.0)
       var i = 0
       while i < axis.preparation.trials do
@@ -385,4 +409,4 @@ object ProfileTrialReadout:
     else
       scaleAt(axis, actualCoordinates, normalization).map: (scale, lambda) =>
         new ProfileTrialReadout(bank, axis, actualCoordinates, referenceNode,
-          mode, normalization, scale, lambda)
+          mode, evidence, normalization, scale, lambda)

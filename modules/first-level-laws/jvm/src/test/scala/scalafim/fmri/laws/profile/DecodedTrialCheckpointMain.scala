@@ -11,7 +11,7 @@ import scalafim.fmri.model.ProfileCriterion
 
 /** Explicit opt-in diagnostic: Test/runMain ... <output.json> <dense|regular|tiny> <voxels> <trials> <workers>
   * <penalized|ml> <exact|corrected> <source-id> [nodes-per-axis] [baseline|expanded|repaired]
-  * [trial-block-size] [noise-ratio] [execution-deadline-seconds]. Writes non-admitted evidence even
+  * [trial-block-size] [noise-ratio] [execution-deadline-seconds] [prepared-residual-limit] [horizon-seconds] [basis-max-rank] [basis-subspace]. Writes non-admitted evidence even
   * when the public execution returns a refusal.
   */
 object DecodedTrialCheckpointMain:
@@ -19,8 +19,8 @@ object DecodedTrialCheckpointMain:
 
   def main(args: Array[String]): Unit =
     require(
-      args.length >= 8 && args.length <= 13,
-      "output.json geometry voxels trials workers criterion mode source-id [nodes-per-axis] [baseline|expanded|repaired] [trial-block-size] [noise-ratio] [execution-deadline-seconds]"
+      args.length >= 8 && args.length <= 17,
+      "output.json geometry voxels trials workers criterion mode source-id [nodes-per-axis] [baseline|expanded|repaired] [trial-block-size] [noise-ratio] [execution-deadline-seconds] [prepared-residual-limit] [horizon-seconds] [basis-max-rank] [basis-subspace]"
     )
     val budget = args.lift(9).getOrElse("baseline") match
       case "baseline" => DecodeBudget()
@@ -48,15 +48,19 @@ object DecodedTrialCheckpointMain:
       gridAxisNodes = args.lift(8).map(_.toInt).getOrElse(2),
       budget = budget,
       noiseRatio = args.lift(11).map(_.toDouble),
+      horizonSeconds = args.lift(14).map(_.toDouble),
+      basisMaxRank = args.lift(15).map(_.toInt).getOrElse(32),
       trialPreparation = TrialPreparationPolicy(args.lift(10)
         .fold[TrialDesignLowering](TrialDesignLowering.Dense)(s => TrialDesignLowering.Blocked(s.toInt))),
       criterion = criterion,
       mode = mode,
       compilation =
-        if args(1).endsWith("-blocked") then KernelBasisCompilation.BlockedPartial(96) else KernelBasisCompilation.Dense
+        if args(1).endsWith("-blocked") then KernelBasisCompilation.BlockedPartial(args.lift(16).map(_.toInt).getOrElse(96)) else KernelBasisCompilation.Dense
     )
     val deadlineSeconds = args.lift(12).map(_.toDouble)
     require(deadlineSeconds.forall(x => x.isFinite && x > 0.0))
+    val evidence = args.lift(13).fold[ProfileTrialEvidenceRequest](ProfileTrialEvidenceRequest.PreparedBasisResidual)(s =>
+      ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(ProfileTrialResidualLimit(s.toDouble)))
     val started = System.nanoTime()
     val receipt = ujson.Obj(
       "format" -> "phrf-decoded-diagnostic/1",
@@ -68,6 +72,9 @@ object DecodedTrialCheckpointMain:
       "workersRequested" -> config.workers,
       "criterion" -> criterion.toString,
       "readout" -> mode.toString,
+      "evidenceRequest" -> evidence.toString,
+      "horizonSeconds" -> config.horizonSeconds.fold[ujson.Value](ujson.Null)(ujson.Num(_)),
+      "basisMaximumRank" -> config.basisMaxRank,
       "java" -> System.getProperty("java.runtime.version"),
       "os" -> System.getProperty("os.name"),
       "arch" -> System.getProperty("os.arch"),
@@ -121,8 +128,8 @@ object DecodedTrialCheckpointMain:
               def cancelled(): Boolean = deadlineSeconds.exists(limit => (System.nanoTime() - runStarted) / 1e9 >= limit)
               val result =
                 try
-                  if config.workers == 1 then outputs.run(readers.head, request, mode, sink, () => cancelled())
-                  else outputs.runParallel(readers, request, mode, sink, () => cancelled()) match
+                  if config.workers == 1 then outputs.run(readers.head, request, mode, sink, () => cancelled(), evidence = evidence)
+                  else outputs.runParallel(readers, request, mode, sink, () => cancelled(), evidence = evidence) match
                     case Left(ProfileFitError.WorkersStillRunning(_, _, _, _, termination)) => Left(termination.awaitFinal())
                     case completed => completed
                 finally heap.close()
@@ -136,6 +143,7 @@ object DecodedTrialCheckpointMain:
               receipt("sinkSeconds") = sink.nanos / 1e9
               receipt("attemptedDelivered") = sink.attempted.toDouble
               receipt("emitted") = sink.emitted.toDouble
+              receipt("readoutRefused") = sink.readoutRefused.toDouble
               receipt("offNodeOutputs") = sink.offNode.toDouble
               receipt("float32OutputBytes") = (sink.outputValues * 4L).toDouble
               receipt("retainedSinkBytes") = sink.retainedOutputBytes.toDouble
@@ -158,6 +166,7 @@ object DecodedTrialCheckpointMain:
                 receipt("decoder") = product(progress.decoder)
                 receipt("trialWork") = progress.trial.fold[ujson.Value](ujson.Null)(v => product(v))
                 receipt("mlWork") = progress.trialMl.fold[ujson.Value](ujson.Null)(v => product(v))
+                receipt("publicReadoutWork") = progress.publicReadout.fold[ujson.Value](ujson.Null)(v => product(v))
               result match
                 case Left(error) => receipt("executionError") = error.message
                 case Right(summary) => receipt("provenance") = summary.provenance

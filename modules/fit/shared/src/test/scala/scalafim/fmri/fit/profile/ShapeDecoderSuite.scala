@@ -728,7 +728,7 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assert(counters.jets <= budget.maxJets)
     assert(counters.newtonSteps <= budget.maxNewtonSteps)
     assert(counters.terminalVerifications >= 1)
-    assert(ConditionProfileProvenance.budgetCanonical(budget).endsWith("|initialization=bounded-multistart/v2"))
+    assert(ConditionProfileProvenance.budgetCanonical(budget).endsWith("|initialization=bounded-multistart/v3"))
 
   test("a jet budget too small for independent starts remains a coherent charged refusal"):
     val counters = new DecoderCounters

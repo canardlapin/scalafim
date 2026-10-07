@@ -733,16 +733,85 @@ final class TrialBandedObjective private (
         if !completed then work.jetFailures += 1L
         completed
 
-  /** Search-only oracle: no second-order bands or solves, and no curvature checks. */
+  /** Search-only envelope gradient. At the conditional optimum, coefficient
+    * derivatives cancel: dE = a' d(X'X) a + 2 a' d(X'F) gamma - 2 a' d(X'y).
+    * One value reference and one response solve suffice. The basis-pair
+    * quadratics are contracted once and shared by all shape coordinates.
+    * Full jets remain mandatory for terminal curvature admission.
+    */
   def gradientAt(coordinates: Array[Double], out: ProfileGradientBuffer): Boolean =
     work.firstOrderAttempts += 1L
-    val completed = buildReference(coordinates, 1 + d, None) match
+    val completed = buildReference(coordinates, 1, None) match
       case Left(_) => false
       case Right(reference) =>
         work.continuousFactors += 1L
-        reducedJet(reference, currentResponse, out, full = false)
+        envelopeGradient(reference, coordinates, currentResponse, out)
     if !completed then work.firstOrderFailures += 1L
     completed
+
+  private def envelopeGradient(ref: TrialBandedReference, coordinates: Array[Double],
+      encoded: TrialBandedResponse, out: ProfileGradientBuffer): Boolean =
+    out.energy = scoreReference(ref, encoded, null)
+    if !out.energy.isFinite then return false
+    preparation.basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector),
+      kernelScratch, coefficients, 1 + d)
+    java.util.Arrays.fill(out.gradient, 0.0)
+    var trial = 0
+    while trial < n do
+      var amplitude = scoreBuilder(trial, 0) + scoreSolved(f + preparation.membership.conditionOfTrial(trial))
+      var col = 0
+      while col < k do
+        amplitude -= ref.wcJets(trial * k + col) * scoreSolved(col)
+        col += 1
+      // Reuse the full-jet solve buffer; no coefficient vector is retained.
+      jetSolveBuilder.writeLinear(trial, amplitude)
+      trial += 1
+    var q = 0
+    while q < m do
+      var p = 0
+      while p <= q do
+        val block = TrialBandedPreparation.pairIndex(p, q) * bandSize
+        var quadratic = 0.0
+        trial = 0
+        while trial < n do
+          val amplitude = jetSolveBuilder(trial, 0)
+          var delta = 0
+          while delta <= math.min(trial, preparation.bandwidth) do
+            val product = amplitude * preparation.gramBlocksData(block + trial * preparation.bandWidth + delta) *
+              jetSolveBuilder(trial - delta, 0)
+            quadratic += (if delta == 0 then product else 2.0 * product)
+            delta += 1
+          trial += 1
+        var axis = 0
+        while axis < d do
+          val derivative = JetLayout.first(axis) * m
+          out.gradient(axis) += quadratic *
+            (coefficients(derivative + p) * coefficients(q) + coefficients(p) * coefficients(derivative + q))
+          axis += 1
+        p += 1
+      q += 1
+    var p = 0
+    while p < m do
+      var cross = 0.0
+      trial = 0
+      while trial < n do
+        var residualScore = -encoded.trialBasisScores(p * n + trial)
+        var col = 0
+        while col < f do
+          residualScore += preparation.basisNuisanceCross((p * n + trial) * f + col) * scoreSolved(col)
+          col += 1
+        cross += jetSolveBuilder(trial, 0) * residualScore
+        trial += 1
+      var axis = 0
+      while axis < d do
+        out.gradient(axis) += 2.0 * coefficients(JetLayout.first(axis) * m + p) * cross
+        axis += 1
+      p += 1
+    var condition = 0
+    while condition < c do
+      out.amplitudes(condition) = scoreSolved(f + condition)
+      condition += 1
+    out.gradient.forall(_.isFinite) && out.amplitudes.forall(_.isFinite)
 
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
     buildReference(coordinates, 1, None) match

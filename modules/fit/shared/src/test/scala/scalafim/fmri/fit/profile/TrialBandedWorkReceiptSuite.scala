@@ -156,11 +156,11 @@ class TrialBandedWorkReceiptSuite extends munit.FunSuite:
       val middle = objective.work.snapshot.attempted
       assert(objective.gradientAt(point.toArray, first))
       val after = objective.work.snapshot.attempted
-      assertEqualsDouble(first.energy, full.energy, 0.0)
-      first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 0.0))
-      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 0.0))
+      assertEqualsDouble(first.energy, full.energy, 1e-10 * math.max(1.0, math.abs(full.energy)))
+      first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
+      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
       assertEquals(middle.solveAttempts - before.solveAttempts, 13L)
-      assertEquals(after.solveAttempts - middle.solveAttempts, 7L)
+      assertEquals(after.solveAttempts - middle.solveAttempts, 3L)
       assertEquals(after.jetAttempts, middle.jetAttempts)
       assertEquals(after.firstOrderAttempts - middle.firstOrderAttempts, 1L)
       assertEquals(after.firstOrderFailures, 0L)

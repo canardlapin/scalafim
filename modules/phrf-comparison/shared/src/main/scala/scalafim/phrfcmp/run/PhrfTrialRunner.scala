@@ -382,6 +382,9 @@ object PhrfTrialRunner:
           o.output match
             case ProfileTrialOutputOutcome.DecodeRefused(s) =>
               PhrfVoxelEstimate(TrialArmStatus.Refused(s"decode_${s.productPrefix}"), Some(s), legacy.coordinates, None, evidence)
+            case ProfileTrialOutputOutcome.ReadoutRefused(error) =>
+              PhrfVoxelEstimate(TrialArmStatus.Refused(s"readout_${error.productPrefix}"), Some(o.selection.status),
+                legacy.coordinates, None, evidence)
             case ProfileTrialOutputOutcome.Emitted(_, value) =>
               val converted = for
                 a <- value.trialAmplitudes.toRight("no_trial_amplitudes")
