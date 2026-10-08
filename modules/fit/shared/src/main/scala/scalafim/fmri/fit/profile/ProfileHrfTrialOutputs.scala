@@ -73,28 +73,30 @@ object ProfileTrialExecutionDeclaration:
   */
 final class ProfileTrialReference private (
     private[profile] val owner: PreparedProfileHrf,
-    private[profile] val bank: TrialBandedObjective,
+    private[profile] val bank: TrialReferenceBank,
     val axis: ProfileTrialAxis,
     val actualCoordinates: Vector[Double],
     val index: Int,
     val coordinates: Vector[Double])
 
 private object ProfileTrialReference:
-  def select(owner: PreparedProfileHrf, bank: TrialBandedObjective, axis: ProfileTrialAxis,
+  def select(owner: PreparedProfileHrf, bank: TrialReferenceBank, axis: ProfileTrialAxis,
       actual: Vector[Double]): Either[ProfileTrialReadoutError, ProfileTrialReference] =
-    bank.grid.chart.point(actual).map { _ =>
-      val indices = new Array[Int](bank.grid.dimension)
-      var dimension = 0
-      while dimension < indices.length do
-        val position = (actual(dimension) - bank.grid.chart.lower(dimension)) / bank.grid.step(dimension)
-        val lower = math.max(0, math.min(bank.grid.nodesPerAxis(dimension) - 1, math.floor(position).toInt))
-        val upper = math.min(bank.grid.nodesPerAxis(dimension) - 1, lower + 1)
-        // Strict comparison preserves the lower bank index at an exact half step.
-        indices(dimension) = if position - lower > upper - position then upper else lower
-        dimension += 1
-      val index = bank.grid.indexOf(indices)
-      new ProfileTrialReference(owner, bank, axis, actual, index, bank.grid.point(index).coordinates)
-    }.left.map(error => ProfileTrialReadoutError.InvalidShape(error.message))
+    val selected = bank match
+      case gridded: TrialBandedObjective => gridded.grid.chart.point(actual).map: _ =>
+        val grid = gridded.grid
+        val indices = new Array[Int](grid.dimension)
+        var dimension = 0
+        while dimension < indices.length do
+          val position = (actual(dimension) - grid.chart.lower(dimension)) / grid.step(dimension)
+          val lower = math.max(0, math.min(grid.nodesPerAxis(dimension) - 1, math.floor(position).toInt))
+          val upper = math.min(grid.nodesPerAxis(dimension) - 1, lower + 1)
+          indices(dimension) = if position - lower > upper - position then upper else lower
+          dimension += 1
+        grid.indexOf(indices)
+      case _ => bank.points.nearestAmong(actual, owner.policy.trialReferences.get.candidates)
+    selected.map(index => new ProfileTrialReference(owner, bank, axis, actual, index, bank.points.coordinates(index)))
+      .left.map(error => ProfileTrialReadoutError.InvalidShape(error.message))
 
 enum ProfileTrialOutputOutcome:
   case Emitted(reference: ProfileTrialReference, value: ProfileTrialReadoutResult)
@@ -210,7 +212,7 @@ object ProfileTrialOutputProgress:
   */
 final class PreparedProfileTrialOutputs private (
     private[profile] val prepared: PreparedProfileHrf,
-    private[profile] val bank: TrialBandedObjective,
+    private[profile] val bank: TrialReferenceBank,
     val axis: ProfileTrialAxis):
 
   private[profile] val nativeMl: Boolean = prepared.plan.criterion.usesDeterminant
@@ -350,7 +352,7 @@ final class PreparedProfileTrialOutputs private (
 
 object PreparedProfileTrialOutputs:
   private[profile] def make(owner: PreparedProfileHrf, preparation: TrialBandedPreparation,
-      bank: TrialBandedObjective): Either[ProfileFitError, PreparedProfileTrialOutputs] =
+      bank: TrialReferenceBank): Either[ProfileFitError, PreparedProfileTrialOutputs] =
     if !(bank.preparation eq preparation) || !owner.ownsTrialBank(preparation, bank) then
       return Left(ProfileFitError.Preparation("public trial bank differs from the supplied preparation"))
     owner.plan.source match

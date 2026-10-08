@@ -111,7 +111,9 @@ object DecodedTrialCheckpoint:
               )
         finally nanos += System.nanoTime() - started
 
-    def prepare: Either[ProfileFitError, PreparedProfileHrf] =
+    def prepare: Either[ProfileFitError, PreparedProfileHrf] = prepareWithReferences(None)
+
+    def prepareWithReferences(references: Option[TrialReferenceDecodePolicy]): Either[ProfileFitError, PreparedProfileHrf] =
       ProfileHrfFit.prepare(
         plan,
         DataSelection.All,
@@ -121,7 +123,8 @@ object DecodedTrialCheckpoint:
           config.budget,
           None,
           ExecutionBudget(config.blockSize, config.workers),
-          trialPreparation = config.trialPreparation
+          trialPreparation = config.trialPreparation,
+          trialReferences = references
         )
       )
 

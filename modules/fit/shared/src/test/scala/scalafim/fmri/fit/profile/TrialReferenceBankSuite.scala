@@ -26,6 +26,8 @@ class TrialReferenceBankSuite extends munit.FunSuite:
     val chart = ShapeChart(("x", 0.0, 1.0))
     val symmetric = TrialReferencePoints(chart, Vector(Vector(0.25), Vector(0.75)))
     assertEquals(symmetric.nearest(Vector(0.5)), Right(0))
+    assertEquals(symmetric.nearestAmong(Vector(0.5), Vector(1, 0)), Right(0))
+    assertEquals(symmetric.nearestAmong(Vector(0.25), Vector(1)), Right(1))
     assert(symmetric.nearest(Vector(Double.NaN)).isLeft)
     intercept[IllegalArgumentException](TrialReferencePoints(chart, Vector.empty))
     intercept[IllegalArgumentException](TrialReferencePoints(chart, Vector(Vector(0.2), Vector(0.2))))

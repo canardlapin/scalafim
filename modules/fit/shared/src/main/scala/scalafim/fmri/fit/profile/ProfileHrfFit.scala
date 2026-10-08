@@ -22,7 +22,8 @@ final case class ProfileDecodePolicy(
     prior: Option[ShapePrior],
     execution: ExecutionBudget = ExecutionBudget(),
     observedAdmission: Option[ObservedFamilyAdmission] = None,
-    trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy())
+    trialPreparation: TrialPreparationPolicy = TrialPreparationPolicy(),
+    trialReferences: Option[TrialReferenceDecodePolicy] = None)
 
 /** `jets` counts all derivative requests; `firstOrderAttempts` is its search-only subset. */
 final case class ProfileDecoderWork(
@@ -205,10 +206,10 @@ private[profile] trait TrialCriterionWorker:
   def mlScratchValues: Option[(Int, Int)] = None
 
 private[profile] enum TrialCriterionFacade:
-  case Penalized(bank: TrialBandedObjective)
+  case Penalized(bank: TrialReferenceBank)
   case Ml(bank: TrialBandedObjective, bundle: TrialBandedMlBackend, sigma2: Double)
 
-  def objectiveBank: TrialBandedObjective = this match
+  def objectiveBank: TrialReferenceBank = this match
     case Penalized(bank) => bank
     case Ml(bank, _, _) => bank
 
@@ -219,7 +220,10 @@ private[profile] enum TrialCriterionFacade:
   def newWorker(policy: ProfileDecodePolicy, noiseVariance: Double): TrialCriterionWorker = this match
     case Penalized(bank) => new TrialCriterionWorker:
       private val objective = bank.newWorker()
-      private val decoder = new ShapeDecoder(objective, policy.budget, policy.prior, noiseVariance)
+      private val shapeObjective: ReferenceShapeObjective = objective match
+        case gridded: TrialBandedObjective => gridded
+        case explicit => new TrialReferenceShapeObjective(explicit, policy.trialReferences.get.candidates)
+      private val decoder = new ShapeDecoder(shapeObjective, policy.budget, policy.prior, noiseVariance)
       private val buffer = bank.preparation.newResponseBuffer
       def numericalWork: TrialBandedWorkSnapshot = objective.work.snapshot
       def evaluate(response: Array[Double], counters: DecoderCounters, observed: DecodeStatus => Unit): Either[ProfileWorkFailure, ProfileTrialEvaluation] =
@@ -342,7 +346,7 @@ final class PreparedProfileHrf private[profile] (
     case ProfileBackend.Trial(_, _) => true
     case _ => false
 
-  private[profile] def ownsTrialBank(preparation: TrialBandedPreparation, bank: TrialBandedObjective): Boolean =
+  private[profile] def ownsTrialBank(preparation: TrialBandedPreparation, bank: TrialReferenceBank): Boolean =
     backend match
       case ProfileBackend.Trial(actual, criterion) => (actual eq preparation) && (criterion.objectiveBank eq bank)
       case _ => false
@@ -492,7 +496,6 @@ final class PreparedProfileHrf private[profile] (
     var deliveredVoxels = 0
     var emittedTrialValues = 0L
     val completedReceipts = Vector.newBuilder[ProfileFitReceipt]
-    val grid = NodeGrid(plan.basis.family.chart, policy.nodesPerAxis)
     val rows = dataset.shape.timepoints
 
     def stop(): Boolean =
@@ -504,7 +507,7 @@ final class PreparedProfileHrf private[profile] (
     final class ProfileBlockWorker(val reader: DatasetSeriesReader) extends BlockWorker[P]:
       val counters = new DecoderCounters
       val compact = backend match
-        case ProfileBackend.Compact(prepared) => Some(CompactConditionRuntime.raw(prepared, grid, policy.budget,
+        case ProfileBackend.Compact(prepared) => Some(CompactConditionRuntime.raw(prepared, NodeGrid(plan.basis.family.chart, policy.nodesPerAxis), policy.budget,
           policy.prior, plan.criterion.noiseVariance, plan.basis.family.libraryNormalization))
         case _ => None
       val trial = backend match
@@ -755,9 +758,17 @@ object ProfileHrfFit:
 
   private def validateGrid(plan: ProfileHrfPlan, policy: ProfileDecodePolicy): Either[ProfileFitError, Unit] =
     val d = plan.basis.family.dimension
+    policy.trialReferences match
+      case Some(references) =>
+        (plan.source, plan.amplitudes) match
+          case (ProfileHrfSource.TrialEvents(_, _, _, _), AmplitudeStructure.ConditionCenteredTrials(_)) if !plan.criterion.usesDeterminant => ()
+          case _ => return Left(ProfileFitError.Unsupported("explicit decoder references currently require penalized trial events"))
+        if references.points.chart != plan.basis.family.chart then
+          return Left(ProfileFitError.Unsupported("explicit reference chart must match the model chart"))
+      case None => ()
     val sizes = policy.nodesPerAxis
     val count = sizes.foldLeft(1L)((n, size) => n * size)
-    if sizes.length != d || sizes.exists(_ < 2) || count > 100000L || count <= 0L then
+    if policy.trialReferences.isEmpty && (sizes.length != d || sizes.exists(_ < 2) || count > 100000L || count <= 0L) then
       Left(ProfileFitError.Unsupported("grid dimensions must match the chart with 2..100000 total nodes"))
     else policy.prior match
       case None => Right(())
@@ -833,18 +844,22 @@ object ProfileHrfFit:
                 trial <- TrialBandedPreparation.prepare(expanded, whiteningOption(whitening),
                   nuisance(baseline.designMatrix), alpha.lambda, policy.trialPreparation.maxRetainedValues)
                   .left.map(error => ProfileFitError.Preparation(error.message))
-                bank <- trial.objective(NodeGrid(plan.basis.family.chart, policy.nodesPerAxis))
+                bank <- (policy.trialReferences match
+                  case Some(references) => trial.referenceBank(references.points, references.storage)
+                  case None => trial.objective(NodeGrid(plan.basis.family.chart, policy.nodesPerAxis)))
                   .left.map(error => ProfileFitError.Preparation(error.message))
                 criterion <-
                   if !plan.criterion.usesDeterminant then Right(TrialCriterionFacade.Penalized(bank))
-                  else
-                    val attempt = TrialBandedMlBackend.make(bank)
-                    mlSetupResult(bank.setupReceipt, attempt)
-                      .flatMap { bundle =>
-                        if bundle.intrinsicLambda != alpha.lambda then
-                          Left(ProfileFitError.TrialMlPreparation("native owner lambda differs from preparation", bank.setupReceipt, attempt.work))
-                        else Right(TrialCriterionFacade.Ml(bank, bundle, plan.criterion.noiseVariance))
-                      }
+                  else bank match
+                    case gridded: TrialBandedObjective =>
+                      val attempt = TrialBandedMlBackend.make(gridded)
+                      mlSetupResult(bank.setupReceipt, attempt)
+                        .flatMap { bundle =>
+                          if bundle.intrinsicLambda != alpha.lambda then
+                            Left(ProfileFitError.TrialMlPreparation("native owner lambda differs from preparation", bank.setupReceipt, attempt.work))
+                          else Right(TrialCriterionFacade.Ml(gridded, bundle, plan.criterion.noiseVariance))
+                        }
+                    case _ => Left(ProfileFitError.Unsupported("ML explicit-reference decoder is unavailable"))
               yield (ProfileBackend.Trial(trial, criterion), if plan.criterion.usesDeterminant then "trial-banded-ml" else "trial-banded")
         yield prepared
 

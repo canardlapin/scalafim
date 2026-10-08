@@ -177,10 +177,16 @@ private[profile] object ProfileFitIdentity:
       s"drive=${field(drive(plan.source))}|basis=${field(basis.provenance.canonical)}|basis-lags=${matrix(1, basis.fineCount, basis.lags)}|" +
       s"basis-values=${matrix(basis.fineCount, basis.rank, basisValues)}|basis-coefficients=${record("coefficient_jets", coefficientRecords*)}|" +
       s"nuisance=${mat(nuisance)}|config=${field(config(fitConfig))}|whitening=$temporalId|amplitudes=${amplitudes(plan.amplitudes)}|" +
-      s"criterion=${criterion(plan.criterion)}|grid=${ints(policy.nodesPerAxis)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
+      s"criterion=${criterion(plan.criterion)}|grid=${ints(if policy.trialReferences.isEmpty then policy.nodesPerAxis else Vector.empty)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
       s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +
-      compactComparisonMarker(route, policy) + trialPreparationMarker(route, policy) + s"|exact-readout=$exactReadout"
+      compactComparisonMarker(route, policy) + trialPreparationMarker(route, policy) + trialReferenceMarker(policy) + s"|exact-readout=$exactReadout"
+
+  private def trialReferenceMarker(policy: ProfileDecodePolicy): String =
+    policy.trialReferences.fold(""): references =>
+      "|trial-references=" + record("explicit_reference_decode/v1",
+        record("points", references.points.coordinates.map(numbers)*), ints(references.candidates),
+        references.storage.toString, "continuous-factors=exact-charged", "production-admitted=false")
 
   private def trialPreparationMarker(route: String, policy: ProfileDecodePolicy): String =
     val preparation = policy.trialPreparation

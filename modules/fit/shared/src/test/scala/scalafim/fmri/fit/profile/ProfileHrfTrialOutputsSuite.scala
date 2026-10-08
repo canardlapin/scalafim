@@ -106,7 +106,7 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
       val (summary, voxels) = execute(view, request, mode)
       assertEquals(voxels.map(_.voxelId), Vector(3, 0, 2))
       assertEquals(summary.receipts.map(_.voxelIds), Vector(Vector(3, 0), Vector(2)))
-      assert(voxels.exists(v => (0 until view.bank.grid.count).forall(i => view.bank.grid.point(i).coordinates != v.selection.coordinates)))
+      assert(voxels.exists(v => (0 until view.bank.points.count).forall(i => view.bank.points.coordinates(i) != v.selection.coordinates)))
       voxels.foreach { voxel =>
         val (reference, actual) = emitted(voxel)
         assert(actual.axis eq view.axis)
@@ -225,7 +225,7 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
 
   test("nearest bank reference uses interval-scaled distances, lower ties and final rather than starting nodes"):
     val view = parallelChecked(outputPrepared().trialOutputs)
-    val grid = view.bank.grid
+    val grid = NodeGrid(view.bank.points.chart, outputPolicy().nodesPerAxis)
     def oracle(coords: Vector[Double]): Int =
       (0 until grid.count).minBy { index =>
         val ref = grid.point(index).coordinates
@@ -417,7 +417,7 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
     val view = mlView(2)
     val (summary, voxels) = execute(view, OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised), ProfileTrialReadoutMode.ExactShape)
     assertEquals(voxels.map(_.voxelId), Vector(3, 0, 2))
-    assert(voxels.exists(v => (0 until view.bank.grid.count).forall(i => view.bank.grid.point(i).coordinates != v.selection.coordinates)))
+    assert(voxels.exists(v => (0 until view.bank.points.count).forall(i => view.bank.points.coordinates(i) != v.selection.coordinates)))
     voxels.foreach: voxel =>
       val (reference, result) = emitted(voxel)
       val (energy, means, trials, nuisance) = denseAllAt(voxel.voxelId, voxel.selection.coordinates)
@@ -620,3 +620,63 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
         value.nuisanceCoefficients.zip(reference.nuisanceCoefficients)
           .foreach((a, b) => assertEqualsDouble(a, b, 1e-10))
         assert(value.axis eq blocked.axis)
+
+  test("explicit compact decoder bank is shared with public corrected readout and all candidate factors are charged"):
+    val chart = basis.family.chart
+    val points = TrialReferencePoints(chart, Vector(Vector(4.8, math.log(1.3)), Vector(5.8, math.log(1.8)), Vector(5.3, math.log(1.55))))
+    val references = TrialReferenceDecodePolicy(points, Vector(0, 1))
+    val prepared = parallelChecked(ProfileHrfFit.prepare(plan(0.4), selection, parallelWhitening,
+      outputPolicy(block = 2).copy(nodesPerAxis = Vector.empty, trialReferences = Some(references))))
+    val view = parallelChecked(prepared.trialOutputs)
+    assert(view.bank.points eq points)
+    assert(!view.bank.isInstanceOf[TrialBandedObjective])
+    assertEquals(view.bank.storage, TrialReferenceStorage.ReconstructSecondBands)
+    assertEquals(view.bank.setupReceipt.nodeReferenceAttempts, 3L)
+    assert(prepared.ownsTrialBank(view.axis.preparation, view.bank))
+    val (summary, values) = execute(view, OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised),
+      ProfileTrialReadoutMode.CorrectedReference)
+    assertEquals(summary.progress.decoder.nodeScores, 6L)
+    assertEquals(summary.progress.trial.get.bankValueEvaluations, 6L)
+    assert(summary.progress.trial.get.continuousFactors > 0L)
+    assertEquals(summary.progress.publicReadout.get.numerical.attempted.exactReadoutFactorAttempts, 0L)
+    assertEquals(values.map(_.voxelId), Vector(3, 0, 2))
+    assert(values.exists(v => points.nearest(v.selection.coordinates).toOption.contains(2)))
+    values.foreach: value =>
+      val (reference, actual) = emitted(value)
+      assert(reference.bank eq view.bank)
+      assertEquals(reference.index, points.nearestAmong(value.selection.coordinates, references.candidates).toOption.get)
+      val frozen = ProfileTrialReadout.freeze(view.bank, view.axis, value.selection.coordinates,
+        reference.index, NormalizationRule.Unnormalised, ProfileTrialReadoutMode.CorrectedReference).toOption.get
+      val expected = frozen.newWorker().evaluate(ProfileTrialResponse.make(view.axis, view.axis.selectedResponseRows,
+        ProfileTrialResponseDomain.Original, responseColumns(value.voxelId)).toOption.get,
+        OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised))
+        .fold(e => fail(e.message), identity)
+      assertEquals(actual.trialAmplitudes, expected.trialAmplitudes)
+      assertEquals(actual.nuisanceCoefficients, expected.nuisanceCoefficients)
+    assert(prepared.provenance.contains("explicit_reference_decode/v1"))
+    assert(prepared.provenance.contains("continuous-factors=exact-charged"))
+
+  test("explicit decoder provenance binds coordinates routing and storage but ignores unused grid configuration"):
+    val chart = basis.family.chart
+    val points = TrialReferencePoints(chart, Vector(Vector(4.8, math.log(1.3)), Vector(5.8, math.log(1.8))))
+    val route = TrialReferenceDecodePolicy(points, Vector(0, 1))
+    def identity(references: TrialReferenceDecodePolicy, grid: Vector[Int] = Vector.empty): String =
+      parallelChecked(ProfileHrfFit.prepare(plan(0.4), selection, parallelWhitening,
+        outputPolicy().copy(nodesPerAxis = grid, trialReferences = Some(references)))).provenance
+    val original = identity(route)
+    assertEquals(identity(route, Vector(3, 3)), original)
+    assertNotEquals(identity(route.copy(candidates = Vector(1))), original)
+    assertNotEquals(identity(route.copy(storage = TrialReferenceStorage.FullJets)), original)
+    val moved = TrialReferencePoints(chart, Vector(Vector(4.9, math.log(1.3)), points.coordinates(1)))
+    assertNotEquals(identity(route.copy(points = moved)), original)
+
+  test("explicit decoder references refuse ML and foreign charts before bank construction"):
+    val points = TrialReferencePoints(basis.family.chart, Vector(Vector(5.0, math.log(1.5))))
+    val configured = outputPolicy().copy(nodesPerAxis = Vector.empty,
+      trialReferences = Some(TrialReferenceDecodePolicy(points, Vector(0))))
+    val ml = plan(0.4, criterion = scalafim.fmri.model.ProfileCriterion.TrialRandomEffectsML(1.0))
+    assert(ProfileHrfFit.prepare(ml, selection, parallelWhitening, configured).isLeft)
+    val foreign = scalafim.fmri.hrf.family.ShapeChart(("x", 0.0, 1.0))
+    val foreignPolicy = configured.copy(trialReferences = Some(TrialReferenceDecodePolicy(
+      TrialReferencePoints(foreign, Vector(Vector(0.5))), Vector(0))))
+    assert(ProfileHrfFit.prepare(plan(0.4), selection, parallelWhitening, foreignPolicy).isLeft)

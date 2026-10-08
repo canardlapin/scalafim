@@ -37,3 +37,22 @@ class TrialReferencePlacementSuite extends munit.FunSuite:
       assertEqualsDouble(jets(0).energy, jets(1).energy, 1e-10)
     assertEquals(banks(1).work.snapshot.attempted.reconstructedBands, 18L)
     assertEquals(banks(1).work.snapshot.attempted.solveAttempts, banks(0).work.snapshot.attempted.solveAttempts)
+
+  test("public three-dimensional decoding uses the selected eight-point bank with two frozen score references"):
+    import scalafim.fmri.fit.profile.*
+    val f = TrialDomainProposal.fixture(30)
+    val points = TrialReferencePlacement.points("4x1x2")
+    val route = TrialReferenceDecodePolicy(points, Vector(1, 6))
+    val outputs = f.prepareWithReferences(Some(route)).flatMap(_.trialOutputs).fold(e => fail(e.message), identity)
+    val sink = new DecodedTrialCheckpoint.Sink(f.trials)
+    val summary = outputs.run(new f.Reader, DecodedTrialCheckpoint.request,
+      ProfileTrialReadoutMode.CorrectedReference, sink).fold(e => fail(e.message), identity)
+    assertEquals(summary.setup.bankSetup.get.nodeReferenceAttempts, 8L)
+    assertEquals(summary.progress.decoder.nodeScores, 2L)
+    assertEquals(summary.progress.trial.get.bankValueEvaluations, 2L)
+    assertEquals(sink.attempted, 1L)
+    assertEquals(sink.statuses.values.sum, 1L)
+    assert(summary.progress.trial.get.attempted.reconstructedBands >= 6L)
+    assertEquals(summary.progress.publicReadout.get.numerical.attempted.exactReadoutFactorAttempts, 0L)
+    assert(outputs.executionDeclaration(DecodedTrialCheckpoint.request, ProfileTrialReadoutMode.CorrectedReference,
+      ProfileTrialEvidenceRequest.CertifiedOriginalEquations).isLeft)

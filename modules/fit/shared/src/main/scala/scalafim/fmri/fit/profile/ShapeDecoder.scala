@@ -56,8 +56,10 @@ final case class NodeGrid(chart: ShapeChart, nodesPerAxis: Vector[Int]):
   * energies with amplitudes. The objective is pointed at a voxel by the
   * backend before decoding; the decoder holds no response data.
   */
-trait ShapeObjective:
-  def grid: NodeGrid
+trait ReferenceShapeObjective:
+  def chart: ShapeChart
+  def referenceCount: Int
+  def referenceCoordinatesInto(node: Int, out: Array[Double]): Unit
   def amplitudeCount: Int
   /** Exact energy at bank node `node` (value only). */
   def scoreNode(node: Int): Double
@@ -67,6 +69,20 @@ trait ShapeObjective:
   def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean
   /** Exact energy at a continuous shape, amplitudes into `out`. */
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double
+
+/** Grid objectives retain their hierarchical scan and parabolic fallback. */
+trait ShapeObjective extends ReferenceShapeObjective:
+  def grid: NodeGrid
+  def chart: ShapeChart = grid.chart
+  def referenceCount: Int = grid.count
+  def referenceCoordinatesInto(node: Int, out: Array[Double]): Unit = grid.coordinatesInto(node, out)
+
+/** Frozen response-independent routing. Every listed reference score is charged.
+  * No grid neighbourhood or unlisted-node fallback is inferred for explicit points.
+  */
+trait RoutedShapeObjective extends ReferenceShapeObjective:
+  /** Captured at decoder construction; exact score ties choose the smallest index. */
+  def referenceCandidates: Vector[Int]
 
 /** Optional backend capability for search. Full jets still own terminal admission. */
 trait FirstOrderShapeObjective extends ShapeObjective:
@@ -184,20 +200,34 @@ private enum NewtonDirectionStatus:
   case CurvatureNotPositive
   case Stalled
 
-/** The shared bounded decoder: a hierarchical scan of the node bank (coarse
-  * sub-grid, then the fine neighbourhood of the coarse best), a jet at the
+/** The shared bounded decoder: a hierarchical grid scan or a frozen explicit
+  * one/two-reference route with all scores charged, a jet at the
   * best node from the bank, then projected Newton steps on the box with every
   * step verified by an exact evaluation, a derivative-free parabolic fallback
   * when the node curvature is not positive definite, and statuses that keep
   * identification, boundary and approximation separate. Data-only and
   * prior-augmented curvature are both reported.
   */
-final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double):
-  private val grid = objective.grid
-  private val d = grid.dimension
+final class ShapeDecoder(objective: ReferenceShapeObjective, budget: DecodeBudget, prior: Option[ShapePrior], noiseVariance: Double):
+  private val routedCandidates = objective match
+    case routed: RoutedShapeObjective => Some(routed.referenceCandidates)
+    case _ => None
+  private val gridOption = objective match
+    case _: RoutedShapeObjective =>
+      require(objective.referenceCount >= 1 && objective.referenceCount <= 8, "routed bank must contain at most eight references")
+      val candidates = routedCandidates.get
+      require(candidates.nonEmpty && candidates.length <= 2 &&
+        candidates.distinct.length == candidates.length &&
+        candidates.forall(i => i >= 0 && i < objective.referenceCount),
+        "frozen routing must select one or two distinct bank references")
+      None
+    case gridded: ShapeObjective => Some(gridded.grid)
+    case _ => throw new IllegalArgumentException("objective must provide grid or frozen reference routing")
+  private val chart = objective.chart
+  private val d = chart.dimension
   private val c = objective.amplitudeCount
-  private val nodeEnergy = new Array[Double](grid.count)
-  private val nodeObjectiveEnergy = new Array[Double](grid.count)
+  private val nodeEnergy = new Array[Double](objective.referenceCount)
+  private val nodeObjectiveEnergy = new Array[Double](objective.referenceCount)
   private val jet = new ProfileJetBuffer(d, c)
   private val firstOrder = new ProfileGradientBuffer(d, c)
   private val x = new Array[Double](d)
@@ -215,7 +245,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val betaAccepted = new Array[Double](c)
   private val indices = new Array[Int](d)
   private val neighbour = new Array[Int](d)
-  private val nodeScored = new Array[Boolean](grid.count)
+  private val nodeScored = new Array[Boolean](objective.referenceCount)
   prior.foreach(p => require(p.dimension == d, "prior dimension must match the chart"))
   private val pairedObjective: Option[PairedProfileObjective] =
     if !CompactComparisonWorkspaceReceipt.enabled(prior, budget) then None
@@ -305,11 +335,24 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       counters.nodeScores += 1
       nodeScored(node) = true
       nodeEnergy(node) = data
-      grid.coordinatesInto(node, trial)
+      objective.referenceCoordinatesInto(node, trial)
       val augmented = data + priorEnergy(trial)
       nodeObjectiveEnergy(node) = augmented
       augmented
 
+    routedCandidates match
+      case Some(candidates) =>
+        var index = 0
+        while index < candidates.length do
+          val node = candidates(index)
+          val augmented = evaluateNode(node)
+          if finite(augmented) && (augmented < bestE || (augmented == bestE && node < best)) then
+            bestE = augmented
+            best = node
+          index += 1
+        return best
+      case None => ()
+    val grid = gridOption.get
     var node = 0
     while node < grid.count do
       grid.indicesInto(node, indices)
@@ -364,6 +407,16 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
 
   /** Energy gap between the best node and the best node outside its immediate neighbourhood. */
   private def ambiguity(best: Int): Double =
+    if gridOption.isEmpty then
+      // Only evaluated routed alternatives supply evidence; unseen points do not.
+      var second = Double.PositiveInfinity
+      var node = 0
+      while node < nodeObjectiveEnergy.length do
+        val energy = nodeObjectiveEnergy(node)
+        if node != best && finite(energy) && energy < second then second = energy
+        node += 1
+      return if second.isInfinite then Double.PositiveInfinity else second - nodeObjectiveEnergy(best)
+    val grid = gridOption.get
     grid.indicesInto(best, indices)
     var second = Double.PositiveInfinity
     var node = 0
@@ -383,7 +436,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private def onBoundary(coords: Array[Double]): Boolean =
     var i = 0
     while i < d do
-      if coords(i) <= grid.chart.lower(i) + 1e-12 || coords(i) >= grid.chart.upper(i) - 1e-12 then return true
+      if coords(i) <= chart.lower(i) + 1e-12 || coords(i) >= chart.upper(i) - 1e-12 then return true
       i += 1
     false
 
@@ -393,8 +446,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   ): NewtonDirectionStatus =
     var i = 0
     while i < d do
-      val atLower = coords(i) <= grid.chart.lower(i) + 1e-12
-      val atUpper = coords(i) >= grid.chart.upper(i) - 1e-12
+      val atLower = coords(i) <= chart.lower(i) + 1e-12
+      val atUpper = coords(i) >= chart.upper(i) - 1e-12
       free(i) = !((atLower && gradient(i) > 0.0) || (atUpper && gradient(i) < 0.0))
       direction(i) = 0.0
       i += 1
@@ -470,7 +523,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   def lastAugmentedNodeEnergies: Array[Double] = nodeObjectiveEnergy
 
   private def refused(best: Int, gap: Double): ShapeDecodeResult =
-    if best >= 0 then grid.coordinatesInto(best, x)
+    if best >= 0 then objective.referenceCoordinatesInto(best, x)
     else java.util.Arrays.fill(x, Double.NaN)
     java.util.Arrays.fill(betaAccepted, Double.NaN)
     clearCurvature()
@@ -512,7 +565,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       def evaluate(unit: Array[Double], gradient: Array[Double]): Either[BoxOptimizationError, Double] =
         var axis = 0
         while axis < d do
-          coordinates(axis) = grid.chart.clamp(axis, grid.chart.lower(axis) + grid.chart.width(axis) * unit(axis))
+          coordinates(axis) = chart.clamp(axis, chart.lower(axis) + chart.width(axis) * unit(axis))
           axis += 1
         counters.jets += 1
         counters.candidateAttempts += 1
@@ -535,7 +588,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
             augmentGradient(coordinates, gradient)
             axis = 0
             while axis < d do
-              gradient(axis) *= grid.chart.width(axis) / scale
+              gradient(axis) *= chart.width(axis) / scale
               axis += 1
             Right((evaluated.energy + priorEnergy(coordinates)) / scale)
     val bounds = BoxBounds.from(Vector.fill(d)(0.0), Vector.fill(d)(1.0)).toOption.get
@@ -558,7 +611,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       .filter(_.value <= lowest + receipt.energyTieToleranceScaled)
       .minByOption(_.projectedGradientNorm)
       .map(point => point.coordinates.indices.map(axis =>
-        grid.chart.clamp(axis, grid.chart.lower(axis) + grid.chart.width(axis) * point.coordinates(axis))).toVector)
+        chart.clamp(axis, chart.lower(axis) + chart.width(axis) * point.coordinates(axis))).toVector)
     val remaining = budget.maxJets - (counters.jets - before).toInt
     val terminalBudget = budget.copy(maxJets = remaining, initialization = DecodeInitialization.BankNode)
     if selected.nonEmpty then counters.terminalVerifications += 1
@@ -574,7 +627,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     val best = scannedBest.getOrElse(scan(counters))
     if best < 0 then return refused(best, Double.NaN)
     val gap = ambiguity(best)
-    grid.coordinatesInto(best, x)
+    objective.referenceCoordinatesInto(best, x)
     initial.foreach(coords => coords.copyToArray(x))
     var jetsUsed = 0
     var exactUsed = 0
@@ -608,7 +661,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       var differs = false
       var axis = 0
       while axis < d do
-        trial(axis) = grid.chart.lower(axis) + 0.5 * grid.chart.width(axis)
+        trial(axis) = chart.lower(axis) + 0.5 * chart.width(axis)
         differs = differs || trial(axis) != x(axis)
         axis += 1
       if differs then
@@ -636,11 +689,11 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       var alpha = 1.0
       var i = 0
       while i < d do
-        val atLower = x(i) <= grid.chart.lower(i) + 1e-12
-        val atUpper = x(i) >= grid.chart.upper(i) - 1e-12
+        val atLower = x(i) <= chart.lower(i) + 1e-12
+        val atUpper = x(i) >= chart.upper(i) - 1e-12
         if (atLower && delta(i) < 0.0) || (atUpper && delta(i) > 0.0) then delta(i) = 0.0
-        if delta(i) > 0.0 then alpha = math.min(alpha, (grid.chart.upper(i) - x(i)) / delta(i))
-        if delta(i) < 0.0 then alpha = math.min(alpha, (grid.chart.lower(i) - x(i)) / delta(i))
+        if delta(i) > 0.0 then alpha = math.min(alpha, (chart.upper(i) - x(i)) / delta(i))
+        if delta(i) < 0.0 then alpha = math.min(alpha, (chart.lower(i) - x(i)) / delta(i))
         i += 1
       usable = usable && finite(alpha) && alpha > 0.0
       i = 0
@@ -657,7 +710,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         while !accepted && tries < budget.maxCandidateAttempts && continue do
           i = 0
           while i < d do
-            trial(i) = grid.chart.clamp(i, x(i) + scale * delta(i))
+            trial(i) = chart.clamp(i, x(i) + scale * delta(i))
             i += 1
           var moved = false
           i = 0
@@ -752,8 +805,9 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           exhaust(DecodeBudgetExit.CandidateAttemptCap)
           continue = false
     if directionStatus == NewtonDirectionStatus.Direction && steps >= budget.maxNewtonSteps then exhaust(DecodeBudgetExit.NewtonStepCap)
-    if initialCurvatureNotPositive && initial.isEmpty then
+    if initialCurvatureNotPositive && initial.isEmpty && gridOption.nonEmpty then
       // derivative-free fallback: parabolic interpolation along each axis of the node grid
+      val grid = gridOption.get
       fallback = true
       counters.fallbacks += 1
       grid.indicesInto(best, indices)
@@ -772,7 +826,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           val den = em - 2.0 * e0 + ep
           if finite(em) && finite(ep) && den > 0.0 then
             val h = grid.step(i)
-            trial(i) = grid.chart.clamp(i, x(i) + math.max(-h, math.min(h, 0.5 * h * (em - ep) / den)))
+            trial(i) = chart.clamp(i, x(i) + math.max(-h, math.min(h, 0.5 * h * (em - ep) / den)))
             moved = true
           else trial(i) = x(i)
         else trial(i) = x(i)
