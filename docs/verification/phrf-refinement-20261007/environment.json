@@ -1,0 +1,29 @@
+{
+  "baseCommit": "95d2c66b39ae2ab94442168d744dcef940044f4f",
+  "branch": "work/phrf-checkpoint-20261007",
+  "platform": "macOS-15.1.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "galeRevision": "0a981febc163e539b019aa9379935e21d8987a20",
+  "noLocalGaleOverride": true,
+  "warmWrapperHeapSetting": "5g",
+  "jvmopts": "-Xmx6g\n-Xss4m\n",
+  "note": "Final pinned gates restart the server without JDK_JAVA_OPTIONS or JAVA_TOOL_OPTIONS. Local-provider development is a separate log. Concurrent machine work was not excluded; no peak engine memory measurement.",
+  "node": {
+    "exit": 0,
+    "stdout": "v24.21.0\n",
+    "stderr": ""
+  },
+  "macOS": {
+    "exit": 0,
+    "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t15.1.1\nBuildVersion:\t\t24B91\n",
+    "stderr": ""
+  },
+  "hardware": {
+    "exit": 0,
+    "stdout": "hw.model: Mac14,12\nhw.ncpu: 10\nhw.memsize: 34359738368\n",
+    "stderr": "",
+    "read": "sysctl outside filesystem sandbox"
+  },
+  "providerPr": "https://github.com/canardlapin/gale/pull/21",
+  "providerTreeEqualsTestedHead": "3bfe3a1349ba9c85c56e8aa4b81cfbcb36a7aa40"
+}

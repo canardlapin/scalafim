@@ -1,0 +1,83 @@
+{
+  "format": "phrf-recovery-comparison/1",
+  "qualification": "not-admitted",
+  "rows": [
+    {
+      "noiseRatio": 0,
+      "attempted": 16,
+      "referenceInteriorStationaryPositive": 16,
+      "referenceBoundary": 0,
+      "bankExpandedStatuses": {
+        "CurvatureNotPositive": 16
+      },
+      "centerStatuses": {
+        "Accepted": 16
+      },
+      "acceptedMaxShapeDifferenceInChartWidths": 1.1987669356633296e-07,
+      "acceptedMaxAbsoluteEnergyGapScaled": 9.423679254346905e-14
+    },
+    {
+      "noiseRatio": 0.1,
+      "attempted": 16,
+      "referenceInteriorStationaryPositive": 16,
+      "referenceBoundary": 0,
+      "bankExpandedStatuses": {
+        "CurvatureNotPositive": 16
+      },
+      "centerStatuses": {
+        "Accepted": 15,
+        "CurvatureNotPositive": 1
+      },
+      "acceptedMaxShapeDifferenceInChartWidths": 4.302336480827007e-07,
+      "acceptedMaxAbsoluteEnergyGapScaled": 1.0405987054088389e-13
+    },
+    {
+      "noiseRatio": 0.5,
+      "attempted": 16,
+      "referenceInteriorStationaryPositive": 15,
+      "referenceBoundary": 1,
+      "bankExpandedStatuses": {
+        "CurvatureNotPositive": 16
+      },
+      "centerStatuses": {
+        "Accepted": 15,
+        "CurvatureNotPositive": 1
+      },
+      "acceptedMaxShapeDifferenceInChartWidths": 1.463599845485941e-07,
+      "acceptedMaxAbsoluteEnergyGapScaled": 8.388345592951843e-14
+    },
+    {
+      "noiseRatio": 1,
+      "attempted": 16,
+      "referenceInteriorStationaryPositive": 10,
+      "referenceBoundary": 6,
+      "bankExpandedStatuses": {
+        "CurvatureNotPositive": 16
+      },
+      "centerStatuses": {
+        "Accepted": 8,
+        "CurvatureNotPositive": 7,
+        "Boundary": 1
+      },
+      "acceptedMaxShapeDifferenceInChartWidths": 0.3364333029264308,
+      "acceptedMaxAbsoluteEnergyGapScaled": 0.0006625273602448404
+    },
+    {
+      "noiseRatio": 2,
+      "attempted": 16,
+      "referenceInteriorStationaryPositive": 3,
+      "referenceBoundary": 13,
+      "bankExpandedStatuses": {
+        "Boundary": 6,
+        "CurvatureNotPositive": 10
+      },
+      "centerStatuses": {
+        "Boundary": 5,
+        "Accepted": 2,
+        "CurvatureNotPositive": 9
+      },
+      "acceptedMaxShapeDifferenceInChartWidths": 2.2246302994188838e-08,
+      "acceptedMaxAbsoluteEnergyGapScaled": 5.680796394896603e-14
+    }
+  ]
+}

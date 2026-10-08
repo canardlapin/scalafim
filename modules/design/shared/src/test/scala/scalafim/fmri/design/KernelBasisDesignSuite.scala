@@ -122,3 +122,43 @@ class KernelBasisDesignSuite extends munit.FunSuite:
     assertEquals(event.levels(9999), "trial_10000")
     assertEquals(event.levels(10000), "trial_10001")
     assertEquals(event.levels(event.codes.head), "trial_10001")
+
+  test("blocked lowering preserves interleaved run records, ties, durations and partial blocks"):
+    import scalafim.fmri.design.hrf.{TrialBasisDesign, TrialDesignLowering}
+    val order = Vector(6, 0, 7, 1, 8, 2, 9, 3, 10, 4, 11, 5)
+    val runs = order.map(blockIds)
+    val xs = order.map(onsets)
+    val lengths = Vector.tabulate(12)(i => Seconds((i % 4) * 0.17))
+    val membership = TrialMembership.make(Vector.tabulate(12)(_ % 3), 3).fold(e => fail(e.message), identity)
+    val mixedFrame = SamplingFrame(blockLens = Seq(60, 40), tr = Seq(1.0, 1.3), startTime = Seq(0.0, 0.2))
+    val dense = ExpandedTrialDesign.lower(xs, runs, lengths, membership, mixedFrame, basis, precision)
+      .fold(e => fail(e.message), identity)
+    Vector(1, 5, 32).foreach: size =>
+      val blocked = TrialBasisDesign.lower(xs, runs, lengths, membership, mixedFrame, basis, precision,
+        TrialDesignLowering.Blocked(size)).fold(e => fail(e.message), identity)
+      assertEquals(blocked.canonicalToInput, dense.canonicalToInput)
+      assertEquals(blocked.inputToCanonical, dense.inputToCanonical)
+      assertEquals(blocked.retainedDesignDataValues, 0L)
+      (0 until blocked.blockCount).foreach: index =>
+        val matrix = blocked.block(index).fold(e => fail(e.message), identity)
+        val count = blocked.trialsInBlock(index)
+        assertEquals(matrix.cols, count * basis.rank)
+        for row <- 0 until blocked.rows; p <- 0 until basis.rank; local <- 0 until count do
+          val trial = index * blocked.trialsPerBlock + local
+          assertEqualsDouble(matrix(row, p * count + local), dense.term.data(row, dense.column(trial, p)), 1e-14)
+
+  test("blocked lowering validates the entire schedule before any block is requested"):
+    import scalafim.fmri.design.hrf.{TrialBasisDesign, TrialDesignLowering}
+    val membership = TrialMembership.make(Vector(0, 0, 0), 1).fold(e => fail(e.message), identity)
+    val malformed = TrialBasisDesign.lower(Vector(2.0, 4.0, 6.0).map(Seconds(_)), Vector(0, 0, 2),
+      Vector.empty, membership, frame, basis, precision, TrialDesignLowering.Blocked(1))
+    assert(malformed.left.exists(_.message.contains("trial 3")))
+    intercept[IllegalArgumentException](TrialDesignLowering.Blocked(0))
+
+  test("blocked descriptors refuse overflowing row dimensions without materializing a block"):
+    import scalafim.fmri.design.hrf.{TrialBasisDesign, TrialDesignLowering}
+    val membership = TrialMembership.make(Vector(0), 1).fold(e => fail(e.message), identity)
+    val huge = SamplingFrame(blockLens = Seq(Int.MaxValue, 1), tr = Seq(1.0))
+    val result = TrialBasisDesign.lower(Vector(Seconds(1.0)), Vector.empty, Vector.empty,
+      membership, huge, basis, precision, TrialDesignLowering.Blocked(1))
+    assert(result.left.exists(_.message.contains("array indices")))

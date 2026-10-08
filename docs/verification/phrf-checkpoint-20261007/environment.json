@@ -1,0 +1,27 @@
+{
+  "baseCommit": "9ba2c57f2b483f8f81a64e30b610f345b13c1784",
+  "branch": "work/phrf-checkpoint-20261007",
+  "platform": "macOS-15.1.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "galeRevision": "d03eb99bde389ce9bce21b8e0fc59bec9ac9b4aa",
+  "noLocalGaleOverride": true,
+  "warmWrapperHeapSetting": "5g",
+  "jvmopts": "-Xmx6g\n-Xss4m\n",
+  "note": "Resident sbt process; heapUsedAtEndBytes includes build state, not measured engine peak. Concurrent machine work was not excluded.",
+  "node": {
+    "exit": 0,
+    "stdout": "v24.21.0\n",
+    "stderr": ""
+  },
+  "macOS": {
+    "exit": 0,
+    "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t15.1.1\nBuildVersion:\t\t24B91\n",
+    "stderr": ""
+  },
+  "hardware": {
+    "exit": 0,
+    "stdout": "hw.model: Mac14,12\nhw.ncpu: 10\nhw.memsize: 34359738368\n",
+    "stderr": "",
+    "read": "sysctl outside filesystem sandbox"
+  }
+}

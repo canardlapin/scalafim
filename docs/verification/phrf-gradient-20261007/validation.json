@@ -1,0 +1,81 @@
+{
+  "galeRevision": "0a981febc163e539b019aa9379935e21d8987a20",
+  "noLocalGaleOverride": true,
+  "gates": [
+    {
+      "command": "scalafimCompileAll",
+      "exit": 0,
+      "seconds": 292.4
+    },
+    {
+      "command": "fitJVM/test",
+      "exit": 0,
+      "seconds": 33.5
+    },
+    {
+      "command": "fitJS/test",
+      "exit": 0,
+      "seconds": 37.0
+    },
+    {
+      "command": "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.TrialRefinementSuite scalafim.fmri.laws.profile.TrialRecoverySuite scalafim.fmri.laws.profile.DecodedTrialCheckpointSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite",
+      "exit": 0,
+      "seconds": 143.4
+    },
+    {
+      "command": "firstLevelLawsJVM/Test/runMain scalafim.fmri.laws.profile.TrialBoundedSearchCandidate /private/tmp/phrf-gradient-final.json 901",
+      "exit": 0,
+      "seconds": 136.0
+    },
+    {
+      "command": "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.TrialRecoverySuite scalafim.fmri.laws.profile.DecodedTrialCheckpointSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite",
+      "exit": 0,
+      "seconds": 27.9
+    },
+    {
+      "command": "firstLevelLawsJVM/Test/compile",
+      "exit": 0,
+      "seconds": 3.5
+    },
+    {
+      "command": "firstLevelLawsJS/Test/compile",
+      "exit": 0,
+      "seconds": 3.0
+    },
+    {
+      "command": "show firstLevelLawsJS / Test / scalaJSStage",
+      "exit": 0,
+      "seconds": 0.4
+    }
+  ],
+  "fullOptTestsPassed": 8,
+  "fullOptCombinedCommandExit": 1,
+  "defaultStageRestored": true,
+  "fullOptResetFailure": "Stopped verified sbt server PID 47108 after tests passed, while stage reapplication thrashed the heap. Fresh-server gates and default-stage check completed afterward.",
+  "tests": [
+    {
+      "total": 697,
+      "failed": 0,
+      "errors": 0,
+      "passed": 697
+    },
+    {
+      "total": 640,
+      "failed": 0,
+      "errors": 0,
+      "passed": 640
+    },
+    {
+      "total": 22,
+      "failed": 0,
+      "errors": 0,
+      "passed": 22
+    },
+    {
+      "total": 15,
+      "failed": 0,
+      "errors": 0,
+      "passed": 15
+    }
+  ]
+}

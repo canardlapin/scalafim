@@ -1,0 +1,48 @@
+{
+  "scope": "post-hoc diagnosis of the frozen cohort, not a new tuning or validation cohort",
+  "failedFresh": 24,
+  "freshCount": 256,
+  "failedSampleIds": [
+    "fresh-0-0.1",
+    "fresh-8-0.1",
+    "fresh-13-0.1",
+    "fresh-15-0.1",
+    "fresh-19-0.1",
+    "fresh-56-0.1",
+    "fresh-59-0.1",
+    "fresh-62-0.1",
+    "fresh-86-0.1",
+    "fresh-129-0.1",
+    "fresh-155-0.1",
+    "fresh-161-0.1",
+    "fresh-170-0.1",
+    "fresh-172-0.1",
+    "fresh-173-0.1",
+    "fresh-179-0.1",
+    "fresh-208-0.1",
+    "fresh-214-0.1",
+    "fresh-219-0.1",
+    "fresh-244-0.1",
+    "fresh-246-0.1",
+    "fresh-251-0.1",
+    "fresh-252-0.1",
+    "fresh-254-0.1"
+  ],
+  "axes": [
+    {
+      "name": "logKappaP",
+      "meanReferenceDistanceAll": 0.12451290337216527,
+      "meanReferenceDistanceFailures": 0.22895188517445172
+    },
+    {
+      "name": "logitRateRatio",
+      "meanReferenceDistanceAll": 0.11791372143968602,
+      "meanReferenceDistanceFailures": 0.11711574584480429
+    },
+    {
+      "name": "rho",
+      "meanReferenceDistanceAll": 0.11753533126325295,
+      "meanReferenceDistanceFailures": 0.115963946392057
+    }
+  ]
+}

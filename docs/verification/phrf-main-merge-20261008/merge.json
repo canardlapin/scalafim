@@ -1,0 +1,61 @@
+{
+  "mainParent": "81c7e1f6a8d6524094e9eb8433cf5618e33061a4",
+  "candidateParent": "9915e1ac0180d2e7555f475b86109890dc1a2b45",
+  "checkpoint": "8992a2bb606781136445f9affe51e3a3355c66d8",
+  "conflicts": [],
+  "compileAll": true,
+  "jvmLawTests": 21,
+  "jsLawTests": 21,
+  "jsIgnoredEntries": 1,
+  "ignoredScope": "Inactive opt-in CorrectedGlsQualificationSuite; ordinary GLS simulator QA ran on both platforms.",
+  "profile": "pull-request",
+  "statisticalCampaignRun": false,
+  "productionQualified": false,
+  "preservedExistingUntrackedPaths": 32,
+  "compilerWarnings": [],
+  "buildMessages": [
+    "Existing multiple-main discovery message"
+  ],
+  "commands": [
+    "scalafimCompileAll",
+    "firstLevelLawsJVM/testOnly affected pHRF suites + CorrectedGlsSimulatorSuite + CorrectedGlsQualificationSuite",
+    "firstLevelLawsJS/testOnly affected pHRF suites + CorrectedGlsSimulatorSuite + CorrectedGlsQualificationSuite"
+  ],
+  "earlierValidation": "docs/verification/phrf-main-readiness-20261008/validation.json",
+  "historicalPacketVerification": {
+    "source": "Git index blobs",
+    "readinessHashes": 78,
+    "referenceDecodeHashes": 26
+  },
+  "preservedConcurrentUnstagedFiles": [
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/DecodedTrialCheckpointMain.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialBoundedSearchCandidate.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialDomainGateMain.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialNeighborhoodAuditMain.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialQualificationAuditMain.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialReadoutBoundAuditMain.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialReferenceDecodeMain.scala",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialReferencePlacementMain.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsQualification.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/DecodedTrialCheckpoint.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/DecodedTrialCheckpointSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialDomainGate.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialDomainGateSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialEnvelopeGradientProbeSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialNeighborhoodAudit.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialNeighborhoodAuditSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialNeighborhoodCertificateAudit.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialObservationEnclosure.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialObservationEnclosureSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialQualificationAudit.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialQualificationAuditSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialReadoutBoundAudit.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialReadoutBoundAuditSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialReferencePlacement.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialReferencePlacementSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialRefinementSuite.scala",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialStressIntegrationSuite.scala",
+    "tools/scenarios/corrected-gls/analyze.R"
+  ],
+  "concurrentChangeScope": "26 Scala formatting edits, GLS qualification extension and R analysis edit; these are excluded from the merge commit."
+}
