@@ -1,0 +1,30 @@
+{
+  "JVM": {
+    "rows": 600,
+    "trials": 1200,
+    "rank": 10,
+    "blocks": 38,
+    "maxBlockValues": 192000,
+    "retainedValues": 9116727,
+    "bandwidth": 127,
+    "retainedSourceValues": 0,
+    "bankBytes": 204786040,
+    "basisSeconds": 0.221426333,
+    "prepareSeconds": 2.537529625,
+    "qualification": "not-admitted"
+  },
+  "JS": {
+    "rows": 600,
+    "trials": 1200,
+    "rank": 10,
+    "blocks": 38,
+    "maxBlockValues": 192000,
+    "retainedValues": 9116727,
+    "bandwidth": 127,
+    "retainedSourceValues": 0,
+    "bankBytes": 204786040,
+    "basisSeconds": 0.479939333,
+    "prepareSeconds": 13.667373083,
+    "qualification": "not-admitted"
+  }
+}

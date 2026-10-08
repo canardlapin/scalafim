@@ -1,0 +1,19 @@
+{
+  "platform": "macOS-15.1.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "node": {
+    "exit": 0,
+    "stdout": "v24.21.0",
+    "stderr": ""
+  },
+  "java": {
+    "exit": 0,
+    "stdout": "",
+    "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)"
+  },
+  "hardware": {
+    "exit": 0,
+    "stdout": "hw.model: Mac14,12\nhw.ncpu: 10\nhw.memsize: 34359738368",
+    "stderr": ""
+  }
+}

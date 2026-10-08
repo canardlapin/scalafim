@@ -1,0 +1,16 @@
+{
+  "id": "explicit-reference-decoder-integration/v1",
+  "bank": "4x1x2",
+  "frozenCandidates": [1, 6],
+  "candidateSelection": "Declared geometric diagonal pair before measurement; identical for every response.",
+  "trials": [30, 300],
+  "voxelsPerGeometry": 8,
+  "noiseRatio": 0.1,
+  "responseSeed": 20260911,
+  "truthUnitCoordinates": [1, 0.5, 1],
+  "decodeBudget": "DecodeBudget() defaults",
+  "readout": "CorrectedReference within frozenCandidates",
+  "sourceFixture": "DecodedTrialCheckpoint B0Dense, blocked preparation, 96-second canonical-like domain",
+  "scope": "Boundary-shape integration diagnostic, no fresh random-shape accuracy claim or timing qualification",
+  "productionAdmitted": false
+}

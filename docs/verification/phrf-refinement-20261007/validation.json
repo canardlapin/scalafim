@@ -1,0 +1,146 @@
+{
+  "galeRevision": "0a981febc163e539b019aa9379935e21d8987a20",
+  "noLocalGaleOverride": true,
+  "pinnedGates": [
+    {
+      "command": "firstLevelLawsJVM/Test/scalafmt",
+      "exit": 0,
+      "elapsedSeconds": 54.0
+    },
+    {
+      "command": "scalafimCompileAll",
+      "exit": 0,
+      "elapsedSeconds": 267.4
+    },
+    {
+      "command": "arJVM/test",
+      "exit": 0,
+      "elapsedSeconds": 1.3
+    },
+    {
+      "command": "arJS/test",
+      "exit": 0,
+      "elapsedSeconds": 5.2
+    },
+    {
+      "command": "fitJVM/test",
+      "exit": 0,
+      "elapsedSeconds": 36.6
+    },
+    {
+      "command": "fitJS/test",
+      "exit": 0,
+      "elapsedSeconds": 39.5
+    },
+    {
+      "command": "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.TrialRefinementSuite scalafim.fmri.laws.profile.TrialRecoverySuite scalafim.fmri.laws.profile.DecodedTrialCheckpointSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite",
+      "exit": 0,
+      "elapsedSeconds": 426.7
+    },
+    {
+      "command": "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.TrialRefinementSuite scalafim.fmri.laws.profile.TrialRecoverySuite scalafim.fmri.laws.profile.DecodedTrialCheckpointSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite",
+      "exit": 0,
+      "elapsedSeconds": 1753.6
+    },
+    {
+      "command": "firstLevelLawsJVM/Test/runMain scalafim.fmri.laws.profile.TrialBoundedSearchCandidate docs/verification/phrf-refinement-20261007/final.json 901",
+      "exit": 0,
+      "elapsedSeconds": 406.5
+    }
+  ],
+  "pinnedTestCounts": {
+    "arJVM": 155,
+    "arJS": 153,
+    "fitJVM": 694,
+    "fitJS": 637,
+    "publicJVM": 21,
+    "publicJS": 21
+  },
+  "localProviderGates": [
+    {
+      "command": "{file:/private/tmp/gale-phrf-refinement-20261007/}coreJVM/test",
+      "exit": 0,
+      "elapsedSeconds": 7.2
+    },
+    {
+      "command": "{file:/private/tmp/gale-phrf-refinement-20261007/}coreJS/test",
+      "exit": 0,
+      "elapsedSeconds": 20.0
+    },
+    {
+      "command": "{file:/private/tmp/gale-phrf-refinement-20261007/}root/scalafmtCheckAll",
+      "exit": 0,
+      "elapsedSeconds": 3.5
+    },
+    {
+      "command": "arJVM/test",
+      "exit": 0,
+      "elapsedSeconds": 5.5
+    },
+    {
+      "command": "arJS/test",
+      "exit": 0,
+      "elapsedSeconds": 7.5
+    },
+    {
+      "command": "fitJVM/test",
+      "exit": 0,
+      "elapsedSeconds": 46.2
+    },
+    {
+      "command": "fitJS/test",
+      "exit": 0,
+      "elapsedSeconds": 71.8
+    },
+    {
+      "command": "scalafimCompileAll",
+      "exit": 0,
+      "elapsedSeconds": 388.4
+    }
+  ],
+  "providerFullTestCounts": {
+    "coreJVM": 804,
+    "coreJS": 792
+  },
+  "providerPr": "https://github.com/canardlapin/gale/pull/21",
+  "providerPrHeadTreeEqualsMerge": "3bfe3a1349ba9c85c56e8aa4b81cfbcb36a7aa40",
+  "qualification": "not-admitted",
+  "buildDiscoveryWarnings": [
+    "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+  ],
+  "restoredSuiteGates": [
+    {
+      "command": "show firstLevelLawsJS / Test / scalaJSStage",
+      "exit": 0,
+      "elapsedSeconds": 0.4
+    },
+    {
+      "command": "firstLevelLawsJVM/Test/compile",
+      "exit": 0,
+      "elapsedSeconds": 5.5
+    },
+    {
+      "command": "firstLevelLawsJS/Test/compile",
+      "exit": 0,
+      "elapsedSeconds": 6.2
+    }
+  ],
+  "fullOptDiagnostic": {
+    "format": "phrf-fullopt-diagnostic/1",
+    "qualification": "not-admitted",
+    "selectedNoiseRatio": 0.1,
+    "voxels": 16,
+    "testsPassed": 1,
+    "fullOptConfirmed": true,
+    "seconds": {
+      "jvm": 89.957,
+      "fastOpt": 388.818,
+      "fullOpt": 156.107
+    },
+    "fastOptOverFullOpt": 2.4907147020953575,
+    "fullOptOverJvm": 1.7353513345264961,
+    "originalSuiteSha256": "b8bf13c939efb2b50fa54cb69a04b6e1e683a1439986bf4f69d913d874883988",
+    "temporarySuiteSha256": "4582871ab7af38acefc385645a390907385e5b07fd26985660c8ce6f4bc73c06",
+    "limitations": "Single diagnostic batch; no controlled repetitions or oracle-count normalization. FullOpt has fresh fixture preparation; fastopt reuses prior noiseless preparation. Profiles and kernel replay are fastopt only."
+  }
+}

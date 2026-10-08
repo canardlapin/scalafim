@@ -1,0 +1,23 @@
+{
+  "mainBase": "c59c21d815a7d6a64142a4a550014584d6c20adf",
+  "checkpoint": "8992a2bb606781136445f9affe51e3a3355c66d8",
+  "commonBase": "9ba2c57f2b483f8f81a64e30b610f345b13c1784",
+  "simulatedMergeTree": "b6a9fc8d70779a4f12f0952dc9463c4dd981c364",
+  "mergeConflicts": [],
+  "galeRevision": "62c0aeb3374557874a17f870c9ae05e3290c21cf",
+  "multivarRevision": "edb05de01401ec0b3aea4dc1190dd3100e70ee51",
+  "backup": {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/checkpoints/phrf-8992a2bb.bundle",
+    "bytes": 6436559,
+    "sha256": "c7ab66c072e6384b14b4442ca40974ca2711368d662f5d0d3b9ec4b619fdb77c",
+    "contains": "8992a2bb606781136445f9affe51e3a3355c66d8",
+    "prerequisite": "9ef6a8ed90fa00603db4e48b5ed2962bec24fdfc",
+    "scope": "Verified local incremental Git bundle; restore requires published prerequisite history."
+  },
+  "productionQualified": false,
+  "remotePublished": false,
+  "preservedMainFiles": {
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Gls.scala": "823ce7031b9abcaf22c6852fe9b7778c51c2d09024abdbb11a7ed8b6f734eae8",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparationIdentity.scala": "bfe5ceb38075b5f1e9b76cf30a48ddf022d9dbf278b3daf4511a7d181bf18fad"
+  }
+}

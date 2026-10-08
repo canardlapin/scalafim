@@ -1,0 +1,207 @@
+{
+  "qualification": "not-admitted",
+  "warmupCallsPerMode": 64,
+  "callsPerRepeat": 256,
+  "repeats": 5,
+  "alternatingOrder": true,
+  "timingsExcludeFixtureAndPreparation": true,
+  "note": "Same host, uncontrolled other activity. Fixed-call oracle timing, not complete B0 throughput.",
+  "JVM": {
+    "rows": [
+      {
+        "gradient": false,
+        "repeat": 0,
+        "seconds": 3.437373875,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": true,
+        "repeat": 0,
+        "seconds": 0.907699458,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": true,
+        "repeat": 1,
+        "seconds": 0.961267791,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": false,
+        "repeat": 1,
+        "seconds": 3.24958475,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": false,
+        "repeat": 2,
+        "seconds": 3.23313325,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": true,
+        "repeat": 2,
+        "seconds": 0.905329167,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": true,
+        "repeat": 3,
+        "seconds": 0.902881084,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": false,
+        "repeat": 3,
+        "seconds": 3.262974042,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": false,
+        "repeat": 4,
+        "seconds": 3.182368042,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026983482
+      },
+      {
+        "gradient": true,
+        "repeat": 4,
+        "seconds": 0.912263917,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026983482
+      }
+    ],
+    "medianSeconds": {
+      "full": 3.24958475,
+      "firstOrder": 0.907699458
+    },
+    "speedup": 3.580022794284846
+  },
+  "FullOpt": {
+    "rows": [
+      {
+        "gradient": false,
+        "repeat": 0,
+        "seconds": 5.66620525,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": true,
+        "repeat": 0,
+        "seconds": 1.895362375,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": true,
+        "repeat": 1,
+        "seconds": 1.745763625,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": false,
+        "repeat": 1,
+        "seconds": 5.478530125,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": false,
+        "repeat": 2,
+        "seconds": 5.38537425,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": true,
+        "repeat": 2,
+        "seconds": 1.652395583,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": true,
+        "repeat": 3,
+        "seconds": 1.687920667,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": false,
+        "repeat": 3,
+        "seconds": 5.832183833,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": false,
+        "repeat": 4,
+        "seconds": 6.821871168,
+        "calls": 256,
+        "solves": 5376,
+        "rhs": 26368,
+        "checksum": 2338.2989026981763
+      },
+      {
+        "gradient": true,
+        "repeat": 4,
+        "seconds": 1.63571575,
+        "calls": 256,
+        "solves": 2304,
+        "rhs": 11008,
+        "checksum": 2338.2989026981763
+      }
+    ],
+    "medianSeconds": {
+      "full": 5.66620525,
+      "firstOrder": 1.687920667
+    },
+    "speedup": 3.356914433704247
+  }
+}
