@@ -48,6 +48,10 @@ private[laws] enum GlsStudyError:
 private[laws] enum StudyPooling:
   case Global, Run, Voxelwise
 
+private[laws] enum GlsStudyDuration(val runLengths: Vector[Int]):
+  case Standard extends GlsStudyDuration(Vector(96, 144))
+  case Extended extends GlsStudyDuration(Vector(192, 288))
+
 private[laws] enum GlsStudyEngine(val label: String):
   case KnownPhi extends GlsStudyEngine("known-phi")
   case Raw extends GlsStudyEngine("raw")
@@ -58,11 +62,12 @@ private[laws] final case class GlsStudyCell(
     phi: Vector[Double],
     nuisance: Int,
     censored: Boolean,
-    pooling: StudyPooling
+    pooling: StudyPooling,
+    duration: GlsStudyDuration = GlsStudyDuration.Standard
 ):
   require(phi.nonEmpty && phi.length <= 2 && ArmaCoefficients.ar(phi*).arOrder == phi.length)
   require(nuisance == 0 || nuisance == 12)
-  val runLengths: Vector[Int] = Vector(96, 144)
+  val runLengths: Vector[Int] = duration.runLengths
   val rows: Int = runLengths.sum
   val frame: SamplingFrame = SamplingFrame(runLengths, Vector(1.0, 1.0))
   val censorRows: Vector[Int] =
@@ -80,8 +85,8 @@ private[laws] final case class GlsStudyCell(
   val eventRows: Vector[Vector[Double]] =
     val kernel = Vector.tabulate(33)(i => Hrfs.SPMG1(Lag(i.toDouble)).data(0))
     Vector.tabulate(rows) { row =>
-      val run = if row < 96 then 0 else 1
-      val local = row - (if run == 0 then 0 else 96)
+      val run = if row < runLengths.head then 0 else 1
+      val local = row - (if run == 0 then 0 else runLengths.head)
       val tasks = Vector.tabulate(2) { task =>
         var total = 0.0
         var onset = 6 + task * 32
@@ -113,12 +118,16 @@ private[laws] final case class GlsStudyCell(
     BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.Runwise)
   val design: DMat = Matrix.tabulate(rows, 4 + nuisance) { (row, col) =>
     if col < 2 + nuisance then eventRows(row)(col)
-    else if (row < 96) == (col == 2 + nuisance) then 1.0
+    else if (row < runLengths.head) == (col == 2 + nuisance) then 1.0
     else 0.0
   }
   val df: Int = rows - design.cols
-  val tCritical: Double = if nuisance == 0 then CorrectedGlsBounds.T236 else CorrectedGlsBounds.T224
-  val fCritical: Double = if nuisance == 0 then CorrectedGlsBounds.F236 else CorrectedGlsBounds.F224
+  val tCritical: Double = duration match
+    case GlsStudyDuration.Standard => if nuisance == 0 then CorrectedGlsBounds.T236 else CorrectedGlsBounds.T224
+    case GlsStudyDuration.Extended => if nuisance == 0 then GlsFactorBounds.T476 else GlsFactorBounds.T464
+  val fCritical: Double = duration match
+    case GlsStudyDuration.Standard => if nuisance == 0 then CorrectedGlsBounds.F236 else CorrectedGlsBounds.F224
+    case GlsStudyDuration.Extended => if nuisance == 0 then GlsFactorBounds.F476 else GlsFactorBounds.F464
 
   def coefficient(predictor: Int, voxel: Int): Double =
     if predictor == 0 then if voxel == 0 then 0.0 else 0.75
@@ -274,7 +283,8 @@ private[laws] object CorrectedGlsQualification:
       cell: GlsStudyCell,
       model: FmriModel,
       engine: GlsStudyEngine,
-      replicate: Int
+      replicate: Int,
+      inspect: DenseFmriFitResult => Unit = _ => ()
   ): Either[GlsStudyError, GlsStudyTrial] =
     val started = System.nanoTime()
     val plan = FitPlan(
@@ -287,6 +297,7 @@ private[laws] object CorrectedGlsQualification:
         .fitDense(plan)
         .left
         .map(error => GlsStudyError.Pipeline(GlsStudyStage.Fit, error.message))
+      _ = inspect(fitted)
       reader <- SynchronousFmriDataset
         .readerFor(model.dataset)
         .left
@@ -406,13 +417,14 @@ private[laws] object CorrectedGlsQualification:
       cell: GlsStudyCell,
       profile: GlsStudyProfile,
       trials: Vector[GlsStudyTrial],
-      failures: Vector[String]
+      failures: Vector[String],
+      engines: Vector[GlsStudyEngine] = GlsStudyEngine.values.toVector
   ): ScenarioResult =
     val observations = Vector.newBuilder[ScenarioObservation]
     def fact(name: String, ok: Boolean, detail: String): Unit =
       observations += ScenarioObservation.Fact(name, ok, detail)
     fact("no-refusals", failures.isEmpty, failures.mkString("; "))
-    GlsStudyEngine.values.foreach { engine =>
+    engines.foreach { engine =>
       val rows = trials.filter(_.engine == engine)
       fact(s"${engine.label}-replicates", rows.length == profile.replicates, s"${rows.length}/${profile.replicates}")
       if rows.length == profile.replicates then

@@ -5,7 +5,8 @@ if (length(args) < 2L) stop("usage: Rscript analyze.R LOG OUTPUT_DIR [paired-pla
 log_path <- args[[1L]]
 out <- args[[2L]]
 dir.create(out, recursive = TRUE, showWarnings = FALSE)
-protocol <- jsonlite::read_json("tools/scenarios/corrected-gls/protocol.json", simplifyVector = FALSE)
+protocol_path <- Sys.getenv("SCALAFIM_GLS_ANALYSIS_PROTOCOL", unset="tools/scenarios/corrected-gls/protocol.json")
+protocol <- jsonlite::read_json(protocol_path, simplifyVector = FALSE)
 read_records <- function(path, marker) {
   lines <- readLines(path, warn = FALSE)
   selected <- lines[grepl(marker, lines, fixed = TRUE)]
@@ -55,7 +56,8 @@ for (i in seq_along(protocol$cells)) {
     interval_f <- cp(f_reject,n)
     interval_coverage <- cp(covered,n)
     ratio_interval <- c(NA_real_,NA_real_)
-    if (profile == "confirmation" && n == n_expected) {
+    bootstrap_enabled <- isTRUE(protocol$profiles[[profile]]$bootstrap_analysis) || profile == "confirmation"
+    if (bootstrap_enabled && n == n_expected) {
       # This stream is disjoint from all Gaussian-data streams; never reseed it
       # from observed uncertainty or a desired qualification result.
       boot_seed <- ((selected[[1L]]$root + 4*10000019 + i*1000003 + match(engine,protocol$engines)*7919) %% 2147483646) + 1

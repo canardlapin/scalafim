@@ -1,0 +1,207 @@
+{
+  "schema_version": "scalafim-gls-factor-analysis/v1",
+  "profile": "confirmation",
+  "replicates_per_cell": 2048,
+  "pairing": "One independent innovation sequence per replicate is reused across all 24 diagnostic cells; differences in AR order filter the same innovations. Pooling, nuisance and censor comparisons are paired. Each cell has 512 independent replicates; there are 512 independent diagnostic innovation blocks, not 12288 independent experiments. Short confirmation pooling cells share 2048 fresh blocks; long confirmation has a separate 2048-block stream.",
+  "scientific_admission": false,
+  "variance_identity_max_error": 1.1102230246251565e-16,
+  "additional_platform_max_scaled_error": 1.0418031312327428e-15,
+  "decomposition": [
+    {
+      "cell": "ar2-high-censored-global",
+      "metrics": [
+        {
+          "name": "calibration",
+          "estimate": 0.92974013223161256,
+          "interval": [0.88300948097432008, 0.97970366049301272]
+        },
+        {
+          "name": "knownCalibration",
+          "estimate": 0.93767084330277328,
+          "interval": [0.89105636018287926, 0.98624296094239838]
+        },
+        {
+          "name": "reportedVarianceRatio",
+          "estimate": 0.99191746804383729,
+          "interval": [0.98768126653557642, 0.9960755793371725]
+        },
+        {
+          "name": "samplingVarianceRatio",
+          "estimate": 1.0003785536448333,
+          "interval": [0.9976536445826939, 1.0031116996455751]
+        },
+        {
+          "name": "scaleRatio",
+          "estimate": 0.99683490954032161,
+          "interval": [0.99642806374975235, 0.99721834982431234]
+        },
+        {
+          "name": "geometryRatio",
+          "estimate": 0.99406260464431262,
+          "interval": [0.99017440927185996, 0.99784952346952327]
+        },
+        {
+          "name": "scaleGeometryCovariance",
+          "estimate": 0.00048050133734540697,
+          "interval": [0.00029463847606993495, 0.00065880415171792059]
+        },
+        {
+          "name": "AR_RMSE",
+          "estimate": 0.038405869929021771,
+          "interval": [0.037717958303371699, 0.03910834479451275]
+        },
+        {
+          "name": "tRejection",
+          "estimate": 0.06005859375,
+          "interval": [0.0517578125, 0.0693359375]
+        },
+        {
+          "name": "fRejection",
+          "estimate": 0.052734375,
+          "interval": [0.044921875, 0.06103515625]
+        },
+        {
+          "name": "coverage",
+          "estimate": 0.9423828125,
+          "interval": [0.93408203125, 0.95068359375]
+        },
+        {
+          "name": "whiteness",
+          "estimate": 0.092263910362973933,
+          "interval": [0.091910679224456476, 0.092628323319545625]
+        }
+      ]
+    },
+    {
+      "cell": "ar2-high-censored-run",
+      "metrics": [
+        {
+          "name": "calibration",
+          "estimate": 0.91672059348335266,
+          "interval": [0.87128885186001659, 0.96464904392023509]
+        },
+        {
+          "name": "knownCalibration",
+          "estimate": 0.93767084330277328,
+          "interval": [0.89105636018287926, 0.98624296094239838]
+        },
+        {
+          "name": "reportedVarianceRatio",
+          "estimate": 0.98625105600259155,
+          "interval": [0.98208664723516825, 0.99034118181311159]
+        },
+        {
+          "name": "samplingVarianceRatio",
+          "estimate": 1.0087903184068641,
+          "interval": [1.0014982184277847, 1.0158436221868121]
+        },
+        {
+          "name": "scaleRatio",
+          "estimate": 0.99531499652699829,
+          "interval": [0.99484548932957007, 0.9957613483769967]
+        },
+        {
+          "name": "geometryRatio",
+          "estimate": 0.98982340948056369,
+          "interval": [0.98597574588348702, 0.99366310144057168]
+        },
+        {
+          "name": "scaleGeometryCovariance",
+          "estimate": 0.00051112711777159684,
+          "interval": [0.00033078624836564133, 0.00068711054095313786]
+        },
+        {
+          "name": "AR_RMSE",
+          "estimate": 0.053561340419766595,
+          "interval": [0.052886256020386782, 0.054204515433153785]
+        },
+        {
+          "name": "tRejection",
+          "estimate": 0.0595703125,
+          "interval": [0.05126953125, 0.068359375]
+        },
+        {
+          "name": "fRejection",
+          "estimate": 0.0595703125,
+          "interval": [0.05126953125, 0.06787109375]
+        },
+        {
+          "name": "coverage",
+          "estimate": 0.9404296875,
+          "interval": [0.93208007812500004, 0.94873046875]
+        },
+        {
+          "name": "whiteness",
+          "estimate": 0.090893947511910447,
+          "interval": [0.090551223242458317, 0.091247863346139546]
+        }
+      ]
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long",
+      "metrics": [
+        {
+          "name": "calibration",
+          "estimate": 0.93329132334992293,
+          "interval": [0.88638767920686312, 0.98334394255245317]
+        },
+        {
+          "name": "knownCalibration",
+          "estimate": 0.97148653493109483,
+          "interval": [0.92337690500220015, 1.0237971099453484]
+        },
+        {
+          "name": "reportedVarianceRatio",
+          "estimate": 0.97936177745940656,
+          "interval": [0.9745915121489257, 0.98475483585150614]
+        },
+        {
+          "name": "samplingVarianceRatio",
+          "estimate": 1.0194424354154963,
+          "interval": [1.0096024360315121, 1.0287119482903124]
+        },
+        {
+          "name": "scaleRatio",
+          "estimate": 0.99127013959071264,
+          "interval": [0.99097754340327537, 0.99158410904457306]
+        },
+        {
+          "name": "geometryRatio",
+          "estimate": 0.98745103114430977,
+          "interval": [0.98276401641537259, 0.99275271644765262]
+        },
+        {
+          "name": "scaleGeometryCovariance",
+          "estimate": 0.00010643962886608718,
+          "interval": [4.3297122410244676e-05, 0.0001689226011482825]
+        },
+        {
+          "name": "AR_RMSE",
+          "estimate": 0.069981627144175218,
+          "interval": [0.069529493355674793, 0.070441041729752532]
+        },
+        {
+          "name": "tRejection",
+          "estimate": 0.06494140625,
+          "interval": [0.0556640625, 0.07421875]
+        },
+        {
+          "name": "fRejection",
+          "estimate": 0.072265625,
+          "interval": [0.06298828125, 0.081103515624999956]
+        },
+        {
+          "name": "coverage",
+          "estimate": 0.94189453125,
+          "interval": [0.93359375, 0.94970703125]
+        },
+        {
+          "name": "whiteness",
+          "estimate": 0.048699762370048985,
+          "interval": [0.048501233787525841, 0.048913288538947483]
+        }
+      ]
+    }
+  ],
+  "paired_effects": []
+}

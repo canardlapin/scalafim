@@ -27,6 +27,15 @@ fails recovery RMSE, joint-F rejection and interval coverage. The explicit
 qualification gate retains that failure. A passing routine test suite or pilot
 does not confer statistical admission.
 
+The [paired AR factor follow-up](../../docs/plans/gls-ar2-factor-diagnosis.md)
+uses `SCALAFIM_GLS_FACTOR_PROFILE=pilot|diagnostic|confirmation`, or
+`tools/scenarios/gls-factor-diagnosis/run_study.py` from the repository root.
+Its fresh confirmation validates global and run pooling for the declared
+homogeneous AR(2), high-nuisance, censored setup. Doubled-run voxelwise estimation
+still fails joint-F equivalence. The factor grid and variance decomposition
+retain that limitation; these results do not qualify heterogeneous-noise
+pooling or general voxelwise inference.
+
 Generators construct domain values through their public validated APIs.
 Shrinkers rebuild smaller valid values rather than deleting fields or emitting
 scientifically impossible schedules. Numerical comparisons derive their bound

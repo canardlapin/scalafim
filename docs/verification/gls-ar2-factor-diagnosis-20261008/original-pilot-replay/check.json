@@ -1,0 +1,10 @@
+{
+  "pass": true,
+  "profile": "original-pilot-replay",
+  "source_unchanged": true,
+  "same_decisions": true,
+  "max_scaled_numeric_difference": 5.783379636074792e-15,
+  "fits_per_platform": 288,
+  "tests_passed_per_platform": 8,
+  "scientific_admission": false
+}
