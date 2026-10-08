@@ -60,11 +60,12 @@ object TrialNeighborhoodAudit:
     f.plan.basis.family.evalInto(lags, ShapePoint.unsafe(actual), out)
     out
 
-  def response(f: DecodedTrialCheckpoint.Fixture, design: Array[Double], noise: Double = 0.1): Array[Double] =
+  def response(f: DecodedTrialCheckpoint.Fixture, design: Array[Double], noise: Double = 0.1,
+      seed: Long = 2026100802L): Array[Double] =
     val amplitudes = Vector.tabulate(f.trials)(j => Vector(1.2, -0.8, 0.4)(j % 3) + 0.25 * math.sin(0.71 * j + 0.31))
     val signal = Array.tabulate(f.rows)(t => (0 until f.trials).map(j => design(t * f.trials + j) * amplitudes(j)).sum)
     val rms = math.sqrt(signal.iterator.map(x => x * x).sum / signal.length)
-    val rng = new scala.util.Random(2026100802L)
+    val rng = new scala.util.Random(seed)
     var ar = rng.nextGaussian()
     Array.tabulate(f.rows): t =>
       if t > 0 then ar = 0.3 * ar + math.sqrt(0.91) * rng.nextGaussian()

@@ -221,12 +221,13 @@ object DecodedTrialCheckpoint:
 
   def request: OutputRequest = OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised)
 
-  def fixture(config: Config): Fixture =
+  def fixture(config: Config, cascade: Option[Cascade34Family] = None): Fixture =
     val started = System.nanoTime()
     val tiny = config.geometry == Geometry.Tiny
     val rows = if tiny then 120 else 600
     val trials = if tiny then 12 else config.trials
-    val family = if tiny then GaussianFamily.Default else
+    require(!tiny || cascade.isEmpty, "the Gaussian tiny fixture does not accept a Cascade34 override")
+    val family = if tiny then GaussianFamily.Default else cascade.getOrElse:
       config.horizonSeconds.fold(Cascade34Family.Default)(h =>
         Cascade34Family.make(horizon = Seconds(h)).fold(e => throw new IllegalArgumentException(e.message), identity))
     val frame = SamplingFrame(blockLens = Seq(rows), tr = Seq(1.0))
