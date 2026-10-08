@@ -43,7 +43,8 @@ class ModelDocumentTextSuite extends munit.FunSuite:
       "estimation: runwise_gls(ar = ar(order = 2, iterations = 1, global = TRUE, voxelwise = FALSE, exact_first = FALSE, censored = c(3, 8), " +
         "coefficients = phi(values = c(0.4, -0.15)), bias = raw()), weights = dvars(function = soft_threshold(threshold = 2, steepness = 3), " +
         "scope = \"across_selection\"), projection = matrix(rows = 2, cols = 1, values = c(1, 0.5), lambda = fixed(value = 4)), missing = \"omit_rows_per_voxel\")",
-      "runs: concatenated(columns = c(\"slope_reward\"))"
+      "runs: concatenated(columns = c(\"slope_reward\"))",
+      "base: fnv64-84ec4c09d96dced2"
     ))
     // Pieces without a text form come from the base; every text piece is replaced.
     val base = ModelDocument(ModelBuildSpec("onset ~ trialwise()", blockColumn = Some("run"), contrastSets = contrasts))
@@ -69,11 +70,12 @@ class ModelDocumentTextSuite extends munit.FunSuite:
 
   test("malformed lines fail with their line number"):
     val lines = render(document)
-    val base = ModelDocument(ModelBuildSpec("onset ~ trialwise()"))
+    val base = ModelDocument(ModelBuildSpec("onset ~ trialwise()", blockColumn = Some("run"), contrastSets = contrasts))
     def errorOf(text: Vector[String]): ModelTextError =
       ModelDocumentText.parse(text, base).swap.toOption.getOrElse(fail(s"expected a parse error for $text"))
-    assertEquals(errorOf(lines :+ "colour: blue").line, Some(8))
-    assertEquals(errorOf(lines :+ lines(3)).line, Some(8))
+    assertEquals(errorOf(lines :+ "colour: blue").line, Some(9))
+    assertEquals(errorOf(lines :+ lines(3)).line, Some(9))
+    assertEquals(errorOf(lines.patch(3, Vector("derive: reward: number = gain"), 0)).line, Some(4))
     assertEquals(errorOf(lines.filterNot(_.startsWith("runs:"))), ModelTextError(None, "missing 'runs' line"))
     assertEquals(errorOf(lines.updated(3, "baseline: dct(cutoff = 128, degree = 2)")).line, Some(4))
     assertEquals(errorOf(lines.updated(3, "baseline: dct(cutoff = 128, degree = 2, intercept = \"runwise\", extra = 1)")).line, Some(4))
@@ -81,3 +83,23 @@ class ModelDocumentTextSuite extends munit.FunSuite:
     assertEquals(errorOf(lines.updated(6, "runs: pooled()")).line, Some(7))
     assertEquals(errorOf(lines.updated(4, "confounds: confounds(motion = \"friston\")")).line, Some(5))
     assert(ModelDocumentText.render(document.copy(build = document.build.copy(strategy = FitStrategy.RobustLeastSquares(RobustConfig.unsafe(RobustOptions(psi = RobustPsi.Huber())))))).isLeft)
+
+  test("text cannot be combined with a base that differs in fields without a text form"):
+    val lines = render(document)
+    val good = ModelDocument(ModelBuildSpec("onset ~ trialwise()", blockColumn = Some("run"), contrastSets = contrasts))
+    assertEquals(ModelDocumentText.parse(lines, good), Right(document))
+    Vector(
+      good.build.copy(blockColumn = None),
+      good.build.copy(contrastSets = Map.empty),
+      good.build.copy(precision = scalafim.fmri.hrf.Seconds(0.1)),
+      good.build.copy(missingValuePolicy = MissingValuePolicy.Reject),
+      good.build.copy(factorLevels = FactorLevelRegistry.of("level" -> Seq("a", "b")).toOption.get)
+    ).foreach: other =>
+      val error = ModelDocumentText.parse(lines, ModelDocument(other)).swap.toOption.getOrElse(fail(s"expected a digest mismatch for $other"))
+      assertEquals(error.line, Some(lines.length))
+    // Fields that do have a text form may differ freely in the base.
+    val textual = ModelDocument(good.build.copy(formula = "onset ~ hrf(x)", strategy = FitStrategy.RunwiseLeastSquares(), baselineDegree = 4))
+    assertEquals(ModelDocumentText.parse(lines, textual), Right(document))
+
+  test("formula text with surrounding whitespace is rejected rather than trimmed"):
+    assert(ModelDocumentText.render(ModelDocument(ModelBuildSpec(" onset ~ trialwise()"))).isLeft)

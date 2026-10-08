@@ -261,12 +261,14 @@ object ModelDocumentJsonCodec:
     for
       _ <- value.fields(Set("motion", "acompcorComponents", "includeWhiteMatter", "includeCsf", "includeGlobalSignal", "censor"))
       motion <- value.field("motion").flatMap(ModelBuildSpecJsonCodec.enumCase(_, "motion expansion", MotionExpansion.values))
-      components <- value.field("acompcorComponents").flatMap(_.integer)
+      componentsCursor <- value.field("acompcorComponents")
+      components <- componentsCursor.integer
+      _ <- ensure(components >= 0, componentsCursor.path, "aCompCor component count must be non-negative")
       whiteMatter <- value.field("includeWhiteMatter").flatMap(_.bool)
       csf <- value.field("includeCsf").flatMap(_.bool)
       global <- value.field("includeGlobalSignal").flatMap(_.bool)
       censor <- value.field("censor").flatMap(_.nullable(readCensor))
-      spec <- admit(ConfoundSpec.make(motion, components, whiteMatter, csf, global, censor), s"${value.path}.acompcorComponents")(_.message)
+      spec <- admit(ConfoundSpec.make(motion, components, whiteMatter, csf, global, censor), value.path)(_.message)
     yield spec
 
   private def readCensor(value: Cursor): Result[FdCensorPolicy] =
