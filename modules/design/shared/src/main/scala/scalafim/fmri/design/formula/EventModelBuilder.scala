@@ -1025,7 +1025,7 @@ object EventModelBuilder:
       termDiagnostics = diagnoseTerm(term, samplingFrame)
       _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
       basisName = t.basis.getOrElse("spmg1")
-      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag)
+      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag, basisParams = t.basisParams)
       conv0 <- catchBuild(DesignError.fromThrowable) {
         term.convolve(
           hrf0,
@@ -3327,12 +3327,15 @@ object EventModelBuilder:
         s"$fun($as)"
 
   private def resolveHrfEither(call: HrfCall, defaultHrf: Hrf, frame: Option[SamplingFrame] = None): Either[DesignError, Hrf] =
-    if call.span.nonEmpty && !call.basis.exists(b => Set("fir", "bspline", "tent", "fourier").contains(b.trim.toLowerCase)) then
-      return Left(DesignError.FormulaBinding("formula span requires an explicit fir, bspline, tent, or fourier basis"))
+    val basisKind = call.basis.flatMap(name => HrfKind.fromString(name).toOption)
+    if call.span.nonEmpty && !basisKind.exists(FormulaBasis.admitsSpan) then
+      return Left(DesignError.FormulaBinding(
+        s"formula span requires an explicit basis whose support it sets (${FormulaBasis.spanKinds.map(_.canonicalName).mkString(", ")})"))
+    if call.basisParams.nonEmpty && call.basis.isEmpty then
+      return Left(DesignError.FormulaBinding(FormulaBasisError.ParamsWithoutBasis.message))
     if call.hrfFun.nonEmpty && (call.span.nonEmpty || call.kernelNormalization.nonEmpty) then
       return Left(DesignError.FormulaBinding("kernel options cannot be combined with hrf_fun"))
-    val span = call.span.fold(24.s)(_.seconds)
-    if call.temporalDerivative.nonEmpty && !call.basis.exists(name => Set("spmg2", "spmg3").contains(name.trim.toLowerCase)) then
+    if call.temporalDerivative.nonEmpty && !basisKind.exists(kind => kind == HrfKind.Spmg2 || kind == HrfKind.Spmg3) then
       return Left(DesignError.FormulaBinding("temporal_derivative requires an explicit spmg2 or spmg3 basis"))
     // "spm-1s" is SPM12's informed basis (spm_get_bf + spm_orth) on SPM's
     // kernel grid, dt = TR / 16 over 32 s, so it needs one repetition time.
@@ -3352,18 +3355,13 @@ object EventModelBuilder:
       call.basis match
         case None => Right(defaultHrf)
         case Some(basisName0) =>
-          val basisName = basisName0.trim.toLowerCase
-          basisName match
-            case "spmg1"    => Right(Hrfs.SPMG1)
-            case "spmg2"    => informedBasis(2)
-            case "spmg3"    => informedBasis(3)
-            case "gamma"    => Right(Hrfs.Gamma)
-            case "gaussian" => Right(Hrfs.Gaussian)
-            case "fir"      => catchBuild(DesignError.fromThrowable)(Hrfs.fir(nBasis = call.nbasis.getOrElse(12), span = span))
-            case "bspline"  => catchBuild(DesignError.fromThrowable)(Hrfs.bspline(nBasis = call.nbasis.getOrElse(5), span = span))
-            case "tent"     => catchBuild(DesignError.fromThrowable)(Hrfs.tent(nBasis = call.nbasis.getOrElse(5), span = span))
-            case "fourier"  => catchBuild(DesignError.fromThrowable)(Hrfs.fourier(nBasis = call.nbasis.getOrElse(5), span = span))
-            case other      => Left(DesignError.UnknownBasis(other))
+          basisKind match
+            case None                => Left(DesignError.UnknownBasis(basisName0.trim.toLowerCase))
+            case Some(HrfKind.Spmg2) => informedBasis(2)
+            case Some(HrfKind.Spmg3) => informedBasis(3)
+            case Some(kind) =>
+              catchBuild(DesignError.fromThrowable)(FormulaBasis.build(kind, call.basisParams, call.nbasis, call.span))
+                .flatMap(_.left.map(error => DesignError.FormulaBinding(error.message)))
 
     val normalized = baseEither.flatMap { base =>
       call.kernelNormalization match
@@ -3378,8 +3376,8 @@ object EventModelBuilder:
           else Left(DesignError.FormulaBinding("`lag` must be finite"))
     }
 
-  private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double]): Either[DesignError, Hrf] =
-    val call = HrfCall(vars = Vector(ArgValue.Ident(ColumnId.unsafe("x"))), basis = Some(basis), lag = lag, nbasis = nbasis)
+  private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double], basisParams: Vector[BasisParam]): Either[DesignError, Hrf] =
+    val call = HrfCall(vars = Vector(ArgValue.Ident(ColumnId.unsafe("x"))), basis = Some(basis), lag = lag, nbasis = nbasis, basisParams = basisParams)
     resolveHrfEither(call, defaultHrf = Hrfs.SPMG1)
 
   private def trialLevels(n: Int): Vector[String] =
