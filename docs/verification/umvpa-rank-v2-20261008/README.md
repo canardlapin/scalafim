@@ -1,6 +1,6 @@
 # UMVPA rank implementation and resource probe, 2026-10-08
 
-This packet implements Steps 1 and 2 of the [prospective plan](../../plans/unified-mvpa-rank-method-plan-v2.md). It prepares the eight resource fixtures that precede a new comparison study. No pilot or confirmation streams have been consumed by this packet. Rank admission remains `PendingFrozenProtocol`.
+This packet implements Steps 1 and 2 of the [prospective plan](../../plans/unified-mvpa-rank-method-plan-v2.md) and completes the eight resource fixtures for the two new methods. No pilot or confirmation streams have been consumed by this packet. Rank admission remains `PendingFrozenProtocol`.
 
 ## Method and scope
 
@@ -42,6 +42,19 @@ All attempts are retained, including the missing local Gale dependency, a stoppe
 
 The run is limited to one worker, four configured processors, 3 GiB heap, 4 GiB sampled resident sbt memory and 900 worker seconds. The R generator has a separate 120-second limit. Every failure is retained and there are no replacement seeds or retries. This measures implementation resources for the two new methods; it does not estimate error rates, power or historical-method timing. A live `probe/host-before.json` supersedes the earlier planning snapshot.
 
+The manifest and 146 source hashes were committed at `72847e147efd8cae0e619e8e2fecd09ab5b4852c` before generating the fixtures. All **16 method evaluations completed**, with 199 draws per hypothesis and 796 compact fits per method/dataset. The worker took **38.47 seconds including startup**; its observed peak resident memory was **3.44 GiB**. Source hashes remained unchanged. See [process-receipt.json](probe/process-receipt.json), [probe-summary.json](probe-summary.json) and retained exact inputs, records and logs.
+
+| n | Score-permutation median | Gaussian-reference median |
+| ---: | ---: | ---: |
+| 80 | 24.1 ms | 72.4 ms |
+| 640 | 67.9 ms | 253.5 ms |
+
+Each median uses only four fixtures; fixed ordering and JIT effects prevent a performance guarantee. Memory sampling begins when the sbt server socket is available and excludes early startup, the thin client and R generator. The measured peak leaves only about 0.56 GiB below the proposed process cap.
+
+A planning sensitivity assigns measured n640 pair costs to all as-yet-unmeasured n160/n320 cases: the two new methods alone would take about **54 minutes using observed means, or 75 minutes using observed maxima**, before historical-method and orchestration costs. This is an explicit extrapolation assumption, not a runtime bound. It does **not** admit the proposed whole campaign under a one-hour ceiling.
+
 ## Next decision
 
-After this probe, bind the historical comparator and the paired 64-cell study to an explicit source, stream and resource manifest. The proposed 12,800 exploratory datasets are not yet an admitted campaign. Their results must precede procedure/sample-size selection and a separately reviewed v2 confirmation protocol. Preserve v1 as unsuccessful qualification; do not reinterpret its criteria or promote any current result to admitted rank inference.
+Next, bind and time the historical comparator on these same eight retained fixtures without drawing replacements. Build the complete cost inventory, then either fit the proposed 64-cell study within its declared cap or make a prospective resource-plan revision before opening its pilot streams. The proposed 12,800 exploratory datasets are not yet an admitted campaign. Their results must precede procedure/sample-size selection and a separately reviewed v2 confirmation protocol. Preserve v1 as unsuccessful qualification; do not reinterpret its criteria or promote any current result to admitted rank inference.
+
+The [prior-evidence check](prior-evidence-check.json) verifies all 632 retained artifact hashes and each earlier packet's source hashes against its recorded Git source revision. The pilot, diagnosis and mathematical-review receipts remain byte-identical. M4.07 and M4.09 stay open.

@@ -58,5 +58,20 @@
     "uncompressed_sha256": "1aca0fbdad3b8f1aaa5d1ed1d191bace91c0e84660b81692a646ac13311d02fe",
     "bytes": 6896,
     "archive": "multivar-rank-first.log.gz"
+  },
+  "multivar-api-checks.log": {
+    "uncompressed_sha256": "816aebaa04001906ee074cb87f99ad901af580e5c5f7568ec89043a756c56c4f",
+    "bytes": 254,
+    "archive": "multivar-api-checks.log.gz"
+  },
+  "probe/generator.log": {
+    "uncompressed_sha256": "633639145d4fad6e5d80ed6377bc677fa88f02a994f456fd47279afd2485a97b",
+    "bytes": 723,
+    "archive": "probe/generator.log.gz"
+  },
+  "probe/worker.log": {
+    "uncompressed_sha256": "7086a800f602523550a45bb861adcdc2fc1ab269d975330629bb7245d9e72832",
+    "bytes": 5586,
+    "archive": "probe/worker.log.gz"
   }
 }
