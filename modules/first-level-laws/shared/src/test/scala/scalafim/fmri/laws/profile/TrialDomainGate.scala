@@ -109,12 +109,12 @@ object TrialDomainGate:
       (if boundaries then boundaryUnits.zipWithIndex.map((u, i) => make("boundary", u, freshCount + i, 0.1)) else Vector.empty) ++
       Vector(0.0, 1.0).flatMap(noise => fresh.take(sensitivityCount).zipWithIndex.map((u, i) => make("sensitivity", u, i, noise)))
 
-  private def geometry(f: DecodedTrialCheckpoint.Fixture, bank: TrialBandedObjective, seconds: Double): Geometry =
+  private def geometry(f: DecodedTrialCheckpoint.Fixture, bank: TrialReferenceBank, seconds: Double): Geometry =
     val p = bank.preparation
     val shared = bank.estimatedSharedBytes + p.retainedSourceDesignDataBytes
     Geometry(f.trials, p.basisRank, p.bandwidth, p.receipt.retainedDoubles, p.retainedSourceDesignDataBytes,
       bank.estimatedReferenceBytes, bank.estimatedValueReferenceBytes, bank.estimatedWorkerBytes,
-      shared, shared - 8L * bank.estimatedReferenceBytes + 8L * bank.estimatedValueReferenceBytes,
+      shared, shared - bank.points.count.toLong * bank.estimatedReferenceBytes + bank.points.count.toLong * bank.estimatedValueReferenceBytes,
       shared + 8L * bank.estimatedWorkerBytes, seconds)
 
   def preparation(trials: Int): Either[String, Geometry] =
@@ -127,18 +127,23 @@ object TrialDomainGate:
     catch case e: IllegalArgumentException => Left(e.getMessage)
 
   def run(trials: Int, freshCount: Int, sensitivityCount: Int, boundaries: Boolean = true,
-      completed: String => Unit = _ => ()): Result =
+      completed: String => Unit = _ => (),
+      referencePoints: Option[TrialReferencePoints] = None,
+      referenceStorage: TrialReferenceStorage = TrialReferenceStorage.FullJets,
+      cohort: Option[Vector[Sample]] = None): Result =
     val start = System.nanoTime()
     val f = TrialDomainProposal.fixture(trials)
     val outputs = f.prepare.flatMap(_.trialOutputs).fold(e => throw new IllegalArgumentException(e.message), identity)
     val axis = outputs.axis
-    val bank = axis.preparation.objective(TrialDomainProposal.references).fold(e => throw new IllegalArgumentException(e.message), identity)
+    val points = referencePoints.getOrElse(TrialReferencePoints(TrialDomainProposal.chart,
+      Vector.tabulate(8)(i => TrialDomainProposal.references.point(i).coordinates)))
+    val bank = axis.preparation.referenceBank(points, referenceStorage).fold(e => throw new IllegalArgumentException(e.message), identity)
     val g = geometry(f, bank, (System.nanoTime() - start) / 1e9)
     val times = f.dataset.samplingFrame.samples().map(_.value)
     val onsets = TrialNeighborhoodAudit.onsets(f)
-    val rows = samples(trials, freshCount, sensitivityCount, boundaries).zipWithIndex.map: (sample, index) =>
+    val rows = cohort.getOrElse(samples(trials, freshCount, sensitivityCount, boundaries)).zipWithIndex.map: (sample, index) =>
       val actual = TrialDomainProposal.coordinates(sample.unit)
-      val node = TrialDomainProposal.route(actual).fold(e => throw new IllegalArgumentException(e.toString), identity)
+      val node = points.nearest(actual).fold(e => throw new IllegalArgumentException(e.toString), identity)
       val design = TrialNeighborhoodAudit.originalDesign(f, actual)
       val raw = TrialNeighborhoodAudit.response(f, design, sample.noiseRatio, sample.responseSeed)
       val oracle = f.copy(rawBlock = raw).oracleDesign(0, design).take(trials)

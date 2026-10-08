@@ -306,7 +306,7 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     val expected = fields(parts(0).attempted).zip(fields(parts(1).attempted)).map((a, b) => a + b)
     assertEquals(attempted.firstOrderAttempts, 5L)
     assertEquals(attempted.firstOrderFailures, 1L)
-    assertEquals(expected.length, 24)
+    assertEquals(expected.length, 26)
     assertEquals(fields(attempted), expected)
     assertEquals(ProfileHrfFit.sumTrialWork(parts.reverse), total)
     assertEquals(ProfileHrfFit.sumTrialWork(Vector.empty).attempted,

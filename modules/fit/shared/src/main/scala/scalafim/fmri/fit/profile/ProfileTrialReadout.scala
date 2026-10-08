@@ -240,7 +240,7 @@ final case class ProfileTrialAdjointResult(
   * is a linear conditional operator only while that shape remains fixed.
   */
 final class ProfileTrialReadout private (
-    val bank: TrialBandedObjective,
+    val bank: TrialReferenceBank,
     val axis: ProfileTrialAxis,
     val actualCoordinates: Vector[Double],
     val referenceNode: Int,
@@ -393,7 +393,7 @@ object ProfileTrialReadout:
         else Right(scale -> lambda)
 
   def freeze(
-      bank: TrialBandedObjective,
+      bank: TrialReferenceBank,
       axis: ProfileTrialAxis,
       actualCoordinates: Vector[Double],
       referenceNode: Int,
@@ -402,8 +402,8 @@ object ProfileTrialReadout:
       evidence: ProfileTrialEvidenceRequest = ProfileTrialEvidenceRequest.PreparedBasisResidual
   ): Either[ProfileTrialReadoutError, ProfileTrialReadout] =
     if !(bank.preparation eq axis.preparation) then Left(ProfileTrialReadoutError.ForeignAxis)
-    else if referenceNode < 0 || referenceNode >= bank.grid.count then
-      Left(ProfileTrialReadoutError.InvalidReferenceNode(referenceNode, bank.grid.count))
+    else if referenceNode < 0 || referenceNode >= bank.points.count then
+      Left(ProfileTrialReadoutError.InvalidReferenceNode(referenceNode, bank.points.count))
     else if evidence == ProfileTrialEvidenceRequest.CertifiedOriginalEquations then
       Left(ProfileTrialReadoutError.CertificateUnavailable)
     else

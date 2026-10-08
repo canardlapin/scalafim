@@ -695,7 +695,8 @@ object ProfileHrfFit:
         a.conditionalInverseFailures + b.conditionalInverseFailures,
         a.conditionalCorrectionAttempts + b.conditionalCorrectionAttempts,
         a.conditionalCorrectionFailures + b.conditionalCorrectionFailures,
-        a.firstOrderAttempts + b.firstOrderAttempts, a.firstOrderFailures + b.firstOrderFailures)
+        a.firstOrderAttempts + b.firstOrderAttempts, a.firstOrderFailures + b.firstOrderFailures,
+        a.reconstructedBands + b.reconstructedBands, a.reconstructedBandProducts + b.reconstructedBandProducts)
     }
     parts.foldLeft(TrialBandedWorkSnapshot(0, 0, 0, 0, 0, 0, 0, 0, 0, attempted)) { (a, b) =>
       TrialBandedWorkSnapshot(a.voxels + b.voxels, a.trialBasisScores + b.trialBasisScores,

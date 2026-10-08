@@ -92,6 +92,9 @@ final case class TrialBandedWorkSnapshot(
   * separate counters; they do not change legacy readout/amplitude counters.
   *
   * First-order search requests/failures are separate from full-jet counters.
+  * Reconstructed bands count omitted derivative components contracted on demand;
+  * reconstructedBandProducts counts their scalar weight-times-Gram additions.
+  * These do not add inverse/factor attempts or include coefficient-weight assembly.
   * Small release solves, profile reduction and curvature checks are excluded.
   * Failed bank construction returns an error without exposing its setup receipt.
   */
@@ -119,7 +122,9 @@ final case class TrialBandedAttemptedWorkSnapshot(
     conditionalCorrectionAttempts: Long,
     conditionalCorrectionFailures: Long,
     firstOrderAttempts: Long = 0L,
-    firstOrderFailures: Long = 0L)
+    firstOrderFailures: Long = 0L,
+    reconstructedBands: Long = 0L,
+    reconstructedBandProducts: Long = 0L)
 
 final class TrialBandedWork private[profile] ():
   private[profile] var voxels: Long = 0L
@@ -155,6 +160,8 @@ final class TrialBandedWork private[profile] ():
   private[profile] var conditionalCorrectionFailures: Long = 0L
   private[profile] var firstOrderAttempts: Long = 0L
   private[profile] var firstOrderFailures: Long = 0L
+  private[profile] var reconstructedBands: Long = 0L
+  private[profile] var reconstructedBandProducts: Long = 0L
   // Additional ML accounting outside the attempted snapshot:
   // N-sized accepted-band factorisations within `factorAttempts`, and legacy scalar
   // constrained-determinant membership RHS columns within `rightHandSideAttempts`.
@@ -206,7 +213,9 @@ final class TrialBandedWork private[profile] ():
       conditionalCorrectionAttempts,
       conditionalCorrectionFailures,
       firstOrderAttempts,
-      firstOrderFailures)
+      firstOrderFailures,
+      reconstructedBands,
+      reconstructedBandProducts)
 
   def snapshot: TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(voxels, trialBasisScores, bankValueEvaluations, jetEvaluations, amplitudeCorrections,
@@ -370,8 +379,14 @@ final class TrialBandedPreparation private[profile] (
       out.energyValue = energy
       Right(out)
 
-  def objective(grid: NodeGrid): Either[TrialBandedError, TrialBandedObjective] =
-    TrialBandedObjective.make(this, grid)
+  def objective(grid: NodeGrid, storage: TrialReferenceStorage = TrialReferenceStorage.FullJets): Either[TrialBandedError, TrialBandedObjective] =
+    TrialBandedObjective.make(this, grid, storage)
+
+  /** Explicit readout/curvature references, independent of the decoder grid. */
+  def referenceBank(points: TrialReferencePoints,
+      storage: TrialReferenceStorage = TrialReferenceStorage.FullJets): Either[TrialBandedError, TrialReferenceBank] =
+    TrialBandedObjective.buildBank(this, points, storage).map: (references, receipt) =>
+      new TrialReferenceBank(this, points, storage, references, receipt)
 
 object TrialBandedPreparation:
 
@@ -605,7 +620,7 @@ private[profile] final class TrialMlResidualEnergy(val preparation: TrialBandedP
     System.arraycopy(response, 0, residual, 0, response.length)
     java.util.Arrays.fill(conditionSums, 0.0)
 
-private final case class TrialBandedReference(
+private[profile] final case class TrialBandedReference(
     coefficients: Array[Double],
     accepted: TrialAcceptedTrialBand,
     aJets: Array[Double],
@@ -619,11 +634,12 @@ private final case class TrialBandedReference(
 /** Trial-sized profile objective. Its node factors and releases are immutable
   * and shared; each worker owns only response statistics and primitive scratch.
   */
-final class TrialBandedObjective private (
+sealed class TrialReferenceBank private[profile] (
     val preparation: TrialBandedPreparation,
-    val grid: NodeGrid,
+    val points: TrialReferencePoints,
+    val storage: TrialReferenceStorage,
     private val references: Vector[TrialBandedReference],
-    val setupReceipt: TrialBandedSetupReceipt) extends FirstOrderShapeObjective:
+    val setupReceipt: TrialBandedSetupReceipt):
 
   private val n = preparation.trials
   private val m = preparation.basisRank
@@ -633,6 +649,17 @@ final class TrialBandedObjective private (
   private val d = preparation.basis.family.dimension
   private val comps = JetLayout.components(d)
   private val bandSize = preparation.packedBandSize
+  private val reconstructionCapacity =
+    if storage == TrialReferenceStorage.ReconstructSecondBands then bandSize else 0
+  // A readout-only worker never uses derivative bands. Capacity is still charged
+  // in its worker estimate, but the buffer is retained only after curvature work.
+  private var reconstructedBandData: Array[Double] = Array.emptyDoubleArray
+  private def reconstructedBand: Array[Double] =
+    if reconstructedBandData.length != reconstructionCapacity then
+      reconstructedBandData = new Array[Double](reconstructionCapacity)
+    reconstructedBandData
+
+  def retainedReconstructionScratchBytes: Long = 8L * reconstructedBandData.length
   private val responseB = new Array[Double](comps * n)
   private val zTy = new Array[Double](comps * k)
   private val wbJets = new Array[Double](comps * n)
@@ -663,7 +690,12 @@ final class TrialBandedObjective private (
     components.toLong * m + components.toLong * bandSize + 2L * components * n * k +
       components.toLong * k * k + 2L * bandSize + k.toLong * k
 
-  val estimatedReferenceBytes: Long = 8L * referenceDoubles(comps)
+  val estimatedFullReferenceBytes: Long = 8L * referenceDoubles(comps)
+  val estimatedReferenceBytes: Long = estimatedFullReferenceBytes -
+    (if storage == TrialReferenceStorage.ReconstructSecondBands then 8L * (comps - 1 - d) * bandSize else 0L)
+  /** Largest derivative reconstruction buffer retained by each worker. */
+  val reconstructionScratchBytes: Long = 8L * reconstructionCapacity
+  /** Hypothetical lower-order references, not the compact full-jet storage. */
   val estimatedFirstOrderReferenceBytes: Long = 8L * referenceDoubles(1 + d)
   val estimatedValueReferenceBytes: Long = 8L * referenceDoubles(1)
   val estimatedValueBuildBytes: Long = estimatedValueReferenceBytes + 8L * n * (k + c)
@@ -680,7 +712,7 @@ final class TrialBandedObjective private (
     val worker = responseB.length.toLong + zTy.length + wbJets.length +
       s.length + b.length + g.length + n.toLong + n.toLong + n.toLong +
       scoreRelease.length + scoreSolved.length + conditionalRelease.length +
-      comps.toLong * preparation.basis.fineCount + coefficients.length
+      comps.toLong * preparation.basis.fineCount + coefficients.length + reconstructionCapacity
     8L * worker
 
   /** Scoped shared estimate plus one listed objective-array estimate. */
@@ -689,7 +721,7 @@ final class TrialBandedObjective private (
   /** A new mutable worker over the same immutable preparation and reference
     * factors. No Gram block, factor or response-independent jet is rebuilt.
     */
-  def newWorker(): TrialBandedObjective = new TrialBandedObjective(preparation, grid, references, setupReceipt)
+  def newWorker(): TrialReferenceBank = new TrialReferenceBank(preparation, points, storage, references, setupReceipt)
 
   def amplitudeCount: Int = c
 
@@ -896,10 +928,10 @@ final class TrialBandedObjective private (
     val width = preparation.bandWidth
     def band(component: Int): DMat =
       val out = DMatBuilder.zeros(n, width)
-      val base = component * bandSize
+      val (bands, base) = derivativeBand(reference, component)
       var i = 0
       while i < bandSize do
-        out.writeLinear(i, reference.aJets(base + i))
+        out.writeLinear(i, bands(base + i))
         i += 1
       out.result()
     val first = Vector.tabulate(d)(axis => band(JetLayout.first(axis)))
@@ -1396,11 +1428,12 @@ final class TrialBandedObjective private (
   /** Solve the differentiated `A w = b` system for one response RHS. */
   private def solveResponseComponent(ref: TrialBandedReference, comp: Int, axisP: Int, axisQ: Int): Boolean =
     val target = comp * n
+    val (bands, bandOffset) = derivativeBand(ref, comp)
     var i = 0
     while i < n do
       var value = responseB(target + i)
       if comp != JetLayout.Value then
-        value -= bandVectorProduct(ref.aJets, comp, wbJets, 0, i)
+        value -= bandVectorProduct(bands, bandOffset / bandSize, wbJets, 0, i)
         if axisQ >= 0 then
           value -= bandVectorProduct(ref.aJets, JetLayout.first(axisP), wbJets, JetLayout.first(axisQ) * n, i)
           value -= bandVectorProduct(ref.aJets, JetLayout.first(axisQ), wbJets, JetLayout.first(axisP) * n, i)
@@ -1419,6 +1452,48 @@ final class TrialBandedObjective private (
           wbJets(target + i) = jetSolveBuilder(i, 0)
           i += 1
         true
+
+  /** Same basis-pair contraction and summation order as setup; only the second
+    * bands are omitted from immutable storage. One buffer is reused between
+    * components, with no additional inverse or factorisation.
+    */
+  private def derivativeBand(ref: TrialBandedReference, component: Int): (Array[Double], Int) =
+    if (component + 1) * bandSize <= ref.aJets.length then (ref.aJets, component * bandSize)
+    else
+      val scratch = reconstructedBand
+      require(scratch.length == bandSize)
+      java.util.Arrays.fill(scratch, 0.0)
+      var axisP = 0
+      var axisQ = 0
+      var p = 0
+      while p < d do
+        var q = p
+        while q < d do
+          if JetLayout.second(d, p, q) == component then
+            axisP = p
+            axisQ = q
+          q += 1
+        p += 1
+      val coefficients = ref.coefficients
+      var q = 0
+      while q < m do
+        p = 0
+        while p <= q do
+          val weight = coefficients(component * m + p) * coefficients(q) +
+            coefficients(JetLayout.first(axisP) * m + p) * coefficients(JetLayout.first(axisQ) * m + q) +
+            coefficients(JetLayout.first(axisQ) * m + p) * coefficients(JetLayout.first(axisP) * m + q) +
+            coefficients(p) * coefficients(component * m + q)
+          if weight != 0.0 then
+            val block = TrialBandedPreparation.pairIndex(p, q) * bandSize
+            var i = 0
+            while i < bandSize do
+              scratch(i) += weight * preparation.gramBlocksData(block + i)
+              i += 1
+            work.reconstructedBandProducts += bandSize.toLong
+          p += 1
+        q += 1
+      work.reconstructedBands += 1L
+      (scratch, 0)
 
   private def bandVectorProduct(bands: Array[Double], comp: Int, vector: Array[Double], vectorOffset: Int, row: Int): Double =
     val width = preparation.bandWidth
@@ -1487,32 +1562,54 @@ final class TrialBandedObjective private (
       i += 1
     sum
 
+/** Regular-grid decoder objective. Explicit point banks do not implement
+  * ShapeObjective and therefore cannot accidentally masquerade as a grid.
+  */
+final class TrialBandedObjective private (
+    preparation: TrialBandedPreparation,
+    val grid: NodeGrid,
+    storage: TrialReferenceStorage,
+    references: Vector[TrialBandedReference],
+    receipt: TrialBandedSetupReceipt)
+    extends TrialReferenceBank(preparation, TrialReferencePoints.fromGrid(grid), storage, references, receipt)
+    with FirstOrderShapeObjective:
+  override def newWorker(): TrialBandedObjective =
+    new TrialBandedObjective(preparation, grid, storage, references, receipt)
+
 object TrialBandedObjective:
 
-  def make(preparation: TrialBandedPreparation, grid: NodeGrid): Either[TrialBandedError, TrialBandedObjective] =
+  def make(preparation: TrialBandedPreparation, grid: NodeGrid,
+      storage: TrialReferenceStorage = TrialReferenceStorage.FullJets): Either[TrialBandedError, TrialBandedObjective] =
+    buildBank(preparation, TrialReferencePoints.fromGrid(grid), storage).map: (references, receipt) =>
+      new TrialBandedObjective(preparation, grid, storage, references, receipt)
+
+  private[profile] def buildBank(preparation: TrialBandedPreparation, points: TrialReferencePoints,
+      storage: TrialReferenceStorage): Either[TrialBandedError, (Vector[TrialBandedReference], TrialBandedSetupReceipt)] =
     val basis = preparation.basis
-    if grid.dimension != basis.family.dimension then
-      Left(TrialBandedError.Factorisation(s"grid dimension ${grid.dimension} does not match family dimension ${basis.family.dimension}"))
+    if points.chart.dimension != basis.family.dimension || points.coordinates.exists(p => basis.family.chart.point(p).isLeft) then
+      Left(TrialBandedError.Factorisation("reference coordinates must lie inside the family chart"))
     else
       val comps = basis.family.jetComponents
       val scratch = new Array[Double](comps * basis.fineCount)
       val coefficients = new Array[Double](comps * basis.rank)
-      val coords = new Array[Double](grid.dimension)
       val refs = Vector.newBuilder[TrialBandedReference]
       val setupWork = new TrialBandedWork
       var node = 0
-      while node < grid.count do
-        grid.coordinatesInto(node, coords)
-        basis.coefficientJetInto(ShapePoint.unsafe(coords.toVector), scratch, coefficients, comps)
-        reference(preparation, coords.toVector, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node),
+      while node < points.count do
+        val coords = points.coordinates(node)
+        basis.coefficientJetInto(ShapePoint.unsafe(coords), scratch, coefficients, comps)
+        reference(preparation, coords, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node),
           setupWork) match
           case Left(error) => return Left(error)
-          case Right(ref) => refs += ref
+          case Right(ref) =>
+            val retained = if storage == TrialReferenceStorage.FullJets then ref else
+              ref.copy(aJets = java.util.Arrays.copyOf(ref.aJets, (1 + basis.family.dimension) * preparation.packedBandSize))
+            refs += retained
         node += 1
       val setup = setupWork.snapshot.attempted
-      Right(new TrialBandedObjective(preparation, grid, refs.result(), TrialBandedSetupReceipt(setup.referenceAttempts, setup)))
+      Right((refs.result(), TrialBandedSetupReceipt(setup.referenceAttempts, setup)))
 
-  private def reference(
+  private[profile] def reference(
       prep: TrialBandedPreparation,
       coordinates: Vector[Double],
       coefficients: Array[Double],
