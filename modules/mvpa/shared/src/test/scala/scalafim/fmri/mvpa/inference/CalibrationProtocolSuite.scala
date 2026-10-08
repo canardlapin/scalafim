@@ -102,3 +102,9 @@ class CalibrationProtocolSuite extends FunSuite:
     assert(failed.contains("\"raw_p_values\":null"))
     assert(failed.contains("\"closed_p_values\":null"))
     assert(failed.contains("\"record_schema\":2"))
+
+  test("an explicit new namespace has independent assignments and preserves the v1 default"):
+    val current = right(CalibrationProtocolSupport.seed("fixture","namespace-check",0,"scalafim/umvpa/rank-method-comparison/v2"))
+    assertEquals(current,7722599716925168164L)
+    assertNotEquals(current,right(CalibrationProtocolSupport.seed("fixture","namespace-check",0)))
+    assert(CalibrationProtocolSupport.seed("fixture","namespace-check",0,"").isLeft)

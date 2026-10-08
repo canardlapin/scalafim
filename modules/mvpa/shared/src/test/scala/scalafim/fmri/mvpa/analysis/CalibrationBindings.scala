@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.analysis
 
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import multivar.inference.{Alpha, MonteCarloDraws}
+import multivar.inference.{Alpha, CanonicalRankMethod, MonteCarloDraws}
 import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
@@ -20,7 +20,8 @@ object CalibrationBindings:
     adapt(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(name + "-root"), id)))
   private def values(name: String) = ValueIdentity.source(ValueId.unsafe(name))
 
-  def rank(x: DMat, y: DMat, nuisance: DMat, rootSeed: Long, draws: Int, scenario: String, ordinal: Int = 0): Either[String, RankConfirmationResult] =
+  def rank(x: DMat, y: DMat, nuisance: DMat, rootSeed: Long, draws: Int, scenario: String, ordinal: Int = 0,
+      method: CanonicalRankMethod = CanonicalRankMethod.GaussianInterlacingWilksV1): Either[String, RankConfirmationResult] =
     val p = x.cols; val q = y.cols; val k = math.min(p, q)
     if x.rows != y.rows || nuisance.rows != x.rows || k <= 0 then Left("rank input shape")
     else CalibrationProtocolSupport.bindingIdentity(scenario, ordinal, rootSeed).flatMap: identity =>
@@ -57,7 +58,7 @@ object CalibrationBindings:
         design <- adapt(ConfirmationDesign.admit(ConfirmationClaim.FixedDiscoveryC1, discovery, confirmation, exposure(confirmation.identity),
           C1Contract("fixed independently declared projections", "remaining canonical roots zero", "independent rows in candidate spaces",
             Vector.tabulate(k)(i => "rank-" + (i + 1)), "spherical joint Gaussian declared", Vector("candidate projections"),
-            Vector("nuisance and stepwise CCA")), z, ConfirmationErrorLaw.IndependentGaussian))
+            Vector("nuisance residual coordinates", method.identity)), z, ConfirmationErrorLaw.IndependentGaussian))
         candidateBrain <- adapt(FrozenProjection(neural, brainCandidate, DMat.eye(p), ProjectionKind.DeclaredLinearProjection))
         candidateTarget <- adapt(FrozenProjection(target, targetCandidate, DMat.eye(q), ProjectionKind.DeclaredLinearProjection))
         frozen <- adapt(RankFrozenSubspaces.freeze(discovery, candidateBrain, candidateTarget, exposure(discovery.identity), "predeclared independent score-space identity"))
@@ -68,6 +69,6 @@ object CalibrationBindings:
         responses <- adapt(MultiResponse.fromDense(rows, target, y, values(identity + "-Y"), targetSource))
         count <- adapt(MonteCarloDraws(draws))
         alpha <- adapt(Alpha(.05))
-        resamplingSeed <- CalibrationProtocolSupport.child(rootSeed, 103, 0)
-        result <- adapt(RankConfirmation.run(design, frozen, law, observations, responses, Seed.fromLong(resamplingSeed), count, alpha))
+        resamplingSeed <- CalibrationProtocolSupport.child(rootSeed, 103, method.ordinal)
+        result <- adapt(RankConfirmation.run(design, frozen, law, observations, responses, Seed.fromLong(resamplingSeed), count, alpha, method = method))
       yield result

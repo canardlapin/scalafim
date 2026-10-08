@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.analysis
 import gale.backend.Backend.given
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import multivar.inference.{Alpha, CanonicalRankSampling, CanonicalResidualMethod, MonteCarloDraws, PermutationAction}
+import multivar.inference.{Alpha, CanonicalRankMethod, CanonicalRankSampling, FixedCanonicalRankResult, GaussianCanonicalRankResult, CanonicalResidualMethod, MonteCarloDraws, PermutationAction}
 import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
@@ -58,7 +58,7 @@ class RankConfirmationSuite extends munit.FunSuite:
       override def transposeApplyTo(input: DVec, output: MutableDVec): Unit = x.transposeApplyTo(input, output)
     val observations = right(Observations.fromOperator(rows, neural, operator, value("rank-brain"), source("rank-brain")))
     val responses = right(MultiResponse.fromDense(rows, target, y, value("rank-target"), source("rank-target")))
-    def run(budget: RankConfirmationBudget = RankConfirmationBudget()) = joint.flatMap(law => RankConfirmation.run(design, candidates, law, observations, responses, Seed.fromLong(39251L), right(MonteCarloDraws(39)), right(Alpha(.05)), budget))
+    def run(budget: RankConfirmationBudget = RankConfirmationBudget(), method: CanonicalRankMethod = CanonicalRankMethod.GaussianInterlacingWilksV1) = joint.flatMap(law => RankConfirmation.run(design, candidates, law, observations, responses, Seed.fromLong(39251L), right(MonteCarloDraws(39)), right(Alpha(.05)), budget, method))
 
   private def analyticScenario(rank: Int, dependent: Boolean): ScenarioResult =
     val f = new Fixture(rank, dependent)
@@ -71,7 +71,9 @@ class RankConfirmationSuite extends munit.FunSuite:
       ScenarioHarness.fact("calibration-pending", result.calibrationStatus == RankCalibrationStatus.PendingFrozenProtocol && result.admittedDetectableRank.isLeft, "unit fixtures do not qualify frozen calibration"),
       ScenarioHarness.fact("actual-rows-and-units", result.confirmationRows == f.rows.descriptor && result.independentUnits == f.units.descriptor && result.rowUnitOrdinals == Vector.range(0,16), "actual confirmation mapping"),
       ScenarioHarness.fact("actual-residual-basis", result.residualBasis.method == CanonicalResidualMethod.HuhJhun && result.residualBasis.matrix.rows == 16 && result.residualBasis.matrix.cols == 14 && result.nuisanceWorkingDesign.cols == 3 && result.residualBasisIdentity.length == 64, "actual Huh-Jhun basis and augmented nuisance design"),
-      ScenarioHarness.fact("explicit-exchangeability", result.jointLaw.assumption == RankExchangeabilityAssumption.SphericalJointGaussianRows && result.candidateArithmetic.action.isInstanceOf[PermutationAction.Unrestricted] && result.candidateArithmetic.sampling.isInstanceOf[CanonicalRankSampling.DistinctNonIdentity], "declared spherical Gaussian residual coordinates and distinct non-identity unrestricted actions")
+      ScenarioHarness.fact("explicit-Gaussian-reference", result.jointLaw.assumption == RankExchangeabilityAssumption.SphericalJointGaussianRows && result.method == CanonicalRankMethod.GaussianInterlacingWilksV1 && (result.candidateArithmetic match
+        case gaussian: GaussianCanonicalRankResult => gaussian.references.map(r => (r.rows,r.smallerColumns,r.largerColumns)) == Vector((14,2,3),(14,1,3)) && gaussian.hypothesisSeeds.distinct.size == 2
+        case _ => false), "independent finite Gaussian reference with only the smaller block reduced")
     ))
 
   test("rank-zero, rank-one and rank-two analytic workflows retain fixed candidates and pending calibration"):
@@ -101,7 +103,7 @@ class RankConfirmationSuite extends munit.FunSuite:
     val f = new Fixture
     assert(f.run(RankConfirmationBudget(0, 100)).isLeft)
     assert(f.run(RankConfirmationBudget(1000000, 1)).isLeft)
-    assert(f.run(RankConfirmationBudget(1000000, 1000, 38)).isLeft)
+    assert(f.run(RankConfirmationBudget(1000000, 1000, 38), CanonicalRankMethod.ScoreOrthogonalPermutationV2).isLeft)
     val foreignRows = axis("foreign-rank-rows",16)
     val foreign = right(MultiResponse.fromDense(foreignRows, f.target, f.y, value("foreign-target"), source("foreign-target")))
     val foreignBrain = right(Observations.fromDense(foreignRows, f.neural, f.x, value("foreign-brain"), source("foreign-brain")))
@@ -121,3 +123,27 @@ class RankConfirmationSuite extends munit.FunSuite:
     assert(RankConfirmation.run(f.design, f.candidates, right(f.joint), f.observations, responses, Seed.fromLong(1L), right(MonteCarloDraws(39)), right(Alpha(.05)), RankConfirmationBudget(0, 1000)).isLeft)
     assertEquals(targetReads, 0)
     assertEquals(f.reads, 0)
+
+  test("score-completed permutation remains an explicit unqualified comparator"):
+    val f = new Fixture
+    val result = right(f.run(method = CanonicalRankMethod.ScoreOrthogonalPermutationV2))
+    assertEquals(result.method,CanonicalRankMethod.ScoreOrthogonalPermutationV2)
+    result.candidateArithmetic match
+      case permutation: FixedCanonicalRankResult =>
+        assert(permutation.action.isInstanceOf[PermutationAction.Unrestricted])
+        assert(permutation.sampling.isInstanceOf[CanonicalRankSampling.DistinctNonIdentity])
+      case _ => fail("expected permutation arithmetic")
+    assert(result.admittedDetectableRank.isLeft)
+
+  test("Gaussian reference does not consume a permutation candidate budget"):
+    val f = new Fixture
+    val result = right(f.run(RankConfirmationBudget(1000000,1000,0)))
+    assertEquals(result.method,CanonicalRankMethod.GaussianInterlacingWilksV1)
+    assert(result.admittedDetectableRank.isLeft)
+
+  test("zero-root permutation refusal cannot remove hypotheses from the Gaussian result"):
+    val f = new Fixture(rank = 0)
+    assert(f.run(method = CanonicalRankMethod.ScoreOrthogonalPermutationV2).isLeft)
+    val result = right(f.run())
+    assertEquals(result.candidateArithmetic.receipts.size,2)
+    result.candidateArithmetic.receipts.foreach(r => assertEqualsDouble(r.pValue.value,1.0,0.0))
