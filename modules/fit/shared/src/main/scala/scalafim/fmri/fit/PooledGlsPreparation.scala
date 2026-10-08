@@ -1,9 +1,9 @@
 package scalafim.fmri.fit
 
 import scalafim.dataset.DatasetSeriesReader
-import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArNoiseSummary, ArOrder, ArOrderValue, NoiseEstimationLayout, NoisePooling, WhiteningPlan, WhiteningMethod, InitialConditionPolicy}
+import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArNoiseSummary, ArOrder, ArOrderValue, NoiseEstimationLayout, NoiseFit, NoisePooling, PreparedCorrection, RunCorrection, WhiteningPlan, WhiteningMethod, InitialConditionPolicy}
 import scalafim.fmri.design.CoefficientAxis
-import scalafim.fmri.model.{ArOptions, AutocorrelationConfig, FitPlan, FitStrategy}
+import scalafim.fmri.model.{ArBiasCorrection, ArOptions, AutocorrelationConfig, FitPlan, FitStrategy}
 
 /** Replays spatial blocks for each noise-estimation pass. Only raw per-run lag
   * statistics cross the reduction boundary; no population response or residual
@@ -17,7 +17,8 @@ private[fit] object PooledGlsPreparation:
       layout: NoiseEstimationLayout,
       initial: OlsPrepared,
       axis: Option[CoefficientAxis],
-      run: Option[RunwiseGlsDesign]
+      run: Option[RunwiseGlsDesign],
+      correction: Option[PreparedCorrection]
   ):
     def bind(error: FitError): FitError =
       val structural = axis.fold(error)(FitKernel.bindRankFailure(error, _))
@@ -31,10 +32,24 @@ private[fit] object PooledGlsPreparation:
         if config.global then NoisePooling.Global else NoisePooling.Run,
         exactFirstAr1 = config.exactFirst)
 
-    def prepared(whitening: WhiteningPlan, voxels: Vector[Int]): GlsPrepared =
-      val shared = GlsWhitening.Shared(whitening)
+    def summarize(residuals: gale.linalg.DMat): Either[FitError, ArNoiseSummary] =
+      val order = ArOrderValue.unsafe(config.order.value)
+      correction.fold(ArEstimation.summarizeNoise(residuals, layout, order)) { prepared =>
+        ArEstimation.summarizeNoise(residuals, layout, order, design.value, prepared)
+      }.left.map(Gls.arToFitError)
+
+    def estimate(summary: ArNoiseSummary): Either[FitError, PreparedGlsUnit] =
+      val estimated = correction match
+        case None => ArEstimation.fitNoise(summary, noiseOptions).map(_ -> Vector.empty[RunCorrection])
+        case Some(_) => NoiseFit.estimate(summary, noiseOptions).map(fit => fit.plan -> fit.corrections)
+      estimated.left.map(Gls.arToFitError).map { (whitening, statuses) =>
+        PreparedGlsUnit(run.map(_.partition.runIndex), whitening, statuses)
+      }
+
+    def prepared(unit: PreparedGlsUnit, voxels: Vector[Int]): GlsPrepared =
+      val shared = GlsWhitening.Shared(unit.whitening, unit.corrections)
       GlsPrepared(design, partitions, shared,
-        Gls.diagnostics(shared, partitions, "estimated", Gls.diagnosticIterations(config)),
+        Gls.diagnostics(shared, partitions, "estimated", Gls.diagnosticIterations(config), config.biasCorrection),
         initial.diagnostics, voxels)
 
   def prepare(
@@ -53,23 +68,23 @@ private[fit] object PooledGlsPreparation:
     prepared.flatMap(shared(source, _))
 
   private def shared(source: BoundedResponseReplay, unit: NoiseUnit): Either[FitError, GlsPrepared] =
-    var previous = Option.empty[WhiteningPlan]
+    var previous = Option.empty[PreparedGlsUnit]
     var pass = 0
     while pass < math.max(1, unit.config.iterations) do
       var summary = Option.empty[ArNoiseSummary]
       source.foreachBlock { input =>
         val fitted = previous.fold(unit.initial.fit(input.response))(
-          Gls.fitWithPlan(_, unit.design.value, input.response.value))
+          value => Gls.fitWithPlan(value.whitening, unit.design.value, input.response.value))
         for
           fit <- fitted
           residuals = Gls.residualMatrix(unit.design.value, input.response.value, fit.coefficients.value)
-          next <- ArEstimation.summarizeNoise(residuals, unit.layout, ArOrderValue.unsafe(unit.config.order.value)).left.map(Gls.arToFitError)
+          next <- unit.summarize(residuals)
           combined <- summary.fold[Either[FitError, ArNoiseSummary]](Right(next))(_.merge(next).left.map(Gls.arToFitError))
         yield summary = Some(combined)
       } match
         case Left(error) => return Left(unit.bind(error))
         case Right(_) => ()
-      ArEstimation.fitNoise(summary.get, unit.noiseOptions).left.map(Gls.arToFitError) match
+      unit.estimate(summary.get) match
         case Left(error) => return Left(unit.bind(error))
         case Right(value) => previous = Some(value)
       pass += 1
@@ -114,7 +129,7 @@ private[fit] object PooledGlsPreparation:
         unit.partitions.map(p => s"${p.runIndex}:${p.rowIndices.mkString(",")}:${p.timepoints.mkString(",")}").mkString(";"),
         unit.run.flatMap(_.projection).fold("")(_.sourceColumnIndices.mkString(",")),
         PreparedGlsArtifact.policyIdentity(unit.initial.diagnostics.policy)
-      ))
+      ) ++ (if unit.config.biasCorrection == ArBiasCorrection.Raw then Vector.empty else Vector(ResponsePreparationIdentity.biasCorrection(unit.config.biasCorrection))))
     }
     FitWorkDescriptor.frame(header ++ designs)
 
@@ -127,7 +142,7 @@ private[fit] object PooledGlsPreparation:
       if saved.designIdentity != identity(plan, units) then
         Left(PreparedGlsArtifact.invalid("design or preparation configuration differs"))
       else validateWhitening(units, saved.units).map { _ =>
-        context(plan, chunks, units, saved.units.map(_.whitening), saved.retainedVoxelIndices)
+        context(plan, chunks, units, saved.units, saved.retainedVoxelIndices)
       }
     }
 
@@ -155,6 +170,10 @@ private[fit] object PooledGlsPreparation:
           w.initialCondition != initial || w.method != WhiteningMethod.Estimated || w.maOrder != 0 ||
           w.coefficients.map(_.arOrder) != expectedOrders then
         return Left(PreparedGlsArtifact.invalid(s"whitening contract differs for unit $index"))
+      if unit.config.biasCorrection == ArBiasCorrection.Raw then
+        if snapshot.corrections.nonEmpty then return Left(PreparedGlsArtifact.invalid(s"unexpected correction outcomes for unit $index"))
+      else if snapshot.corrections.length != unit.layout.runCount || snapshot.corrections.contains(RunCorrection.Uncorrected) then
+        return Left(PreparedGlsArtifact.invalid(s"correction outcomes differ for unit $index"))
       index += 1
     Right(())
 
@@ -171,7 +190,8 @@ private[fit] object PooledGlsPreparation:
       layout <- Gls.noiseEstimationLayout(partitions, options.censoredTimepoints)
       initial <- Ols.prepare(design)
       _ <- ResidualDegreesOfFreedom(design.timepoints - initial.diagnostics.rank)
-    yield NoiseUnit(design, partitions, config, layout, initial, axis, run)
+      correction <- Gls.preparedCorrection(design.value, layout, config)
+    yield NoiseUnit(design, partitions, config, layout, initial, axis, run, correction)
     prepared.left.map { error =>
       val structural = axis.fold(error)(FitKernel.bindRankFailure(error, _))
       run.fold(structural)(value => FitError.RunwiseFitFailed(value.partition.runIndex, structural))
@@ -203,6 +223,7 @@ private[fit] object PooledGlsPreparation:
     val iterations = math.max(1, plan.config.autocorrelation.iterations)
     var units = Vector.empty[NoiseUnit]
     var previous = Vector.empty[WhiteningPlan]
+    var completedUnits = Vector.empty[PreparedGlsUnit]
     var pass = 0
     while pass < iterations do
       var summaries = Array.fill[Option[ArNoiseSummary]](units.length)(None)
@@ -241,8 +262,7 @@ private[fit] object PooledGlsPreparation:
                 fit <- fitted
                 // Noise estimation uses ORIGINAL residuals, not whitened ones.
                 residuals = Gls.residualMatrix(unit.design.value, response.value, fit.coefficients.value)
-                summary <- ArEstimation.summarizeNoise(residuals, unit.layout, ArOrderValue.unsafe(unit.config.order.value))
-                  .left.map(Gls.arToFitError)
+                summary <- unit.summarize(residuals)
                 combined <- summaries(unitIndex) match
                   case None => Right(summary)
                   case Some(current) => current.merge(summary).left.map(Gls.arToFitError)
@@ -253,26 +273,27 @@ private[fit] object PooledGlsPreparation:
               unitIndex += 1
         chunkIndex += 1
       if summaries.isEmpty || summaries.head.isEmpty then return Left(FitError.AllVoxelsExcluded(excluded.result()))
-      val completed = Vector.newBuilder[WhiteningPlan]
+      val completed = Vector.newBuilder[PreparedGlsUnit]
       var unitIndex = 0
       while unitIndex < units.length do
         val unit = units(unitIndex)
-        ArEstimation.fitNoise(summaries(unitIndex).get, unit.noiseOptions).left.map(Gls.arToFitError) match
+        unit.estimate(summaries(unitIndex).get) match
           case Left(error) => return Left(unit.bind(error))
           case Right(whitening) => completed += whitening
         unitIndex += 1
-      previous = completed.result()
+      completedUnits = completed.result()
+      previous = completedUnits.map(_.whitening)
       pass += 1
     val voxels = membership.iterator.flatten.toVector
     val saved = CompletedGlsNoise(if saveIdentity then identity(plan, units) else "", voxels,
-      units.zip(previous).map((unit, whitening) => PreparedGlsUnit(unit.run.map(_.partition.runIndex), whitening)))
-    Right((context(plan, chunks, units, previous, voxels), saved))
+      completedUnits)
+    Right((context(plan, chunks, units, completedUnits, voxels), saved))
 
   private def context(
       plan: FitPlan,
       chunks: FitChunkPlan,
       units: Vector[NoiseUnit],
-      whitening: Vector[WhiteningPlan],
+      whitening: Vector[PreparedGlsUnit],
       voxels: Vector[Int]
   ): PreparedFitContext =
     val fitted = plan.strategy match

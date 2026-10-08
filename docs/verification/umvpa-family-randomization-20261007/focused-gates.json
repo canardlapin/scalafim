@@ -1,0 +1,30 @@
+{
+  "status": "historical-focused-engineering-passed; superseded by bounded failure metadata fix",
+  "scientificRelease": "PendingFrozenProtocol",
+  "executedBy": "parent agent; this packet author ran no build",
+  "platformCounts": {
+    "JVM": {
+      "newVoxelFamily": 9,
+      "newFamilyThreshold": 4,
+      "regressionAndGroup": 34,
+      "total": 47
+    },
+    "JS": {
+      "newVoxelFamily": 9,
+      "newFamilyThreshold": 4,
+      "regressionAndGroup": 34,
+      "total": 47
+    }
+  },
+  "log": {
+    "path": "logs/umvpa-family-group-focused-retry-20261007.log",
+    "sha256": "10262936c0f57562bd3937f6a17835a1d018ab37b4fcd703871925503b738822"
+  },
+  "remainingFinding": "failure metadata vector can retain B-by-failed-member entries; proposed compact count plus first failure",
+  "testedSources": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala": "891fc2dd0d5f7588bae1f88f6c7064ff5a7deff0b16c7363e41bcd2f279e9425",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomizationSuite.scala": "5ec99a990978eb936c7c68238c13bb6954a36032756d85081020449aab02db2e",
+    "modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/FamilyThreshold.scala": "ff04285b53242f37dda55eba71fbe6c423e22dc14e9cd266eaf14655566b3e50",
+    "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/FamilyThresholdSuite.scala": "7cf19a453a58d52e6b938a2e193d330d16bc1f6fc14ae482548e7cb6c7de9697"
+  }
+}

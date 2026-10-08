@@ -1,0 +1,192 @@
+{
+  "branch": "work/umvpa-family-group-20261007",
+  "base": "d6e922a038049ce30d4de5f5c72b11eae71ca11f",
+  "sources": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala": "5dac8b1bfa75da7b98b7164b630cecb2525bf1cc13c5b244ef6193b7b85e4387",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelLoadingConfirmation.scala": "e00962e8ca2f18a31ea052d159ccb2d12236ad9bca51b4ac6c06f2383c91933d",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala": "37b75046460d21b5efa6985a7b0621f1b681f9e2a8ccd32c6ec4786a66e17814",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinatesSuite.scala": "0d178ac22607338cb0ddcbba85ad0de7488c820a0f63b6855e1ce8141e6d7018",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelLoadingConfirmationSuite.scala": "f37c2dacf4b7e24058f0e1ad22c86927f01bbfae278d276789a728f24090703f",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomizationSuite.scala": "249543cb0f6477072fe93ecde9dc15e4a848d3728a43b632cbc6aabfb17648aa",
+    "modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/FamilyThreshold.scala": "cb4875e198c6d36424bef3ef91bd5ee1eb94ffc336cafaa9ae628e920f79bd36",
+    "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/FamilyThresholdSuite.scala": "efbde63e4023b704c1889b1bd03b6169a8e4cc68ad86574e22c2d93f6c6edc2f",
+    "modules/mvpa-group/shared/src/main/scala/scalafim/fmri/mvpa/group/SubjectGroupBridge.scala": "84267786eb51734833cc5625f1d727a2be8311ed2961c225fe326a607703d2f3",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupBridgeSuite.scala": "7bbcf5105cf6e93cbbc0d531e7c56073f6779f9bf3a9d24d9e5d92ebda6efe53",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala": "5a60ef17608362cc238b2d0a3a25f993d610fd1cd9b5ddec67b926c220f8b724",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala": "446ffab878bd7a95131ea034cb5e2fb2c8f4a1a2ccfbd637cfe47af863d48df5",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/FixedRepresentationInferenceSuite.scala": "ab1e6ef42c4e64acf924b973e4d1fa526b95c7eec497a0f901d5ab0ea68abbaa",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala": "8bd6a69ce2eddd5a118efaad0310d8ca0c6204b0861d9d79957ec97a06ebba64",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala": "07748868d288c8ee320f6e00ca2e418d65a1c1d045d6d4f9c9ca4fc8d208849c",
+    "modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationPlatform.scala": "e5a74392ba030b3327a7b575d3f4d755640e54aba354fd41a55a3f4cf698f490",
+    "modules/mvpa/js/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationPlatform.scala": "1f15ce169535e6a78c7ba3cb6462618dab91d2c5cc8f0048608db055ebf33e33"
+  },
+  "gates": [
+    {
+      "platform": "jvm",
+      "command": "python3 tools/build/sbt-warm mvpaJVM/test",
+      "exit": 0,
+      "total": 455,
+      "passed": 454,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 1,
+      "warm_seconds": 10.2,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log",
+      "sha256": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d"
+    },
+    {
+      "platform": "jvm",
+      "command": "python3 tools/build/sbt-warm mvpaSpatialJVM/test",
+      "exit": 0,
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 7.1,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log",
+      "sha256": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d"
+    },
+    {
+      "platform": "jvm",
+      "command": "python3 tools/build/sbt-warm mvpaGroupJVM/test",
+      "exit": 0,
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 7.2,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log",
+      "sha256": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d"
+    },
+    {
+      "platform": "jvm",
+      "command": "python3 tools/build/sbt-warm groupJVM/test",
+      "exit": 0,
+      "total": 75,
+      "passed": 75,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 4.9,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log",
+      "sha256": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d"
+    },
+    {
+      "platform": "jvm",
+      "command": "python3 tools/build/sbt-warm estimatesJVM/test",
+      "exit": 0,
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 3.6,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log",
+      "sha256": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d"
+    },
+    {
+      "platform": "jvm",
+      "command": "python3 tools/build/sbt-warm thresholdJVM/test",
+      "exit": 0,
+      "total": 90,
+      "passed": 90,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 16.9,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log",
+      "sha256": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d"
+    },
+    {
+      "platform": "js",
+      "command": "python3 tools/build/sbt-warm mvpaJS/test",
+      "exit": 0,
+      "total": 455,
+      "passed": 454,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 1,
+      "warm_seconds": 14.2,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-js.log",
+      "sha256": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07"
+    },
+    {
+      "platform": "js",
+      "command": "python3 tools/build/sbt-warm mvpaSpatialJS/test",
+      "exit": 0,
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 6.8,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-js.log",
+      "sha256": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07"
+    },
+    {
+      "platform": "js",
+      "command": "python3 tools/build/sbt-warm mvpaGroupJS/test",
+      "exit": 0,
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 7.6,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-js.log",
+      "sha256": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07"
+    },
+    {
+      "platform": "js",
+      "command": "python3 tools/build/sbt-warm groupJS/test",
+      "exit": 0,
+      "total": 74,
+      "passed": 74,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 5.5,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-js.log",
+      "sha256": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07"
+    },
+    {
+      "platform": "js",
+      "command": "python3 tools/build/sbt-warm estimatesJS/test",
+      "exit": 0,
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 3.9,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-js.log",
+      "sha256": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07"
+    },
+    {
+      "platform": "js",
+      "command": "python3 tools/build/sbt-warm thresholdJS/test",
+      "exit": 0,
+      "total": 90,
+      "passed": 90,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "warm_seconds": 39.2,
+      "raw_log": "docs/verification/umvpa-subject-group-20261007/logs/full-js.log",
+      "sha256": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07"
+    }
+  ],
+  "scope": "M5.02 bridge implementation; M4.08 omnibus candidates; M4.09 engineering infrastructure. No released C1, joint group inference or scientific calibration from test green.",
+  "totals": {
+    "jvm": {
+      "passed": 662,
+      "skipped": 1
+    },
+    "js": {
+      "passed": 661,
+      "skipped": 1
+    }
+  }
+}

@@ -55,6 +55,7 @@ cross-compiled sbt build.
 - `mvpa-artifacts`: bounded, fitter-independent pattern profiles with verified external Float64 payloads over existing archive IO; durable fitter checkpoints are unsupported.
 - `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
+- `mvpa-group`: identified subject-coordinate and full-covariance adapters into group inputs, preserving first-level uncertainty/df and explicit admission limits.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
 - Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
@@ -267,6 +268,8 @@ sbt mvpaSpatialJVM/test
 sbt mvpaSpatialJS/test
 sbt groupJVM/test
 sbt groupJS/test
+sbt mvpaGroupJVM/test
+sbt mvpaGroupJS/test
 sbt fmriWorkflowJVM/test
 sbt fmriWorkflowJS/test
 ```

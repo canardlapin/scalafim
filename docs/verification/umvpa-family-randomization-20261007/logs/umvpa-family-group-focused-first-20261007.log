@@ -1,0 +1,39 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/scenario-testkit/jvm/target/scala-3.7.4/classes ...
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 64 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.VoxelLoadingConfirmationSuite:
+  + target-derived batched loadings match an independent orthogonal nuisance t/F oracle 0.254s
+  + an omitted intercept preserves the independent OLS and GLS oracles with shifted targets 0.076s
+  + an intercept in the nuisance span is retained without a redundant column 0.002s
+  + an existing intercept retains the last residual degree of freedom 0.006s
+  + aliased target dimensions and missing values refuse before any brain reads 0.007s
+  + foreign actual rows, target endpoint, budgets and replay refuse before brain reads 0.036s
+  + structured row whitening is an isometry against independent diagonal-plus-rank-one precision 0.004s
+  + known dependent row shape retains exact units and matches independent R GLS fixture 0.04s
+  + a frozen nonorthogonal target projection changes component loading coordinates and preserves the omnibus hypothesis 0.013s
+  + preflight budget refuses a poison target application and a foreign target endpoint 0.009s
+scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite:
+  + common Gaussian residual actions retain the independent GLS observed omnibus estimates 0.491s
+==> X scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite.tiny exhausted MC group maxima agree with independent scalar regression enumeration  0.114s munit.ComparisonFailException: modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomizationSuite.scala:120 values are not the same expected: 0.30769230769230743 but was: 0.05901985189739595
+119:    val actual = complete.maxima.sorted; val expected = maxima.sorted
+120:    actual.zip(expected).foreach((a, b) => assertEqualsDouble(a, b, 1e-9))
+121:    assertEquals(prepared.actions.map(_.candidate).distinct.size, 23)
+    at munit.FunSuite.assertEqualsDouble(FunSuite.scala:13)
+    at scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite.$init$$$anonfun$2$$anonfun$1(VoxelFamilyRandomizationSuite.scala:120)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite.$init$$$anonfun$2(VoxelFamilyRandomizationSuite.scala:120)
+  + ordering and identical retries preserve actions, digests, denominator and bitwise maxima 0.065s
+  + omitted, cancelled and refused commits cannot report completed fixed B 0.067s
+  + one nonfinite voxel preserves valid local coefficients and blocks the complete family 0.03s
+  + omnibus null-column fields ignore an alternative in a different voxel 0.024s
+  + complete family, source endpoints, law receipt and pre-exposure binding refuse before reads 0.012s
+  + actual action seed binds the adopted work address and separates different frozen plans 0.009s
+  + aggregate storage, transform indices and fixed candidate caps refuse without brain reads 0.014s
+[error] Failed: Total 19, Failed 1, Errors 0, Passed 18
+[error] Failed tests:
+[error] 	scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite
+[error] elapsed time: 20 s
+[0J[sbt-warm] mvpaJVM/testOnly *VoxelFamilyRandomizationSuite *VoxelLoadingConfirmationSuite: exit 1 in 20.4s

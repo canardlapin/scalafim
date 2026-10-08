@@ -55,6 +55,8 @@ jobs:
           echo "fmridesign=$(jq -r '.r.packages.fmridesign.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmrihrf=$(jq -r '.r.packages.fmrihrf.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmrireg=$(jq -r '.r.packages.fmrireg.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
+          echo "fmriar_ar=$(jq -r '.r.packages.fmriAR.revision' tools/r-parity/ar-reference-lock.json)" >> "$GITHUB_OUTPUT"
+          echo "fmrireg_ar=$(jq -r '.r.packages.fmrireg.revision' tools/r-parity/ar-reference-lock.json)" >> "$GITHUB_OUTPUT"
 
       - name: Check out fmriAR at the locked revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,6 +85,20 @@ jobs:
           repository: bbuchsbaum/fmrireg
           ref: ${{ steps.lock.outputs.fmrireg }}
           path: reference/fmrireg
+
+      - name: Check out design-corrected AR references at their locked revisions
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bbuchsbaum/fmriAR
+          ref: ${{ steps.lock.outputs.fmriar_ar }}
+          path: reference/ar-fmriAR
+
+      - name: Check out the design-corrected fmrireg adapter
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bbuchsbaum/fmrireg
+          ref: ${{ steps.lock.outputs.fmrireg_ar }}
+          path: reference/ar-fmrireg
 
       - name: Set up locked R
         uses: r-lib/actions/setup-r@aae88a2d9cd3d63571eb05980b09f44611788515 # v2-branch
@@ -133,13 +149,24 @@ jobs:
           R CMD INSTALL reference/fmriAR
           R CMD INSTALL reference/fmridesign
 
-      - name: Regenerate every R receipt
+      - name: Regenerate the original-lock R receipts
         env:
           FMRIAR_R: ${{ github.workspace }}/reference/fmriAR
           FMRIDESIGN_R: ${{ github.workspace }}/reference/fmridesign
           FMRIHRF_R: ${{ github.workspace }}/reference/fmrihrf
           FMRIREG_R: ${{ github.workspace }}/reference/fmrireg
         run: bash tools/r-parity/regenerate_receipts.sh --r-only
+
+      - name: Install the locked design-corrected fmriAR reference
+        run: R CMD INSTALL reference/ar-fmriAR
+
+      - name: Regenerate the design-corrected AR and GLS receipts
+        env:
+          FMRIAR_AR_R: ${{ github.workspace }}/reference/ar-fmriAR
+          FMRIREG_AR_R: ${{ github.workspace }}/reference/ar-fmrireg
+        run: >-
+          python3 tools/r-parity/check_receipts.py --regenerate r
+          --lock-path tools/r-parity/ar-reference-lock.json
 
       - name: Capture the R receipt diff
         if: always()
@@ -151,6 +178,7 @@ jobs:
             'modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/*RFixture.scala' \
             'modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/*RFixture.scala' \
             modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/FmriArEstimatedGlsFixture.scala \
+            modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/FmriArCorrectedGlsFixture.scala \
             > scenario-r-receipts.patch
 
       - name: Require checked-in R receipts to be current

@@ -1,0 +1,29 @@
+[info] compiling 2 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.inference.CalibrationProtocolSuite:
+  + raw UTF-8 SHA/64-bit roots and named provider child streams match external fixtures 0.02s
+  + root digest is not the existing length-framed axis digest 0.004s
+  + published resample seed-path fixture agrees independently 0.0s
+  + worker ordering, retries and plan capacity cannot alter immutable assignments 0.007s
+  + frozen phase counts preserve exact datasets and resampling budgets 0.0s
+  + initial statistic adapter refuses confirmation before any matrix payload parsing 0.002s
+scalafim.fmri.mvpa.inference.FixedRepresentationInferenceSuite:
+  + serialized independent rank coordinates retain the actual nuisance and candidate scope 0.254s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[success] elapsed time: 11 s
+[0J[sbt-warm] mvpaJVM/testOnly *CalibrationProtocolSuite *FixedRepresentationInferenceSuite: exit 0 in 11.9s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/scalafim-fmri-mvpa-test-fastopt
+scalafim.fmri.mvpa.inference.CalibrationProtocolSuite:
+  + raw UTF-8 SHA/64-bit roots and named provider child streams match external fixtures 0.018s
+  + root digest is not the existing length-framed axis digest 0.001s
+  + published resample seed-path fixture agrees independently 0.000s
+  + worker ordering, retries and plan capacity cannot alter immutable assignments 0.001s
+  + frozen phase counts preserve exact datasets and resampling budgets 0.000s
+  + initial statistic adapter refuses confirmation before any matrix payload parsing 0.001s
+scalafim.fmri.mvpa.inference.FixedRepresentationInferenceSuite:
+  + serialized independent rank coordinates retain the actual nuisance and candidate scope 0.113s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[success] elapsed time: 9 s
+[0J[sbt-warm] mvpaJS/testOnly *CalibrationProtocolSuite *FixedRepresentationInferenceSuite: exit 0 in 9.7s

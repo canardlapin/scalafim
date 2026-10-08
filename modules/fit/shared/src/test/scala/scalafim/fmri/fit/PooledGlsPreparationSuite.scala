@@ -165,7 +165,7 @@ class PooledGlsPreparationSuite extends munit.FunSuite:
     val sharedResult = chunked(FitPlanExecutor.fitChunked(recordingReader(model.dataset), shared, selection, chunking))
     assertDenseClose(sharedResult, sharedDense)
     assertEquals(sharedResult.autocorrelation.map(_.runs.map(_.runIndex)), Some(Vector(0, 1)))
-    assertEquals(sharedResult.autocorrelation.map(_.runs.last.coefficients), Some(Vector.empty))
+    assertVectorClose(sharedResult.autocorrelation.get.runs.last.coefficients, Vector(0.0))
 
     val runwise = FitPlan(model, FitStrategy.RunwiseGeneralizedLeastSquares(
       AutocorrelationConfig.unsafe(censoredTimepoints = censored, coefficients = ArCoefficientSpec.Estimate)

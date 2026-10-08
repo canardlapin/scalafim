@@ -1,0 +1,8 @@
+key	value
+independent_datasets	10000
+rows_per_dataset	160
+mean_absolute_error	0.00150301456864513
+covariance_absolute_error	0.00256612591259209
+noiseless_coefficient_error	0
+elapsed_seconds	2.367
+cpu_seconds	2.073

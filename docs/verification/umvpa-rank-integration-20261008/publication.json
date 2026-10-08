@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-08T02:13:52.665390+00:00",
+  "user_authorization": "User replied proceed to publication and dependency-pin approval request.",
+  "provider_commit": "edb05de01401ec0b3aea4dc1190dd3100e70ee51",
+  "provider_branch": "work/umvpa-rank-v2-20261008",
+  "pull_request": "https://github.com/canardlapin/multivar/pull/2",
+  "pull_request_state": "draft",
+  "github_login": "canardlapin",
+  "transport": "HTTPS with command-scoped isolated canardlapin credential helper",
+  "ssh_attempt": "Required alias github-canardlapin rejected publickey; authenticated HTTPS fallback used without changing any global or repository credential configuration.",
+  "remote_commit_api_verified": true,
+  "upstream_main_merged": false
+}

@@ -82,14 +82,19 @@ final case class OlsDiagnostics(
   /**
     * Compatibility for merging response chunks.  QR diagonal magnitudes and
     * condition estimates may legitimately vary after voxel-specific whitening;
-    * the rank/pivot partition is the factorization identity that must agree.
+    * every full-rank factorization identifies the same complete predictor set,
+    * even if whitening changes pivot order. Deficient fits must retain the same
+    * rank/pivot partition so merging cannot change which columns were aliased.
     */
   def structurallyCompatible(other: OlsDiagnostics): Boolean =
     solveMethod == other.solveMethod &&
       predictors == other.predictors &&
       rank == other.rank &&
       policy == other.policy &&
-      rankReport.structurallyCompatible(other.rankReport)
+      (if fullRank && other.fullRank then
+        rankReport.method == other.rankReport.method &&
+          rankReport.toleranceConvention == other.rankReport.toleranceConvention
+      else rankReport.structurallyCompatible(other.rankReport))
 
 final class OlsPrepared private[fit] (
     val design: DesignMatrix,

@@ -1,0 +1,565 @@
+{
+  "run_id": 37555835270,
+  "head": "0ec1a0fc378291b8c405d25ce174dac2edaa144d",
+  "url": "https://github.com/canardlapin/scalafim/actions/runs/37555835270",
+  "conclusion": "success",
+  "checks": {
+    "focused first-level JVM/Scala.js gates": "success",
+    "scoped first-level scientific coverage": "success",
+    "full repository JVM/Scala.js compile and test": "success"
+  },
+  "coverage": {
+    "head": "0ec1a0fc378291b8c405d25ce174dac2edaa144d",
+    "run_id": 37555835270,
+    "job_id": 112581728628,
+    "conclusion": "success",
+    "passed": 1842,
+    "failed": 0,
+    "errors": 0,
+    "coverage_lines": [
+      "2026-10-07T01:11:34.8918074Z [first-level-coverage] enforcing per-module scientific coverage floors",
+      "2026-10-07T01:11:34.8918518Z [first-level-coverage] arJVM",
+      "2026-10-07T01:14:09.7312053Z [info] All done. Coverage was stmt=[83.80%] branch=[71.03%]",
+      "2026-10-07T01:14:10.2024320Z [first-level-coverage] hrfJVM",
+      "2026-10-07T01:16:06.6779562Z [info] All done. Coverage was stmt=[81.44%] branch=[74.28%]",
+      "2026-10-07T01:16:07.1154695Z [first-level-coverage] designJVM",
+      "2026-10-07T01:18:30.1583433Z [info] All done. Coverage was stmt=[78.67%] branch=[68.27%]",
+      "2026-10-07T01:18:31.0414139Z [first-level-coverage] modelJVM",
+      "2026-10-07T01:20:45.1467809Z [info] All done. Coverage was stmt=[71.61%] branch=[62.81%]",
+      "2026-10-07T01:20:48.5710118Z [first-level-coverage] fitJVM",
+      "2026-10-07T01:38:53.1623612Z [info] All done. Coverage was stmt=[83.09%] branch=[72.24%]",
+      "2026-10-07T01:38:53.6376803Z [first-level-coverage] all module floors passed"
+    ],
+    "all_module_floors_passed": true,
+    "log_sha256": "b826ecfd0ed1b026c9aac51ee1a7e2a36d11eab693bb383d7a9dda6a7b337ff4"
+  },
+  "focused": {
+    "head": "0ec1a0fc378291b8c405d25ce174dac2edaa144d",
+    "run_id": 37555835270,
+    "job_id": 112581728574,
+    "conclusion": "success",
+    "counts": {
+      "JVM": {
+        "total": 1929,
+        "passed": 1929,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "JS": {
+        "total": 1869,
+        "passed": 1869,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "batches": {
+      "JVM": [
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 155,
+          "failed": 0,
+          "errors": 0,
+          "passed": 155,
+          "skipped": 0
+        },
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386,
+          "skipped": 0
+        },
+        {
+          "total": 82,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82,
+          "skipped": 0
+        },
+        {
+          "total": 478,
+          "failed": 0,
+          "errors": 0,
+          "passed": 478,
+          "skipped": 0
+        },
+        {
+          "total": 53,
+          "failed": 0,
+          "errors": 0,
+          "passed": 53,
+          "skipped": 0
+        },
+        {
+          "total": 686,
+          "failed": 0,
+          "errors": 0,
+          "passed": 686,
+          "skipped": 0
+        },
+        {
+          "total": 84,
+          "failed": 0,
+          "errors": 0,
+          "passed": 84,
+          "skipped": 0
+        }
+      ],
+      "JS": [
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 153,
+          "failed": 0,
+          "errors": 0,
+          "passed": 153,
+          "skipped": 0
+        },
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386,
+          "skipped": 0
+        },
+        {
+          "total": 82,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82,
+          "skipped": 0
+        },
+        {
+          "total": 477,
+          "failed": 0,
+          "errors": 0,
+          "passed": 477,
+          "skipped": 0
+        },
+        {
+          "total": 53,
+          "failed": 0,
+          "errors": 0,
+          "passed": 53,
+          "skipped": 0
+        },
+        {
+          "total": 629,
+          "failed": 0,
+          "errors": 0,
+          "passed": 629,
+          "skipped": 0
+        },
+        {
+          "total": 84,
+          "failed": 0,
+          "errors": 0,
+          "passed": 84,
+          "skipped": 0
+        }
+      ]
+    },
+    "lwu_lines": {
+      "JVM": [
+        "2026-10-07T01:24:54.9162855Z [milestone] LWU basis rank 23, K = 69",
+        "2026-10-07T01:24:54.9193081Z [milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+        "2026-10-07T01:26:23.7852703Z [milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.37 exact 0.09; oracle beaten under the exact kernel in 91/93 admitted voxels",
+        "2026-10-07T01:26:23.7854710Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "2026-10-07T01:26:23.7862760Z [milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+        "2026-10-07T01:27:50.9684574Z [milestone] LWU SNR 0.50: admitted 82.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.49 exact 0.10; oracle beaten under the exact kernel in 79/82 admitted voxels",
+        "2026-10-07T01:27:50.9686069Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "2026-10-07T01:27:50.9686974Z [milestone] LWU admission 82.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+      ],
+      "JS": [
+        "2026-10-07T01:53:32.0394462Z [milestone] LWU basis rank 23, K = 69",
+        "2026-10-07T01:53:32.0403686Z [milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+        "2026-10-07T01:57:16.4172404Z [milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.39 exact 0.10; oracle beaten under the exact kernel in 91/93 admitted voxels",
+        "2026-10-07T01:57:16.4174882Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "2026-10-07T01:57:16.4193201Z [milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+        "2026-10-07T02:00:55.6483241Z [milestone] LWU SNR 0.50: admitted 81.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.51 exact 0.08; oracle beaten under the exact kernel in 78/81 admitted voxels",
+        "2026-10-07T02:00:55.6485450Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "2026-10-07T02:00:55.6487352Z [milestone] LWU admission 81.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+      ]
+    },
+    "runtime_lines": [
+      "2026-10-07T01:11:36.6695017Z [first-level-ci] declared Scala 3.7.4",
+      "2026-10-07T01:11:36.6738952Z [first-level-ci] Node.js v24.21.0",
+      "2026-10-07T01:11:36.7041506Z [first-level-ci] JDK 17.0.20.1"
+    ],
+    "lwu_context": {
+      "training_grid": [
+        14,
+        9,
+        7
+      ],
+      "decode_bank": [
+        13,
+        9,
+        7
+      ],
+      "oracle_grid": [
+        26,
+        11,
+        9
+      ],
+      "actual_budget": {
+        "maxNewtonSteps": 6,
+        "maxJets": 8,
+        "maxExactEvaluations": 2
+      },
+      "reporting_correction": "Printed3Newton/3jets is stale reporting; actual source budget is6/8/2. Distinct training/decode/oracle grids are the same fixture.",
+      "admission_caveat": "Admission below95% remains the original reported rho-weak gap; passing accuracy assertions do not establish clean95% admission.",
+      "source_sha256": "a04bd332674d8fd0686892adf2b4fdc9ca2516f31118e41f0520587929146ad2"
+    },
+    "log_sha256": "80a4453bca74340a88a42c05fc38d7cf0e986eb28dba4f3dbd36f994cb38bbb6"
+  },
+  "full": {
+    "head": "0ec1a0fc378291b8c405d25ce174dac2edaa144d",
+    "run_id": 37555835270,
+    "job_id": 112581728668,
+    "conclusion": "success",
+    "batches": {
+      "phrf-comparison-jvm": {
+        "total": 476,
+        "passed": 471,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 5
+      },
+      "phrf-comparison-js": {
+        "total": 243,
+        "passed": 243,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "core-jvm": {
+        "total": 1232,
+        "passed": 1232,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "core-js": {
+        "total": 1228,
+        "passed": 1228,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "image-surface-jvm": {
+        "total": 985,
+        "passed": 973,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 12
+      },
+      "image-surface-js": {
+        "total": 911,
+        "passed": 909,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 2
+      },
+      "data-jvm": {
+        "total": 778,
+        "passed": 773,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 5
+      },
+      "data-js": {
+        "total": 625,
+        "passed": 625,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "estimates-jvm": {
+        "total": 37,
+        "passed": 37,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "estimates-js": {
+        "total": 27,
+        "passed": 27,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "analysis-jvm": {
+        "total": 1269,
+        "passed": 1269,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "analysis-js": {
+        "total": 1212,
+        "passed": 1212,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "downstream-jvm": {
+        "total": 354,
+        "passed": 354,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "downstream-js": {
+        "total": 331,
+        "passed": 331,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "examples": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "examples-js": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "inventory": {
+      "phrf-comparison-jvm": [
+        "phrfComparisonJVM/test"
+      ],
+      "phrf-comparison-js": [
+        "phrfComparisonJS/test"
+      ],
+      "core-jvm": [
+        "locusDataJVM/test",
+        "pipelineJVM/test",
+        "responseJVM/test",
+        "responseLawsJVM/test",
+        "latentJVM/test",
+        "arJVM/test",
+        "hrfJVM/test",
+        "hrfLawsJVM/test",
+        "scenarioTestkitJVM/test",
+        "designJVM/test",
+        "providerSpikeJVM/test"
+      ],
+      "core-js": [
+        "locusDataJS/test",
+        "pipelineJS/test",
+        "responseJS/test",
+        "responseLawsJS/test",
+        "latentJS/test",
+        "arJS/test",
+        "hrfJS/test",
+        "hrfLawsJS/test",
+        "scenarioTestkitJS/test",
+        "designJS/test",
+        "providerSpikeJS/test"
+      ],
+      "image-surface-jvm": [
+        "imageJVM/test",
+        "imageViewJVM/test",
+        "imageViewJava2dJVM/test",
+        "thresholdJVM/test",
+        "motionJVM/test",
+        "surfaceJVM/test",
+        "surfaceViewJVM/test",
+        "surfaceViewRasterJVM/test"
+      ],
+      "image-surface-js": [
+        "imageJS/test",
+        "imageViewJS/test",
+        "imageViewCanvasJS/test",
+        "thresholdJS/test",
+        "motionJS/test",
+        "surfaceJS/test",
+        "surfaceViewJS/test",
+        "surfaceViewRasterJS/test",
+        "surfaceViewThreeJS/test"
+      ],
+      "data-jvm": [
+        "surfaceViewConnectivityJVM/test",
+        "surfaceViewExamplesJVM/test",
+        "transformJVM/test",
+        "spatialJVM/test",
+        "atlasJVM/test",
+        "archiveJVM/test",
+        "archiveLnaJVM/test",
+        "archivedResponseInteropJVM/test",
+        "datasetJVM/test"
+      ],
+      "data-js": [
+        "surfaceViewConnectivityJS/test",
+        "surfaceViewExamplesJS/test",
+        "transformJS/test",
+        "spatialJS/test",
+        "atlasJS/test",
+        "archiveJS/test",
+        "archiveLnaJS/test",
+        "archivedResponseInteropJS/test",
+        "datasetJS/test"
+      ],
+      "estimates-jvm": [
+        "estimatesJVM/test",
+        "estimatesIoJVM/test",
+        "fitEstimatesJVM/test"
+      ],
+      "estimates-js": [
+        "estimatesJS/test",
+        "estimatesIoJS/test",
+        "fitEstimatesJS/test"
+      ],
+      "analysis-jvm": [
+        "modelJVM/test",
+        "fitJVM/test",
+        "firstLevelLawsJVM/test",
+        "mvpaJVM/test",
+        "mvpaFitJVM/test"
+      ],
+      "analysis-js": [
+        "modelJS/test",
+        "fitJS/test",
+        "firstLevelLawsJS/test",
+        "mvpaJS/test",
+        "mvpaFitJS/test"
+      ],
+      "downstream-jvm": [
+        "connectivityJVM/test",
+        "mvpaDatasetJVM/test",
+        "mvpaArtifactsJVM/test",
+        "mvpaSpatialJVM/test",
+        "mvpaFoundationAdmissionJVM/test",
+        "groupJVM/test",
+        "fmriWorkflowJVM/test",
+        "archiveZarrJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "downstream-js": [
+        "connectivityJS/test",
+        "mvpaDatasetJS/test",
+        "mvpaArtifactsJS/test",
+        "mvpaSpatialJS/test",
+        "mvpaFoundationAdmissionJS/test",
+        "groupJS/test",
+        "fmriWorkflowJS/test",
+        "archiveZarrJS/test",
+        "datasetZarrJS/test"
+      ],
+      "examples": [
+        "surfaceExamplesJVM/test",
+        "atlasExamplesJVM/test",
+        "workflowExamplesJVM/test"
+      ],
+      "examples-js": [
+        "workflowExamplesJS/test"
+      ]
+    },
+    "batch_count": 16,
+    "target_count": 97,
+    "platform_totals": {
+      "JVM": {
+        "total": 5142,
+        "passed": 5120,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 22
+      },
+      "JS": {
+        "total": 4579,
+        "passed": 4577,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    "skip_lines": [
+      "2026-10-07T01:27:31.3799440Z ==> s scalafim.phrfcmp.ingest.RealGeneratorSuite.fixtures are byte-identical to a fresh generator run (skipped without python3+numpy) skipped 0.168s",
+      "2026-10-07T01:28:11.7986192Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.002s",
+      "2026-10-07T01:28:11.7989313Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.0s",
+      "2026-10-07T01:28:11.8013145Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.001s",
+      "2026-10-07T01:28:13.2698930Z ==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.0s",
+      "2026-10-07T01:38:14.4851068Z ==> s scalafim.surface.reference.RealFrameEvidenceSuite.Conte69 anatomy carries the publisher's affine group-average basis; the inverse bridge is approximate skipped 0.011s",
+      "2026-10-07T01:38:14.5458876Z ==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres skipped 0.003s",
+      "2026-10-07T01:38:14.5460938Z ==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.0s",
+      "2026-10-07T01:38:14.5462943Z ==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.0s",
+      "2026-10-07T01:38:14.5465390Z ==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.001s",
+      "2026-10-07T01:38:14.5467668Z ==> s scalafim.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.0s",
+      "2026-10-07T01:38:14.9149964Z ==> s scalafim.surface.reference.RealPointMapSuite.the real point map is the digest-bound 2009c -> 6Asym composite: displacement then affine skipped 0.001s",
+      "2026-10-07T01:38:14.9152361Z ==> s scalafim.surface.reference.RealPointMapSuite.forward evaluation agrees with SimpleITK on the templateflow4s oracle to 1e-6 mm skipped 0.0s",
+      "2026-10-07T01:38:14.9154914Z ==> s scalafim.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.0s",
+      "2026-10-07T01:38:15.0085930Z ==> s scalafim.surface.reference.RealPointwiseInverseSuite.P1-P3, P5, P6 (timing asserted with SCALAFIM_TIMING_BUDGETS=1): the pointwise route matches the oracle at every vertex and maps GM within budget skipped 0.001s",
+      "2026-10-07T01:38:15.2877881Z ==> s scalafim.surface.reference.DeclaredSurfaceReaderSuite.TemplateFlow fsLR 32k left midthickness declares Talairach, CortexLeft, 32492 vertices skipped 0.001s",
+      "2026-10-07T01:38:15.9058334Z ==> s scalafim.surface.reference.RealInverseOracleSuite.ITK solutions round-trip through ScalaFIM's exact declared map at every vertex skipped 0.001s",
+      "2026-10-07T01:41:24.0837865Z ==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped",
+      "2026-10-07T01:41:27.1661753Z ==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped",
+      "2026-10-07T01:43:38.9886791Z ==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.the composite pulls MNI152NLin2009cAsym points to MNI152NLin6Asym exactly as ITK TransformPoint does skipped 0.013s",
+      "2026-10-07T01:43:38.9889323Z ==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.resampling 6Asym data onto a 2009c grid samples it through the composite skipped 0.082s",
+      "2026-10-07T01:43:38.9891504Z ==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing skipped 0.001s",
+      "2026-10-07T01:43:38.9893540Z ==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.TemplateFlow's reverse composite is refused with its measured direction skipped 0.0s",
+      "2026-10-07T01:43:38.9897184Z ==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.a qualified numerical inverse gives the forward map and an executable reverse route skipped 0.001s"
+    ],
+    "log_sha256": "363a032806347a9b75bf7f8de1d98e55ad205cb7000c01ff66ebdb4a20169a22",
+    "source_context": "Published compiler stack-Xss4m and bridge lifecycle repair passed on native Linux; no compiler or test errors in full log. All16 declared batches were reached. Inventory contains97 unique commands, including providerSpikeJVM/JS.",
+    "alias_inventory": {
+      "supported_alias_targets": 95,
+      "display_exclusions": {
+        "imageViewJavafxJVM/test": "requires OpenJFX natives and a display",
+        "surfaceViewJavafxJVM/test": "requires OpenJFX natives and a display"
+      },
+      "extra_examples": [
+        "atlasExamplesJVM/test",
+        "surfaceExamplesJVM/test",
+        "workflowExamplesJS/test",
+        "workflowExamplesJVM/test"
+      ],
+      "explicit_headless_commands": 97,
+      "batches": 16,
+      "check_errors": [],
+      "checker_sha256": "e4fecfef8b367c12791943c1ba3d6ede93321e27fae43a49c13e655a743bb92a"
+    }
+  },
+  "archive_sha256": "c40168aa9f692c744a7749cacdb75b76c5def32d4ece225aa02b4c71c17549d8",
+  "files": {
+    "run.json": "a6c1a89cb4b2ca68df461c8df083bbc96a61abdca7eba1e5464866d7ab54a290",
+    "jobs.json": "b7b6812d913f224472ccffe21ea14c2ebbb0a93bbfb2a5592868898051a662b2",
+    "pr21.json": "8f1195eecd2c4778dd3430252a032ed1fda3eb55742f7116457d48d9ba4b0d61",
+    "112581728628.log": "b826ecfd0ed1b026c9aac51ee1a7e2a36d11eab693bb383d7a9dda6a7b337ff4",
+    "112581728574.log": "80a4453bca74340a88a42c05fc38d7cf0e986eb28dba4f3dbd36f994cb38bbb6",
+    "112581728668.log": "363a032806347a9b75bf7f8de1d98e55ad205cb7000c01ff66ebdb4a20169a22",
+    "coverage-receipt.json": "2c60799425ac63362577106e1eb56ba63432e53565ec4a212435b407aa72ca78",
+    "focused-receipt.json": "a99ec2e14196b47629cb35e22e234e98ec55f6f3fdf9a8df57259a1737824ecc",
+    "full-receipt.json": "c6e2f4db055f72c2385c4a130ac175f7a769a829526430fae66d518542209df7",
+    "published-jvmopts.txt": "1fff2856fee580af6c5ed868b9f832f144afb23694c2a796ee3577ead5f7f4a7",
+    "published-first-level.yml": "c6c5dc16e57ab978031c4876860d43ce2974badbb2dd7767e9b1aec8514a0b97",
+    "published-full-repository-tests.sh": "166d1fd6665ae73fe7a561e2d1b3fb25b622f5e7dedab513c045860e1cfc160f",
+    "published-build.sbt": "d2c46101da8bf58d7912b2f9d128c2946567eb9aa27e9eca75f168806bc6ae1c",
+    "published-ConditionMilestoneSuite.scala": "a04bd332674d8fd0686892adf2b4fdc9ca2516f31118e41f0520587929146ad2",
+    "published-GlmSingleBridge.scala": "a83c872b78d38a94ef92e5ff157a22935812a7240ab613e6ed76b917203af89c",
+    "published-GlmSingleBridgeSuite.scala": "a5d19a79039d6d0c5375fea02a6d2620e7c5fd975ae4320f976fa1d055ce2026",
+    "inventory-checker.py": "e4fecfef8b367c12791943c1ba3d6ede93321e27fae43a49c13e655a743bb92a",
+    "inventory.json": "12c6b1d1869a1b3806cfbd76c1cee8ceeb7ac0e2715e2abd8f26719fb2898ebb"
+  },
+  "scope": "Read-only exact-head CI monitoring and evidence packaging. Root owns preservation verification and protected publication."
+}

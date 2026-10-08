@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-07",
+  "branch": "work/umvpa-m4-m5-20261007",
+  "base": "9ba2c57f2b483f8f81a64e30b610f345b13c1784",
+  "main_base": "9ef6a8ed90fa00603db4e48b5ed2962bec24fdfc",
+  "execution": "separate bounded warm-client invocations; full owning-module gates",
+  "toolchain": {
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "jdk": "Eclipse Adoptium Java 21.0.12.1 (server startup)",
+    "node": "24.21.0"
+  },
+  "sources": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentConfirmation.scala": "3f9ea8658754ced1bd8372b549cbe430a7c2d35f699c2fcb284ce946e1972325",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentInference.scala": "31ed07db6356111817df362fd79e4d875505ffe0a83326d2f257a7b256ecfc3d",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala": "02c3a664e007516e6c70035f223d248f832dba1df71a4c9690ab163d1dc7d4a5",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala": "a80bda7a54e8a34a4986ce207b20b6b1e3833d282def5b04cc2967311827949e",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceNumericsSuite.scala": "934931cc31f349dff3230e23e3af9a02a088b01e54deaca5a34a61dc3b0f4616",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinatesSuite.scala": "d51ff8050378b090d5261d76094bec366415e86d17ffe23009c603e768d64509"
+  },
+  "build_inputs": {
+    "build.sbt": "d2c46101da8bf58d7912b2f9d128c2946567eb9aa27e9eca75f168806bc6ae1c",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    ".jvmopts": "1fff2856fee580af6c5ed868b9f832f144afb23694c2a796ee3577ead5f7f4a7"
+  },
+  "gates": [
+    {
+      "command": "python3 tools/build/sbt-warm mvpaJVM/test",
+      "exit": 0,
+      "passed": 433,
+      "failed": 0,
+      "errors": 0,
+      "warnings": 0,
+      "raw_log": "docs/verification/umvpa-component-inference-20261007/logs/full-jvm.log",
+      "sha256": "88dba0898b30e86c6686dd9ab831597d66df6710969bfaa38facec0627edbd09"
+    },
+    {
+      "command": "python3 tools/build/sbt-warm mvpaJS/test",
+      "exit": 0,
+      "passed": 433,
+      "failed": 0,
+      "errors": 0,
+      "warnings": 0,
+      "raw_log": "docs/verification/umvpa-component-inference-20261007/logs/full-js.log",
+      "sha256": "05ab82b2471d9e88cece3d351f17f466b73514c1f87c4c16c4aa609022e0d074"
+    }
+  ],
+  "scope": "M4.06 procedures and M5.01 arithmetic transport; no M4.08 corrected-family, M4.09 released C1, or M5.02 group admission",
+  "independent_review": "atlas_test_isolation; source/oracle review, not an independent calibration campaign"
+}

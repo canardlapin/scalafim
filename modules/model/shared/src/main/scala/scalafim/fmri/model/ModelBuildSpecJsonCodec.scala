@@ -81,13 +81,29 @@ object ModelBuildSpecJsonCodec:
 
   private def autocorrelation(value: AutocorrelationConfig, path: String): Result[Value] =
     arCoefficients(value.coefficients, s"$path.coefficients").map: coefficients =>
-      Obj("order" -> Num(value.order.value), "iterations" -> Num(value.iterations), "global" -> Bool(value.global),
+      val encoded = Obj("order" -> Num(value.order.value), "iterations" -> Num(value.iterations), "global" -> Bool(value.global),
         "voxelwise" -> Bool(value.voxelwise), "exactFirst" -> Bool(value.exactFirst),
         "censoredTimepoints" -> Arr.from(value.censoredTimepoints.values.map(Num(_))), "coefficients" -> coefficients)
+      value.biasCorrection match
+        case ArBiasCorrection.Raw => ()
+        case ArBiasCorrection.OlsDesign(ceiling) =>
+          encoded("biasCorrection") = Obj("kind" -> Str("ols-design"), "ceiling" -> Num(ceiling.value))
+      encoded
+
+  private def readBiasCorrection(value: Cursor): Result[ArBiasCorrection] =
+    for
+      _ <- value.fields(Set("kind", "ceiling"))
+      kind <- str(value, "kind")
+      _ <- ensure(kind == "ols-design", s"${value.path}.kind", "unknown AR bias correction")
+      ceiling <- value.field("ceiling").flatMap(_.integer)
+      policy <- admit(ArBiasCorrection.olsDesign(ceiling), s"${value.path}.ceiling")(_.message)
+    yield policy
 
   private def readAutocorrelation(value: Cursor): Result[AutocorrelationConfig] =
     for
-      _ <- value.fields(Set("order", "iterations", "global", "voxelwise", "exactFirst", "censoredTimepoints", "coefficients"))
+      fields <- value.obj
+      _ <- value.fields(Set("order", "iterations", "global", "voxelwise", "exactFirst", "censoredTimepoints", "coefficients") ++
+        (if fields.contains("biasCorrection") then Set("biasCorrection") else Set.empty))
       order <- value.field("order").flatMap(_.integer)
       iterations <- value.field("iterations").flatMap(_.integer)
       global <- value.field("global").flatMap(_.bool)
@@ -95,7 +111,8 @@ object ModelBuildSpecJsonCodec:
       exactFirst <- value.field("exactFirst").flatMap(_.bool)
       censored <- value.field("censoredTimepoints").flatMap(_.arr).flatMap(items => traverse(items)(_.integer))
       coefficients <- value.field("coefficients").flatMap(readArCoefficients)
-      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients), value.path)(_.message)
+      policy <- if fields.contains("biasCorrection") then value.field("biasCorrection").flatMap(readBiasCorrection) else Right(ArBiasCorrection.Raw)
+      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, policy), value.path)(_.message)
     yield config
 
   private def lss(value: LssStrategyConfig, path: String): Result[Value] =

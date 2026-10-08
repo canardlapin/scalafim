@@ -65,7 +65,8 @@ final class ComponentAssociationResult private[pattern] (
     val componentAxis: AxisDescriptor, val confirmationRows: AxisDescriptor,
     val independentUnits: AxisDescriptor, val rowUnitOrdinals: Vector[Int],
     val planIdentity: String, val brainEvidenceIdentity: EvidenceIdentity, val targetEvidenceIdentity: EvidenceIdentity,
-    val plannedOwnedCells: Long
+    val plannedOwnedCells: Long, private[pattern] val nuisanceWorkingDesign: DMat,
+    private[pattern] val residualScores: DMat
 ):
   val calibrationStatus: ComponentCalibrationStatus = ComponentCalibrationStatus.PendingFrozenProtocol
 
@@ -90,7 +91,8 @@ final class ComponentIncrementalResult private[pattern] (
     val independentUnits: AxisDescriptor, val rowUnitOrdinals: Vector[Int],
     val targetMetric: Vector[Double], val headIdentity: String,
     val brainEvidenceIdentity: EvidenceIdentity, val targetEvidenceIdentity: EvidenceIdentity,
-    val plannedOwnedCells: Long
+    val plannedOwnedCells: Long, val planIdentity: String,
+    private[pattern] val lossContrasts: DMat
 ):
   val calibrationStatus: ComponentCalibrationStatus = ComponentCalibrationStatus.PendingFrozenProtocol
 
@@ -102,8 +104,7 @@ object ComponentConfirmation:
       budget: ComponentConfirmationBudget = ComponentConfirmationBudget()
   ): Either[ComponentConfirmationError, ComponentAssociationResult] =
     val design = plan.design; val n = observations.rows; val r = design.discovery.brainProjection.matrix.cols
-    val z = design.nuisance.matrix.cols.toLong + 1L
-    val cells = BigInt(24) * n * (BigInt(z) + 2 * BigInt(r)) + BigInt(24) * z * z
+    val cells = associationOwnedCells(plan, n)
     for
       _ <- endpoints(plan, observations, targets, training = false)
       _ <- admit(cells, budget)
@@ -137,7 +138,8 @@ object ComponentConfirmation:
         error.toLeft(out.result())
     yield new ComponentAssociationResult(correlations, nuisance._1.cols, plan.associationMembers,
       design.discovery.brainProjection.output.descriptor, observations.sampleAxis, design.confirmation.samples.units.descriptor,
-      design.confirmation.samples.rowUnitOrdinals, plan.identity, observations.identity, targets.identity, cells.toLong)
+      design.confirmation.samples.rowUnitOrdinals, plan.identity, observations.identity, targets.identity, cells.toLong,
+      nuisance._1, residual)
 
   def fitHeads[S <: SemanticSpace, N <: SemanticSpace, Q <: SemanticSpace](
       plan: FrozenComponentConfirmation, observations: Observations[S, N], targets: MultiResponse[S, Q],
@@ -187,8 +189,7 @@ object ComponentConfirmation:
   ): Either[ComponentConfirmationError, ComponentIncrementalResult] =
     val plan = heads.plan; val design = plan.design; val n = observations.rows; val r = heads.reduced.size; val q = targets.columns
     val units = design.confirmation.samples.units.size; val mapping = design.confirmation.samples.rowUnitOrdinals
-    val m = BigInt(heads.trainingNuisanceColumns) + r
-    val cells = 12 * BigInt(n) * (m + q) + 6 * BigInt(units) * (BigInt(r) + 1) + BigInt(q) * q
+    val cells = incrementalOwnedCells(heads, n, q)
     for
       _ <- endpoints(plan, observations, targets, training = false)
       _ <- admit(cells, budget)
@@ -203,8 +204,10 @@ object ComponentConfirmation:
       result <-
         val counts = new Array[Int](units)
         mapping.foreach(u => counts(u) += 1)
-        def losses(coefficients: DMat, omitted: Option[Int]): Either[ComponentConfirmationError, Vector[Double]] =
-          val prediction = headDesign(nuisance, x, omitted) * coefficients
+        val fullPrediction = headDesign(nuisance, x, None) * heads.full
+        val contrasts = DMat.newBuilder(n * q, r)
+        val differences = DMat.newBuilder(units, r)
+        def losses(prediction: DMat): Either[ComponentConfirmationError, Vector[Double]] =
           val sums = new Array[Double](units)
           var i = 0
           while i < n do
@@ -217,29 +220,54 @@ object ComponentConfirmation:
             i += 1
           if sums.exists(value => !value.isFinite) then Left(ComponentConfirmationError.Numerical("nonfinite held-out squared loss")) else Right(sums.toVector)
         for
-          full <- losses(heads.full, None)
+          full <- losses(fullPrediction)
           reduced <-
             val out = DMat.newBuilder(units, r)
             var k = 0; var error: Option[ComponentConfirmationError] = None
             while k < r && error.isEmpty do
-              losses(heads.reduced(k), Some(k)) match
+              val prediction = headDesign(nuisance, x, Some(k)) * heads.reduced(k)
+              losses(prediction) match
                 case Left(value) => error = Some(value)
                 case Right(values) =>
                   var u = 0
                   while u < units do
                     out.update(u, k, values(u)); u += 1
+                  val unitDifferences = new Array[Double](units)
+                  var i = 0
+                  while i < n do
+                    var improvement = 0.0
+                    var j = 0
+                    while j < q do
+                      // Squared-error Y² terms cancel between fixed heads.
+                      // Each column is the affine contrast on row-major Y,
+                      // with equal rows within a unit and equal unit weights.
+                      val deltaPrediction = fullPrediction(i, j) - prediction(i, j)
+                      val coefficient = plan.targetMetric(j) * (deltaPrediction * (2.0 / counts(mapping(i)) / units))
+                      contrasts.update(i * q + j, k, coefficient)
+                      // Algebraic reduced-minus-full difference; subtracting
+                      // separately rounded squared losses loses small effects
+                      // under a common large response offset.
+                      improvement += deltaPrediction *
+                        ((y(i, j) - prediction(i, j)) + (y(i, j) - fullPrediction(i, j))) * plan.targetMetric(j)
+                      j += 1
+                    unitDifferences(mapping(i)) += improvement / counts(mapping(i))
+                    i += 1
+                  u = 0
+                  while u < units do
+                    differences.update(u, k, unitDifferences(u)); u += 1
               k += 1
             error.toLeft(out.result())
-          improvements = DMat.tabulate(units, r)((u, k) => reduced(u, k) - full(u))
+          improvements = differences.result()
           means = Vector.tabulate(r): k =>
             var sum = 0.0; var u = 0
             while u < units do
               sum += improvements(u, k) / units; u += 1
             sum
-          _ <- if means.forall(_.isFinite) && ResidualCovariance.finite(improvements) then Right(()) else Left(ComponentConfirmationError.Numerical("nonfinite loss improvement"))
+          contrast = contrasts.result()
+          _ <- if means.forall(_.isFinite) && ResidualCovariance.finite(improvements) && ResidualCovariance.finite(contrast) then Right(()) else Left(ComponentConfirmationError.Numerical("nonfinite loss improvement or affine contrast"))
         yield new ComponentIncrementalResult(full, reduced, improvements, means, plan.incrementalMembers,
           design.discovery.brainProjection.output.descriptor, observations.sampleAxis, design.confirmation.samples.units.descriptor,
-          mapping, plan.targetMetric, heads.identity, observations.identity, targets.identity, cells.toLong)
+          mapping, plan.targetMetric, heads.identity, observations.identity, targets.identity, cells.toLong, plan.identity, contrast)
     yield result
 
   private def endpoints[S <: SemanticSpace, N <: SemanticSpace, Q <: SemanticSpace](plan: FrozenComponentConfirmation,
@@ -249,6 +277,18 @@ object ComponentConfirmation:
     if observations.sampleAxis != rows || targets.sampleAxis != rows then Left(ComponentConfirmationError.AxisMismatch("actual training/confirmation rows"))
     else if observations.neuralAxis != discovery.brainProjection.input.descriptor || targets.featureAxis != discovery.targetProjection.input.descriptor then Left(ComponentConfirmationError.AxisMismatch("frozen brain/target endpoint"))
     else Right(())
+
+  private[pattern] def associationOwnedCells(plan: FrozenComponentConfirmation, rows: Int): BigInt =
+    val z = BigInt(plan.design.nuisance.matrix.cols) + 1
+    val r = BigInt(plan.associationMembers.size)
+    24 * BigInt(rows) * (z + 2 * r) + 24 * z * z
+
+  private[pattern] def incrementalOwnedCells(heads: ComponentPredictionHeads, rows: Int, targets: Int): BigInt =
+    val r = BigInt(heads.reduced.size)
+    val units = BigInt(heads.plan.design.confirmation.samples.units.size)
+    val m = BigInt(heads.trainingNuisanceColumns) + r
+    // Includes the retained improvement builder and its per-unit accumulator.
+    12 * BigInt(rows) * (m + targets) + 7 * units * (r + 1) + BigInt(targets) * targets + BigInt(rows) * targets * r
 
   private def admit(cells: BigInt, budget: ComponentConfirmationBudget): Either[ComponentConfirmationError, Unit] =
     // Also bounds every individual dense array, conservatively.

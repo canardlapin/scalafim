@@ -1,0 +1,35 @@
+{
+  "status": "exploratory-diagnosis-only",
+  "purpose": "Explain observed pilot conservatism and standard-root power; no qualification",
+  "source_commit": "10ed81b060f3f31efcf3952d2ce927c59b0f8e03",
+  "prior_evidence_sha256": "e960350e1e0da8540e3721c350dc8ebe1c9d380cf2e158fa2405b855ba929cce",
+  "source_locks": {
+    "tools/mvpa-inference/rank_power_bound.R": "db2b0a2ee871fb1b702174cd00474c041765b5e7961619a4bf8ea3eb2b802dc0",
+    "tools/mvpa-inference/diagnose_rank.R": "67b893a521accf941eeac7707f45bfb64545a64869bf02a7b3db590bf95f21df",
+    "docs/verification/umvpa-rank-diagnosis-20261007/prepare.py": "3145112873b6c9d523e75ae9f90975767638f50ccb42e9c2070abd14b4c48662",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankDiagnosticReplaySuite.scala": "a3d8ac971352114547c080ec92739b64ec78d85d59ce96785149e8c774fdeeab"
+  },
+  "analyses": [
+    "Raw versus closed decisions on every retained pilot record",
+    "Independent R observed CCA and tail statistics on all12200 retained inputs",
+    "Known-axis H4 exact Beta reference and known-third-pair oracle, reported by original cell",
+    "Optimal simple Gaussian likelihood-ratio bound via two deterministic quadratures",
+    "Portable algebra-only replay of ordinal0 for all16 R3 null/alternative cells;3 explicit actions per case"
+  ],
+  "extra_information": "Known-coordinate and likelihood-ratio oracles get population directions/signs/nuisance/scale; never substituted for the fitted-rank estimand",
+  "new_datasets": 0,
+  "new_random_draws": 0,
+  "confirmation_consumed": false,
+  "threshold_or_population_changes": false,
+  "resource_plan": {
+    "R_workers": 1,
+    "R_wall_limit_seconds": 600,
+    "Scala_heap": "3g",
+    "Scala_processors": 4,
+    "owning_platforms": [
+      "JVM",
+      "JS"
+    ],
+    "no_parallel_sbt_commands": true
+  }
+}

@@ -58,7 +58,7 @@ class BoundedReducedRankGlsPreparationSuite extends munit.FunSuite:
         val gls = Gls.prepare(source.design, ResponseBlock.unsafe(Matrix.zeros(source.design.timepoints, 1)), source.partitions,
           fixed.toLegacy, Vector(0)).toOption.get
         val whitening = gls.whitening match
-          case GlsWhitening.Shared(value) => value
+          case GlsWhitening.Shared(value, _) => value
           case _ => fail("expected shared whitening")
         val white = WhiteningTransform(whitening, input.design.value, input.response.value).toOption.get
         val target = selectColumns(white.design, partition.targetColumns)

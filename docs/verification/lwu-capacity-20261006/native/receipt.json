@@ -1,0 +1,157 @@
+{
+  "recorded_at": "2026-10-06T21:20:21.779255+00:00",
+  "run_id": 37530987004,
+  "run_url": "https://github.com/canardlapin/scalafim/actions/runs/37530987004",
+  "native_source_commit": "19f535758f3b1345d8667c055642ec464ab7a7c2",
+  "run_conclusion": "success",
+  "gale_revision": "b56a9dd0b8ad479621a3594880f90c9add8c2824",
+  "source_sha256": {
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala": "3900220acc32c609f2e57327131220d5a514b1a410ea2b18cb6851de30b28a31",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactConditionJets.scala": "1f0b9dbe95e0b8e0981f59b96a34249bf1d559f4bdc8681b9fd6a2e454270a87",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactPairedComparison.scala": "2cb1b68d0e3f60e8d4cbba1243997361cb190423110a4d62f91cb23660bf8c5b",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala": "a00a48defa08b5ed6e25991b48b4be6a59debedf7cf7c517390556044c329361",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "fd9815b6c3b337e837b2318e2ee320152afdd7176937eba0c8e262763041fac4",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "2112483c212b2c1a65282e647a3ac538590ee4629a1aca7eeacb97e27fff9dcc",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/CompactPairedComparisonSuite.scala": "b3b18f853dc65cc947bec24fdcb5623f0307ced1437fb82638038cb8e255b0a2",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisBudget.scala": "03a709fd58cb4492712c38475b60c817a2e157149cdadac1336c866648780c16",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": "43d003e5452ca2ba6de5d62297aca246ace207a5a01f0e0ad3106b50fa025009",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/hrf/KernelBasisBudgetSuite.scala": "6fd9c254225593893a56511d5d18c2f99997b4a6c81218b9d8f01c729c6fbf80",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala": "1c458e6d1aa89bab25e2aeebf9d89a5fe337941b7da2166a6c790305f1a0e31b",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb",
+    "build.sbt": "78b09642afae2dcd05ecd0a13454191681ca4069d985e42d6293bb6391e77163",
+    "tools/qualification/LwuAccuracyOnlySuite.scala": "db8ca9b16b6e74454207ec45f2aa4ca96d2adc3f8e7b984b6a0dfc6724bfa925",
+    "tools/qualification/precision-lwu-final.sh": "f21e4184ed156bd82f10f08e618a37645546320e22808dfa232b8531d88ce75a",
+    "tools/qualification/verify-final-inputs.py": "e3e4bb754333e4f64dc723fd4a91d72ee3ba9f9996673730dded0affe92357be",
+    "tools/qualification/summarize-final-gates.py": "51b22f8de366b5114bc0fdf8df11a5b1478164a0ec9fd6192208052715d7c4e7",
+    ".github/workflows/first-level-laws-calibration.yml": "6397412aae4f99cc56096c5a8a243c720ccae1a839105f905aa8528f2d050f47"
+  },
+  "source_overrides": [],
+  "platforms": {
+    "JVM": {
+      "passing_tests": 720,
+      "stage_counts": {
+        "budget-kernel": 29,
+        "compact-cohort": 4,
+        "lwu-accuracy": 1,
+        "full-fit": 686
+      },
+      "cohort": {
+        "admitted": 24,
+        "count": 24,
+        "max_latency_error": 0.00037063737046327816,
+        "max_relative_amplitude_error": 0.00010634654267540857
+      },
+      "lwu": [
+        {
+          "snr": 1.0,
+          "admitted_percent": 93.0,
+          "p95_latency_seconds": 0.0,
+          "p95_fwhm_seconds": 0.01,
+          "p95_relative_amplitude": 0.000319,
+          "admission_caveat": "rho-weak fraction below95%; original reported unmet target"
+        },
+        {
+          "snr": 0.5,
+          "admitted_percent": 82.0,
+          "p95_latency_seconds": 0.01,
+          "p95_fwhm_seconds": 0.01,
+          "p95_relative_amplitude": 0.00045,
+          "admission_caveat": "rho-weak fraction below95%; original reported unmet target"
+        }
+      ],
+      "gate_receipt_sha256": "23b74a1796da80a0e00699773e3bc1e810072640f14c84970204f94f6cae7d95",
+      "host_sha256": "e7768a0034b5e38a9a09b34f19b5d3baf72a40afda3c04aaa3f74e7be523e66c"
+    },
+    "JS": {
+      "passing_tests": 663,
+      "stage_counts": {
+        "budget-kernel": 29,
+        "compact-cohort": 4,
+        "lwu-accuracy": 1,
+        "full-fit": 629
+      },
+      "cohort": {
+        "admitted": 23,
+        "count": 24,
+        "max_latency_error": 0.0003706373704650545,
+        "max_relative_amplitude_error": 0.00010634654267505173
+      },
+      "lwu": [
+        {
+          "snr": 1.0,
+          "admitted_percent": 92.0,
+          "p95_latency_seconds": 0.0,
+          "p95_fwhm_seconds": 0.01,
+          "p95_relative_amplitude": 0.000319,
+          "admission_caveat": "rho-weak fraction below95%; original reported unmet target"
+        },
+        {
+          "snr": 0.5,
+          "admitted_percent": 82.0,
+          "p95_latency_seconds": 0.01,
+          "p95_fwhm_seconds": 0.01,
+          "p95_relative_amplitude": 0.00045,
+          "admission_caveat": "rho-weak fraction below95%; original reported unmet target"
+        }
+      ],
+      "gate_receipt_sha256": "9d325ad17ecc8c192c4ec76f4aedb89fd76ed53cea4a45b654b58dd2a97a0d6f",
+      "host_sha256": "e7768a0034b5e38a9a09b34f19b5d3baf72a40afda3c04aaa3f74e7be523e66c"
+    }
+  },
+  "passing_test_executions": 1383,
+  "failed_tests": 0,
+  "errors": 0,
+  "skipped_tests": 0,
+  "actual_host": {
+    "os": "Ubuntu24.04.5 LTS x64",
+    "kernel": "6.17.0-1022-azure",
+    "java": "Temurin17.0.20.1+1",
+    "node": "24.21.0",
+    "v8": "13.6.233.17-node.53",
+    "glibc": "2.39-0ubuntu8.9"
+  },
+  "requested_jdk_setup": "17.0.20+1; actual binary above differs in patch version",
+  "selector": {
+    "file": "tools/qualification/LwuAccuracyOnlySuite.scala",
+    "class": "scalafim.fmri.laws.profile.LwuAccuracyOnlySuite",
+    "exact_test_name": "LWU: accuracy on the frozen C0 cohorts at SNR 1.0 and 0.5",
+    "count": 1,
+    "timeout_minutes_inherited": 60
+  },
+  "lwu_scientific_inputs": {
+    "sample_size": 100,
+    "snr": [
+      1.0,
+      0.5
+    ],
+    "seeds": [
+      111,
+      112
+    ],
+    "oracle_nodes": [
+      26,
+      11,
+      9
+    ],
+    "latency_tolerance_seconds": 0.02,
+    "fwhm_tolerance_seconds": 0.05,
+    "relative_amplitude_tolerance": 0.001
+  },
+  "explicit_lwu_capacity": {
+    "maximum_array_cells": 3000000,
+    "maximum_spectral_work": 128000000000
+  },
+  "archive": {
+    "path": "native-results.tar.gz",
+    "sha256": "01ed498a9ab3c94cccc6cca6d35d961376b293bfc8a1c08aa7d39f8caa9e1100"
+  },
+  "qualification_scope": "Native Linux x64 declared JDK17 and Node24.21; published defaultGaleURI,unchangedcompactcohort,newkernelbudgettests,completefrozen100sampleLWUaccuracyatSNR1/.5,fullfitJVMandJS",
+  "limits": [
+    "LWU admission remains below95%: JVM93/82%,JS92/82%; this is preserved original rho-weak reported unmet target, not a new clean-admission claim",
+    "Generic numerical certification and adapter qualification are separate evidence layers; this packet qualifies the assembled nativecandidate at exact19f53575",
+    "No broad throughput/calibration benchmark or entire first-level spike ran; no general timing/performance claims",
+    "ObservedJDK17.0.20.1+1 is recorded accurately rather than claiming exactrequested17.0.20+1 historicalbinary",
+    "This agent monitored/read/downloaded/packaged only; root handled publication and dispatch and controls Motes/commits"
+  ],
+  "lwu_reported_metric_precision": "Latencies/FWHM use four-decimal logs and amplitudes three-significant-figure logs; original assertions evaluate full precision."
+}

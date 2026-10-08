@@ -1,0 +1,534 @@
+[info] compiling 9 Scala sources to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/scalafim-fmri-mvpa-test-fastopt
+scalafim.fmri.mvpa.pattern.PatternInterpretationSuite:
+  + calibrated filters separate forward loadings from suppressor weights and recover the named score 0.020s
+  + model-covariance held-out Walsh samples give the independent Haufe identity 0.004s
+  + independent empirical maps may be dense and posterior scores have different scaling 0.005s
+  + diagnostic rows used in training selection or tuning refuse and singular empirical scores are explicit 0.004s
+  + rank-deficient or ill-conditioned G is refused without a silent inverse or jitter 0.002s
+  + posterior target diagnostics retain a full-rank coordinate mix rather than the task-loading columns 0.003s
+scalafim.fmri.mvpa.OperatorRidgeSuite:
+  + membership and solver smart constructors reject invalid states 0.001s
+  + analytic centered ridge fit has an unpenalized intercept and operator receipt 0.003s
+  + operator LSQR coefficients and scores match an independent dense normal-equation oracle 0.005s
+  + feature translation and permutation preserve fitted class scores 0.004s
+  + single-fit simplex targets obey the affine ridge score law 0.001s
+  + non-convergence, poisoned operators, and feature mismatch are typed failures 0.002s
+scalafim.fmri.mvpa.ObservationsSuite:
+  + dense and operator realizations share scientific identity without hidden materialization 0.002s
+  + complete decoded descriptors fail before a poison source is read 0.001s
+  + multiresponse targets retain both sample and target-feature identity 0.001s
+  + response provenance must declare the bound source 0.000s
+  + nominal sample and feature boundaries reject invalid supervision at compile time 0.000s
+scalafim.fmri.mvpa.pattern.ResidualCovarianceSuite:
+  + a two-feature, rank-one covariance matches the hand-derived precision, diagonal and log determinant 0.007s
+  + factorized precision, covariance and log determinant match dense oracles for heterogeneous D and ill-conditioned U 0.003s
+  + hard ROI restriction keeps D_R and U_R and differs from cropping the whole-axis precision 0.003s
+  + ROI and general measurements outside the supported structure are refused with typed errors 0.005s
+  + factor fit is monotone, satisfies the ML diagonal identity, recovers the generating model and reports its work 1.655s
+  + a feature without unique variance hits the declared relative floor and is reported 0.094s
+  + non-convergence is refused by default and recorded when declared 0.011s
+  + fit inputs and policies are validated with specific errors 0.014s
+  + an ROI with fewer features than the noise rank keeps every factor and matches its dense marginal 0.000s
+  + a strongly ill-conditioned Psi still solves with small backward error and an accurate log determinant 0.000s
+  + solve work is reported per call and never includes a features-by-features array 0.000s
+  + precision along a dominant loading is computed without cancellation 0.000s
+  + finite inputs whose results overflow are refused, never returned 0.000s
+  + residual rows must match the training binding and ROI axes must share basis, units and scale 0.001s
+  + dominant loadings: span and complement precision, stacked factors and degenerate columns match analytic values 0.001s
+  + the precision bilinear form is symmetric and positive 0.000s
+  + more than one chunk of precision-diagonal fallback rows is evaluated and bounded 0.034s
+  + square structured whitening yields identity covariance and the cofactor precision metric 0.000s
+scalafim.fmri.mvpa.analysis.RankConfirmationSuite:
+  + rank-zero, rank-one and rank-two analytic workflows retain fixed candidates and pending calibration 0.050s
+  + a known voxel covariance does not license row randomization of dependent confirmation 0.002s
+  + candidate freeze refuses foreign discovery and unknown or exposed holdout snapshots 0.002s
+  + budget and actual endpoint refusals happen before confirmation source application 0.002s
+  + budget preflight cannot apply a poison target provider 0.002s
+scalafim.fmri.mvpa.GroupedValidationSuite:
+  + identified leave-one-group-out retains complete membership and predictor separation 0.008s
+  + display-label changes preserve stable grouping semantics but remain visible in source provenance 0.004s
+  + row reordering requires a matching axis while preserving group-keyed scientific membership 0.003s
+  + identified schedule agrees with the independent literal leave-one-block-out schedule 0.003s
+  + invalid stable keys and single-group validation fail through typed boundaries 0.001s
+scalafim.fmri.mvpa.analysis.ComponentInferenceNumericsSuite:
+  + large outcome offsets preserve the exact affine improvement and independently known Gaussian interval 0.010s
+  + a large negative improvement retains positive variance and never rejects the one-sided positive null 0.005s
+  + identical fitted full and reduced predictions refuse zero known contrast variance through the public pipeline 0.003s
+scalafim.fmri.mvpa.pattern.SpatialSupportSuite:
+  + isolated row matches analytic group soft threshold through envelope cone 0.001s
+  + support TV preserves alternating signs; signed smoothing is independent 0.012s
+  + weighted two-node TV agrees with independent fused-lasso solution 0.001s
+  + signed two-node quadratic agrees with independent linear solve 0.000s
+  + zero group is sparse, exhausted iterations remain unqualified, budget refusal is typed 0.000s
+  + duplicate, self, nonfinite and foreign graph inputs are rejected 0.000s
+scalafim.fmri.mvpa.ReindexingLegSuite:
+  + selection, injection, draw and permutation retain distinct axis identity 0.001s
+  + nested draws preserve root keys and occurrence paths through composition 0.001s
+  + composition is associative and agrees with an independent direct ordinal oracle 0.001s
+  + columns, observations and multiresponse targets restrict without reading matrix-free evidence 0.001s
+  + foreign row legs and abstract reindexings fail at the public type boundary 0.000s
+scalafim.fmri.mvpa.relation.ResidualMetricSuite:
+  + residual precision agrees with an independent dense inverse on a small diagonal-plus-rank-one covariance 0.001s
+  + a bounded residual precision refuses a wider hidden materialization 0.000s
+  + framed residual metric provenance distinguishes source fields that collide under toString rendering 0.000s
+  + rejected residual provenance cannot become an identity metric 0.000s
+  + residual admission binds actual precision capability, source and df without an identity qualification 0.001s
+  + residual RDM distinguishes independent declared evidence, endpoint-learned descriptions, and rejected substitutions 0.008s
+scalafim.fmri.mvpa.pattern.ConditionalInformationSuite:
+  + matches the independent dense leave-one-voxel-out Gaussian determinant oracle 0.001s
+  + rank-one declared target support in a two-coordinate target matches its scalar model 0.001s
+  + factorized three-voxel map matches dense marginal-covariance cofactors and preserves forward-mean gauges 0.002s
+  + nonorthogonal support and correlated prior match the independent dense LOVO oracle 0.000s
+  + a permutation of full supported coordinates preserves the map 0.001s
+  + numerical identity binds numeric inputs, supported prior, and every numerical policy 0.001s
+  + cancellation between voxels returns no partial map and work records one factorized pass 0.000s
+  + refuses categorical, deficient support, budget, cancellation, and near-one requests 0.002s
+scalafim.fmri.mvpa.pattern.PatternArtifactSuite:
+  + factorized categorical forward operation is callable through the artifact 0.001s
+  + explicit intercept changes the model mean and is neural-axis bound 0.001s
+  + numerical rank admission is scale-relative and refuses singular or near-collinear factors 0.000s
+  + factor rank ceiling and finite storage are independent constructor refusals 0.000s
+  + categorical prior, centering, coding rank and axis refusals each have one invalid input 0.000s
+  + K-class coding cannot expose more than K-1 mean-discrimination coordinates 0.000s
+  + continuous geometry checks target axes, positive weights and uniquely named blocks 0.000s
+  + covariance, lineage and degenerate-policy declarations cannot bypass validation 0.000s
+scalafim.fmri.mvpa.RsaSuite:
+  + Spearman RDM scorer uses average ranks for ties 0.000s
+  + Spearman RDM scorer reports typed finite and zero-variance errors 0.000s
+  + RDM vectors expose symmetric row-distance access 0.000s
+  + partial Pearson RDM scorer aligns labeled controls and residualizes them 0.001s
+  + partial Pearson RDM scorer reports typed zero-residual errors 0.000s
+scalafim.fmri.mvpa.AxisRefSuite:
+  + compact signatures are deterministic while complete records remain verified 0.001s
+  + digest hexadecimal preserves independent SHA-256 framing and UTF-8 fixtures 0.001s
+  + ordered keys and complete scientific metadata participate in axis identity 0.001s
+  + decoded records and supplied indexes are checked before use 0.001s
+  + production axes are not subject to the prototype 64-coordinate bound 0.019s
+  + locus points retain their runtime owner at compile time 0.000s
+scalafim.fmri.mvpa.measurement.MeasurementLegSuite:
+  + identity and sparse selection equal explicit dense and matrix-free slicing without construction reads 0.001s
+  + weighted maps match independent arithmetic and distinguish coefficient changes while ignoring rendition 0.001s
+  + rank-deficient basis maps preserve explicit metric requirements and reject unverified isometry 0.001s
+  + a foreign nominal neural space cannot enter a measurement even with equal dimensions 0.000s
+  + local measurement preserves acquisition and preparation support while binding its output values 0.001s
+scalafim.fmri.mvpa.relation.PairingSuite:
+  + reversing endpoints preserves their order rather than identifying them 0.000s
+  + same acquisition and preparation remain descriptive reasons 0.001s
+  + endpoint-learned metric needs a bound conditional argument 0.001s
+  + repeated partition pairs refuse naive replicate independence 0.001s
+  + signed fixed cross-product oracle retains its sign 0.000s
+  + weighted ordered scalar contributions preserve orientation under pair reversal and metric transpose 0.001s
+  + foreign conditional evidence and unknown metric cannot grant a declared unbiased claim 0.000s
+  + known shared acquisition support survives changed source revision labels 0.000s
+  + restricted beta rows retain shared original acquisition support and remain descriptive 0.001s
+  + finite weight overflow and zero weighted-mean denominator are refused 0.001s
+  + public assessment binds actual typed relation set origins 0.000s
+scalafim.fmri.mvpa.measurement.MeasurementFrameSuite:
+  + lazy frames open entries only during traversal and always release the owned observation 0.001s
+  + frame construction canonicalizes eager ordering and refuses duplicate ids 0.000s
+  + a local task failure preserves later successful outputs and closes exactly once 0.000s
+  + iterator failure preserves completed outputs and releases the source 0.000s
+  + invalid budgets and failed opens perform no entry or source work 0.000s
+  + close failure is reported after retaining successful outputs 0.000s
+  + streaming fold does not retain generated entries and owns at most one resource 0.030s
+  + eager identity binds actual maps while rendition stays outside scientific identity 0.002s
+  + invalid lazy ordering cannot lower the high-water mark and execute a duplicate 0.001s
+scalafim.fmri.mvpa.inference.FixedRepresentationInferenceSuite:
+  + serialized independent rank coordinates retain the actual nuisance and candidate scope 0.023s
+scalafim.fmri.mvpa.relation.QueryReuseSuite:
+  + dependency DAG admits exact matches, rejects changed ancestors, and propagates unknown inputs 0.003s
+  + dependency programs reject forward or cyclic parents, duplicate products, and budget excess 0.001s
+  + relation value identity changes at a fixed locator while display-only metadata is absent from reuse identity 0.001s
+  + new RSA models invalidate comparison and multiplicity but retain geometry; targets and folds propagate only their descendants 0.001s
+  + fidelity implementation scope and dense metric identity changes reject, including distinct ROI scopes 0.000s
+  + reuse refusals name the changed metric source scope and scientific parameter 0.000s
+  + a mutated identified validation grouping invalidates reuse through its receipt, not a fold label 0.002s
+  + a model-only change does not blame unchanged relation metric or fold dependencies 0.000s
+  + retained budget refusal occurs before callback and separate dense metric ROI scopes cannot be additively reused 0.000s
+  + retained queries reject an over-budget stored program and a narrowed current budget before callbacks 0.000s
+  + program construction refuses a deep explanation beyond its entry budget 0.000s
+  + low-rank contraction matches a four-index oracle and rejects budget or one-shot evidence before reads 0.002s
+  + low-rank contraction compensates trace cancellation and is invariant to endpoint reversal 0.002s
+  + low-rank factors reject a foreign component axis at compile time 0.000s
+  + all-distinct products match explicit ordered pairs through cancellation, mixed scales, and overflow 0.001s
+  + all-distinct cancellation is stable under matched permutations and endpoint swapping 0.001s
+  + explanation budget accounts for comparison reasons on input-free products 0.000s
+  + global all-distinct fallback preserves small terms across cancelling coordinates 0.000s
+scalafim.fmri.mvpa.MvpaMigrationParitySuite:
+  + Swift centroid freezes training Z-score, class order, priors, scores, and probabilities 0.005s
+  + identity-metric RDM uses every ordered distinct partition pair and retains signed values 0.002s
+  + migration baseline failure policy remains typed 0.001s
+scalafim.fmri.mvpa.analysis.ConfirmationDesignSuite:
+  + admits a concrete untouched C1 design with disjoint actual units 0.003s
+  + refuses leaked, foreign, unknown, and overlapping confirmation evidence 0.004s
+  + identity changes with frozen artifact values and nuisance design, while unavailable claims are typed 0.002s
+  + actual recorded confirmation reads and failed attempts block untouched admission 0.003s
+  + same nominal rows cannot be made independent by relabeling their units 0.001s
+  + independent nominal datasets may retain identical local row ordinal keys 0.000s
+  + foreign projection, nuisance, and discovery training axes refuse despite equal shapes 0.001s
+  + frozen identity binds rank evidence, training lineage, and fit diagnostics 0.001s
+  + known repeated Gaussian blocks are actual numeric capabilities and estimated covariance refuses 0.003s
+  + large finite residual scales cannot hide cross-subject dependence through overflow 0.000s
+  + dependent-time Gaussian covariance is bound numerically and estimated references remain unavailable 0.002s
+scalafim.fmri.mvpa.pattern.LocalPatternPredictionSuite:
+  + hard ROI uses inverse marginal covariance rather than either cropped full-brain filter 0.002s
+  + local observation dimension below inherited task rank retains Gaussian posterior but refuses calibration 0.001s
+  + hard restriction retains all covariance noise factors when ROI size is smaller than h 0.001s
+  + consistent ROI reordering and selected intercept preserve predictions and local forward means 0.001s
+  + foreign parent, foreign local coordinates, outside preprocessing and zero budgets refuse 0.001s
+  + actual held-out local Gaussian predictions have an explicit squared-loss calculation 0.001s
+  + local categorical likelihood preserves ordered priors under the marginal observation model 0.001s
+  + identified held-out assessment returns target reduction and equal-unit loss and rejects selection reuse 0.003s
+  + assessment refuses a positive target reduction whose normalization would underflow 0.001s
+scalafim.fmri.mvpa.RsaProjectionSuite:
+  + partial correlation matches an independent orthogonal residual oracle 0.005s
+  + control units do not determine rank, including mixed extreme scales 0.002s
+  + outcome scaling and offsets preserve the partial-correlation estimand 0.001s
+  + resolves a full-rank control span lost by normal equations 0.000s
+  + duplicate and constant controls report rank loss 0.000s
+  + numerically unresolved control directions are refused explicitly 0.000s
+  + constant or fully explained outcomes have no residual correlation 0.000s
+  + non-finite distances are rejected in every role 0.001s
+  + residual tolerance distinguishes resolved signal from roundoff 0.000s
+  + common extreme outcome units cannot overflow or underflow the correlation 0.000s
+scalafim.fmri.mvpa.relation.RelationsSuite:
+  + residual methods require supplied residual moment precision and df capabilities 0.000s
+  + replay provenance must name its reader owner 0.000s
+  + a restriction from a different identified effect axis cannot typecheck 0.000s
+scalafim.fmri.mvpa.relation.ObservationMeanRelationsSuite:
+  + sparse mean legs average unequal cells, retain declared effect order, and implement the adjoint 0.007s
+  + foreign axes and budgets refuse before acquisition or source reads 0.002s
+  + scoped sources expire after the callback and cannot be retained 0.001s
+  + acquisition and close failures preserve one acquire attempt and expire before close 0.001s
+  + owned dense snapshot copies fixture values and supplies retained access 0.001s
+  + supported observation origins survive grouping and keep shared-acquisition pairing descriptive 0.002s
+  + nested source refusals cannot close or expire the outer acquired scope 0.001s
+  + finite convex means avoid predivision overflow and agree in forward and adjoint orientation 0.000s
+scalafim.fmri.mvpa.analysis.CompilationSuite:
+  + an open test-only estimand binds and compiles without a registry 0.001s
+  + actual source capability is required; a caller label cannot admit a poison source 0.000s
+  + source revision, realized splits, map weights, and estimand parameters all change the plan 0.000s
+  + schedule changes preserve scientific identity 0.001s
+  + result completion is bound to the estimand result type and receipt 0.000s
+  + result completion rejects String for a Double estimand at compile time 0.000s
+  + dependent entries retain distinct nominal measurement spaces without casts 0.001s
+  + native metadata distinguishes structural value and provenance lineage without reading a one-shot operator 0.003s
+  + native one-shot observations cannot be admitted as replayable without applying the operator 0.001s
+  + pooled-trial and mean-run accuracy retain distinct denominators 0.001s
+  + pooled reduction retains exact totals beyond Long range 0.003s
+  + empty and duplicate reductions are not numerical results 0.000s
+scalafim.fmri.mvpa.relation.RelationConsumersSuite:
+  + samplewise block exclusion keeps undefined rows explicit 0.001s
+  + samplewise Pearson and Spearman use only cross-block entries with repeated items 0.001s
+  + samplewise rejects a partial method without admitted row-local controls 0.001s
+  + partial RSA uses row-major paired RHS and explicit Gale QR policy 0.003s
+  + partial RSA reports singular and zero residual outcomes and normalizes extreme scales 0.000s
+  + partial RSA policy rejects malformed tolerances 0.000s
+  + partial RSA centers large offsets and reports malformed vector shapes 0.000s
+  + one relation set produces a retained RDM and an RSA receipt without another source read 0.006s
+  + changed fitted relation provenance refuses cached geometry before it is read 0.001s
+  + one-shot relations refuse cache retention 0.001s
+  + typed samplewise geometry binds repeated items and blocks to its axis 0.001s
+  + ordinary samplewise geometry preserves repeated-item block exclusion and consistent reordering 0.048s
+  + model, scorer and controls alter only the comparison child; fitting and geometry changes reject reuse 0.003s
+  + first-order receipt names its selected relation and refuses non-estimable support 0.001s
+  + rectangular consumer streams a typed form over explicit endpoints 0.001s
+scalafim.fmri.mvpa.ColumnSuite:
+  + columns bind values to the full ordered sample axis 0.000s
+  + stable keys, rather than implementation ordinals, survive selection-shaped export 0.000s
+  + categorical, scalar and metadata columns remain ordinary distinct Scala types 0.000s
+  + column length and nominal row boundaries fail at construction or compilation 0.000s
+scalafim.fmri.mvpa.analysis.ResourceAdmissionSuite:
+  + live source plus all workers scratch and retained outputs is charged exactly 0.000s
+  + unknown strict scratch refuses while owned-only receipt preserves excluded costs 0.000s
+  + checked arithmetic refuses shape and live byte overflow before conversion 0.001s
+  + uncertified concurrency is refused rather than inventing provider parallel safety 0.000s
+  + small dense route can win only with admitted copy policy and unchanged scientific plan 0.000s
+  + malformed provider declarations and negative copy costs refuse admission 0.000s
+scalafim.fmri.mvpa.pattern.StructuredPatternOptimizerSuite:
+  + coupled fixed-Psi two-row oracle recovers the dense product, envelope, and full objective 0.031s
+  + C block uses empirical target covariance rather than normalizing the cross product 0.002s
+  + C-block residual projects a zero trial point onto Stiefel instead of refusing its rank 0.001s
+  + C block gradient agrees with central differences of its independent dense objective 0.000s
+  + loading gradient and all penalty values match independent four-index arithmetic 0.002s
+  + rank-start extension preserves the old mean even when cold columns duplicate it 0.001s
+  + rank expansion preserves a prefix-compatible warm component and appends its orthogonal complement 0.010s
+  + cold and full-rank warm starts follow the same penalized fixture contract 0.011s
+  + several valid rank-one starts record provided initialization without a global-optimum assertion 0.006s
+  + preflight refusals do not read a one-shot source and metadata mismatch is also read-free 0.001s
+  + public metadata admission plans the exact fitter workspace without reading either operator 0.005s
+  + a q squared overflow declaration is refused before either operator is read 1.042s
+  + operator and dense fixtures agree, and work counts requested widths rather than a p-wide identity 0.094s
+  + outer iteration exhaustion produces no artifact and records both final block residuals 0.011s
+  + structured config rejects invalid numerical and resource declarations 0.000s
+scalafim.fmri.mvpa.relation.QueryOracleSuite:
+  + rectangular signed closures agree with the independent four-index contraction oracle 0.001s
+  + scalar uses compensated diagonal accumulation for dense and operator closures 0.000s
+  + first-order contrasts and reversed pairs preserve their bilinear laws 0.001s
+  + foreign same-sized closure axes do not typecheck 0.000s
+  + closures refuse table witnesses even when their nominal axes match 0.000s
+  + first-order queries refuse the old dual-table weight witness 0.000s
+  + public primal forms inhabit same-axis cross closures without a PSD claim 0.000s
+  + public dual forms cannot be used as cross closures 0.000s
+  + constructing relations and opening a transport do not read operators 0.000s
+  + one-shot scalar closure is refused before reading either aliased endpoint 0.000s
+  + scalar closure reads lazy tables in width-one batches 0.000s
+  + scalar contractions agree with independent oracles across numerical scales 0.000s
+scalafim.fmri.mvpa.analysis.ComponentInferenceSuite:
+  + independent R oracle: full target covariance and separately refitted component improvements 0.019s
+  + independent R oracle: unequal units use actual per-row weights and keep cross-component covariance 0.004s
+  + association preserves nuisance-adjusted correlations and common reconstructible provider actions 0.014s
+  + known within-unit dependence and off-diagonal target covariance match independent R 0.003s
+  + complete finite association group uses inclusive extrema and an independent dot-product oracle 0.448s
+  + one perfect member refuses the association family instead of silently omitting it 0.004s
+  + complete2r candidate family retains bindings and cannot become corrected or released significance 0.031s
+  + unknown, estimated, marginal and cross-unit covariance cannot quietly license Gaussian prediction 0.003s
+  + frozen identity endpoints and covariance budgets refuse before confirmation operator reads 0.001s
+  + unknown or already exposed holdout cannot freeze reference laws 0.010s
+  + aggregate budget and changed evidence refuse before any source projection 0.008s
+  + dependent association remains unavailable despite a known response covariance 0.003s
+scalafim.fmri.mvpa.decomposition.GlobalDecompositionsSuite:
+  + neutral relation SVD reconstructs a signed rectangular estimate without PSD retagging 0.007s
+  + relation SVD budget refuses before estimate evaluation 0.001s
+  + PCA centers a literal observation matrix, reconstructs it, and leaves no escaped source 0.004s
+  + PCA budget rejection does not read a poison product and content identity remains source-bound 0.001s
+  + PCA refuses an expired product and distinguishes changed values with the same source declaration 0.001s
+  + PCA and relation artifacts retain nominal endpoint types 0.000s
+  + neutral SVD decomposes signed effect and neural cross forms with their real nominal endpoints 0.001s
+  + explicit paired row geometries distinguish PLSC covariance from regularized CCA 0.006s
+  + paired artifacts own their cross form after scoped input providers expire 0.001s
+scalafim.fmri.mvpa.analysis.PatternTrainingStabilitySuite:
+  + actual leave-one-training-group-out structured fits retain selected rows and stable subspaces 0.014s
+  + confirmation rows, unknown exposure and refit-count budget refuse before invoking the fitter 0.003s
+  + a failed refit is retained and subsequent groups still complete 0.005s
+  + an actual refit followed by within-plane gauge rotation distinguishes axes from a stable subspace 0.007s
+  + returned discovery artifact cannot impersonate a selected-row refit 0.011s
+  + actual one-component refits retain unequal dimensions without inventing axis correspondence 0.004s
+scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite:
+  + common Gaussian residual actions retain the independent GLS observed omnibus estimates 0.039s
+  + tiny exhausted MC group maxima agree with independent scalar regression enumeration 0.020s
+  + ordering and identical retries preserve actions, digests, denominator and bitwise maxima 0.017s
+  + omitted, cancelled and refused commits cannot report completed fixed B 0.010s
+  + one nonfinite voxel preserves valid local coefficients and blocks the complete family 0.005s
+  + all failed members retain every observed outcome and only one bounded failure summary per replicate 0.006s
+  + omnibus null-column fields ignore an alternative in a different voxel 0.016s
+  + complete family, source endpoints, law receipt and pre-exposure binding refuse before reads 0.003s
+  + actual action seed binds the adopted work address and separates different frozen plans 0.003s
+  + aggregate storage, transform indices and fixed candidate caps refuse without brain reads 0.002s
+  + multiple capture batches and blank replay declarations refuse before either source read 0.001s
+  + full-width single capture and admitted repeatable batches retain the same observed and exhaustive null calculations 0.054s
+scalafim.fmri.mvpa.relation.RelationRdmSuite:
+  + fixed identity RDM uses all ordered distinct partitions, preserves effect order and signed values 0.002s
+  + a locally non-estimable effect remains visible and is not replaced by another family 0.001s
+  + four-effect condensed order and three-partition baseline match independent raw loop and legacy oracle 0.004s
+scalafim.fmri.mvpa.FeatureModelSuite:
+  + feature model design validates labels, dimensions, and finite values 0.000s
+  + constant standardized source predicts the training target mean 0.000s
+scalafim.fmri.mvpa.analysis.ComponentConfirmationSuite:
+  + correlated components require reduced-head refitting; analytic held-out metric losses 0.004s
+  + association is paired nuisance-adjusted correlation, not incremental usefulness 0.003s
+  + intercept addition retains the training layout and all arithmetic 0.002s
+  + unequal run sizes receive equal unit weights, not equal fold or row weights 0.001s
+  + budget, foreign rows, and incomplete units refuse before operator reads 0.002s
+  + family and exposure are frozen and cannot silently gain another uncorrected view 0.001s
+  + nonfinite targets refuse the complete family before brain reads 0.001s
+  + aliased components fail without producing fallback or partially fitted heads 0.001s
+  + negative held-out usefulness is retained and confirmation never refits heads 0.001s
+  + nuisance-aliased scores are refused, while perfect nonconstant association remains descriptive 0.001s
+  + foreign training nuisance and missing training targets refuse before brain reads 0.001s
+scalafim.fmri.mvpa.relation.OrdinaryRelationGeometrySuite:
+  + ordinary squared, Euclidean and signed geometry retain distinct numerical semantics 0.002s
+  + partition, budget, non-estimability and replay refusals precede operator reads 0.001s
+  + native mean compilation preserves frozen squared, unsquared, normalized and correlation fixtures 0.003s
+scalafim.fmri.mvpa.inference.RankConfirmationSuite:
+==> s opt-in case uses the production rank procedure and reports actual completed B skipped
+scalafim.fmri.mvpa.EvidenceDesignSuite:
+  + exact-once cross-fit covers every identified sample exactly once 0.003s
+  + repeated exact validation remains exact but cannot become exact-once cross-fit 0.002s
+  + bootstrap analysis rows retain draw occurrence identity and ordinary coverage 0.002s
+  + randomization receipts and assignments are axis-scoped and access-order independent 0.003s
+  + public plan mapping forgets coverage and design families cannot be interchanged 0.000s
+  + unknown plan units return a typed boundary error 0.000s
+scalafim.fmri.mvpa.analysis.ObservationProductSuite:
+  + direct and owned dense products preserve evidence identity and return the literal matrix 0.003s
+  + strict unknown and one-shot replay refuse before resource acquisition or poison reads 0.000s
+  + operator attempts and successful cells are recorded and escaped products expire 0.000s
+  + bounded whole-population probe records both success and callback failure 0.001s
+  + failed provider reads retain partial work and marked fit limits stop before the next fit 0.000s
+  + strict product costs require enclosing matrix output admission and one worker 0.000s
+scalafim.fmri.mvpa.pattern.PatternCoordinateRotationSuite:
+  + rotation retains the original prediction and reconstructs its effective forward map 0.011s
+  + the admitted supplied shear has distinct display axes and the required inverse covariance 0.002s
+  + near-singular condition and owned-work budgets refuse before display admission 0.002s
+  + supplied sign-permutation and scaled shears preserve intercept-aware Gaussian and categorical heads 0.002s
+scalafim.fmri.mvpa.relation.RelationConsumerAdmissionSuite:
+  + rectangular 2 by 3 forms preserve orientation and transpose explicitly 0.003s
+  + foreign rectangular endpoint axes do not typecheck 0.000s
+  + rectangular receipt frames source fields that collide under case-class display strings 0.002s
+  + first-order owned relation returns contrast and receipt; admission refusals occur early 0.002s
+  + cache admission rejects retention, output and workspace budgets and reports structured refit 0.001s
+  + rectangular missing effects retain endpoint identity and refuse before placeholder operator reads 0.000s
+  + budget, one-shot and reuse refusals never read poisoned sources; cached RSA adds no reads 0.002s
+scalafim.fmri.mvpa.relation.MeasuredMeanRelationSuite:
+  + a real frame preserves selected order and bounded origins through scoped ordinary and signed RSA 0.010s
+scalafim.fmri.mvpa.OperatorRsaSuite:
+  + identified partition means match independent raw signed products in frozen condensed order 0.013s
+scalafim.fmri.mvpa.analysis.LocalExecutionSuite:
+  + addresses derive stable domain-separated streams regardless of scheduling order 0.001s
+  + duplicate retry with the same contribution commits one reducer and OOF row 0.001s
+  + conflicting retry is terminal and never double-counts a contribution 0.001s
+  + failure immediately before commit leaves no contribution and closes the owned resource once 0.002s
+  + partial and cancellation remain incomplete, and compute plus close failures are both preserved 0.001s
+  + omitted expected units never form a complete family 0.000s
+  + identical declared fingerprint cannot hide a conflicting contribution 0.000s
+  + plan identity and measurement identity separate complete stream paths 0.000s
+  + explicit schedule reorder preserves canonical reducer and OOF order 0.001s
+  + cancellation callback failure is typed and acquires no resources 0.000s
+  + reduction faults retain committed coverage including an empty family 0.000s
+  + a close-failing retry cannot be healed by an earlier or later commit 0.000s
+  + conflict survives a later cancellation and stops further work 0.000s
+  + throwing acquire and before-commit preserve their exact typed cause 0.000s
+  + a pre-commit crash followed by identical retries contributes exactly once 0.002s
+  + cancellation after one commit retains exact missing coverage and durable resume remains unavailable 0.001s
+scalafim.fmri.mvpa.pattern.WholeBrainPatternQualificationSuite:
+  + a two-stage artifact supplies independently checked Gaussian, encoding, categorical, and ROI heads without another provider lifecycle 0.023s
+  + three-dimensional diagonal-plus-rank-one precision matches a dense cofactor oracle and target units scale outputs 0.005s
+  + checkerboard support is consumed by the support optimizer with its literal weighted TV law 0.001s
+  + rank, conditioning, and covariance convergence boundaries return typed outcomes 0.003s
+  + metadata admission proves p squared and p by q are not required while q squared remains a planned bound 2.848s
+scalafim.fmri.mvpa.PatternOperatorSuite:
+  + dense pattern operator preserves the matrix and satisfies the adjoint law 0.002s
+  + row and feature restrictions match an explicit dense reference 0.001s
+  + row stacking and composed operators match explicit block matrices 0.001s
+  + generated operators preserve adjoints and feature-permutation laws 0.006s
+  + pattern operator reports malformed axes, shapes, and non-finite inputs 0.001s
+  + explicit dense-copy ceilings refuse before reads and admitted copies use one source column at a time 0.000s
+  + dense-copy primitive capacity is checked without touching a large declared provider 0.036s
+scalafim.fmri.mvpa.inference.CalibrationProtocolSuite:
+  + raw UTF-8 SHA/64-bit roots and named provider child streams match external fixtures 0.002s
+  + root digest is not the existing length-framed axis digest 0.000s
+  + published resample seed-path fixture agrees independently 0.000s
+  + worker ordering, retries and plan capacity cannot alter immutable assignments 0.003s
+  + frozen phase counts preserve exact datasets and resampling budgets 0.000s
+  + full dotted scenario and ordinal have a portable collision-resistant internal binding 0.000s
+  + a thrown assigned-case evaluation becomes one failed record and later cases still run 0.001s
+  + initial statistic adapter refuses confirmation before any matrix payload parsing 0.000s
+scalafim.fmri.mvpa.analysis.VoxelLoadingConfirmationSuite:
+  + target-derived batched loadings match an independent orthogonal nuisance t/F oracle 0.007s
+  + an omitted intercept preserves the independent OLS and GLS oracles with shifted targets 0.004s
+  + an intercept in the nuisance span is retained without a redundant column 0.001s
+  + an existing intercept retains the last residual degree of freedom 0.001s
+  + aliased target dimensions and missing values refuse before any brain reads 0.001s
+  + foreign actual rows, target endpoint, budgets and replay refuse before brain reads 0.001s
+  + structured row whitening is an isometry against independent diagonal-plus-rank-one precision 0.001s
+  + known dependent row shape retains exact units and matches independent R GLS fixture 0.001s
+  + a frozen nonorthogonal target projection changes component loading coordinates and preserves the omnibus hypothesis 0.001s
+  + preflight budget refuses a poison target application and a foreign target endpoint 0.001s
+scalafim.fmri.mvpa.analysis.FoundationExtensionSuite:
+  + a new native signed-column estimand returns its own typed record 0.004s
+  + an analyst repairs metadata order and explains missing capability without reading patterns 0.003s
+  + an analyst changes RSA comparison and reuses actual native geometry 0.002s
+scalafim.fmri.mvpa.analysis.SubjectCoordinatesSuite:
+  + oblique subject coefficients and full correlated covariance match the exact independent oracle 0.006s
+  + dropping cross-feature or cross-component covariance changes the transported uncertainty 0.002s
+  + signed rotation and component reindexing preserve the explicit coefficient orientation 0.002s
+  + stable subspaces return a named task operator with singular covariance and no forced component labels 0.002s
+  + task operator and its covariance are invariant to an oblique discovery gauge 0.003s
+  + unequal anatomical dimensions preserve every covariance cell without requiring positive definiteness 0.002s
+  + shared unstable axes cannot license component matches but retain task-operator comparison 0.001s
+  + all df classifications and source identities survive arithmetic transport without group admission 0.011s
+  + covariance origin is independent of known df and is immutable transport identity metadata 0.005s
+  + df role is explicit immutable transport metadata and approximate df requires an effective role 0.003s
+  + subject differences remain visible under the same admitted coordinates 0.001s
+  + dimension-only, reordered task and wrong destination bindings refuse 0.002s
+  + confirmation-derived or overlapping shared coordinate selection refuses 0.002s
+  + spatial alignment and stability cannot be selected from confirmation or borrowed discovery accounts 0.001s
+  + physical value units must match independently of anatomical coordinate units 0.005s
+  + covariance units are mechanically squared and cannot be replaced by unrelated physical labels 0.001s
+  + subject rows cannot silently relabel a multisubject confirmation fit 0.003s
+  + ill-conditioned, different task subspaces, invalid covariance and budgets fail closed 0.006s
+  + budget and metadata refusals never apply the original confirmation evidence source 0.002s
+scalafim.fmri.mvpa.pattern.PatternPredictionSuite:
+  + Gaussian heads match the independent two by two joint inverse oracle 0.002s
+  + prior covariance rejects asymmetric singular foreign and over-budget declarations 0.001s
+  + categorical posterior preserves declared class order and normalized direct scores 0.001s
+  + explicit intercept is removed from neural input and restored by encoding 0.004s
+  + deficient loading filters refuse calibrated scores but retain raw and Gaussian posterior heads 0.001s
+  + restored equal descriptors are admitted, while foreign reconstructed descriptors are refused 0.000s
+  + explicit covariance is used once despite nonunit target geometry metadata 0.000s
+  + scalar rescaling retains the finite joint Gaussian decode and derived overflow is typed 0.000s
+  + noncommuting rank-two target and precision Grams match the dense joint inverse oracle 0.000s
+scalafim.fmri.mvpa.analysis.EvidenceExposureSuite:
+  + unknown external evidence refuses a training-only probe without calling the callback 0.000s
+  + failure retains an approved whole-population exposure and its budget 0.000s
+  + score selection and handoff round trip retain adaptive dependence 0.001s
+  + whole-population payload access denies an untouched holdout confirmation even after failure 0.000s
+  + failed score attempts remain uncertain through DTO reconstruction 0.000s
+  + permits are stale after an immutable record advances 0.000s
+  + diagnostic exposure inspection is metadata only 0.001s
+scalafim.fmri.mvpa.analysis.DiagnosticsSuite:
+  + describe and explain only inspect cached metadata 0.001s
+  + native diagnostic binding does not apply a poison evidence operator 0.002s
+  + large axis inspection is bounded and continuation-driven 0.027s
+  + identity evidence never overclaims complete verification 0.000s
+  + structural plan differences require rebind and repairs preserve scientific scope 0.000s
+  + open estimand metadata is captured once and never re-entered by diagnostics 0.000s
+  + capability changes require renewed admission and explain legal next operations 0.000s
+  + large scientific metadata pages retain all entries through continuations 0.003s
+scalafim.fmri.mvpa.RdmSuite:
+  + squared Euclidean RDM uses lower-triangle order 0.000s
+  + correlation RDM computes one minus row correlation 0.000s
+  + RDM kernels reject non-finite pattern values 0.000s
+  + crossnobis distances use cross-fold second moments 0.000s
+  + crossnobis distances keep feature normalization explicit 0.000s
+scalafim.fmri.mvpa.pattern.TwoStagePatternFitSuite:
+  + training residuals stream one neural column and equal independently calculated X minus Y C A transpose 0.002s
+  + two-stage fit returns converged pilot covariance and final artifacts with bounded real work 0.009s
+  + budget replay axis and noise-rank preflights reject poison observations before reads 0.002s
+  + training perturbation changes the framed content residual receipt 0.006s
+  + mandatory whole numeric admission refuses unknown providers before any fitting or reads 0.001s
+  + owned and direct two-stage routes preserve the fitted object and report actual distinct reads 0.007s
+  + full provider declarations admit the same fit without changing scientific population or metric 0.017s
+  + dense route reuses complete structured admission before acquisition or poison reads 0.001s
+  + final high-noise-rank precision shape overflow refuses using only metadata 0.000s
+scalafim.fmri.mvpa.EvidenceOriginsSuite:
+  + bounded direct support is tied to the original temporal axis 0.000s
+  + reindexing changes output association without narrowing upstream support 0.000s
+  + metadata-only origin validation does not call a matrix-free source 0.000s
+  + evidence records retain declared support through validated reconstruction 0.000s
+  + reindexed evidence records bind the reindexed output value identity 0.000s
+  + structurally reconstructed source equality and provenance evidence affect origin identity 0.000s
+scalafim.fmri.mvpa.MvpaParitySuite:
+  + RDM parity fixtures keep squared, normalized, and Euclidean estimands explicit 0.001s
+  + crossnobis parity fixture keeps feature normalization explicit 0.000s
+  + RSA scorer parity fixture residualizes labeled nuisance RDMs 0.001s
+  + classifier parity fixtures anchor centroid and ridge probability oracles 0.001s
+  + lightweight benchmark harness runs deterministic workloads with explicit checksums 0.000s
+  + lightweight benchmark harness validates workload shape 0.000s
+scalafim.fmri.mvpa.ClassificationSuite:
+  + correlation centroid consumes dense matrices and has row-offset invariant scores 0.001s
+  + swift centroid keeps sample-standard-deviation scaling and prior linear scores 0.001s
+  + ridge LDA matches a one-dimensional analytic probability oracle 0.001s
+  + class summary and explicit probability reordering preserve the declared class columns 0.001s
+  + matrix kernels reject malformed labels, non-finite values, and incompatible prediction width 0.001s
+  + finite Swift inputs that overflow scores return a typed refusal 0.000s
+  + class probability construction validates rows and derives first-maximum labels 0.000s
+scalafim.fmri.mvpa.RsaScoreKernelsSuite:
+  + Pearson is invariant to separate finite scales and reverses under a negative scale 0.001s
+  + finite extremes and large offsets do not overflow sums or centered products 0.000s
+  + undefined and malformed inputs retain distinct typed failures 0.000s
+  + average ties produce the independent five sixths Spearman expectation 0.000s
+[info] Passed: Total 457, Failed 0, Errors 0, Passed 456, Skipped 1
+[success] elapsed time: 23 s
+[0J[sbt-warm] mvpaJS/test: exit 0 in 23.4s
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-group/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Passed: Total 27, Failed 0, Errors 0, Passed 27
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/code/scala/scalafim/modules/group/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /Users/bbuchsbaum/code/scala/scalafim/modules/group/js/target/scala-3.7.4/scalafim-fmri-group-test-fastopt
+[info] Passed: Total 74, Failed 0, Errors 0, Passed 74
+[success] elapsed time: 17 s
+[0J[sbt-warm] groupJS/test: exit 0 in 17.8s

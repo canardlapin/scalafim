@@ -1,0 +1,46 @@
+{
+  "status": "M4.06-procedures-qualified-engineering-only-M4.08-M4.09-release-unavailable",
+  "branch": "work/umvpa-m4-m5-20261007",
+  "base": "9ba2c57f2b483f8f81a64e30b610f345b13c1784",
+  "sources": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentConfirmation.scala": "3f9ea8658754ced1bd8372b549cbe430a7c2d35f699c2fcb284ce946e1972325",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentInference.scala": "31ed07db6356111817df362fd79e4d875505ffe0a83326d2f257a7b256ecfc3d",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala": "a80bda7a54e8a34a4986ce207b20b6b1e3833d282def5b04cc2967311827949e",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceNumericsSuite.scala": "934931cc31f349dff3230e23e3af9a02a088b01e54deaca5a34a61dc3b0f4616",
+    "docs/plans/unified-mvpa-prd.md": "7c5f5ea485f27693c67e5ffeba7bbcdd4778e0bca0bb16cabd629e8cbcc4fb89",
+    "docs/plans/unified-mvpa-inference-calibration-protocol.md": "d612ca89ebc9f4ae3f3f7e6988a6e5b905f642505c46fed4240093eb9e1314d3",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentConfirmationSuite.scala": "97fda79bc9bde794e86a735a7d12b7450255bfe8b41445618dd96e6d9b2b3494"
+  },
+  "build_inputs": {
+    "build.sbt": "d2c46101da8bf58d7912b2f9d128c2946567eb9aa27e9eca75f168806bc6ae1c",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    ".jvmopts": "1fff2856fee580af6c5ed868b9f832f144afb23694c2a796ee3577ead5f7f4a7"
+  },
+  "providers": {
+    "multivar": "ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+    "gale": "d03eb99bde389ce9bce21b8e0fc59bec9ac9b4aa"
+  },
+  "artifacts": {
+    "README.md": "d026a36da86e455326a260f24046252ce9918c9b3cb418e8000f17e4cd17cec2",
+    "independent-review.md": "a5a9851223273ecac9ffca7ec58624cc8513b9209a0f2ace91029b9ac8dc393d",
+    "integration-gates.json": "262c717b9698b1e27dbe921bb9dbedd1a15fdc3d9c3367b7bf5af4328c6faf66",
+    "logs/component-arithmetic.log": "be43ca7da78067fe0a183b3dfb6754dbdfd1b1c3dc38a06e3eea5450013f142a",
+    "logs/component-numerics.log": "796addc4088d042888cbdada8f75dda09b4ca98af1d99bdea21ad05d1f99c444",
+    "logs/focused-inference-initial.log": "263b9d4177dba9b8c4322b3ef7aea6af08503e727bb83f982e82b5e9e2fc73b1",
+    "logs/focused-inference.log": "b652d8c1555e4468857edebfbff31d41ddc04d14df5e71dd57dd3085614ca059",
+    "logs/full-js.log": "05ab82b2471d9e88cece3d351f17f466b73514c1f87c4c16c4aa609022e0d074",
+    "logs/full-jvm.log": "88dba0898b30e86c6686dd9ab831597d66df6710969bfaa38facec0627edbd09",
+    "oracle.R": "8f62fdcd87be8957581e6279d64bed2f1534968db588e1b7e2ec3e8a8bc69577",
+    "oracle.log": "550bd1e2ffcf9879642ab3798eece36253cad7a2a2c402fab82fe32713b25507"
+  },
+  "gates_reference": "integration-gates.json",
+  "calibration": "Independent deterministic oracle plus exploratory known-Gaussian response smoke; frozen scientific admission not claimed",
+  "independent_review": "independent-review.md",
+  "gates_complete": {
+    "mvpaJVM": 433,
+    "mvpaJS": 433,
+    "failures": 0,
+    "errors": 0,
+    "warnings": 0
+  }
+}

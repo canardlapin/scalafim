@@ -1,0 +1,77 @@
+{
+  "consumer-compile-all.log": {
+    "uncompressed_sha256": "682546b0e36bbc867ea6a1fb7fb5fb499f85a679d79dd72495779b0571747fcc",
+    "bytes": 28541,
+    "archive": "consumer-compile-all.log.gz"
+  },
+  "consumer-final.log": {
+    "uncompressed_sha256": "8de9a6324d968080684a5da8d7d59a658767f7b9641c0017652ecc6f7c03aa77",
+    "bytes": 98308,
+    "archive": "consumer-final.log.gz"
+  },
+  "consumer-first.log": {
+    "uncompressed_sha256": "f09c8570935de7e97329b9161684306dd2945bb10e62c8373c662572facdf1c1",
+    "bytes": 6134,
+    "archive": "consumer-first.log.gz"
+  },
+  "consumer-fourth.log": {
+    "uncompressed_sha256": "1afdae8276653ccb479cd5103cc75f69551c6f58da23589839f6d803c2b60863",
+    "bytes": 100563,
+    "archive": "consumer-fourth.log.gz"
+  },
+  "consumer-second.log": {
+    "uncompressed_sha256": "0660d3c185b34392edc73d14b9acf7b019872f067170a1ff3c4c88bf6c3f3151",
+    "bytes": 9214,
+    "archive": "consumer-second.log.gz"
+  },
+  "consumer-third.log": {
+    "uncompressed_sha256": "0dcbc0afedad65fc067f36b2d636c39e27925ad70b8efd0000892f03737a909d",
+    "bytes": 12839,
+    "archive": "consumer-third.log.gz"
+  },
+  "gale-prerequisite.log": {
+    "uncompressed_sha256": "77b7007cbb8fdfe949849ed26479ca74fbc48fcbe567d3894c6519cdd6114801",
+    "bytes": 5856,
+    "archive": "gale-prerequisite.log.gz"
+  },
+  "multivar-final-fixture.log": {
+    "uncompressed_sha256": "0d96de0d6a694b070e360bbe6b24942eb9a248f8dcda9105d48bd09b263d3d93",
+    "bytes": 4666,
+    "archive": "multivar-final-fixture.log.gz"
+  },
+  "multivar-initial.log": {
+    "uncompressed_sha256": "a3c8e4ddf0b8f5dfd4f23e6bad18eebd25e4f625af832860f1b35468cdaf630d",
+    "bytes": 1253,
+    "archive": "multivar-initial.log.gz"
+  },
+  "multivar-js-smoke.log": {
+    "uncompressed_sha256": "2aae860be9cca8ccc2359b2036a4d0390419d72bda8c5ea47e1c0807897c77d2",
+    "bytes": 75535,
+    "archive": "multivar-js-smoke.log.gz"
+  },
+  "multivar-jvm-all.log": {
+    "uncompressed_sha256": "2383ccfadd34d2f995424f99a5fd4bde5335ce0fd85bd973b618aab286d4b6d9",
+    "bytes": 71236,
+    "archive": "multivar-jvm-all.log.gz"
+  },
+  "multivar-rank-first.log": {
+    "uncompressed_sha256": "1aca0fbdad3b8f1aaa5d1ed1d191bace91c0e84660b81692a646ac13311d02fe",
+    "bytes": 6896,
+    "archive": "multivar-rank-first.log.gz"
+  },
+  "multivar-api-checks.log": {
+    "uncompressed_sha256": "816aebaa04001906ee074cb87f99ad901af580e5c5f7568ec89043a756c56c4f",
+    "bytes": 254,
+    "archive": "multivar-api-checks.log.gz"
+  },
+  "probe/generator.log": {
+    "uncompressed_sha256": "633639145d4fad6e5d80ed6377bc677fa88f02a994f456fd47279afd2485a97b",
+    "bytes": 723,
+    "archive": "probe/generator.log.gz"
+  },
+  "probe/worker.log": {
+    "uncompressed_sha256": "7086a800f602523550a45bb861adcdc2fc1ab269d975330629bb7245d9e72832",
+    "bytes": 5586,
+    "archive": "probe/worker.log.gz"
+  }
+}

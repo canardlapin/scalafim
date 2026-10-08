@@ -10,6 +10,18 @@
       "description": "fmriAR estimated-AR GLS inference oracle",
       "exporter_path": "modules/fit/tools/generate_fmriar_estimated_gls_parity.R",
       "finalizer_path": "tools/r-parity/finalize_fmriar_estimated_gls_receipt.py"
+    },
+    {
+      "description": "Design-aware fmriAR residual-bias correction and fmrireg adaptive budget",
+      "exporter_path": "modules/ar/tools/generate_fmriar_bias_parity.R",
+      "finalizer_path": "tools/r-parity/finalize_fmriar_bias_receipt.py",
+      "lock_path": "tools/r-parity/ar-reference-lock.json"
+    },
+    {
+      "description": "Design-corrected end-to-end AR GLS, including run and voxelwise pooling",
+      "exporter_path": "modules/fit/tools/generate_fmriar_corrected_gls_parity.R",
+      "finalizer_path": "tools/r-parity/finalize_fmriar_corrected_gls_receipt.py",
+      "lock_path": "tools/r-parity/ar-reference-lock.json"
     }
   ]
 }

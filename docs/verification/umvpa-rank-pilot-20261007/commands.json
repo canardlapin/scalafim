@@ -1,0 +1,18 @@
+{
+  "oracle": [
+    "LC_ALL=C LANG=C /usr/local/bin/Rscript tools/mvpa-inference/generate_rank_oracle.R modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankOracleFixtures.scala",
+    "SBT_WARM_HEAP=2g SBT_WARM_CPUS=4 python3 tools/build/sbt-warm \"mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankIndependentOracleSuite\" \"mvpaJS/testOnly scalafim.fmri.mvpa.inference.RankIndependentOracleSuite\""
+  ],
+  "owning_gates": "SBT_WARM_HEAP=2g SBT_WARM_CPUS=4 python3 tools/build/sbt-warm mvpaJVM/test mvpaJS/test",
+  "python": "python3 -m unittest discover -s tools/mvpa-inference -p test_calibration_protocol.py",
+  "pilot": "python3 tools/mvpa-inference/run_rank_pilot.py --manifest docs/verification/umvpa-rank-pilot-20261007/pilot-manifest.json --packet docs/verification/umvpa-rank-pilot-20261007/results",
+  "full_b_sizing": "python3 docs/verification/umvpa-rank-pilot-20261007/size_full_b.py",
+  "derived_receipts": [
+    "python3 docs/verification/umvpa-rank-pilot-20261007/aggregate.py",
+    "python3 docs/verification/umvpa-rank-pilot-20261007/audit_inputs.py",
+    "LC_ALL=C LANG=C /usr/local/bin/Rscript tools/mvpa-inference/summarize_rank_pilot.R docs/verification/umvpa-rank-pilot-20261007/metric-counts.tsv docs/verification/umvpa-rank-pilot-20261007/metric-intervals.tsv",
+    "python3 docs/verification/umvpa-rank-pilot-20261007/render_report.py",
+    "python3 docs/verification/umvpa-rank-pilot-20261007/finalize.py"
+  ],
+  "boundary": "Fixture and pilot execution use write-once directories and source locks. Derived reports never launch confirmation."
+}
