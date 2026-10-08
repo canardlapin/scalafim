@@ -13,7 +13,7 @@ enum LawRunProfile(
 
 object LawRunProfile:
   val current: LawRunProfile =
-    sys.env.get("SCALAFIM_LAW_PROFILE") match
+    LawEnvironment.get("SCALAFIM_LAW_PROFILE") match
       case None | Some("") | Some("pr") | Some("pull-request") => LawRunProfile.PullRequest
       case Some("calibration")                                 => LawRunProfile.Calibration
       case Some(other)                                         =>
@@ -23,10 +23,10 @@ object LawRunProfile:
 
   val initialSeed: String =
     val configured =
-      sys.env
+      LawEnvironment
         .get("SCALAFIM_LAW_SEED")
         .orElse(
-          sys.env.get("SCALAFIM_LAW_SEED_LONG").map { raw =>
+          LawEnvironment.get("SCALAFIM_LAW_SEED_LONG").map { raw =>
             val value = raw.toLongOption.getOrElse(
               throw new IllegalArgumentException("SCALAFIM_LAW_SEED_LONG must be a signed 64-bit integer")
             )

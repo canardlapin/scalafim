@@ -1,0 +1,968 @@
+{
+  "schema_version": "scalafim-corrected-gls-qualification-summary/v1",
+  "profile": "confirmation",
+  "seed": 1149777122,
+  "r_version": "4.3.3",
+  "independent_sampling_units": "replicate datasets; response columns are not counted as independent tests",
+  "replicates_per_cell": 2048,
+  "failures": [],
+  "results": [
+    {
+      "cell": "ar1-low-global",
+      "engine": "known-phi",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": 0,
+      "phi_bias_halfwidth": 0,
+      "AR_RMSE": 0,
+      "whiteness": 0.07512751863174004,
+      "null_t": {
+        "count": 104,
+        "rate": 0.05078125,
+        "interval": [0.043039044736485441, 0.059496397787647148]
+      },
+      "null_f": {
+        "count": 96,
+        "rate": 0.046875,
+        "interval": [0.039434403369900589, 0.055298388416317068]
+      },
+      "coverage": {
+        "count": 1932,
+        "rate": 0.943359375,
+        "interval": [0.93423051888536923, 0.95152974384456246]
+      },
+      "variance_ratio": {
+        "estimate": 1.0060948389964544,
+        "interval": [0.9578877946596952, 1.0558366115070488]
+      },
+      "standardized_bias": {
+        "estimate": -0.0045835283964497332,
+        "interval": [-0.040946458321767659, 0.031779401528868198]
+      },
+      "d_eff": 234.97236987900104,
+      "d_inv": 828.56479346877768,
+      "effect_variance_dependence": -0.02550520016002775,
+      "timing_ms": {
+        "mean": 4.3715888369140625,
+        "median": 2.6045205
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar1-low-global",
+      "engine": "raw",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": -0.024794528971038565,
+      "phi_bias_halfwidth": 0.0010441822834300883,
+      "AR_RMSE": 0.037933494907969392,
+      "whiteness": 0.073551747185849434,
+      "null_t": {
+        "count": 125,
+        "rate": 0.06103515625,
+        "interval": [0.052560522498355869, 0.070457637886005231]
+      },
+      "null_f": {
+        "count": 113,
+        "rate": 0.05517578125,
+        "interval": [0.047109925189539804, 0.064203707017700729]
+      },
+      "coverage": {
+        "count": 1916,
+        "rate": 0.935546875,
+        "interval": [0.92590485726365557, 0.94424922142552137]
+      },
+      "variance_ratio": {
+        "estimate": 0.93802209756035826,
+        "interval": [0.8915937019061142, 0.98871729708895606]
+      },
+      "standardized_bias": {
+        "estimate": -0.0041236373383283188,
+        "interval": [-0.040486567263646245, 0.032239292586989612]
+      },
+      "d_eff": 128.45100559944109,
+      "d_inv": 26.14102867441034,
+      "effect_variance_dependence": 0.0031526751444232075,
+      "timing_ms": {
+        "mean": 4.4165957358398451,
+        "median": 2.600854
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-low-global",
+      "engine": "corrected",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": -0.0015556154891126495,
+      "phi_bias_halfwidth": 0.0010513849763009958,
+      "AR_RMSE": 0.028948416358344727,
+      "whiteness": 0.074024109634310886,
+      "null_t": {
+        "count": 105,
+        "rate": 0.05126953125,
+        "interval": [0.043490579412862218, 0.060020207430218186]
+      },
+      "null_f": {
+        "count": 94,
+        "rate": 0.0458984375,
+        "interval": [0.038535478590608366, 0.054246682089464038]
+      },
+      "coverage": {
+        "count": 1924,
+        "rate": 0.939453125,
+        "interval": [0.93006261812315971, 0.9478946092470224]
+      },
+      "variance_ratio": {
+        "estimate": 1.0045941664433573,
+        "interval": [0.95608820698037511, 1.0567630925404485]
+      },
+      "standardized_bias": {
+        "estimate": -0.0042686666233107632,
+        "interval": [-0.04063159654862869, 0.032094263302007167]
+      },
+      "d_eff": 125.50306130303508,
+      "d_inv": 176.63306949791379,
+      "effect_variance_dependence": 0.003020194974331392,
+      "timing_ms": {
+        "mean": 9.0468271845703132,
+        "median": 5.9078125000000004
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar1-high-global",
+      "engine": "known-phi",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": 0,
+      "phi_bias_halfwidth": 0,
+      "AR_RMSE": 0,
+      "whiteness": 0.09187605174279749,
+      "null_t": {
+        "count": 96,
+        "rate": 0.046875,
+        "interval": [0.039434403369900589, 0.055298388416317068]
+      },
+      "null_f": {
+        "count": 103,
+        "rate": 0.05029296875,
+        "interval": [0.042587715289329885, 0.058972385638375369]
+      },
+      "coverage": {
+        "count": 1919,
+        "rate": 0.93701171875,
+        "interval": [0.92746288584933168, 0.94561738577071575]
+      },
+      "variance_ratio": {
+        "estimate": 0.98199618510732345,
+        "interval": [0.93492122609155492, 1.0338845972661979]
+      },
+      "standardized_bias": {
+        "estimate": 0.024638772314323831,
+        "interval": [-0.011724157610994098, 0.061001702239641756]
+      },
+      "d_eff": 206.8484670870034,
+      "d_inv": 72.88845071723425,
+      "effect_variance_dependence": 0.0035331277295033922,
+      "timing_ms": {
+        "mean": 3.2916610483398436,
+        "median": 2.5650209999999998
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar1-high-global",
+      "engine": "raw",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": -0.11651491631979738,
+      "phi_bias_halfwidth": 0.0011453790062007192,
+      "AR_RMSE": 0.12069548025755278,
+      "whiteness": 0.085869470524706851,
+      "null_t": {
+        "count": 205,
+        "rate": 0.10009765625,
+        "interval": [0.089373894084412958, 0.11167901489782606]
+      },
+      "null_f": {
+        "count": 233,
+        "rate": 0.11376953125,
+        "interval": [0.10239889729878209, 0.12596720735819633]
+      },
+      "coverage": {
+        "count": 1837,
+        "rate": 0.89697265625,
+        "interval": [0.88525432517780778, 0.90783996790320576]
+      },
+      "variance_ratio": {
+        "estimate": 0.71817064888673177,
+        "interval": [0.68301247872525861, 0.75683727493407171]
+      },
+      "standardized_bias": {
+        "estimate": 0.025176727245032046,
+        "interval": [-0.011186202680285882, 0.061539657170349975]
+      },
+      "d_eff": 116.27447703927091,
+      "d_inv": 6.8030661952380758,
+      "effect_variance_dependence": 0.0066637564581923632,
+      "timing_ms": {
+        "mean": 3.3975066157226563,
+        "median": 2.5655415000000001
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-global",
+      "engine": "corrected",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": -0.0068200143172424954,
+      "phi_bias_halfwidth": 0.0013059257920804541,
+      "AR_RMSE": 0.036546868159007539,
+      "whiteness": 0.090824359078564301,
+      "null_t": {
+        "count": 111,
+        "rate": 0.05419921875,
+        "interval": [0.046203946311756887, 0.063158960206133097]
+      },
+      "null_f": {
+        "count": 112,
+        "rate": 0.0546875,
+        "interval": [0.046656843383734353, 0.063681424844658996]
+      },
+      "coverage": {
+        "count": 1920,
+        "rate": 0.9375,
+        "interval": [0.9279825261385668, 0.94607313996154385]
+      },
+      "variance_ratio": {
+        "estimate": 0.96744420300432776,
+        "interval": [0.91822815471436037, 1.0143693654381731]
+      },
+      "standardized_bias": {
+        "estimate": 0.026169916163587978,
+        "interval": [-0.010193013761729951, 0.062532846088905913]
+      },
+      "d_eff": 96.078978181566114,
+      "d_inv": 38.173340148417068,
+      "effect_variance_dependence": -0.004628432907633262,
+      "timing_ms": {
+        "mean": 8.8969063398437509,
+        "median": 7.3368124999999997
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar1-high-censored-run",
+      "engine": "known-phi",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": 0,
+      "phi_bias_halfwidth": 0,
+      "AR_RMSE": 0,
+      "whiteness": 0.09396374091589299,
+      "null_t": {
+        "count": 114,
+        "rate": 0.0556640625,
+        "interval": [0.047563189418769268, 0.064725808986548894]
+      },
+      "null_f": {
+        "count": 110,
+        "rate": 0.0537109375,
+        "interval": [0.045751236335809034, 0.062636310790578187]
+      },
+      "coverage": {
+        "count": 1922,
+        "rate": 0.9384765625,
+        "interval": [0.92902226259299692, 0.9469841875371835]
+      },
+      "variance_ratio": {
+        "estimate": 0.96937566725081314,
+        "interval": [0.92428317327462495, 1.0214342690933114]
+      },
+      "standardized_bias": {
+        "estimate": -0.0033908063187440248,
+        "interval": [-0.039753736244061956, 0.032972123606573901]
+      },
+      "d_eff": 228.07349486337404,
+      "d_inv": 51.161805305189908,
+      "effect_variance_dependence": -0.016188385232790984,
+      "timing_ms": {
+        "mean": 3.5685459477539063,
+        "median": 2.5953534999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar1-high-censored-run",
+      "engine": "raw",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": -0.11803243348942111,
+      "phi_bias_halfwidth": 0.0011597068080938598,
+      "AR_RMSE": 0.12798101325926889,
+      "whiteness": 0.087759214392867865,
+      "null_t": {
+        "count": 199,
+        "rate": 0.09716796875,
+        "interval": [0.086590644099212452, 0.10860948539759963]
+      },
+      "null_f": {
+        "count": 246,
+        "rate": 0.1201171875,
+        "interval": [0.10846482986675202, 0.13258250705782337]
+      },
+      "coverage": {
+        "count": 1837,
+        "rate": 0.89697265625,
+        "interval": [0.88525432517780778, 0.90783996790320576]
+      },
+      "variance_ratio": {
+        "estimate": 0.71515864877168034,
+        "interval": [0.68184836263914972, 0.75030138101756871]
+      },
+      "standardized_bias": {
+        "estimate": -0.0038179064275030519,
+        "interval": [-0.040180836352820978, 0.032545023497814879]
+      },
+      "d_eff": 126.514190435796,
+      "d_inv": 6.7567535556646892,
+      "effect_variance_dependence": 0.007935688045682756,
+      "timing_ms": {
+        "mean": 3.6588983271484374,
+        "median": 2.5980619999999996
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-run",
+      "engine": "corrected",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": -0.0073918858323818726,
+      "phi_bias_halfwidth": 0.0013403327180573845,
+      "AR_RMSE": 0.052442482917953857,
+      "whiteness": 0.09269636881162191,
+      "null_t": {
+        "count": 118,
+        "rate": 0.0576171875,
+        "interval": [0.049378026087834689, 0.066812458370548167]
+      },
+      "null_f": {
+        "count": 129,
+        "rate": 0.06298828125,
+        "interval": [0.054382614229284296, 0.072537114150668325]
+      },
+      "coverage": {
+        "count": 1910,
+        "rate": 0.9326171875,
+        "interval": [0.92279267731804449, 0.94150897536190681]
+      },
+      "variance_ratio": {
+        "estimate": 0.94516937198184614,
+        "interval": [0.9041582750415762, 0.99097071212284726]
+      },
+      "standardized_bias": {
+        "estimate": -0.0045573058375506896,
+        "interval": [-0.040920235762868615, 0.031805624087767242]
+      },
+      "d_eff": 105.72234536414342,
+      "d_inv": 27.604779355061645,
+      "effect_variance_dependence": 0.019720037432011787,
+      "timing_ms": {
+        "mean": 9.1934393071289069,
+        "median": 7.1228959999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar2-low-global",
+      "engine": "known-phi",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [1.5765166949677223e-14, 3.5943470422239443e-15],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.075218195176235028,
+      "null_t": {
+        "count": 106,
+        "rate": 0.0517578125,
+        "interval": [0.043942316543468758, 0.060543817277665113]
+      },
+      "null_f": {
+        "count": 113,
+        "rate": 0.05517578125,
+        "interval": [0.047109925189539804, 0.064203707017700729]
+      },
+      "coverage": {
+        "count": 1926,
+        "rate": 0.9404296875,
+        "interval": [0.93110360668913139, 0.94880439085812796]
+      },
+      "variance_ratio": {
+        "estimate": 1.0049151485980294,
+        "interval": [0.95751293380658709, 1.0592884482073512]
+      },
+      "standardized_bias": {
+        "estimate": 0.0097995510491724926,
+        "interval": [-0.026563378876145436, 0.046162480974490425]
+      },
+      "d_eff": 228.66753886547488,
+      "d_inv": 519.20734752852036,
+      "effect_variance_dependence": -0.017643386074599587,
+      "timing_ms": {
+        "mean": 3.0883936611328124,
+        "median": 2.316125
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar2-low-global",
+      "engine": "raw",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [-0.017269167619111958, -0.013991214736182464],
+      "phi_bias_halfwidth": [0.0011882368423519023, 0.0011666119093229931],
+      "AR_RMSE": 0.03598634410089651,
+      "whiteness": 0.072430040535371665,
+      "null_t": {
+        "count": 125,
+        "rate": 0.06103515625,
+        "interval": [0.052560522498355869, 0.070457637886005231]
+      },
+      "null_f": {
+        "count": 144,
+        "rate": 0.0703125,
+        "interval": [0.061236232549882461, 0.080314589685538063]
+      },
+      "coverage": {
+        "count": 1911,
+        "rate": 0.93310546875,
+        "interval": [0.9233110247802736, 0.94196603577307036]
+      },
+      "variance_ratio": {
+        "estimate": 0.93090280535492942,
+        "interval": [0.88781468479490344, 0.97663408243930783]
+      },
+      "standardized_bias": {
+        "estimate": 0.009457077160505355,
+        "interval": [-0.026905852764812575, 0.045820007085823282]
+      },
+      "d_eff": 120.73510075310533,
+      "d_inv": 23.686403064740411,
+      "effect_variance_dependence": -0.015854184301947388,
+      "timing_ms": {
+        "mean": 3.1341744370117186,
+        "median": 2.3297084999999997
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": false,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-low-global",
+      "engine": "corrected",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [-0.0015982844919826822, -0.0010664610179553086],
+      "phi_bias_halfwidth": [0.0011826114657907676, 0.0011839793647940658],
+      "AR_RMSE": 0.032561673347118146,
+      "whiteness": 0.072838041342846729,
+      "null_t": {
+        "count": 108,
+        "rate": 0.052734375,
+        "interval": [0.044846387389750955, 0.061590448121353836]
+      },
+      "null_f": {
+        "count": 120,
+        "rate": 0.05859375,
+        "interval": [0.050286482443692548, 0.067854757183434922]
+      },
+      "coverage": {
+        "count": 1920,
+        "rate": 0.9375,
+        "interval": [0.9279825261385668, 0.94607313996154385]
+      },
+      "variance_ratio": {
+        "estimate": 0.99883396262369639,
+        "interval": [0.95116198683308606, 1.0523107255335715]
+      },
+      "standardized_bias": {
+        "estimate": 0.0099336843079887004,
+        "interval": [-0.026429245617329226, 0.046296614233306631]
+      },
+      "d_eff": 117.02596191372393,
+      "d_inv": 110.2502402032505,
+      "effect_variance_dependence": -0.016432607968320259,
+      "timing_ms": {
+        "mean": 6.7827539653320308,
+        "median": 5.3781250000000007
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar2-high-global",
+      "engine": "known-phi",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [1.5765166949677223e-14, 3.5943470422239443e-15],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.09221175773450184,
+      "null_t": {
+        "count": 82,
+        "rate": 0.0400390625,
+        "interval": [0.03316294635885559, 0.047915749936748075]
+      },
+      "null_f": {
+        "count": 95,
+        "rate": 0.04638671875,
+        "interval": [0.03898482421873984, 0.054772650313177795]
+      },
+      "coverage": {
+        "count": 1943,
+        "rate": 0.94873046875,
+        "interval": [0.93997979256978181, 0.95650942058713773]
+      },
+      "variance_ratio": {
+        "estimate": 1.0402751357584881,
+        "interval": [0.98833510023407312, 1.0955788811888949]
+      },
+      "standardized_bias": {
+        "estimate": 0.00079218282847579892,
+        "interval": [-0.035570747096842131, 0.037155112753793726]
+      },
+      "d_eff": 228.25666428404972,
+      "d_inv": null,
+      "effect_variance_dependence": -0.0032391454115685749,
+      "timing_ms": {
+        "mean": 3.5716588544921875,
+        "median": 2.546646
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar2-high-global",
+      "engine": "raw",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [-0.074013142168519563, -0.067189915309919468],
+      "phi_bias_halfwidth": [0.0012811682363727905, 0.0011352880745238091],
+      "AR_RMSE": 0.078126344614803125,
+      "whiteness": 0.083747788434033479,
+      "null_t": {
+        "count": 184,
+        "rate": 0.08984375,
+        "interval": [0.079645945394019022, 0.1009223256894578]
+      },
+      "null_f": {
+        "count": 218,
+        "rate": 0.1064453125,
+        "interval": [0.095414031695822979, 0.11831996112138221]
+      },
+      "coverage": {
+        "count": 1871,
+        "rate": 0.91357421875,
+        "interval": [0.90267197668485777, 0.92358790302729343]
+      },
+      "variance_ratio": {
+        "estimate": 0.75209849607256474,
+        "interval": [0.71381311328748287, 0.79284194333245051]
+      },
+      "standardized_bias": {
+        "estimate": 0.0028356359543768605,
+        "interval": [-0.03352729397094107, 0.039198565879694787]
+      },
+      "d_eff": 110.81207665449924,
+      "d_inv": 7.6519035772710886,
+      "effect_variance_dependence": 0.017164308421596847,
+      "timing_ms": {
+        "mean": 3.7394930146484371,
+        "median": 2.5605415000000002
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": false,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-global",
+      "engine": "corrected",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [-0.0023199834075479653, -0.0029526815809818724],
+      "phi_bias_halfwidth": [0.0013146809284641649, 0.0012954162880088958],
+      "AR_RMSE": 0.035979857877528741,
+      "whiteness": 0.090442870091925531,
+      "null_t": {
+        "count": 89,
+        "rate": 0.04345703125,
+        "interval": [0.036292381430068785, 0.051613264294066319]
+      },
+      "null_f": {
+        "count": 109,
+        "rate": 0.05322265625,
+        "interval": [0.045298715871537706, 0.062113474234609445]
+      },
+      "coverage": {
+        "count": 1936,
+        "rate": 0.9453125,
+        "interval": [0.936318575155341, 0.95334315661626567]
+      },
+      "variance_ratio": {
+        "estimate": 1.0300920912466043,
+        "interval": [0.98094127215295857, 1.0837875257643701]
+      },
+      "standardized_bias": {
+        "estimate": 0.00072356601330501793,
+        "interval": [-0.03563936391201291, 0.037086495938622947]
+      },
+      "d_eff": 85.261218665366584,
+      "d_inv": null,
+      "effect_variance_dependence": 0.022366556105930479,
+      "timing_ms": {
+        "mean": 10.105939530273437,
+        "median": 7.4978544999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise",
+      "engine": "known-phi",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [1.5765166949677223e-14, 3.5943470422239443e-15],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.09381606431841058,
+      "null_t": {
+        "count": 105,
+        "rate": 0.05126953125,
+        "interval": [0.043490579412862218, 0.060020207430218186]
+      },
+      "null_f": {
+        "count": 116,
+        "rate": 0.056640625,
+        "interval": [0.048470256155437492, 0.065769481114630768]
+      },
+      "coverage": {
+        "count": 1930,
+        "rate": 0.9423828125,
+        "interval": [0.93318754162945183, 0.9506219739121653]
+      },
+      "variance_ratio": {
+        "estimate": 0.99858750609009317,
+        "interval": [0.94852871349352086, 1.0543621286043858]
+      },
+      "standardized_bias": {
+        "estimate": 0.016225824211274959,
+        "interval": [-0.020137105714042969, 0.052588754136592891]
+      },
+      "d_eff": 223.30828972226467,
+      "d_inv": 193.65769319226015,
+      "effect_variance_dependence": 0.043998534204345345,
+      "timing_ms": {
+        "mean": 4.1900943310546879,
+        "median": 2.7600625000000001
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": true,
+        "null_f": true,
+        "interval_coverage": true,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": true
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise",
+      "engine": "raw",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [-0.078180378014097218, -0.072929703109239907],
+      "phi_bias_halfwidth": [0.0013431357710822777, 0.0012149996004486277],
+      "AR_RMSE": 0.12468777653368898,
+      "whiteness": 0.061038634858066647,
+      "null_t": {
+        "count": 209,
+        "rate": 0.10205078125,
+        "interval": [0.091231005417137814, 0.11372376688682995]
+      },
+      "null_f": {
+        "count": 271,
+        "rate": 0.13232421875,
+        "interval": [0.12015947910145376, 0.14527499279814649]
+      },
+      "coverage": {
+        "count": 1822,
+        "rate": 0.8896484375,
+        "interval": [0.87759954104076221, 0.90086268449110185]
+      },
+      "variance_ratio": {
+        "estimate": 0.70997075465759474,
+        "interval": [0.6735400747427831, 0.75102671379921249]
+      },
+      "standardized_bias": {
+        "estimate": 0.021739427382386704,
+        "interval": [-0.014623502542931224, 0.058102357307704633]
+      },
+      "d_eff": 52.542949215351967,
+      "d_inv": 6.3176567103776211,
+      "effect_variance_dependence": 0.027185203740535669,
+      "timing_ms": {
+        "mean": 5.029621771972657,
+        "median": 3.0906880000000001
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": true,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise",
+      "engine": "corrected",
+      "replicates": 2048,
+      "complete": true,
+      "phi_bias": [-0.0089030179686980793, -0.011544827881724562],
+      "phi_bias_halfwidth": [0.0013708565787303147, 0.0013807861869372456],
+      "AR_RMSE": 0.10625069697731178,
+      "whiteness": 0.082142835183835514,
+      "null_t": {
+        "count": 129,
+        "rate": 0.06298828125,
+        "interval": [0.054382614229284296, 0.072537114150668325]
+      },
+      "null_f": {
+        "count": 159,
+        "rate": 0.07763671875,
+        "interval": [0.068119154660385789, 0.088063038461294263]
+      },
+      "coverage": {
+        "count": 1897,
+        "rate": 0.92626953125,
+        "interval": [0.91606610199945382, 0.9355551330100409]
+      },
+      "variance_ratio": {
+        "estimate": 0.90985732217426396,
+        "interval": [0.86608343214518735, 0.96183865424618431]
+      },
+      "standardized_bias": {
+        "estimate": 0.0233931607639759,
+        "interval": [-0.012969769161342029, 0.059756090689293828]
+      },
+      "d_eff": 37.062655379316055,
+      "d_inv": 14.460451156654303,
+      "effect_variance_dependence": 0.034643459710936825,
+      "timing_ms": {
+        "mean": 11.231232418457031,
+        "median": 7.7786664999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": false,
+        "null_t": true,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": true,
+        "standardized_bias": true,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    }
+  ],
+  "cross_platform": {
+    "same_dataset_keys": true,
+    "max_scaled_numeric_error": 9.9718567401427027e-15,
+    "tolerance": 1.0000000000000001e-09,
+    "same_decisions": true,
+    "pass": true
+  },
+  "scientific_pass": false,
+  "limits": [
+    "No group/PM/mKH qualification or resumption of historical/spent calibration campaigns",
+    "No effective-df implementation or blanket FGLS-variance-independence claim",
+    "No corrected iterative/robust fit or ARMA estimation",
+    "No scientific admission from screen or pilot results",
+    "Known-phi censor-reset whitening is a known-parameter comparator, not an exact inverse of the continuous-noise covariance; its calibration is measured rather than presumed."
+  ]
+}

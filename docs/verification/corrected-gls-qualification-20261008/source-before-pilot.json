@@ -1,0 +1,18 @@
+{
+  "recorded_at": "2026-10-08T16:35:44.921121+00:00",
+  "source_base": "c59c21d815a7d6a64142a4a550014584d6c20adf",
+  "source_sha256": {
+    "build.sbt": "811518e429faaa291267ef5b93cd02c07deeb312c06285555e7efe7be9ee01d7",
+    "tools/scenarios/corrected-gls/protocol.json": "5d046b21b8398697f6a07fbefb365dfa45489dc7446881c82282019b98f58d5e",
+    "tools/scenarios/corrected-gls/bounds.json": "5607523d1d5590a37d36ec5a5d49f2de5266158d5f5e02553143b836901079e8",
+    "tools/scenarios/corrected-gls/generate_bounds.R": "6e7c283a6302f11482fda73b635a98f6919c139a02e42c9c030bfb9766d459f7",
+    "tools/scenarios/corrected-gls/analyze.R": "066f5e33887964bb8a1f81be78d0a8d63f5975706bf06cb17fd30d286a44b97b",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsQualification.scala": "7ac3f0eba6f760965aeeb180a5bc946962d2b595071c5339d1d90d768869421c",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsQualificationSuite.scala": "18f590c286763f6389596a8f9dfd9583924fb9de6cbd2de1209cc62151a86692",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsSimulatorSuite.scala": "a2e673842d2d53d5677496f895c8ca47e26c4332f090502d2120e69f061f7c7a",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsBounds.scala": "88f5afc145528fee943832bad3ea3d41821d4520d159ee32ce9e61b3c2a7db7f"
+  },
+  "simulator_JVM_JS": "Pass",
+  "pilot_results_observed": false,
+  "confirmation_results_observed": false
+}
