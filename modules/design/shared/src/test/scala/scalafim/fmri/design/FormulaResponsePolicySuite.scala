@@ -119,12 +119,12 @@ class FormulaResponsePolicySuite extends munit.FunSuite:
     val model = EventModelBuilder.buildEither(request).fold(e => fail(e.message), identity)
     val observed = model.policyReceipts.filter(_.name == "observed-modulator")
     assertEquals(observed.length, 2)
-    assert(observed.forall(_.detail.contains("effective-center=Global")), "z-scoring promotes center = none to global centering")
+    assert(observed.forall(_.detail.contains("center=none;effective-center=run;grouping=run;")), "z-scoring promotes center = none to within-run centering")
     assert(observed.exists(r => r.detail.contains("run=1;") && r.detail.contains("degenerate=true")))
     assert(observed.exists(r => r.detail.contains("run=0;") && r.detail.contains("degenerate=false")))
     val degenerate = model.policyReceipts.filter(_.name == "observed-modulator-degenerate")
     assertEquals(degenerate.length, 1)
-    assert(degenerate.head.detail.contains("run=1;"))
+    assert(degenerate.head.detail.contains("run=1;effective-center=run;grouping=run;"), degenerate.head.detail)
     assert(model.designSchema.audit.policyReceipts.exists(_.name == "observed-modulator-degenerate"))
 
   test("the missing-value receipt reports per-modulator observed policies, not only the default"):
@@ -149,3 +149,42 @@ class FormulaResponsePolicySuite extends munit.FunSuite:
       (0 until 3).foreach: column =>
         assertEqualsDouble(shared.designMatrix(row, column), reference.designMatrix(row, column), 1e-12)
     assert((0 until shared.designMatrix.rows).exists(row => math.abs(shared.designMatrix(row, 2)) > 1e-3))
+
+  test("observed-modulator receipts name the requested centring scope and the rows that share a mean"):
+    def receipts(center: String) =
+      build(s"onset ~ hrf(condition, modulators(modulator(first, center = $center)), id = task)")
+        .fold(e => fail(e.message), identity)
+        .policyReceipts.filter(_.name == "observed-modulator")
+    val run = receipts("run")
+    assertEquals(run.length, 2)
+    assert(run.forall(_.detail.contains("center=run;effective-center=run;grouping=run;")), run.toString)
+    assert(run.exists(_.detail.startsWith("modulator=first;run=0;center=run;")), run.toString)
+    val cell = receipts("cell")
+    assertEquals(cell.length, 2)
+    assert(cell.forall(_.detail.contains("center=cell;effective-center=cell;grouping=run-by-cell(condition);")), cell.toString)
+    val none = receipts("none")
+    assert(none.forall(_.detail.contains("center=none;effective-center=none;grouping=none;")), none.toString)
+
+  test("a cell-centred modulator without factors groups by run alone"):
+    val model = EventModelBuilder.buildEither(
+      EventDesignRequest.fromText("onset ~ hrf(modulators(modulator(first, center = cell)), id = slope)", table, twoRuns, blockPlan = blocks).toOption.get
+    ).fold(e => fail(e.message), identity)
+    val observed = model.policyReceipts.filter(_.name == "observed-modulator")
+    assertEquals(observed.length, 2)
+    assert(observed.forall(_.detail.contains("center=cell;effective-center=cell;grouping=run;")), observed.toString)
+
+  test("build receipts name each run's sampling reference and its start time"):
+    val defaulted = build("onset ~ hrf(condition, id = task)").fold(e => fail(e.message), identity)
+    assertEquals(
+      defaulted.policyReceipts.filter(_.name == "sampling-reference").map(_.detail),
+      Vector("run=0;reference=mid-volume;start-time=0.5;tr=1", "run=1;reference=mid-volume;start-time=0.5;tr=1")
+    )
+    assert(defaulted.designSchema.audit.policyReceipts.exists(_.name == "sampling-reference"))
+    val frame = SamplingFrame(blockLens = Seq(40, 40), tr = Seq(2.0), startTime = Seq(0.0, 0.7))
+    val explicit = EventModelBuilder.buildEither(
+      EventDesignRequest.fromText("onset ~ hrf(condition, id = task)", table, frame, blockPlan = blocks).toOption.get
+    ).fold(e => fail(e.message), identity)
+    assertEquals(
+      explicit.policyReceipts.filter(_.name == "sampling-reference").map(_.detail),
+      Vector("run=0;reference=volume-onset;start-time=0;tr=2", "run=1;reference=explicit-offset;start-time=0.7;tr=2")
+    )

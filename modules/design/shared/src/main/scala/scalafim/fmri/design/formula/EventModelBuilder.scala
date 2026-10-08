@@ -1080,7 +1080,7 @@ object EventModelBuilder:
       diagnosed <- model0.withDiagnosticsEither(compiled.diagnostics)
       evidenced <- diagnosed.withPolicyEvidenceEither(
         compiled.missingValues,
-        compiled.policyReceipts,
+        compiled.policyReceipts ++ samplingReferenceReceipts(samplingFrame),
         factorLevels = compiled.factorLevels,
         emptyCells = compiled.emptyCells,
         emptyCellAudits = compiled.emptyCellAudits,
@@ -1090,6 +1090,16 @@ object EventModelBuilder:
         basisOrthogonalization = compiled.basisOrthogonalizationReceipts
       )
     yield evidenced.copy(contrastSetsByTerm = attached)
+
+  /** One receipt per run naming the instant its samples refer to (see
+    * [[SamplingReference]]: `TR / 2` is mid-volume, `0` volume-onset, any
+    * other start time an explicit offset) together with the start time and TR. */
+  private def samplingReferenceReceipts(samplingFrame: SamplingFrame): Vector[PolicyReceipt] =
+    samplingFrame.samplingReferences.zipWithIndex.map { (reference, block) =>
+      PolicyReceipt("sampling-reference",
+        s"run=$block;reference=${reference.label};start-time=${PortableNumber.format(samplingFrame.startTime(block).value)};" +
+          s"tr=${PortableNumber.format(samplingFrame.tr(block).value)}")
+    }
 
   private def attachContrastSetsEither(
       model: EventModel,
@@ -2471,6 +2481,7 @@ object EventModelBuilder:
           case factor: CategoricalEvent =>
             CellAssignment(FactorId.unsafe(factor.varName), LevelId.unsafe(factor.levels(factor.codes(row))))
         )
+      val cellFactors = events.collect { case factor: CategoricalEvent => factor.varName }
       val missing = Vector.newBuilder[MissingValueResolution]
       val policies = Vector.newBuilder[PolicyReceipt]
       val output = Vector.newBuilder[Event]
@@ -2509,7 +2520,8 @@ object EventModelBuilder:
                           s"${group.cell.fold("all")(_.canonical)}:n=${group.observedIndices.length}:mean=${group.mean.fold("")(PortableNumber.format)}"
                         }.mkString(",")
                         policies += PolicyReceipt("observed-modulator",
-                          s"modulator=${plan.source.value};run=${runs(runIndex)};center=${plan.centering};effective-center=${receipt.effectiveCentering};" +
+                          s"modulator=${plan.source.value};run=${runs(runIndex)};center=${observedCenterScope(plan.centering)};" +
+                            s"effective-center=${observedCenterScope(receipt.effectiveCentering)};grouping=${observedCenterGrouping(receipt.effectiveCentering, cellFactors)};" +
                             s"scale=${plan.scaling};missing=${plan.missing.canonical};divisor=${PortableNumber.format(receipt.scale)};observed=${receipt.observedIndices.length};" +
                             s"degenerate=${receipt.degenerate};degenerate-scale=${receipt.degenerateScale};groups=$cellsDetail")
                         if receipt.degenerate then
@@ -2517,13 +2529,32 @@ object EventModelBuilder:
                             if receipt.observedIndices.length < 2 then s"fewer than two observed values (${receipt.observedIndices.length})"
                             else "prepared values do not vary within the run"
                           policies += PolicyReceipt("observed-modulator-degenerate",
-                            s"modulator=${plan.source.value};run=${runs(runIndex)};effective-center=${receipt.effectiveCentering};reason=$reason")
+                            s"modulator=${plan.source.value};run=${runs(runIndex)};effective-center=${observedCenterScope(receipt.effectiveCentering)};" +
+                              s"grouping=${observedCenterGrouping(receipt.effectiveCentering, cellFactors)};reason=$reason")
                     runIndex += 1
               column += 1
             output += event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(event.value.rows, event.value.cols, data))
           case other => output += other
         eventIndex += 1
       Right(ObservedEvents(output.result(), missing.result(), policies.result()))
+
+  /** The formula spelling of an observed-modulator centering scope.
+    * [[prepareObserved]] calls [[ObservedModulator.prepare]] once per run, so
+    * its partition-wide `Global` centering is centring within the run. */
+  private def observedCenterScope(centering: ObservedModulator.Centering): String = centering match
+    case ObservedModulator.Centering.None => "none"
+    case ObservedModulator.Centering.Global => "run"
+    case ObservedModulator.Centering.ByCell => "cell"
+
+  /** The rows that actually share one centring mean: none, each run, or each
+    * run crossed with the term's factor cells (the categorical events of the
+    * term; with no factors there is one cell per run). */
+  private def observedCenterGrouping(centering: ObservedModulator.Centering, cellFactors: Vector[String]): String =
+    centering match
+      case ObservedModulator.Centering.None => "none"
+      case ObservedModulator.Centering.Global => "run"
+      case ObservedModulator.Centering.ByCell =>
+        if cellFactors.isEmpty then "run" else s"run-by-cell(${cellFactors.mkString(",")})"
 
   private def missingValueResolutions(
       events: Vector[Event],
