@@ -187,7 +187,7 @@ lazy val multivarInferenceJS  = ProjectRef(multivarBuild, "inferenceJS")
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "596b398af380079e4b251535230d0bc03cd88c51"
+lazy val intaglioRevision = "edcdfd5ffaf010e8205da04a85a7f8b6b2fd0d92"
 lazy val intaglioBuild =
   uri(
     sys.props.getOrElse(
