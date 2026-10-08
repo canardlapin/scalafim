@@ -133,6 +133,73 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     val invalidTime = encoded.replace("\"timepoint\":1", "\"timepoint\":99")
     assert(SurfaceSceneCodec.decode(invalidTime).left.exists(_.message.contains("timepoint 99")))
 
+  test("every display threshold kind roundtrips through the scene codec"):
+    val (model, state, bindings, provenance) = fixture()
+    val thresholds = Vector(
+      DisplayThreshold.Disabled,
+      DisplayThreshold.transparentBand(-0.2, 0.3).toOption.get,
+      DisplayThreshold.below(-0.25).toOption.get,
+      DisplayThreshold.above(1.5).toOption.get,
+      DisplayThreshold.twoSidedMagnitude(0.4).toOption.get,
+      DisplayThreshold.twoSided(ThresholdBand.unsafe(-0.5, 0.25), Some(ThresholdBand.unsafe(-1.0, 1.75))).toOption.get
+    )
+    // Exhaustive over the enum: a new Intaglio case warns here until the codec and this suite cover it.
+    def kind(threshold: DisplayThreshold): String =
+      threshold match
+        case DisplayThreshold.Disabled => "disabled"
+        case DisplayThreshold.TransparentBand(_) => "transparent-band"
+        case DisplayThreshold.Below(_) => "below"
+        case DisplayThreshold.Above(_) => "above"
+        case DisplayThreshold.TwoSided(_, _) => "two-sided"
+    assertEquals(thresholds.map(kind).toSet, Set("disabled", "transparent-band", "below", "above", "two-sided"))
+    assertEquals(thresholds.collect { case DisplayThreshold.TwoSided(_, outer) => outer.isDefined }, Vector(false, true))
+
+    thresholds.foreach: threshold =>
+      val thresholded = SurfaceViewer.reduce(
+        model,
+        state,
+        SurfaceViewerAction.SetLayerThreshold(activationId, threshold)
+      ).toOption.get
+      val document = SurfaceSceneDocument.capture(model, thresholded, bindings, provenance).toOption.get
+      val encoded = SurfaceSceneCodec.encode(document)
+      assert(encoded.contains(s"\"kind\":\"${kind(threshold)}\""), clue(encoded))
+      val decoded = SurfaceSceneCodec.decode(encoded).toOption.get
+      assertEquals(SurfaceSceneCodec.encode(decoded), encoded)
+      assertEquals(decoded.restore(model, bindings).toOption.get, thresholded)
+
+  test("threshold decoding rejects invalid cutoffs, nesting, and fields foreign to the kind"):
+    val (model, state, bindings, provenance) = fixture()
+    def encodedWith(threshold: DisplayThreshold): String =
+      val thresholded = SurfaceViewer.reduce(
+        model,
+        state,
+        SurfaceViewerAction.SetLayerThreshold(activationId, threshold)
+      ).toOption.get
+      SurfaceSceneCodec.encode(SurfaceSceneDocument.capture(model, thresholded, bindings, provenance).toOption.get)
+
+    val above = encodedWith(DisplayThreshold.above(1.5).toOption.get)
+    val aboveJson = "{\"kind\":\"above\",\"cutoff\":1.5}"
+    assert(above.contains(aboveJson), clue(above))
+    assert(SurfaceSceneCodec.decode(above.replace(aboveJson, "{\"kind\":\"above\",\"cutoff\":1e999}"))
+      .left.exists(_.message.contains("expected finite number")))
+    assert(SurfaceSceneCodec.decode(above.replace(aboveJson, "{\"kind\":\"above\"}"))
+      .left.exists(_.message.contains("missing required field")))
+    assertEquals(
+      SurfaceSceneCodec.decode(above.replace(aboveJson, "{\"kind\":\"above\",\"cutoff\":1.5,\"lower\":0.0}"))
+        .left.toOption.collect { case SurfaceSceneError.UnknownField(_, field) => field },
+      Some("lower")
+    )
+
+    val twoSided = encodedWith(DisplayThreshold.twoSidedMagnitude(0.4, Some(1.5)).toOption.get)
+    val twoSidedJson = "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"outer\":[-1.5,1.5]}"
+    assert(twoSided.contains(twoSidedJson), clue(twoSided))
+    val notNested = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"outer\":[-0.2,1.5]}")
+    assert(SurfaceSceneCodec.decode(notNested).left.exists(_.isInstanceOf[SurfaceSceneError.InvalidState]))
+    val malformed = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[0.4],\"outer\":null}")
+    assert(SurfaceSceneCodec.decode(malformed).left.exists(_.message.contains("two-number array")))
+    val missingOuter = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4]}")
+    assert(SurfaceSceneCodec.decode(missingOuter).left.exists(_.message.contains("missing required field")))
+
   private def fixture(): (SurfaceViewerModel, SurfaceViewerState, SurfaceSceneBindings, SurfaceProvenance) =
     val left = geometry(Hemisphere.Left, SurfaceKind.Inflated, -1.0)
     val right = geometry(Hemisphere.Right, SurfaceKind.Inflated, 1.0)
