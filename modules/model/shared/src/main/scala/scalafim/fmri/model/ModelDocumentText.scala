@@ -3,7 +3,8 @@ package scalafim.fmri.model
 import gale.linalg.Matrix
 import scalafim.fmri.design.{ColumnId, RunContrastCombination}
 import scalafim.fmri.design.baseline.{BaselineBasis, DctCutoffPeriod, Intercept}
-import scalafim.fmri.design.formula.{Arg, ArgValue, DerivedColumn, DerivedEventPlan, DerivedMissingRows, FormulaParser, FormulaPrinter}
+import scalafim.fmri.design.formula.{Arg, ArgValue, DerivedColumn, DerivedEventPlan, DerivedMissingRows, FormulaParser, FormulaPrinter, PortableJson}
+import ujson.{Null, Obj}
 
 /** A text-form problem. `line` is one-based when the problem is in parsed text. */
 final case class ModelTextError(line: Option[Int], detail: String):
@@ -21,20 +22,48 @@ final case class ModelTextError(line: Option[Int], detail: String):
   *   censor = fd(threshold = 0.5, before = 1, after = 2, min_segment = 5, max_fraction = 0.25))
   * estimation: runwise_gls(ar = ar(...), weights = none(), projection = none(), missing = "error")
   * runs: fixed_effects()
+  * base: fnv64-<16 hex digits>
   * }}}
   *
   * (Each entry is one physical line; the wrap above is for reading only.)
   * Values use the admitted formula expression grammar and its printer, so
   * numbers are platform-stable and every rendered line re-parses losslessly.
   * Every argument is explicit: parsing rejects unknown, duplicate or missing
-  * arguments rather than filling defaults. Pieces with no text form —
-  * contrasts, nuisance matrices, factor levels, orthogonalization and the
-  * remaining build policies — are taken from the `base` document on parse.
+  * arguments rather than filling defaults.
+  *
+  * Pieces with no text form — block and duration columns, precision,
+  * contrasts, nuisance matrices, factor levels, empty-cell, missing-value and
+  * degenerate-modulator policies, orthogonalization — come from the `base`
+  * document on parse. The contract is that `base` agrees with the rendered
+  * document on all of them: the `base:` line is a platform-stable digest of
+  * exactly those fields, and [[parse]] fails at that line when `base`
+  * differs, so text can never silently be combined with another model.
   */
 object ModelDocumentText:
   private type Result[A] = Either[ModelTextError, A]
 
-  private val singleKeys = Vector("formula", "missing_rows", "baseline", "confounds", "estimation", "runs")
+  private val singleKeys = Vector("formula", "missing_rows", "baseline", "confounds", "estimation", "runs", "base")
+
+  /** Build fields that do have a text form, excluded from the base digest. */
+  private val textBuildFields = Set("baseline", "baselineDegree", "intercept", "strategy")
+
+  /** Digest of every build field without a text form, from its canonical
+    * model-document JSON (FNV-1a 64 over the UTF-16 text, as design
+    * fingerprints use; an identity, not a security hash).
+    */
+  def baseDigest(document: ModelDocument): Either[ModelTextError, String] =
+    ModelBuildSpecJsonCodec.encodeBody(document.build, "$.build", (_, _) => Right(Null))
+      .flatMap(fields => PortableJson.render(Obj.from(fields.filterNot((key, _) => textBuildFields(key)))))
+      .left.map(error => ModelTextError(None, s"base document has no portable digest: ${error.message}"))
+      .map { text =>
+        var hash = -3750763034362895579L
+        var index = 0
+        while index < text.length do
+          hash = (hash ^ text.charAt(index).toLong) * 1099511628211L
+          index += 1
+        val hex = java.lang.Long.toHexString(hash)
+        s"fnv64-${"0" * (16 - hex.length)}$hex"
+      }
 
   // ------------------------------------------------------------------ render
 
@@ -44,6 +73,8 @@ object ModelDocumentText:
       FormulaPrinter.expressionTextEither(value).left.map(error => ModelTextError(None, error.message))
     for
       _ <- if build.formula.exists(c => c == '\n' || c == '\r') then Left(ModelTextError(None, "formula text must be a single line")) else Right(())
+      _ <- if build.formula != build.formula.trim then Left(ModelTextError(None, "formula text must not have leading or trailing whitespace")) else Right(())
+      digest <- baseDigest(document)
       baselineText <- print(baseline(build.baselineBasis, build.baselineDegree, build.baselineIntercept))
       confoundText <- print(document.confounds.fold(call("none"))(confounds))
       strategyValue <- estimation(build.strategy)
@@ -51,7 +82,7 @@ object ModelDocumentText:
       runsText <- print(runs(document.runCombination))
     yield Vector(s"formula: ${build.formula}", s"missing_rows: ${build.derived.missingRows.label}") ++
       build.derived.columns.map(column => s"derive: ${column.text}") ++
-      Vector(s"baseline: $baselineText", s"confounds: $confoundText", s"estimation: $estimationText", s"runs: $runsText")
+      Vector(s"baseline: $baselineText", s"confounds: $confoundText", s"estimation: $estimationText", s"runs: $runsText", s"base: $digest")
 
   private def call(name: String, args: (String, ArgValue)*): ArgValue =
     ArgValue.Call(name, args.toVector.map((key, value) => Arg(Some(key), value)))
@@ -164,14 +195,23 @@ object ModelDocumentText:
       _ <- FormulaParser.parseEither(formula).left.map(error => ModelTextError(Some(formulaLine), error.message))
       policy <- single("missing_rows") match
         case (number, value) => DerivedMissingRows.fromLabel(value).toRight(ModelTextError(Some(number), s"unknown missing-row policy '$value'"))
-      columns <- traverse(keyed.filter(_._2 == "derive")) { (number, _, value) =>
+      deriveLines = keyed.filter(_._2 == "derive")
+      columns <- traverse(deriveLines) { (number, _, value) =>
         DerivedColumn.parse(value).left.map(error => ModelTextError(Some(number), error.message))
       }
-      derived <- DerivedEventPlan.from(columns, policy).left.map(error => ModelTextError(None, error.message))
+      derived <- DerivedEventPlan.from(columns, policy).left.map { error =>
+        val repeated = columns.indices.find(index => columns.take(index).exists(_.id == columns(index).id))
+        ModelTextError(repeated.map(index => deriveLines(index)._1), error.message)
+      }
       baselineParts <- expression(single("baseline")).flatMap((number, value) => readBaseline(value).left.map(at(number)))
       confoundSpec <- expression(single("confounds")).flatMap((number, value) => readConfounds(value).left.map(at(number)))
       strategy <- expression(single("estimation")).flatMap((number, value) => readEstimation(value).left.map(at(number)))
       combination <- expression(single("runs")).flatMap((number, value) => readRuns(value).left.map(at(number)))
+      expected <- baseDigest(base)
+      _ <- single("base") match
+        case (_, digest) if digest == expected => Right(())
+        case (number, digest) => Left(ModelTextError(Some(number),
+          s"base document differs from the rendered one in fields without a text form (text has $digest, base has $expected)"))
     yield
       val (basis, degree, intercept) = baselineParts
       ModelDocument(

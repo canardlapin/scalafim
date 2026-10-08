@@ -77,6 +77,33 @@ class ModelDocumentJsonCodecSuite extends munit.FunSuite:
     assertEquals(encoded(document), expected)
     assertEquals(decoded(expected), document)
 
+  test("exponents, negatives and integral values render with pinned, platform-stable bytes"):
+    val document = ModelDocument(
+      ModelBuildSpec("onset ~ trialwise()", strategy = FitStrategy.GeneralizedLeastSquares(
+        AutocorrelationConfig.unsafe(order = 1, iterations = 0, coefficients = ArCoefficientSpec.Rho(-0.25)),
+        FitControls(
+          volumeWeighting = ModelVolumeWeighting.fixed(Vector(1e-7, 1e21, 2.0)).toOption.get,
+          nuisanceProjection = ModelNuisanceProjection.MatrixProjection(NuisanceMatrix.unsafe(Matrix.dense(2, 2, Vector(-1.5, 1e-7, 1e21, -3.0))), Regularization.Fixed(1e21))
+        ))),
+      confounds = Some(ConfoundSpec(censor = Some(FdCensorPolicy(1e-7, maximumCensoredFraction = 0.5))))
+    )
+    val json = encoded(document)
+    Vector(
+      """"coefficients":{"kind":"rho","value":-0.25}""",
+      """"volumeWeighting":{"kind":"fixed","weights":[1e-7,1e21,2],"alignment":"FullSeries"}""",
+      """"nuisanceProjection":{"kind":"matrix","rows":2,"cols":2,"values":[-1.5,1e-7,1e21,-3],"lambda":{"kind":"fixed","value":1e21}}""",
+      """"censor":{"threshold":1e-7,"before":0,"after":0,"minimumRetainedSegment":1,"maximumCensoredFraction":0.5}"""
+    ).foreach(fragment => assert(json.contains(fragment), s"$fragment not in $json"))
+    assertEquals(decoded(json), document)
+    assertEquals(encoded(decoded(json)), json)
+
+  test("nuisance matrices compare by value bits, copy their input, and stay reflexive with NaN"):
+    val withNaN = NuisanceMatrix.unsafe(Matrix.dense(1, 2, Vector(Double.NaN, 1.0)))
+    assertEquals(withNaN, withNaN)
+    assertEquals(withNaN, NuisanceMatrix.unsafe(Matrix.dense(1, 2, Vector(Double.NaN, 1.0))))
+    assertEquals(withNaN.hashCode, NuisanceMatrix.unsafe(Matrix.dense(1, 2, Vector(Double.NaN, 1.0))).hashCode)
+    assertNotEquals(NuisanceMatrix.unsafe(Matrix.dense(1, 2, Vector(1.0, 2.0))), NuisanceMatrix.unsafe(Matrix.dense(2, 1, Vector(1.0, 2.0))))
+
   test("unknown and missing fields fail with the JSON path of the offending value"):
     val json = encoded(full)
     def pathOf(text: String): String =
@@ -94,6 +121,8 @@ class ModelDocumentJsonCodecSuite extends munit.FunSuite:
     assertEquals(pathOf(swap(""""kind":"fixed","value":4""", """"kind":"fixed","value":-4""")), "$.build.strategy.controls.nuisanceProjection.lambda.value")
     assertEquals(pathOf(swap(""","minimumRetainedSegment":5""", "")), "$.confounds.censor")
     assertEquals(pathOf(swap(""""motion":"Friston24"""", """"motion":"friston24"""")), "$.confounds.motion")
+    assertEquals(pathOf(swap(""""acompcorComponents":5""", """"acompcorComponents":-1""")), "$.confounds.acompcorComponents")
+    assertEquals(pathOf(swap(""""threshold":0.5""", """"threshold":-0.5""")), "$.confounds.censor")
     assertEquals(pathOf(swap(""""missingRows":"drop"""", """"missingRows":"keep"""")), "$.derived.missingRows")
     assertEquals(pathOf(swap(""""version":1""", """"version":2""")), "$.version")
     assertEquals(pathOf(swap("""scalafim.model-document""", """scalafim.model-other""")), "$.schema")

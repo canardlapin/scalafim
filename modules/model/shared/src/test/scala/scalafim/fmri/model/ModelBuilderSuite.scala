@@ -111,6 +111,14 @@ class ModelBuilderSuite extends munit.FunSuite:
       case _ => false
     )
     assert(ModelBuildSpecJsonCodec.encode(spec).swap.toOption.exists(_.path == "$.derived"))
+    // The same model as building from manually materialized events.
+    val manualRows = Vector(0.0 -> "low", 2.0 -> "high", 3.0 -> "high").map: (onset, level) =>
+      DatasetEventRow.unsafe(Map(DatasetFieldId("onset") -> DatasetValue.Number(onset), DatasetFieldId("level") -> DatasetValue.Text(level)))
+    val manualEvents = DatasetEvents.fromTypedRows(manualRows).fold(error => fail(error.message), identity)
+    val manual = FmriModelBuilder.buildModelEither(dataset(manualEvents), ModelBuildSpec("onset ~ hrf(level)")).fold(error => fail(error.message), identity)
+    assertEquals(model.columnNames, manual.columnNames)
+    assertEquals(model.eventModel.designMatrix.data.toVector, manual.eventModel.designMatrix.data.toVector)
+    assertEquals(model.eventModel.designSchema.audit.copy(derivedRows = Vector.empty), manual.eventModel.designSchema.audit)
   }
 
   test("buildModel propagates declared factor levels through the public model path") {

@@ -76,13 +76,52 @@ final case class EventModel(
   /** Attach derived-declaration row evidence and refresh identity: the same
     * matrix built with and without a missing-row policy must not share a
     * design fingerprint.
+    *
+    * The model was compiled from the materialized table, whose row `i` is
+    * the caller's row `receipt.retainedRows(i)`. Every field that names a
+    * caller row is rewritten to the caller's numbering:
+    * [[EventRowProvenance.sourceRow]] (term provenance, audit provenance and
+    * missing-value sources), and the `sourceRows` of degenerate-modulator and
+    * orthogonalization receipts. Term-local event positions
+    * (`MissingValueResolution.eventIndex`, `EventExclusion.eventIndex`,
+    * centering `eventIndices`) index a term's own events and are unchanged.
     */
   def withDerivedRowsEither(receipt: DerivedRowsReceipt): Either[DesignError, EventModel] =
-    val schema0 = designSchema
-    val audit0 = schema0.audit.copy(derivedRows = schema0.audit.derivedRows :+ receipt)
-    DesignSchema
-      .validated(schema0.matrix, schema0.rows, schema0.columns, audit0)
-      .map(schema1 => copy(compiledSchema = compiledSchema.map(_ => schema1)))
+    val rows = receipt.retainedRows
+    val outside = (terms.flatMap(_._2 match
+      case ct: ConvolvedTerm => ct.term.eventProvenance.map(_.sourceRow)
+      case _ => Vector.empty
+    ) ++ designSchema.audit.eventProvenance.map(_.sourceRow) ++ degenerateModulatorReceipts.flatMap(_.sourceRows) ++
+      orthogonalizationReceipts.flatMap(_.steps.flatMap(_.groups.flatMap(_.sourceRows)))).find(row => row < 0 || row >= rows.length)
+    outside match
+      case Some(row) => Left(DesignError.InvalidSchema(s"compiled source row $row has no retained caller row"))
+      case None =>
+        def provenance(value: EventRowProvenance): EventRowProvenance = value.copy(sourceRow = rows(value.sourceRow))
+        def missing(value: MissingValueResolution): MissingValueResolution = value.copy(source = value.source.map(provenance))
+        def degenerate(value: DegenerateModulatorReceipt): DegenerateModulatorReceipt =
+          value.copy(sourceRows = value.sourceRows.map(rows), finiteSourceRows = value.finiteSourceRows.map(rows))
+        def orthogonalized(value: OrthogonalizationReceipt): OrthogonalizationReceipt =
+          value.copy(steps = value.steps.map(step => step.copy(groups = step.groups.map(group => group.copy(sourceRows = group.sourceRows.map(rows))))))
+        val terms1 = terms.map:
+          case (key, ct: ConvolvedTerm) => key -> ct.copy(term = ct.term.copy(eventProvenance = ct.term.eventProvenance.map(provenance)))
+          case other => other
+        val schema0 = designSchema
+        val audit0 = schema0.audit.copy(
+          eventProvenance = schema0.audit.eventProvenance.map(provenance),
+          missingValues = schema0.audit.missingValues.map(missing),
+          degenerateModulatorReceipts = schema0.audit.degenerateModulatorReceipts.map(degenerate),
+          orthogonalizationReceipts = schema0.audit.orthogonalizationReceipts.map(orthogonalized),
+          derivedRows = schema0.audit.derivedRows :+ receipt
+        )
+        DesignSchema
+          .validated(schema0.matrix, schema0.rows, schema0.columns, audit0)
+          .map(schema1 => copy(
+            terms = terms1,
+            compiledSchema = compiledSchema.map(_ => schema1),
+            missingValueResolutions = missingValueResolutions.map(missing),
+            degenerateModulatorReceipts = degenerateModulatorReceipts.map(degenerate),
+            orthogonalizationReceipts = orthogonalizationReceipts.map(orthogonalized)
+          ))
 
   /** Compatibility wrapper over [[withPolicyEvidenceEither]].
     *
