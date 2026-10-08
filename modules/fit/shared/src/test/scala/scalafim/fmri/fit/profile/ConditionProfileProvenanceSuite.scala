@@ -162,7 +162,8 @@ class ConditionProfileProvenanceSuite extends munit.FunSuite:
     assertEncodesFields(
       "AR options",
       labels[ArOptions],
-      ResponsePreparationIdentity.autocorrelation(ArOptions(ArStructure.Ar(2), phi = Some(Vector(0.1, -0.1)))),
+      ResponsePreparationIdentity.autocorrelation(ArOptions(ArStructure.Ar(2),
+        biasCorrection = scalafim.fmri.model.ArBiasCorrection.Ols)),
       framed
     )
     assertEncodesFields("robust options", labels[RobustOptions], ResponsePreparationIdentity.robust(RobustOptions()), framed)

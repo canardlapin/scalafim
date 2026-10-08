@@ -2,6 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.fmri.design.hrf.KernelBasisProvenance.{matrix, number, option, record}
 import scalafim.fmri.model.{
+  ArBiasCorrection,
   ArOptions,
   ArStructure,
   DvarsWeightEstimator,
@@ -113,15 +114,24 @@ private[fit] object ResponsePreparationIdentity:
         values.copyRowMajorTo(rowMajor)
         record("matrix_projection", matrix(values.rows, values.cols, rowMajor), regularization(lambda))
 
+  /** Raw policies keep the historical v1 form, whose correction is implicitly
+    * Raw. Corrected policies use an explicit v2 nested record; this avoids
+    * changing old immutable preparation identities when the default is used.
+    */
+  private[fit] def biasCorrection(value: ArBiasCorrection): String =
+    value match
+      case ArBiasCorrection.Raw => record("raw")
+      case ArBiasCorrection.OlsDesign(ceiling) => record("ols_design", s"ceiling=${ceiling.value}")
+
   private[fit] def autocorrelation(value: ArOptions): String =
     value match
-      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi) =>
+      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, correction) =>
         val order = structure match
           case ArStructure.Iid => record("iid")
           case ArStructure.Ar(order) => record("ar", order.toString)
         record(
-          "ar_options",
-          s"structure=$order",
+          if correction == ArBiasCorrection.Raw then "ar_options" else "ar_options/v2",
+          (Vector(s"structure=$order",
           s"iterations=$iterations",
           s"global=$global",
           s"voxelwise=$voxelwise",
@@ -129,6 +139,7 @@ private[fit] object ResponsePreparationIdentity:
           s"censoredTimepoints=${ints("timepoints", censoredTimepoints)}",
           s"rho=${option(rho.map(number))}",
           s"phi=${option(phi.map(numbers))}"
+          ) ++ (if correction == ArBiasCorrection.Raw then Vector.empty else Vector(s"biasCorrection=${biasCorrection(correction)}")))*
         )
 
   private[fit] def robust(value: RobustOptions): String =

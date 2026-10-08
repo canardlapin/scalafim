@@ -176,7 +176,10 @@ def finalize_receipt(
     raise SystemExit("receipt finalization requires LANG=C")
 
   payload["truth_boundary"] = truth_boundary
-  receipt["producer_command"] = "bash tools/r-parity/regenerate_receipts.sh --r-only"
+  receipt["producer_command"] = (
+    "bash tools/r-parity/regenerate_receipts.sh --r-only" if lock_path == LOCK_PATH else
+    f"python3 tools/r-parity/check_receipts.py --regenerate r --lock-path {lock_path.relative_to(REPO_ROOT)}"
+  )
   receipt["environment"] = expected_environment
   receipt["comparison_policy"] = COMPARISON_POLICY
   receipt["hashes"] = expected_hashes

@@ -1,21 +1,26 @@
 package scalafim.fmri.fit
 
 import scalafim.fmri.ar.{
+  AcvfBias,
   ArError,
   ArEstimation,
   ArFitOptions,
   ArmaCoefficients,
   ArOrder,
   InitialConditionPolicy,
+  CorrectionBudget,
+  NoiseFit,
   NoiseEstimationLayout,
   NoisePooling,
+  PreparedCorrection,
+  RunCorrection,
   TimeSegment,
   TimeSegments,
   WhiteningMethod,
   WhiteningPlan,
   WhiteningTransform
 }
-import scalafim.fmri.model.{ArCoefficientSpec, ArOptions, AutocorrelationConfig}
+import scalafim.fmri.model.{ArBiasCorrection, ArCoefficientSpec, ArOptions, AutocorrelationConfig}
 import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 final case class GlsFit(
@@ -36,8 +41,8 @@ final case class GlsFit(
   def olsDiagnostics: OlsDiagnostics = finalOlsDiagnostics
 
 private[fit] enum GlsWhitening:
-  case Shared(plan: WhiteningPlan)
-  case Voxelwise(plans: Vector[WhiteningPlan])
+  case Shared(plan: WhiteningPlan, corrections: Vector[RunCorrection] = Vector.empty)
+  case Voxelwise(plans: Vector[WhiteningPlan], corrections: Vector[Vector[RunCorrection]] = Vector.empty)
 
 final case class GlsPrepared private[fit] (
     design: DesignMatrix,
@@ -101,7 +106,7 @@ object Gls:
       design = design,
       partitions = partitions,
       whitening = whitening,
-      diagnostics = diagnostics(whitening, partitions, method, diagnosticIterations(config)),
+      diagnostics = diagnostics(whitening, partitions, method, diagnosticIterations(config), config.biasCorrection),
       initialOlsDiagnostics = initial.diagnostics,
       selectedVoxelIndices = selectedVoxelIndices
     )
@@ -113,7 +118,7 @@ object Gls:
   ): Either[FitError, GlsFit] =
     validateVoxelIndices(response, voxelIndices).flatMap { _ =>
       prepared.whitening match
-        case GlsWhitening.Shared(plan) =>
+        case GlsWhitening.Shared(plan, _) =>
           for
             whitened <- WhiteningTransform(
               plan,
@@ -136,7 +141,7 @@ object Gls:
             coefficientCovariance = fit.coefficientCovariance
           )
 
-        case GlsWhitening.Voxelwise(plans) =>
+        case GlsWhitening.Voxelwise(plans, _) =>
           for
             selectedPlans <- subsetPlans(plans, prepared.diagnostics, prepared.selectedVoxelIndices, voxelIndices)
             diagnostics <- subsetDiagnostics(prepared.diagnostics, selectedPlans.positions)
@@ -275,18 +280,33 @@ object Gls:
 
       case ArCoefficientSpec.Estimate =>
         if config.voxelwise then
-          iterateEstimatedVoxelwiseWhitening(design, response, coefficients, noiseLayout, config)
-            .map(GlsWhitening.Voxelwise.apply)
-            .map(_ -> "voxelwise-estimated")
-        else iterateEstimatedWhitening(design, response, coefficients, noiseLayout, config).map(GlsWhitening.Shared.apply).map(_ -> "estimated")
+          preparedCorrection(design, noiseLayout, config).flatMap { correction =>
+            iterateEstimatedVoxelwiseWhitening(design, response, coefficients, noiseLayout, config, correction)
+          }.map(_ -> "voxelwise-estimated")
+        else preparedCorrection(design, noiseLayout, config).flatMap { correction =>
+          iterateEstimatedWhitening(design, response, coefficients, noiseLayout, config, correction)
+            .map((plan, statuses) => GlsWhitening.Shared(plan, statuses))
+        }.map(_ -> "estimated")
+
+  private[fit] def preparedCorrection(
+      design: DMat,
+      layout: NoiseEstimationLayout,
+      config: AutocorrelationConfig
+  ): Either[FitError, Option[PreparedCorrection]] =
+    config.biasCorrection match
+      case ArBiasCorrection.Raw => Right(None)
+      case ArBiasCorrection.OlsDesign(ceiling) =>
+        AcvfBias.prepare(design, layout, CorrectionBudget.Adaptive(ceiling.value), config.order.value)
+          .left.map(arToFitError).map(Some(_))
 
   private def iterateEstimatedWhitening(
       design: DMat,
       response: DMat,
       initialCoefficients: DMat,
       noiseLayout: NoiseEstimationLayout,
-      config: AutocorrelationConfig
-  ): Either[FitError, WhiteningPlan] =
+      config: AutocorrelationConfig,
+      correction: Option[PreparedCorrection]
+  ): Either[FitError, (WhiteningPlan, Vector[RunCorrection])] =
     val pooling = if config.global then NoisePooling.Global else NoisePooling.Run
     val arOptions =
       ArFitOptions(
@@ -295,16 +315,20 @@ object Gls:
         exactFirstAr1 = config.exactFirst
       )
 
-    def estimate(coefficients: DMat): Either[FitError, WhiteningPlan] =
+    def estimate(coefficients: DMat): Either[FitError, (WhiteningPlan, Vector[RunCorrection])] =
       val residuals = residualMatrix(design, response, coefficients)
-      ArEstimation
-        .fitNoise(residuals, noiseLayout, arOptions)
-        .left
-        .map(arToFitError)
+      correction match
+        case None =>
+          ArEstimation.fitNoise(residuals, noiseLayout, arOptions).left.map(arToFitError)
+            .map(_ -> Vector.empty)
+        case Some(prepared) =>
+          NoiseFit.estimate(residuals, noiseLayout, arOptions, design, prepared)
+            .left.map(arToFitError).map(fit => fit.plan -> fit.corrections)
 
-    def loop(iteration: Int, coefficients: DMat): Either[FitError, WhiteningPlan] =
-      estimate(coefficients).flatMap { plan =>
-        if iteration >= config.iterations then Right(plan)
+    def loop(iteration: Int, coefficients: DMat): Either[FitError, (WhiteningPlan, Vector[RunCorrection])] =
+      estimate(coefficients).flatMap { estimated =>
+        val (plan, _) = estimated
+        if iteration >= config.iterations then Right(estimated)
         else
           for
             fit <- fitWithPlan(plan, design, response)
@@ -319,9 +343,11 @@ object Gls:
       response: DMat,
       initialCoefficients: DMat,
       noiseLayout: NoiseEstimationLayout,
-      config: AutocorrelationConfig
-  ): Either[FitError, Vector[WhiteningPlan]] =
+      config: AutocorrelationConfig,
+      correction: Option[PreparedCorrection]
+  ): Either[FitError, GlsWhitening] =
     val plans = Vector.newBuilder[WhiteningPlan]
+    val statuses = Vector.newBuilder[Vector[RunCorrection]]
     var voxel = 0
     while voxel < response.cols do
       iterateEstimatedWhitening(
@@ -329,14 +355,16 @@ object Gls:
         response = matrixColumn(response, voxel),
         initialCoefficients = matrixColumn(initialCoefficients, voxel),
         noiseLayout = noiseLayout,
-        config = config
+        config = config,
+        correction = correction
       ) match
         case Left(error) =>
           return Left(error)
-        case Right(plan) =>
+        case Right((plan, outcomes)) =>
           plans += plan
+          statuses += outcomes
       voxel += 1
-    Right(plans.result())
+    Right(GlsWhitening.Voxelwise(plans.result(), if correction.isDefined then statuses.result() else Vector.empty))
 
   private[fit] def fitWithPlan(
       plan: WhiteningPlan,
@@ -392,7 +420,8 @@ object Gls:
           run.copy(
             rho = summary.head,
             coefficients = summary,
-            voxelwiseCoefficients = perVoxel
+            voxelwiseCoefficients = perVoxel,
+            voxelwiseCorrections = if run.voxelwiseCorrections.isEmpty then Vector.empty else positions.map(run.voxelwiseCorrections)
           )
         }
       Right(diagnostics.copy(runs = runs))
@@ -466,10 +495,11 @@ object Gls:
       whitening: GlsWhitening,
       partitions: Vector[RunPartition],
       method: String,
-      iterations: Int
+      iterations: Int,
+      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw
   ): ArDiagnostics =
     whitening match
-      case GlsWhitening.Shared(plan) =>
+      case GlsWhitening.Shared(plan, corrections) =>
         ArDiagnostics(
           order = plan.arOrder,
           runs = partitions.map { partition =>
@@ -477,20 +507,24 @@ object Gls:
               plan.pooling match
                 case NoisePooling.Global => plan.coefficients.head
                 case NoisePooling.Run    => plan.coefficients(partition.runIndex)
-            val phi = coefficients.phi
+            // IID filters have no lags; report zeros at the common diagnostic
+            // order while retaining the native filter and correction outcome.
+            val phi = coefficients.phi.padTo(plan.arOrder, 0.0)
             ArRunDiagnostic(
               runIndex = partition.runIndex,
               rho = phi.headOption.getOrElse(0.0),
               method = method,
               rows = partition.rowIndices.length,
-              coefficients = phi
+              coefficients = phi,
+              correction = corrections.lift(partition.runIndex)
             )
           },
           iterations = iterations,
-          whitening = whiteningProvenance(plan, partitions)
+          whitening = whiteningProvenance(plan, partitions),
+          biasCorrection = biasCorrection
         )
 
-      case GlsWhitening.Voxelwise(plans) =>
+      case GlsWhitening.Voxelwise(plans, corrections) =>
         val order = plans.map(_.arOrder).max
         ArDiagnostics(
           order = order,
@@ -498,7 +532,7 @@ object Gls:
             val perVoxel =
               plans.map { plan =>
                 val segment = plan.segments.find(_.runIndex == partition.runIndex).getOrElse(plan.segments.head)
-                plan.coefficientsFor(segment).phi
+                plan.coefficientsFor(segment).phi.padTo(order, 0.0)
               }
             val summary = averageCoefficients(perVoxel, order)
             ArRunDiagnostic(
@@ -507,12 +541,14 @@ object Gls:
               method = method,
               rows = partition.rowIndices.length,
               coefficients = summary,
-              voxelwiseCoefficients = perVoxel
+              voxelwiseCoefficients = perVoxel,
+              voxelwiseCorrections = corrections.map(_(partition.runIndex))
             )
           },
           iterations = iterations,
           sharedNormalizedCovariance = false,
-          whitening = whiteningProvenance(plans.head, partitions)
+          whitening = whiteningProvenance(plans.head, partitions),
+          biasCorrection = biasCorrection
         )
 
   private def whiteningProvenance(

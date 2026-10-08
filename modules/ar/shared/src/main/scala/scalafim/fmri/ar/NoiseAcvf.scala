@@ -106,6 +106,29 @@ object NoiseAcvf:
     val perRun = units.result()
     if perRun.isEmpty then Left(ArError.NoEstimableRows) else Right(RunUnits(perRun, statuses.result()))
 
+  private[ar] def perRunUnits(summary: ArNoiseSummary, maxLag: Int): Either[ArError, RunUnits] =
+    val units = Vector.newBuilder[NoiseAcvfUnit]
+    val statuses = Vector.newBuilder[RunCorrection]
+    var run = 0
+    while run < summary.layout.runCount do
+      val segments = summary.layout.segmentsForRun(run)
+      val outcome =
+        if segments.map(_.length).sum < 2 then Right(RunOutcome(None, Some(CorrectionSkip.FewerThanTwoObservations), None))
+        else
+          fromPooled(
+            ArEstimation.PooledAutocovariance(summary.sumsByRun(run).toArray,
+              summary.countsByRun(run).toArray, summary.correction.usable(run)),
+            run, segments, maxLag
+          )
+      outcome match
+        case Left(error) => return Left(error)
+        case Right(value) =>
+          value.unit.foreach(units += _)
+          statuses += finalStatus(summary.correction.runs(run), value)
+      run += 1
+    val perRun = units.result()
+    if perRun.isEmpty then Left(ArError.NoEstimableRows) else Right(RunUnits(perRun, statuses.result()))
+
   /** The gate status stands for runs that were never going to be solved (uncorrected, or rejected by the gate);
     * otherwise what actually happened at estimation time wins.
     */
@@ -149,27 +172,28 @@ object NoiseAcvf:
     if observations < 2 then Right(RunOutcome(None, Some(CorrectionSkip.FewerThanTwoObservations), None))
     else
       val accumulate = correction.fold(maxLag)(matrix => math.max(maxLag, matrix.rows - 1))
-      ArEstimation.pooledAutocovariance(residuals, segments, ArOrderValue.unsafe(accumulate), correction).flatMap { pooled =>
-        if pooled.pairCounts(0) <= 0L then Right(RunOutcome(None, Some(CorrectionSkip.NoLagZeroPairs), None))
-        else
-          val order = math.min(maxLag, pooled.maxLag.value)
-          pooled.through(ArOrderValue.unsafe(order)).map { gamma =>
-            val unit =
-              if gamma.lagZero <= 0.0 then None
-              else
-                Some(
-                NoiseAcvfUnit(
-                  runIndex = Some(run),
-                  acvf = gamma.toVector,
-                  pairs = pooled.pairCounts.take(gamma.length).toVector,
-                  segmentCount = segments.length,
-                  segmentLengths = segments.map(_.length),
-                  corrected = pooled.correctionApplied,
-                  fallback = pooled.correctionFallback
-                )
-                )
-            RunOutcome(unit, None, pooled.correctionFallback)
-          }
+      ArEstimation.pooledAutocovariance(residuals, segments, ArOrderValue.unsafe(accumulate), correction)
+        .flatMap(fromPooled(_, run, segments, maxLag))
+
+  private def fromPooled(
+      pooled: ArEstimation.PooledAutocovariance,
+      run: Int,
+      segments: Vector[TimeSegment],
+      maxLag: Int
+  ): Either[ArError, RunOutcome] =
+    if pooled.pairCounts(0) <= 0L then Right(RunOutcome(None, Some(CorrectionSkip.NoLagZeroPairs), None))
+    else
+      val order = math.min(maxLag, pooled.maxLag.value)
+      pooled.through(ArOrderValue.unsafe(order)).map { gamma =>
+        val unit =
+          if gamma.lagZero <= 0.0 then None
+          else Some(NoiseAcvfUnit(
+            runIndex = Some(run), acvf = gamma.toVector,
+            pairs = pooled.pairCounts.take(gamma.length).toVector,
+            segmentCount = segments.length, segmentLengths = segments.map(_.length),
+            corrected = pooled.correctionApplied, fallback = pooled.correctionFallback
+          ))
+        RunOutcome(unit, None, pooled.correctionFallback)
       }
 
   /** Length-weighted pooling truncated to the shortest unit. A zero-padded autocovariance is not a covariance:
