@@ -60,6 +60,13 @@ val raster = reviewed.left.map(_.message).flatMap: review =>
   DesignMatrixRaster.build(review, maximumCells = 2000000).left.map(_.toString)
 ```
 
+Pass a `DesignMatrixPalette(positive, negative, nuisance, paper)` of intaglio
+`Rgba32` colours to theme the image, e.g. for a dark sheet:
+`DesignMatrixRaster.build(review, palette = darkPalette)`. The default,
+`DesignMatrixPalette.Default`, is the light rust/blue/grey palette. A palette
+changes pixel colours only; column ids, scans, scaling and the scene shape are
+unchanged, and colour never enters the `toCsv` sidecar.
+
 `DesignMatrixRaster` is an image-oriented overview; use `matrixPlot` when
 column labels and page selection are needed.
 
