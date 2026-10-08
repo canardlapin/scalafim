@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "0a981febc163e539b019aa9379935e21d8987a20"
+lazy val galeRevision = "62c0aeb3374557874a17f870c9ae05e3290c21cf"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")

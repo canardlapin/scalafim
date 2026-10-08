@@ -6,6 +6,16 @@ import scalafim.fmri.hrf.family.{GaussianFamily, ShapeChart}
 
 class ShapeDecoderSuite extends munit.FunSuite:
 
+  test("all prepared grid nodes stay in their chart including cancellation-prone upper endpoints"):
+    val chart = scalafim.fmri.hrf.family.Cascade34Family.Default.chart
+    Vector(2, 3, 7).foreach: count =>
+      val grid = NodeGrid(chart, Vector.fill(chart.dimension)(count))
+      (0 until grid.count).foreach: node =>
+        assert(chart.point(grid.point(node).coordinates).isRight, s"count=$count node=$node")
+      chart.names.indices.foreach: axis =>
+        assertEqualsDouble(grid.coordinateOf(0, axis), chart.lower(axis), 0.0)
+        assertEqualsDouble(grid.coordinateOf(count - 1, axis), chart.upper(axis), 0.0)
+
   /** Smooth synthetic objective: `E = (x - x*)' A (x - x*) + 0.3 sum cos(2 x_i) + 5`, no amplitudes. */
   private final class Bowl(val grid: NodeGrid, target: Array[Double], a: Array[Double], val indefinite: Boolean = false) extends ShapeObjective:
     private val d = grid.dimension

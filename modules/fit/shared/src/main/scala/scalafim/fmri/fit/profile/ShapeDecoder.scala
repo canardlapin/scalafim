@@ -32,7 +32,11 @@ final case class NodeGrid(chart: ShapeChart, nodesPerAxis: Vector[Int]):
       axis += 1
 
   def coordinateOf(nodeIndexOnAxis: Int, axis: Int): Double =
-    chart.lower(axis) + step(axis) * nodeIndexOnAxis
+    // Reconstructing lower + (upper - lower) can round above upper. Keep the
+    // declared endpoints exact so a prepared node remains a valid shape.
+    if nodeIndexOnAxis == 0 then chart.lower(axis)
+    else if nodeIndexOnAxis == nodesPerAxis(axis) - 1 then chart.upper(axis)
+    else chart.lower(axis) + step(axis) * nodeIndexOnAxis
 
   def coordinatesInto(node: Int, out: Array[Double]): Unit =
     var rest = node
