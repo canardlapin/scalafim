@@ -5,6 +5,7 @@ import scalafim.fmri.design.baseline.{BaselineBasis, BaselineError, Intercept, N
 import scalafim.fmri.design.{CellAssignment, CellKey, ColumnId, DegenerateModulatorPolicy, DesignError, EmptyCellDisposition, EmptyCellPolicy, FactorId, FactorLevelRegistry, FactorSchemaBinding, HrfAssignment, HrfByCell, HrfByPhase, ModulatorId, ModulatorOrthogonalization, ModulatorOrthogonalizationPlan, OrthogonalizationOutcome, TermId}
 import scalafim.fmri.design.contrast.LevelId
 import scalafim.fmri.design.data.Column
+import scalafim.fmri.design.formula.{DerivedEventPlan, DerivedMissingRows}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.hrf.Hrfs
@@ -89,6 +90,27 @@ class ModelBuilderSuite extends munit.FunSuite:
     assertEquals(model.eventModel.designMatrix.rows, 4)
     assertEquals(model.eventModel.designMatrix.cols, 1)
     assertEquals(model.eventModel.designMatrix.col(0).data.toVector, Vector(0.0, 1.0, 2.0, 3.0))
+  }
+
+  test("buildModel evaluates derived declarations and records the rows its policy drops") {
+    val rows = Vector(0.0 -> 1.0, 1.0 -> Double.NaN, 2.0 -> 3.0, 3.0 -> 4.0).map: (onset, gain) =>
+      DatasetEventRow.unsafe(Map(DatasetFieldId("onset") -> DatasetValue.Number(onset), DatasetFieldId("gain") -> DatasetValue.Number(gain)))
+    val events = DatasetEvents.fromTypedRows(rows).fold(error => fail(error.message), identity)
+    val derived = DerivedEventPlan.parse(
+      Vector("level: text = cut(gain, c(-Inf, 2, Inf), c(\"low\", \"high\"))"),
+      DerivedMissingRows.Drop
+    ).fold(error => fail(error.message), identity)
+    val spec = ModelBuildSpec("onset ~ hrf(level)", derived = derived)
+    val model = FmriModelBuilder.buildModelEither(dataset(events), spec).fold(error => fail(error.message), identity)
+    val receipt = model.eventModel.designSchema.audit.derivedRows.head
+    assertEquals(receipt.retainedRows, Vector(0, 2, 3))
+    assertEquals(receipt.dropped.map(_.sourceRow), Vector(1))
+    val rejected = FmriModelBuilder.buildModelEither(dataset(events), spec.copy(derived = DerivedEventPlan.from(derived.columns, DerivedMissingRows.Reject).toOption.get))
+    assert(rejected.left.exists:
+      case ModelError.DesignFailure(DesignError.DerivedColumns(_)) => true
+      case _ => false
+    )
+    assert(ModelBuildSpecJsonCodec.encode(spec).swap.toOption.exists(_.path == "$.derived"))
   }
 
   test("buildModel propagates declared factor levels through the public model path") {

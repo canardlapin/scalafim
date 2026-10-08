@@ -101,7 +101,13 @@ object EventModelBuilder:
       blockPlan: BlockPlan,
       durationPlan: DurationPlan = DurationPlan(Seq(0.0)),
       options: BuildOptions = BuildOptions(),
-      extensions: DesignExtensionEnv = DesignExtensionEnv()
+      extensions: DesignExtensionEnv = DesignExtensionEnv(),
+      /** Declarations evaluated against `env.eventData` before compilation.
+        * Block and duration plans refer to the caller's rows; rows the
+        * missing-row policy drops are removed from them and recorded in the
+        * design audit as a [[DerivedRowsReceipt]].
+        */
+      derived: DerivedEventPlan = DerivedEventPlan.empty
   )
 
   object EventDesignRequest:
@@ -113,7 +119,8 @@ object EventModelBuilder:
         durationPlan: DurationPlan = DurationPlan(Seq(0.0)),
         tables: Map[String, DataTable] = Map.empty,
         options: BuildOptions = BuildOptions(),
-        extensions: DesignExtensionEnv = DesignExtensionEnv()
+        extensions: DesignExtensionEnv = DesignExtensionEnv(),
+        derived: DerivedEventPlan = DerivedEventPlan.empty
     ): Either[DesignError, EventDesignRequest] =
       FormulaParser.parseEither(formula).left.map(parseError).map { parsed =>
         EventDesignRequest(
@@ -123,7 +130,8 @@ object EventModelBuilder:
           blockPlan = blockPlan,
           durationPlan = durationPlan,
           options = options,
-          extensions = extensions
+          extensions = extensions,
+          derived = derived
         )
       }
 
@@ -312,18 +320,54 @@ object EventModelBuilder:
 
   def buildEither(request: EventDesignRequest): Either[DesignError, EventModel] =
     for
-      blockIds <- request.blockPlan.resolve(request.env.eventData)
-      durations <- request.durationPlan.resolve(request.env.eventData.nrows)
+      rows <- prepareRows(request)
       model <- buildEither(
         formula = request.formula,
-        env = request.env,
+        env = rows.env,
         samplingFrame = request.samplingFrame,
-        blockIds = blockIds,
-        durations = durations,
+        blockIds = rows.blockIds,
+        durations = rows.durations,
         options = request.options,
         extensions = request.extensions
       )
-    yield model
+      evidenced <- rows.attach(model)
+    yield evidenced
+
+  /** The event rows the compiler sees: the caller's table, or its derived
+    * materialization with the block and duration plans restricted to the
+    * retained rows.
+    */
+  private final case class PreparedRows(
+      env: TableEnv,
+      blockIds: Vector[Int],
+      durations: Vector[Double],
+      receipt: Option[DerivedRowsReceipt]
+  ):
+    def attach(model: EventModel): Either[DesignError, EventModel] =
+      receipt.fold[Either[DesignError, EventModel]](Right(model))(model.withDerivedRowsEither)
+
+  private def prepareRows(request: EventDesignRequest): Either[DesignError, PreparedRows] =
+    val data = request.env.eventData
+    for
+      blockIds <- request.blockPlan.resolve(data)
+      durations <- request.durationPlan.resolve(data.nrows)
+      rows <-
+        if request.derived.isEmpty then Right(PreparedRows(request.env, blockIds, durations, None))
+        else if blockIds.length != data.nrows then
+          Left(DesignError.InvalidSchedule(s"`blockIds` must have length ${data.nrows}, not ${blockIds.length}"))
+        else
+          for
+            materialized <- request.derived.materialize(data).left.map(DesignError.DerivedColumns(_))
+            dropped <- materialized.droppedRows.zip(materialized.droppedColumns).foldLeft[Either[DesignError, Vector[DerivedRowDrop]]](Right(Vector.empty)):
+              case (acc, (row, columns)) =>
+                for previous <- acc; run <- RunIndex.fromZeroBased(blockIds(row)) yield previous :+ DerivedRowDrop(row, run, columns)
+          yield PreparedRows(
+            request.env.copy(eventData = materialized.table),
+            materialized.retainedRows.map(blockIds),
+            materialized.retainedRows.map(durations),
+            Some(DerivedRowsReceipt(request.derived.missingRows, request.derived.ids, materialized.retainedRows, dropped))
+          )
+    yield rows
 
   /** A bounded cache over one fixed compilation context. Only the formula may
     * change; new data, sampling, policies or extension implementations require
@@ -353,9 +397,9 @@ object EventModelBuilder:
     val cache = new TermCache(previous)
     for
       _ <- request.options.validate
-      blocks <- request.blockPlan.resolve(request.env.eventData)
-      durations <- request.durationPlan.resolve(request.env.eventData.nrows)
-      model <- compile(request.formula, request.env, request.samplingFrame, blocks, durations, request.options, request.extensions, Some(cache))
+      rows <- prepareRows(request)
+      compiled <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions, Some(cache))
+      model <- rows.attach(compiled)
     yield new IncrementalDesign(request, cache.entries.toMap, model, cache.compiledCount, cache.reusedCount)
 
   private def parseError(error: FormulaParser.ParseError): DesignError =

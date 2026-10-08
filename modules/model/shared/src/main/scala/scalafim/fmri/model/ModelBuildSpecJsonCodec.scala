@@ -293,6 +293,7 @@ object ModelBuildSpecJsonCodec:
       _ <- requirePortable(spec.factorSchemaBinding.isEmpty, "$.factorSchemaBinding")
       _ <- requirePortable(spec.hrfByCell.isEmpty, "$.hrfByCell")
       _ <- requirePortable(spec.hrfByPhase.isEmpty, "$.hrfByPhase")
+      _ <- ensure(spec.derived.isEmpty, "$.derived", "derived declarations require the scalafim.model-document envelope")
       baselineValue <- baseline(spec.baselineBasis)
       strategyValue <- strategy(spec.strategy)
       precision <- number(spec.precision.value, "$.precision")

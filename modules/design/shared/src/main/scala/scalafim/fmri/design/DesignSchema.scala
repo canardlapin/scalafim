@@ -2,6 +2,7 @@ package scalafim.fmri.design
 
 import gale.linalg.{DMat, Matrix}
 import scalafim.fmri.design.contrast.LevelId
+import scalafim.fmri.design.formula.DerivedRowsReceipt
 import scalafim.fmri.design.linalg.QrDecomposition
 import scalafim.fmri.hrf.{BasisElementId, BasisRole, Hrf, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -784,7 +785,9 @@ final case class DesignAudit(
     policyReceipts: Vector[PolicyReceipt] = Vector.empty,
     rankPreview: Option[RankPreview] = None,
     diagnostics: Vector[DesignDiagnostic] = Vector.empty,
-    eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty
+    eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty,
+    /** Rows retained and dropped by derived-column declarations, when the build had any. */
+    derivedRows: Vector[DerivedRowsReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -817,6 +820,9 @@ final case class DesignAudit(
     val eventResponse =
       if eventResponseScales.isEmpty then ""
       else s";event-response-scales=${eventResponseScales.map(_.canonical).mkString(",")}"
+    val derived =
+      if derivedRows.isEmpty then ""
+      else s";derived-rows=${derivedRows.map(_.canonical).mkString(",")}"
     val policies = policyReceipts.map(p => s"${p.name}:${p.detail}").mkString(",")
     val rank = rankPreview.fold("") {
       case RankPreview.Available(preview) =>
@@ -831,7 +837,7 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse;policies=$policies;rank=$rank;diagnostics=$diags"
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags"
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -1349,7 +1355,8 @@ object DesignSchema:
       policyReceipts = left.policyReceipts ++ right.policyReceipts,
       rankPreview = None,
       diagnostics = left.diagnostics ++ right.diagnostics,
-      eventResponseScales = left.eventResponseScales ++ right.eventResponseScales
+      eventResponseScales = left.eventResponseScales ++ right.eventResponseScales,
+      derivedRows = left.derivedRows ++ right.derivedRows
     )
 
   private[design] def validate(

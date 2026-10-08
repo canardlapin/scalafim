@@ -2,6 +2,7 @@ package scalafim.fmri.design.event
 
 import scalafim.fmri.design.*
 import scalafim.fmri.design.contrast.ContrastSpec
+import scalafim.fmri.design.formula.DerivedRowsReceipt
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 
@@ -71,6 +72,17 @@ final case class EventModel(
     DesignSchema
       .validated(schema0.matrix, schema0.rows, schema0.columns, audit0)
       .map(schema1 => copy(diagnostics = values, compiledSchema = compiledSchema.map(_ => schema1)))
+
+  /** Attach derived-declaration row evidence and refresh identity: the same
+    * matrix built with and without a missing-row policy must not share a
+    * design fingerprint.
+    */
+  def withDerivedRowsEither(receipt: DerivedRowsReceipt): Either[DesignError, EventModel] =
+    val schema0 = designSchema
+    val audit0 = schema0.audit.copy(derivedRows = schema0.audit.derivedRows :+ receipt)
+    DesignSchema
+      .validated(schema0.matrix, schema0.rows, schema0.columns, audit0)
+      .map(schema1 => copy(compiledSchema = compiledSchema.map(_ => schema1)))
 
   /** Compatibility wrapper over [[withPolicyEvidenceEither]].
     *
