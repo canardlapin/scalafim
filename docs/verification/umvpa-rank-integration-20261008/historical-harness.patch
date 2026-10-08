@@ -1,0 +1,208 @@
+diff --git a/docs/verification/umvpa-rank-integration-20261008/prepare_historical_probe.py b/docs/verification/umvpa-rank-integration-20261008/prepare_historical_probe.py
+new file mode 100644
+index 00000000..8632a869
+--- /dev/null
++++ b/docs/verification/umvpa-rank-integration-20261008/prepare_historical_probe.py
+@@ -0,0 +1,36 @@
++#!/usr/bin/env python3
++"""Freeze replay of eight retained inputs against unchanged historical production."""
++import hashlib
++import json
++import subprocess
++from pathlib import Path
++
++packet=Path(__file__).resolve().parent
++root=packet.parents[2]
++baseline='edad5bcd65f7ba004458a6dd08c5fb3a31a3e6d3'
++allowed={
++ 'modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala',
++ 'modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala'}
++changed=set(subprocess.check_output(['git','diff',baseline,'--name-only'],cwd=root,text=True).splitlines())
++assert changed<=allowed,changed
++files=subprocess.check_output(['git','ls-files','modules/mvpa','modules/scenario-testkit','build.sbt',
++ '.jvmopts','project/build.properties','project/plugins.sbt','tools/build/sbt-warm',
++ 'tools/mvpa-inference/calibration_protocol.py','tools/mvpa-inference/run_calibration.py',
++ 'tools/mvpa-inference/run_rank_pilot.py'],cwd=root,text=True).splitlines()
++files += ['modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankHistoricalResourceProbeSuite.scala']
++files += [str(p.relative_to(root)) for p in packet.glob('*.py')]
++sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
++original=json.loads((packet/'original-probe-manifest.json').read_text())
++manifest=dict(status='source-frozen-retained-fixture-replay-only',historical_consumer_baseline=baseline,
++ provider_revision='ab811e257dd67f77e8c3b70cb1ea600f274429a3',
++ method_identity='historical-euclidean-coefficient-permutation/ab811e257dd67f77e8c3b70cb1ea600f274429a3',
++ cells=original['cells'],new_datasets=0,retained_datasets=8,expected_records=8,
++ input_archive_sha256=sha(packet/'retained-inputs.tar.gz'),
++ inputs=json.loads((packet/'retained-input-sha256.json').read_text()),
++ resampling_seed='Unchanged historical child(root, custom-domain 103, ordinal 0); shared with the repaired permutation comparator.',
++ production_unchanged_from_baseline=True,
++ source_locks={p:sha(root/p) for p in sorted(set(files))},
++ limits=dict(worker_processes=1,cpus=4,heap='3g',max_wall_seconds=900,max_rss_bytes=4*1024**3),
++ scientific_qualification=False,pilot_or_confirmation_consumed=False)
++with (packet/'historical-manifest.json').open('x') as out:out.write(json.dumps(manifest,indent=2)+'\n')
++print(json.dumps(dict(sources=len(manifest['source_locks']),cases=8,new_datasets=0)))
+diff --git a/docs/verification/umvpa-rank-integration-20261008/run_historical_probe.py b/docs/verification/umvpa-rank-integration-20261008/run_historical_probe.py
+new file mode 100644
+index 00000000..f85ec030
+--- /dev/null
++++ b/docs/verification/umvpa-rank-integration-20261008/run_historical_probe.py
+@@ -0,0 +1,61 @@
++#!/usr/bin/env python3
++"""Replay retained fixtures once; never generate or replace a dataset."""
++import datetime
++import hashlib
++import json
++import os
++import re
++import subprocess
++import sys
++import tarfile
++from pathlib import Path
++
++packet=Path(__file__).resolve().parent
++root=packet.parents[2]
++sys.path.insert(0,str(root/'tools/mvpa-inference'))
++from run_rank_pilot import monitor
++sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
++manifest=json.loads((packet/'historical-manifest.json').read_text())
++assert manifest['status']=='source-frozen-retained-fixture-replay-only'
++for p,expected in manifest['source_locks'].items():assert sha(root/p)==expected,p
++assert subprocess.check_output(['git','show','HEAD:'+str((packet/'historical-manifest.json').relative_to(root))],cwd=root)==(packet/'historical-manifest.json').read_bytes()
++assert sha(packet/'retained-inputs.tar.gz')==manifest['input_archive_sha256']
++out=packet/'historical-probe';out.mkdir(exist_ok=False)
++vm=subprocess.check_output(['vm_stat'],text=True)
++page=int(re.search(r'page size of (\d+) bytes',vm).group(1))
++pages={name:int(value) for name,value in re.findall(r'^([^:]+):\s+(\d+)\.',vm,re.M)}
++available=sum(pages.get(name,0) for name in ('Pages free','Pages inactive','Pages speculative'))*page
++host=dict(utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
++ physical_memory_bytes=int(subprocess.check_output(['sysctl','-n','hw.memsize'],text=True)),
++ free_inactive_speculative_bytes=available,required_headroom_bytes=8*1024**3)
++(out/'host-before.json').write_text(json.dumps(host,indent=2)+'\n')
++assert available>=8*1024**3,'insufficient host headroom; no replay performed'
++inputs=out/'inputs';inputs.mkdir()
++with tarfile.open(packet/'retained-inputs.tar.gz','r:gz') as archive:
++    assert set(archive.getnames())==set(manifest['inputs'])
++    for name,expected in manifest['inputs'].items():
++        assert Path(name).name==name
++        data=archive.extractfile(name).read()
++        assert hashlib.sha256(data).hexdigest()==expected
++        with (inputs/name).open('xb') as stream:stream.write(data)
++paths=[inputs/(c['id']+'.tsv') for c in manifest['cells']]
++(out/'case-files.txt').write_text(''.join(str(p)+'\n' for p in paths))
++env=dict(os.environ,SBT_WARM_HEAP='3g',SBT_WARM_CPUS='4',LC_ALL='C',LANG='C',
++ SCALAFIM_RANK_HISTORICAL_PROBE_LIST=str(out/'case-files.txt'),
++ SCALAFIM_RANK_HISTORICAL_PROBE_OUTPUT=str(out/'records.jsonl'))
++for key in ['JAVA_TOOL_OPTIONS','JDK_JAVA_OPTIONS','SBT_OPTS','JAVA_OPTS']:env.pop(key,None)
++with (out/'server-lifecycle.log').open('x') as log:
++    subprocess.run(['python3','tools/build/sbt-warm','--shutdown'],cwd=root,env=env,
++        stdout=log,stderr=subprocess.STDOUT,timeout=65,check=True)
++command=['python3','tools/build/sbt-warm','mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankHistoricalResourceProbeSuite']
++with (out/'worker.log').open('x') as log:receipt=monitor(root,command,env,log,manifest['limits'])
++records=[json.loads(line) for line in (out/'records.jsonl').read_text().splitlines()] if (out/'records.jsonl').exists() else []
++receipt.update(source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
++ provider_revision=manifest['provider_revision'],new_datasets=0,records=len(records),
++ all_assignments_completed=len(records)==8 and {r['scenario_id'] for r in records}=={c['id'] for c in manifest['cells']},
++ evaluated=sum(r.get('status')=='evaluated' for r in records),
++ source_locks_unchanged=all(sha(root/p)==expected for p,expected in manifest['source_locks'].items()),
++ limits=manifest['limits'],scientific_qualification=False)
++(out/'process-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
++print(json.dumps(receipt))
++assert receipt['worker_exit']==0 and not receipt['resource_refusal'] and receipt['all_assignments_completed'] and receipt['evaluated']==8 and receipt['source_locks_unchanged']
+diff --git a/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala b/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala
+index 2f1288b2..22a0add5 100644
+--- a/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala
++++ b/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala
+@@ -102,3 +102,9 @@ class CalibrationProtocolSuite extends FunSuite:
+     assert(failed.contains("\"raw_p_values\":null"))
+     assert(failed.contains("\"closed_p_values\":null"))
+     assert(failed.contains("\"record_schema\":2"))
++
++  test("an explicit new namespace has independent assignments and preserves the v1 default"):
++    val current = right(CalibrationProtocolSupport.seed("fixture","namespace-check",0,"scalafim/umvpa/rank-method-comparison/v2"))
++    assertEquals(current,7722599716925168164L)
++    assertNotEquals(current,right(CalibrationProtocolSupport.seed("fixture","namespace-check",0)))
++    assert(CalibrationProtocolSupport.seed("fixture","namespace-check",0,"").isLeft)
+diff --git a/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala b/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala
+index f4177b69..9317aaaf 100644
+--- a/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala
++++ b/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala
+@@ -63,11 +63,11 @@ object CalibrationProtocolSupport:
+           ",\"p_values\":null,\"reject\":null,\"raw_p_values\":null,\"closed_p_values\":null," +
+           "\"raw_reject\":null,\"closed_reject\":null,\"raw_exceedances\":null}\n"
+ 
+-  def seed(phase: String, scenario: String, ordinal: Int): Either[String, Long] =
+-    if !phases.contains(phase) || scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then
++  def seed(phase: String, scenario: String, ordinal: Int, streamNamespace: String = namespace): Either[String, Long] =
++    if streamNamespace.isEmpty || streamNamespace.contains('\u0000') || !phases.contains(phase) || scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then
+       Left("invalid protocol seed assignment")
+     else
+-      val text = namespace + "\u0000" + phase + "\u0000" + scenario + "\u0000" + ordinal.toString
++      val text = streamNamespace + "\u0000" + phase + "\u0000" + scenario + "\u0000" + ordinal.toString
+       val digest = CalibrationPlatform.sha256Utf8(text)
+       val masked = (BigInt(digest.take(16), 16) & ((BigInt(1) << 63) - 1)).toLong
+       Right(if masked == 0L then 1L else masked)
+@@ -84,7 +84,7 @@ object CalibrationProtocolSupport:
+   )
+ 
+   /** Independent generated TSV input; raw values are shared with the external oracle. */
+-  def readCase(text: String): Either[String, Case] =
++  def readCase(text: String, streamNamespace: String = namespace): Either[String, Case] =
+     val lines = text.linesIterator.filter(_.nonEmpty).toVector
+     val records = lines.map(_.split("\t", -1).toVector)
+     def field(name: String): Either[String, Vector[String]] =
+@@ -115,7 +115,7 @@ object CalibrationProtocolSupport:
+           val phase = header(0); val scenario = header(1); val ordinal = header(2).toInt
+           val root = header(3).toLong; val draws = header(4).toInt; val declaredRows = header(5).toInt
+           val correlations = truth.headOption.toVector.flatMap(_.split(",").map(_.toDouble))
+-          seed(phase, scenario, ordinal).flatMap: expected =>
++          seed(phase, scenario, ordinal, streamNamespace).flatMap: expected =>
+             if root != expected || x.rows != y.rows || z.rows != x.rows || declaredRows != x.rows then Left("input assignment/rows mismatch")
+             else if phase == "confirmation" && draws != confirmationDraws then Left("confirmation B must be 1999")
+             else if phase == "pilot" && draws != 199 then Left("pilot B must be 199")
+diff --git a/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankHistoricalResourceProbeSuite.scala b/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankHistoricalResourceProbeSuite.scala
+new file mode 100644
+index 00000000..91c6ea08
+--- /dev/null
++++ b/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankHistoricalResourceProbeSuite.scala
+@@ -0,0 +1,42 @@
++package scalafim.fmri.mvpa.inference
++
++import scalafim.fmri.mvpa.analysis.CalibrationBindings
++import scala.concurrent.duration.*
++
++/** Historical public adapter, on retained fixtures; contains no numeric kernel. */
++class RankHistoricalResourceProbeSuite extends munit.FunSuite:
++  override val munitTimeout: Duration = 10.minutes
++
++  test("opt-in historical resource probe retains every assigned result"):
++    val list = CalibrationPlatform.environment("SCALAFIM_RANK_HISTORICAL_PROBE_LIST")
++    assume(list.isDefined, "retained resource fixture inventory absent")
++    val output = CalibrationPlatform.environment("SCALAFIM_RANK_HISTORICAL_PROBE_OUTPUT").getOrElse(fail("probe output required"))
++    val paths = CalibrationPlatform.readText(list.get).linesIterator.filter(_.nonEmpty).toVector
++    assertEquals(paths.size, 8)
++    val cases = paths.map(path => CalibrationProtocolSupport.readCase(CalibrationPlatform.readText(path),
++      "scalafim/umvpa/rank-method-comparison/v2").fold(fail(_), identity))
++    assertEquals(cases.map(c => (c.x.rows, c.x.cols, c.y.cols, c.nuisance.cols)).toSet,
++      (for n <- Set(80,640); (p,q) <- Set((4,6),(6,4)); z <- Set(1,3) yield (n,p,q,z)))
++    cases.foreach: input =>
++      assertEquals(input.phase, "fixture")
++      assertEquals(input.ordinal, 0)
++      assertEquals(input.draws, 199)
++      assertEquals(input.populationCorrelations.size, 4)
++      input.populationCorrelations.zip(Vector(.5,.3,.2,0.0)).foreach((a,b) => assertEqualsDouble(a,b,0.0))
++      val started = System.nanoTime()
++      def prefix = "{\"scenario_id\":" + CalibrationProtocolSupport.jsonString(input.scenario) +
++        ",\"phase\":\"fixture\",\"dataset_index\":0,\"root_seed64\":\"" + input.rootSeed +
++        "\",\"rank_method\":\"historical-euclidean-coefficient-permutation/ab811e257dd67f77e8c3b70cb1ea600f274429a3\"" +
++        ",\"elapsed_seconds\":" + ((System.nanoTime()-started)/1e9)
++      val record = CalibrationProtocolSupport.retainEvaluation(prefix):
++        CalibrationBindings.rank(input.x,input.y,input.nuisance,input.rootSeed,input.draws,input.scenario,0).map: result =>
++          val arithmetic = result.candidateArithmetic
++          val metrics = CalibrationProtocolSupport.rankMetrics(arithmetic.receipts.map(_.pValue.value),
++            arithmetic.adjustedPValues.map(_.value),arithmetic.receipts.map(_.exceedances),input.draws).fold(fail(_),identity)
++          assert(arithmetic.receipts.forall(_.consumed.value==199))
++          assert(result.admittedDetectableRank.isLeft)
++          prefix + ",\"status\":\"evaluated\",\"completed_draws\":199,\"residual_rows\":" + result.residualRows +
++            ",\"planned_owned_cells\":" + result.plannedOwnedCells + ",\"completed_compact_fits\":" +
++            arithmetic.completedCompactFits + ",\"historical_refit_method\":" +
++            CalibrationProtocolSupport.jsonString(arithmetic.refitMethod.toString) + metrics.jsonFields + "}\n"
++      CalibrationPlatform.appendText(output,record)
