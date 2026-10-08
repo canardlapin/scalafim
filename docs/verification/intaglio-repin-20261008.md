@@ -13,7 +13,10 @@ Mote: `bd-01M4DNVJ9CAA4GYG1G016JCYNR`. Base: ScalaFIM `main` at `c59c21d8`.
   - `{"kind":"below","cutoff":x}` and `{"kind":"above","cutoff":x}`
   - `{"kind":"two-sided","inner":[lo,hi],"outer":[lo,hi] | null}`
   Each kind checks its own field set under the strict read policy; cutoffs must be finite and
-  `outer` must contain `inner` (Intaglio's `twoSided` constructor).
+  `outer` must contain `inner` (Intaglio's `twoSided` constructor). Accept/reject outcomes for
+  existing `disabled` and `transparent-band` documents are unchanged; one error precedence
+  shifts: under the strict policy, an object with a missing or unknown `kind` *and* a foreign
+  field now reports the `kind` problem rather than `UnknownField`.
 - API break absorbed: `DiscreteDomain` is now `DiscreteDomain[A]` (Intaglio `55cbbc5`,
   "Retain typed scale categories"); `DesignGraphics.regressorDomain` returns
   `DiscreteDomain[String]`.
@@ -39,7 +42,8 @@ Mote: `bd-01M4DNVJ9CAA4GYG1G016JCYNR`. Base: ScalaFIM `main` at `c59c21d8`.
   New `SurfaceSceneDocumentSuite` tests: every-kind round-trip (an exhaustive match over the
   enum, so a future Intaglio case raises a non-exhaustive-match warning in the suite, which
   breaks the warning-clean gate; surface-view is not built with `-Werror`) and
-  rejection of non-finite cutoffs, missing fields, foreign fields and non-nested two-sided bands.
+  rejection of non-finite cutoffs, missing fields, foreign fields (and their acceptance under
+  the `Ignore` policy), malformed bands and non-nested two-sided bands.
 
 ## Direct consumer: PLS Neuro
 

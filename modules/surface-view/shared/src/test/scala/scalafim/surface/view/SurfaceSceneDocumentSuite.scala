@@ -189,6 +189,11 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
         .left.toOption.collect { case SurfaceSceneError.UnknownField(_, field) => field },
       Some("lower")
     )
+    val ignored = SurfaceSceneCodec.decode(
+      above.replace(aboveJson, "{\"kind\":\"above\",\"cutoff\":1.5,\"lower\":0.0}"),
+      SurfaceSceneReadPolicy(SurfaceUnknownFieldPolicy.Ignore)
+    ).toOption.get
+    assertEquals(SurfaceSceneCodec.encode(ignored), above)
 
     val twoSided = encodedWith(DisplayThreshold.twoSidedMagnitude(0.4, Some(1.5)).toOption.get)
     val twoSidedJson = "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"outer\":[-1.5,1.5]}"
@@ -196,7 +201,9 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     val notNested = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"outer\":[-0.2,1.5]}")
     assert(SurfaceSceneCodec.decode(notNested).left.exists(_.isInstanceOf[SurfaceSceneError.InvalidState]))
     val malformed = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[0.4],\"outer\":null}")
-    assert(SurfaceSceneCodec.decode(malformed).left.exists(_.message.contains("two-number array")))
+    assert(SurfaceSceneCodec.decode(malformed).left.exists(_.message.contains("expected two numbers")))
+    val scalarOuter = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"outer\":1.5}")
+    assert(SurfaceSceneCodec.decode(scalarOuter).left.exists(_.message.contains("expected null or a two-number array")))
     val missingOuter = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4]}")
     assert(SurfaceSceneCodec.decode(missingOuter).left.exists(_.message.contains("missing required field")))
 

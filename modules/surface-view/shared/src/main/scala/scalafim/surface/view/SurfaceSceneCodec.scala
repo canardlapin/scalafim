@@ -427,15 +427,8 @@ object SurfaceSceneCodec:
       case other =>
         def display[A](result: Either[DisplayError, A]): Either[SurfaceSceneError, A] =
           result.left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
-        def band(value: SceneJson, bandPath: String): Either[SurfaceSceneError, ThresholdBand] =
-          value match
-            case SceneJson.Arr(Vector(lowerValue, upperValue)) =>
-              for
-                lower <- SceneJsonRead.doubleValue(lowerValue, s"$bandPath[0]")
-                upper <- SceneJsonRead.doubleValue(upperValue, s"$bandPath[1]")
-                result <- display(ThresholdBand.make(lower, upper))
-              yield result
-            case _ => Left(SurfaceSceneError.InvalidJson(bandPath, "expected a two-number array"))
+        def band(values: Vector[SceneJson], bandPath: String): Either[SurfaceSceneError, ThresholdBand] =
+          pair(values, bandPath).flatMap((lower, upper) => display(ThresholdBand.make(lower, upper)))
         def cutoff(obj: SceneJson.Obj): Either[SurfaceSceneError, Double] =
           SceneJsonRead.checkFields(obj, path, Set("kind", "cutoff"), policy)
             .flatMap(_ => SceneJsonRead.double(obj, "cutoff", s"$path.cutoff"))
@@ -456,12 +449,13 @@ object SurfaceSceneCodec:
             case "two-sided" =>
               for
                 _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "inner", "outer"), policy)
-                innerValue <- SceneJsonRead.value(obj, "inner", s"$path.inner")
-                inner <- band(innerValue, s"$path.inner")
+                innerValues <- SceneJsonRead.array(obj, "inner", s"$path.inner")
+                inner <- band(innerValues, s"$path.inner")
                 outerValue <- SceneJsonRead.value(obj, "outer", s"$path.outer")
                 outer <- outerValue match
                   case SceneJson.Null => Right(None)
-                  case value => band(value, s"$path.outer").map(Some(_))
+                  case SceneJson.Arr(values) => band(values, s"$path.outer").map(Some(_))
+                  case _ => Left(SurfaceSceneError.InvalidJson(s"$path.outer", "expected null or a two-number array"))
                 result <- display(DisplayThreshold.twoSided(inner, outer))
               yield result
             case unknown => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown threshold '$unknown'"))
