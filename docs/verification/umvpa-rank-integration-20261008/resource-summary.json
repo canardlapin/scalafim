@@ -1,0 +1,93 @@
+{
+  "status": "three-method-resource-fixtures-complete-no-rate-qualification",
+  "datasets": 8,
+  "evaluations": 24,
+  "failed_evaluations": 0,
+  "new_datasets_this_continuation": 0,
+  "groups": [
+    {
+      "n": 80,
+      "method": "canonical-rank-gaussian-interlacing-wilks/v1",
+      "fixtures": 4,
+      "minimum_seconds": 0.042925125,
+      "median_seconds": 0.072426333,
+      "mean_seconds": 0.07838488525000001,
+      "maximum_seconds": 0.12576175
+    },
+    {
+      "n": 80,
+      "method": "canonical-rank-score-orthogonal-permutation/v2",
+      "fixtures": 4,
+      "minimum_seconds": 0.014385625,
+      "median_seconds": 0.024143750000000002,
+      "mean_seconds": 0.0723229375,
+      "maximum_seconds": 0.226618625
+    },
+    {
+      "n": 80,
+      "method": "historical-euclidean-coefficient-permutation/ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+      "fixtures": 4,
+      "minimum_seconds": 0.023726458,
+      "median_seconds": 0.054075125,
+      "mean_seconds": 0.1783857915,
+      "maximum_seconds": 0.581666458
+    },
+    {
+      "n": 640,
+      "method": "canonical-rank-gaussian-interlacing-wilks/v1",
+      "fixtures": 4,
+      "minimum_seconds": 0.248709125,
+      "median_seconds": 0.253539834,
+      "mean_seconds": 0.256157417,
+      "maximum_seconds": 0.268840875
+    },
+    {
+      "n": 640,
+      "method": "canonical-rank-score-orthogonal-permutation/v2",
+      "fixtures": 4,
+      "minimum_seconds": 0.064605291,
+      "median_seconds": 0.0679395415,
+      "mean_seconds": 0.076372385,
+      "maximum_seconds": 0.105005166
+    },
+    {
+      "n": 640,
+      "method": "historical-euclidean-coefficient-permutation/ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+      "fixtures": 4,
+      "minimum_seconds": 0.091744708,
+      "median_seconds": 0.2679009995,
+      "mean_seconds": 0.243511979,
+      "maximum_seconds": 0.346501209
+    }
+  ],
+  "paired_seconds_by_n": {
+    "80": [
+      0.9015913740000001,
+      0.161905792,
+      0.171840083,
+      0.081037208
+    ],
+    "640": [
+      0.704523999,
+      0.663765417,
+      0.523426166,
+      0.412451542
+    ]
+  },
+  "planning_sensitivity": {
+    "proposed_datasets": 12800,
+    "proposed_method_evaluations": 38400,
+    "assumption": "Measured n80 costs cover 5600 datasets; measured n640 costs provisionally stand in for 7200 n160/n320/n640 datasets.",
+    "using_observed_means_seconds": 5990.425063000001,
+    "using_observed_maxima_seconds": 10121.4844872,
+    "omitted": "Input generation, parsing/serialization outside the timed adapter, worker startups and longer-run GC.",
+    "one_hour_campaign_supported": false,
+    "runtime_bound": false
+  },
+  "limitations": [
+    "Four fixtures per n; fixed ordering and JIT/GC/system variation preclude timing confidence intervals or speedup claims.",
+    "Historical and current providers retain their own published dependency versions; these are complete-pipeline resource measurements.",
+    "All matrices are identical across methods; numeric outcomes are retained for audit but support no size/power inference.",
+    "Sampled RSS excludes early startup and clients; hard runtime monitors remain required."
+  ]
+}

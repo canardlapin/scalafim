@@ -1,6 +1,7 @@
 package scalafim.fmri.mvpa.inference
 
 import munit.FunSuite
+import multivar.inference.CanonicalRankMethod
 import scalafim.fmri.mvpa.analysis.CalibrationBindings
 import scala.concurrent.duration.*
 
@@ -23,7 +24,8 @@ class RankConfirmationSuite extends FunSuite:
       assert(Set("fixture", "pilot").contains(input.phase),
         "this initial adapter cannot consume simulator or confirmation studies")
       val started = System.nanoTime()
-      val resamplingSeed = CalibrationProtocolSupport.child(input.rootSeed, 103, 0)
+      val method = CanonicalRankMethod.GaussianInterlacingWilksV1
+      val resamplingSeed = CalibrationProtocolSupport.child(input.rootSeed, 103, method.ordinal)
         .fold(error => fail(error), identity)
       def elapsed = (System.nanoTime() - started) / 1e9
       val output = CalibrationPlatform.environment("SCALAFIM_CALIBRATION_OUTPUT").getOrElse(fail("case output path is required"))
@@ -33,7 +35,7 @@ class RankConfirmationSuite extends FunSuite:
         "\",\"resampling_seed64\":\"" + resamplingSeed + "\",\"child_seed_algorithm\":\"seed-path/v1\",\"elapsed_seconds\":" + elapsed
       val record = CalibrationProtocolSupport.retainEvaluation(prefix):
         CalibrationBindings.rank(input.x, input.y, input.nuisance, input.rootSeed, input.draws,
-          input.scenario, input.ordinal).map: value =>
+          input.scenario, input.ordinal, method).map: value =>
           val arithmetic = value.candidateArithmetic
           assert(arithmetic.receipts.forall(_.consumed.value == input.draws))
           val metrics = CalibrationProtocolSupport.rankMetrics(arithmetic.receipts.map(_.pValue.value),
@@ -41,7 +43,7 @@ class RankConfirmationSuite extends FunSuite:
             .fold(error => fail(error), identity)
           val nulls = input.populationCorrelations.indices.map(k => input.populationCorrelations.drop(k).forall(_ == 0.0))
           val members = metrics.raw.indices.map(k => "\"rank-" + (k + 1) + "\"")
-          val line = prefix + ",\"status\":\"evaluated\",\"family_complete\":true,\"completed_draws\":" + input.draws +
+          val line = prefix + ",\"rank_method\":" + CalibrationProtocolSupport.jsonString(arithmetic.method.identity) + ",\"status\":\"evaluated\",\"family_complete\":true,\"completed_draws\":" + input.draws +
             ",\"member_ids\":[" + members.mkString(",") + "]" + metrics.jsonFields +
             ",\"declared_population_null\":[" + nulls.mkString(",") +
             "],\"actual_conditional_null\":[" + nulls.mkString(",") + "],\"completed_compact_fits\":" +

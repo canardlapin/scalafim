@@ -63,11 +63,11 @@ object CalibrationProtocolSupport:
           ",\"p_values\":null,\"reject\":null,\"raw_p_values\":null,\"closed_p_values\":null," +
           "\"raw_reject\":null,\"closed_reject\":null,\"raw_exceedances\":null}\n"
 
-  def seed(phase: String, scenario: String, ordinal: Int): Either[String, Long] =
-    if !phases.contains(phase) || scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then
+  def seed(phase: String, scenario: String, ordinal: Int, streamNamespace: String = namespace): Either[String, Long] =
+    if streamNamespace.isEmpty || streamNamespace.contains('\u0000') || !phases.contains(phase) || scenario.isEmpty || scenario.contains('\u0000') || ordinal < 0 then
       Left("invalid protocol seed assignment")
     else
-      val text = namespace + "\u0000" + phase + "\u0000" + scenario + "\u0000" + ordinal.toString
+      val text = streamNamespace + "\u0000" + phase + "\u0000" + scenario + "\u0000" + ordinal.toString
       val digest = CalibrationPlatform.sha256Utf8(text)
       val masked = (BigInt(digest.take(16), 16) & ((BigInt(1) << 63) - 1)).toLong
       Right(if masked == 0L then 1L else masked)
@@ -84,7 +84,7 @@ object CalibrationProtocolSupport:
   )
 
   /** Independent generated TSV input; raw values are shared with the external oracle. */
-  def readCase(text: String): Either[String, Case] =
+  def readCase(text: String, streamNamespace: String = namespace): Either[String, Case] =
     val lines = text.linesIterator.filter(_.nonEmpty).toVector
     val records = lines.map(_.split("\t", -1).toVector)
     def field(name: String): Either[String, Vector[String]] =
@@ -115,7 +115,7 @@ object CalibrationProtocolSupport:
           val phase = header(0); val scenario = header(1); val ordinal = header(2).toInt
           val root = header(3).toLong; val draws = header(4).toInt; val declaredRows = header(5).toInt
           val correlations = truth.headOption.toVector.flatMap(_.split(",").map(_.toDouble))
-          seed(phase, scenario, ordinal).flatMap: expected =>
+          seed(phase, scenario, ordinal, streamNamespace).flatMap: expected =>
             if root != expected || x.rows != y.rows || z.rows != x.rows || declaredRows != x.rows then Left("input assignment/rows mismatch")
             else if phase == "confirmation" && draws != confirmationDraws then Left("confirmation B must be 1999")
             else if phase == "pilot" && draws != 199 then Left("pilot B must be 199")

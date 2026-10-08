@@ -1,0 +1,154 @@
+{
+  "conclusion": "success",
+  "jobs": [
+    {
+      "completedAt": "2026-10-08T02:22:10Z",
+      "conclusion": "success",
+      "databaseId": 113114338159,
+      "name": "test",
+      "startedAt": "2026-10-08T02:10:53Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-08T02:10:57Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-08T02:10:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:10:58Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v7",
+          "number": 2,
+          "startedAt": "2026-10-08T02:10:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:11:04Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-java@v5",
+          "number": 3,
+          "startedAt": "2026-10-08T02:10:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:11:09Z",
+          "conclusion": "success",
+          "name": "Run sbt/setup-sbt@v1",
+          "number": 4,
+          "startedAt": "2026-10-08T02:11:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:11:16Z",
+          "conclusion": "success",
+          "name": "Install ripgrep",
+          "number": 5,
+          "startedAt": "2026-10-08T02:11:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:12:54Z",
+          "conclusion": "success",
+          "name": "Publish pinned Gale for Maven resolution",
+          "number": 6,
+          "startedAt": "2026-10-08T02:11:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:14:01Z",
+          "conclusion": "success",
+          "name": "Publish pinned Resample4s for Maven resolution",
+          "number": 7,
+          "startedAt": "2026-10-08T02:12:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:18:02Z",
+          "conclusion": "success",
+          "name": "Compile and test JVM plus Scala.js",
+          "number": 8,
+          "startedAt": "2026-10-08T02:14:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:18:22Z",
+          "conclusion": "success",
+          "name": "Check the ordinary public API surface",
+          "number": 9,
+          "startedAt": "2026-10-08T02:18:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:19:48Z",
+          "conclusion": "success",
+          "name": "Check the inference public API surface",
+          "number": 10,
+          "startedAt": "2026-10-08T02:18:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:19:58Z",
+          "conclusion": "success",
+          "name": "Binary compatibility gate",
+          "number": 11,
+          "startedAt": "2026-10-08T02:19:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:21:03Z",
+          "conclusion": "success",
+          "name": "Compile API docs and executable guides",
+          "number": 12,
+          "startedAt": "2026-10-08T02:19:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:22:04Z",
+          "conclusion": "success",
+          "name": "Consumer smoke against publishedLocal artifacts",
+          "number": 13,
+          "startedAt": "2026-10-08T02:21:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:22:07Z",
+          "conclusion": "success",
+          "name": "Post Run sbt/setup-sbt@v1",
+          "number": 24,
+          "startedAt": "2026-10-08T02:22:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:22:07Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-java@v5",
+          "number": 25,
+          "startedAt": "2026-10-08T02:22:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:22:07Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v7",
+          "number": 26,
+          "startedAt": "2026-10-08T02:22:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-08T02:22:07Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 27,
+          "startedAt": "2026-10-08T02:22:07Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/canardlapin/multivar/actions/runs/37716593488/job/113114338159"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/canardlapin/multivar/actions/runs/37716593488"
+}

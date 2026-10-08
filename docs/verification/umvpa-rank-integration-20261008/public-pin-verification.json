@@ -1,0 +1,27 @@
+{
+  "provider_checkout": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/bbaeeda0e865951f/staging/0b37fe7ff37e220439ad/multivar",
+  "provider_git_revision": "edb05de01401ec0b3aea4dc1190dd3100e70ee51",
+  "provider_checkout_clean": true,
+  "original_log_sha256": "00fa8013fc778708d74accce2fe78303ff754d754ebfc89881f896f9cc7126a1",
+  "tests": {
+    "jvm": {
+      "suites": 65,
+      "tests": 471,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 468
+    },
+    "js": {
+      "suites": 65,
+      "tests": 471,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 468
+    }
+  },
+  "source_compiler_warnings": 0,
+  "local_provider_override": false,
+  "build_sbt_sha256": "8fbe6d017f43fcfbd0745e44b2eea0bd1c57bd671622d077727e87d17884373e"
+}

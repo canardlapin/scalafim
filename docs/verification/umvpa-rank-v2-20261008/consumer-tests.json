@@ -1,0 +1,18 @@
+{
+  "jvm": {
+    "suites": 65,
+    "tests": 471,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3,
+    "passed": 468
+  },
+  "js": {
+    "suites": 65,
+    "tests": 471,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3,
+    "passed": 468
+  }
+}
