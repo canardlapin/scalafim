@@ -11,6 +11,7 @@ enum BasisError:
   case UnknownRole(role: String)
   case InvalidFunctional(detail: String)
   case InvalidDiscretization(detail: String)
+  case InvalidSummary(detail: String)
 
   def message: String =
     this match
@@ -30,6 +31,8 @@ enum BasisError:
         s"invalid response functional: $detail"
       case InvalidDiscretization(detail) =>
         s"invalid response-functional discretization: $detail"
+      case InvalidSummary(detail) =>
+        s"invalid nonlinear response summary: $detail"
 
 /** Errors raised while deriving stable identities for basis elements. */
 enum BasisIdentityError:
@@ -259,6 +262,16 @@ final case class ResponseFunctionalWeights[S](
 enum NonlinearResponseSummary:
   case PeakLatency(from: Seconds, until: Seconds)
 
+  /** Derivative-boost signed amplitude of an informed basis (canonical plus
+    * temporal and/or dispersion derivatives; Calhoun et al. 2004, Steffener et
+    * al. 2010): `sign(b_c) * sqrt(sum_k b_k^2)`, where `b_c` is the coefficient
+    * of the element whose role is [[BasisRole.Canonical]]. Evaluated by
+    * [[ResponseBasis.signedAmplitude]]; the result is descriptive only. See
+    * [[SignedAmplitudeEstimate]] for the sign convention and
+    * [[AmplitudeWeighting]] for the optional basis-norm weighting.
+    */
+  case SignedAmplitude(weighting: AmplitudeWeighting)
+
 /** A response basis: a kernel whose values span a finite response space.
   *
   * The point of wrapping an [[Hrf]] this way is the abstract `Space` member.
@@ -425,6 +438,21 @@ trait ResponseBasis:
       i += 1
     if values.length != dimension then Left(BasisError.DimensionMismatch(name, dimension, values.length))
     else Right(values)
+
+  /** Derivative-boost signed amplitude of fitted coefficients on this basis.
+    *
+    * The canonical coordinate is located by its [[BasisRole.Canonical]] role
+    * in this basis's own [[elements]], never by assuming column 0; every
+    * other element must be a temporal or dispersion derivative. The default
+    * [[AmplitudeWeighting.Unweighted]] is the plain published formula. The
+    * result is a [[SummaryInference.Descriptive]] point summary: no standard
+    * error, degrees of freedom or test is attached.
+    */
+  def signedAmplitude(
+      coefficients: BasisCoefficients[Space],
+      weighting: AmplitudeWeighting = AmplitudeWeighting.Unweighted
+  ): Either[BasisError, SignedAmplitudeEstimate] =
+    SignedAmplitudeEvaluation.evaluate(kernel, coefficients.values, weighting)
 
   /** Lift a raw coefficient vector into this basis's dual space. */
   def coefficients(values: Seq[Double]): Either[BasisError, BasisCoefficients[Space]] =
