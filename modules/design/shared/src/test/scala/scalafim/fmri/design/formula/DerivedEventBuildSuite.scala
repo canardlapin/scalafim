@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{ColumnId, DesignError, RunIndex}
+import scalafim.fmri.design.{ColumnId, DesignError, FactorPartitionAudit, RunIndex}
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -40,8 +40,84 @@ class DerivedEventBuildSuite extends munit.FunSuite:
     assertEquals(declared.columnNames, reference.columnNames)
     assertEquals(declared.designMatrix.data.toVector, reference.designMatrix.data.toVector)
     assertEquals(declared.designSchema.audit.copy(derivedRows = Vector.empty), reference.designSchema.audit)
+    assertEquivalent(declared, reference, declared.designSchema.audit.derivedRows.head)
     // The policy is part of scientific identity.
     assertNotEquals(declared.designSchema.fingerprint.value, reference.designSchema.fingerprint.value)
+
+  /** The declared build is the manual build with its compiled rows renumbered
+    * to the caller's rows and the receipt attached.
+    */
+  private def assertEquivalent(declared: EventModel, manual: EventModel, receipt: DerivedRowsReceipt)(using munit.Location): Unit =
+    assertEquals(declared.columnNames, manual.columnNames)
+    assertEquals(declared.designMatrix.data.toVector, manual.designMatrix.data.toVector)
+    val renumbered = manual.withDerivedRowsEither(receipt).fold(error => fail(error.message), identity)
+    assertEquals(declared.designSchema.audit, renumbered.designSchema.audit)
+    assertEquals(declared.designSchema.fingerprint, renumbered.designSchema.fingerprint)
+
+  private def table(gain: Vector[Double], extra: (String, Column)*): DataTable =
+    DataTable.fromColumns((Vector("onset" -> Column.Doubles(Vector(2.0, 8.0, 14.0, 2.0, 8.0, 14.0)), "gain" -> Column.Doubles(gain)) ++ extra)*)
+
+  test("a dropped row in a later run keeps per-run centering equal to manual materialization"):
+    val values = table(Vector(1.0, 2.0, 5.0, 4.0, Double.NaN, 6.0))
+    val centered = "onset ~ hrf(level, modulators(modulator(reward, center = run, scale = raw, missing = zero)), include_main = TRUE, id = task)"
+    val declared = built(request(values, blocks, plan(DerivedMissingRows.Drop), centered))
+    val manual = plan(DerivedMissingRows.Drop).materialize(values).toOption.get
+    assertEquals(manual.droppedRows, Vector(4))
+    val reference = built(request(manual.table, manual.retainedRows.map(blocks), DerivedEventPlan.empty, centered))
+    val uncentered = built(request(values, blocks, plan(DerivedMissingRows.Drop), centered.replace("center = run, scale = raw, missing = zero", "center = none, scale = raw, missing = reject")))
+    assertNotEquals(declared.designMatrix.data.toVector, uncentered.designMatrix.data.toVector)
+    assertEquivalent(declared, reference, declared.designSchema.audit.derivedRows.head)
+    assertEquals(declared.designSchema.audit.derivedRows.head.dropped.map(_.run), Vector(RunIndex.unsafeOneBased(2)))
+
+  test("a run whose rows are all dropped is still reported by per-run factor audits"):
+    val values = table(Vector(1.0, 5.0, 2.0, Double.NaN, Double.NaN, Double.NaN))
+    val declared = built(request(values, blocks, plan(DerivedMissingRows.Drop)))
+    val manual = plan(DerivedMissingRows.Drop).materialize(values).toOption.get
+    val reference = built(request(manual.table, manual.retainedRows.map(blocks), DerivedEventPlan.empty))
+    assertEquals(declared.columnNames, reference.columnNames)
+    assertEquals(declared.designMatrix.data.toVector, reference.designMatrix.data.toVector)
+    val partitions = declared.designSchema.audit.factorLevels.flatMap(_.partitions)
+    assertEquals(partitions.map(_.partition), Vector("run-1", "run-2"))
+    assertEquals(partitions.last, FactorPartitionAudit("run-2", Vector.empty))
+    assertEquals(declared.designSchema.audit.derivedRows.head.dropped.map(_.sourceRow), Vector(3, 4, 5))
+
+  test("a policy that drops every row fails explicitly"):
+    val values = table(Vector.fill(6)(Double.NaN))
+    assertEquals(buildEither(request(values, blocks, plan(DerivedMissingRows.Drop))),
+      Left(DesignError.DerivedColumns(DerivedEventError.NoRetainedRows(DerivedMissingRows.Drop, 6))))
+
+  test("block formulas and per-row durations are restricted to the retained rows"):
+    val values = table(Vector(1.0, 5.0, Double.NaN, 4.0, 2.0, 6.0), "run" -> Column.Ints(Vector(1, 1, 1, 2, 2, 2)))
+    val durations = DurationPlan(Seq(0.5, 1.0, 1.5, 2.0, 2.5, 3.0))
+    def formulaRequest(data: DataTable, durationPlan: DurationPlan, derived: DerivedEventPlan): EventDesignRequest =
+      EventDesignRequest.fromText(formula, data, frame, BlockPlan.Formula("~run"), durationPlan, derived = derived).fold(error => fail(error.message), identity)
+    val declared = built(formulaRequest(values, durations, plan(DerivedMissingRows.Drop)))
+    val manual = plan(DerivedMissingRows.Drop).materialize(values).toOption.get
+    val reference = built(formulaRequest(manual.table, DurationPlan(manual.retainedRows.map(Vector(0.5, 1.0, 1.5, 2.0, 2.5, 3.0))), DerivedEventPlan.empty))
+    assertEquivalent(declared, reference, declared.designSchema.audit.derivedRows.head)
+    val shifted = built(formulaRequest(manual.table, DurationPlan(Seq(0.5, 1.0, 2.0, 2.5, 3.0).reverse), DerivedEventPlan.empty))
+    assertNotEquals(declared.designMatrix.data.toVector, shifted.designMatrix.data.toVector)
+
+  test("every caller-row index in the audit refers to the caller's table after an earlier row is dropped"):
+    val values = table(Vector(1.0, Double.NaN, 5.0, 4.0, 2.0, 6.0), "trial" -> Column.Strings(Vector("t1", "t2", "t3", "t4", "t5", "t6")))
+    val declarations = DerivedEventPlan.parse(Vector(
+      "level: text = cut(gain, c(-Inf, 3, Inf), c(\"small\", \"large\"))",
+      "flat: number = ifelse(is.na(gain), missing(), 1)"
+    ), DerivedMissingRows.Drop).toOption.get
+    val phased = "onset ~ hrf(level, phase = cue, parent = trial, id = cue) + hrf(flat, id = flat)"
+    val declared = built(request(values, blocks, declarations, phased))
+    val audit = declared.designSchema.audit
+    assertEquals(audit.eventProvenance.map(_.sourceRow), Vector(0, 2, 3, 4, 5))
+    assertEquals(audit.eventProvenance.map(_.parent.value), Vector("t1", "t3", "t4", "t5", "t6"))
+    assertEquals(audit.eventProvenance.map(p => values.get[String](ColumnId.unsafe("trial")).toOption.get(p.sourceRow)), audit.eventProvenance.map(_.parent.value))
+    assertEquals(audit.degenerateModulatorReceipts.flatMap(_.sourceRows), Vector(0, 2, 3, 4, 5))
+    assertEquals(declared.degenerateModulatorReceipts, audit.degenerateModulatorReceipts)
+    val term = declared.terms.collectFirst { case (_, ct: scalafim.fmri.design.event.ConvolvedTerm) if ct.term.eventProvenance.nonEmpty => ct }.get
+    assertEquals(term.term.eventProvenance.map(_.sourceRow), Vector(0, 2, 3, 4, 5))
+    val manual = declarations.materialize(values).toOption.get
+    val reference = built(request(manual.table, manual.retainedRows.map(blocks), DerivedEventPlan.empty, phased))
+    assertEquals(reference.designSchema.audit.eventProvenance.map(_.sourceRow), Vector(0, 1, 2, 3, 4))
+    assertEquivalent(declared, reference, audit.derivedRows.head)
 
   test("dropped rows are recorded in the build audit with provenance"):
     val model = built(request(data, blocks, plan(DerivedMissingRows.Drop)))

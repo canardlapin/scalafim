@@ -320,27 +320,34 @@ object EventModelBuilder:
 
   def buildEither(request: EventDesignRequest): Either[DesignError, EventModel] =
     for
+      _ <- request.options.validate
       rows <- prepareRows(request)
-      model <- buildEither(
-        formula = request.formula,
-        env = rows.env,
-        samplingFrame = request.samplingFrame,
-        blockIds = rows.blockIds,
-        durations = rows.durations,
-        options = request.options,
-        extensions = request.extensions
-      )
+      model <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions,
+        runs = Some(rows.runs))
       evidenced <- rows.attach(model)
     yield evidenced
 
   /** The event rows the compiler sees: the caller's table, or its derived
     * materialization with the block and duration plans restricted to the
     * retained rows.
+    *
+    * `runs` is the run set of the caller's rows, so a run whose rows were all
+    * dropped is still reported (with no observed levels) by per-run audits.
+    * Only `env.eventData` is filtered: `env.other` tables are read by
+    * `covariate(data = ...)`, are scan-aligned rather than indexed by event
+    * row, and are passed through unchanged. A `covariate(...)` without
+    * `data` reads the materialized event table.
+    *
+    * `attach` records the receipt and rewrites every caller-row field of the
+    * model ([[scalafim.fmri.design.EventRowProvenance.sourceRow]], degenerate
+    * modulator and orthogonalization `sourceRows`) from compiled rows to the
+    * caller's rows; see [[EventModel.withDerivedRowsEither]].
     */
   private final case class PreparedRows(
       env: TableEnv,
       blockIds: Vector[Int],
       durations: Vector[Double],
+      runs: Vector[Int],
       receipt: Option[DerivedRowsReceipt]
   ):
     def attach(model: EventModel): Either[DesignError, EventModel] =
@@ -352,12 +359,15 @@ object EventModelBuilder:
       blockIds <- request.blockPlan.resolve(data)
       durations <- request.durationPlan.resolve(data.nrows)
       rows <-
-        if request.derived.isEmpty then Right(PreparedRows(request.env, blockIds, durations, None))
+        if request.derived.isEmpty then Right(PreparedRows(request.env, blockIds, durations, blockIds.distinct.sorted, None))
         else if blockIds.length != data.nrows then
           Left(DesignError.InvalidSchedule(s"`blockIds` must have length ${data.nrows}, not ${blockIds.length}"))
         else
           for
             materialized <- request.derived.materialize(data).left.map(DesignError.DerivedColumns(_))
+            _ <-
+              if materialized.retainedRows.nonEmpty || data.nrows == 0 then Right(())
+              else Left(DesignError.DerivedColumns(DerivedEventError.NoRetainedRows(request.derived.missingRows, materialized.droppedRows.length)))
             dropped <- materialized.droppedRows.zip(materialized.droppedColumns).foldLeft[Either[DesignError, Vector[DerivedRowDrop]]](Right(Vector.empty)):
               case (acc, (row, columns)) =>
                 for previous <- acc; run <- RunIndex.fromZeroBased(blockIds(row)) yield previous :+ DerivedRowDrop(row, run, columns)
@@ -365,6 +375,7 @@ object EventModelBuilder:
             request.env.copy(eventData = materialized.table),
             materialized.retainedRows.map(blockIds),
             materialized.retainedRows.map(durations),
+            blockIds.distinct.sorted,
             Some(DerivedRowsReceipt(request.derived.missingRows, request.derived.ids, materialized.retainedRows, dropped))
           )
     yield rows
@@ -398,7 +409,8 @@ object EventModelBuilder:
     for
       _ <- request.options.validate
       rows <- prepareRows(request)
-      compiled <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions, Some(cache))
+      compiled <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions, Some(cache),
+        runs = Some(rows.runs))
       model <- rows.attach(compiled)
     yield new IncrementalDesign(request, cache.entries.toMap, model, cache.compiledCount, cache.reusedCount)
 
@@ -465,7 +477,9 @@ object EventModelBuilder:
   private final case class ResolvedSchedule(
       defaultOnsets: Vector[Seconds],
       defaultDurs: Vector[Seconds],
-      blockIds0: Vector[Int]
+      blockIds0: Vector[Int],
+      /** Runs reported by per-run audits: those of the caller's rows. */
+      runs: Vector[Int]
   )
 
   private final case class ResolvedPhase(
@@ -628,10 +642,11 @@ object EventModelBuilder:
       durations: Seq[Double],
       options: BuildOptions,
       extensions: DesignExtensionEnv,
-      cache: Option[TermCache] = None
+      cache: Option[TermCache] = None,
+      runs: Option[Vector[Int]] = None
   ): Either[DesignError, EventModel] =
     for
-      schedule <- resolveSchedule(formula, env, blockIds, durations)
+      schedule <- resolveSchedule(formula, env, blockIds, durations, runs)
       hrfTermCount = formula.terms.count {
         case _: HrfCall => true
         case _          => false
@@ -660,7 +675,8 @@ object EventModelBuilder:
       formula: ModelFormula,
       env: TableEnv,
       blockIds: Seq[Int],
-      durations: Seq[Double]
+      durations: Seq[Double],
+      runs: Option[Vector[Int]]
   ): Either[DesignError, ResolvedSchedule] =
     for
       onsetVals <- env.eventData.get[Double](formula.onset)
@@ -671,7 +687,8 @@ object EventModelBuilder:
     yield ResolvedSchedule(
       defaultOnsets = onsetVals.map(Seconds(_)),
       defaultDurs = durVals.map(Seconds(_)),
-      blockIds0 = blockIds.toVector
+      blockIds0 = blockIds.toVector,
+      runs = runs.getOrElse(blockIds.toVector.distinct.sorted)
     )
 
   private def resolveDurationValues(durations: Seq[Double], nEvents: Int): Either[DesignError, Vector[Double]] =
@@ -820,7 +837,7 @@ object EventModelBuilder:
         subset.events,
         options.factorRegistry,
         subset.blockIds,
-        schedule.blockIds0.distinct.sorted
+        schedule.runs
       )
       droppedMissing =
         if dropMissingMask.contains(false) then

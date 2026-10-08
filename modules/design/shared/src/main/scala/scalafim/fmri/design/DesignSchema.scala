@@ -352,6 +352,10 @@ final case class DesignDiagnostic(
   require(message.trim.nonEmpty, "diagnostic message must be non-empty")
 
 final case class EventExclusion(
+    /** Position within the excluding term's own events (onset-bounds checks),
+      * or the caller's row when produced by [[EventOnsetSelection]]; it is not
+      * renumbered by a derived missing-row policy.
+      */
     eventIndex: Int,
     reason: String,
     term: Option[TermId] = None
@@ -361,6 +365,7 @@ final case class EventExclusion(
 
 final case class MissingValueResolution(
     modulator: ModulatorId,
+    /** Position within the term's own events; `source` names the caller's row when known. */
     eventIndex: Int,
     policy: String,
     action: String,

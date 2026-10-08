@@ -35,6 +35,8 @@ enum DerivedEventError:
   case DeclaredType(column: ColumnId, declared: EventValueType, inferred: EventValueType)
   case MissingValues(columns: Vector[ColumnId], rows: Vector[Int])
   case InvalidBins(detail: String)
+  /** The missing-row policy removed every event row. */
+  case NoRetainedRows(policy: DerivedMissingRows, dropped: Int)
 
   def message: String = this match
     case InvalidDefinition(detail) => detail
@@ -43,6 +45,7 @@ enum DerivedEventError:
     case DeclaredType(column, declared, inferred) => s"${column.value}: declared $declared, but the expression has type $inferred"
     case MissingValues(columns, rows) => s"missing derived values in ${columns.map(_.value).mkString(", ")} at rows ${rows.mkString(", ")}"
     case InvalidBins(detail) => detail
+    case NoRetainedRows(policy, dropped) => s"missing-row policy '${policy.label}' dropped all $dropped event rows; no events remain to model"
 
 /** One typed derived-column declaration.
   *
