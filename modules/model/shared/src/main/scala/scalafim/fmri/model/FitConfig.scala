@@ -607,13 +607,19 @@ object ModelVolumeWeighting:
 final class NuisanceMatrix private (val matrix: DMat):
   require(matrix.rows > 0 && matrix.cols > 0, "nuisance matrix must be non-empty")
 
+  /** Row-major values; equality is by shape and contents, not matrix identity. */
+  private def values: Vector[Double] =
+    val data = new Array[Double](matrix.rows * matrix.cols)
+    matrix.copyRowMajorTo(data)
+    data.toVector
+
   override def equals(other: Any): Boolean =
     other match
-      case that: NuisanceMatrix => matrix == that.matrix
+      case that: NuisanceMatrix => matrix.rows == that.matrix.rows && matrix.cols == that.matrix.cols && values == that.values
       case _ => false
 
   override def hashCode(): Int =
-    matrix.hashCode()
+    (matrix.rows, matrix.cols, values).hashCode()
 
   def validateRows(nTimepoints: Int): Either[ModelError, Unit] =
     if matrix.rows == nTimepoints then Right(())
