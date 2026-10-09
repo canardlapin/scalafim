@@ -103,20 +103,25 @@ class TrialRefinementSuite extends munit.FunSuite:
     assertEquals(f.expanded.blockCount, 1, "this derivative oracle uses the dense fixture")
     val denseSource = f.expanded.block(0).fold(e => fail(e.message), identity)
     val nuisance = gale.linalg.DMat.tabulate(f.rows, f.nuisance)((t, j) => f.baseline.designMatrix(t, j))
-    val prep = TrialBandedPreparation.prepare(f.expanded, Some(f.whitening), Some(nuisance), 1.0)
+    val prep = TrialBandedPreparation
+      .prepare(f.expanded, Some(f.whitening), Some(nuisance), 1.0)
       .fold(e => fail(e.message), identity)
-    val objective = prep.objective(NodeGrid(f.plan.basis.family.chart, Vector(2, 2, 2)))
+    val objective = prep
+      .objective(NodeGrid(f.plan.basis.family.chart, Vector(2, 2, 2)))
       .fold(e => fail(e.message), identity)
     val chart = f.plan.basis.family.chart
-    val shapes = Vector(Vector(0.2, 0.25, 0.15), Vector(0.4, 0.75, 0.7),
-      Vector(0.75, 0.3, 0.45), Vector(0.9, 0.85, 0.9))
+    val shapes =
+      Vector(Vector(0.2, 0.25, 0.15), Vector(0.4, 0.75, 0.7), Vector(0.75, 0.3, 0.45), Vector(0.9, 0.85, 0.9))
     val full = new ProfileJetBuffer(3, 3)
     val first = new ProfileGradientBuffer(3, 3)
     shapes.foreach: unit =>
       val truth = unit.indices.map(i => chart.lower(i) + unit(i) * chart.width(i)).toVector
       val coefficients = new Array[Double](f.expanded.rank)
-      f.plan.basis.coefficientsInto(scalafim.fmri.hrf.family.ShapePoint.unsafe(truth),
-        new Array[Double](f.plan.basis.fineCount), coefficients)
+      f.plan.basis.coefficientsInto(
+        scalafim.fmri.hrf.family.ShapePoint.unsafe(truth),
+        new Array[Double](f.plan.basis.fineCount),
+        coefficients
+      )
       val raw = gale.linalg.DMat.tabulate(f.rows, 1): (t, _) =>
         var signal = 2.0 + 0.01 * math.sin(0.31 * t)
         var trial = 0
@@ -128,17 +133,23 @@ class TrialRefinementSuite extends munit.FunSuite:
             p += 1
           trial += 1
         signal
-      val whitened = scalafim.fmri.ar.WhiteningTransform.matrix(f.whitening, raw)
+      val whitened = scalafim.fmri.ar.WhiteningTransform
+        .matrix(f.whitening, raw)
         .fold(e => fail(e.toString), identity)
-      objective.pointAt(prep.encodeWhitened(Array.tabulate(f.rows)(t => whitened(t, 0)))
-        .fold(e => fail(e.message), identity))
+      objective.pointAt(
+        prep
+          .encodeWhitened(Array.tabulate(f.rows)(t => whitened(t, 0)))
+          .fold(e => fail(e.message), identity)
+      )
       // Evaluate away from the generating point so all first derivatives are exercised.
       val point = truth.indices.map(i => chart.lower(i) + (0.9 * unit(i) + 0.04) * chart.width(i)).toArray
       assert(objective.jetAt(point, full))
       assert(objective.gradientAt(point, first))
       assertEqualsDouble(first.energy, full.energy, 1e-10 * math.max(1.0, math.abs(full.energy)))
       first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
-      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
+      first.amplitudes
+        .zip(full.amplitudes)
+        .foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
       point.indices.foreach: axis =>
         val h = 1e-4 * chart.width(axis)
         val plus = point.clone()

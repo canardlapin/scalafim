@@ -28,9 +28,9 @@ class DecodedTrialCheckpointSuite extends munit.FunSuite:
       def accept(block: VoxelBlock, payload: ProfileTrialOutputBlock): Either[String, ProfileFitReceipt] =
         payload.results.foreach: voxel =>
           voxel.output match
-            case ProfileTrialOutputOutcome.DecodeRefused(_)  => ()
+            case ProfileTrialOutputOutcome.DecodeRefused(_)      => ()
             case ProfileTrialOutputOutcome.ReadoutRefused(error) => fail(error.message)
-            case ProfileTrialOutputOutcome.Emitted(_, value) =>
+            case ProfileTrialOutputOutcome.Emitted(_, value)     =>
               val oracle = tiny.oracle(voxel.voxelId, voxel.selection.coordinates)
               val actual = value.trialAmplitudes.get ++ value.nuisanceCoefficients
               actual.zip(oracle).foreach((a, b) => assertEqualsDouble(a, b, 1e-7))

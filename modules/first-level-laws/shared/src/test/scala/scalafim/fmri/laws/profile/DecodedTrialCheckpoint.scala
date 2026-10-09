@@ -113,7 +113,9 @@ object DecodedTrialCheckpoint:
 
     def prepare: Either[ProfileFitError, PreparedProfileHrf] = prepareWithReferences(None)
 
-    def prepareWithReferences(references: Option[TrialReferenceDecodePolicy]): Either[ProfileFitError, PreparedProfileHrf] =
+    def prepareWithReferences(
+        references: Option[TrialReferenceDecodePolicy]
+    ): Either[ProfileFitError, PreparedProfileHrf] =
       ProfileHrfFit.prepare(
         plan,
         DataSelection.All,
@@ -230,9 +232,12 @@ object DecodedTrialCheckpoint:
     val rows = if tiny then 120 else 600
     val trials = if tiny then 12 else config.trials
     require(!tiny || cascade.isEmpty, "the Gaussian tiny fixture does not accept a Cascade34 override")
-    val family = if tiny then GaussianFamily.Default else cascade.getOrElse:
-      config.horizonSeconds.fold(Cascade34Family.Default)(h =>
-        Cascade34Family.make(horizon = Seconds(h)).fold(e => throw new IllegalArgumentException(e.message), identity))
+    val family = if tiny then GaussianFamily.Default
+    else
+      cascade.getOrElse:
+        config.horizonSeconds.fold(Cascade34Family.Default)(h =>
+          Cascade34Family.make(horizon = Seconds(h)).fold(e => throw new IllegalArgumentException(e.message), identity)
+        )
     val frame = SamplingFrame(blockLens = Seq(rows), tr = Seq(1.0))
     val step = PositiveSeconds.unsafe(Seconds(0.1))
     val basisStarted = System.nanoTime()
@@ -251,7 +256,8 @@ object DecodedTrialCheckpoint:
     val basisNanos = System.nanoTime() - basisStarted
     val onsetRng = new scala.util.Random(20260910L)
     // Horizon experiments preserve the original schedule.
-    val lastOnset = rows - (if tiny then GaussianFamily.Default.horizon.value else Cascade34Family.Default.horizon.value) - 1.0
+    val lastOnset =
+      rows - (if tiny then GaussianFamily.Default.horizon.value else Cascade34Family.Default.horizon.value) - 1.0
     val onsets =
       if config.geometry == Geometry.B0Dense then
         Vector.fill(trials)(math.floor(onsetRng.nextDouble() * lastOnset * 10.0) / 10.0).sorted.map(Seconds(_))
@@ -273,7 +279,16 @@ object DecodedTrialCheckpoint:
       )
       .fold(e => throw new IllegalArgumentException(e.message), identity)
     val expanded = TrialBasisDesign
-      .lower(onsets, schedule.blockIds, schedule.durations, membership, frame, basis, Seconds(0.1), config.trialPreparation.lowering)
+      .lower(
+        onsets,
+        schedule.blockIds,
+        schedule.durations,
+        membership,
+        frame,
+        basis,
+        Seconds(0.1),
+        config.trialPreparation.lowering
+      )
       .fold(e => throw new IllegalArgumentException(e.message), identity)
     val nuisanceValues = Array.tabulate(rows * 5): index =>
       val t = index / 5

@@ -19,9 +19,11 @@ class TrialDomainGateSuite extends munit.FunSuite:
     assertEquals(samples.length, 155)
     assertEquals(samples.count(_.cohort == "boundary"), 27)
     assertEquals(samples.map(_.id).distinct.length, samples.length)
-    samples.filter(_.cohort == "sensitivity").foreach: sample =>
-      val original = samples.find(s => s.cohort == "fresh" && s.responseSeed == sample.responseSeed).get
-      assertEquals(original.unit, sample.unit)
+    samples
+      .filter(_.cohort == "sensitivity")
+      .foreach: sample =>
+        val original = samples.find(s => s.cohort == "fresh" && s.responseSeed == sample.responseSeed).get
+        assertEquals(original.unit, sample.unit)
 
   test("public fixed-shape gate uses one reference and separates approximation from representation"):
     val result = TrialDomainGate.run(30, 4, 2, boundaries = false)

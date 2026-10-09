@@ -91,8 +91,11 @@ object TrialBoundedSearchCandidate:
         ),
         "trialWork" -> result.progress.trial.fold("")(_.toString),
         "trialAttempted" -> result.progress.trial.fold[ujson.Value](ujson.Null): work =>
-          ujson.Obj.from(work.attempted.productElementNames.zip(work.attempted.productIterator)
-            .map((k, v) => k -> ujson.Num(v.asInstanceOf[Long].toDouble))),
+          ujson.Obj.from(
+            work.attempted.productElementNames
+              .zip(work.attempted.productIterator)
+              .map((k, v) => k -> ujson.Num(v.asInstanceOf[Long].toDouble))
+          ),
         "readout" -> result.progress.publicReadout.fold("")(_.toString)
       )
       println(s"ratio=$ratio ${result.progress.decodeStatuses}")

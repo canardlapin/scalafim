@@ -10,9 +10,9 @@ import scalafim.fmri.fit.profile.ProfileHrfTrialOutputsParallel.*
 import scalafim.fmri.model.ProfileCriterion
 
 /** Explicit opt-in diagnostic: Test/runMain ... <output.json> <dense|regular|tiny> <voxels> <trials> <workers>
-  * <penalized|ml> <exact|corrected> <source-id> [nodes-per-axis] [baseline|expanded|repaired]
-  * [trial-block-size] [noise-ratio] [execution-deadline-seconds] [prepared-residual-limit] [horizon-seconds] [basis-max-rank] [basis-subspace]. Writes non-admitted evidence even
-  * when the public execution returns a refusal.
+  * <penalized|ml> <exact|corrected> <source-id> [nodes-per-axis] [baseline|expanded|repaired] [trial-block-size]
+  * [noise-ratio] [execution-deadline-seconds] [prepared-residual-limit] [horizon-seconds] [basis-max-rank]
+  * [basis-subspace]. Writes non-admitted evidence even when the public execution returns a refusal.
   */
 object DecodedTrialCheckpointMain:
   import DecodedTrialCheckpoint.*
@@ -50,17 +50,25 @@ object DecodedTrialCheckpointMain:
       noiseRatio = args.lift(11).map(_.toDouble),
       horizonSeconds = args.lift(14).map(_.toDouble),
       basisMaxRank = args.lift(15).map(_.toInt).getOrElse(32),
-      trialPreparation = TrialPreparationPolicy(args.lift(10)
-        .fold[TrialDesignLowering](TrialDesignLowering.Dense)(s => TrialDesignLowering.Blocked(s.toInt))),
+      trialPreparation = TrialPreparationPolicy(
+        args
+          .lift(10)
+          .fold[TrialDesignLowering](TrialDesignLowering.Dense)(s => TrialDesignLowering.Blocked(s.toInt))
+      ),
       criterion = criterion,
       mode = mode,
       compilation =
-        if args(1).endsWith("-blocked") then KernelBasisCompilation.BlockedPartial(args.lift(16).map(_.toInt).getOrElse(96)) else KernelBasisCompilation.Dense
+        if args(1).endsWith("-blocked") then
+          KernelBasisCompilation.BlockedPartial(args.lift(16).map(_.toInt).getOrElse(96))
+        else KernelBasisCompilation.Dense
     )
     val deadlineSeconds = args.lift(12).map(_.toDouble)
     require(deadlineSeconds.forall(x => x.isFinite && x > 0.0))
-    val evidence = args.lift(13).fold[ProfileTrialEvidenceRequest](ProfileTrialEvidenceRequest.PreparedBasisResidual)(s =>
-      ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(ProfileTrialResidualLimit(s.toDouble)))
+    val evidence = args
+      .lift(13)
+      .fold[ProfileTrialEvidenceRequest](ProfileTrialEvidenceRequest.PreparedBasisResidual)(s =>
+        ProfileTrialEvidenceRequest.PreparedBasisResidualAtMost(ProfileTrialResidualLimit(s.toDouble))
+      )
     val started = System.nanoTime()
     val receipt = ujson.Obj(
       "format" -> "phrf-decoded-diagnostic/1",
@@ -125,18 +133,23 @@ object DecodedTrialCheckpointMain:
               val runStarted = System.nanoTime()
               val heap = new DiagnosticHeapSampler
               heap.start()
-              def cancelled(): Boolean = deadlineSeconds.exists(limit => (System.nanoTime() - runStarted) / 1e9 >= limit)
+              def cancelled(): Boolean =
+                deadlineSeconds.exists(limit => (System.nanoTime() - runStarted) / 1e9 >= limit)
               val result =
                 try
-                  if config.workers == 1 then outputs.run(readers.head, request, mode, sink, () => cancelled(), evidence = evidence)
-                  else outputs.runParallel(readers, request, mode, sink, () => cancelled(), evidence = evidence) match
-                    case Left(ProfileFitError.WorkersStillRunning(_, _, _, _, termination)) => Left(termination.awaitFinal())
-                    case completed => completed
+                  if config.workers == 1 then
+                    outputs.run(readers.head, request, mode, sink, () => cancelled(), evidence = evidence)
+                  else
+                    outputs.runParallel(readers, request, mode, sink, () => cancelled(), evidence = evidence) match
+                      case Left(ProfileFitError.WorkersStillRunning(_, _, _, _, termination)) =>
+                        Left(termination.awaitFinal())
+                      case completed => completed
                 finally heap.close()
               receipt("executionSecondsIncludingReadsAndSink") = (System.nanoTime() - runStarted) / 1e9
               receipt("sampledProcessHeapMaximumBytes") = heap.maximum.toDouble
               receipt("processHeapSamples") = heap.samples.toDouble
-              receipt("memoryScope") = "whole sbt JVM used heap sampled every 10ms; includes build, fixture, garbage and engine; neither engine live memory nor an exact peak"
+              receipt("memoryScope") =
+                "whole sbt JVM used heap sampled every 10ms; includes build, fixture, garbage and engine; neither engine live memory nor an exact peak"
               receipt("readerWallSecondsSummedAcrossWorkers") = readers.map(_.nanos).sum / 1e9
               receipt("readValues") = readers.map(_.values.toDouble).sum
               receipt("largestReaderSeriesValues") = readers.map(_.largestSeriesValues.toDouble).max
@@ -157,18 +170,23 @@ object DecodedTrialCheckpointMain:
                 sink.exits.toVector.sortBy(_._1.toString).map((k, v) => k.toString -> ujson.Num(v.toDouble))
               )
               receipt("completed") = result.isRight
-              result.fold(errorProgress, summary => Some(summary.progress)).foreach: progress =>
-                receipt("progress") = progress.toString
-                receipt("workersUsed") = progress.workersUsed
-                receipt("attemptedVoxels") = progress.attemptedVoxels
-                receipt("attemptedStatuses") = ujson.Obj.from(progress.decodeStatuses.toVector
-                  .sortBy(_._1.toString).map((k, v) => k.toString -> ujson.Num(v.toDouble)))
-                receipt("decoder") = product(progress.decoder)
-                receipt("trialWork") = progress.trial.fold[ujson.Value](ujson.Null)(v => product(v))
-                receipt("mlWork") = progress.trialMl.fold[ujson.Value](ujson.Null)(v => product(v))
-                receipt("publicReadoutWork") = progress.publicReadout.fold[ujson.Value](ujson.Null)(v => product(v))
+              result
+                .fold(errorProgress, summary => Some(summary.progress))
+                .foreach: progress =>
+                  receipt("progress") = progress.toString
+                  receipt("workersUsed") = progress.workersUsed
+                  receipt("attemptedVoxels") = progress.attemptedVoxels
+                  receipt("attemptedStatuses") = ujson.Obj.from(
+                    progress.decodeStatuses.toVector
+                      .sortBy(_._1.toString)
+                      .map((k, v) => k.toString -> ujson.Num(v.toDouble))
+                  )
+                  receipt("decoder") = product(progress.decoder)
+                  receipt("trialWork") = progress.trial.fold[ujson.Value](ujson.Null)(v => product(v))
+                  receipt("mlWork") = progress.trialMl.fold[ujson.Value](ujson.Null)(v => product(v))
+                  receipt("publicReadoutWork") = progress.publicReadout.fold[ujson.Value](ujson.Null)(v => product(v))
               result match
-                case Left(error) => receipt("executionError") = error.message
+                case Left(error)    => receipt("executionError") = error.message
                 case Right(summary) => receipt("provenance") = summary.provenance
     catch case NonFatal(error) => receipt("failure") = error.toString
     receipt("totalSeconds") = (System.nanoTime() - started) / 1e9
@@ -193,28 +211,31 @@ object DecodedTrialCheckpointMain:
     )
 
   private def errorProgress(error: ProfileFitError): Option[ProfileRunProgress] = error match
-    case ProfileFitError.Cancelled(p) => Some(p)
-    case ProfileFitError.Dataset(_, p) => Some(p)
-    case ProfileFitError.Backend(_, p) => Some(p)
+    case ProfileFitError.Cancelled(p)              => Some(p)
+    case ProfileFitError.Dataset(_, p)             => Some(p)
+    case ProfileFitError.Backend(_, p)             => Some(p)
     case ProfileFitError.TrialReadoutFailure(_, p) => Some(p)
-    case ProfileFitError.TrialMlFailure(_, p) => Some(p)
-    case ProfileFitError.SinkRefused(_, p) => Some(p)
-    case ProfileFitError.SinkThrew(_, p) => Some(p)
-    case _ => None
+    case ProfileFitError.TrialMlFailure(_, p)      => Some(p)
+    case ProfileFitError.SinkRefused(_, p)         => Some(p)
+    case ProfileFitError.SinkThrew(_, p)           => Some(p)
+    case _                                         => None
 
   /** Process instrumentation only. No engine-memory inference is made from these samples. */
   private final class DiagnosticHeapSampler extends AutoCloseable:
     @volatile private var active = true
     @volatile var maximum = 0L
     @volatile var samples = 0L
-    private val thread = new Thread(() =>
-      val bean = ManagementFactory.getMemoryMXBean
-      while active do
-        maximum = math.max(maximum, bean.getHeapMemoryUsage.getUsed)
-        samples += 1
-        try Thread.sleep(10)
-        catch case _: InterruptedException => ()
-    , "phrf-diagnostic-heap-sampler")
+    private val thread = new Thread(
+      () =>
+        val bean = ManagementFactory.getMemoryMXBean
+        while active do
+          maximum = math.max(maximum, bean.getHeapMemoryUsage.getUsed)
+          samples += 1
+          try Thread.sleep(10)
+          catch case _: InterruptedException => ()
+      ,
+      "phrf-diagnostic-heap-sampler"
+    )
     thread.setDaemon(true)
     def start(): Unit = thread.start()
     def close(): Unit =
