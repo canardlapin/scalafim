@@ -74,3 +74,28 @@ object BlockSelection:
 
 enum TimeReference:
   case Local, Global
+
+/** The within-volume instant a run's samples are referenced to, named from
+  * the run's start time.
+  *
+  * A [[SamplingFrame]] stores only the numeric start time, not how it was
+  * chosen, so the name is a classification of that number rather than a
+  * record of intent: a start time of exactly `TR / 2` (the default when no
+  * start time is given) is [[MidVolume]], exactly `0` is [[VolumeOnset]],
+  * and anything else — for example a slice-time reference supplied by the
+  * caller — is an [[ExplicitOffset]] carrying its value. */
+enum SamplingReference:
+  case MidVolume
+  case VolumeOnset
+  case ExplicitOffset
+
+  def label: String = this match
+    case MidVolume => "mid-volume"
+    case VolumeOnset => "volume-onset"
+    case ExplicitOffset => "explicit-offset"
+
+object SamplingReference:
+  def classify(startTime: Seconds, tr: Seconds): SamplingReference =
+    if startTime.value == tr.value / 2.0 then MidVolume
+    else if startTime.value == 0.0 then VolumeOnset
+    else ExplicitOffset
