@@ -1,14 +1,31 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{ColumnId, PortableNumber}
+import scalafim.fmri.design.{ColumnId, PortableNumber, RunIndex}
 import scalafim.fmri.design.data.{Column, DataTable}
 
 /** Declared types make even an entirely missing derived column inspectable. */
 enum EventValueType:
   case Number, Text, Logical
 
+/** What happens to an event row where a declared derived column has no value.
+  *
+  *  - `Reject` fails the build and names the rows.
+  *  - `Drop` removes the row before compilation.
+  *  - `PreserveNumeric` keeps missing numeric values (as `NaN`, for the
+  *    term's modulator policy) and fails like `Reject` on a missing text or
+  *    logical value, which never acquires a synthetic categorical level.
+  */
 enum DerivedMissingRows:
   case Reject, Drop, PreserveNumeric
+
+  /** Stable portable name, used by JSON documents and audit receipts. */
+  def label: String = this match
+    case Reject => "reject"
+    case Drop => "drop"
+    case PreserveNumeric => "preserve-numeric"
+
+object DerivedMissingRows:
+  def fromLabel(label: String): Option[DerivedMissingRows] = values.find(_.label == label)
 
 enum DerivedEventError:
   case InvalidDefinition(detail: String)
@@ -18,6 +35,8 @@ enum DerivedEventError:
   case DeclaredType(column: ColumnId, declared: EventValueType, inferred: EventValueType)
   case MissingValues(columns: Vector[ColumnId], rows: Vector[Int])
   case InvalidBins(detail: String)
+  /** The missing-row policy removed every event row. */
+  case NoRetainedRows(policy: DerivedMissingRows, dropped: Int)
 
   def message: String = this match
     case InvalidDefinition(detail) => detail
@@ -26,6 +45,7 @@ enum DerivedEventError:
     case DeclaredType(column, declared, inferred) => s"${column.value}: declared $declared, but the expression has type $inferred"
     case MissingValues(columns, rows) => s"missing derived values in ${columns.map(_.value).mkString(", ")} at rows ${rows.mkString(", ")}"
     case InvalidBins(detail) => detail
+    case NoRetainedRows(policy, dropped) => s"missing-row policy '${policy.label}' dropped all $dropped event rows; no events remain to model"
 
 /** One typed derived-column declaration.
   *
@@ -78,8 +98,16 @@ object DerivedColumn:
         yield column
       case _ => Left(DerivedEventError.InvalidDefinition("expected name: number|text|logical = expression"))
 
-/** Rows are always zero-based indices in the caller's input table. */
-final case class MaterializedEvents(table: DataTable, retainedRows: Vector[Int], droppedRows: Vector[Int])
+/** Rows are always zero-based indices in the caller's input table.
+  * `droppedColumns(i)` names the declared columns missing at `droppedRows(i)`.
+  */
+final case class MaterializedEvents(
+    table: DataTable,
+    retainedRows: Vector[Int],
+    droppedRows: Vector[Int],
+    droppedColumns: Vector[Vector[ColumnId]]
+):
+  require(droppedColumns.length == droppedRows.length, "dropped-row columns must parallel dropped rows")
 
 final case class DerivedEventTable private[formula] (
     source: DataTable,
@@ -112,9 +140,65 @@ final case class DerivedEventTable private[formula] (
               case EventValueType.Text => Column.Strings(cells.collect { case EventExpressionValue.Text(value) => value })
               case EventValueType.Logical => Column.Bools(cells.collect { case EventExpressionValue.Logical(value) => value })
             id.value -> column
-          Right(MaterializedEvents(DataTable(retained.size, base.columns ++ columns), retained, dropped))
+          val reasons = dropped.map(row => incomplete.filter(id => values(id)(row) == EventExpressionValue.Missing))
+          Right(MaterializedEvents(DataTable(retained.size, base.columns ++ columns), retained, dropped, reasons))
 
   private def sourceRows: Vector[Int] = Vector.range(0, source.nrows)
+
+/** Derived-column declarations a build evaluates against its event table
+  * before compiling, with the one missing-row policy applied to every declared
+  * column. Declarations are evaluated in order; ids are distinct.
+  */
+final case class DerivedEventPlan private (columns: Vector[DerivedColumn], missingRows: DerivedMissingRows):
+  def isEmpty: Boolean = columns.isEmpty
+  def ids: Vector[ColumnId] = columns.map(_.id)
+
+  /** Evaluate every declaration and materialize all declared columns. This is
+    * exactly what a build does with the plan, exposed so a caller can inspect
+    * or reproduce the event table the compiler sees.
+    */
+  def materialize(data: DataTable): Either[DerivedEventError, MaterializedEvents] =
+    DerivedEvents.evaluate(data, columns).flatMap(_.materialize(ids, missingRows))
+
+object DerivedEventPlan:
+  val empty: DerivedEventPlan = new DerivedEventPlan(Vector.empty, DerivedMissingRows.Reject)
+
+  def from(columns: Vector[DerivedColumn], missingRows: DerivedMissingRows): Either[DerivedEventError, DerivedEventPlan] =
+    val ids = columns.map(_.id)
+    ids.diff(ids.distinct).headOption match
+      case Some(id) => Left(DerivedEventError.InvalidDefinition(s"column '${id.value}' is declared more than once"))
+      case None => Right(new DerivedEventPlan(columns, missingRows))
+
+  /** Parse declarations such as `reward: number = gain - loss`. */
+  def parse(declarations: Vector[String], missingRows: DerivedMissingRows): Either[DerivedEventError, DerivedEventPlan] =
+    declarations.foldLeft[Either[DerivedEventError, Vector[DerivedColumn]]](Right(Vector.empty)): (acc, text) =>
+      for previous <- acc; column <- DerivedColumn.parse(text) yield previous :+ column
+    .flatMap(from(_, missingRows))
+
+/** One event row a build removed because a declared derived column had no
+  * value there. `sourceRow` is the zero-based row of the caller's event table.
+  */
+final case class DerivedRowDrop(sourceRow: Int, run: RunIndex, missingColumns: Vector[ColumnId]):
+  require(sourceRow >= 0, "dropped derived row must be non-negative")
+  require(missingColumns.nonEmpty, "a dropped derived row names its missing columns")
+
+  def canonical: String = s"$sourceRow@run=${run.oneBased}@missing=${missingColumns.map(_.value).mkString("|")}"
+
+/** Build evidence for derived declarations. `retainedRows(i)` is the caller's
+  * event-table row behind compiled event row `i`, so every compiled row index
+  * (event provenance, missing-value receipts) maps back to the caller's table.
+  */
+final case class DerivedRowsReceipt(
+    policy: DerivedMissingRows,
+    columns: Vector[ColumnId],
+    retainedRows: Vector[Int],
+    dropped: Vector[DerivedRowDrop]
+):
+  require(columns.nonEmpty, "derived-row receipt requires declared columns")
+  require(retainedRows.toSet.intersect(dropped.map(_.sourceRow).toSet).isEmpty, "a row is either retained or dropped")
+
+  def canonical: String =
+    s"policy=${policy.label}:columns=${columns.map(_.value).mkString(",")}:retained=${retainedRows.mkString(",")}:dropped=${dropped.map(_.canonical).mkString(",")}"
 
 object DerivedEvents:
   /** Declarations are evaluated in order. Forward references and overwrites fail. */

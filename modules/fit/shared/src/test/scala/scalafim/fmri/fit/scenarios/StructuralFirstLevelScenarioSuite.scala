@@ -175,6 +175,9 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     val weights = responseBasis
       .responseFunctional(ResponseFunctional.WindowMean(Seconds(4.0), Seconds(8.0)), FunctionalDiscretization.Exact)
       .fold(error => fail(error.message), identity)
+    val signedAmplitude = responseBasis
+      .coefficients(Vector(1.0, 2.0, 2.0))
+      .flatMap(responseBasis.signedAmplitude(_))
     val firBasis = ResponseBasis.of(Hrfs.fir(nBasis = 4, span = Seconds(8.0)))
     val firWindow = firBasis
       .responseFunctional(ResponseFunctional.WindowMean(Seconds(2.0), Seconds(6.0)), FunctionalDiscretization.Exact)
@@ -238,8 +241,14 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact(
           "nonlinear summary is not a linear functional",
           NonlinearResponseSummary.PeakLatency(Seconds(4.0), Seconds(8.0)) match
-            case NonlinearResponseSummary.PeakLatency(_, _) => true,
+            case NonlinearResponseSummary.PeakLatency(_, _)  => true
+            case NonlinearResponseSummary.SignedAmplitude(_) => false,
           "nonlinear summary was unexpectedly coerced"
+        ),
+        ScenarioHarness.fact(
+          "signed amplitude of the informed basis is descriptive",
+          signedAmplitude.exists(_.inference == SummaryInference.Descriptive),
+          signedAmplitude.fold(_.message, value => s"value=${value.value} inference=${value.inference}")
         )
       ),
       Vector.empty

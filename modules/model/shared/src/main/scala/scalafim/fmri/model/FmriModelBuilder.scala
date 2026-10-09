@@ -5,7 +5,7 @@ import scalafim.fmri.design.{ColumnId, DegenerateModulatorPolicy, EmptyCellPolic
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NaAction, NuisanceCheck}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.fmri.design.formula.EventModelBuilder
+import scalafim.fmri.design.formula.{DerivedEventPlan, EventModelBuilder}
 import scalafim.fmri.hrf.{Hrf, Hrfs, Seconds}
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.linalg.Mat
@@ -158,7 +158,9 @@ final case class ModelBuildSpec(
     hrfByPhase: Option[HrfByPhase] = None,
     missingValuePolicy: MissingValuePolicy = MissingValuePolicy.ZeroContribution,
     degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
-    orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
+    orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None,
+    /** Derived event columns, evaluated against the dataset events before the formula is compiled. */
+    derived: DerivedEventPlan = DerivedEventPlan.empty
 ):
   require(formula.trim.nonEmpty, "model formula must be non-empty")
   require(baselineDegree >= 1, "baseline degree must be at least 1")
@@ -215,7 +217,8 @@ object FmriModelBuilder:
         ),
         extensions = EventModelBuilder.DesignExtensionEnv(
           contrastSets = spec.contrastSets
-        )
+        ),
+        derived = spec.derived
       ).left.map(ModelError.fromDesignError)
       eventModel <- EventModelBuilder.buildEither(request).left.map(ModelError.fromDesignError)
       baseline <- BaselineModel.buildEither(

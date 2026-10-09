@@ -604,16 +604,20 @@ object ModelVolumeWeighting:
   ): ModelVolumeWeighting =
     Estimated(DvarsWeightEstimator(function, scope))
 
-final class NuisanceMatrix private (val matrix: DMat):
+/** A nuisance projection matrix, held as a private copy of the caller's
+  * matrix. Equality is by shape and exact value bits, so it is reflexive
+  * even for NaN entries and never depends on matrix identity.
+  */
+final class NuisanceMatrix private (val matrix: DMat, private val bits: Vector[Long]):
   require(matrix.rows > 0 && matrix.cols > 0, "nuisance matrix must be non-empty")
 
   override def equals(other: Any): Boolean =
     other match
-      case that: NuisanceMatrix => matrix == that.matrix
+      case that: NuisanceMatrix => matrix.rows == that.matrix.rows && matrix.cols == that.matrix.cols && bits == that.bits
       case _ => false
 
   override def hashCode(): Int =
-    matrix.hashCode()
+    (matrix.rows, matrix.cols, bits).hashCode()
 
   def validateRows(nTimepoints: Int): Either[ModelError, Unit] =
     if matrix.rows == nTimepoints then Right(())
@@ -621,7 +625,11 @@ final class NuisanceMatrix private (val matrix: DMat):
 
 object NuisanceMatrix:
   def apply(matrix: DMat): Either[ModelError, NuisanceMatrix] =
-    if matrix.rows > 0 && matrix.cols > 0 then Right(new NuisanceMatrix(matrix))
+    if matrix.rows > 0 && matrix.cols > 0 then
+      val data = new Array[Double](matrix.rows * matrix.cols)
+      matrix.copyRowMajorTo(data)
+      val values = data.toVector
+      Right(new NuisanceMatrix(gale.linalg.Matrix.dense(matrix.rows, matrix.cols, values), values.map(java.lang.Double.doubleToLongBits)))
     else Left(ModelError.InvalidParameter("nuisance matrix", "must be non-empty"))
 
   def unsafe(matrix: DMat): NuisanceMatrix =

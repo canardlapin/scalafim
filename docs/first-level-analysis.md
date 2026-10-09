@@ -167,6 +167,18 @@ semantic basis role when the coefficient itself is the target. `omnibus`
 constructs a basis-aware F hypothesis; `BasisScope.NonCanonical` asks whether
 the non-canonical shape dimensions jointly contribute.
 
+For an amplitude readout on an informed basis (SPMG2/SPMG3), use
+`ResponseBasis.signedAmplitude(beta)` rather than a hypothesis. It computes the
+derivative boost `sign(b_c) * sqrt(sum_k b_k^2)` (Calhoun et al. 2004;
+Steffener et al. 2010), locating `b_c` by the basis element whose role is
+`BasisRole.Canonical`; it refuses bases that are not canonical-plus-derivatives.
+A zero canonical coefficient yields `AmplitudeSign.Zero` and value `0.0`, with
+the pooled `magnitude` still reported. `AmplitudeWeighting.BasisL2Norm` optionally
+weights each coefficient by its basis function's L2 norm over `[0, span]`; the
+default is the plain formula. The result's `inference` is always
+`SummaryInference.Descriptive`: the summary is nonlinear and carries no
+standard error or test.
+
 Compile each hypothesis against the inspected schema, then evaluate it against
 the fit result. Compilation checks selection, basis identity, rank, and
 estimability. In the example, the declared but unobserved mismatch-high cell is
