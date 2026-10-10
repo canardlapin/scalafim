@@ -35,6 +35,16 @@ enum VerificationRefusal(val message: String):
       extends VerificationRefusal(s"the commit the scorer consumed for ${OwnerVerification.path(unit)} is not in the store")
   case NoFirstAttempt(unit: WorkUnit)
       extends VerificationRefusal(s"kept unit ${OwnerVerification.path(unit)} has no scheduled commit")
+  /** The store holds differing sealed copies of `meta/stamp` (for example two `output_id`s): its output identity was
+    * substituted between invocations (owner decision 2026-10-10: detected at unseal). Tamper evidence, never Valid.
+    */
+  case SealedStampConflict(fields: Vector[String])
+      extends VerificationRefusal(s"the store's sealed stamps differ (${fields.mkString(", ")}): its output identity was substituted")
+  /** Any other logical name sealed twice with different plaintext. */
+  case DuplicateConflict(name: String) extends VerificationRefusal(s"logical name $name sealed twice with different plaintext")
+  /** A sealed ceiling raise that this store's sealed identity or invocation history cannot account for. */
+  case CeilingRaiseNotBound(runId: String, detail: String)
+      extends VerificationRefusal(s"ceiling raise of run $runId is not bound to this store: $detail")
 
 /** The secondary check (format spec section 10): the outcome digest rebuilt from the first completed attempts. */
 enum DigestCheck:
@@ -78,6 +88,35 @@ object OwnerVerification:
   private final case class Consumed(unit: WorkUnit, runId: String, phase: CommitPhase, payloadSha256: String)
   private final case class Aggregate(runId: String, datasets: Int, outcomes: String, schema: Option[String], units: Vector[Consumed])
 
+  /** The owner's entry point: every decrypted record of the store, duplicates included, in any order. Differing
+    * copies of `meta/stamp` refuse as [[VerificationRefusal.SealedStampConflict]], differing copies of any other
+    * name as [[VerificationRefusal.DuplicateConflict]]; then [[verify]] runs on the deduplicated store.
+    */
+  def verifyRecords(
+      records: Vector[(String, Array[Byte])],
+      plan: PilotPlan,
+      manifestWhitelistSha256: String,
+      assemblers: Vector[CorpusAssembler]
+  ): OwnerVerdict =
+    val byName = records.groupBy(_._1).view
+      .mapValues(_.map(_._2).foldLeft(Vector.empty[Array[Byte]])((acc, b) => if acc.exists(java.util.Arrays.equals(_, b)) then acc else acc :+ b))
+      .toMap
+    val conflict = byName.toVector.sortBy(_._1).collectFirst {
+      case (n, vs) if vs.length > 1 && n == SealedNames.Stamp => VerificationRefusal.SealedStampConflict(stampDifferences(vs))
+      case (n, vs) if vs.length > 1 => VerificationRefusal.DuplicateConflict(n)
+    }
+    conflict.fold(verify(byName.view.mapValues(_.head).toMap, plan, manifestWhitelistSha256, assemblers))(OwnerVerdict.Refused(_))
+
+  /** The stamp fields whose values differ between the sealed copies. */
+  private def stampDifferences(copies: Vector[Array[Byte]]): Vector[String] =
+    val parsed = copies.map(b => PilotStamp.parse(new String(b, UTF_8)).toOption.map(_.fields.toMap).getOrElse(Map.empty[String, String]))
+    val keys = parsed.flatMap(_.keySet).distinct.sorted
+    val differing = keys.filter(k => parsed.map(_.get(k)).distinct.length > 1)
+    if differing.isEmpty then Vector("stamp") else differing
+
+  /** Verification of an already deduplicated store. The owner uses [[verifyRecords]]: a `Map` cannot show that a
+    * name was sealed twice with different plaintext.
+    */
   def verify(
       items: Map[String, Array[Byte]],
       plan: PilotPlan,
@@ -88,6 +127,7 @@ object OwnerVerification:
       agg <- authoritative(items, manifestWhitelistSha256)
       _ <- datasetBounds(agg, plan)
       ledgers <- ledgerRecords(items, plan)
+      _ <- ceilingRaises(items, ledgers)
       _ <- unitList(agg, plan)
       firsts <- firstAttempts(agg, ledgers)
     yield
@@ -106,6 +146,48 @@ object OwnerVerification:
     result.fold(OwnerVerdict.Refused(_), identity)
 
   private def text(items: Map[String, Array[Byte]], name: String): String = new String(items(name), UTF_8)
+
+  private val RaiseName = """meta/ceiling-raise/([^/]+)""".r
+
+  /** The output identity the sealed stamp commits to: SHA-256 of the plaintext `stamp.json` (the sealed stamp
+    * without `sealed_store_path`) followed by `output-id`, exactly as the runner and the owner compute it.
+    */
+  private def sealedOutputIdentity(items: Map[String, Array[Byte]]): Either[String, String] =
+    items.get(SealedNames.Stamp).toRight("no sealed stamp").flatMap { b =>
+      PilotStamp.parse(new String(b, UTF_8)).flatMap { st =>
+        val plain = st.fields.filterNot(_._1 == "sealed_store_path")
+        plain.find(_._1 == "output_id").map(_._2).toRight("the sealed stamp has no output_id").map { id =>
+          Fs.sha256((PilotStamp(plain).json + "\n").getBytes(UTF_8) ++ (id + "\n").getBytes(UTF_8))
+        }
+      }
+    }
+
+  /** Every sealed ceiling raise must name this store's sealed output identity, and its run id and invocation must
+    * be one invocation of this store's ledger history (owner decision 2026-10-10: detect at unseal what the runner
+    * cannot authenticate). A raise of an invocation that committed nothing cannot be accounted for and refuses too.
+    */
+  private def ceilingRaises(items: Map[String, Array[Byte]], ledgers: Vector[LedgerRecord]): Either[VerificationRefusal, Unit] =
+    val raises = items.keys.toVector.sorted.collect { case n @ RaiseName(rid) => n -> rid }
+    if raises.isEmpty then Right(())
+    else
+      sealedOutputIdentity(items).left.map(d => VerificationRefusal.CeilingRaiseNotBound(raises.head._2, d)).flatMap { identity =>
+        val invocationsOf = ledgers.groupBy(_.runId).view.mapValues(_.map(_.invocation).toSet).toMap
+        raises.collectFirst(Function.unlift { (n, rid) =>
+          val problem =
+            try
+              val o = ujson.read(text(items, n)).obj
+              if o("run_id").str != rid then Some("the record names another run")
+              else if o("output_identity").str != identity then Some("it names another output identity")
+              else
+                val inv = o("invocation").num
+                invocationsOf.get(rid) match
+                  case None => Some("the run committed nothing in this store")
+                  case Some(invs) if invs != Set(inv.toInt) || !inv.isWhole => Some(s"the run's ledger invocation is not ${inv}")
+                  case _ => None
+            catch case e: Exception => Some(s"malformed (${e.getClass.getSimpleName})")
+          problem.map(VerificationRefusal.CeilingRaiseNotBound(rid, _))
+        }).toLeft(())
+      }
 
   private def authoritative(items: Map[String, Array[Byte]], whitelist: String): Either[VerificationRefusal, Aggregate] =
     val parsed = items.keys.toVector.sorted.collect { case n @ RecordName(rid) => n -> rid }.map((n, rid) => parseAggregate(n, rid, text(items, n)))

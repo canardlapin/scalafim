@@ -50,6 +50,22 @@ object OwnerReader:
           catch case _: java.security.GeneralSecurityException => Left(SealError.ReadBackMismatch("tag"))
         }
 
+  /** Every data record of the store, duplicates included (file names checked, CLOSE records skipped): what
+    * `OwnerVerification.verifyRecords` needs to see a name sealed twice with different plaintext.
+    */
+  def readRecords(store: Path, priv: Array[Byte]): Either[String, Vector[(String, Array[Byte])]] =
+    val files = Files.list(store.resolve("blobs")).iterator().asScala.toVector.filterNot(_.getFileName.toString.endsWith(".tmp")).sortBy(_.toString)
+    files.foldLeft[Either[String, Vector[(String, Array[Byte])]]](Right(Vector.empty)) { (accE, p) =>
+      accE.flatMap { acc =>
+        val raw = Files.readAllBytes(p)
+        if p.getFileName.toString != s"${Fs.sha256(raw)}.enc" then Left("file name does not match content")
+        else
+          decrypt(priv, raw).left.map(_.message).map { o =>
+            if o.kind == SealFormat.KindClose then acc else acc :+ (o.name -> o.data)
+          }
+      }
+    }
+
   /** name -> data after the reader checks of format spec section 6 (file names, duplicates, CLOSE, receipt). */
   def readAll(store: Path, priv: Array[Byte], allowPartial: Boolean = false): Either[String, Map[String, Array[Byte]]] =
     val files = Files.list(store.resolve("blobs")).iterator().asScala.toVector.filterNot(_.getFileName.toString.endsWith(".tmp")).sortBy(_.toString)
