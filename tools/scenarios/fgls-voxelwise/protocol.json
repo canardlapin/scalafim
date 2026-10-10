@@ -1,0 +1,66 @@
+{
+  "schema_version": "scalafim-fgls-voxelwise-protocol/v1",
+  "mote": "bd-01M4EMEBCBMBHA7BF4BQY6AFPB",
+  "declaration_label": "scalafim-fgls-voxelwise-v1-20261010",
+  "declared_before_outcomes": "Declared before any Scala development or confirmation stream was generated. An exploratory R prototype on R's own RNG (not a declared stream) preceded this declaration and is retained as exploration only.",
+  "seed": 1310161010,
+  "seed_derivation": "(root + domain*10000019 + (group+1)*1000003 + replicate*7919) mod 2147483646 + 1; Park-Miller 48271/2147483647 uniforms, Box-Muller Gaussians, voxel-major columns, 256 burn-in draws per run",
+  "seed_collision_check": {
+    "old_roots": [1149777122, 973860617],
+    "old_domains": [1, 2, 3, 4],
+    "new_domains": [10, 11, 12, 13],
+    "replicates_checked": 2048,
+    "overlap": 0
+  },
+  "profiles": {
+    "pilot": {"domain": 10, "replicates": 8, "role": "runtime and recording check; no inference"},
+    "development": {"domain": 11, "replicates": 1024, "role": "exploratory diagnosis and candidate selection; no admission"},
+    "confirmation": {"domain": 12, "replicates": 2048, "role": "held-out, single execution after the candidate and its source are frozen; admission against original margins"},
+    "bootstrap": {"domain": 13, "resamples": 1999}
+  },
+  "cells": [
+    {"id": "ar2-high-censored-short", "group": 0, "truth": "homogeneous phi=(0.45,-0.10)", "runs": [96, 144], "censored": true, "role": "admission"},
+    {"id": "ar2-high-censored-long", "group": 1, "truth": "homogeneous phi=(0.45,-0.10)", "runs": [192, 288], "censored": true, "role": "admission"},
+    {"id": "ar2-high-complete-short", "group": 2, "truth": "homogeneous phi=(0.45,-0.10)", "runs": [96, 144], "censored": false, "role": "admission"},
+    {"id": "ar2-high-censored-short-voxel-heterogeneous", "group": 3, "truth": "voxel phi (0.60,-0.20), (0.20,0.05), (0.45,-0.10), (0.30,0.10); same in both runs", "runs": [96, 144], "censored": true, "role": "admission"},
+    {"id": "ar2-high-censored-short-run-heterogeneous", "group": 4, "truth": "run phi (0.30,0.05) then (0.55,-0.15); same for every voxel", "runs": [96, 144], "censored": true, "role": "scope boundary: reported, not required; a failure restricts any across-run pooling claim"}
+  ],
+  "design": "Unchanged corrected-GLS study design: two SPMG1 task epochs, run intercepts and six run-local DCT terms per run (16 columns), censor rows 23,24,60 then every 37 from 97 per run; voxel 0 null, voxel 1 task_a=0.75. Noise is continuous within each run; censoring never changes the generator.",
+  "engines": {
+    "existing-known-restart": "public FitPlan GLS with known phi and the current censor restart (homogeneous cells only)",
+    "existing-voxelwise": "public FitPlan corrected voxelwise GLS (homogeneous cells only)",
+    "known-continuous": "VoxelwiseArFgls Known(true phi per voxel/run), ContinuousMissing, Conditional",
+    "run-continuous-conditional": "Estimated PerRun, ContinuousMissing, Conditional",
+    "run-continuous-kr": "Estimated PerRun, ContinuousMissing, KenwardRoger",
+    "pooled-continuous-conditional": "Estimated AcrossRuns (per voxel), ContinuousMissing, Conditional",
+    "pooled-continuous-kr": "Estimated AcrossRuns (per voxel), ContinuousMissing, KenwardRoger",
+    "pooled-restart-conditional": "Estimated AcrossRuns (per voxel), RestartAfterCensor, Conditional"
+  },
+  "decisions": "Candidate engines use p-values from the portable F upper tail with the reported numerator/denominator df (KR: scaled statistic and KR df). Existing engines keep the original fixed t/F critical values. Coverage is acceptance of H0 task_a=0.75 for voxel 1 at alpha 0.05.",
+  "acceptance": {
+    "source": "original corrected-GLS margins, unchanged",
+    "alpha": 0.05,
+    "null_rejection_interval": [0.02, 0.08],
+    "coverage_interval": [0.92, 0.98],
+    "equivalence_interval_confidence": 0.9,
+    "interval_method": "exact Clopper-Pearson",
+    "AR_RMSE_max": 0.1,
+    "AR_mean_bias_interval": [-0.04, 0.04],
+    "AR_mean_bias_rule": "|bias| + qt(0.95, n-1) * sd/sqrt(n) <= 0.04 for each lag",
+    "whiteness_mean_abs_max": 0.1,
+    "whiteness_excess_over_known_max": 0.025,
+    "whiteness_comparator": "known-continuous for candidate engines",
+    "variance_ratio_interval": [0.8, 1.2],
+    "variance_ratio_rule": "90% percentile dataset-bootstrap interval of mean reported null variance / empirical null-estimate variance",
+    "standardized_effect_bias_interval": [-0.1, 0.1],
+    "no_drop": true,
+    "no_refusals": true
+  },
+  "candidate_selection": "After the development profile only: among the four estimated ContinuousMissing engines, select the one passing the most acceptance criteria summed over the four admission cells on development data (ties: fewer pooling assumptions, i.e. PerRun before AcrossRuns, then Conditional before KenwardRoger). Record the selection, development evidence and a source hash in a mote decision and a commit before generating any confirmation stream. No margin, cell or criterion may change after this declaration.",
+  "confirmation_decision": "scientific_pass requires the frozen candidate to pass every acceptance criterion in every admission cell on both JVM and JS with identical decisions; retained regardless of outcome. The scope-boundary cell is reported and limits claims. Existing engines are reported as baselines only.",
+  "scope_limits": [
+    "No change to the production FitPlan GLS path or its defaults; the candidate is a separate typed entry point.",
+    "No group-level or iterative/robust inference claim.",
+    "Original 2026-10-08 adverse receipts and spent streams remain binding and are not reused."
+  ]
+}
