@@ -251,9 +251,34 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     val result = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair)).sample(withNaN)
     assertEquals(result.tally, SurfaceSampleTally(requested = 3, outsideVolume = 0, masked = 0, nonFinite = 1, accepted = 2))
     assertEquals(result.tally.rejected, 1L)
-    // Per-vertex counts keep their documented meaning: in-volume, in-mask samples.
-    assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(1))
+    // A non-finite value is not an observation: it is counted apart, per vertex.
+    assertEquals((0 until 3).map(i => result.sampleCounts.valueAt(VertexId(i)).get).toVector, Vector(0, 1, 1))
+    assertEquals((0 until 3).map(i => result.nonFiniteCounts.valueAt(VertexId(i)).get).toVector, Vector(1, 0, 0))
     assert(result.values.valueAt(VertexId(0)).exists(_.isNaN))
+
+  test("per-vertex finite and non-finite counts partition each vertex's in-mask samples"):
+    // The ribbon of vertex 0 reads voxels (0, 0, 0), (0, 0, 1) and (0, 0, 2); only (0, 0, 1) is NaN.
+    val withNaN =
+      SomeScalarVolume.unsafeCopyFromCanonicalArray(
+        PrimitiveBuffers.tabulate[Double](27) { idx =>
+          val g = space.indexToGrid3D(idx)
+          if g == Vector(0, 0, 1) then Double.NaN else g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
+        },
+        space,
+        "with-nan"
+      )
+    val result = VolumeSurfaceSampler.sample(
+      withNaN,
+      pair,
+      path = SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.5, 1.0)),
+      aggregation = SurfaceSampleAggregation.Average
+    )
+    assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(2))
+    assertEquals(result.nonFiniteCounts.valueAt(VertexId(0)), Some(1))
+    assertEquals(result.tally, SurfaceSampleTally(requested = 9, outsideVolume = 0, masked = 0, nonFinite = 1, accepted = 8))
+    val ids = (0 until 3).map(VertexId(_))
+    assertEquals(ids.map(result.sampleCounts.valueAt(_).get).sum.toLong, result.tally.accepted)
+    assertEquals(ids.map(result.nonFiniteCounts.valueAt(_).get).sum.toLong, result.tally.nonFinite)
 
   test("sample tallies must account for every requested sample"):
     intercept[IllegalArgumentException](SurfaceSampleTally(requested = 3, outsideVolume = 1, masked = 0, nonFinite = 0, accepted = 1))

@@ -62,14 +62,25 @@ final case class SurfaceSampleTally(
   def rejected: Long =
     outsideVolume + masked + nonFinite
 
-/** `sampleCounts` counts in-volume, in-mask samples per vertex, including
-  * non-finite volume values, which the aggregate then propagates.
+/** Per-vertex accounting splits the in-volume, in-mask samples in two.
+  * `sampleCounts` counts finite values only: a non-finite value is not an
+  * observation, so it never counts toward a minimum-sample rule.
+  * `nonFiniteCounts` counts the non-finite values separately so that they stay
+  * visible. The aggregate in `values` still sees every in-mask sample, so a
+  * vertex with any non-finite sample can carry a non-finite value.
+  * Summed over the sampled vertices, the two fields equal `tally.accepted` and
+  * `tally.nonFinite`.
   */
 final case class SurfaceSampleResult(
   values: SurfaceField[Double],
   sampleCounts: SurfaceField[Int],
+  nonFiniteCounts: SurfaceField[Int],
   tally: SurfaceSampleTally
-)
+):
+  require(
+    sampleCounts.size == values.size && nonFiniteCounts.size == values.size,
+    "per-vertex sample counts must cover every vertex"
+  )
 
 enum SurfaceSampleOutcome:
   case OutsideVolume
@@ -115,6 +126,7 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     val vertexCount = plan.surfaces.white.vertexCount
     val values = Array.fill(vertexCount)(Double.NaN)
     val counts = Array.ofDim[Int](vertexCount)
+    val nonFiniteCounts = Array.ofDim[Int](vertexCount)
     val tally = TallyBuilder()
     selected.foreach(flags => require(flags.length == vertexCount, "selected vertex count differs from anatomy"))
 
@@ -123,13 +135,17 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
       if selected.forall(_(i)) then
         val vertex = VertexId.unsafe(i)
         val samples = sampleValues(volume, mask, samplePoints(vertex), tally)
-        counts(i) = samples.length
+        var finite = 0
+        samples.foreach(value => if value.isFinite then finite += 1)
+        counts(i) = finite
+        nonFiniteCounts(i) = samples.length - finite
         if samples.nonEmpty then values(i) = aggregate(samples)
       i += 1
 
     SurfaceSampleResult(
       values = SurfaceField.full(plan.surfaces.white, values.toVector, "surface-sample"),
       sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count"),
+      nonFiniteCounts = SurfaceField.full(plan.surfaces.white, nonFiniteCounts.toVector, "surface-non-finite-sample-count"),
       tally = tally.result()
     )
 

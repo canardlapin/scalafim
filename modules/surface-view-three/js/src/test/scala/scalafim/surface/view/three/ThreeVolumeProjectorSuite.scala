@@ -114,7 +114,20 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
     assert(result.projection.values.valueAt(VertexId(1)).get.isNaN)
     assert(result.projection.values.valueAt(VertexId(2)).get.isNaN)
     assertEquals(result.projection.receipt.tally, SurfaceSampleTally(3, 1, 0, 1, 1))
-    assertEquals((0 until 3).map(i => result.projection.quality.valueAt(VertexId(i)).get).toVector, Vector(true, true, false))
+    // A non-finite texel is not an observation, so vertex 1 does not qualify.
+    assertEquals((0 until 3).map(i => result.projection.quality.valueAt(VertexId(i)).get).toVector, Vector(true, false, false))
+    assertEquals((0 until 3).map(i => result.projection.sampleCounts.valueAt(VertexId(i)).get).toVector, Vector(1, 0, 0))
+    assertEquals((0 until 3).map(i => result.projection.nonFiniteCounts.valueAt(VertexId(i)).get).toVector, Vector(0, 1, 0))
+    assertEquals(result.projection.receipt.vertexTally, SurfaceVertexTally(vertices = 3, qualified = 1, nonFiniteOnly = 1, insufficient = 1))
+    val cpu = SurfaceVolumeProjection.materialize(
+      morphism(Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(3.0, 0.0, 0.0))), input
+    )
+    (0 until 3).foreach: i =>
+      val id = VertexId(i)
+      assertEquals(result.projection.quality.valueAt(id), cpu.quality.valueAt(id))
+      assertEquals(result.projection.sampleCounts.valueAt(id), cpu.sampleCounts.valueAt(id))
+      assertEquals(result.projection.nonFiniteCounts.valueAt(id), cpu.nonFiniteCounts.valueAt(id))
+    assertEquals(result.projection.receipt.vertexTally, cpu.receipt.vertexTally)
 
   test("GPU nearest transport rejects far-outside coordinates before narrowing indices"):
     val result = project(Vector(Vector(4294967296.0, 0.0, 0.0), Vector(-4294967296.0, 1.0, 0.0), Vector(2.0, 0.0, 1.0)))

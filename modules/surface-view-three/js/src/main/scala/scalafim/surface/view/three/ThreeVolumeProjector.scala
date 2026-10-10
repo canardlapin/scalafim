@@ -170,17 +170,22 @@ object ThreeVolumeProjector:
 
           val values = new Array[Double](vertexCount)
           val counts = new Array[Int](vertexCount)
+          val nonFiniteCounts = new Array[Int](vertexCount)
           val quality = new Array[Boolean](vertexCount)
           var renderedPixels = 0
           var nonFinite = 0L
           vertex = 0
           while vertex < vertexCount do
             val valid = coordinates(vertex * 4 + 3) > 0.5f
-            if valid && !output(vertex * 4).toDouble.isFinite then nonFinite += 1L
-            counts(vertex) = if valid then 1 else 0
-            quality(vertex) = valid
+            // A non-finite texel is not an observation: with minimumSamples=1 the
+            // vertex does not qualify, as in the shared CPU projection.
+            val finite = valid && output(vertex * 4).toDouble.isFinite
+            if valid && !finite then nonFinite += 1L
+            counts(vertex) = if finite then 1 else 0
+            nonFiniteCounts(vertex) = if valid && !finite then 1 else 0
+            quality(vertex) = finite
             values(vertex) =
-              if valid then output(vertex * 4).toDouble
+              if finite then output(vertex * 4).toDouble
               else policy.fill match
                 case SurfaceProjectionFill.NaN => Double.NaN
                 case SurfaceProjectionFill.Constant(value) => value
@@ -190,9 +195,16 @@ object ThreeVolumeProjector:
           val projection = SurfaceProjectionResult(
             SurfaceField.full(geometry, values.toIndexedSeq, "gpu-surface-sample"),
             SurfaceField.full(geometry, counts.toIndexedSeq, "gpu-surface-sample-count"),
+            SurfaceField.full(geometry, nonFiniteCounts.toIndexedSeq, "gpu-surface-non-finite-sample-count"),
             SurfaceField.full(geometry, quality.toIndexedSeq, "gpu-surface-projection-quality"),
             SurfaceProjectionReceipt(
-              vertexCount,
+              // One sample per vertex, so a non-finite vertex is non-finite only.
+              SurfaceVertexTally(
+                vertices = vertexCount,
+                qualified = accepted - nonFinite.toInt,
+                nonFiniteOnly = nonFinite.toInt,
+                insufficient = vertexCount - accepted
+              ),
               // One midpoint sample per vertex; the GPU path applies no mask.
               SurfaceSampleTally(
                 requested = vertexCount.toLong,
@@ -201,10 +213,9 @@ object ThreeVolumeProjector:
                 nonFinite = nonFinite,
                 accepted = accepted.toLong - nonFinite
               ),
-              accepted,
               volumeValues.toLong,
               volumeValues.toLong * 8L,
-              vertexCount.toLong * 13L,
+              vertexCount.toLong * 17L,
               nowNanos() - started,
               morphism.plan.path,
               morphism.plan.aggregation
