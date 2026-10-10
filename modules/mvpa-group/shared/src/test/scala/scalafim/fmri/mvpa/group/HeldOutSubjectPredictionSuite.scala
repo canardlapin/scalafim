@@ -93,7 +93,7 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
     val f = new Fixture
     val heads = right(f.heads)
     val plan = right(freeze(f, heads))
-    val result = right(plan.evaluate(f.brain, f.responses, exposure(f.snapshot.identity)))
+    val result = right(plan.evaluate(f.brain, f.responses, exposure(f.snapshot.identity)).result)
     val summary = right(SubjectPredictiveSummary.combine(Vector(a, b), Vector(result)))
     assertEquals(result.rowCounts, Vector(6, 2))
     assertEqualsDouble(summary.meanFullLoss, .375, 1e-12)
@@ -114,8 +114,8 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
   test("the subject reducer is invariant to grouping rows into unequal independent blocks within each subject"):
     val rows = new Fixture
     val blocks = new Fixture(Vector(0, 0, 0, 0, 1, 1, 2, 2), 3)
-    val left = right(right(freeze(rows, right(rows.heads))).evaluate(rows.brain, rows.responses, exposure(rows.snapshot.identity)))
-    val rightResult = right(right(freeze(blocks, right(blocks.heads))).evaluate(blocks.brain, blocks.responses, exposure(blocks.snapshot.identity)))
+    val left = right(right(freeze(rows, right(rows.heads))).evaluate(rows.brain, rows.responses, exposure(rows.snapshot.identity)).result)
+    val rightResult = right(right(freeze(blocks, right(blocks.heads))).evaluate(blocks.brain, blocks.responses, exposure(blocks.snapshot.identity)).result)
     for s <- 0 until 2; k <- 0 until 2 do
       assertEqualsDouble(rightResult.improvements(s, k), left.improvements(s, k), 1e-11)
 
@@ -145,11 +145,46 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
     val changed = ExposureControl.read(account, right(ExposureControl.permit(account, request)), request)(Right(())) match
       case ExposureAttempt.Completed(_, exposure) => exposure
       case other => fail(other.toString)
-    assert(plan.evaluate(f.brain, f.poisonTargets, changed).isLeft)
-    assert(plan.evaluate(f.brain, f.poisonTargets, EvidenceExposure.external(account.reference)).isLeft)
-    assert(plan.evaluate(f.brain, f.poisonTargets, account, maximumSummaryCells = 0).isLeft)
-    assert(plan.evaluate(f.brain, f.poisonTargets, account, ComponentConfirmationBudget(0)).isLeft)
+    val external = EvidenceExposure.external(account.reference)
+    Vector(plan.evaluate(f.brain, f.poisonTargets, changed) -> changed,
+      plan.evaluate(f.brain, f.poisonTargets, external) -> external,
+      plan.evaluate(f.brain, f.poisonTargets, account, maximumSummaryCells = 0) -> account,
+      plan.evaluate(f.brain, f.poisonTargets, account, ComponentConfirmationBudget(0)) -> account).foreach: (evaluation, supplied) =>
+      assert(evaluation.result.isLeft)
+      assert(!evaluation.readAttempted)
+      assert(evaluation.exposure eq supplied, "pre-read refusals return the supplied ledger unchanged")
+    assert(plan.evaluate(f.brain, f.poisonTargets, account, ComponentConfirmationBudget(0)).result.left.toOption
+      .exists(_.isInstanceOf[SubjectPredictionError.Component]))
     assertEquals(f.confirmationReads, 0); assertEquals(f.targetReads, 0)
+
+  test("evaluation records the held-out read, and the returned ledger refuses reuse of those subjects"):
+    val f = new Fixture; val heads = right(f.heads); val plan = right(freeze(f, heads))
+    val account = exposure(f.snapshot.identity)
+    val evaluation = plan.evaluate(f.brain, f.responses, account)
+    assert(evaluation.result.isRight && evaluation.readAttempted)
+    assertEquals(evaluation.exposure.events.map(_.request.purpose), Vector(ExposurePurpose.PayloadRead, ExposurePurpose.DerivedScoreView))
+    assert(evaluation.exposure.events.forall(_.request.scope == ExposureScope.Holdout))
+    assert(evaluation.exposure.hasPayloadAccess(ExposureScope.Holdout) && evaluation.exposure.hasObservedScores(ExposureScope.Holdout))
+    assert(ExposureControl.untouchedConfirmation(evaluation.exposure, ExposureScope.Holdout).isLeft)
+    assert(account.events.isEmpty, "the supplied snapshot is an immutable value")
+    val reads = f.confirmationReads
+    val again = plan.evaluate(f.brain, f.responses, evaluation.exposure)
+    assert(again.result.left.toOption.exists(_.isInstanceOf[SubjectPredictionError.Leakage]) && !again.readAttempted)
+    assertEquals(f.confirmationReads, reads)
+    // A replacement plan cannot present the viewed assessment as untouched.
+    assert(HeldOutSubjectPrediction.freeze(shared(f), heads, labels(f.training, Vector.fill(8)(learner)),
+      labels(f.training, Vector.fill(8)(learner)), labels(f.rows, Vector.fill(6)(a) ++ Vector.fill(2)(b)),
+      SubjectHeadTraining.SharedTraining, contract, headAccount(heads), evaluation.exposure)
+      .left.toOption.exists(_.isInstanceOf[SubjectPredictionError.Leakage]))
+
+  test("a failed assessment read still records the attempted exposure"):
+    val f = new Fixture; val plan = right(freeze(f, right(f.heads)))
+    val evaluation = plan.evaluate(f.brain, f.poisonTargets, exposure(f.snapshot.identity))
+    assert(evaluation.result.isLeft && evaluation.readAttempted)
+    assertEquals(f.targetReads, 1)
+    assert(evaluation.exposure.hasPayloadAccess(ExposureScope.Holdout))
+    assert(!evaluation.exposure.hasObservedScores(ExposureScope.Holdout))
+    assert(ExposureControl.untouchedConfirmation(evaluation.exposure, ExposureScope.Holdout).isLeft)
 
   test("single-subject head adaptation uses separate rows while shared coordinates stay external"):
     val global = new Fixture(trainingName = "global-training", assessmentName = "unused")
@@ -162,7 +197,7 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
         labels(f.training, Vector.fill(8)(subject)), labels(f.rows, Vector.fill(8)(subject)),
         SubjectHeadTraining.SubjectAdaptation(subject, "OLS head on eight independent calibration rows"), contract,
         headAccount(heads), exposure(f.snapshot.identity)))
-      val result = right(plan.evaluate(f.brain, f.responses, exposure(f.snapshot.identity)))
+      val result = right(plan.evaluate(f.brain, f.responses, exposure(f.snapshot.identity)).result)
       assertEquals(f.trainingReads, 2)
       result
     val first = adapted(a); val second = adapted(b)
@@ -193,7 +228,7 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
 
   test("complete cohort coverage rejects missing, repeated and reordered subjects"):
     val f = new Fixture
-    val result = right(right(freeze(f, right(f.heads))).evaluate(f.brain, f.responses, exposure(f.snapshot.identity)))
+    val result = right(right(freeze(f, right(f.heads))).evaluate(f.brain, f.responses, exposure(f.snapshot.identity)).result)
     assert(SubjectPredictiveSummary.combine(Vector(a), Vector(result)).isLeft)
     assert(SubjectPredictiveSummary.combine(Vector(b, a), Vector(result)).isLeft)
     assert(SubjectPredictiveSummary.combine(Vector(a, b, a, b), Vector(result, result)).isLeft)
@@ -203,10 +238,10 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
 
   test("duplicated assessment evidence cannot create two additional subjects"):
     val f = new Fixture; val heads = right(f.heads)
-    val first = right(right(freeze(f, heads)).evaluate(f.brain, f.responses, exposure(f.snapshot.identity)))
+    val first = right(right(freeze(f, heads)).evaluate(f.brain, f.responses, exposure(f.snapshot.identity)).result)
     val c = key("C"); val d = key("D")
     val second = right(right(freeze(f, heads, Vector.fill(6)(c) ++ Vector.fill(2)(d)))
-      .evaluate(f.brain, f.responses, exposure(f.snapshot.identity)))
+      .evaluate(f.brain, f.responses, exposure(f.snapshot.identity)).result)
     assert(SubjectPredictiveSummary.combine(Vector(a, b, c, d), Vector(first, second))
       .left.toOption.exists(_.isInstanceOf[SubjectPredictionError.Binding]))
 
@@ -215,7 +250,7 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
     val reducedTruth = DMat.tabulate(8, 2)((i, j) => if j == 0 then 7 + 4 * f.drift(i) + 4 * f.x(i, 1)
       else -3 - 2 * f.drift(i) + 1.5 * f.x(i, 1))
     val targets = right(MultiResponse.fromDense(f.rows, f.target, reducedTruth, value("reduced-truth"), source("reduced-truth")))
-    val result = right(right(freeze(f, heads)).evaluate(f.brain, targets, exposure(f.snapshot.identity)))
+    val result = right(right(freeze(f, heads)).evaluate(f.brain, targets, exposure(f.snapshot.identity)).result)
     val summary = right(SubjectPredictiveSummary.combine(Vector(a, b), Vector(result)))
     assert(summary.meanImprovements.head < 0)
     assertEquals(f.trainingReads, 2)
