@@ -1,0 +1,30 @@
+package scalafim.phrfcmp.run
+
+import java.nio.file.{Files, Path, Paths}
+import java.security.MessageDigest
+
+/** Temporary, uncommitted S10-workload probe (reconciliation 2026-10-10): pilot-size harness datasets through the
+  * real bridge. Removed from the worktree after the run.
+  */
+class ReconBridgeCpuProbeSuite extends munit.FunSuite:
+  override val munitTimeout = scala.concurrent.duration.Duration(1800, "s")
+
+  private val dir = Paths.get("/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/04bbc69d-f6f8-4cbf-aa62-0e6d5336b473/scratchpad/phrf-recon/pilotsize")
+  private def sha(b: Array[Byte]): String = MessageDigest.getInstance("SHA-256").digest(b).map(x => f"${x & 0xff}%02x").mkString
+  private def repoRoot: Path =
+    Iterator.iterate(Paths.get(System.getProperty("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
+      .find(p => Files.exists(p.resolve("build.sbt"))).get
+
+  test("pilot-size bridge CPU probe") {
+    val py = Paths.get(sys.env("PHRF_GLMSINGLE_PYTHON"))
+    val script = repoRoot.resolve("tools/phrf-comparison/glmsingle/from_generator.py")
+    for cell <- Seq("T-TX-fast", "T-TX-jit"); rep <- 1 to 2 do
+      val npz = dir.resolve(s"${cell}__d0000.npz")
+      val inSha = sha(Files.readAllBytes(npz))
+      val cfg = GlmSingleConfig(py, script, 900.0, expectNPool = Some(4000), expectNVoxels = Some(40))
+      val run = GlmSingleBridge.runAttempt(GlmSingleInputs(npz, Some(inSha)), cfg)
+      val a = run.attempt
+      val outcome = run.result.fold(r => s"REFUSED ${r.productPrefix}", o => s"ok voxels=${o.voxels.length} trials=${o.nTrials} pool=${o.realizedPoolSize}")
+      println(f"[RECON S6 CPU] cell=$cell rep=$rep input=${inSha.take(16)} $outcome exit=${a.exitCode} guard=${a.guardCpuSeconds}%.2f rusage=${a.rusageCpuSeconds.getOrElse(Double.NaN)}%.2f polled=${a.polledCpuSeconds}%.2f sidecar=${a.sidecarCpuSeconds.getOrElse(Double.NaN)}%.2f wall=${a.wallSeconds}%.2f out=${a.outputNpzSha256.getOrElse("-")} survivors=${a.groupSurvivors}")
+      assert(run.result.isRight, outcome)
+  }
