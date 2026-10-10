@@ -87,12 +87,14 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   private def cost(out: Path): ujson.Value = ujson.read(Files.readString(out.resolve("cost.json")))
 
-  /** Plaintext files the runner may leave next to the sealed store: stamp, CPU total, D, journal markers. */
+  /** Plaintext files the runner may leave next to the sealed store: stamp, CPU total, D, journal markers (dispatch
+    * and completion).
+    */
   private def assertOnlyAllowedPlaintext(out: Path): Unit =
     Fs.listFiles(out).foreach { p =>
       val rel = out.relativize(p).toString
       val allowed = rel == "stamp.json" || rel == "cost.json" || rel == "selection.json" ||
-        (rel.startsWith("progress/") && (rel.endsWith(".done") || rel.endsWith(".done.sha256"))) ||
+        (rel.startsWith("progress/") && Vector(".done", ".done.sha256", ".dispatched", ".dispatched.sha256").exists(rel.endsWith)) ||
         (rel.startsWith("sealed/blobs/") && (rel.endsWith(".enc") || rel.endsWith(".enc.tmp"))) || rel == "sealed/SEALED"
       assert(allowed, s"unexpected file $rel")
     }
@@ -278,7 +280,8 @@ class PilotRunnerSuite extends munit.FunSuite:
         case CommitStage.MarkerWritten =>
           assert(markers.exists(_.endsWith("d0001.done")) && !markers.exists(_.endsWith("d0001.done.sha256")), "marker written, sha missing")
         case CommitStage.DataSealed | CommitStage.LedgerSealed =>
-          assert(!markers.exists(_.contains("d0001")), "no marker before the job's blobs are sealed")
+          assert(!markers.exists(_.contains("d0001.done")), "no completion marker before the job's blobs are sealed")
+          assert(markers.exists(_.endsWith("d0001.dispatched.sha256")), "the dispatch marker precedes the job's first seal")
         case CommitStage.MarkerSealed => assert(markers.exists(_.endsWith("d0001.done.sha256")))
       val ex = new Counting(clk, 1.0, ok)
       val rep = runner(plan, out, ex, clk).run().fold(r => fail(r.message), identity)
@@ -497,11 +500,15 @@ class PilotRunnerSuite extends munit.FunSuite:
     assertEquals(c, a)
   }
 
-  test("ArmContext: unsafe or duplicate blob names are refused; RawBlob and PilotRoot never print their contents") {
+  test("ArmContext: unsafe or duplicate blob names are refused; one scorer contribution per attempt; RawBlob and PilotRoot never print their contents") {
     val ctx = new ArmContext(WorkUnit(cell("C0"), 0, arm("a0")), 1, root, () => false)
     intercept[IllegalArgumentException](ctx.emit("../x", Array[Byte](1)))
     ctx.emit("ok", Array[Byte](1))
     intercept[IllegalArgumentException](ctx.emit("ok", Array[Byte](2)))
+    intercept[IllegalArgumentException](ctx.emit(ScorerContribution.EntryName, Array[Byte](3)))
+    ctx.contribute(Array[Byte](4))
+    intercept[IllegalArgumentException](ctx.contribute(Array[Byte](5)))
+    assertEquals(ctx.emitted.map(_.name), Vector("ok", ScorerContribution.EntryName))
     assertEquals(ctx.emitted.head.toString, "RawBlob(redacted)")
     assert(!root.toString.contains("0123"))
   }
@@ -735,4 +742,102 @@ class PilotRunnerSuite extends munit.FunSuite:
     assert(finishedAtReturn, "run() returned before the in-flight worker finished")
     assert(flagAfter, "the interrupt flag is restored for the caller")
     assert(!Files.exists(out.resolve("progress/C0/d0001.done")), "nothing after the interrupt is marked complete")
+  }
+
+  // ---- independent probes of the 2026-10-03 blocker notes (H1, M2, M4), kept as regressions ----
+
+  test("probe H1: successful bytes that change per invocation, crashed after LedgerSealed, resume into a store the owner reads; the first attempt is scored") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    def arms(tag: String): ArmRunner = ctx => { ctx.emit("o", s"${ctx.unit.dataset}-$tag".getBytes(UTF_8)); ArmResult.Done() }
+    val crash: CommitHook = (s, j) => if s == CommitStage.LedgerSealed && j.dataset == 1 then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms("inv1"), clk, hook = crash, runId = "h1first").run())
+    val rep = runner(plan, out, arms("inv2"), clk, runId = "h1second").run().fold(x => fail(x.message), identity)
+    val items = OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = true).fold(e => fail(s"the store must stay readable: $e"), identity)
+    val u1 = WorkUnit(cell("C0"), 1, arm("a0"))
+    val recs = ledgersOf(items, u1)
+    assertEquals(recs.map(r => (r.invocation, r.runId)), Vector((1, "h1first"), (2, "h1second")))
+    assertNotEquals(recs(0).payloadSha256, recs(1).payloadSha256)
+    assert(!items.contains(SealedNames.timing(u1, "h1first")), "the crash hit between ledger and timing; the scheduled record counts without it")
+    assertEquals(Fs.sha256(items(recs(0).payload)), recs(0).payloadSha256)
+    // the earlier completed dataset was recomputed with other bytes under rerun/: no differing duplicate either
+    val u0 = WorkUnit(cell("C0"), 0, arm("a0"))
+    assertNotEquals(Fs.sha256(items(SealedNames.rerunData(u0, "h1second"))), ledgersOf(items, u0).head.payloadSha256)
+    assertEquals(rep.scorerInputs.map(_.unit).toSet, Set(u0, u1))
+  }
+
+  test("probe M2a: a job in flight at the highest completed index when the run crashed is finished on a resume past the soft stop") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(2, 4, 1)
+    val crash: CommitHook = (s, j) => if s == CommitStage.DataSealed && j == Job(cell("C1"), 2) then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, new Counting(clk, 10.0, ok), clk, hook = crash).run())
+    // C0 completed 0..2, C1 completed 0..1; (C1, 2) was dispatched and in flight
+    val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
+    val arms: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
+    val rep = runner(plan, out, arms, clock(), CpuGuard(30.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    assert(seen.contains(("C1", 2)), "the in-flight job is finished before the soft stop is honoured")
+    assert(!seen.contains(("C0", 3)) && !seen.contains(("C1", 3)), "no new dataset is dispatched past the soft stop")
+    assertEquals(rep.outcome.decision.D, 3)
+  }
+
+  test("probe M2b: every job in flight when the run crashed is finished on a resume past the soft stop, even above the highest completed index") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(2, 4, 1)
+    val c0Entered = new CountDownLatch(1)
+    val arms1: ArmRunner = ctx =>
+      clk.advance(10.0)
+      ctx.unit match
+        case WorkUnit(c, 2, _) if c.value == "C0" =>
+          c0Entered.countDown()
+          val t0 = System.nanoTime()
+          while !ctx.shouldAbort && System.nanoTime() - t0 < 10000000000L do Thread.sleep(5L)
+        case WorkUnit(c, 2, _) if c.value == "C1" => assert(c0Entered.await(10, TimeUnit.SECONDS))
+        case _ => ()
+      ArmResult.Done()
+    val crash: CommitHook = (s, j) => if s == CommitStage.DataSealed && j == Job(cell("C1"), 2) then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms1, clk, threads = 2, hook = crash).run())
+    assert(!Files.exists(out.resolve("progress/C0/d0002.done")) && !Files.exists(out.resolve("progress/C1/d0002.done")))
+    val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
+    val arms2: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
+    val rep = runner(plan, out, arms2, clock(), CpuGuard(30.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    assert(seen.contains(("C0", 2)) && seen.contains(("C1", 2)), s"both in-flight jobs are finished: $seen")
+    assert(!seen.contains(("C0", 3)) && !seen.contains(("C1", 3)), "no new dataset is dispatched past the soft stop")
+    assertEquals(rep.outcome.decision.D, 3)
+  }
+
+  test("probe M4: repeated interrupts of the run() thread never return it while a latch-blocked worker is alive") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val entered = new CountDownLatch(1)
+    val release = new CountDownLatch(1)
+    val armFinished = new java.util.concurrent.atomic.AtomicBoolean(false)
+    @volatile var worker: Thread = null
+    val arms: ArmRunner = ctx =>
+      worker = Thread.currentThread()
+      entered.countDown()
+      var released = false
+      while !released do
+        try released = release.await(30, TimeUnit.SECONDS)
+        catch case _: InterruptedException => () // a worker interrupt must not end the arm early either
+      armFinished.set(true)
+      ctx.emit("o", blobBytes(ctx.unit))
+      ArmResult.Done()
+    val r = runner(plan, out, arms, clk)
+    @volatile var result: Option[Either[PilotRefusal, PilotReport]] = None
+    @volatile var finishedAtReturn = false
+    val t = new Thread(() =>
+      result = Some(r.run())
+      finishedAtReturn = armFinished.get()
+    )
+    t.start()
+    assert(entered.await(10, TimeUnit.SECONDS))
+    (1 to 3).foreach { _ =>
+      t.interrupt()
+      Thread.sleep(200L)
+      assert(t.isAlive, "run() returned while its worker was still blocked")
+    }
+    release.countDown()
+    t.join(20000L)
+    assert(!t.isAlive)
+    assertEquals(result.flatMap(_.left.toOption), Some(PilotRefusal.Interrupted))
+    assert(finishedAtReturn, "run() returned before the blocked worker finished")
+    worker.join(5000L)
+    assert(!worker.isAlive, "the worker thread terminates once run() has returned")
+    assert(!Files.exists(out.resolve("progress/C0/d0000.done")), "nothing after the interrupt is marked complete")
   }

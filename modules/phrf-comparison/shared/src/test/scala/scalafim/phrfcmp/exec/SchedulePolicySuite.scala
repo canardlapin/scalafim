@@ -81,6 +81,18 @@ class SchedulePolicySuite extends munit.FunSuite:
     assertEquals(Dispatch.mustFinish(order, Set(j("A", 0), j("B", 0))), Set.empty[Job])
   }
 
+  test("M2: a resume also finishes every dispatched incomplete job, at or above the highest completed index") {
+    val cells = Vector(pilotCell("A"), pilotCell("B"))
+    val order = Dispatch.order(cells, 6)
+    def j(c: String, d: Int) = Job(cell(c), d)
+    val done = Set(j("A", 0), j("A", 1), j("A", 2), j("B", 0), j("B", 1))
+    // (B, 2) at the highest completed index and (A, 3) above it were in flight
+    val dispatched = done ++ Set(j("B", 2), j("A", 3))
+    assertEquals(Dispatch.mustFinish(order, done), Set.empty[Job], "the completed set alone cannot see them")
+    assertEquals(Dispatch.mustFinish(order, done, dispatched), Set(j("B", 2), j("A", 3)))
+    assertEquals(Dispatch.mustFinish(order, done, done), Set.empty[Job], "a completed job is never finished again")
+  }
+
   test("D < 15 refuses a partial pilot; D = 15 is accepted with df 14") {
     val bad = completed("A" -> (0 until 20), "B" -> (0 until 14))
     assertEquals(PartialPilot.decide(bad), Left(PilotRefusal.TooFewDatasets(14, 15)))

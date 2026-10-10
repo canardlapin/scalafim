@@ -456,7 +456,9 @@ not stamped).
   `D`. *[S7 review, D2: `D` is the smallest per-cell **longest completed prefix**. A cell keeps
   exactly `0..D-1`, and a hole is never kept. On resume, incomplete jobs below the highest completed
   index were in flight when the run was interrupted; they are finished before the soft stop is
-  honoured.]*
+  honoured. 2026-10-10 (blocker probe M2): the completed set alone misses a job in flight at or above
+  the highest completed index, so the runner writes a durable constant-content dispatch marker
+  before a job's first arm, and a resume past the soft stop finishes every dispatched incomplete job.]*
 - **Hard stop (60):** `CpuCeilingReached`, resumable only with an owner-approved raised ceiling.
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit

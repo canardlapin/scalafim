@@ -205,13 +205,28 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 *What the owner checks at unseal.*
 
 - **Primary check, which needs only this spec.** For every listed unit, the owner compares `payload_sha256` with that of the first completed attempt, as defined above. This requires nothing beyond the sealed records and this section.
-- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. This depends on the S10 `ScoreFeed` mapping, which turns the payload arms and the generator truth into per-voxel outcomes. That mapping is not yet specified (design section 6, slice S10), so this check becomes available once S10 specifies it.
+- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. It is possible only for an aggregate that carries `contribution_schema` (see *Scorer contributions* below): the corpus is then a pure function, named by that schema, of the scorer contributions sealed in the payloads. The production mapping for the pilot arms (generator truth to `ConditionDataset`, `TrialDataset`, `CoverageObs`) is still an S10 deliverable; until it exists, no real pilot aggregate is verifiable.
 
 *Policy:*
 
 - any mismatch, of a unit or of the outcome digest, **invalidates the whitelist released from that aggregate**;
 - the owner records the exact list of mismatching units in the deviation report;
 - recomputing the whitelist owner-side from the first attempts, after the confirmatory analysis is closed, is allowed only as a documented deviation.
+
+**Scorer contributions (S10 seam).**
+
+- An arm hands its truth-free scorer contribution for the attempt to `ArmContext.contribute`, at most once per attempt. It is sealed inside the unit payload as the reserved entry `scorer-contribution`, so `payload_sha256` covers it.
+- Only the committing attempt's contribution exists: a retried or abandoned attempt's contribution is discarded with the attempt and never reaches the scorer.
+- `PilotAggregation.aggregateContributions` assembles the in-process corpus from the contributions of the commits the scorer consumed (the `units` list), by a deterministic `CorpusAssembler`, and adds `contribution_schema` (the assembler's name) to `aggregate/<runId>/record`. The assembler receives the contributions sorted by (cell, dataset, arm) path; a unit whose committing attempt contributed nothing is passed as absent.
+- An aggregate sealed with `aggregateAndSeal` from a corpus built out of sight has no `contribution_schema`.
+
+**Owner verification** (`OwnerVerification.verify`, over the decrypted store; reference implementation of this section):
+
+1. The authoritative aggregate is the one whose `whitelist_sha256` manifest v1 records. **No** such record, or **several** (for example the same pilot aggregated twice), refuses.
+2. Every ledger record must sit under its own name and name its own payload, and that payload must match `payload_sha256`; otherwise the store is refused.
+3. `units` must be exactly the plan's cells and arms over datasets `0 until D`, each naming an existing commit of the aggregating invocation; otherwise refused.
+4. Primary check: as above. Secondary check: rebuild from the `scorer-contribution` entries of the first completed attempts with the assembler for `contribution_schema`.
+5. Verdict: any unit mismatch or a digest mismatch is **Invalidated** (the primary check alone suffices for that, even on a legacy aggregate). Otherwise, an aggregate without `contribution_schema` (legacy, pre-S10), with a schema the owner has no assembler for, or whose rebuild fails is **Unverifiable**, never Valid. Only an aggregate that passes both checks is **Valid**. Units whose scheduled commits differ in `payload_sha256` are listed for the deviation report in every verdict.
 
 The runner seals at most one aggregate per run id: a second `aggregateAndSeal` with the same run id is refused with `AlreadyAggregated`. Several aggregates may exist, for example a partial pilot and then the full one. The authoritative aggregate is the one whose `whitelist_sha256` is recorded in manifest v1.
 
@@ -250,7 +265,8 @@ An arm map is written as `int k` (the number of methods present), then, for each
 - `stamp.json`: hashes and versions, `recipient_fp` (the owner key fingerprint, already public), and `sealed_store_path_sha256`, never the path itself;
 - `cost.json`: `cpu_seconds_total` and `invocations`;
 - `selection.json`: D, df and the UCL factor;
+- `progress/<cell>/dNNNN.dispatched` plus `.sha256` markers, written before a job's first arm runs, so that a resume past the soft stop finishes every job that was in flight (blocker probe M2);
 - `progress/<cell>/dNNNN.done` plus `.sha256` markers;
 - optionally the S6 scratch custody log: a hash-chained JSONL of scratch lifecycle events, holding paths, device names and residue counts but no result.
 
-The markers' contents are constant, but their modification times reveal when each job completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3).
+The markers' contents are constant, but their modification times reveal when each job was dispatched and completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3).

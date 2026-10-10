@@ -10,14 +10,15 @@ object Dispatch:
   def waves(order: Vector[Job], probe: Int): (Vector[Job], Vector[Job]) = order.partition(_.dataset < probe)
 
   /** Jobs a resume finishes even past the soft stop (design 5.2: the runner "finishes in-flight datasets"): every
-    * incomplete job, in any cell, whose index is below the highest index completed by an earlier invocation. Such a
-    * job was dispatched before the interruption (dispatch is round-robin in index order) and abandoned by a crash or
-    * a hard stop; without it a cell's completed set has a hole and the kept prefix shrinks (decision D2).
+    * incomplete job that an earlier invocation dispatched (its durable dispatch marker exists) and abandoned by a
+    * crash or a hard stop, whatever its index; and, for journals without dispatch markers, every incomplete job
+    * whose index is below the highest completed one (dispatch is round-robin in index order, so it was dispatched
+    * too). Without them a cell's completed set has a hole or a short tail and the kept prefix shrinks (decision D2;
+    * blocker probe M2: a job in flight at or above the highest completed index was skipped).
     */
-  def mustFinish(order: Vector[Job], completed: Set[Job]): Set[Job] =
-    completed.iterator.map(_.dataset).maxOption match
-      case None => Set.empty
-      case Some(top) => order.iterator.filter(j => j.dataset < top && !completed.contains(j)).toSet
+  def mustFinish(order: Vector[Job], completed: Set[Job], dispatched: Set[Job] = Set.empty): Set[Job] =
+    val top = completed.iterator.map(_.dataset).maxOption.getOrElse(-1)
+    order.iterator.filter(j => !completed.contains(j) && (dispatched.contains(j) || j.dataset < top)).toSet
 
 /** Retry cap: at most `maxRetries` retries after the first attempt (design 5.2: 2). Refusals are never retried. */
 final case class RetryPolicy(maxRetries: Int = 2):

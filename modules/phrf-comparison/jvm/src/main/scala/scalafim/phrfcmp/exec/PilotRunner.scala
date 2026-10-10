@@ -19,7 +19,9 @@ enum PilotOutcome(val decision: PartialDecision):
 /** What one invocation returns, in process only. `rerunJobs` counts the jobs completed by earlier invocations that
   * this one recomputed so that every kept dataset reached the scorer in memory (decision D1). `scorerInputs` lists,
   * for every kept unit, the commit of this invocation whose payload the scorer consumed (finding F4); pass it with
-  * `runId` to [[PilotAggregation.aggregateAndSeal]], which seals it. Nothing here is written in plaintext.
+  * `runId` to [[PilotAggregation.aggregateAndSeal]], which seals it. `contributions` holds, in the same order, the
+  * scorer contribution sealed in each of those commits (S10); [[PilotAggregation.aggregateContributions]] assembles
+  * the corpus from them and nothing else. Nothing here is written in plaintext.
   */
 final case class PilotReport(
     outcome: PilotOutcome,
@@ -28,7 +30,8 @@ final case class PilotReport(
     invocation: Int,
     rerunJobs: Int,
     runId: String,
-    scorerInputs: Vector[ScorerInput]
+    scorerInputs: Vector[ScorerInput],
+    contributions: Vector[UnitContribution] = Vector.empty
 )
 
 /** Raised inside a worker when the sealed store refuses a write; turned into a `Left` by [[PilotRunner.run]]. */
@@ -106,7 +109,7 @@ object UnitPayload:
   * stamp.json                       plaintext, releasable (hashes and versions, recipient fingerprint, store path hash)
   * cost.json                        {"cpu_seconds_total": x, "invocations": n}: totals only, releasable (design 3.2)
   * selection.json                   D, df and UCL factor only (manifest v1 records D)
-  * progress/<cell>/dNNNN.done(+sha) completion markers, see [[PilotProgress]]
+  * progress/<cell>/dNNNN.{dispatched,done}(+sha) dispatch and completion markers, see [[PilotProgress]]
   * <store dir>/blobs/<hash>.enc    every payload, ledger record, timing record and meta blob, sealed at write time
   * }}}
   * Nothing result-bearing is ever written in plaintext: arms hand bytes to the scheduler in memory, and the scheduler
@@ -228,10 +231,10 @@ final class PilotRunner(
           prior <- loadCost()
           inv = prior.invocations + 1
           _ = { invocationNo = inv; Fs.writeAtomic(costFile, CostState(prior.cpuSecondsTotal, inv).json) }
-          done <- progress.recover(cellById.keySet)
+          journal <- progress.recover(cellById.keySet)
           _ = try sweepStale() catch case NonFatal(_) => () // stale RAM scratch of a dead earlier runner (S6)
           _ <- sealMeta()
-          report <- schedule(done, prior.cpuSecondsTotal, inv)
+          report <- schedule(journal, prior.cpuSecondsTotal, inv)
         yield report
       catch case e: RunAborted => Left(e.refusal)
       finally busy.set(false)
@@ -270,7 +273,8 @@ final class PilotRunner(
       val notes: Vector[String]
   )
 
-  private def schedule(alreadyDone: Set[Job], priorCpu: Double, inv: Int): Either[PilotRefusal, PilotReport] =
+  private def schedule(journal: JournalState, priorCpu: Double, inv: Int): Either[PilotRefusal, PilotReport] =
+    val alreadyDone = journal.completed
     val meter = new CpuMeter(clock, priorCpu)
     val hard = new AtomicBoolean(guard.check(meter.totalSeconds) == CpuGuard.State.HardStop)
     val crashed = new AtomicBoolean(false)
@@ -278,10 +282,10 @@ final class PilotRunner(
     val completed = java.util.concurrent.ConcurrentHashMap.newKeySet[Job]()
     alreadyDone.foreach(j => completed.add(j): Unit)
     val rerunDone = java.util.concurrent.ConcurrentHashMap.newKeySet[Job]()
-    val consumed = new java.util.concurrent.ConcurrentHashMap[WorkUnit, ScorerInput]()
+    val consumed = new java.util.concurrent.ConcurrentHashMap[WorkUnit, (ScorerInput, UnitContribution)]()
     val order = Dispatch.order(plan.cells, plan.datasets)
     val (probe, rest) = Dispatch.waves(order, plan.probeDatasets)
-    val mustFinish = Dispatch.mustFinish(order, alreadyDone)
+    val mustFinish = Dispatch.mustFinish(order, alreadyDone, journal.dispatched)
 
     def checkpoint(): Unit = costLock.synchronized {
       val total = meter.totalSeconds
@@ -339,8 +343,9 @@ final class PilotRunner(
       sealOrAbort(ledgerName, (record.json + "\n").getBytes(UTF_8))
       hook.at(CommitStage.LedgerSealed, job)
       sealOrAbort(timingName, timingJson(u, phase, attempts))
-      // the committed attempt is the last one the arm fed to the scorer (ScoreFeed: last call wins)
-      consumed.put(u, ScorerInput(u, runId, phase, payloadSha)): Unit
+      // only the committed attempt reaches the scorer: its contribution is the one sealed in this payload (S10)
+      val contribution = raws.find(_.name == ScorerContribution.EntryName).map(_.bytes)
+      consumed.put(u, (ScorerInput(u, runId, phase, payloadSha), new UnitContribution(u, contribution))): Unit
 
     /** Runs one unit to a commit; false when it stopped without committing. Retries seal nothing: their timings and
       * notes are buffered and sealed in the one timing record at commit.
@@ -380,6 +385,14 @@ final class PilotRunner(
               throw t
           checkpoint()
       committed
+
+    /** Durable dispatch marker before the job's first arm (blocker probe M2); a failure to write it is a crash. */
+    def dispatch(job: Job): Unit =
+      try progress.markDispatched(job)
+      catch
+        case t: Throwable =>
+          crashed.set(true)
+          throw t
 
     def runJob(job: Job, phase: CommitPhase): Unit =
       val cell = cellById(job.cell)
@@ -423,10 +436,15 @@ final class PilotRunner(
                       case CommitPhase.Rerun => runJob(job, phase) // the soft stop does not apply: the scorer needs every kept job
                       case CommitPhase.Scheduled =>
                         guard.check(meter.totalSeconds) match
-                          case CpuGuard.State.Ok => runJob(job, phase)
+                          case CpuGuard.State.Ok =>
+                            dispatch(job)
+                            runJob(job, phase)
                           case CpuGuard.State.SoftStop =>
-                            // no new datasets past the soft stop; jobs abandoned below completed ones are finished (D2)
-                            if mustFinish.contains(job) then runJob(job, phase)
+                            // no new datasets past the soft stop; jobs an earlier invocation dispatched and abandoned
+                            // are finished (D2, M2)
+                            if mustFinish.contains(job) then
+                              dispatch(job)
+                              runJob(job, phase)
                           case CpuGuard.State.HardStop =>
                             hard.set(true)
                             go = false
@@ -485,7 +503,7 @@ final class PilotRunner(
           else
             Fs.writeAtomic(selectionFile, selectionJson(decision))
             val outcome = if full then PilotOutcome.Complete(decision) else PilotOutcome.Partial(decision)
-            Right(PilotReport(outcome, meter.totalSeconds, projected, inv, reruns.length, runId, inputs))
+            Right(PilotReport(outcome, meter.totalSeconds, projected, inv, reruns.length, runId, inputs.map(_._1), inputs.map(_._2)))
       }
 
     if hard.get() then

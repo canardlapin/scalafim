@@ -35,6 +35,11 @@ trait PilotDatasetSource:
 /** Where per-voxel arm outcomes go for scoring (S8). Truth lives on the other side of this seam: the S10 harness
   * implements it with the generator truth and assembles the `PilotCorpus`. The scheduler calls it once per attempt;
   * the LAST call per (job, method) is the terminal attempt, so implementations overwrite.
+  *
+  * It is not transactional (a call made by an attempt that is later discarded still lands) and nothing binds it to
+  * the sealed payloads, so an aggregate built through it is unverifiable to the owner. The verifiable S10 path is
+  * [[ArmContext.contribute]] plus [[PilotAggregation.aggregateContributions]]; the production contribution encoding
+  * and `CorpusAssembler` for the pilot arms are still to be written (S10).
   */
 trait ScoreFeed:
   def condition(job: Job, result: ConditionArmResult): Unit
