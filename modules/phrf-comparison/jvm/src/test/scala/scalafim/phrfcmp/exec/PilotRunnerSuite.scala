@@ -53,8 +53,10 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   private def runner(plan: PilotPlan, out: Path, arms: ArmRunner, clk: CpuClock, guard: CpuGuard = roomy, threads: Int = 1,
       hook: CommitHook = CommitHook.none, st: PilotStamp = stamp, store: Option[SealedStore] = None, rt: PilotRoot = root,
-      runId: String = PilotRunner.freshRunId(), wall: () => Double = () => System.nanoTime() / 1e9): PilotRunner =
-    new PilotRunner(plan, out, st, store.getOrElse(openStore(out)), rt, arms, guard, clk, threads, hook, _ => (), () => runId, wall)
+      runId: String = PilotRunner.freshRunId(), wall: () => Double = () => System.nanoTime() / 1e9,
+      outputId: String = PilotRunner.freshOutputId()): PilotRunner =
+    new PilotRunner(plan, out, st, store.getOrElse(openStore(out)), rt, arms, guard, clk, threads, hook, _ => (), () => runId, wall,
+      outputIds = () => outputId)
 
   private def read(out: Path, partial: Boolean = true): Map[String, Array[Byte]] =
     OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = partial).fold(e => fail(e), identity)
@@ -502,15 +504,13 @@ class PilotRunnerSuite extends munit.FunSuite:
       val out = base.resolve("run") // one path for every run: the store path is part of the sealed stamp
       Fs.deleteTree(out)
       Files.createDirectories(out)
-      // Hold the output identity fixed alongside the run id and encryption entropy in this determinism fixture.
-      Files.writeString(out.resolve("output-id"), "0123456789abcdef0123456789abcdef\n")
       val clk = clock()
       val ex: ArmRunner = ctx =>
         Thread.sleep(math.abs((ctx.unit.cell.value + ctx.unit.dataset).hashCode % 4).toLong + (if threads > 1 then util.Random.nextInt(3) else 0))
         clk.advance(0.01)
         ctx.emit("out.bin", blobBytes(ctx.unit))
         behaviour(ctx.unit)(ctx.attempt)
-      val r = runner(plan, out, ex, clk, threads = threads, store = Some(openStore(out, entropy = new DerivedEntropy("seed"))), runId = "fixed", wall = () => 0.0)
+      val r = runner(plan, out, ex, clk, threads = threads, store = Some(openStore(out, entropy = new DerivedEntropy("seed"))), runId = "fixed", wall = () => 0.0, outputId = "0" * 32)
       r.run().fold(x => fail(x.message), identity)
       r.closeStore().fold(x => fail(x.message), identity)
       assertOnlyAllowedPlaintext(out)
@@ -992,7 +992,8 @@ class PilotRunnerSuite extends munit.FunSuite:
     val arms = new ArmRunner:
       def run(ctx: ArmContext): ArmResult = throw new OutOfMemoryError("synthetic child CPU handoff failure")
       override def jobFinished(job: Job): Unit = throw new SimulatedCrash
-    intercept[SimulatedCrash](runner(plan, out, arms, clk, runId = "fatal-cleanup").run())
+    val thrown = intercept[OutOfMemoryError](runner(plan, out, arms, clk, runId = "fatal-cleanup").run())
+    assert(thrown.getSuppressed.exists(_.isInstanceOf[SimulatedCrash]))
     assert(Files.exists(out.resolve("accounting.open")), "cleanup must not certify unknown CPU accounting")
     val resumed = runner(plan, out, new Counting(clk, 0.0, ok), clk).run()
     assertEquals(resumed.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal-cleanup")))
@@ -1149,3 +1150,71 @@ class PilotRunnerSuite extends munit.FunSuite:
     assertEquals(fields("output_id"), id.trim)
     val sealedFields = PilotStamp.parse(new String(read(out)(SealedNames.Stamp), UTF_8)).fold(e => fail(e), identity).fields.toMap
     assertEquals(sealedFields("output_id"), id.trim)
+
+  // ---- fifth independent review 2026-10-10 (D1 and its hardening) ----
+
+  test("merge regression: inspecting a stamp cannot hide a later output-id substitution"):
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 1.0, ok), clk, outputId = "ab" * 16).run().fold(x => fail(x.message), identity)
+    val before = Files.readString(out.resolve("cost.json"))
+    val arms = new Counting(clk, 1.0, ok)
+    val resumed = runner(plan, out, arms, clk)
+    assertEquals(resumed.effectiveStamp.fields.toMap.apply("output_id"), "ab" * 16)
+    assertEquals(resumed.sealedStamp.fields.toMap.apply("output_id"), "ab" * 16)
+    Files.writeString(out.resolve("output-id"), "cd" * 16 + "\n")
+    assertEquals(resumed.run().left.toOption, Some(PilotRefusal.StampMismatch("output_id")))
+    assertEquals(arms.calls.get(), 0)
+    assertEquals(Files.readString(out.resolve("cost.json")), before)
+    assert(!Files.exists(out.resolve("accounting.open")))
+
+  test("merge regression: cleanup rethrowing the same fatal error preserves the error and accounting marker"):
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val fatal = new OutOfMemoryError("simulated unmetered child CPU")
+    val arms = new ArmRunner:
+      def run(ctx: ArmContext): ArmResult = throw fatal
+      override def jobFinished(job: Job): Unit = throw fatal
+    val thrown = intercept[OutOfMemoryError](runner(plan, out, arms, clk).run())
+    assert(thrown eq fatal)
+    assertEquals(thrown.getSuppressed.length, 0)
+    assert(Files.exists(out.resolve("accounting.open")))
+    val resumed = new Counting(clk, 1.0, ok)
+    assert(runner(plan, out, resumed, clk).run().left.toOption.exists(_.isInstanceOf[PilotRefusal.AccountingUncertain]))
+    assertEquals(resumed.calls.get(), 0)
+
+  test("review5 D1: substituting an archived output-id into a fresh output at the same path cannot transfer the raise") {
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val base = tmp()
+    val out = base.resolve("out")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    val id = runner(plan, out, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "the original output", id, 2).fold(e => fail(e), identity)
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight, "1-2: the raise is used")
+    Files.move(out, base.resolve("archive")) // 3
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight) // 4: a fresh output at the same path
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isLeft) // 5
+    Files.copy(base.resolve("archive/output-id"), out.resolve("output-id"), java.nio.file.StandardCopyOption.REPLACE_EXISTING) // 6
+    val costBefore = Files.readString(out.resolve("cost.json"))
+    assertEquals(
+      runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().left.toOption,
+      Some(PilotRefusal.StampMismatch("output_id"))
+    )
+    assertEquals(Files.readString(out.resolve("cost.json")), costBefore, "refused before any cost change")
+    assert(!Files.exists(out.resolve("accounting.open")))
+    // ordinary resumes of the substituted output are refused too, and both stores stay readable
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.StampMismatch("output_id")))
+    assert(OwnerReader.readAll(base.resolve("archive/sealed"), owner.priv, allowPartial = true).isRight)
+    assert(OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = true).isRight)
+  }
+
+  test("review5 hardening: an output-id left by a death before the stamp is kept, never redrawn; only ASCII hex is accepted") {
+    val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val out = tmp()
+    Files.writeString(out.resolve("output-id"), "ab" * 16 + "\n")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, outputId = "cd" * 16).run().isRight)
+    assertEquals(Files.readString(out.resolve("output-id")), "ab" * 16 + "\n")
+    assertEquals(ujson.read(Files.readString(out.resolve("stamp.json")))("output_id").str, "ab" * 16)
+    val other = tmp()
+    Files.writeString(other.resolve("output-id"), "\u0660" * 32 + "\n") // Arabic-Indic zeros: digits, not ASCII hex
+    assert(runner(plan, other, new Counting(clk, 1.0, ok), clk).run().left.toOption.exists(_.isInstanceOf[PilotRefusal.Failure]))
+    assert(!PilotRunner.validOutputId("AB" * 16 + "\n") && PilotRunner.validOutputId("09af" * 8 + "\n"))
+  }

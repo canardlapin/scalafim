@@ -300,6 +300,36 @@ class PilotArmsSuite extends munit.FunSuite:
     assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("fatalint1")))
   }
 
+  test("review5 D2: a cleanup exception never masks a fatal throwable after GLMsingle ran; accounting stays open") {
+    val owner = TestOwner.random()
+    val fatal = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new OutOfMemoryError("synthetic")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val inner = new PilotArmRunner(new Source, e, fatal)
+    val failingCleanup = new ArmRunner:
+      def run(ctx: ArmContext): ArmResult = inner.run(ctx)
+      override def jobFinished(job: Job): Unit = throw new IllegalStateException("cleanup failed")
+    val out = Files.createTempDirectory("phrf-s7-cleanup-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 0)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val stamp = PilotStamp(Vector("k" -> "v"))
+    val thrown =
+      try
+        new PilotRunner(plan, out, stamp, store, root, failingCleanup, CpuGuard(), new FakeClock, runIds = () => "cleanup1").run()
+        None
+      catch case t: Throwable => Some(t)
+    assert(thrown.isDefined, "the run fails")
+    assert(thrown.exists(_.isInstanceOf[OutOfMemoryError]), s"the fatal throwable propagates, not the cleanup failure: $thrown")
+    assert(thrown.exists(_.getSuppressed.exists(_.getMessage == "cleanup failed")), "the cleanup failure is attached")
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "cleanup1")
+    val resume = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e), CpuGuard(), new FakeClock).run()
+    assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("cleanup1")))
+  }
+
   test("real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates") {
     val owner = TestOwner.random()
     val out = Files.createTempDirectory("phrf-s7-real-")

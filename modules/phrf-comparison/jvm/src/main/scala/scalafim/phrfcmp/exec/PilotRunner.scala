@@ -232,6 +232,8 @@ object UnitPayload:
   * @param runIds  draws the invocation's run id, once, inside [[run]]; it names every blob whose content may differ
   *                between invocations. Tests inject a fixed one
   * @param sweepStale called once at start: removes RAM scratch left by a dead runner (`RamScratch.sweepStale`, S6)
+  * @param outputIds draws the output instance id when this instance creates a fresh output (tests inject a fixed one);
+  *                an existing `output-id` file is never redrawn
   * @param accountingRecovery the owner's decision to resume after an invocation whose accounting stayed open
   *                (`accounting.open` survived a crash, a power loss or a failed checkpoint); without it such a resume
   *                refuses with `AccountingUncertain`
@@ -255,6 +257,7 @@ final class PilotRunner(
     runIds: () => String = () => PilotRunner.freshRunId(),
     wallSeconds: () => Double = () => System.nanoTime() / 1e9,
     sweepStale: () => Unit = () => (),
+    outputIds: () => String = () => PilotRunner.freshOutputId(),
     accountingRecovery: Option[OwnerAccountingRecovery] = None
 ):
   require(threads >= 1, "threads must be positive")
@@ -301,7 +304,7 @@ final class PilotRunner(
   /** The output identity an owner ceiling raise names in advance: SHA-256 of `stamp.json` followed by `output-id`,
     * exactly as written (`cat stamp.json output-id | sha256sum`). `output-id` is 128 random bits drawn by the first
     * invocation on a fresh output, before its stamp, and never rewritten once the stamp exists, so a fresh output at
-    * the same path (same stamp bytes) has another identity. `None` until the first invocation has created the output; the first invocation runs at
+    * the same path with the same configuration has another identity. `None` until the first invocation has created the output; the first invocation runs at
     * the 60 core-hour ceiling, so the identity always exists before any raise is needed.
     */
   def outputIdentity: Option[String] =
@@ -382,11 +385,13 @@ final class PilotRunner(
     if !Files.exists(stampFile) && (progress.exists || store.hasBlobs) then
       Left(PilotRefusal.Failure("output holds data but no stamp.json; refusing to adopt it"))
     else
-      if !Files.exists(stampFile) && !Files.exists(outputIdFile) then
-        Fs.writeAtomic(outputIdFile, PilotRunner.freshOutputId() + "\n")
-      if !PilotRunner.validOutputId(outputIdText) then
+      val fresh = !Files.exists(stampFile) && !Files.exists(outputIdFile)
+      val id = if fresh then outputIds() + "\n" else outputIdText
+      if !PilotRunner.validOutputId(id) then
         Left(PilotRefusal.Failure("output-id is missing or malformed; refusing to adopt the output"))
-      else checkStampFile()
+      else
+        if fresh then Fs.writeAtomic(outputIdFile, id)
+        checkStampFile()
 
   private def checkStampFile(): Either[PilotRefusal, Unit] =
     if Files.exists(stampFile) then
@@ -623,6 +628,11 @@ final class PilotRunner(
               Thread.currentThread().interrupt()
               ArmResult.Failed("interrupted")
             case NonFatal(e) => ArmResult.Failed("executor_exception:" + e.getClass.getSimpleName.take(40).filter(_.isLetterOrDigit))
+            case t: Throwable =>
+              // a fatal throwable: a measured child CPU may never reach the meter. Recorded here, at its origin,
+              // before any cleanup can replace it (fifth review D2)
+              noteThrowable(t)
+              throw t
         val wall = wallSeconds() - t0
         meter.addChild(result.childCpu)
         if Thread.currentThread().isInterrupted then
@@ -669,12 +679,22 @@ final class PilotRunner(
     def runJob(job: Job, phase: CommitPhase): Unit =
       val cell = cellById(job.cell)
       var allCommitted = true
+      var pending: Throwable = null
       try cell.arms.foreach(arm => allCommitted = allCommitted && !stopped && runUnit(job, WorkUnit(job.cell, job.dataset, arm), phase))
       catch
         case t: Throwable =>
           noteThrowable(t)
+          pending = t
           throw t
-      finally arms.jobFinished(job)
+      finally
+        // a cleanup failure never replaces the job's own throwable; it is attached to it instead (fifth review D2)
+        try arms.jobFinished(job)
+        catch
+          case c: Throwable =>
+            noteThrowable(c)
+            if pending != null then
+              if pending ne c then pending.addSuppressed(c)
+            else throw c
       if allCommitted && !crashed.get() then
         phase match
           case CommitPhase.Rerun => rerunDone.add(job): Unit
@@ -826,6 +846,7 @@ object PilotRunner:
     Fs.hex(b)
 
   private[exec] def validOutputId(text: String): Boolean =
+    // exactly 32 lowercase ASCII hex characters and a newline (no Unicode digits)
     text.length == 33 && text.endsWith("\n") && text.init.forall(c => c >= '0' && c <= '9' || c >= 'a' && c <= 'f')
 
   /** Plaintext marker present while an invocation's CPU accounting is open (content: its run id). */

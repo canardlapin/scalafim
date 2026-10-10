@@ -95,7 +95,10 @@ object ScorerContribution:
 trait ArmRunner:
   def run(ctx: ArmContext): ArmResult
 
-  /** Called once per job after its last arm ran (or the run stopped), so per-dataset caches can be released. */
+  /** Called once per job after its last arm ran (or the run stopped), so per-dataset caches can be released. It
+    * should not throw; if it does while the job is already failing, its exception is attached to the job's own
+    * (`addSuppressed`) and never replaces it.
+    */
   def jobFinished(job: Job): Unit = ()
 
 /** Logical names inside the sealed store (format spec section 4; runner layout in the format spec section 10).
