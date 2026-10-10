@@ -4,7 +4,7 @@ import gale.linalg.DMat
 import gale.linalg.verifySymmetric
 import gale.spectral.{Eigen, EigenSelection, EigenVectors}
 import scalafim.dataset.{DataSelection, DatasetSeriesReader, FmriDataset, ResolvedDataSelection, TimepointSelection, VoxelSelection}
-import scalafim.fmri.ar.{InitialConditionPolicy, NoisePooling}
+import scalafim.fmri.ar.{NoisePooling}
 import scalafim.fmri.design.{FactorId, FactorLevelSet}
 import scalafim.fmri.design.event.{Event, EventTerm}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, TrialBasisDesign}
@@ -899,7 +899,7 @@ object ProfileHrfFit:
             val requested = config.autocorrelation.phi.getOrElse(config.autocorrelation.rho.toVector)
             if plan.coefficients.length != 1 || plan.coefficients.head.phi != requested ||
                 plan.coefficients.head.theta.nonEmpty || plan.arOrder != order ||
-                plan.initialCondition != InitialConditionPolicy.fromExactFirstAr1(config.autocorrelation.exactFirst) ||
+                plan.initialCondition != Gls.initialCondition(config.autocorrelation) ||
                 plan.segments != segments then
               Left(ProfileFitError.Unsupported("fixed shared AR coefficients, initial condition or segments differ from FitConfig"))
             else Right(())

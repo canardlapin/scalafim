@@ -9,7 +9,17 @@ import scalafim.fmri.fit.*
 import scalafim.fmri.hrf.{Hrfs, Lag}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{ArBiasCorrection, ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
+import scalafim.fmri.model.{
+  ArBiasCorrection,
+  ArOptions,
+  ArStructure,
+  FitConfig,
+  FitEngine,
+  FitPlan,
+  FmriModel,
+  ArInitialization,
+  ArCensorTreatment
+}
 import scalafim.image.SampleSpaces
 import scalafim.scenarios.{ScenarioObservation, ScenarioResult}
 import ujson.{Arr, Bool, Num, Obj, Str}
@@ -63,7 +73,10 @@ private[laws] final case class GlsStudyCell(
     nuisance: Int,
     censored: Boolean,
     pooling: StudyPooling,
-    duration: GlsStudyDuration = GlsStudyDuration.Standard
+    duration: GlsStudyDuration = GlsStudyDuration.Standard,
+    initialization: Option[ArInitialization] = None,
+    correction: Option[ArBiasCorrection] = None,
+    censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
 ):
   require(phi.nonEmpty && phi.length <= 2 && ArmaCoefficients.ar(phi*).arOrder == phi.length)
   require(nuisance == 0 || nuisance == 12)
@@ -78,7 +91,8 @@ private[laws] final case class GlsStudyCell(
         (Vector(23, 24, 60) ++ (97 until length by 37)).filter(_ < length).map(_ + start)
       }
   val segments: Vector[TimeSegment] =
-    TimeSegments.withCensorResets(TimeSegments.fromRunLengths(runLengths), censorRows.toSet)
+    if censorTreatment == ArCensorTreatment.EstimateOnly then TimeSegments.fromRunLengths(runLengths)
+    else TimeSegments.withCensorResets(TimeSegments.fromRunLengths(runLengths), censorRows.toSet)
   val estimationLayout: NoiseEstimationLayout = NoiseEstimationLayout
     .excludingRows(segments, rows, censorRows.toSet)
     .fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -136,14 +150,24 @@ private[laws] final case class GlsStudyCell(
 
   def options(engine: GlsStudyEngine): ArOptions = engine match
     case GlsStudyEngine.KnownPhi =>
-      ArOptions(ArStructure.Ar(phi.length), global = true, phi = Some(phi), censoredTimepoints = censorRows)
+      ArOptions(
+        ArStructure.Ar(phi.length),
+        global = true,
+        phi = Some(phi),
+        censoredTimepoints = censorRows,
+        initialization = initialization,
+        censorTreatment = censorTreatment
+      )
     case other =>
       ArOptions(
         ArStructure.Ar(phi.length),
         global = pooling == StudyPooling.Global,
         voxelwise = pooling == StudyPooling.Voxelwise,
         censoredTimepoints = censorRows,
-        biasCorrection = if other == GlsStudyEngine.Corrected then ArBiasCorrection.Ols else ArBiasCorrection.Raw
+        biasCorrection = if other == GlsStudyEngine.Corrected then correction.getOrElse(ArBiasCorrection.Ols)
+        else ArBiasCorrection.Raw,
+        initialization = initialization,
+        censorTreatment = censorTreatment
       )
 
 /** A portable, named Monte Carlo stream. Gaussian draws consume an independent run's own burn-in; censoring never
@@ -316,11 +340,22 @@ private[laws] object CorrectedGlsQualification:
       _ <-
         val applied = if cell.pooling == StudyPooling.Voxelwise then
           diagnostic.runs.forall(_.voxelwiseCorrections.length == 4) && diagnostic.runs.forall(
-            _.voxelwiseCorrections.forall(_.isInstanceOf[RunCorrection.Applied])
+            _.voxelwiseCorrections.forall(_.wasApplied)
           )
-        else diagnostic.runs.forall(_.correction.exists(_.isInstanceOf[RunCorrection.Applied]))
+        else diagnostic.runs.forall(_.correction.exists(_.wasApplied))
         if engine != GlsStudyEngine.Corrected || applied then Right(())
-        else Left(GlsStudyError.Pipeline(GlsStudyStage.Correction, "corrected fit returned a non-Applied outcome"))
+        else
+          val statuses = diagnostic.runs.zipWithIndex.flatMap: (run, index) =>
+            val values =
+              if cell.pooling == StudyPooling.Voxelwise then run.voxelwiseCorrections else run.correction.toVector
+            values.zipWithIndex.collect:
+              case (value, voxel) if !value.wasApplied => s"run=$index voxel=$voxel $value"
+          Left(
+            GlsStudyError.Pipeline(
+              GlsStudyStage.Correction,
+              s"corrected fit returned a non-Applied outcome: ${statuses.mkString("; ")}"
+            )
+          )
       residuals = Matrix.tabulate(cell.rows, 4) { (row, voxel) =>
         var predicted = 0.0
         var col = 0
@@ -390,15 +425,21 @@ private[laws] object CorrectedGlsQualification:
       val coefficients = if diagnostics.whitening.pooling == NoisePooling.Global then
         Vector(ArmaCoefficients.ar(diagnostics.runs.head.phi*))
       else diagnostics.runs.map(run => ArmaCoefficients.ar(run.phi*))
-      val plan = WhiteningPlan(coefficients, cell.segments, diagnostics.whitening.pooling, exactFirstAr1 = true)
-      WhiteningTransform.matrix(plan, residuals)
+      val scope = if diagnostics.whitening.pooling == NoisePooling.Global then
+        CoefficientScope.Global(coefficients.head)
+      else CoefficientScope.ByRun(coefficients)
+      WhiteningPlan
+        .withScope(scope, cell.segments, diagnostics.whitening.initialCondition)
+        .flatMap(plan => WhiteningTransform.matrix(plan, residuals))
     else
       val output = Matrix.newBuilder(residuals.rows, residuals.cols)
       var voxel = 0
       while voxel < residuals.cols do
         val coefficients = diagnostics.runs.map(run => ArmaCoefficients.ar(run.voxelwiseCoefficients(voxel)*))
-        val plan = WhiteningPlan(coefficients, cell.segments, NoisePooling.Run, exactFirstAr1 = true)
-        WhiteningTransform.matrix(plan, residuals.slice(0, residuals.rows, voxel, voxel + 1)) match
+        val transformed = WhiteningPlan
+          .withScope(CoefficientScope.ByRun(coefficients), cell.segments, diagnostics.whitening.initialCondition)
+          .flatMap(plan => WhiteningTransform.matrix(plan, residuals.slice(0, residuals.rows, voxel, voxel + 1)))
+        transformed match
           case Left(error)  => return Left(error)
           case Right(value) =>
             var row = 0
