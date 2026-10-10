@@ -36,7 +36,10 @@ final class SubjectGroupSummary private (
   def prevalence: Either[SubjectGroupError, Nothing] = SubjectGroupSummary.prevalence
 
 /** Under common effects tau² is fixed at zero, not estimated. Q and I² still
-  * diagnose disagreement with the common-effect model. */
+  * diagnose disagreement with the common-effect model. `cochranQ` is the
+  * fixed-effect Q and `iSquared` is Higgins-Thompson max(0, (Q - df) / Q) for
+  * every calculation. It is not metafor's tau²-based I² = tau²/(tau² + s²),
+  * which differs from this value under Paule-Mandel with unequal variances. */
 final class SubjectHeterogeneitySummary private[group] (
     val tauSquared: DMat, val cochranQ: DMat, val iSquared: DMat, val tauEstimated: Boolean
 )
