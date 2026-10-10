@@ -66,7 +66,7 @@ class FrameDeclarationSuite extends munit.FunSuite:
     val xml = DeclaredGiftiFixture.xml()
     val bytes = DeclaredGiftiFixture.bytes(xml)
     val declaration = DeclaredGiftiFixture.declaration(nlin6, bytes)
-    val decoded = DeclaredGiftiSurface(geometry, coordinates(xml))
+    val decoded = DeclaredGiftiSurface(geometry, coordinates(xml), GiftiPlacement.NativeCoordinates)
     val surface = DeclaredSurface.verified(declaration, bytes, decoded).fold(e => fail(e.message), s => s)
     assertEquals(surface.frame, nlin6)
     assertEquals(surface.coordinates.declaredSpaces,
@@ -81,7 +81,7 @@ class FrameDeclarationSuite extends munit.FunSuite:
     val declaration = DeclaredGiftiFixture.declaration(nlin6, bytes)
     def readAs(hemisphere: Hemisphere, kind: SurfaceKind, source: String = xml) =
       DeclaredSurface.verified(declaration, bytes, DeclaredGiftiSurface(
-        SurfaceGeometry(geometry.mesh, hemisphere, kind), coordinates(source)))
+        SurfaceGeometry(geometry.mesh, hemisphere, kind), coordinates(source), GiftiPlacement.NativeCoordinates))
     assert(readAs(Hemisphere.Left, SurfaceKind.Midthickness).isRight)
     assert(readAs(Hemisphere.Right, SurfaceKind.Midthickness).left.exists(_.isInstanceOf[ReferenceError.DeclarationConflict]))
     assert(readAs(Hemisphere.Left, SurfaceKind.Pial).left.exists(_.isInstanceOf[ReferenceError.DeclarationConflict]))

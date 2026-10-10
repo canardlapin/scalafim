@@ -61,6 +61,14 @@ The shared module cross-compiles to JVM and Scala.js and contains:
   and 2.4e-5. These parity tests need the TemplateFlow spheres locally and are
   skipped, not failed, without them.
 
+- Declared volume-to-surface routes (`scalafim.surface.reference`):
+  `SurfaceRoute.admit`/`select`, `FrameBridge`, `AdmittedSurfaceRoute` with
+  `map`, `inspect` and `disclosure`. The qualified real MNI152NLin2009cAsym ->
+  fsLR 32k route is assembled for consumers by the atlas module
+  (`scalafim.atlas.StandardSurfaceRoutes`, JVM loader
+  `scalafim.atlas.io.StandardSurfaceRouteFiles`); see the atlas README,
+  "Standard Surface Routes", for the call and the disclosure fields.
+
 The platform modules add matching GIFTI APIs:
 
 - `GiftiReader` for typed GIFTI documents, metadata, label tables,
@@ -233,3 +241,48 @@ sbt surfaceJS/test
 The deterministic fixture corpus is documented in
 `tools/r-parity/surface-fixtures.md`; JVM IO resources are under
 `modules/surface/jvm/src/test/resources/surface/`.
+
+### Float64 reader extension
+
+GIFTI readers also accept `NIFTI_TYPE_FLOAT64` as an interoperability extension
+for coordinates and scalar values. It is not one of the standard GIFTI scalar
+data types. ASCII and both binary endian orders retain double precision; gzip
+and zlib payloads use the existing bounded decompression paths. Integer/label
+and byte payload APIs reject Float64, including integral-valued ASCII data.
+
+### Explicit GIFTI placement
+
+`GiftiSurfaceReader.declared(document, hemisphere, kind, selection)` (and
+`readDeclaredEither` on the JVM, `readDeclared`/`readDeclaredString` on
+Scala.js) returns `DeclaredGiftiSurface`: geometry, the file's full
+`GiftiCoordinateDeclaration` (every `CoordinateSystemTransformMatrix` in file
+order) and the typed `placement` that produced `geometry.surfaceToWorld`.
+`GiftiPlacement.Transformed(index, system, target)` names the original
+declared transform by its index. JVM returns `Either`; Scala.js returns a
+`Future` of `Either`.
+
+`GiftiTransformSelection.Target(GiftiTargetSpace.Mni152)` requests exactly one
+transform to that declared target. Scanner, aligned, Talairach and MNI targets
+have no implicit priority. Two transforms into the same target are ambiguous;
+`Transform(index)` explicitly selects from the original transform vector when
+the caller has the evidence to choose. A selected transform with an unknown or
+missing target is refused, as is any matrix failing the image4s
+homogeneous/finite/invertibility checks.
+
+The default `Unambiguous` policy, also used by the geometry-only convenience
+readers, leaves files without transforms native, applies exactly one transform
+with a recognized target, and leaves identity-only declarations (for example a
+nibabel `NIFTI_XFORM_UNKNOWN` identity, or a Workbench-style undeclared identity
+beside a Talairach identity) native: no matrix choice can change coordinates
+there, so nothing is applied and no frame is claimed. It refuses several
+transforms when any is not the identity, and a single non-identity transform
+with an unknown or missing target. Explicit `NativeCoordinates` ignores
+placement while preserving the declaration. A recognized target code does not
+establish correspondence to an arbitrary subject/image; the caller owns that
+registration evidence.
+
+Decoded mesh coordinates are never pretransformed. The chosen original matrix
+is carried in `geometry.surfaceToWorld` and must be applied exactly once. Prefer
+the declared result whenever placement provenance matters; geometry-only APIs
+cannot retain the distinction between native coordinates and a declared
+identity map.

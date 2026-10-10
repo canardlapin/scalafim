@@ -1,0 +1,1750 @@
+{
+  "schema_version": "scalafim-corrected-gls-qualification-summary/v1",
+  "profile": "pilot",
+  "seed": 1339142671,
+  "r_version": "4.5.1",
+  "independent_sampling_units": "replicate datasets; response columns are not counted as independent tests",
+  "replicates_per_cell": 16,
+  "failures": [
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 3,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 5,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 6,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 8,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 9,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 10,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 13,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 14,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 15,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 3,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 5,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 6,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 8,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 9,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 10,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 13,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 14,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 15,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 2,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 3,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 4,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 5,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 6,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 7,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 8,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 9,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 11,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 13,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 14,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 15,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 2,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 3,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 4,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 5,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 6,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 7,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 8,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 9,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 11,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 13,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 14,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 15,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 2,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 3,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 4,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 5,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 6,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 7,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 8,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 9,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 11,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 13,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 14,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 15,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 2,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 3,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 4,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 5,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 6,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 7,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 8,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 9,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 11,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 13,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 14,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "profile": "pilot",
+      "engine": "corrected",
+      "replicate": 15,
+      "error": "Correction: corrected fit returned a non-Applied outcome"
+    }
+  ],
+  "results": [
+    {
+      "cell": "ar2-high-complete-voxelwise-adaptive-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [5.5511151231257827e-17, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.090960283893933472,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.3879955328097233,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.12893873989601004,
+        "interval": [-0.30932384902713317, 0.56720132881915319]
+      },
+      "d_eff": 218.42607884120764,
+      "d_inv": null,
+      "effect_variance_dependence": -0.27417802996007357,
+      "timing_ms": {
+        "mean": 16.763763062500001,
+        "median": 5.8011670000000004
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-adaptive-restart",
+      "engine": "corrected",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [-0.012232211885925881, -0.0075430563799623873],
+      "phi_bias_halfwidth": [0.014009830475226252, 0.011306357753375617],
+      "AR_RMSE": 0.098523519643306121,
+      "whiteness": 0.080977673868936312,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 1,
+        "rate": 0.0625,
+        "interval": [0.0032006977101884963, 0.26395739728856848]
+      },
+      "coverage": {
+        "count": 14,
+        "rate": 0.875,
+        "interval": [0.65617480077041057, 0.97732121727755428]
+      },
+      "variance_ratio": {
+        "estimate": 1.2750357128237539,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.085887138042193112,
+        "interval": [-0.35237545088095007, 0.52414972696533635]
+      },
+      "d_eff": 48.784701269103643,
+      "d_inv": null,
+      "effect_variance_dependence": -0.14461353875217567,
+      "timing_ms": {
+        "mean": 20.9158775625,
+        "median": 15.053312
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [5.5511151231257827e-17, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.090960283893933472,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.3879955328097233,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.12893873989601004,
+        "interval": [-0.30932384902713317, 0.56720132881915319]
+      },
+      "d_eff": 218.42607884120764,
+      "d_inv": null,
+      "effect_variance_dependence": -0.27417802996007357,
+      "timing_ms": {
+        "mean": 5.0448021250000004,
+        "median": 4.2624789999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-restart",
+      "engine": "corrected",
+      "replicates": 7,
+      "complete": false,
+      "phi_bias": [-0.064005954440667034, -0.051100066278490924],
+      "phi_bias_halfwidth": [0.083859601477996454, 0.066284895388350709],
+      "AR_RMSE": 0.31515571269899728,
+      "whiteness": 0.13555316329184874,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.34816365513116077]
+      },
+      "null_f": {
+        "count": 1,
+        "rate": 0.14285714285714285,
+        "interval": [0.0073008319790146981, 0.52070297359130702]
+      },
+      "coverage": {
+        "count": 5,
+        "rate": 0.7142857142857143,
+        "interval": [0.341261436155336, 0.9466244995297628]
+      },
+      "variance_ratio": {
+        "estimate": 2.9404301679365497,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.26404609696552023,
+        "interval": [-0.99849920765240885, 0.47040701372136834]
+      },
+      "d_eff": 8.4915592099890311,
+      "d_inv": null,
+      "effect_variance_dependence": -0.11829943511470492,
+      "timing_ms": {
+        "mean": 30.495410571428572,
+        "median": 27.311499999999999
+      },
+      "gates": {
+        "complete": false,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": false,
+        "whiteness_excess": false
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [5.5511151231257827e-17, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.090960283893933472,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.3879955328097233,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.12893873989601004,
+        "interval": [-0.30932384902713317, 0.56720132881915319]
+      },
+      "d_eff": 218.42607884120764,
+      "d_inv": null,
+      "effect_variance_dependence": -0.27417802996007357,
+      "timing_ms": {
+        "mean": 4.7140363750000001,
+        "median": 4.1043335000000001
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-complete-voxelwise-tail-continuous",
+      "engine": "corrected",
+      "replicates": 7,
+      "complete": false,
+      "phi_bias": [-0.064005954440667034, -0.051100066278490924],
+      "phi_bias_halfwidth": [0.083859601477996454, 0.066284895388350709],
+      "AR_RMSE": 0.31515571269899728,
+      "whiteness": 0.13555316329184874,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.34816365513116077]
+      },
+      "null_f": {
+        "count": 1,
+        "rate": 0.14285714285714285,
+        "interval": [0.0073008319790146981, 0.52070297359130702]
+      },
+      "coverage": {
+        "count": 5,
+        "rate": 0.7142857142857143,
+        "interval": [0.341261436155336, 0.9466244995297628]
+      },
+      "variance_ratio": {
+        "estimate": 2.9404301679365497,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.26404609696552023,
+        "interval": [-0.99849920765240885, 0.47040701372136834]
+      },
+      "d_eff": 8.4915592099890311,
+      "d_inv": null,
+      "effect_variance_dependence": -0.11829943511470492,
+      "timing_ms": {
+        "mean": 20.786904571428572,
+        "median": 19.283332999999999
+      },
+      "gates": {
+        "complete": false,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": false,
+        "whiteness_excess": false
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-adaptive-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [0, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.093273740955166426,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.426126390907436,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.15225737560799349,
+        "interval": [-0.28600521331514972, 0.59051996453113664]
+      },
+      "d_eff": 221.16496460351493,
+      "d_inv": null,
+      "effect_variance_dependence": -0.27641282780916443,
+      "timing_ms": {
+        "mean": 7.9183126875000003,
+        "median": 4.7042295000000003
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-adaptive-restart",
+      "engine": "corrected",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [-0.010404513053560882, -0.0080460351444601591],
+      "phi_bias_halfwidth": [0.015968794815296644, 0.014007784230059732],
+      "AR_RMSE": 0.10436387041179343,
+      "whiteness": 0.082690056748207383,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 1,
+        "rate": 0.0625,
+        "interval": [0.0032006977101884963, 0.26395739728856848]
+      },
+      "coverage": {
+        "count": 14,
+        "rate": 0.875,
+        "interval": [0.65617480077041057, 0.97732121727755428]
+      },
+      "variance_ratio": {
+        "estimate": 1.3095411531702623,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.10448789462447979,
+        "interval": [-0.33377469429866341, 0.54275048354762301]
+      },
+      "d_eff": 56.141335355774935,
+      "d_inv": null,
+      "effect_variance_dependence": -0.20550853382050324,
+      "timing_ms": {
+        "mean": 14.0222343125,
+        "median": 12.159604
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [0, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.093273740955166426,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.426126390907436,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.15225737560799349,
+        "interval": [-0.28600521331514972, 0.59051996453113664]
+      },
+      "d_eff": 221.16496460351493,
+      "d_inv": null,
+      "effect_variance_dependence": -0.27641282780916443,
+      "timing_ms": {
+        "mean": 5.0145156875000003,
+        "median": 3.9526455
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-restart",
+      "engine": "corrected",
+      "replicates": 4,
+      "complete": false,
+      "phi_bias": [-0.044243120930908653, -0.062244107466981891],
+      "phi_bias_halfwidth": [0.17153971734052037, 0.15719842435195677],
+      "AR_RMSE": 0.29970110141996104,
+      "whiteness": 0.14004618937341973,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "coverage": {
+        "count": 3,
+        "rate": 0.75,
+        "interval": [0.24860462573018144, 0.98725854490143383]
+      },
+      "variance_ratio": {
+        "estimate": 11.30521262333129,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.39756784836551384,
+        "interval": [-1.5742495657664262, 0.77911386903539848]
+      },
+      "d_eff": 13.378489890594587,
+      "d_inv": null,
+      "effect_variance_dependence": 0.27246910118271844,
+      "timing_ms": {
+        "mean": 18.523739249999998,
+        "median": 18.331166500000002
+      },
+      "gates": {
+        "complete": false,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": false,
+        "whiteness_excess": false
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [0, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.094165950658091274,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.3879955328097233,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.12893873989601004,
+        "interval": [-0.30932384902713317, 0.56720132881915319]
+      },
+      "d_eff": 218.42607884120764,
+      "d_inv": null,
+      "effect_variance_dependence": -0.27417802996007357,
+      "timing_ms": {
+        "mean": 5.9400286874999999,
+        "median": 3.7936455000000002
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-tail-continuous",
+      "engine": "corrected",
+      "replicates": 4,
+      "complete": false,
+      "phi_bias": [-0.044243120930908653, -0.062244107466981891],
+      "phi_bias_halfwidth": [0.17153971734052037, 0.15719842435195677],
+      "AR_RMSE": 0.29970110141996104,
+      "whiteness": 0.14201074492375226,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "coverage": {
+        "count": 3,
+        "rate": 0.75,
+        "interval": [0.24860462573018144, 0.98725854490143383]
+      },
+      "variance_ratio": {
+        "estimate": 15.697216665845632,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.39642086828011402,
+        "interval": [-1.5731025856810263, 0.78026084912079829]
+      },
+      "d_eff": 12.61091363586303,
+      "d_inv": null,
+      "effect_variance_dependence": 0.34960895019203608,
+      "timing_ms": {
+        "mean": 25.345333249999999,
+        "median": 24.379958000000002
+      },
+      "gates": {
+        "complete": false,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": false,
+        "whiteness_excess": false
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long-adaptive-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [5.5511151231257827e-17, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.057975152837426269,
+      "null_t": {
+        "count": 3,
+        "rate": 0.1875,
+        "interval": [0.053145984482663805, 0.41657228070615282]
+      },
+      "null_f": {
+        "count": 2,
+        "rate": 0.125,
+        "interval": [0.022678782722445709, 0.34382519922958943]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 0.58002242327386089,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.26943993116774084,
+        "interval": [-0.70770252009088397, 0.16882265775540234]
+      },
+      "d_eff": 1571.7829629171542,
+      "d_inv": 4.7542799162163591,
+      "effect_variance_dependence": -0.073669780649774974,
+      "timing_ms": {
+        "mean": 15.340445375,
+        "median": 12.290312499999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long-adaptive-restart",
+      "engine": "corrected",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [0.00042363662265687552, -0.011363747812486447],
+      "phi_bias_halfwidth": [0.0095048379961863785, 0.0098891149227576924],
+      "AR_RMSE": 0.066353997812130014,
+      "whiteness": 0.045615228450087857,
+      "null_t": {
+        "count": 3,
+        "rate": 0.1875,
+        "interval": [0.053145984482663805, 0.41657228070615282]
+      },
+      "null_f": {
+        "count": 3,
+        "rate": 0.1875,
+        "interval": [0.053145984482663805, 0.41657228070615282]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 0.65140451401376287,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.33279827332363759,
+        "interval": [-0.77106086224678072, 0.10546431559950559]
+      },
+      "d_eff": 117.9881489534755,
+      "d_inv": 5.5877855827972081,
+      "effect_variance_dependence": -0.026876901191923354,
+      "timing_ms": {
+        "mean": 30.645643187499999,
+        "median": 26.779271000000001
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long-tail-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [5.5511151231257827e-17, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.057975152837426269,
+      "null_t": {
+        "count": 3,
+        "rate": 0.1875,
+        "interval": [0.053145984482663805, 0.41657228070615282]
+      },
+      "null_f": {
+        "count": 2,
+        "rate": 0.125,
+        "interval": [0.022678782722445709, 0.34382519922958943]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 0.58002242327386089,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.26943993116774084,
+        "interval": [-0.70770252009088397, 0.16882265775540234]
+      },
+      "d_eff": 1571.7829629171542,
+      "d_inv": 4.7542799162163591,
+      "effect_variance_dependence": -0.073669780649774974,
+      "timing_ms": {
+        "mean": 13.334765562499999,
+        "median": 12.234957999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long-tail-restart",
+      "engine": "corrected",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [-0.0153402191210113, -0.026873655289991222],
+      "phi_bias_halfwidth": [0.013664309212011916, 0.015040878940594618],
+      "AR_RMSE": 0.099200167852963025,
+      "whiteness": 0.062392149486846994,
+      "null_t": {
+        "count": 2,
+        "rate": 0.125,
+        "interval": [0.022678782722445709, 0.34382519922958943]
+      },
+      "null_f": {
+        "count": 4,
+        "rate": 0.25,
+        "interval": [0.090252433030427417, 0.48439642109366909]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 0.61650295313618009,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.33444112575584189,
+        "interval": [-0.77270371467898502, 0.10382146316730129]
+      },
+      "d_eff": 38.151925958340051,
+      "d_inv": 4.8652536242084139,
+      "effect_variance_dependence": 0.30427402946823007,
+      "timing_ms": {
+        "mean": 68.746057374999992,
+        "median": 67.328812499999998
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": false,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long-tail-continuous",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [5.5511151231257827e-17, 0],
+      "phi_bias_halfwidth": [0, 0],
+      "AR_RMSE": 0,
+      "whiteness": 0.05829728174099217,
+      "null_t": {
+        "count": 3,
+        "rate": 0.1875,
+        "interval": [0.053145984482663805, 0.41657228070615282]
+      },
+      "null_f": {
+        "count": 2,
+        "rate": 0.125,
+        "interval": [0.022678782722445709, 0.34382519922958943]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 0.61554606539256251,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.26741402766508121,
+        "interval": [-0.70567661658822445, 0.17084856125806197]
+      },
+      "d_eff": 1673.9759390419995,
+      "d_inv": 5.1927719119598699,
+      "effect_variance_dependence": -0.065052358176456521,
+      "timing_ms": {
+        "mean": 12.215687624999999,
+        "median": 11.970417000000001
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise-long-tail-continuous",
+      "engine": "corrected",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": [-0.0153402191210113, -0.026873655289991222],
+      "phi_bias_halfwidth": [0.013664309212011916, 0.015040878940594618],
+      "AR_RMSE": 0.099200167852963025,
+      "whiteness": 0.062629284801973092,
+      "null_t": {
+        "count": 2,
+        "rate": 0.125,
+        "interval": [0.022678782722445709, 0.34382519922958943]
+      },
+      "null_f": {
+        "count": 5,
+        "rate": 0.3125,
+        "interval": [0.13211096575490611, 0.54834708084874739]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 0.65888708188909551,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.33718465102128081,
+        "interval": [-0.77544723994442399, 0.10107793790186237]
+      },
+      "d_eff": 36.170647782520923,
+      "d_inv": 5.3722279679512983,
+      "effect_variance_dependence": 0.29466024602720786,
+      "timing_ms": {
+        "mean": 70.237317625000003,
+        "median": 66.035646
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": false,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-adaptive-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": 0,
+      "phi_bias_halfwidth": 0,
+      "AR_RMSE": 0,
+      "whiteness": 0.092567507825333878,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.5486059488998627,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.16609093617033274,
+        "interval": [-0.27217165275281041, 0.60435352509347595]
+      },
+      "d_eff": 221.65146701502812,
+      "d_inv": null,
+      "effect_variance_dependence": -0.29792961023878539,
+      "timing_ms": {
+        "mean": 3.8740519375,
+        "median": 3.4508749999999999
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-adaptive-restart",
+      "engine": "corrected",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": -0.019036794228853626,
+      "phi_bias_halfwidth": 0.012296140809239981,
+      "AR_RMSE": 0.10645960608458289,
+      "whiteness": 0.087418665862948094,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 1,
+        "rate": 0.0625,
+        "interval": [0.0032006977101884963, 0.26395739728856848]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.3516040497961181,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.10147846168520437,
+        "interval": [-0.33678412723793882, 0.53974105060834754]
+      },
+      "d_eff": 61.610635956669611,
+      "d_inv": null,
+      "effect_variance_dependence": -0.12137226715214341,
+      "timing_ms": {
+        "mean": 8.7235208125000003,
+        "median": 8.3806250000000002
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true,
+        "whiteness_excess": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": 0,
+      "phi_bias_halfwidth": 0,
+      "AR_RMSE": 0,
+      "whiteness": 0.092567507825333878,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 15,
+        "rate": 0.9375,
+        "interval": [0.7360426027114314, 0.99679930228981151]
+      },
+      "variance_ratio": {
+        "estimate": 1.5486059488998627,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.16609093617033274,
+        "interval": [-0.27217165275281041, 0.60435352509347595]
+      },
+      "d_eff": 221.65146701502812,
+      "d_inv": null,
+      "effect_variance_dependence": -0.29792961023878539,
+      "timing_ms": {
+        "mean": 3.7504299374999999,
+        "median": 3.6166255
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-restart",
+      "engine": "corrected",
+      "replicates": 4,
+      "complete": false,
+      "phi_bias": -0.042505398514099402,
+      "phi_bias_halfwidth": 0.2267393119630004,
+      "AR_RMSE": 0.35149085179215306,
+      "whiteness": 0.12913112697754911,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "coverage": {
+        "count": 4,
+        "rate": 1,
+        "interval": [0.47287080450158786, 1]
+      },
+      "variance_ratio": {
+        "estimate": 10.612397091388434,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.52988244350678482,
+        "interval": [-1.7065641609076971, 0.6467992738941275]
+      },
+      "d_eff": 12.509644966641645,
+      "d_inv": null,
+      "effect_variance_dependence": 0.22091939047262257,
+      "timing_ms": {
+        "mean": 29.070614749999997,
+        "median": 28.717333499999999
+      },
+      "gates": {
+        "complete": false,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": false,
+        "whiteness_excess": false
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "engine": "known-phi",
+      "replicates": 16,
+      "complete": true,
+      "phi_bias": 0,
+      "phi_bias_halfwidth": 0,
+      "AR_RMSE": 0,
+      "whiteness": 0.093724544439341403,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.17074972298248092]
+      },
+      "coverage": {
+        "count": 16,
+        "rate": 1,
+        "interval": [0.82925027701751908, 1]
+      },
+      "variance_ratio": {
+        "estimate": 1.5391249571416998,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": 0.12518258126291243,
+        "interval": [-0.31308000766023075, 0.56344517018605567]
+      },
+      "d_eff": 216.61792670626176,
+      "d_inv": null,
+      "effect_variance_dependence": -0.29282185490027057,
+      "timing_ms": {
+        "mean": 4.5696718125000002,
+        "median": 3.7212085000000004
+      },
+      "gates": {
+        "complete": true,
+        "mean_AR_bias": true,
+        "AR_RMSE": true,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": true
+      },
+      "scientific_pass": false
+    },
+    {
+      "cell": "ar1-high-censored-voxelwise-tail-continuous",
+      "engine": "corrected",
+      "replicates": 4,
+      "complete": false,
+      "phi_bias": -0.042505398514099402,
+      "phi_bias_halfwidth": 0.2267393119630004,
+      "AR_RMSE": 0.35149085179215306,
+      "whiteness": 0.13058323231115054,
+      "null_t": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "null_f": {
+        "count": 0,
+        "rate": 0,
+        "interval": [0, 0.52712919549841197]
+      },
+      "coverage": {
+        "count": 4,
+        "rate": 1,
+        "interval": [0.47287080450158786, 1]
+      },
+      "variance_ratio": {
+        "estimate": 7.4879355877685141,
+        "interval": [null, null]
+      },
+      "standardized_bias": {
+        "estimate": -0.33134691207114259,
+        "interval": [-1.5080286294720548, 0.84533480532976979]
+      },
+      "d_eff": 12.252284247070689,
+      "d_inv": null,
+      "effect_variance_dependence": 0.45879145965168699,
+      "timing_ms": {
+        "mean": 49.303750000000001,
+        "median": 29.597250000000003
+      },
+      "gates": {
+        "complete": false,
+        "mean_AR_bias": false,
+        "AR_RMSE": false,
+        "null_t": false,
+        "null_f": false,
+        "interval_coverage": false,
+        "variance_ratio": false,
+        "standardized_bias": false,
+        "residual_whiteness": false,
+        "whiteness_excess": false
+      },
+      "scientific_pass": false
+    }
+  ],
+  "cross_platform": {
+    "same_dataset_keys": true,
+    "max_scaled_numeric_error": 5.4539057710419389e-12,
+    "tolerance": 1.0000000000000001e-09,
+    "same_decisions": true,
+    "pass": true
+  },
+  "scientific_pass": null,
+  "limits": [
+    "Gaussian stationary pure AR truth; homogeneous across four independent response columns",
+    "All responses retained, including rows excluded from lag estimation; this is estimation-only censoring, not physical observation removal",
+    "Non-contiguous selected source timepoints are refused under estimation-only continuity",
+    "Short-memory tail assumption is explicit; no long-memory qualification",
+    "Historical negative qualification receipts remain binding for their old recipes",
+    "No inference admission from pilot or screen"
+  ]
+}

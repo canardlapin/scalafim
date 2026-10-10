@@ -32,7 +32,9 @@ val summary = SubjectGroupSummary.fit(input, contract,
 
 The result contains mean effects, standard errors, unadjusted pointwise p-values,
 Q, I² and tau², plus empirical subject means/variances. Empirical variance includes
-sampling noise; tau² estimates the model's between-subject variance. For
+sampling noise; tau² estimates the model's between-subject variance. I² is
+always the Higgins-Thompson `(Q - df) / Q` from the fixed-effect Q; metafor's
+Paule-Mandel I² is tau²-based and differs when sampling variances differ. For
 `KnownVarianceGaussianFixedEffects`, tau² is fixed at zero and the estimand is
 a common effect. That calculation accepts only known covariance sources.
 Neither mode changes the original uncertainty or discards individual expression
@@ -70,11 +72,21 @@ for
     learningSubjectColumn, headTrainingSubjectColumn, assessmentSubjectColumn,
     SubjectHeadTraining.SharedTraining, predictionContract,
     actualHeadExposure, untouchedAssessmentExposure)
-  assessed <- plan.evaluate(assessmentBrain, assessmentTargets,
+  evaluation = plan.evaluate(assessmentBrain, assessmentTargets,
     currentAssessmentExposure)
+  // Carry evaluation.exposure forward: it records the held-out read.
+  assessed <- evaluation.result
   summary <- SubjectPredictiveSummary.combine(expectedSubjects, Vector(assessed))
 yield summary
 ```
+
+`evaluate` returns a `HeldOutSubjectEvaluation`: the typed result, the
+assessment ledger and whether the payload read was attempted. Binding,
+exposure and budget refusals happen before any read and return the supplied
+ledger unchanged. Otherwise the payload read is recorded as an instrumented
+holdout event, even if it fails, and a completed evaluation also records the
+derived loss view. The returned ledger therefore refuses a second evaluation or
+a replacement plan that would present the same held-out subjects as untouched.
 
 For adaptation, evaluate each subject's separate head and combine the results
 in the declared cohort order. All results must share the same learning source,
@@ -99,3 +111,5 @@ renamed physical observations or undisclosed external access.
 Tests: `python3 tools/build/sbt-warm mvpaGroupJVM/test mvpaGroupJS/test`.
 Independent numerical fixtures and source-bound execution evidence live in
 [`umvpa-group-summaries-20261007`](../../docs/verification/umvpa-group-summaries-20261007/README.md).
+The [2026-10-10 salvage review](../../docs/verification/umvpa-group-salvage-20261010/README.md)
+adds an equal-variance analytic oracle and a metafor cross-check.

@@ -20,7 +20,7 @@ final case class PreparedGlsUnit private[fit] (
   require(whitening.method == WhiteningMethod.Estimated && whitening.maOrder == 0,
     "completed GLS artifacts contain estimated pure-AR whitening")
   require(whitening.initialCondition == InitialConditionPolicy.Identity ||
-    whitening.initialCondition == InitialConditionPolicy.ExactAr1, "unsupported GLS initial condition")
+    whitening.initialCondition == InitialConditionPolicy.ExactAr1 || whitening.initialCondition == InitialConditionPolicy.Stationary, "unsupported GLS initial condition")
 
 private[fit] final case class CompletedGlsNoise(
     designIdentity: String,
@@ -70,6 +70,7 @@ final class PreparedGlsArtifact private[fit] (
 object PreparedGlsArtifact:
   private val Version = "prepared-gls-v1"
   private val CorrectedVersion = "prepared-gls-v2"
+  private val StationaryVersion = "prepared-gls-v3"
 
   /** Performs the configured bounded AR estimation passes, but no final fit pass. */
   def prepare(descriptor: FitWorkDescriptor, resolver: FitWorkResolver): Either[FitError, PreparedGlsArtifact] =
@@ -142,20 +143,25 @@ object PreparedGlsArtifact:
       case OlsRankTolerance.Absolute(value) => s"absolute:${bits(value)}"
     FitWorkDescriptor.frame(Vector(policy.method.toString, rank, tolerance, bits(policy.choleskyTolerance)))
 
-  private def encodeUnit(unit: PreparedGlsUnit): String =
+  private def encodeUnit(unit: PreparedGlsUnit, includeCorrections: Boolean): String =
     val w = unit.whitening
     FitWorkDescriptor.frame(Vector(
       unit.sourceRun.fold("shared")(_.toString), w.pooling.toString,
-      if w.exactFirstAr1 then "exact-ar1" else "identity",
+      (w.initialCondition match
+        case InitialConditionPolicy.Identity => "identity"
+        case InitialConditionPolicy.ExactAr1 => "exact-ar1"
+        case InitialConditionPolicy.Stationary => "stationary"
+        case _ => throw new IllegalArgumentException("unsupported GLS initial condition")),
       FitWorkDescriptor.frame(w.segments.map(s => s"${s.start},${s.endExclusive},${s.runIndex}")),
       FitWorkDescriptor.frame(w.coefficients.map(c => c.phi.map(bits).mkString(",")))
-    ) ++ (if unit.corrections.isEmpty then Vector.empty else Vector(FitWorkDescriptor.frame(unit.corrections.map(encodeCorrection)))))
+    ) ++ (if !includeCorrections then Vector.empty else Vector(FitWorkDescriptor.frame(unit.corrections.map(encodeCorrection)))))
 
   private def encode(artifact: PreparedGlsArtifact): String =
-    val version = if artifact.units.exists(_.corrections.nonEmpty) then CorrectedVersion else Version
+    val version = if artifact.units.exists(unit => unit.whitening.initialCondition == InitialConditionPolicy.Stationary || unit.corrections.exists(_.isInstanceOf[RunCorrection.AppliedWithTailAnchor])) then StationaryVersion
+      else if artifact.units.exists(_.corrections.nonEmpty) then CorrectedVersion else Version
     FitWorkDescriptor.frame(Vector(version, artifact.descriptor.encode, artifact.scope.toString,
       artifact.noise.designIdentity, artifact.retainedVoxelIndices.mkString(","),
-      FitWorkDescriptor.frame(artifact.units.map(encodeUnit))))
+      FitWorkDescriptor.frame(artifact.units.map(unit => encodeUnit(unit, version != Version)))))
 
   /** Canonical UTF-16 length framing, with exact IEEE-754 bit strings for numbers.
     * Unknown versions, noncanonical text, invalid axes and invalid AR state fail closed.
@@ -163,16 +169,17 @@ object PreparedGlsArtifact:
   def decode(text: String): Either[FitError, PreparedGlsArtifact] =
     try
       val fields = unframe(text)
-      require(fields.length == 6 && Set(Version, CorrectedVersion).contains(fields.head), "unsupported or malformed prepared GLS schema")
+      require(fields.length == 6 && Set(Version, CorrectedVersion, StationaryVersion).contains(fields.head), "unsupported or malformed prepared GLS schema")
       val descriptor = FitWorkDescriptor.decode(fields(1)).fold(e => throw new IllegalArgumentException(e.message), identity)
       val units = unframe(fields(5)).map { encoded =>
         val parts = unframe(encoded)
         require(parts.length == (if fields.head == Version then 5 else 6), "invalid whitening unit")
         val run = if parts(0) == "shared" then None else Some(parts(0).toInt)
         val pooling = NoisePooling.valueOf(parts(1))
-        val exact = parts(2) match
-          case "exact-ar1" => true
-          case "identity" => false
+        val initial = parts(2) match
+          case "exact-ar1" => InitialConditionPolicy.ExactAr1
+          case "identity" => InitialConditionPolicy.Identity
+          case "stationary" if fields.head == StationaryVersion => InitialConditionPolicy.Stationary
           case _ => throw new IllegalArgumentException("invalid initial condition")
         val segments = unframe(parts(3)).map { value =>
           val axis = value.split(",", -1).toVector.map(_.toInt)
@@ -183,7 +190,9 @@ object PreparedGlsArtifact:
           ArmaCoefficients.ar((if value.isEmpty then Vector.empty else value.split(",", -1).toVector.map(number))*)
         }
         val corrections = if fields.head == Version then Vector.empty else unframe(parts(5)).map(decodeCorrection)
-        PreparedGlsUnit(run, WhiteningPlan(coefficients, segments, pooling, exact, WhiteningMethod.Estimated), corrections)
+        val scope = if pooling == NoisePooling.Global then scalafim.fmri.ar.CoefficientScope.Global(coefficients.head) else scalafim.fmri.ar.CoefficientScope.ByRun(coefficients)
+        val whitening = WhiteningPlan.withScope(scope, segments, initial, WhiteningMethod.Estimated).fold(e => throw new IllegalArgumentException(e.message), identity)
+        PreparedGlsUnit(run, whitening, corrections)
       }
       val artifact = new PreparedGlsArtifact(descriptor, PreparedGlsScope.valueOf(fields(2)),
         CompletedGlsNoise(fields(3), fields(4).split(",", -1).toVector.map(_.toInt), units))
@@ -196,6 +205,7 @@ object PreparedGlsArtifact:
     val fields = correction match
       case RunCorrection.Uncorrected => Vector("raw")
       case RunCorrection.Applied(rcond) => Vector("applied", bits(rcond))
+      case RunCorrection.AppliedWithTailAnchor(rcond, directions) => Vector("tail-applied", bits(rcond), directions.toString)
       case RunCorrection.IllConditioned(rcond) => Vector("ill-conditioned", bits(rcond))
       case RunCorrection.NotAttempted(reason) => Vector("skipped", reason.toString)
       case RunCorrection.SolveFallback(reason) => reason match
@@ -214,6 +224,11 @@ object PreparedGlsArtifact:
         val rcond = number(value)
         require(rcond >= scalafim.fmri.ar.AcvfBias.ReciprocalConditionFloor, "invalid applied conditioning")
         RunCorrection.Applied(rcond)
+      case Vector("tail-applied", value, count) =>
+        val rcond = number(value)
+        val directions = count.toInt
+        require(rcond >= scalafim.fmri.ar.AcvfBias.ReciprocalConditionFloor && directions > 0, "invalid tail correction diagnostic")
+        RunCorrection.AppliedWithTailAnchor(rcond, directions)
       case Vector("ill-conditioned", value) =>
         val rcond = number(value)
         require(rcond >= 0.0 && rcond < scalafim.fmri.ar.AcvfBias.ReciprocalConditionFloor, "invalid rejected conditioning")

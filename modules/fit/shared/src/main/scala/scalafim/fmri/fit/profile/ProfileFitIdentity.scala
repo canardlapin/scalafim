@@ -67,6 +67,7 @@ private[profile] object ProfileFitIdentity:
     val first = initial match
       case InitialConditionPolicy.Identity => record("identity")
       case InitialConditionPolicy.ExactAr1 => record("exact_ar1")
+      case InitialConditionPolicy.Stationary => record("stationary")
       case InitialConditionPolicy.PrecomputedScale(scale) => record("precomputed_scale", number(scale))
     val methodId = method match
       case WhiteningMethod.Fixed => "fixed"
@@ -177,7 +178,22 @@ private[profile] object ProfileFitIdentity:
       s"drive=${field(drive(plan.source))}|basis=${field(basis.provenance.canonical)}|basis-lags=${matrix(1, basis.fineCount, basis.lags)}|" +
       s"basis-values=${matrix(basis.fineCount, basis.rank, basisValues)}|basis-coefficients=${record("coefficient_jets", coefficientRecords*)}|" +
       s"nuisance=${mat(nuisance)}|config=${field(config(fitConfig))}|whitening=$temporalId|amplitudes=${amplitudes(plan.amplitudes)}|" +
-      s"criterion=${criterion(plan.criterion)}|grid=${ints(policy.nodesPerAxis)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
+      s"criterion=${criterion(plan.criterion)}|grid=${ints(if policy.trialReferences.isEmpty then policy.nodesPerAxis else Vector.empty)}|decode=${field(ConditionProfileProvenance.budgetCanonical(policy.budget))}|" +
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
       s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +
-      compactComparisonMarker(route, policy) + s"|exact-readout=$exactReadout"
+      compactComparisonMarker(route, policy) + trialPreparationMarker(route, policy) + trialReferenceMarker(policy) + s"|exact-readout=$exactReadout"
+
+  private def trialReferenceMarker(policy: ProfileDecodePolicy): String =
+    policy.trialReferences.fold(""): references =>
+      "|trial-references=" + record("explicit_reference_decode/v1",
+        record("points", references.points.coordinates.map(numbers)*), ints(references.candidates),
+        references.storage.toString, "continuous-factors=exact-charged", "production-admitted=false")
+
+  private def trialPreparationMarker(route: String, policy: ProfileDecodePolicy): String =
+    val preparation = policy.trialPreparation
+    if !route.startsWith("trial-banded") || preparation == TrialPreparationPolicy() then ""
+    else
+      val lowering = preparation.lowering match
+        case scalafim.fmri.design.hrf.TrialDesignLowering.Dense => record("dense")
+        case scalafim.fmri.design.hrf.TrialDesignLowering.Blocked(size) => record("blocked", size.toString)
+      s"|trial-preparation=${record("trial-preparation/v1", lowering, preparation.maxRetainedValues.toString)}"

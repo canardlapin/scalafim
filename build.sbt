@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "d03eb99bde389ce9bce21b8e0fc59bec9ac9b4aa"
+lazy val galeRevision = "62c0aeb3374557874a17f870c9ae05e3290c21cf"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -945,7 +945,9 @@ lazy val atlas =
         ).filter(_.tests.nonEmpty)
       }
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
+    // Test-only: the real-asset fsLR fixtures (locked asset gate, SimpleITK inverse oracle, qualification inputs)
+    // live with surface's JVM tests; atlas tests drive them through the public standard-route entry point.
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, surface.jvm % "test->test"))
     .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
@@ -1189,7 +1191,7 @@ lazy val firstLevelLaws =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/first-level-laws"))
-    .dependsOn(fit, hrfLaws)
+    .dependsOn(fit, hrfLaws, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(

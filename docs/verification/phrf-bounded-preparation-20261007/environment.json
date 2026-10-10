@@ -1,0 +1,11 @@
+{
+  "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+  "node": "v24.21.0",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t15.1.1\nBuildVersion:\t\t24B91",
+  "hardware": "arm64",
+  "sbtWarmHeap": "5g",
+  "scalaJsStage": "FastOptStage",
+  "localGaleOverride": false,
+  "timingScope": "single diagnostic runs; no controlled warmup or external host activity",
+  "peakEngineMemoryMeasured": false
+}

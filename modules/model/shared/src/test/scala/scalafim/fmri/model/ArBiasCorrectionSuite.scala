@@ -26,3 +26,14 @@ class ArBiasCorrectionSuite extends munit.FunSuite:
     assertEquals(ModelBuildSpecJsonCodec.decode(encoded), Right(spec))
     assert(ModelBuildSpecJsonCodec.decode(encoded.replace("\"ceiling\":25", "\"ceiling\":0")).isLeft)
   }
+
+  test("robust AR refuses GLS-only initialization and censor policies") {
+    val configs = Vector(
+      AutocorrelationConfig.withInitialization(ArInitialization.Stationary).toOption.get,
+      AutocorrelationConfig.unsafe(censorTreatment = ArCensorTreatment.EstimateOnly)
+    )
+    configs.foreach: config =>
+      assert(RobustAutocorrelation.Reestimate(config).validateFor(80).isLeft)
+      assert(RobustAutocorrelation.fromLegacy(
+        RobustOptions(reestimateAutocorrelation = true), config.toLegacy).isLeft)
+  }

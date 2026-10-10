@@ -1,0 +1,32 @@
+{
+  "confirmation_datasets_per_cell": 2048,
+  "projection_from": "paired 16-dataset pilot, no statistical admission",
+  "jvm_fitting_seconds": 1864.663595264,
+  "by_case": [
+    {
+      "cell": "ar1-high-censored-run",
+      "projected_jvm_seconds": 372.06680524800004
+    },
+    {
+      "cell": "ar1-high-global",
+      "projected_jvm_seconds": 270.885957632
+    },
+    {
+      "cell": "ar1-low-global",
+      "projected_jvm_seconds": 525.964602624
+    },
+    {
+      "cell": "ar2-high-censored-voxelwise",
+      "projected_jvm_seconds": 188.99054912
+    },
+    {
+      "cell": "ar2-high-global",
+      "projected_jvm_seconds": 272.854901632
+    },
+    {
+      "cell": "ar2-low-global",
+      "projected_jvm_seconds": 233.90077900799997
+    }
+  ],
+  "setup_linking_and_other_contention_excluded": true
+}

@@ -1,0 +1,2250 @@
+{
+  "qualification": "not-admitted",
+  "format": "phrf-original-family-audit/1",
+  "rows": 600,
+  "trials": 60,
+  "voxelsPerCell": 2,
+  "cells": [
+    {
+      "label": "shape-0-matched",
+      "unitShape": [
+        0.2,
+        0.25,
+        0.15
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0,
+      "originalFamily": false
+    },
+    {
+      "label": "shape-0-original",
+      "unitShape": [
+        0.2,
+        0.25,
+        0.15
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-0-original-noisy",
+      "unitShape": [
+        0.2,
+        0.25,
+        0.15
+      ],
+      "noiseRatio": 0.5,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-1-matched",
+      "unitShape": [
+        0.4,
+        0.75,
+        0.7
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0,
+      "originalFamily": false
+    },
+    {
+      "label": "shape-1-original",
+      "unitShape": [
+        0.4,
+        0.75,
+        0.7
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-1-original-noisy",
+      "unitShape": [
+        0.4,
+        0.75,
+        0.7
+      ],
+      "noiseRatio": 0.5,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-2-matched",
+      "unitShape": [
+        0.75,
+        0.3,
+        0.45
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0,
+      "originalFamily": false
+    },
+    {
+      "label": "shape-2-original",
+      "unitShape": [
+        0.75,
+        0.3,
+        0.45
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-2-original-noisy",
+      "unitShape": [
+        0.75,
+        0.3,
+        0.45
+      ],
+      "noiseRatio": 0.5,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-3-matched",
+      "unitShape": [
+        0.9,
+        0.85,
+        0.9
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0,
+      "originalFamily": false
+    },
+    {
+      "label": "shape-3-original",
+      "unitShape": [
+        0.9,
+        0.85,
+        0.9
+      ],
+      "noiseRatio": 0,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    },
+    {
+      "label": "shape-3-original-noisy",
+      "unitShape": [
+        0.9,
+        0.85,
+        0.9
+      ],
+      "noiseRatio": 0.5,
+      "trialVariation": 0.25,
+      "originalFamily": true
+    }
+  ],
+  "result": {
+    "records": [
+      {
+        "cell": "shape-0-matched",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1090354889066967,
+          -1.3013448427338705,
+          0.11999999999401059
+        ],
+        "energy": 1.0835776720341528E-13,
+        "shapeErrorInChartUnits": 7.779200921864147E-12,
+        "emitted": true,
+        "preparedQrMaxError": 4.4797499043625066E-14,
+        "originalQrMaxError": 0.005406721848406072,
+        "signedQueryAbsoluteError": 2.3515175874605498E-4,
+        "amplitudeTruthRelativeError": 1.1051224254468256E-11,
+        "preparedResidual": 1.4344424122231032E-14,
+        "originalResidual": 0.5333374192983432,
+        "preparedTrialQrMaxError": 4.4797499043625066E-14,
+        "originalTrialQrMaxError": 0.005023066943013799,
+        "originalNuisanceQrMaxError": 0.005406721848406072
+      },
+      {
+        "cell": "shape-0-matched",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1090354888978555,
+          -1.3013448415379631,
+          0.11999999986330756
+        ],
+        "energy": 1.0125233984581428E-13,
+        "shapeErrorInChartUnits": 3.3046525311665497E-10,
+        "emitted": true,
+        "preparedQrMaxError": 2.0457073535151693E-13,
+        "originalQrMaxError": 0.005406721839230404,
+        "signedQueryAbsoluteError": 2.3515175774541097E-4,
+        "amplitudeTruthRelativeError": 5.9428024204462026E-12,
+        "preparedResidual": 2.1373612353375867E-14,
+        "originalResidual": 0.5333374180727877,
+        "preparedTrialQrMaxError": 5.4012350148013866E-14,
+        "originalTrialQrMaxError": 0.005023066940328225,
+        "originalNuisanceQrMaxError": 0.005406721839230404
+      },
+      {
+        "cell": "shape-0-matched",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1090354889066967,
+          -1.3013448427338705,
+          0.11999999999401059
+        ],
+        "energy": 1.0835776720341528E-13,
+        "shapeErrorInChartUnits": 7.779200921864147E-12,
+        "emitted": true,
+        "preparedQrMaxError": 0.09662028448698301,
+        "originalQrMaxError": 0.09615060866119429,
+        "signedQueryAbsoluteError": 0.001498422620067108,
+        "amplitudeTruthRelativeError": 0.07791733224969806,
+        "preparedResidual": 0.03000193648957629,
+        "originalResidual": 0.49741820608899556,
+        "preparedTrialQrMaxError": 0.09662028448698301,
+        "originalTrialQrMaxError": 0.09615060866119429,
+        "originalNuisanceQrMaxError": 0.007459644847428931
+      },
+      {
+        "cell": "shape-0-matched",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1090354888978555,
+          -1.3013448415379631,
+          0.11999999986330756
+        ],
+        "energy": 1.0125233984581428E-13,
+        "shapeErrorInChartUnits": 3.3046525311665497E-10,
+        "emitted": true,
+        "preparedQrMaxError": 0.09662028450228832,
+        "originalQrMaxError": 0.09615060867896674,
+        "signedQueryAbsoluteError": 0.0014984226196032013,
+        "amplitudeTruthRelativeError": 0.07791733226045497,
+        "preparedResidual": 0.030001936503595675,
+        "originalResidual": 0.4974182048649341,
+        "preparedTrialQrMaxError": 0.09662028450228832,
+        "originalTrialQrMaxError": 0.09615060867896674,
+        "originalNuisanceQrMaxError": 0.007459644848570045
+      },
+      {
+        "cell": "shape-0-original",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1430951151023312,
+          -1.3196357419122011,
+          0.18930748656174723
+        ],
+        "energy": 0.08637331881094212,
+        "shapeErrorInChartUnits": 0.08663435820218404,
+        "emitted": true,
+        "preparedQrMaxError": 3.3678615452004124E-13,
+        "originalQrMaxError": 0.009636835081745374,
+        "signedQueryAbsoluteError": 3.5233313142524203E-4,
+        "amplitudeTruthRelativeError": 0.1931641087982292,
+        "preparedResidual": 2.427780056307139E-15,
+        "originalResidual": 0.9836299743995308,
+        "preparedTrialQrMaxError": 8.060219158778636E-14,
+        "originalTrialQrMaxError": 0.008887372648229808,
+        "originalNuisanceQrMaxError": 0.009636835081745374
+      },
+      {
+        "cell": "shape-0-original",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "CurvatureNotPositive",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1035104580087616,
+          -2.197224577336219,
+          0
+        ],
+        "energy": 0.08753011675752198,
+        "shapeErrorInChartUnits": 0.25,
+        "emitted": false,
+        "preparedQrMaxError": null,
+        "originalQrMaxError": null,
+        "signedQueryAbsoluteError": null,
+        "amplitudeTruthRelativeError": null,
+        "preparedResidual": null,
+        "originalResidual": null,
+        "preparedTrialQrMaxError": null,
+        "originalTrialQrMaxError": null,
+        "originalNuisanceQrMaxError": null
+      },
+      {
+        "cell": "shape-0-original",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1430951151023312,
+          -1.3196357419122011,
+          0.18930748656174723
+        ],
+        "energy": 0.08637331881094212,
+        "shapeErrorInChartUnits": 0.08663435820218404,
+        "emitted": true,
+        "preparedQrMaxError": 0.06643427733492668,
+        "originalQrMaxError": 0.06793730504613582,
+        "signedQueryAbsoluteError": 0.001641435184780271,
+        "amplitudeTruthRelativeError": 0.19320696778087887,
+        "preparedResidual": 0.03687674587341491,
+        "originalResidual": 0.9251847921063439,
+        "preparedTrialQrMaxError": 0.06643427733492668,
+        "originalTrialQrMaxError": 0.06793730504613582,
+        "originalNuisanceQrMaxError": 0.007877829515484266
+      },
+      {
+        "cell": "shape-0-original",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "CurvatureNotPositive",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1035104580087616,
+          -2.197224577336219,
+          0
+        ],
+        "energy": 0.08753011675752198,
+        "shapeErrorInChartUnits": 0.25,
+        "emitted": false,
+        "preparedQrMaxError": null,
+        "originalQrMaxError": null,
+        "signedQueryAbsoluteError": null,
+        "amplitudeTruthRelativeError": null,
+        "preparedResidual": null,
+        "originalResidual": null,
+        "preparedTrialQrMaxError": null,
+        "originalTrialQrMaxError": null,
+        "originalNuisanceQrMaxError": null
+      },
+      {
+        "cell": "shape-0-original-noisy",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Boundary",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1109627363636845,
+          -2.197224577336219,
+          0.7070143632395023
+        ],
+        "energy": 0.4947706631999438,
+        "shapeErrorInChartUnits": 0.7337679540493778,
+        "emitted": false,
+        "preparedQrMaxError": null,
+        "originalQrMaxError": null,
+        "signedQueryAbsoluteError": null,
+        "amplitudeTruthRelativeError": null,
+        "preparedResidual": null,
+        "originalResidual": null,
+        "preparedTrialQrMaxError": null,
+        "originalTrialQrMaxError": null,
+        "originalNuisanceQrMaxError": null
+      },
+      {
+        "cell": "shape-0-original-noisy",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Boundary",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1110519136789874,
+          -2.144414059607429,
+          0.8
+        ],
+        "energy": 0.5044408436630636,
+        "shapeErrorInChartUnits": 0.85,
+        "emitted": false,
+        "preparedQrMaxError": null,
+        "originalQrMaxError": null,
+        "signedQueryAbsoluteError": null,
+        "amplitudeTruthRelativeError": null,
+        "preparedResidual": null,
+        "originalResidual": null,
+        "preparedTrialQrMaxError": null,
+        "originalTrialQrMaxError": null,
+        "originalNuisanceQrMaxError": null
+      },
+      {
+        "cell": "shape-0-original-noisy",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Boundary",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1109627363636845,
+          -2.197224577336219,
+          0.7070143632395023
+        ],
+        "energy": 0.4947706631999438,
+        "shapeErrorInChartUnits": 0.7337679540493778,
+        "emitted": false,
+        "preparedQrMaxError": null,
+        "originalQrMaxError": null,
+        "signedQueryAbsoluteError": null,
+        "amplitudeTruthRelativeError": null,
+        "preparedResidual": null,
+        "originalResidual": null,
+        "preparedTrialQrMaxError": null,
+        "originalTrialQrMaxError": null,
+        "originalNuisanceQrMaxError": null
+      },
+      {
+        "cell": "shape-0-original-noisy",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Boundary",
+        "truth": [
+          -1.1090354888959124,
+          -1.3013448427221916,
+          0.12
+        ],
+        "coordinates": [
+          -1.1110519136789874,
+          -2.144414059607429,
+          0.8
+        ],
+        "energy": 0.5044408436630636,
+        "shapeErrorInChartUnits": 0.85,
+        "emitted": false,
+        "preparedQrMaxError": null,
+        "originalQrMaxError": null,
+        "signedQueryAbsoluteError": null,
+        "amplitudeTruthRelativeError": null,
+        "preparedResidual": null,
+        "originalResidual": null,
+        "preparedTrialQrMaxError": null,
+        "originalTrialQrMaxError": null,
+        "originalNuisanceQrMaxError": null
+      },
+      {
+        "cell": "shape-1-matched",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.8317766166447691,
+          0.4904146263175222,
+          0.5599999999874109
+        ],
+        "energy": 8.526512829121202E-14,
+        "shapeErrorInChartUnits": 5.25576523401949E-11,
+        "emitted": true,
+        "preparedQrMaxError": 1.8653655009526204E-13,
+        "originalQrMaxError": 1.5256075882463804E-4,
+        "signedQueryAbsoluteError": 7.173591493603304E-6,
+        "amplitudeTruthRelativeError": 5.3398650591504656E-11,
+        "preparedResidual": 1.4304915388686218E-14,
+        "originalResidual": 0.00471681654290654,
+        "preparedTrialQrMaxError": 2.2870594307278225E-14,
+        "originalTrialQrMaxError": 1.5256075882463804E-4,
+        "originalNuisanceQrMaxError": 5.188100295740831E-5
+      },
+      {
+        "cell": "shape-1-matched",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.8317766166716682,
+          0.49041462650353473,
+          0.560000000000826
+        ],
+        "energy": 7.638334409421077E-14,
+        "shapeErrorInChartUnits": 1.0325074129013956E-12,
+        "emitted": true,
+        "preparedQrMaxError": 5.1985325766334967E-14,
+        "originalQrMaxError": 1.5256075874864328E-4,
+        "signedQueryAbsoluteError": 7.173591463072171E-6,
+        "amplitudeTruthRelativeError": 6.183828722171954E-13,
+        "preparedResidual": 7.222681770069612E-15,
+        "originalResidual": 0.0047168165402398125,
+        "preparedTrialQrMaxError": 2.1316282072803006E-14,
+        "originalTrialQrMaxError": 1.5256075874864328E-4,
+        "originalNuisanceQrMaxError": 5.1881002938559484E-5
+      },
+      {
+        "cell": "shape-1-matched",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.8317766166447691,
+          0.4904146263175222,
+          0.5599999999874109
+        ],
+        "energy": 8.526512829121202E-14,
+        "shapeErrorInChartUnits": 5.25576523401949E-11,
+        "emitted": true,
+        "preparedQrMaxError": 1.3542036937759565,
+        "originalQrMaxError": 1.354274304239534,
+        "signedQueryAbsoluteError": 0.009521575411827632,
+        "amplitudeTruthRelativeError": 1.1636022233996506,
+        "preparedResidual": 0.4033043786445867,
+        "originalResidual": 0.4025371874969711,
+        "preparedTrialQrMaxError": 1.3542036937759565,
+        "originalTrialQrMaxError": 1.354274304239534,
+        "originalNuisanceQrMaxError": 0.016834557009736077
+      },
+      {
+        "cell": "shape-1-matched",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.8317766166716682,
+          0.49041462650353473,
+          0.560000000000826
+        ],
+        "energy": 7.638334409421077E-14,
+        "shapeErrorInChartUnits": 1.0325074129013956E-12,
+        "emitted": true,
+        "preparedQrMaxError": 1.3542036936260557,
+        "originalQrMaxError": 1.3542743040896166,
+        "signedQueryAbsoluteError": 0.009521575414182415,
+        "amplitudeTruthRelativeError": 1.1636022231898435,
+        "preparedResidual": 0.4033043785916843,
+        "originalResidual": 0.4025371874484479,
+        "preparedTrialQrMaxError": 1.3542036936260557,
+        "originalTrialQrMaxError": 1.3542743040896166,
+        "originalNuisanceQrMaxError": 0.016834557010240704
+      },
+      {
+        "cell": "shape-1-original",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7688368159671363,
+          -0.19119057679949503,
+          0.5557053005427387
+        ],
+        "energy": 0.07551902949037625,
+        "shapeErrorInChartUnits": 0.19020555353867197,
+        "emitted": true,
+        "preparedQrMaxError": 2.2373422559063272E-13,
+        "originalQrMaxError": 9.223602397807618E-4,
+        "signedQueryAbsoluteError": 4.0671963703442504E-5,
+        "amplitudeTruthRelativeError": 0.23836548909432737,
+        "preparedResidual": 4.265037515363608E-14,
+        "originalResidual": 0.03873994744175037,
+        "preparedTrialQrMaxError": 2.6423307986078726E-14,
+        "originalTrialQrMaxError": 9.223602397807618E-4,
+        "originalNuisanceQrMaxError": 4.1994474591009433E-4
+      },
+      {
+        "cell": "shape-1-original",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7764073193868593,
+          0.26692676168595675,
+          0.5054172718062537
+        ],
+        "energy": 0.0721511073625809,
+        "shapeErrorInChartUnits": 0.06822841024218276,
+        "emitted": true,
+        "preparedQrMaxError": 5.901182320577902E-14,
+        "originalQrMaxError": 1.8561519672732896E-4,
+        "signedQueryAbsoluteError": 3.777848872066336E-7,
+        "amplitudeTruthRelativeError": 0.21413816100416314,
+        "preparedResidual": 1.4293157931801956E-14,
+        "originalResidual": 0.004828486660403691,
+        "preparedTrialQrMaxError": 1.9984014443252818E-14,
+        "originalTrialQrMaxError": 1.8561519672732896E-4,
+        "originalNuisanceQrMaxError": 5.140093085590283E-5
+      },
+      {
+        "cell": "shape-1-original",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7688368159671363,
+          -0.19119057679949503,
+          0.5557053005427387
+        ],
+        "energy": 0.07551902949037625,
+        "shapeErrorInChartUnits": 0.19020555353867197,
+        "emitted": true,
+        "preparedQrMaxError": 2.0623302179534857,
+        "originalQrMaxError": 2.0631257562551046,
+        "signedQueryAbsoluteError": 0.011625270092329387,
+        "amplitudeTruthRelativeError": 1.5444344439753095,
+        "preparedResidual": 3.286779045035058,
+        "originalResidual": 3.188441659750398,
+        "preparedTrialQrMaxError": 2.0623302179534857,
+        "originalTrialQrMaxError": 2.0631257562551046,
+        "originalNuisanceQrMaxError": 0.02859447362811049
+      },
+      {
+        "cell": "shape-1-original",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7764073193868593,
+          0.26692676168595675,
+          0.5054172718062537
+        ],
+        "energy": 0.0721511073625809,
+        "shapeErrorInChartUnits": 0.06822841024218276,
+        "emitted": true,
+        "preparedQrMaxError": 1.9135378265541136,
+        "originalQrMaxError": 1.9135874988985255,
+        "signedQueryAbsoluteError": 0.007780745797836719,
+        "amplitudeTruthRelativeError": 1.761179090911748,
+        "preparedResidual": 0.7235594391258144,
+        "originalResidual": 0.7206470099093534,
+        "preparedTrialQrMaxError": 1.9135378265541136,
+        "originalTrialQrMaxError": 1.9135874988985255,
+        "originalNuisanceQrMaxError": 0.02519171484940414
+      },
+      {
+        "cell": "shape-1-original-noisy",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7409951763276427,
+          -0.4375609249870176,
+          0.541256406155287
+        ],
+        "energy": 0.44360358449872095,
+        "shapeErrorInChartUnits": 0.25895650823396554,
+        "emitted": true,
+        "preparedQrMaxError": 2.2072621508328893E-14,
+        "originalQrMaxError": 0.0019310390752589335,
+        "signedQueryAbsoluteError": 1.5970884250859907E-4,
+        "amplitudeTruthRelativeError": 0.24729855854297073,
+        "preparedResidual": 1.4316627662221963E-14,
+        "originalResidual": 0.07182757032368435,
+        "preparedTrialQrMaxError": 1.1657341758564144E-14,
+        "originalTrialQrMaxError": 0.0019310390752589335,
+        "originalNuisanceQrMaxError": 7.524736454605253E-4
+      },
+      {
+        "cell": "shape-1-original-noisy",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7495609502344128,
+          0.003335647984084922,
+          0.5648057155560169
+        ],
+        "energy": 0.4587321384428602,
+        "shapeErrorInChartUnits": 0.13592197694136568,
+        "emitted": true,
+        "preparedQrMaxError": 9.030276526544867E-14,
+        "originalQrMaxError": 3.5017128789904817E-4,
+        "signedQueryAbsoluteError": 5.031982868952678E-5,
+        "amplitudeTruthRelativeError": 0.2737085714805156,
+        "preparedResidual": 7.294340498624352E-15,
+        "originalResidual": 0.009246556728830888,
+        "preparedTrialQrMaxError": 1.454392162258955E-14,
+        "originalTrialQrMaxError": 3.5017128789904817E-4,
+        "originalNuisanceQrMaxError": 9.837137585559132E-5
+      },
+      {
+        "cell": "shape-1-original-noisy",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7409951763276427,
+          -0.4375609249870176,
+          0.541256406155287
+        ],
+        "energy": 0.44360358449872095,
+        "shapeErrorInChartUnits": 0.25895650823396554,
+        "emitted": true,
+        "preparedQrMaxError": 2.0416666129915453,
+        "originalQrMaxError": 2.042655290236315,
+        "signedQueryAbsoluteError": 0.06568575085543937,
+        "amplitudeTruthRelativeError": 1.6724220046609726,
+        "preparedResidual": 3.1293230311452205,
+        "originalResidual": 3.1086987503154084,
+        "preparedTrialQrMaxError": 2.0416666129915453,
+        "originalTrialQrMaxError": 2.042655290236315,
+        "originalNuisanceQrMaxError": 0.17023810906887518
+      },
+      {
+        "cell": "shape-1-original-noisy",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.8317766166719344,
+          0.49041462650586354,
+          0.5599999999999999
+        ],
+        "coordinates": [
+          -0.7495609502344128,
+          0.003335647984084922,
+          0.5648057155560169
+        ],
+        "energy": 0.4587321384428602,
+        "shapeErrorInChartUnits": 0.13592197694136568,
+        "emitted": true,
+        "preparedQrMaxError": 2.223253359489848,
+        "originalQrMaxError": 2.2232802725091014,
+        "signedQueryAbsoluteError": 0.005933714900776099,
+        "amplitudeTruthRelativeError": 2.0904830827114336,
+        "preparedResidual": 0.7999304728197559,
+        "originalResidual": 0.7990685574109856,
+        "preparedTrialQrMaxError": 2.223253359489848,
+        "originalTrialQrMaxError": 2.2232802725091014,
+        "originalNuisanceQrMaxError": 0.042019347752451475
+      },
+      {
+        "cell": "shape-2-matched",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.34657359028132007,
+          -1.1221688957408893,
+          0.3599999999194543
+        ],
+        "energy": 2.1316282072803006E-13,
+        "shapeErrorInChartUnits": 1.0068217093373022E-10,
+        "emitted": true,
+        "preparedQrMaxError": 7.831409132297296E-14,
+        "originalQrMaxError": 0.0012103340233677873,
+        "signedQueryAbsoluteError": 6.885050162269701E-5,
+        "amplitudeTruthRelativeError": 7.877871099797268E-12,
+        "preparedResidual": 1.4350109047137345E-14,
+        "originalResidual": 0.09647935459743386,
+        "preparedTrialQrMaxError": 1.9984014443252818E-14,
+        "originalTrialQrMaxError": 0.0012103340233677873,
+        "originalNuisanceQrMaxError": 9.87485621844027E-4
+      },
+      {
+        "cell": "shape-2-matched",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.34657359027995427,
+          -1.1221688957997697,
+          0.36000000000050814
+        ],
+        "energy": 2.7000623958883807E-13,
+        "shapeErrorInChartUnits": 6.351169590246286E-13,
+        "emitted": true,
+        "preparedQrMaxError": 2.9256631839391645E-13,
+        "originalQrMaxError": 0.00121033402388393,
+        "signedQueryAbsoluteError": 6.885050165778006E-5,
+        "amplitudeTruthRelativeError": 6.959455103921614E-14,
+        "preparedResidual": 1.4292956574760565E-14,
+        "originalResidual": 0.09647935464117437,
+        "preparedTrialQrMaxError": 3.3306690738754696E-14,
+        "originalTrialQrMaxError": 0.00121033402388393,
+        "originalNuisanceQrMaxError": 9.874856223130058E-4
+      },
+      {
+        "cell": "shape-2-matched",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.34657359028132007,
+          -1.1221688957408893,
+          0.3599999999194543
+        ],
+        "energy": 2.1316282072803006E-13,
+        "shapeErrorInChartUnits": 1.0068217093373022E-10,
+        "emitted": true,
+        "preparedQrMaxError": 0.020857635482755654,
+        "originalQrMaxError": 0.02185907151343469,
+        "signedQueryAbsoluteError": 0.0026296301334229333,
+        "amplitudeTruthRelativeError": 0.017932198296735643,
+        "preparedResidual": 0.1426256670307555,
+        "originalResidual": 0.05884212096689439,
+        "preparedTrialQrMaxError": 0.020857635482755654,
+        "originalTrialQrMaxError": 0.02185907151343469,
+        "originalNuisanceQrMaxError": 0.005071335634246247
+      },
+      {
+        "cell": "shape-2-matched",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.34657359027995427,
+          -1.1221688957997697,
+          0.36000000000050814
+        ],
+        "energy": 2.7000623958883807E-13,
+        "shapeErrorInChartUnits": 6.351169590246286E-13,
+        "emitted": true,
+        "preparedQrMaxError": 0.020857635488789383,
+        "originalQrMaxError": 0.02185907152026223,
+        "signedQueryAbsoluteError": 0.002629630133936467,
+        "amplitudeTruthRelativeError": 0.017932198294716838,
+        "preparedResidual": 0.1426256671093096,
+        "originalResidual": 0.05884212100556988,
+        "preparedTrialQrMaxError": 0.020857635488789383,
+        "originalTrialQrMaxError": 0.02185907152026223,
+        "originalNuisanceQrMaxError": 0.005071335637442897
+      },
+      {
+        "cell": "shape-2-original",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.3469658928608139,
+          -1.369302976508345,
+          0.49647659317000037
+        ],
+        "energy": 0.1701887384756091,
+        "shapeErrorInChartUnits": 0.1705957414625004,
+        "emitted": true,
+        "preparedQrMaxError": 9.860168237452172E-14,
+        "originalQrMaxError": 0.003612878331531644,
+        "signedQueryAbsoluteError": 0.001133930732902022,
+        "amplitudeTruthRelativeError": 0.18106173975978926,
+        "preparedResidual": 7.108526316701507E-14,
+        "originalResidual": 0.35042778067045127,
+        "preparedTrialQrMaxError": 2.2870594307278225E-14,
+        "originalTrialQrMaxError": 0.002868475926891434,
+        "originalNuisanceQrMaxError": 0.003612878331531644
+      },
+      {
+        "cell": "shape-2-original",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.32715684266031864,
+          -1.0324628943119711,
+          0.2657730275740437
+        ],
+        "energy": 0.16244109234066784,
+        "shapeErrorInChartUnits": 0.11778371553244543,
+        "emitted": true,
+        "preparedQrMaxError": 1.835406826522501E-13,
+        "originalQrMaxError": 7.001268456529042E-4,
+        "signedQueryAbsoluteError": 8.005154663986991E-5,
+        "amplitudeTruthRelativeError": 0.18835783683878365,
+        "preparedResidual": 5.690167041247958E-14,
+        "originalResidual": 0.037734690882181454,
+        "preparedTrialQrMaxError": 2.1760371282653068E-14,
+        "originalTrialQrMaxError": 7.001268456529042E-4,
+        "originalNuisanceQrMaxError": 3.846837114170297E-4
+      },
+      {
+        "cell": "shape-2-original",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.3469658928608139,
+          -1.369302976508345,
+          0.49647659317000037
+        ],
+        "energy": 0.1701887384756091,
+        "shapeErrorInChartUnits": 0.1705957414625004,
+        "emitted": true,
+        "preparedQrMaxError": 0.01312539936091861,
+        "originalQrMaxError": 0.01294665083721247,
+        "signedQueryAbsoluteError": 0.0031360751265138154,
+        "amplitudeTruthRelativeError": 0.18085576126669337,
+        "preparedResidual": 0.011136984945265254,
+        "originalResidual": 0.3581430363174556,
+        "preparedTrialQrMaxError": 0.01312539936091861,
+        "originalTrialQrMaxError": 0.01294665083721247,
+        "originalNuisanceQrMaxError": 0.0033250120423780247
+      },
+      {
+        "cell": "shape-2-original",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.32715684266031864,
+          -1.0324628943119711,
+          0.2657730275740437
+        ],
+        "energy": 0.16244109234066784,
+        "shapeErrorInChartUnits": 0.11778371553244543,
+        "emitted": true,
+        "preparedQrMaxError": 0.01468621157318617,
+        "originalQrMaxError": 0.015170221352748259,
+        "signedQueryAbsoluteError": 0.0016209812940691237,
+        "amplitudeTruthRelativeError": 0.18868867438110032,
+        "preparedResidual": 0.06633418520886497,
+        "originalResidual": 0.033267058065030046,
+        "preparedTrialQrMaxError": 0.01468621157318617,
+        "originalTrialQrMaxError": 0.015170221352748259,
+        "originalNuisanceQrMaxError": 0.00196885996794496
+      },
+      {
+        "cell": "shape-2-original-noisy",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.35629759796597216,
+          -1.4926115047237603,
+          0.47075028813187897
+        ],
+        "energy": 1.1905072714759868,
+        "shapeErrorInChartUnits": 0.13843786016484866,
+        "emitted": true,
+        "preparedQrMaxError": 1.6764367671839864E-14,
+        "originalQrMaxError": 0.0055832462082177,
+        "signedQueryAbsoluteError": 0.0010881284723910367,
+        "amplitudeTruthRelativeError": 0.18042294912495518,
+        "preparedResidual": 1.465850486170183E-14,
+        "originalResidual": 0.5366267765296378,
+        "preparedTrialQrMaxError": 1.6764367671839864E-14,
+        "originalTrialQrMaxError": 0.0050431184466157575,
+        "originalNuisanceQrMaxError": 0.0055832462082177
+      },
+      {
+        "cell": "shape-2-original-noisy",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.32577781724489063,
+          -1.167860786583893,
+          0.32174299410935653
+        ],
+        "energy": 1.1471881996558366,
+        "shapeErrorInChartUnits": 0.04782125736330439,
+        "emitted": true,
+        "preparedQrMaxError": 3.883907084833993E-13,
+        "originalQrMaxError": 0.0012605123244383565,
+        "signedQueryAbsoluteError": 6.732293915484577E-5,
+        "amplitudeTruthRelativeError": 0.19799950012436784,
+        "preparedResidual": 1.435871428419258E-14,
+        "originalResidual": 0.08064306316911912,
+        "preparedTrialQrMaxError": 3.8413716652030416E-14,
+        "originalTrialQrMaxError": 0.0012605123244383565,
+        "originalNuisanceQrMaxError": 7.980064472133952E-4
+      },
+      {
+        "cell": "shape-2-original-noisy",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.35629759796597216,
+          -1.4926115047237603,
+          0.47075028813187897
+        ],
+        "energy": 1.1905072714759868,
+        "shapeErrorInChartUnits": 0.13843786016484866,
+        "emitted": true,
+        "preparedQrMaxError": 0.014417150600069928,
+        "originalQrMaxError": 0.013287384730598428,
+        "signedQueryAbsoluteError": 0.0032313922220400526,
+        "amplitudeTruthRelativeError": 0.17984916111871183,
+        "preparedResidual": 0.011345298021185767,
+        "originalResidual": 0.5402225260069106,
+        "preparedTrialQrMaxError": 0.014417150600069928,
+        "originalTrialQrMaxError": 0.013287384730598428,
+        "originalNuisanceQrMaxError": 0.005078936162280438
+      },
+      {
+        "cell": "shape-2-original-noisy",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.3465735902799727,
+          -1.1221688957993863,
+          0.36000000000000004
+        ],
+        "coordinates": [
+          -0.32577781724489063,
+          -1.167860786583893,
+          0.32174299410935653
+        ],
+        "energy": 1.1471881996558366,
+        "shapeErrorInChartUnits": 0.04782125736330439,
+        "emitted": true,
+        "preparedQrMaxError": 0.018951652628453886,
+        "originalQrMaxError": 0.019824945787514703,
+        "signedQueryAbsoluteError": 0.0024733550950646332,
+        "amplitudeTruthRelativeError": 0.19865583641749504,
+        "preparedResidual": 0.08334839297587882,
+        "originalResidual": 0.02447217759248181,
+        "preparedTrialQrMaxError": 0.018951652628453886,
+        "originalTrialQrMaxError": 0.019824945787514703,
+        "originalNuisanceQrMaxError": 0.003994195846559212
+      },
+      {
+        "cell": "shape-3-matched",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.13862943611336198,
+          0.8487665203630348,
+          0.7200000000005048
+        ],
+        "energy": 2.3092638912203256E-13,
+        "shapeErrorInChartUnits": 3.2260274075173332E-12,
+        "emitted": true,
+        "preparedQrMaxError": 2.2567538116025077E-13,
+        "originalQrMaxError": 1.995634925644474E-5,
+        "signedQueryAbsoluteError": 4.797107083176488E-6,
+        "amplitudeTruthRelativeError": 3.5184351931866564E-12,
+        "preparedResidual": 1.4301436395553775E-14,
+        "originalResidual": 9.784124390360353E-5,
+        "preparedTrialQrMaxError": 1.4654943925052066E-14,
+        "originalTrialQrMaxError": 1.995634925644474E-5,
+        "originalNuisanceQrMaxError": 5.340661175579943E-6
+      },
+      {
+        "cell": "shape-3-matched",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.1386294361119833,
+          0.8487665203491606,
+          0.7200000000008595
+        ],
+        "energy": 1.8474111129762605E-13,
+        "shapeErrorInChartUnits": 1.074279554202917E-12,
+        "emitted": true,
+        "preparedQrMaxError": 1.282376982381095E-13,
+        "originalQrMaxError": 1.995634924212286E-5,
+        "signedQueryAbsoluteError": 4.797107074849816E-6,
+        "amplitudeTruthRelativeError": 4.213441863505825E-13,
+        "preparedResidual": 7.10726798570426E-14,
+        "originalResidual": 9.784124521924247E-5,
+        "preparedTrialQrMaxError": 1.0436096431476471E-14,
+        "originalTrialQrMaxError": 1.995634924212286E-5,
+        "originalNuisanceQrMaxError": 5.3406615289587275E-6
+      },
+      {
+        "cell": "shape-3-matched",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.13862943611336198,
+          0.8487665203630348,
+          0.7200000000005048
+        ],
+        "energy": 2.3092638912203256E-13,
+        "shapeErrorInChartUnits": 3.2260274075173332E-12,
+        "emitted": true,
+        "preparedQrMaxError": 0.0034758490296351585,
+        "originalQrMaxError": 0.0034868034366346556,
+        "signedQueryAbsoluteError": 0.0033693925163566507,
+        "amplitudeTruthRelativeError": 0.0023104499548080477,
+        "preparedResidual": 0.05037487968921368,
+        "originalResidual": 0.05028188244163944,
+        "preparedTrialQrMaxError": 0.0034758490296351585,
+        "originalTrialQrMaxError": 0.0034868034366346556,
+        "originalNuisanceQrMaxError": 0.0011726201230051088
+      },
+      {
+        "cell": "shape-3-matched",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.1386294361119833,
+          0.8487665203491606,
+          0.7200000000008595
+        ],
+        "energy": 1.8474111129762605E-13,
+        "shapeErrorInChartUnits": 1.074279554202917E-12,
+        "emitted": true,
+        "preparedQrMaxError": 0.003475849030429856,
+        "originalQrMaxError": 0.003486803437427799,
+        "signedQueryAbsoluteError": 0.0033693925163915672,
+        "amplitudeTruthRelativeError": 0.002310449957008596,
+        "preparedResidual": 0.0503748796893881,
+        "originalResidual": 0.050281882440403936,
+        "preparedTrialQrMaxError": 0.003475849030429856,
+        "originalTrialQrMaxError": 0.003486803437427799,
+        "originalNuisanceQrMaxError": 0.0011726201226258818
+      },
+      {
+        "cell": "shape-3-original",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.07256357460306195,
+          0.4418720042626898,
+          0.6532011839283457
+        ],
+        "energy": 0.10907617676410197,
+        "shapeErrorInChartUnits": 0.11354607665728902,
+        "emitted": true,
+        "preparedQrMaxError": 1.7607790225859787E-13,
+        "originalQrMaxError": 7.700213283223789E-6,
+        "signedQueryAbsoluteError": 2.8078233380024464E-6,
+        "amplitudeTruthRelativeError": 0.23292195618438588,
+        "preparedResidual": 8.527958755144056E-14,
+        "originalResidual": 1.4028066004506565E-5,
+        "preparedTrialQrMaxError": 1.3100631690576847E-14,
+        "originalTrialQrMaxError": 7.700213283223789E-6,
+        "originalNuisanceQrMaxError": 1.4114042696921486E-6
+      },
+      {
+        "cell": "shape-3-original",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.1124398976297678,
+          0.7282668324210735,
+          0.7378613092371994
+        ],
+        "energy": 0.09682658975343017,
+        "shapeErrorInChartUnits": 0.03362607816503287,
+        "emitted": true,
+        "preparedQrMaxError": 1.6274091449441919E-13,
+        "originalQrMaxError": 1.4415073659401756E-5,
+        "signedQueryAbsoluteError": 2.957428326233469E-6,
+        "amplitudeTruthRelativeError": 0.19582157221809107,
+        "preparedResidual": 1.428710006259713E-14,
+        "originalResidual": 6.861150248953197E-5,
+        "preparedTrialQrMaxError": 1.0880185641326534E-14,
+        "originalTrialQrMaxError": 1.4415073659401756E-5,
+        "originalNuisanceQrMaxError": 3.999309091624881E-6
+      },
+      {
+        "cell": "shape-3-original",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.07256357460306195,
+          0.4418720042626898,
+          0.6532011839283457
+        ],
+        "energy": 0.10907617676410197,
+        "shapeErrorInChartUnits": 0.11354607665728902,
+        "emitted": true,
+        "preparedQrMaxError": 0.026609351411369886,
+        "originalQrMaxError": 0.026615739205184674,
+        "signedQueryAbsoluteError": 0.0026269340954925835,
+        "amplitudeTruthRelativeError": 0.24619139737197876,
+        "preparedResidual": 0.09586117347208549,
+        "originalResidual": 0.09585123147392874,
+        "preparedTrialQrMaxError": 0.026609351411369886,
+        "originalTrialQrMaxError": 0.026615739205184674,
+        "originalNuisanceQrMaxError": 9.008473336819204E-4
+      },
+      {
+        "cell": "shape-3-original",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.1124398976297678,
+          0.7282668324210735,
+          0.7378613092371994
+        ],
+        "energy": 0.09682658975343017,
+        "shapeErrorInChartUnits": 0.03362607816503287,
+        "emitted": true,
+        "preparedQrMaxError": 0.010813378222800152,
+        "originalQrMaxError": 0.010823134797014689,
+        "signedQueryAbsoluteError": 0.0031438728557815487,
+        "amplitudeTruthRelativeError": 0.1973280745970823,
+        "preparedResidual": 0.03623767545435025,
+        "originalResidual": 0.03617344986275829,
+        "preparedTrialQrMaxError": 0.010813378222800152,
+        "originalTrialQrMaxError": 0.010823134797014689,
+        "originalNuisanceQrMaxError": 5.723015945902346E-4
+      },
+      {
+        "cell": "shape-3-original-noisy",
+        "voxel": 0,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.014481775573484068,
+          0.13397761658553797,
+          0.6035653709586929
+        ],
+        "energy": 0.7686793307031046,
+        "shapeErrorInChartUnits": 0.19946564146634294,
+        "emitted": true,
+        "preparedQrMaxError": 2.291639100704401E-13,
+        "originalQrMaxError": 1.2619928693835547E-5,
+        "signedQueryAbsoluteError": 1.3733311219843447E-5,
+        "amplitudeTruthRelativeError": 0.30517445180019365,
+        "preparedResidual": 2.855266197661959E-14,
+        "originalResidual": 5.475875057141302E-5,
+        "preparedTrialQrMaxError": 1.454392162258955E-14,
+        "originalTrialQrMaxError": 1.2619928693835547E-5,
+        "originalNuisanceQrMaxError": 1.346007721766962E-6
+      },
+      {
+        "cell": "shape-3-original-noisy",
+        "voxel": 1,
+        "mode": "ExactShape",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.06561879799271808,
+          0.26194193505219365,
+          0.7889276127271931
+        ],
+        "energy": 0.8307972370941918,
+        "shapeErrorInChartUnits": 0.16375651848852868,
+        "emitted": true,
+        "preparedQrMaxError": 1.9899533409972747E-13,
+        "originalQrMaxError": 1.2442111466892669E-5,
+        "signedQueryAbsoluteError": 9.060304118624352E-7,
+        "amplitudeTruthRelativeError": 0.272705994905843,
+        "preparedResidual": 1.4261359984617337E-14,
+        "originalResidual": 2.285921750461374E-5,
+        "preparedTrialQrMaxError": 1.0547118733938987E-14,
+        "originalTrialQrMaxError": 1.2442111466892669E-5,
+        "originalNuisanceQrMaxError": 5.152364534275616E-7
+      },
+      {
+        "cell": "shape-3-original-noisy",
+        "voxel": 0,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.014481775573484068,
+          0.13397761658553797,
+          0.6035653709586929
+        ],
+        "energy": 0.7686793307031046,
+        "shapeErrorInChartUnits": 0.19946564146634294,
+        "emitted": true,
+        "preparedQrMaxError": 0.02402174851625516,
+        "originalQrMaxError": 0.02402091736589107,
+        "signedQueryAbsoluteError": 7.490488536815998E-4,
+        "amplitudeTruthRelativeError": 0.31929998521509867,
+        "preparedResidual": 0.018889221281286117,
+        "originalResidual": 0.018927589039468742,
+        "preparedTrialQrMaxError": 0.02402174851625516,
+        "originalTrialQrMaxError": 0.02402091736589107,
+        "originalNuisanceQrMaxError": 6.49517299769628E-4
+      },
+      {
+        "cell": "shape-3-original-noisy",
+        "voxel": 1,
+        "mode": "CorrectedReference",
+        "status": "Accepted",
+        "truth": [
+          -0.13862943611198908,
+          0.8487665203514743,
+          0.7200000000000001
+        ],
+        "coordinates": [
+          -0.06561879799271808,
+          0.26194193505219365,
+          0.7889276127271931
+        ],
+        "energy": 0.8307972370941918,
+        "shapeErrorInChartUnits": 0.16375651848852868,
+        "emitted": true,
+        "preparedQrMaxError": 0.02905150477997054,
+        "originalQrMaxError": 0.02906151640844945,
+        "signedQueryAbsoluteError": 0.002404195269822107,
+        "amplitudeTruthRelativeError": 0.28591606935715924,
+        "preparedResidual": 0.018057698063995674,
+        "originalResidual": 0.018055391707671172,
+        "preparedTrialQrMaxError": 0.02905150477997054,
+        "originalTrialQrMaxError": 0.02906151640844945,
+        "originalNuisanceQrMaxError": 8.77811152143847E-4
+      }
+    ],
+    "geometry": [
+      {
+        "cell": "shape-0-matched",
+        "relativeBasisErrorWithinHorizon": 5.581115739703269E-6,
+        "relativeTailDesignError": 0.034847631479868614,
+        "relativeWhitenedDesignError": 0.034965651804129964,
+        "finiteOriginalAugmentedSigmaLower": 0.10863598249087064
+      },
+      {
+        "cell": "shape-0-original",
+        "relativeBasisErrorWithinHorizon": 5.581115739703269E-6,
+        "relativeTailDesignError": 0.034847631479868614,
+        "relativeWhitenedDesignError": 0.034965651804129964,
+        "finiteOriginalAugmentedSigmaLower": 0.10863598249087064
+      },
+      {
+        "cell": "shape-0-original-noisy",
+        "relativeBasisErrorWithinHorizon": 5.581115739703269E-6,
+        "relativeTailDesignError": 0.034847631479868614,
+        "relativeWhitenedDesignError": 0.034965651804129964,
+        "finiteOriginalAugmentedSigmaLower": 0.10863598249087064
+      },
+      {
+        "cell": "shape-1-matched",
+        "relativeBasisErrorWithinHorizon": 3.7609991886213875E-5,
+        "relativeTailDesignError": 8.408176619327316E-4,
+        "relativeWhitenedDesignError": 9.123158365249348E-4,
+        "finiteOriginalAugmentedSigmaLower": 0.12476718684691816
+      },
+      {
+        "cell": "shape-1-original",
+        "relativeBasisErrorWithinHorizon": 3.7609991886213875E-5,
+        "relativeTailDesignError": 8.408176619327316E-4,
+        "relativeWhitenedDesignError": 9.123158365249348E-4,
+        "finiteOriginalAugmentedSigmaLower": 0.12476718684691816
+      },
+      {
+        "cell": "shape-1-original-noisy",
+        "relativeBasisErrorWithinHorizon": 3.7609991886213875E-5,
+        "relativeTailDesignError": 8.408176619327316E-4,
+        "relativeWhitenedDesignError": 9.123158365249348E-4,
+        "finiteOriginalAugmentedSigmaLower": 0.12476718684691816
+      },
+      {
+        "cell": "shape-2-matched",
+        "relativeBasisErrorWithinHorizon": 9.037261089852443E-5,
+        "relativeTailDesignError": 0.00824823333883863,
+        "relativeWhitenedDesignError": 0.00839965586499789,
+        "finiteOriginalAugmentedSigmaLower": 0.20371756886150702
+      },
+      {
+        "cell": "shape-2-original",
+        "relativeBasisErrorWithinHorizon": 9.037261089852443E-5,
+        "relativeTailDesignError": 0.00824823333883863,
+        "relativeWhitenedDesignError": 0.00839965586499789,
+        "finiteOriginalAugmentedSigmaLower": 0.20371756886150702
+      },
+      {
+        "cell": "shape-2-original-noisy",
+        "relativeBasisErrorWithinHorizon": 9.037261089852443E-5,
+        "relativeTailDesignError": 0.00824823333883863,
+        "relativeWhitenedDesignError": 0.00839965586499789,
+        "finiteOriginalAugmentedSigmaLower": 0.20371756886150702
+      },
+      {
+        "cell": "shape-3-matched",
+        "relativeBasisErrorWithinHorizon": 1.5982227308367625E-4,
+        "relativeTailDesignError": 1.1245827936443513E-9,
+        "relativeWhitenedDesignError": 1.9120933456813512E-4,
+        "finiteOriginalAugmentedSigmaLower": 0.19935855313922857
+      },
+      {
+        "cell": "shape-3-original",
+        "relativeBasisErrorWithinHorizon": 1.5982227308367625E-4,
+        "relativeTailDesignError": 1.1245827936443513E-9,
+        "relativeWhitenedDesignError": 1.9120933456813512E-4,
+        "finiteOriginalAugmentedSigmaLower": 0.19935855313922857
+      },
+      {
+        "cell": "shape-3-original-noisy",
+        "relativeBasisErrorWithinHorizon": 1.5982227308367625E-4,
+        "relativeTailDesignError": 1.1245827936443513E-9,
+        "relativeWhitenedDesignError": 1.9120933456813512E-4,
+        "finiteOriginalAugmentedSigmaLower": 0.19935855313922857
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "phrf-audit-shape-0-matched-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=4.4797499043625066E-14 expected=0.0 delta=4.4797499043625066E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-matched-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=2.0457073535151693E-13 expected=0.0 delta=2.0457073535151693E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-matched-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-matched-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=3.3678615452004124E-13 expected=0.0 delta=3.3678615452004124E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=CurvatureNotPositive; emitted=false pass=false"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=CurvatureNotPositive; emitted=false pass=false"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-noisy-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Boundary; emitted=false pass=false"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-noisy-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Boundary; emitted=false pass=false"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-noisy-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Boundary; emitted=false pass=false"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-0-original-noisy-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Boundary; emitted=false pass=false"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-matched-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.8653655009526204E-13 expected=0.0 delta=1.8653655009526204E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-matched-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=5.1985325766334967E-14 expected=0.0 delta=5.1985325766334967E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-matched-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-matched-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=2.2373422559063272E-13 expected=0.0 delta=2.2373422559063272E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=5.901182320577902E-14 expected=0.0 delta=5.901182320577902E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-noisy-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=2.2072621508328893E-14 expected=0.0 delta=2.2072621508328893E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-noisy-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=9.030276526544867E-14 expected=0.0 delta=9.030276526544867E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-noisy-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-1-original-noisy-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-matched-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=7.831409132297296E-14 expected=0.0 delta=7.831409132297296E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-matched-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=2.9256631839391645E-13 expected=0.0 delta=2.9256631839391645E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-matched-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-matched-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=9.860168237452172E-14 expected=0.0 delta=9.860168237452172E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.835406826522501E-13 expected=0.0 delta=1.835406826522501E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-noisy-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.6764367671839864E-14 expected=0.0 delta=1.6764367671839864E-14 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-noisy-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=3.883907084833993E-13 expected=0.0 delta=3.883907084833993E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-noisy-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-2-original-noisy-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-matched-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=2.2567538116025077E-13 expected=0.0 delta=2.2567538116025077E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-matched-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.282376982381095E-13 expected=0.0 delta=1.282376982381095E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-matched-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-matched-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.7607790225859787E-13 expected=0.0 delta=1.7607790225859787E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.6274091449441919E-13 expected=0.0 delta=1.6274091449441919E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-noisy-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=2.291639100704401E-13 expected=0.0 delta=2.291639100704401E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-noisy-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "exact prepared QR agreement: actual=1.9899533409972747E-13 expected=0.0 delta=1.9899533409972747E-13 tol=1.0E-7 pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-noisy-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-audit-shape-3-original-noisy-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "selected energy and chart error: 2 finite values pass=true",
+          "decoded output available: status=Accepted; emitted=true pass=true",
+          "measured corrected QR error: 1 finite values pass=true"
+        ],
+        "caveats": [
+          "caveat=phrf-original-equation-certificate kind=PublicApiGap severity=Blocking owner=fit/profile detail=original-family equation certification is unavailable followUp=PHRF-11",
+          "caveat=phrf-exploratory-scientific-scope kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=exploratory Cascade34 cells lack independently searched optima, other families and adaptive coverage calibration followUp=PHRF-14"
+        ]
+      }
+    ]
+  },
+  "seconds": 15.232236333,
+  "limitations": [
+    "exploratory seeds, no coverage claim",
+    "no independent global search reference",
+    "Cascade34 only",
+    "full observation-window microtime oracle is empirical, not a continuous-time certificate"
+  ]
+}

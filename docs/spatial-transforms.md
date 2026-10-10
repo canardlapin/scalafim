@@ -479,11 +479,13 @@ The native inverse regression declares a cropped evaluation domain before
 inversion and requires full coverage, 0.01 mm residual gates and zero interior
 divergence. Its original source and failing published-provider log are
 preserved in `verification/stp-finish-20260929`. Independent diagnosis found
-inverse interpolation across the ANTs field's knot planes; a development
-candidate using fixed quarter spacing passes the unchanged gates on JVM and
-JS. The original coarse nodes, including faces, remain checked. FSL uses a
-separate coincident-geometry control with fixed half spacing. These are local
-candidate results; the provider publication and consumer pin are still pending.
+inverse interpolation across the ANTs field's knot planes; the regression
+therefore evaluates ANTs on fixed quarter spacing, with unchanged gates. The
+original coarse nodes, including faces, remain checked. FSL uses a separate
+coincident-geometry control with fixed half spacing. The provider fix is
+published as reframe4s `9662317` (canardlapin/reframe4s#11), ScalaFIM pins
+it, and the shared JVM/Scala.js `transform` suite `NativeInverseOracleSuite`
+holds these checks (ScalaFIM commit `7b51e4c3`, merged in PR #35).
 The pinned reframe4s solver starts from the identity. Qualification of the
 large-affine registration fixtures awaits the unpublished upstream start-guess work. That
 limitation and typed refusal remain explicit; the new controls do not qualify

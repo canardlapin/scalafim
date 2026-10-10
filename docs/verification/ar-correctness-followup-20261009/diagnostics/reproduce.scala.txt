@@ -1,0 +1,15 @@
+package scalafim.fmri.laws
+
+import scalafim.fmri.model.{ArBiasCorrection,ArInitialization,ArCensorTreatment}
+
+class GlsTailDiagnosticSuite extends munit.FunSuite:
+  test("inspect the retained pilot correction refusals"):
+    val study = CorrectedGlsQualification
+    val cell = GlsStudyCell("tail-diagnostic",Vector(0.45,-0.1),12,true,StudyPooling.Voxelwise,
+      initialization=Some(ArInitialization.Stationary),correction=Some(ArBiasCorrection.olsTailAnchored().toOption.get),censorTreatment=ArCensorTreatment.EstimateOnly)
+    (0 until 4).foreach: replicate =>
+      val errors=study.noise(cell,study.seed(41,0,replicate))
+      val model=study.model(cell,errors,s"diagnostic-$replicate")
+      val result=study.measure(cell,model,GlsStudyEngine.Corrected,replicate,fit =>
+        println(s"TAIL_DIAGNOSTIC|$replicate|${fit.autocorrelation.get.runs.map(_.voxelwiseCorrections)}"))
+      println(s"TAIL_RESULT|$replicate|${result.left.toOption}")

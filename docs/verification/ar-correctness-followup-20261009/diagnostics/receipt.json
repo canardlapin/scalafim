@@ -1,0 +1,16 @@
+{
+  "root": 1339142671,
+  "domain": 41,
+  "group": 0,
+  "replicates": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "source_archive": "docs/verification/gls-tail-continuity-20261009/pilot/frozen-source.tar.gz",
+  "command": "SCALAFIM_GLS_STUDY_SEED=1339142671 SBT_WARM_HEAP=6g python3 tools/build/sbt-warm 'firstLevelLawsJVM/testOnly scalafim.fmri.laws.GlsTailDiagnosticSuite'",
+  "note": "Advisory replay after the observed pilot; temporary suite removed from ordinary builds. Restore the archived source and place this reproducer in the laws test package for a replay.",
+  "decoded_log_sha256": "15d9c99e2dab524f68b5ec8f3384ecff2168cffae7f8dae6417db5afeec5f23b",
+  "source_sha256": "b461f3c74c43efc6b1d70642b194d1c5c41aaa59a3d70893bc9eaa9982c8ee45"
+}

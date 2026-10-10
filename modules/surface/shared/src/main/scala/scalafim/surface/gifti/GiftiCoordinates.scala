@@ -134,8 +134,16 @@ object GiftiCoordinateDeclaration:
       .toRight(GiftiError.MissingDataArray(GiftiIntent.PointSet))
       .map(fromPointSet(document, _))
 
-/** A surface read from GIFTI together with the file's coordinate declaration. */
-final case class DeclaredGiftiSurface(
+/** A surface read from GIFTI together with the file's coordinate declaration
+  * and the placement that produced `geometry.surfaceToWorld`.
+  *
+  * Mesh coordinates are never pretransformed: a `Transformed` placement's
+  * original matrix is carried in `geometry.surfaceToWorld` and must be applied
+  * exactly once. Only the GIFTI readers construct this, so the placement always
+  * agrees with the geometry it accompanies.
+  */
+final case class DeclaredGiftiSurface private[surface] (
   geometry: scalafim.surface.SurfaceGeometry,
-  coordinates: GiftiCoordinateDeclaration
+  coordinates: GiftiCoordinateDeclaration,
+  placement: GiftiPlacement
 )

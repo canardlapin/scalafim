@@ -1,0 +1,20 @@
+{
+  "schema_version": "scalafim-corrected-gls-registration-disposition/v1",
+  "changed_after_observing_outcomes": true,
+  "reason": "Keep statistical campaigns explicit; ordinary suites execute simulator QA. The complete scientific campaign remains negative.",
+  "change": "Register all six campaign cells when SCALAFIM_GLS_STUDY_PROFILE is supplied or LawRunProfile is Calibration.",
+  "scientific_changes": [],
+  "confirmation_source_archive": "confirmation/frozen-source.tar.gz",
+  "unchanged": [
+    "case grid",
+    "root and seed domains",
+    "replicate budgets",
+    "simulator controls",
+    "model/noise generation",
+    "fit and contrast measurement",
+    "scientific margins and summary gates",
+    "R exact interval/bootstrap analysis"
+  ],
+  "explicit_confirmation_expected_exit_code": 1,
+  "scientific_pass": false
+}

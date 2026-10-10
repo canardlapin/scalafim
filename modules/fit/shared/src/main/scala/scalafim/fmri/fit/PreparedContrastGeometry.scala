@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.ar.{NoisePooling, WhiteningMethod, WhiteningPlan, WhiteningTransform}
+import scalafim.fmri.ar.{InitialConditionPolicy, NoisePooling, WhiteningMethod, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.model.{
   ArStructure,
   MissingDataPolicy,
@@ -60,7 +60,7 @@ enum TemporalWhiteningReceipt:
       pooling: NoisePooling,
       arOrder: Int,
       segmentCount: Int,
-      exactFirstAr1: Boolean
+      initialCondition: InitialConditionPolicy
   )
 
 final case class TemporalPreparationReceipt(
@@ -241,13 +241,13 @@ object PreparedContrastGeometry:
             Left(FitError.InvalidFitAxis("canonical whitening", "AR preparation requires a shared whitening plan"))
           case CanonicalTemporalWhitening.Shared(plan) =>
             for
-              expectedSegments <- Gls.timeSegments(partitions, preparation.autocorrelation.censoredTimepoints)
+              expectedSegments <- Gls.noiseEstimationLayout(partitions, preparation.autocorrelation.censoredTimepoints, preparation.autocorrelation.censorTreatment).map(_.whiteningSegments)
               _ <-
                 if plan.nTimepoints != design.timepoints then
                   Left(FitError.InvalidFitAxis("canonical whitening", s"plan covers ${plan.nTimepoints} rows, expected ${design.timepoints}"))
                 else if plan.segments != expectedSegments then
                   Left(FitError.InvalidFitAxis("canonical whitening", "plan segments do not match run partitions and censor resets"))
-                else if plan.exactFirstAr1 != preparation.autocorrelation.exactFirst then
+                else if plan.initialCondition != Gls.initialCondition(preparation.autocorrelation) then
                   Left(FitError.InvalidFitAxis("canonical whitening", "initial-condition policy does not match first-level preparation"))
                 else Right(())
               _ <- validateWhiteningOrigin(preparation, plan, scope)
@@ -329,7 +329,8 @@ object PreparedContrastGeometry:
   ): ResponsePreparationProvenance =
     val records = preparation.records.map:
       case ResponsePreparationRecord(step @ ResponsePreparationStep.Censoring(timepoints), _) if timepoints.nonEmpty =>
-        ResponsePreparationRecord(step, ResponsePreparationDisposition.Applied("encoded as whitening segment resets"))
+        val detail = if preparation.autocorrelation.censorTreatment == scalafim.fmri.model.ArCensorTreatment.EstimateOnly then "excluded from AR estimation; retained responses use continuous-run whitening" else "encoded as whitening segment resets"
+        ResponsePreparationRecord(step, ResponsePreparationDisposition.Applied(detail))
       case ResponsePreparationRecord(step @ ResponsePreparationStep.Whitening(_), _) =>
         whitening match
           case CanonicalTemporalWhitening.Iid =>
@@ -348,5 +349,5 @@ object PreparedContrastGeometry:
           pooling = plan.pooling,
           arOrder = plan.arOrder,
           segmentCount = plan.segments.length,
-          exactFirstAr1 = plan.exactFirstAr1
+          initialCondition = plan.initialCondition
         )

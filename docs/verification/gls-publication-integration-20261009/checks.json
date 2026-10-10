@@ -1,0 +1,97 @@
+{
+  "gates": [
+    {
+      "command": "hrfJVM/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T14:58:13.891698+00:00",
+      "ended_at": "2026-10-09T14:59:47.182094+00:00",
+      "log": "hrf-jvm.log",
+      "sha256": "8dc1a649ea9086c8af6fda623bc9fcefccf7bf7d9c57f23899807b00e5c93bc6"
+    },
+    {
+      "command": "designJVM/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T14:59:47.182894+00:00",
+      "ended_at": "2026-10-09T15:00:27.037382+00:00",
+      "log": "design-jvm.log",
+      "sha256": "ebb76f4d023d63718e55fc0744a9750ad9510da16ea5010053ba852873fa1fe5"
+    },
+    {
+      "command": "modelJVM/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T15:00:27.038010+00:00",
+      "ended_at": "2026-10-09T15:00:46.657718+00:00",
+      "log": "model-jvm.log",
+      "sha256": "6ce45917c35a7fbba9396eb6f8a3685dcda0f10185b3d7248201b96730b403ec"
+    },
+    {
+      "command": "fitJVM/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T15:00:46.658155+00:00",
+      "ended_at": "2026-10-09T15:01:35.097034+00:00",
+      "log": "fit-jvm.log",
+      "sha256": "773d0b11d3ab39626aec0fa61c8bc25b7f6b0a3eb066df8015476c788730af9c"
+    },
+    {
+      "command": "firstLevelLawsJVM/testOnly scalafim.fmri.laws.CorrectedGlsSimulatorSuite scalafim.fmri.laws.GlsFactorSimulatorSuite scalafim.fmri.laws.GlsFactorStudySuite",
+      "exit_code": 0,
+      "log": "pilot-jvm.log",
+      "sha256": "224fd1d4fdb9e0bbb4754324ea2642b6fa5c067e63aa29494c8f791ba92fde46"
+    },
+    {
+      "command": "hrfJS/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T15:01:46.418877+00:00",
+      "ended_at": "2026-10-09T15:02:13.214648+00:00",
+      "log": "hrf-js.log",
+      "sha256": "3d00314224ad92dbbebe617d379c4a027c402d39553aff7e1e2f4133334586d3"
+    },
+    {
+      "command": "designJS/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T15:02:13.215281+00:00",
+      "ended_at": "2026-10-09T15:03:14.486981+00:00",
+      "log": "design-js.log",
+      "sha256": "2eff07fabf8411caa96452196d0d5f437975d7a4d045c82fdbdd29853b1af40d"
+    },
+    {
+      "command": "modelJS/test",
+      "exit_code": 0,
+      "started_at": "2026-10-09T15:03:14.488485+00:00",
+      "ended_at": "2026-10-09T15:03:53.255930+00:00",
+      "log": "model-js.log",
+      "sha256": "94966c00463d0c1259e9524207a73acc319c779cf8407b2ec71740f91decfde9"
+    },
+    {
+      "command": "fitJS/test",
+      "exit_code": 0,
+      "log": "fit-js-fresh.log",
+      "sha256": "ce66e532ee6cb10c2e69548de869a112140370cf6b2de564f1f84f2495320f9b",
+      "fresh_server": true,
+      "heap": "6g"
+    },
+    {
+      "command": "firstLevelLawsJS/testOnly scalafim.fmri.laws.CorrectedGlsSimulatorSuite scalafim.fmri.laws.GlsFactorSimulatorSuite scalafim.fmri.laws.GlsFactorStudySuite",
+      "exit_code": 0,
+      "log": "pilot-js.log",
+      "sha256": "cde94e0bb089ae3c69b364f0d872e9183a8054b30d837a3c7e702fcd334af01f",
+      "fresh_server": true,
+      "heap": "6g"
+    }
+  ],
+  "recovery": {
+    "reason": "fitJS link exhausted the accumulated 3g heap; integration-only processes stopped before a completed result",
+    "stalled_log": "fit-js.log",
+    "fresh_heap": "6g"
+  },
+  "local_parent": "de5266afab3ce3c3ac6f1e5eeb2f662e931c703a",
+  "remote_parent": "ed171edde64730a93e11bafc4dd5a49c5c13be1d",
+  "validated_code_tree": "c8ff03b218028ad3937a8c3d01588694ae46892d",
+  "pilot_regression": {
+    "pass": true,
+    "fits_per_platform": 384,
+    "same_decisions": true,
+    "max_scaled_numeric_difference": 3.3126018841448983e-15,
+    "tolerance": 1e-09
+  }
+}

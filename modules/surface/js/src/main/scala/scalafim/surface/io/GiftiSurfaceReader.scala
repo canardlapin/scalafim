@@ -47,34 +47,49 @@ object GiftiSurfaceReader:
             yield surface
           }
 
-  /** Read geometry together with the file's own coordinate declaration. */
+  /** Read geometry together with the file's own coordinate declaration and
+    * the placement chosen by `selection`.
+    */
   def readDeclared(
     bytes: Uint8Array,
     hemisphere: Hemisphere,
-    kind: SurfaceKind
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
   ): Future[Either[GiftiError, DeclaredGiftiSurface]] =
     GiftiReader.read(bytes).flatMap {
       case Left(error) => Future.successful(Left(error))
-      case Right(document) => declared(document, hemisphere, kind)
+      case Right(document) => declared(document, hemisphere, kind, selection)
     }
 
   def readDeclaredString(
     xml: String,
     hemisphere: Hemisphere,
-    kind: SurfaceKind
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
   ): Future[Either[GiftiError, DeclaredGiftiSurface]] =
     GiftiReader.parseString(xml) match
       case Left(error) => Future.successful(Left(error))
-      case Right(document) => declared(document, hemisphere, kind)
+      case Right(document) => declared(document, hemisphere, kind, selection)
 
   def declared(
     document: GiftiDocument,
     hemisphere: Hemisphere,
-    kind: SurfaceKind
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
   ): Future[Either[GiftiError, DeclaredGiftiSurface]] =
-    geometry(document, hemisphere, kind).map(_.flatMap { surface =>
-      GiftiCoordinateDeclaration.fromDocument(document).map(DeclaredGiftiSurface(surface, _))
-    })
+    GiftiSurfaceCodec.geometryArrays(document) match
+      case Left(error) => Future.successful(Left(error))
+      case Right(arrays) =>
+        GiftiReader
+          .doubleMatrix(arrays.pointSet)
+          .zip(GiftiReader.intMatrix(arrays.triangles))
+          .map { case (coordinatesResult, facesResult) =>
+            for
+              coordinates <- coordinatesResult
+              faces <- facesResult
+              surface <- GiftiSurfaceCodec.declaredGeometry(document, coordinates, faces, hemisphere, kind, selection)
+            yield surface
+          }
 
   def readLabels(
     bytes: Uint8Array,
