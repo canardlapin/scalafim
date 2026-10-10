@@ -32,3 +32,6 @@ modules/*/shared/target/
 !modules/*/shared/src/test/resources/**/oracle/**/*.log
 *.semanticdb
 __pycache__/
+
+# oh-my-claudecode local agent state
+.omc/
