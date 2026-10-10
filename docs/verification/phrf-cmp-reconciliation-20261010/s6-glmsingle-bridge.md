@@ -69,6 +69,11 @@ output is `398d45a249590ef9d41eca2e659eb2fcc8c3a5d9aca8d3eb749b9f826d98e27f`.
   Accelerate update since 10-05 appears in the install history. The root
   cause is **not established**.
 
+Follow-up: `s6-hash-drift-investigation.md` traces the difference to the 2026-10-05
+machine migration (the pin was made on the pre-migration host; the lock's
+numpy/scipy link the host's system Accelerate), classified as float32-level BLAS
+noise with identical HRF index, FRAC, pool and pcnum.
+
 Neither the pin nor any tolerance was changed. Before S6 can close, someone
 must explain the difference and re-qualify. Options: obtain the 10-05 output
 bytes, or a host where the pin reproduces, and compare the arrays; or adopt a
