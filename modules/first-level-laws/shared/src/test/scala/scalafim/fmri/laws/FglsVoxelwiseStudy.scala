@@ -202,8 +202,18 @@ private[laws] object FglsVoxelwiseStudy:
     )
   )
 
+  /** Engines selected by `SCALAFIM_FGLS_ENGINES` (comma-separated labels), or all of them. */
+  val selectedEngines: Vector[FglsEngine] = LawEnvironment.get("SCALAFIM_FGLS_ENGINES") match
+    case None      => FglsEngine.values.toVector
+    case Some(raw) =>
+      raw.split(',').toVector.map(_.trim).filter(_.nonEmpty).map { label =>
+        FglsEngine.values
+          .find(_.label == label)
+          .getOrElse(throw new IllegalArgumentException(s"unknown FGLS study engine: $label"))
+      }
+
   def engines(cell: FglsStudyCell): Vector[FglsEngine] =
-    FglsEngine.values.toVector.filter(engine => cell.homogeneous || !engine.existing)
+    selectedEngines.filter(engine => cell.homogeneous || !engine.existing)
 
   val rootSeed: Int = LawEnvironment
     .get("SCALAFIM_FGLS_STUDY_SEED")

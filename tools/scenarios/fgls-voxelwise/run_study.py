@@ -15,6 +15,7 @@ parser.add_argument('--profile', choices=['pilot', 'development', 'confirmation'
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--candidate', help='frozen candidate engine (confirmation only)')
 parser.add_argument('--platforms', default='JVM,JS')
+parser.add_argument('--engines', help='comma-separated engine labels (default: all declared engines)')
 args = parser.parse_args()
 if args.profile == 'confirmation' and not args.candidate:
     raise SystemExit('confirmation requires the frozen --candidate')
@@ -35,9 +36,12 @@ for name in list(env):
         env.pop(name)
 env.update(SCALAFIM_FGLS_STUDY_PROFILE=args.profile, SCALAFIM_LAW_PROFILE='pull-request',
            SCALAFIM_GLS_STUDY_LOG=str(out / 'records'), SCALAFIM_FGLS_STUDY_SEED=str(protocol['seed']), LC_ALL='C')
+if args.engines:
+    env['SCALAFIM_FGLS_ENGINES'] = args.engines
 warm = [sys.executable, str(ROOT / 'tools/build/sbt-warm')]
 subprocess.run(warm + ['--shutdown'], cwd=ROOT, env=env, check=True)
 receipt = dict(schema_version='scalafim-fgls-voxelwise-run/v1', profile=args.profile, candidate=args.candidate,
+               engines=args.engines,
                protocol_sha256=hashlib.sha256(protocol_file.read_bytes()).hexdigest(),
                source_base=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                source_dirty=subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', 'modules', 'tools/scenarios/fgls-voxelwise', 'build.sbt'], cwd=ROOT).returncode != 0,
