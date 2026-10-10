@@ -5,7 +5,8 @@ import scalafim.fmri.fit.profile.*
 import scalafim.scenarios.*
 
 class TrialStressIntegrationSuite extends munit.FunSuite:
-  override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(10, "min")
+  // The complete 1200-trial fixture took 21 minutes with fit coverage in run 38076297937.
+  override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(30, "min")
 
   test("1200-trial blocked preparation and repaired decoder emit a low-noise public readout"):
     val f = DecodedTrialCheckpoint.fixture(

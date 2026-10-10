@@ -6,7 +6,9 @@ import scalafim.fmri.model.ProfileCriterion
 
 /** Reference agreement and actual public outputs; boundary solutions remain refusals. */
 class TrialRefinementSuite extends munit.FunSuite:
-  override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(10, "min")
+  // Instrumented fit kernels took up to 21 minutes per case in CI run 38076297937.
+  // Retain the complete oracle ladder and allow coverage instrumentation overhead.
+  override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(30, "min")
   private val budget = DecodedTrialCheckpoint.repairedBudget
   private lazy val f = DecodedTrialCheckpoint.fixture(
     DecodedTrialCheckpoint.Config(
