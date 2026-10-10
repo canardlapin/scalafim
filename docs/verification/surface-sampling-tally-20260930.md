@@ -67,3 +67,7 @@ New tests:
   masked, out-of-volume and NaN samples, plus tally invariant refusal.
 - `SurfaceProjectionNetworkSuite`: a NaN voxel is rejected, not accepted, in
   the receipt; the masked receipt reports `tally.masked`.
+
+**Superseded 2026-10-10.** The owner decided both questions: non-finite samples
+neither count toward `minimumSamples` nor enter any reducer. See row 4b of
+`volume-surface-gap-matrix-20261010.md`.

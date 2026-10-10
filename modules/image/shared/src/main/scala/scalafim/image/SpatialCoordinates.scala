@@ -118,7 +118,7 @@ object SpatialCoordinates:
       affine: Affine[D3]
   ): Either[GeometryError, WorldPoint] =
     affine(voxel.toVector)
-      .map(value => WorldPoint.unsafeFromVector(value, "world point"))
+      .flatMap(finiteImage).map(value => WorldPoint.unsafeFromVector(value, "world point"))
 
   @deprecated("Use voxelPointsToWorld(Vector[VoxelPoint], affine), which returns Either instead of throwing.", "0.2.0")
   def voxelsToWorld(
@@ -153,16 +153,14 @@ object SpatialCoordinates:
       affine: Affine[D3]
   ): Either[GeometryError, SpatialPoint] =
     affine.inverse(world.toVector)
-      .map(value =>
-        SpatialPoint.unsafeFromVector(value, "voxel coordinate")
-      )
+      .flatMap(finiteImage).map(value => SpatialPoint.unsafeFromVector(value, "voxel coordinate"))
 
   def worldToVoxel(
       world: WorldPoint,
       affine: Affine[D3]
   ): Either[GeometryError, VoxelPoint] =
     affine.inverse(world.toVector)
-      .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
+      .flatMap(finiteImage).map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
 
   @deprecated("Use worldPointsToVoxel(Vector[WorldPoint], affine).", "0.2.0")
   def worldsToVoxel(
@@ -193,6 +191,14 @@ object SpatialCoordinates:
   @targetName("gridCoordsFromSampleSpace")
   def gridCoords(space: SomeSampleSpace): Vector[Vector[Double]] =
     GridSpec.fromSpace(space).worldCoords
+
+  /** A finite input can overflow to a non-finite image under a finite affine;
+    * Either-returning conversions report that as a Left instead of throwing.
+    */
+  private def finiteImage(value: Vector[Double]): Either[GeometryError, Vector[Double]] =
+    value.indexWhere(!_.isFinite) match
+      case -1 => Right(value)
+      case axis => Left(GeometryError.NonFiniteCoordinate(axis, value(axis)))
 
   private[image] def validatePoint(point: Vector[Double], label: String): Unit =
     require(point.length == 3, s"$label must contain exactly 3 coordinates")
