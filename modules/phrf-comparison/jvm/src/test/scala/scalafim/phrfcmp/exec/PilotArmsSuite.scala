@@ -238,6 +238,31 @@ class PilotArmsSuite extends munit.FunSuite:
     assert(!Files.exists(out.resolve("accounting.open")))
   }
 
+  test("review3 H1: a fatal throwable after GLMsingle ran leaves accounting.open, so the resume refuses uncertain accounting") {
+    val owner = TestOwner.random()
+    val fatal = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new OutOfMemoryError("synthetic")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val out = Files.createTempDirectory("phrf-s7-fatal-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 0)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val stamp = PilotStamp(Vector("k" -> "v"))
+    // munit's intercept does not catch fatal throwables
+    val thrown =
+      try
+        new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e, fatal), CpuGuard(), new FakeClock, runIds = () => "fatal1").run()
+        None
+      catch case t: OutOfMemoryError => Some(t)
+    assert(thrown.isDefined, "the fatal throwable propagates")
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "fatal1", "the measured 37 s may be missing: accounting stays open")
+    val resume = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e), CpuGuard(), new FakeClock).run()
+    assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal1")))
+  }
+
   test("real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates") {
     val owner = TestOwner.random()
     val out = Files.createTempDirectory("phrf-s7-real-")

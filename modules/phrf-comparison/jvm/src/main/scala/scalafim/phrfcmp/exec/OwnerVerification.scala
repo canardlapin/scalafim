@@ -165,11 +165,14 @@ object OwnerVerification:
         if own != n || r.payload != payload then Left(VerificationRefusal.MalformedRecord(n, "record does not match its name"))
         else if !arms.get(r.unit.cell).exists(_.contains(r.unit.arm)) || r.unit.dataset >= plan.datasets then
           Left(VerificationRefusal.ImpossibleLedger(n, "unit outside the plan"))
-        else if r.attempts > plan.maxRetries + 1 then Left(VerificationRefusal.ImpossibleLedger(n, s"${r.attempts} attempts exceed the retry cap"))
+        else if r.attempts.toLong > plan.maxRetries.toLong + 1L then Left(VerificationRefusal.ImpossibleLedger(n, s"${r.attempts} attempts exceed the retry cap"))
         else if !items.get(payload).exists(b => Fs.sha256(b) == r.payloadSha256) then Left(VerificationRefusal.PayloadMismatch(payload))
         else
           decode(items, payload).flatMap { (status, entries) =>
             if status != r.status || entries.map(_._1) != r.entries then Left(VerificationRefusal.PayloadLedgerMismatch(n))
+            // RetryPolicy: a failure is retried while retries remain, so a committed Failed has exhausted them all
+            else if r.status == UnitStatus.Failed && r.attempts.toLong != plan.maxRetries.toLong + 1L then
+              Left(VerificationRefusal.ImpossibleLedger(n, s"Failed after ${r.attempts} attempts, before the retries were exhausted"))
             else Right(r)
           }
       }

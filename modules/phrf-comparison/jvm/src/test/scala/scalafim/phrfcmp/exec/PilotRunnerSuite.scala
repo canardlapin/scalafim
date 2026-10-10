@@ -339,7 +339,9 @@ class PilotRunnerSuite extends munit.FunSuite:
       // resuming past a reached ceiling needs the owner's typed authorization; a plain number above 60 is refused
       intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
       // the raise authorizes exactly the third invocation (two were refused at the ceiling) and is recorded
-      val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop", 3).fold(e => fail(e), identity)
+      val outputId = runner(plan, out, fin, clk).stampSha256
+      assertEquals(outputId, Fs.sha256(Files.readAllBytes(out.resolve("stamp.json"))), "the owner can compute it as sha256sum stamp.json")
+      val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop", outputId, 3).fold(e => fail(e), identity)
       val lines = new java.util.concurrent.ConcurrentLinkedQueue[String]()
       val r3 = new PilotRunner(plan, out, stamp, openStore(out), root, fin, CpuGuard.raised(45.0, raise), clk, threads, log = lines.add(_): Unit)
       val rep = r3.run().fold(x => fail(x.message), identity)
@@ -931,10 +933,79 @@ class PilotRunnerSuite extends munit.FunSuite:
       assert(!classOf[java.io.Serializable].isAssignableFrom(c), s"${c.getSimpleName} must not be Serializable")
     val ctor = classOf[OwnerCeilingRaise].getDeclaredConstructors.head
     ctor.setAccessible(true)
-    val e = intercept[java.lang.reflect.InvocationTargetException](ctor.newInstance(Double.box(Double.PositiveInfinity), "", "", Int.box(1)))
+    val e = intercept[java.lang.reflect.InvocationTargetException](ctor.newInstance(Double.box(Double.PositiveInfinity), "", "", "", Int.box(1)))
     assert(e.getCause.isInstanceOf[IllegalArgumentException])
     val g = classOf[CpuGuard].getDeclaredConstructors.head
     g.setAccessible(true)
     val e2 = intercept[java.lang.reflect.InvocationTargetException](g.newInstance(Double.box(45.0), Double.box(61.0), None))
     assert(e2.getCause.isInstanceOf[IllegalArgumentException])
+  }
+
+  // ---- third independent review 2026-10-10 (H2, M1, L1, L2, L3, hardening) ----
+
+  test("review3 H2: an owner ceiling raise is bound to one output: accepted for output A, refused for output B") {
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val a = tmp(); val b = tmp()
+    val idA = runner(plan, a, new Counting(clk, 1.0, ok), clk).stampSha256
+    assertNotEquals(idA, runner(plan, b, new Counting(clk, 1.0, ok), clk).stampSha256)
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "output A only", idA, 1).fold(e => fail(e), identity)
+    assert(runner(plan, a, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight)
+    runner(plan, b, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
+      case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
+      case other => fail(s"expected CeilingNotAuthorized, got $other")
+  }
+
+  private def craftedCost(cpu: Double, invocations: Int, recovered: Option[String]): String =
+    val rec = recovered.fold("")(id =>
+      s""","accounting_recoveries":[{"invocation":$invocations,"uncertain_run_id":"$id","charged_cpu_seconds":$cpu,"approver":"owner-bb","reason":"power loss"}]""")
+    s"""{"cpu_seconds_total":$cpu,"invocations":$invocations$rec}\n"""
+
+  test("review3 M1: an accounting recovery already recorded for the uncertain run is not charged twice") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 0.0, ok), clk).run().fold(x => fail(x.message), identity)
+    // the state a death leaves between the recovery's cost write and the marker replacement
+    Files.writeString(out.resolve("cost.json"), craftedCost(100.0, 2, Some("dead")))
+    Files.writeString(out.resolve("accounting.open"), "dead\n")
+    val rec = OwnerAccountingRecovery.of("dead", 100.0, "owner-bb", "power loss").fold(e => fail(e), identity)
+    val r = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 0.0, ok), roomy, clk, accountingRecovery = Some(rec))
+    r.run().fold(x => fail(x.message), identity)
+    assertEqualsDouble(cost(out)("cpu_seconds_total").num, 100.0, 1e-9)
+    assertEquals(cost(out)("accounting_recoveries").arr.length, 1)
+    assert(!Files.exists(out.resolve("accounting.open")))
+  }
+
+  test("review3 L2: a recovery whose charge makes the total non-finite is refused; the marker and the cost stay") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 0.0, ok), clk).run().fold(x => fail(x.message), identity)
+    Files.writeString(out.resolve("cost.json"), craftedCost(1e308, 2, None))
+    Files.writeString(out.resolve("accounting.open"), "dead\n")
+    val before = Files.readString(out.resolve("cost.json"))
+    val rec = OwnerAccountingRecovery.of("dead", 1e308, "owner-bb", "power loss").fold(e => fail(e), identity)
+    val r = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 0.0, ok), roomy, clk, accountingRecovery = Some(rec))
+    r.run() match
+      case Left(_: PilotRefusal.AccountingRecoveryInvalid) => ()
+      case other => fail(s"expected AccountingRecoveryInvalid, got $other")
+    assertEquals(Files.readString(out.resolve("cost.json")), before)
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "dead")
+  }
+
+  test("review3 L1: the runner never writes an invocation count its parser rejects") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    val last = s"{\"cpu_seconds_total\":0,\"invocations\":${Int.MaxValue - 1}}\n"
+    Files.writeString(out.resolve("cost.json"), last)
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.InvocationsExhausted(Int.MaxValue - 1)))
+    assertEquals(Files.readString(out.resolve("cost.json")), last)
+  }
+
+  test("review3 hardening: cost.json authorization records are validated; L3: the retry cap is bounded") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    val badRaise = """{"cpu_seconds_total":0,"invocations":1,"ceiling_raises":[{"invocation":0,"run_id":"../x","output_stamp_sha256":"zz","hard_core_hours":1e6,"approver":"","reason":""}]}"""
+    Files.writeString(out.resolve("cost.json"), badRaise + "\n")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run() match
+      case Left(_: PilotRefusal.CostStateLost) => ()
+      case other => fail(s"expected CostStateLost, got $other")
+    intercept[IllegalArgumentException](mkPlan(1, 2, 1).copy(maxRetries = Int.MaxValue))
+    assertEquals(mkPlan(1, 2, 1).copy(maxRetries = PilotPlan.MaxRetries).maxRetries, PilotPlan.MaxRetries)
   }

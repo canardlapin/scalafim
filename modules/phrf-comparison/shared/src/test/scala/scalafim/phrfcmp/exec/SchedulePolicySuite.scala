@@ -1,6 +1,7 @@
 package scalafim.phrfcmp.exec
 
 class SchedulePolicySuite extends munit.FunSuite:
+  private val Sha = "ab" * 32
 
   private def cell(s: String): CellId = CellId.parse(s).fold(sys.error, identity)
   private def arm(s: String): ArmId = ArmId.parse(s).fold(sys.error, identity)
@@ -174,11 +175,11 @@ class SchedulePolicySuite extends munit.FunSuite:
     intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
     intercept[IllegalArgumentException](CpuGuard(45.0, Double.PositiveInfinity))
     assertEquals(CpuGuard(1.0, 60.0).check(60.0 * 3600), CpuGuard.State.HardStop)
-    assert(OwnerCeilingRaise.of(60.0, "owner", "no raise", 1).isLeft, "a raise must exceed 60")
-    assert(OwnerCeilingRaise.of(Double.NaN, "owner", "r", 1).isLeft)
-    assert(OwnerCeilingRaise.of(70.0, "", "r", 1).isLeft, "an approver is required")
-    assert(OwnerCeilingRaise.of(70.0, "owner", "  ", 1).isLeft, "a reason is required")
-    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "crash late in the pilot", 1).fold(sys.error, identity)
+    assert(OwnerCeilingRaise.of(60.0, "owner", "no raise", Sha, 1).isLeft, "a raise must exceed 60")
+    assert(OwnerCeilingRaise.of(Double.NaN, "owner", "r", Sha, 1).isLeft)
+    assert(OwnerCeilingRaise.of(70.0, "", "r", Sha, 1).isLeft, "an approver is required")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "  ", Sha, 1).isLeft, "a reason is required")
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "crash late in the pilot", Sha, 1).fold(sys.error, identity)
     val g = CpuGuard.raised(45.0, raise)
     assertEquals((g.hardCoreHours, g.raise), (70.0, Some(raise)))
     assertEquals(g.check(65.0 * 3600), CpuGuard.State.SoftStop)
@@ -186,9 +187,11 @@ class SchedulePolicySuite extends munit.FunSuite:
   }
 
   test("re-review 6: OwnerCeilingRaise and OwnerAccountingRecovery hold their invariants; no generated constructor bypasses them") {
-    assert(OwnerCeilingRaise.of(Double.PositiveInfinity, "owner", "r", 1).isLeft, "an infinite ceiling is refused")
-    assert(OwnerCeilingRaise.of(1e6, "owner", "r", 1).isLeft, "a ceiling above the sane cap is refused")
-    assert(OwnerCeilingRaise.of(70.0, "owner", "r", 0).isLeft, "the authorized invocation is 1-based")
+    assert(OwnerCeilingRaise.of(Double.PositiveInfinity, "owner", "r", Sha, 1).isLeft, "an infinite ceiling is refused")
+    assert(OwnerCeilingRaise.of(1e6, "owner", "r", Sha, 1).isLeft, "a ceiling above the sane cap is refused")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "r", Sha, 0).isLeft, "the authorized invocation is 1-based")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "r", "not-a-hash", 1).isLeft, "the output is named by a SHA-256")
+    assert(OwnerCeilingRaise.of(OwnerCeilingRaise.MaxRaisedCoreHours, "owner", "r", Sha, 1).isRight, "the cap itself is allowed")
     assert(compileErrors("summon[scala.deriving.Mirror.ProductOf[OwnerCeilingRaise]]").nonEmpty, "no Mirror, so no fromProduct")
     assert(compileErrors("""OwnerCeilingRaise(1e9, "", "", 1)""").nonEmpty, "no public apply")
     assert(compileErrors("""new OwnerCeilingRaise(1e9, "", "", 1)""").nonEmpty, "no public constructor")

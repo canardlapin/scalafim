@@ -37,32 +37,48 @@ object RetryPolicy:
     case Retry(code: String)
 
 /** The owner's explicit authorization to run past the 60 core-hour ceiling (owner decision 2026-10-03: "do not raise
-  * the ceiling without the owner"; runbook section 6). It names the new ceiling, the approving owner, the reason and
-  * the one runner invocation (the 1-based ordinal of `cost.json`) it authorizes, so it cannot be reused by a later
+  * the ceiling without the owner"; runbook section 6). It names the new ceiling, the approving owner, the reason, the
+  * output (the SHA-256 of its `stamp.json`, which binds the store path and the owner key) and the one runner
+  * invocation on it (the 1-based ordinal of `cost.json`), so it cannot be reused by another output or a later
   * invocation. The runner records it, with its run id, in `cost.json` and in the sealed `meta/ceiling-raise/<runId>`.
   *
   * A plain class, not a case class: there is no generated `apply`, `copy` or `Mirror.fromProduct`, and it is not
   * `Serializable`, so the only way to obtain one is the validated [[OwnerCeilingRaise.of]]; the constructor re-checks
   * every invariant in case of reflective construction.
   */
-final class OwnerCeilingRaise private (val hardCoreHours: Double, val approver: String, val reason: String, val invocation: Int):
-  require(OwnerCeilingRaise.problem(hardCoreHours, approver, reason, invocation).isEmpty, "invalid OwnerCeilingRaise")
+final class OwnerCeilingRaise private (
+    val hardCoreHours: Double,
+    val approver: String,
+    val reason: String,
+    val outputStampSha256: String,
+    val invocation: Int
+):
+  require(OwnerCeilingRaise.problem(hardCoreHours, approver, reason, outputStampSha256, invocation).isEmpty, "invalid OwnerCeilingRaise")
   override def toString: String = f"OwnerCeilingRaise($hardCoreHours%.3f core-h, $approver, invocation $invocation)"
 
 object OwnerCeilingRaise:
-  /** No raise may exceed this, whoever approves it: a typo must not unbound the guard. */
+  /** No raise may exceed this, whoever approves it: a typo must not unbound the guard. Pending owner decision; the
+    * single place the cap is defined.
+    */
   val MaxRaisedCoreHours: Double = 240.0
 
-  private def problem(hardCoreHours: Double, approver: String, reason: String, invocation: Int): Option[String] =
+  private def problem(hardCoreHours: Double, approver: String, reason: String, outputStampSha256: String, invocation: Int): Option[String] =
     if hardCoreHours.isNaN || hardCoreHours.isInfinite || hardCoreHours <= CpuGuard.MaxHardCoreHours || hardCoreHours > MaxRaisedCoreHours then
-      Some("a raise names a finite ceiling above 60 and at most 240 core-hours")
+      Some(s"a raise names a finite ceiling above ${CpuGuard.MaxHardCoreHours} and at most $MaxRaisedCoreHours core-hours")
+    else if outputStampSha256 == null || !LedgerRecord.isSha256(outputStampSha256) then
+      Some("a raise names its output by the SHA-256 of its stamp.json")
     else if approver == null || !SafeName.valid(approver) then Some("the approver is a safe name")
     else if reason == null || reason.trim.isEmpty || reason.length > 500 then Some("a raise states its reason (at most 500 characters)")
     else if invocation < 1 || invocation == Int.MaxValue then Some("a raise names the invocation it authorizes")
     else None
 
-  def of(hardCoreHours: Double, approver: String, reason: String, invocation: Int): Either[String, OwnerCeilingRaise] =
-    problem(hardCoreHours, approver, reason, invocation).toLeft(new OwnerCeilingRaise(hardCoreHours, approver, reason.trim, invocation))
+  /** @param outputStampSha256 SHA-256 of the output's `stamp.json` as written (`PilotRunner.stampSha256`): the raise
+    *                          is valid for that output only
+    * @param invocation        the one invocation ordinal it authorizes on that output
+    */
+  def of(hardCoreHours: Double, approver: String, reason: String, outputStampSha256: String, invocation: Int): Either[String, OwnerCeilingRaise] =
+    problem(hardCoreHours, approver, reason, outputStampSha256, invocation)
+      .toLeft(new OwnerCeilingRaise(hardCoreHours, approver, reason.trim, outputStampSha256, invocation))
 
 /** The owner's explicit decision to resume after an invocation whose CPU accounting is uncertain (its
   * `accounting.open` marker survived: a crash, a power loss, or a failed cost checkpoint). It names that invocation's

@@ -371,3 +371,30 @@ class OwnerVerificationSuite extends munit.FunSuite:
       case OwnerVerdict.Refused(VerificationRefusal.UnitListMismatch(_)) => ()
       case other => fail(s"expected UnitListMismatch, got $other")
   }
+
+  // ---- third independent review 2026-10-10 (M2) ----
+
+  test("review3 M2: a terminal Failed commit before the retries were exhausted is an impossible history") {
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val all = items(p)
+    val rid = p.report.runId
+    val (_, entries) = UnitPayload.decode(all(SealedNames.data(unit(0), rid))).fold(e => fail(e), identity)
+    val failed = UnitPayload.encode(UnitStatus.Failed, entries.map((n, b) => new RawBlob(n, b)))
+    val sha = Fs.sha256(failed)
+    val ledger = SealedNames.ledger(unit(0), rid)
+    val relabelled = rewriteLedger(all.updated(SealedNames.data(unit(0), rid), failed), ledger) { o =>
+      o("status") = ujson.Str("failed")
+      o("code") = ujson.Str("boom")
+      o("payload_sha256") = ujson.Str(sha)
+    }
+    val recordName = SealedNames.aggregateRecord(rid)
+    val rec = ujson.read(new String(relabelled(recordName), UTF_8))
+    rec("units").arr.foreach(u => if u("dataset").num == 0 then u("payload_sha256") = ujson.Str(sha))
+    val tampered = relabelled.updated(recordName, (ujson.write(rec) + "\n").getBytes(UTF_8))
+    OwnerVerification.verify(tampered, plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.ImpossibleLedger(n, d)) =>
+        assertEquals(n, ledger)
+        assert(d.contains("Failed"), d)
+      case other => fail(s"expected ImpossibleLedger, got $other")
+  }

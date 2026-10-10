@@ -43,10 +43,18 @@ private final class RunAborted(val refusal: PilotRefusal) extends RuntimeExcepti
 private final class StopRequested extends RuntimeException("stop requested", null, false, false)
 
 /** An owner ceiling raise as one invocation used it: durable in `cost.json` and sealed as `meta/ceiling-raise/<runId>`. */
-private[exec] final case class CeilingRaiseRecord(invocation: Int, runId: String, hardCoreHours: Double, approver: String, reason: String):
+private[exec] final case class CeilingRaiseRecord(
+    invocation: Int,
+    runId: String,
+    hardCoreHours: Double,
+    approver: String,
+    reason: String,
+    outputStampSha256: String
+):
   def json: ujson.Obj = ujson.Obj(
     "invocation" -> ujson.Num(invocation.toDouble),
     "run_id" -> ujson.Str(runId),
+    "output_stamp_sha256" -> ujson.Str(outputStampSha256),
     "hard_core_hours" -> ujson.Num(hardCoreHours),
     "approver" -> ujson.Str(approver),
     "reason" -> ujson.Str(reason)
@@ -79,6 +87,9 @@ private[exec] final case class CostState(
     ujson.write(ujson.Obj.from(base ++ extra)) + "\n"
 
 private[exec] object CostState:
+  /** The largest invocation count `cost.json` may hold. */
+  val MaxInvocations: Int = Int.MaxValue - 1
+
   private val Base = Set("cpu_seconds_total", "invocations")
   private val Optional = Set("ceiling_raises", "accounting_recoveries")
 
@@ -89,6 +100,14 @@ private[exec] object CostState:
   private def finite(v: ujson.Value): Either[String, Double] =
     val d = v.num
     if d.isNaN || d.isInfinite || d < 0.0 then Left("value out of range") else Right(d)
+
+  private def prose(v: ujson.Value, what: String): Either[String, String] =
+    val s = v.str
+    if s.trim.isEmpty || s.length > 500 then Left(s"$what out of range") else Right(s)
+
+  private def safe(v: ujson.Value, what: String): Either[String, String] =
+    val s = v.str
+    if SafeName.valid(s) then Right(s) else Left(s"$what is not a safe name")
 
   private def sequence[A](xs: Vector[Either[String, A]]): Either[String, Vector[A]] =
     xs.collectFirst { case Left(e) => e }.toLeft(xs.collect { case Right(a) => a })
@@ -104,18 +123,27 @@ private[exec] object CostState:
       else
         for
           cpu <- finite(o("cpu_seconds_total")).left.map(_ => "CPU total out of range")
-          inv <- whole(o("invocations"), Int.MaxValue - 1).left.map(_ => "invocation count out of range")
+          inv <- whole(o("invocations"), MaxInvocations).left.map(_ => "invocation count out of range")
           raises <- sequence(o.get("ceiling_raises").fold(Vector.empty[ujson.Value])(_.arr.toVector).map { r =>
             for
-              i <- whole(r("invocation"), inv)
+              i <- whole(r("invocation"), inv).filterOrElse(_ >= 1, "raise invocation out of range")
+              rid <- safe(r("run_id"), "raise run id")
               h <- finite(r("hard_core_hours"))
-            yield CeilingRaiseRecord(i, r("run_id").str, h, r("approver").str, r("reason").str)
+                .filterOrElse(h => h > CpuGuard.MaxHardCoreHours && h <= OwnerCeilingRaise.MaxRaisedCoreHours, "raised ceiling out of range")
+              a <- safe(r("approver"), "raise approver")
+              why <- prose(r("reason"), "raise reason")
+              stampSha = r("output_stamp_sha256").str
+              _ <- Either.cond(LedgerRecord.isSha256(stampSha), (), "raise output stamp hash")
+            yield CeilingRaiseRecord(i, rid, h, a, why, stampSha)
           })
           recoveries <- sequence(o.get("accounting_recoveries").fold(Vector.empty[ujson.Value])(_.arr.toVector).map { r =>
             for
-              i <- whole(r("invocation"), inv)
+              i <- whole(r("invocation"), inv).filterOrElse(_ >= 1, "recovery invocation out of range")
+              rid <- safe(r("uncertain_run_id"), "recovery run id")
               c <- finite(r("charged_cpu_seconds"))
-            yield RecoveryRecord(i, r("uncertain_run_id").str, c, r("approver").str, r("reason").str)
+              a <- safe(r("approver"), "recovery approver")
+              why <- prose(r("reason"), "recovery reason")
+            yield RecoveryRecord(i, rid, c, a, why)
           })
         yield CostState(cpu, inv, raises, recoveries)
     catch case e: Exception => Left(s"unparsable (${e.getClass.getSimpleName})")
@@ -242,8 +270,10 @@ final class PilotRunner(
   private val used = new AtomicBoolean(false)
   @volatile private var invocationNo = 0
   @volatile private var currentRunId: Option[String] = None
-  /** Writes the final cost and removes `accounting.open`; set once the marker is down. */
-  @volatile private var closeAccounting: Option[() => Unit] = None
+  /** Writes the final cost; set once `accounting.open` is down. The marker is removed after it only on exits where
+    * every measured CPU is known to be in the meter.
+    */
+  @volatile private var finalCheckpoint: Option[() => Unit] = None
 
   private val storePath: String = store.dir.toAbsolutePath.normalize.toString
 
@@ -256,6 +286,11 @@ final class PilotRunner(
       "recipient_fp" -> store.recipientFingerprint,
       "sealed_store_path_sha256" -> Fs.sha256(storePath.getBytes(UTF_8))
     ))
+
+  /** SHA-256 of `stamp.json` exactly as written (`sha256sum stamp.json`): the output identity an owner ceiling raise
+    * names in advance.
+    */
+  lazy val stampSha256: String = Fs.sha256((effectiveStamp.json + "\n").getBytes(UTF_8))
 
   /** The sealed `meta/stamp`: the plaintext stamp plus the full store path. */
   val sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
@@ -294,8 +329,15 @@ final class PilotRunner(
         accountingRecovery.fold(Right(prior))(r => Left(PilotRefusal.AccountingRecoveryMismatch(r.runId, "none")))
       case Some(id) =>
         accountingRecovery match
-          case None => Left(PilotRefusal.AccountingUncertain(id))
           case Some(r) if r.runId != id => Left(PilotRefusal.AccountingRecoveryMismatch(r.runId, id))
+          case _ if prior.recoveries.exists(_.uncertainRunId == id) =>
+            // the owner's charge for this run is already durable (a death between the cost write and the marker
+            // replacement): finish the transition without charging again (third review M1)
+            log(s"PILOT_ACCOUNTING_RECOVERY_ALREADY_APPLIED,uncertain_run_id=$id")
+            Right(prior)
+          case None => Left(PilotRefusal.AccountingUncertain(id))
+          case Some(r) if (prior.cpuSecondsTotal + r.chargedCpuSeconds).isInfinite =>
+            Left(PilotRefusal.AccountingRecoveryInvalid("the charged CPU makes the total non-finite"))
           case Some(r) =>
             log(s"PILOT_ACCOUNTING_RECOVERY,uncertain_run_id=$id,charged_cpu_s=${r.chargedCpuSeconds},approver=${r.approver},reason=${ujson.write(ujson.Str(r.reason))}")
             Right(prior.copy(
@@ -304,11 +346,15 @@ final class PilotRunner(
             ))
     }
 
-  /** The runner's own admission of its guard: invariants re-checked, and a raise only for this very invocation. */
+  /** The runner's own admission of its guard: invariants re-checked, and a raise only for this very output (the
+    * SHA-256 of its `stamp.json`, which binds the store path and the owner key) and this very invocation.
+    */
   private def admitGuard(inv: Int): Either[PilotRefusal, Unit] =
     if !CpuGuard.admissible(guard) then Left(PilotRefusal.CeilingNotAuthorized("the guard's ceiling is not authorized"))
     else
       guard.raise match
+        case Some(r) if r.outputStampSha256 != stampSha256 =>
+          Left(PilotRefusal.CeilingNotAuthorized("the raise names another output (stamp.json SHA-256)"))
         case Some(r) if r.invocation != inv => Left(PilotRefusal.CeilingNotAuthorized(s"the raise authorizes invocation ${r.invocation}, not $inv"))
         case _ => Right(())
 
@@ -343,10 +389,12 @@ final class PilotRunner(
           for
             _ <- checkStamp()
             loaded <- loadCost()
+            // the written ordinal must stay one the parser accepts (always below Int.MaxValue; third review L1)
+            _ <- Either.cond(loaded.invocations < CostState.MaxInvocations, (), PilotRefusal.InvocationsExhausted(loaded.invocations))
             inv = loaded.invocations + 1
             prior <- reconcileAccounting(loaded, inv)
             _ <- admitGuard(inv)
-            raise = guard.raise.map(r => CeilingRaiseRecord(inv, rid, r.hardCoreHours, r.approver, r.reason))
+            raise = guard.raise.map(r => CeilingRaiseRecord(inv, rid, r.hardCoreHours, r.approver, r.reason, r.outputStampSha256))
             state = prior.copy(invocations = inv, raises = prior.raises ++ raise)
             _ = open(state, rid)
             journal <- progress.recover(cellById.keySet)
@@ -365,15 +413,17 @@ final class PilotRunner(
     invocationNo = state.invocations
     Fs.writeAtomic(costFile, state.json)
     Fs.writeAtomic(accountingFile, rid + "\n")
-    closeAccounting = Some(() => { Fs.writeAtomic(costFile, state.json); closeMarker() })
+    finalCheckpoint = Some(() => Fs.writeAtomic(costFile, state.json))
 
   private def closeMarker(): Unit =
     Files.deleteIfExists(accountingFile): Unit
     Fs.fsyncDir(output.toAbsolutePath)
 
-  /** Runs `body` and, on every exit, closes the accounting: the final cost checkpoint, then the marker removal. If
-    * that fails the marker stays (the next resume refuses) and the failure propagates; an exception of `body` is
-    * rethrown after a best-effort close.
+  /** Runs `body` and, on every exit, writes the final cost checkpoint. The marker is then removed only when the run
+    * ended by a result, a typed refusal, an ordinary (non-fatal) exception or an interrupt: those paths hand every
+    * measured child CPU to the meter first. On a fatal throwable (an `OutOfMemoryError`, a `LinkageError`, ...) a
+    * measured child CPU may never have reached the meter, so the marker stays and the next resume refuses with
+    * `AccountingUncertain` (third review H1). A failed checkpoint also leaves the marker and propagates.
     */
   private def accounted(body: => Either[PilotRefusal, PilotReport]): Either[PilotRefusal, PilotReport] =
     val result =
@@ -382,17 +432,22 @@ final class PilotRunner(
         catch case e: RunAborted => Left(e.refusal)
       catch
         case t: Throwable =>
-          try closeUninterrupted() catch case NonFatal(_) => ()
+          val known = NonFatal(t) || t.isInstanceOf[InterruptedException]
+          try closeUninterrupted(removeMarker = known) catch case NonFatal(_) => ()
           throw t
-    closeUninterrupted()
+    closeUninterrupted(removeMarker = true)
     result
 
-  /** The final close with the caller's interrupt flag cleared (an interrupted thread cannot write through a
-    * `FileChannel`) and restored afterwards, so an interrupted run still closes its accounting.
+  /** The final checkpoint (and marker removal) with the caller's interrupt flag cleared (an interrupted thread cannot
+    * write through a `FileChannel`) and restored afterwards, so an interrupted run still closes its accounting.
     */
-  private def closeUninterrupted(): Unit =
+  private def closeUninterrupted(removeMarker: Boolean): Unit =
     val wasInterrupted = Thread.interrupted()
-    try closeAccounting.foreach(_())
+    try
+      finalCheckpoint.foreach { checkpoint =>
+        checkpoint()
+        if removeMarker then closeMarker()
+      }
     finally if wasInterrupted then Thread.currentThread().interrupt()
 
   /** Seals the root check (the ack hash, never the root) and the stamp. Both are deterministic: resuming under
@@ -453,7 +508,7 @@ final class PilotRunner(
       if guard.check(total) == CpuGuard.State.HardStop then hard.set(true)
     }
     // the schedule-wide final checkpoint: on every exit of the invocation, after every worker has stopped
-    closeAccounting = Some(() => { checkpoint(); closeMarker() })
+    finalCheckpoint = Some(() => checkpoint())
 
     def stopped: Boolean = hard.get() || crashed.get()
 

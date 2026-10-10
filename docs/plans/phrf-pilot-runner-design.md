@@ -469,7 +469,9 @@ not stamped).
   authorization are plain non-serializable classes whose constructors re-check every invariant. The
   accounting is opened durably (`accounting.open`) before metered work and closed only by a successful
   final checkpoint; a surviving marker makes the resume refuse until the owner's
-  `OwnerAccountingRecovery` charges the uncertain run.]*
+  `OwnerAccountingRecovery` charges the uncertain run. Third review: the raise also names the output
+  (SHA-256 of its `stamp.json`); a fatal throwable leaves the accounting open; a recovery is applied
+  once per uncertain run id; plans allow at most 100 retries.]*
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit
   attempt.]*
