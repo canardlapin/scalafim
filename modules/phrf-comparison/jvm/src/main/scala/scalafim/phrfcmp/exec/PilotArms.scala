@@ -240,8 +240,13 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
         val guard = run.attempt.guardCpuSeconds // what the machine spent, for the section 5.2 guard
         // the child already ran: whatever the adapter or the feed throws from here on, the measured CPU stays with the
         // attempt's result (re-review failure 3); the scheduler would otherwise substitute a zero-CPU failure
+        // an interrupt is handed back the same way, with the flag restored, so the scheduler meters the CPU first
         try glmResult(job, ctx, d, run, guard)
-        catch case NonFatal(e) => ArmResult.Failed(token("glmsingle_adapter_" + e.getClass.getSimpleName), guard)
+        catch
+          case _: InterruptedException =>
+            Thread.currentThread().interrupt()
+            ArmResult.Failed("glmsingle_interrupted", guard)
+          case NonFatal(e) => ArmResult.Failed(token("glmsingle_adapter_" + e.getClass.getSimpleName), guard)
 
   private def glmResult(job: Job, ctx: ArmContext, d: LoadedDataset, run: GlmSingleRun, guard: Double): ArmResult =
     run.result match

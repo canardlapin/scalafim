@@ -131,4 +131,8 @@ object SealedNames:
   def aggregateRecord(runId: String): String = s"aggregate/$runId/record"
 
   val RootCheck: String = "meta/root-check"
+
+  /** The owner ceiling raise and the owner accounting recovery an invocation used, when any. */
+  def ceilingRaise(runId: String): String = s"meta/ceiling-raise/$runId"
+  def accountingRecovery(runId: String): String = s"meta/accounting-recovery/$runId"
   val Stamp: String = "meta/stamp"

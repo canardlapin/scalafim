@@ -463,7 +463,13 @@ not stamped).
   *[2026-10-10, owner decision of 2026-10-03 "do not raise the ceiling without the owner": `CpuGuard`
   refuses a hard ceiling above 60 core-hours. The only way past 60 is `CpuGuard.raised` with an
   `OwnerCeilingRaise` value naming the new ceiling, the approving owner and the reason; the runner
-  logs `PILOT_CEILING_RAISE` with the ceiling and the approver. No code path raises the ceiling by itself.]*
+  logs `PILOT_CEILING_RAISE` with the ceiling and the approver. No code path raises the ceiling by itself.
+  Second re-review: the raise also names the one invocation it authorizes, at most 240 core-hours, and
+  is recorded in `cost.json` and the sealed `meta/ceiling-raise/<runId>`; `CpuGuard` and the
+  authorization are plain non-serializable classes whose constructors re-check every invariant. The
+  accounting is opened durably (`accounting.open`) before metered work and closed only by a successful
+  final checkpoint; a surviving marker makes the resume refuse until the owner's
+  `OwnerAccountingRecovery` charges the uncertain run.]*
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit
   attempt.]*

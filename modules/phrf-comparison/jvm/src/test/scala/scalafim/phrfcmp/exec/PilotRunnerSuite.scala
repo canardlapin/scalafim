@@ -338,8 +338,19 @@ class PilotRunnerSuite extends munit.FunSuite:
       val fin = new Counting(clk, 10.0, ok)
       // resuming past a reached ceiling needs the owner's typed authorization; a plain number above 60 is refused
       intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
-      val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop").fold(e => fail(e), identity)
-      val rep = runner(plan, out, fin, clk, CpuGuard.raised(45.0, raise), threads).run().fold(x => fail(x.message), identity)
+      // the raise authorizes exactly the third invocation (two were refused at the ceiling) and is recorded
+      val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop", 3).fold(e => fail(e), identity)
+      val lines = new java.util.concurrent.ConcurrentLinkedQueue[String]()
+      val r3 = new PilotRunner(plan, out, stamp, openStore(out), root, fin, CpuGuard.raised(45.0, raise), clk, threads, log = lines.add(_): Unit)
+      val rep = r3.run().fold(x => fail(x.message), identity)
+      val logged = lines.toArray.map(_.toString).find(_.startsWith("PILOT_CEILING_RAISE")).getOrElse(fail("no raise log line"))
+      assert(logged.contains(s"run_id=${r3.runId}") && logged.contains("forced low-ceiling stop") && logged.contains("approver=owner-bb"), logged)
+      val recorded = cost(out)("ceiling_raises").arr
+      assertEquals(recorded.map(r => (r("invocation").num.toInt, r("run_id").str, r("approver").str)).toVector, Vector((3, r3.runId, "owner-bb")))
+      assert(read(out).contains(SealedNames.ceilingRaise(r3.runId)), "the raise is sealed with the run")
+      // the same authorization cannot be used by a later invocation
+      val reuse = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard.raised(45.0, raise), threads).run()
+      assertEquals(reuse.left.toOption.map(_.isInstanceOf[PilotRefusal.CeilingNotAuthorized]), Some(true))
       assertEquals(rep.outcome.decision.D, 4)
     }
 
@@ -854,4 +865,76 @@ class PilotRunnerSuite extends munit.FunSuite:
     val hook: CommitHook = (s, _) => if s == CommitStage.DataSealed && crashed.incrementAndGet() == 1 then throw new SimulatedCrash
     intercept[SimulatedCrash](runner(plan, out, arms, clk, hook = hook).run())
     assertEqualsDouble(cost(out)("cpu_seconds_total").num, 17.0, 1e-9)
+  }
+
+  // ---- second independent re-review 2026-10-10 (failures 1, 2, 3, 5) ----
+
+  test("re-review 1a: a failed cost checkpoint leaves accounting.open; the resume refuses until the owner charges that run") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 3, 1)
+    val arms: ArmRunner = ctx =>
+      clk.advance(10.0)
+      if ctx.unit.dataset == 1 && !Files.isDirectory(out.resolve("cost.json")) then
+        // the cost file becomes unwritable for the rest of the run: every checkpoint fails from here on
+        Files.delete(out.resolve("cost.json"))
+        Files.createDirectories(out.resolve("cost.json").resolve("blocker")): Unit
+      ctx.emit("o", blobBytes(ctx.unit))
+      ArmResult.Done()
+    val r1 = runner(plan, out, arms, clk, runId = "uncertain1")
+    intercept[java.io.IOException](r1.run())
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "uncertain1")
+    Fs.deleteTree(out.resolve("cost.json"))
+    Files.writeString(out.resolve("cost.json"), "{\"cpu_seconds_total\":0,\"invocations\":1}\n") // stale but parseable
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.AccountingUncertain("uncertain1")))
+    val wrong = OwnerAccountingRecovery.of("someother", 100.0, "owner-bb", "power loss").fold(e => fail(e), identity)
+    val w = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 1.0, ok), roomy, clk, accountingRecovery = Some(wrong))
+    assertEquals(w.run().left.toOption, Some(PilotRefusal.AccountingRecoveryMismatch("someother", "uncertain1")))
+    val rec = OwnerAccountingRecovery.of("uncertain1", 100.0, "owner-bb", "cost checkpoint failed").fold(e => fail(e), identity)
+    val r = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 1.0, ok), roomy, clk, accountingRecovery = Some(rec))
+    val rep = r.run().fold(x => fail(x.message), identity)
+    assert(rep.totalCpuSeconds >= 100.0, s"the charged CPU counts: ${rep.totalCpuSeconds}")
+    assert(!Files.exists(out.resolve("accounting.open")))
+    assertEquals(cost(out)("accounting_recoveries").arr.map(_("uncertain_run_id").str).toVector, Vector("uncertain1"))
+    assert(read(out).contains(SealedNames.accountingRecovery(r.runId)))
+  }
+
+  test("re-review 1b: a process death mid-run (accounting.open on disk) makes the resume refuse uncertain accounting") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 3, 1)
+    val snap = tmp()
+    val arms: ArmRunner = ctx =>
+      clk.advance(10.0)
+      if ctx.unit.dataset == 1 then
+        // what the disk holds if the power fails now
+        Files.copy(out.resolve("cost.json"), snap.resolve("cost.json"))
+        Files.copy(out.resolve("accounting.open"), snap.resolve("accounting.open")): Unit
+      ctx.emit("o", blobBytes(ctx.unit))
+      ArmResult.Done()
+    val r1 = runner(plan, out, arms, clk, runId = "died1")
+    r1.run().fold(x => fail(x.message), identity)
+    assert(!Files.exists(out.resolve("accounting.open")), "a clean exit closes the accounting")
+    Files.copy(snap.resolve("cost.json"), out.resolve("cost.json"), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(snap.resolve("accounting.open"), out.resolve("accounting.open"))
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.AccountingUncertain("died1")))
+  }
+
+  test("re-review 5b: a cost.json whose invocation count would overflow is refused, never incremented") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    Files.writeString(out.resolve("cost.json"), s"{\"cpu_seconds_total\":0,\"invocations\":${Int.MaxValue}}\n")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run() match
+      case Left(_: PilotRefusal.CostStateLost) => ()
+      case other => fail(s"expected CostStateLost, got $other")
+    assertEquals(cost(out)("invocations").num, Int.MaxValue.toDouble)
+  }
+
+  test("re-review 3: CpuGuard and the owner authorizations are not Serializable, and reflective construction re-checks every invariant") {
+    for c <- Vector(classOf[CpuGuard], classOf[OwnerCeilingRaise], classOf[OwnerAccountingRecovery]) do
+      assert(!classOf[java.io.Serializable].isAssignableFrom(c), s"${c.getSimpleName} must not be Serializable")
+    val ctor = classOf[OwnerCeilingRaise].getDeclaredConstructors.head
+    ctor.setAccessible(true)
+    val e = intercept[java.lang.reflect.InvocationTargetException](ctor.newInstance(Double.box(Double.PositiveInfinity), "", "", Int.box(1)))
+    assert(e.getCause.isInstanceOf[IllegalArgumentException])
+    val g = classOf[CpuGuard].getDeclaredConstructors.head
+    g.setAccessible(true)
+    val e2 = intercept[java.lang.reflect.InvocationTargetException](g.newInstance(Double.box(45.0), Double.box(61.0), None))
+    assert(e2.getCause.isInstanceOf[IllegalArgumentException])
   }

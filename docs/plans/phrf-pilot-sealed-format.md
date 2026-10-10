@@ -163,6 +163,8 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 |---|---|
 | `meta/root-check` | `hex(SHA-256(root64 decimal + "\n"))`, the acknowledgement hash, never the root |
 | `meta/stamp` | the sealed stamp: every `stamp.json` field plus `sealed_store_path` (the full absolute path, which the plaintext stamp holds only as `sealed_store_path_sha256`) |
+| `meta/ceiling-raise/<runId>` | only when the invocation ran under an `OwnerCeilingRaise`: JSON `invocation run_id hard_core_hours approver reason` |
+| `meta/accounting-recovery/<runId>` | only when the invocation resumed under an `OwnerAccountingRecovery`: JSON `invocation uncertain_run_id charged_cpu_seconds approver reason` |
 | `data/<unit>/<runId>` | unit payload of a scheduled commit, any status (a status placeholder when the arm emitted nothing) |
 | `ledger/<unit>/<runId>` | ledger record: JSON with keys exactly `cell dataset arm invocation run_id phase attempts status code payload payload_sha256 entries`; `phase` is `scheduled` here |
 | `timing/<unit>/<runId>` | timing record: every attempt of this invocation (status `retried`/`done`/`refused`/`failed`, code, wall and child CPU seconds, named timings, result-adjacent notes) |
@@ -263,7 +265,8 @@ An arm map is written as `int k` (the number of methods present), then, for each
 **Plaintext outside the store** (runner output directory):
 
 - `stamp.json`: hashes and versions, `recipient_fp` (the owner key fingerprint, already public), and `sealed_store_path_sha256`, never the path itself;
-- `cost.json`: `cpu_seconds_total` and `invocations`;
+- `cost.json`: `cpu_seconds_total` and `invocations` (always below `Int.MaxValue`), plus `ceiling_raises` and `accounting_recoveries` when the owner authorized any (the same records as the sealed `meta/...` blobs; owner decisions, no results);
+- `accounting.open`: the run id of the invocation whose CPU accounting is open. The runner writes it, durably, before any metered work and removes it only after a successful final cost checkpoint. A marker that survives (crash, power loss, failed checkpoint) makes the next resume refuse with `AccountingUncertain` until the owner supplies an `OwnerAccountingRecovery` for that run id, which charges a stated CPU amount;
 - `selection.json`: D, df and the UCL factor;
 - `progress/<cell>/dNNNN.dispatched` plus `.sha256` markers, written before a job's first arm runs, so that a resume past the soft stop finishes every job that was in flight (blocker probe M2);
 - `progress/<cell>/dNNNN.done` plus `.sha256` markers;

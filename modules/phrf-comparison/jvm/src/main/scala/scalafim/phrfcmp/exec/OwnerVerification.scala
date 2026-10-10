@@ -28,6 +28,8 @@ enum VerificationRefusal(val message: String):
   case PayloadLedgerMismatch(ledger: String)
       extends VerificationRefusal(s"ledger record $ledger disagrees with its payload's status or entry inventory")
   case DatasetsOutOfPlan(datasets: Int) extends VerificationRefusal(s"aggregate D = $datasets is outside the plan's dataset bounds")
+  case ImpossibleLedger(name: String, detail: String) extends VerificationRefusal(s"ledger record $name cannot come from this plan's runner: $detail")
+  case InconsistentInvocations(detail: String) extends VerificationRefusal(s"ledger invocation history is inconsistent: $detail")
   case UnitListMismatch(detail: String) extends VerificationRefusal(s"the aggregate's unit list is not the kept set: $detail")
   case ConsumedCommitMissing(unit: WorkUnit)
       extends VerificationRefusal(s"the commit the scorer consumed for ${OwnerVerification.path(unit)} is not in the store")
@@ -85,7 +87,7 @@ object OwnerVerification:
     val result = for
       agg <- authoritative(items, manifestWhitelistSha256)
       _ <- datasetBounds(agg, plan)
-      ledgers <- ledgerRecords(items)
+      ledgers <- ledgerRecords(items, plan)
       _ <- unitList(agg, plan)
       firsts <- firstAttempts(agg, ledgers)
     yield
@@ -139,7 +141,8 @@ object OwnerVerification:
         units.collectFirst { case Left(e) => e } match
           case Some(e) => bad(e)
           case None =>
-            if !datasets.isWhole || datasets < 1 then bad("datasets")
+            // bounded before narrowing: a non-integral, non-positive or non-Int D is malformed
+            if datasets.isNaN || !datasets.isWhole || datasets < 1 || datasets > Int.MaxValue then bad("datasets")
             else
               val schema = o.get("contribution_schema").map(_.str)
               if schema.exists(s => !SafeName.valid(s)) then bad("contribution schema")
@@ -151,7 +154,8 @@ object OwnerVerification:
   /** Every ledger record, scheduled and rerun, after checking that it sits under its own name and that the payload
     * it names exists and matches its hash.
     */
-  private def ledgerRecords(items: Map[String, Array[Byte]]): Either[VerificationRefusal, Vector[LedgerRecord]] =
+  private def ledgerRecords(items: Map[String, Array[Byte]], plan: PilotPlan): Either[VerificationRefusal, Vector[LedgerRecord]] =
+    val arms = plan.cells.map(c => c.id -> c.arms.toSet).toMap
     val names = items.keys.toVector.sorted.filter(n => n.startsWith("ledger/") || n.startsWith("rerun/") && n.split('/').lift(2).contains("ledger"))
     val parsed = names.map { n =>
       LedgerRecord.parse(text(items, n)).left.map(VerificationRefusal.MalformedRecord(n, _)).flatMap { r =>
@@ -159,6 +163,9 @@ object OwnerVerification:
           case CommitPhase.Scheduled => (SealedNames.ledger(r.unit, r.runId), SealedNames.data(r.unit, r.runId))
           case CommitPhase.Rerun => (SealedNames.rerunLedger(r.unit, r.runId), SealedNames.rerunData(r.unit, r.runId))
         if own != n || r.payload != payload then Left(VerificationRefusal.MalformedRecord(n, "record does not match its name"))
+        else if !arms.get(r.unit.cell).exists(_.contains(r.unit.arm)) || r.unit.dataset >= plan.datasets then
+          Left(VerificationRefusal.ImpossibleLedger(n, "unit outside the plan"))
+        else if r.attempts > plan.maxRetries + 1 then Left(VerificationRefusal.ImpossibleLedger(n, s"${r.attempts} attempts exceed the retry cap"))
         else if !items.get(payload).exists(b => Fs.sha256(b) == r.payloadSha256) then Left(VerificationRefusal.PayloadMismatch(payload))
         else
           decode(items, payload).flatMap { (status, entries) =>
@@ -167,7 +174,18 @@ object OwnerVerification:
           }
       }
     }
-    parsed.collectFirst { case Left(e) => e }.toLeft(parsed.collect { case Right(r) => r })
+    parsed.collectFirst { case Left(e) => e }.toLeft(parsed.collect { case Right(r) => r }).flatMap(invocationHistory)
+
+  /** One invocation is one run id (format spec section 10): every record of a run id carries the same ordinal, and
+    * no two run ids share one.
+    */
+  private def invocationHistory(ledgers: Vector[LedgerRecord]): Either[VerificationRefusal, Vector[LedgerRecord]] =
+    val byRun = ledgers.groupBy(_.runId).view.mapValues(_.map(_.invocation).distinct).toMap
+    val byInvocation = ledgers.groupBy(_.invocation).view.mapValues(_.map(_.runId).distinct).toMap
+    byRun.collectFirst { case (rid, invs) if invs.length > 1 => s"run $rid carries invocations ${invs.sorted.mkString(",")}" }
+      .orElse(byInvocation.collectFirst { case (inv, rids) if rids.length > 1 => s"invocation $inv carries ${rids.length} run ids" })
+      .map(VerificationRefusal.InconsistentInvocations(_))
+      .toLeft(ledgers)
 
   /** A unit payload, decoded with every failure contained in a typed refusal. */
   private def decode(items: Map[String, Array[Byte]], payload: String): Either[VerificationRefusal, (UnitStatus, Vector[(String, Array[Byte])])] =
@@ -181,6 +199,13 @@ object OwnerVerification:
     Either.cond(ok, (), VerificationRefusal.DatasetsOutOfPlan(d))
 
   private def unitList(agg: Aggregate, plan: PilotPlan): Either[VerificationRefusal, Unit] =
+    // counted in Long before anything of size D is built: a huge D refuses without allocating
+    val expectedCount = plan.cells.map(_.arms.length.toLong).sum * agg.datasets.toLong
+    if agg.units.length.toLong != expectedCount then
+      Left(VerificationRefusal.UnitListMismatch(s"${agg.units.length} units listed, $expectedCount expected"))
+    else unitSet(agg, plan)
+
+  private def unitSet(agg: Aggregate, plan: PilotPlan): Either[VerificationRefusal, Unit] =
     val expected = for
       c <- plan.cells
       d <- 0 until agg.datasets

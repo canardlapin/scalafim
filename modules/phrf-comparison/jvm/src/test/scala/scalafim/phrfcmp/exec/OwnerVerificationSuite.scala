@@ -327,3 +327,47 @@ class OwnerVerificationSuite extends munit.FunSuite:
       OwnerVerdict.Invalidated(p.report.runId, Vector(unit(4)), DigestCheck.Mismatched, Vector(unit(4)))
     )
   }
+
+  // ---- second independent re-review 2026-10-10 (failures 4, 5) ----
+
+  test("re-review 4: impossible ledger histories refuse (attempt cap, invocation ordinals, units outside the plan)") {
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val all = items(p)
+    val rid = p.report.runId
+    val ledger = SealedNames.ledger(unit(0), rid)
+    OwnerVerification.verify(rewriteLedger(all, ledger)(o => o("attempts") = ujson.Num(999)), plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.ImpossibleLedger(n, _)) => assertEquals(n, ledger)
+      case other => fail(s"attempts: expected ImpossibleLedger, got $other")
+    OwnerVerification.verify(rewriteLedger(all, ledger)(o => o("invocation") = ujson.Num(99)), plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.InconsistentInvocations(_)) => ()
+      case other => fail(s"invocation: expected InconsistentInvocations, got $other")
+    val stray = WorkUnit(cell("C9"), 0, a0)
+    val payload = UnitPayload.encode(UnitStatus.Done, Vector(new RawBlob("o", Array[Byte](1))))
+    val rec = LedgerRecord(stray, 1, rid, CommitPhase.Scheduled, 1, UnitStatus.Done, "", SealedNames.data(stray, rid), Fs.sha256(payload), Vector("o"))
+    val withStray = all.updated(SealedNames.data(stray, rid), payload).updated(SealedNames.ledger(stray, rid), (rec.json + "\n").getBytes(UTF_8))
+    OwnerVerification.verify(withStray, plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.ImpossibleLedger(n, _)) => assertEquals(n, SealedNames.ledger(stray, rid))
+      case other => fail(s"stray unit: expected ImpossibleLedger, got $other")
+  }
+
+  private def withDatasets(all: Map[String, Array[Byte]], rid: String, d: ujson.Value): Map[String, Array[Byte]] =
+    val name = SealedNames.aggregateRecord(rid)
+    val rec = ujson.read(new String(all(name), UTF_8))
+    rec("datasets") = d
+    all.updated(name, (ujson.write(rec) + "\n").getBytes(UTF_8))
+
+  test("re-review 5a: aggregate D is bounded before narrowing, and a huge D refuses without allocating its unit list") {
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val all = items(p)
+    val rid = p.report.runId
+    for d <- Vector(ujson.Num(1e100), ujson.Num(15.5), ujson.Num(-3), ujson.Num(Int.MaxValue.toDouble + 1)) do
+      OwnerVerification.verify(withDatasets(all, rid, d), plan, wl, Vector(new Synthetic())) match
+        case OwnerVerdict.Refused(VerificationRefusal.MalformedRecord(_, "datasets")) => ()
+        case other => fail(s"D = $d: expected a malformed record, got $other")
+    val hugePlan = PilotPlan(plan.cells, datasets = Int.MaxValue)
+    OwnerVerification.verify(withDatasets(all, rid, ujson.Num(Int.MaxValue.toDouble)), hugePlan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.UnitListMismatch(_)) => ()
+      case other => fail(s"expected UnitListMismatch, got $other")
+  }

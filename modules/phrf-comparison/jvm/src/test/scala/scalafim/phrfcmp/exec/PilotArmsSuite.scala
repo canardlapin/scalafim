@@ -217,6 +217,27 @@ class PilotArmsSuite extends munit.FunSuite:
       assertEqualsDouble(rep.totalCpuSeconds, 2 * (retries + 1) * 37.0, 1e-9)
   }
 
+  test("re-review 2: an InterruptedException from the feed after GLMsingle ran still meters its CPU, then ends the run as Interrupted") {
+    val owner = TestOwner.random()
+    val interrupting = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new InterruptedException("feed interrupted")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val direct = new PilotArmRunner(new Source, e, interrupting).run(ctx("glmsingle"))
+    assertEquals(direct.childCpu, 37.0)
+    assert(Thread.interrupted(), "the interrupt flag is restored for the caller")
+    val out = Files.createTempDirectory("phrf-s7-intcpu-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 2)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val r = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e, interrupting), CpuGuard(), new FakeClock)
+    assertEquals(r.run().left.toOption, Some(PilotRefusal.Interrupted))
+    assertEquals(ujson.read(Files.readString(out.resolve("cost.json")))("cpu_seconds_total").num, 37.0)
+    assert(!Files.exists(out.resolve("accounting.open")))
+  }
+
   test("real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates") {
     val owner = TestOwner.random()
     val out = Files.createTempDirectory("phrf-s7-real-")
