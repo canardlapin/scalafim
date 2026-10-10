@@ -1,10 +1,10 @@
-# DRAFT upstream request: HalfFlow geometry ownership
+# Upstream request: HalfFlow geometry ownership
 
-> **Status: DRAFT, NOT SUBMITTED.** Prepared for the reframe4s owner under
-> STP-P8.04 (`bd-01M39Q5EKTWVNNJ3ZHF3SSRV20`). It has not been filed on any
-> tracker, sent, or published. Submission needs explicit owner authorization
-> and a chosen route, such as a `canardlapin/reframe4s` issue. Until then no
-> ScalaFIM document may describe this request as made.
+> **Status: SUBMITTED 2026-10-10** as
+> [canardlapin/reframe4s#12](https://github.com/canardlapin/reframe4s/issues/12)
+> on owner authorization, under STP-P8.04 (`bd-01M39Q5EKTWVNNJ3ZHF3SSRV20`).
+> The issue body carries the requested-change text below with the evidence
+> table. Resolution belongs to the reframe4s owner.
 
 Refreshed 2026-10-10 against ScalaFIM `origin/main` `8e85ef61`.
 
@@ -40,7 +40,7 @@ As of 2026-10-10, no issue mentioning HalfFlow exists in
 `canardlapin/reframe4s`. A read-only
 `gh issue list --state all --search halfflow` returned nothing.
 
-## Requested change (text to submit once authorized)
+## Requested change (as submitted)
 
 > HalfFlow keeps private copies of volume geometry under
 > `reframe4s/halfflow/internal/`: `Affine.scala`, `Geometry.scala` and
