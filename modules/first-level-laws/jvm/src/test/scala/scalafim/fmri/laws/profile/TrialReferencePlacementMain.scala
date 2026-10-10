@@ -6,21 +6,28 @@ import scalafim.fmri.fit.profile.*
 
 object TrialReferencePlacementMain:
   private val expectedProtocol = "3d68e7e4fe106f877608c09468c3cfd62b97b35ec578347bdf5ab92adc88eda1"
-  private def hash(bytes: Array[Byte]): String = MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 0xff}%02x").mkString
+  private def hash(bytes: Array[Byte]): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 0xff}%02x").mkString
   private def json(value: Any): ujson.Value = value match
-    case v: ujson.Value => v
-    case v: scalafim.scenarios.ScenarioResult => ujson.Obj("id" -> v.id, "status" -> v.status.toString,
-      "ciPass" -> v.ciPass, "observations" -> ujson.Arr.from(v.observations.map(_.render)), "caveats" -> ujson.Arr.from(v.caveats.map(_.render)))
-    case None => ujson.Null
-    case Some(v) => json(v)
+    case v: ujson.Value                       => v
+    case v: scalafim.scenarios.ScenarioResult =>
+      ujson.Obj(
+        "id" -> v.id,
+        "status" -> v.status.toString,
+        "ciPass" -> v.ciPass,
+        "observations" -> ujson.Arr.from(v.observations.map(_.render)),
+        "caveats" -> ujson.Arr.from(v.caveats.map(_.render))
+      )
+    case None         => ujson.Null
+    case Some(v)      => json(v)
     case v: Vector[?] => ujson.Arr.from(v.map(json))
-    case v: String => ujson.Str(v)
-    case v: Double => if v.isFinite then ujson.Num(v) else ujson.Str(v.toString)
-    case v: Int => ujson.Num(v)
-    case v: Long => ujson.Num(v.toDouble)
-    case v: Boolean => ujson.Bool(v)
-    case v: Product => ujson.Obj.from(v.productElementNames.zip(v.productIterator).map((k, v) => k -> json(v)))
-    case v => throw new IllegalArgumentException(s"unsupported receipt $v")
+    case v: String    => ujson.Str(v)
+    case v: Double    => if v.isFinite then ujson.Num(v) else ujson.Str(v.toString)
+    case v: Int       => ujson.Num(v)
+    case v: Long      => ujson.Num(v.toDouble)
+    case v: Boolean   => ujson.Bool(v)
+    case v: Product   => ujson.Obj.from(v.productElementNames.zip(v.productIterator).map((k, v) => k -> json(v)))
+    case v            => throw new IllegalArgumentException(s"unsupported receipt $v")
 
   def main(args: Array[String]): Unit =
     require(args.length == 2, "packet-directory development|confirmation|stress")
@@ -40,9 +47,15 @@ object TrialReferencePlacementMain:
         val selected = results.zipWithIndex.minBy: (entry, index) =>
           val fresh = entry._2.coverage.find(_.cohort == "fresh").get
           (-fresh.correctedPasses, fresh.originalP95, index)
-        write("selected.json", ujson.Obj("name" -> selected._1._1, "protocolSha256" -> protocol,
-          "developmentSha256" -> hash(Files.readAllBytes(dir.resolve("development.json"))),
-          "coordinates" -> json(TrialReferencePlacement.points(selected._1._1).coordinates)))
+        write(
+          "selected.json",
+          ujson.Obj(
+            "name" -> selected._1._1,
+            "protocolSha256" -> protocol,
+            "developmentSha256" -> hash(Files.readAllBytes(dir.resolve("development.json"))),
+            "coordinates" -> json(TrialReferencePlacement.points(selected._1._1).coordinates)
+          )
+        )
       case "confirmation" =>
         val selectedBytes = Files.readAllBytes(dir.resolve("selected.json"))
         val selected = ujson.read(selectedBytes)
@@ -50,10 +63,19 @@ object TrialReferencePlacementMain:
         require(selected("developmentSha256").str == hash(Files.readAllBytes(dir.resolve("development.json"))))
         val name = selected("name").str
         require(selected("coordinates") == json(TrialReferencePlacement.points(name).coordinates))
-        val results = Vector(TrialReferencePlacement.run(name, 30, 64, 32, confirm = true, completed = println),
-          TrialReferencePlacement.run(name, 300, 256, 64, confirm = true, completed = println))
-        write("confirmation.json", ujson.Obj("protocolSha256" -> protocol, "selectionSha256" -> hash(selectedBytes),
-          "results" -> json(results), "seconds" -> (System.nanoTime() - start) / 1e9))
+        val results = Vector(
+          TrialReferencePlacement.run(name, 30, 64, 32, confirm = true, completed = println),
+          TrialReferencePlacement.run(name, 300, 256, 64, confirm = true, completed = println)
+        )
+        write(
+          "confirmation.json",
+          ujson.Obj(
+            "protocolSha256" -> protocol,
+            "selectionSha256" -> hash(selectedBytes),
+            "results" -> json(results),
+            "seconds" -> (System.nanoTime() - start) / 1e9
+          )
+        )
       case "stress" =>
         val selected = ujson.read(Files.readAllBytes(dir.resolve("selected.json")))
         require(selected("protocolSha256").str == protocol)
@@ -75,40 +97,69 @@ object TrialReferencePlacementMain:
         import scalafim.fmri.design.{TrialId, ConditionId, ColumnId, ScanIndex}
         import scalafim.fmri.hrf.family.NormalizationRule
         val conditions = Vector.tabulate(prep.conditions)(i => ConditionId.unsafe(s"condition-$i"))
-        val axis = ProfileTrialAxis.make(prep.source, prep,
-          Vector.tabulate(prep.trials)(i => TrialId.unsafe(s"trial-$i")), conditions,
-          Vector.tabulate(prep.trials)(i => conditions(prep.membership.conditionOfTrial(i))),
-          Vector.tabulate(prep.nuisanceColumns)(i => ColumnId.unsafe(s"nuisance-$i")),
-          Vector.tabulate(prep.rows)(i => ScanIndex.unsafeOneBased(i + 1))).toOption.get
-        val readout = ProfileTrialReadout.freeze(bank, axis, bank.points.coordinates.head, 0,
-          NormalizationRule.Unnormalised, ProfileTrialReadoutMode.CorrectedReference).toOption.get
+        val axis = ProfileTrialAxis
+          .make(
+            prep.source,
+            prep,
+            Vector.tabulate(prep.trials)(i => TrialId.unsafe(s"trial-$i")),
+            conditions,
+            Vector.tabulate(prep.trials)(i => conditions(prep.membership.conditionOfTrial(i))),
+            Vector.tabulate(prep.nuisanceColumns)(i => ColumnId.unsafe(s"nuisance-$i")),
+            Vector.tabulate(prep.rows)(i => ScanIndex.unsafeOneBased(i + 1))
+          )
+          .toOption
+          .get
+        val readout = ProfileTrialReadout
+          .freeze(
+            bank,
+            axis,
+            bank.points.coordinates.head,
+            0,
+            NormalizationRule.Unnormalised,
+            ProfileTrialReadoutMode.CorrectedReference
+          )
+          .toOption
+          .get
         val readoutWorkers = Vector.fill(8)(readout.newWorker())
-        val input = ProfileTrialResponse.make(axis, axis.selectedResponseRows, ProfileTrialResponseDomain.Original, raw).toOption.get
+        val input = ProfileTrialResponse
+          .make(axis, axis.selectedResponseRows, ProfileTrialResponseDomain.Original, raw)
+          .toOption
+          .get
         val result = readoutWorkers.head.evaluate(input, DecodedTrialCheckpoint.request).toOption.get
         val graph = retainedGraph((bank +: workers).toArray[AnyRef])
         val readoutGraph = retainedGraph((Vector[AnyRef](bank) ++ readoutWorkers).toArray)
         val combinedGraph = retainedGraph((Vector[AnyRef](bank) ++ workers ++ readoutWorkers).toArray)
-        write("stress.json", ujson.Obj("protocolSha256" -> protocol, "selectedBank" -> selected("name"),
-          "rank" -> bank.preparation.basisRank, "bandwidth" -> bank.preparation.bandwidth,
-          "preparationBytes" -> bank.preparation.receipt.estimatedBytes,
-          "referenceBytes" -> bank.estimatedReferenceBytes, "fullReferenceBytes" -> bank.estimatedFullReferenceBytes,
-          "sharedBytes" -> bank.estimatedSharedBytes, "workerBytes" -> bank.estimatedWorkerBytes,
-          "reconstructionScratchBytes" -> bank.reconstructionScratchBytes,
-          "curvatureWorkersWarmed" -> workers.length,
-          "retainedCurvatureScratchBytes" -> workers.map(_.retainedReconstructionScratchBytes).sum,
-          "retainedBankScratchBytes" -> bank.retainedReconstructionScratchBytes,
-          "scopedEightWorkersBytes" -> (bank.estimatedSharedBytes + 8 * bank.estimatedWorkerBytes),
-          "reachableBankAndEightWorkers" -> graph,
-          "reachableBankAndEightReadoutWorkers" -> readoutGraph,
-          "reachableBankEightCurvatureAndEightReadoutWorkers" -> combinedGraph,
-          "readoutWork" -> json(result.work), "terminalJetCompleted" -> completed,
-          "terminalWork" -> json(worker.work.snapshot), "terminalSecondsDiagnosticOnly" -> curvatureSeconds,
-          "seconds" -> (System.nanoTime() - start) / 1e9))
+        write(
+          "stress.json",
+          ujson.Obj(
+            "protocolSha256" -> protocol,
+            "selectedBank" -> selected("name"),
+            "rank" -> bank.preparation.basisRank,
+            "bandwidth" -> bank.preparation.bandwidth,
+            "preparationBytes" -> bank.preparation.receipt.estimatedBytes,
+            "referenceBytes" -> bank.estimatedReferenceBytes,
+            "fullReferenceBytes" -> bank.estimatedFullReferenceBytes,
+            "sharedBytes" -> bank.estimatedSharedBytes,
+            "workerBytes" -> bank.estimatedWorkerBytes,
+            "reconstructionScratchBytes" -> bank.reconstructionScratchBytes,
+            "curvatureWorkersWarmed" -> workers.length,
+            "retainedCurvatureScratchBytes" -> workers.map(_.retainedReconstructionScratchBytes).sum,
+            "retainedBankScratchBytes" -> bank.retainedReconstructionScratchBytes,
+            "scopedEightWorkersBytes" -> (bank.estimatedSharedBytes + 8 * bank.estimatedWorkerBytes),
+            "reachableBankAndEightWorkers" -> graph,
+            "reachableBankAndEightReadoutWorkers" -> readoutGraph,
+            "reachableBankEightCurvatureAndEightReadoutWorkers" -> combinedGraph,
+            "readoutWork" -> json(result.work),
+            "terminalJetCompleted" -> completed,
+            "terminalWork" -> json(worker.work.snapshot),
+            "terminalSecondsDiagnosticOnly" -> curvatureSeconds,
+            "seconds" -> (System.nanoTime() - start) / 1e9
+          )
+        )
       case other => throw new IllegalArgumentException(s"unknown mode $other")
 
-  /** Identity-deduplicated reachable graph. The optional test-only Java agent
-    * measures actual shallow object sizes; no heuristic JVM layout estimate.
-    * Inaccessible instance fields are errors, never silently omitted.
+  /** Identity-deduplicated reachable graph. The optional test-only Java agent measures actual shallow object sizes; no
+    * heuristic JVM layout estimate. Inaccessible instance fields are errors, never silently omitted.
     */
   private def retainedGraph(roots: Array[AnyRef]): ujson.Value =
     val sizeMethod = Class.forName("PhrfMemoryAgent").getMethod("sizeOf", classOf[Object])
@@ -140,5 +191,9 @@ object TrialReferencePlacementMain:
                 val child = field.get(value)
                 if child != null then pending.push(child)
             current = current.getSuperclass
-    ujson.Obj("bytes" -> bytes, "objects" -> seen.size(), "doubleValues" -> doubleValues,
-      "scope" -> "all objects reachable from the stated roots, including shared basis/source/response and object overhead; excludes external plans, build and ML determinant temporaries")
+    ujson.Obj(
+      "bytes" -> bytes,
+      "objects" -> seen.size(),
+      "doubleValues" -> doubleValues,
+      "scope" -> "all objects reachable from the stated roots, including shared basis/source/response and object overhead; excludes external plans, build and ML determinant temporaries"
+    )

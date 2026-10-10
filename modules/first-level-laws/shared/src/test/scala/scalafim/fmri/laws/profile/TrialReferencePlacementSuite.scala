@@ -24,8 +24,10 @@ class TrialReferencePlacementSuite extends munit.FunSuite:
     val f = TrialDomainProposal.fixture(30)
     val prep = f.prepare.flatMap(_.trialOutputs).toOption.get.axis.preparation
     val points = TrialReferencePlacement.points("4x2x1")
-    val banks = Vector(prep.referenceBank(points).toOption.get,
-      prep.referenceBank(points, TrialReferenceStorage.ReconstructSecondBands).toOption.get)
+    val banks = Vector(
+      prep.referenceBank(points).toOption.get,
+      prep.referenceBank(points, TrialReferenceStorage.ReconstructSecondBands).toOption.get
+    )
     val encoded = prep.encodeWhitened(Array.tabulate(f.rows)(i => math.sin(0.17 * i))).toOption.get
     banks.foreach(_.pointAt(encoded))
     Vector(0, 3, 7).foreach: node =>
@@ -45,8 +47,9 @@ class TrialReferencePlacementSuite extends munit.FunSuite:
     val route = TrialReferenceDecodePolicy(points, Vector(1, 6))
     val outputs = f.prepareWithReferences(Some(route)).flatMap(_.trialOutputs).fold(e => fail(e.message), identity)
     val sink = new DecodedTrialCheckpoint.Sink(f.trials)
-    val summary = outputs.run(new f.Reader, DecodedTrialCheckpoint.request,
-      ProfileTrialReadoutMode.CorrectedReference, sink).fold(e => fail(e.message), identity)
+    val summary = outputs
+      .run(new f.Reader, DecodedTrialCheckpoint.request, ProfileTrialReadoutMode.CorrectedReference, sink)
+      .fold(e => fail(e.message), identity)
     assertEquals(summary.setup.bankSetup.get.nodeReferenceAttempts, 8L)
     assertEquals(summary.progress.decoder.nodeScores, 2L)
     assertEquals(summary.progress.trial.get.bankValueEvaluations, 2L)
@@ -54,5 +57,12 @@ class TrialReferencePlacementSuite extends munit.FunSuite:
     assertEquals(sink.statuses.values.sum, 1L)
     assert(summary.progress.trial.get.attempted.reconstructedBands >= 6L)
     assertEquals(summary.progress.publicReadout.get.numerical.attempted.exactReadoutFactorAttempts, 0L)
-    assert(outputs.executionDeclaration(DecodedTrialCheckpoint.request, ProfileTrialReadoutMode.CorrectedReference,
-      ProfileTrialEvidenceRequest.CertifiedOriginalEquations).isLeft)
+    assert(
+      outputs
+        .executionDeclaration(
+          DecodedTrialCheckpoint.request,
+          ProfileTrialReadoutMode.CorrectedReference,
+          ProfileTrialEvidenceRequest.CertifiedOriginalEquations
+        )
+        .isLeft
+    )

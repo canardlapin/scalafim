@@ -5,12 +5,10 @@ import gale.spectral.{MatrixEnclosure, RealInterval, ValidatedLinearBound, Valid
 import scalafim.fmri.ar.{InitialConditionPolicy, WhiteningTransform}
 import scalafim.fmri.hrf.family.Cascade34Family
 
-/** Original continuous Cascade34 impulse court: exact declared binary times,
-  * chart coordinates, response and nuisance inputs; analytic impulse
-  * convolution, full observation support, exact AR(1) first-row scaling and
-  * lambda=1 condition-centered penalty. No grid quadrature or tail is omitted.
-  * This deliberately materialises dense interval normal equations and is NOT
-  * an admitted production certificate or a general drive/whitening adapter.
+/** Original continuous Cascade34 impulse court: exact declared binary times, chart coordinates, response and nuisance
+  * inputs; analytic impulse convolution, full observation support, exact AR(1) first-row scaling and lambda=1
+  * condition-centered penalty. No grid quadrature or tail is omitted. This deliberately materialises dense interval
+  * normal equations and is NOT an admitted production certificate or a general drive/whitening adapter.
   */
 object TrialObservationEnclosure:
   private def checked[A](value: Either[LinAlgError, A]): A = value.fold(throw _, identity)
@@ -31,23 +29,34 @@ object TrialObservationEnclosure:
       design: MatrixEnclosure,
       retainedScalarValues: Long,
       normalProductTerms: Long,
-      buildSeconds: Double):
-    def certify(candidate: Vector[Double], referenceInverse: DMat, query: Option[Vector[Double]] = None)
-        : Either[LinAlgError, ValidatedLinearBound] =
+      buildSeconds: Double
+  ):
+    def certify(
+        candidate: Vector[Double],
+        referenceInverse: DMat,
+        query: Option[Vector[Double]] = None
+    ): Either[LinAlgError, ValidatedLinearBound] =
       ValidatedLinearSystem.bound(normal, rhs, DVec.fromSeq(candidate), referenceInverse, query.map(DVec.fromSeq))
 
-  /** Shape intervals can cover a box. A successful inverse-defect check then
-    * applies uniformly to its enclosed original equations; response-specific
-    * coefficient accuracy is certified only for the supplied candidate.
+  /** Shape intervals can cover a box. A successful inverse-defect check then applies uniformly to its enclosed original
+    * equations; response-specific coefficient accuracy is certified only for the supplied candidate.
     */
-  def prepare(f: DecodedTrialCheckpoint.Fixture, lower: Vector[Double], upper: Vector[Double],
-      raw: Array[Double]): Prepared =
+  def prepare(
+      f: DecodedTrialCheckpoint.Fixture,
+      lower: Vector[Double],
+      upper: Vector[Double],
+      raw: Array[Double]
+  ): Prepared =
     val start = System.nanoTime()
     require(f.plan.basis.family.isInstanceOf[Cascade34Family] && lower.length == 3 && upper.length == 3)
-    require(raw.length == f.rows && f.whitening.segments.length == 1 &&
-      f.whitening.initialCondition == InitialConditionPolicy.ExactAr1)
-    require(f.whitening.arOrder == 1 && f.whitening.maOrder == 0 && f.config.criterion ==
-      scalafim.fmri.model.ProfileCriterion.PenalizedProfile(1.0))
+    require(
+      raw.length == f.rows && f.whitening.segments.length == 1 &&
+        f.whitening.initialCondition == InitialConditionPolicy.ExactAr1
+    )
+    require(
+      f.whitening.arOrder == 1 && f.whitening.maOrder == 0 && f.config.criterion ==
+        scalafim.fmri.model.ProfileCriterion.PenalizedProfile(1.0)
+    )
     val family = f.plan.basis.family
     family.chart.point(lower).fold(e => throw new IllegalArgumentException(e.message), identity)
     family.chart.point(upper).fold(e => throw new IllegalArgumentException(e.message), identity)
@@ -93,7 +102,9 @@ object TrialObservationEnclosure:
           row += 1
         if i < f.trials && j < f.trials then
           val same = f.expanded.membership.conditionOfTrial(i) == f.expanded.membership.conditionOfTrial(j)
-          val mean = if same then div(one, point(f.expanded.membership.trialsOf(f.expanded.membership.conditionOfTrial(i)).length.toDouble)) else zero
+          val mean = if same then
+            div(one, point(f.expanded.membership.trialsOf(f.expanded.membership.conditionOfTrial(i)).length.toDouble))
+          else zero
           value = add(value, sub(if i == j then one else zero, mean))
         normal(i * n + j) = value
         normal(j * n + i) = value
@@ -107,33 +118,49 @@ object TrialObservationEnclosure:
         row += 1
       value
     def enclosure(values: Array[RealInterval], rows: Int, cols: Int): MatrixEnclosure =
-      checked(MatrixEnclosure.checked(DMat.tabulate(rows, cols)((i, j) => values(i * cols + j).lower),
-        DMat.tabulate(rows, cols)((i, j) => values(i * cols + j).upper)))
+      checked(
+        MatrixEnclosure.checked(
+          DMat.tabulate(rows, cols)((i, j) => values(i * cols + j).lower),
+          DMat.tabulate(rows, cols)((i, j) => values(i * cols + j).upper)
+        )
+      )
     val g = enclosure(normal, n, n)
-    Prepared(g, enclosure(rhs, n, 1), enclosure(design, f.rows, n),
+    Prepared(
+      g,
+      enclosure(rhs, n, 1),
+      enclosure(design, f.rows, n),
       2L * f.rows * n + 2L * n * n + 2L * n,
-      f.rows.toLong * (n.toLong * (n + 1) / 2 + n), (System.nanoTime() - start) / 1e9)
+      f.rows.toLong * (n.toLong * (n + 1) / 2 + n),
+      (System.nanoTime() - start) / 1e9
+    )
 
-  /** Dense diagnostic candidate for the SAME prepared normal matrix used by
-    * the band's reference inverse. Construct once at the reference, never at
-    * the requested off-node point. Gale owns all factorization/solve work.
+  /** Dense diagnostic candidate for the SAME prepared normal matrix used by the band's reference inverse. Construct
+    * once at the reference, never at the requested off-node point. Gale owns all factorization/solve work.
     */
   def referenceInverse(f: DecodedTrialCheckpoint.Fixture, reference: Vector[Double]): DMat =
     val basis = DecodedTrialCheckpoint.designAt(f.expanded, reference)
     val n = f.trials + f.nuisance
-    val design = DMat.tabulate(f.rows, n)((i, j) => if j < f.trials then basis(i * f.trials + j)
-      else f.baseline.designMatrix(i, j - f.trials))
-    val whitened = WhiteningTransform.matrix(f.whitening, design).fold(e => throw new IllegalArgumentException(e.toString), identity)
+    val design = DMat.tabulate(f.rows, n)((i, j) =>
+      if j < f.trials then basis(i * f.trials + j)
+      else f.baseline.designMatrix(i, j - f.trials)
+    )
+    val whitened =
+      WhiteningTransform.matrix(f.whitening, design).fold(e => throw new IllegalArgumentException(e.toString), identity)
     val penalty = DMat.tabulate(n, n): (i, j) =>
       if i >= f.trials || j >= f.trials then 0.0
       else
         val condition = f.expanded.membership.conditionOfTrial(i)
         (if i == j then 1.0 else 0.0) - (if condition == f.expanded.membership.conditionOfTrial(j) then
-          1.0 / f.expanded.membership.trialsOf(condition).length else 0.0)
+                                           1.0 / f.expanded.membership.trialsOf(condition).length
+                                         else 0.0)
     (whitened.t * whitened + penalty).solve(DMat.eye(n)).fold(throw _, identity)
 
-  def queryErrorUpper(candidate: Vector[Double], queryValue: Double, weights: Vector[Double],
-      bounds: ValidatedLinearBound): Double =
+  def queryErrorUpper(
+      candidate: Vector[Double],
+      queryValue: Double,
+      weights: Vector[Double],
+      bounds: ValidatedLinearBound
+  ): Double =
     var contraction = zero
     var error = zero
     weights.indices.foreach: i =>
