@@ -61,6 +61,14 @@ The shared module cross-compiles to JVM and Scala.js and contains:
   and 2.4e-5. These parity tests need the TemplateFlow spheres locally and are
   skipped, not failed, without them.
 
+- Declared volume-to-surface routes (`scalafim.surface.reference`):
+  `SurfaceRoute.admit`/`select`, `FrameBridge`, `AdmittedSurfaceRoute` with
+  `map`, `inspect` and `disclosure`. The qualified real MNI152NLin2009cAsym ->
+  fsLR 32k route is assembled for consumers by the atlas module
+  (`scalafim.atlas.StandardSurfaceRoutes`, JVM loader
+  `scalafim.atlas.io.StandardSurfaceRouteFiles`); see the atlas README,
+  "Standard Surface Routes", for the call and the disclosure fields.
+
 The platform modules add matching GIFTI APIs:
 
 - `GiftiReader` for typed GIFTI documents, metadata, label tables,
