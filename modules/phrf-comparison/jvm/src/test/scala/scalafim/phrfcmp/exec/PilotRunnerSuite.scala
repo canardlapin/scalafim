@@ -94,6 +94,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     Fs.listFiles(out).foreach { p =>
       val rel = out.relativize(p).toString
       val allowed = rel == "stamp.json" || rel == "cost.json" || rel == "selection.json" ||
+        rel == "output-id" ||
         (rel.startsWith("progress/") && Vector(".done", ".done.sha256", ".dispatched", ".dispatched.sha256").exists(rel.endsWith)) ||
         (rel.startsWith("sealed/blobs/") && (rel.endsWith(".enc") || rel.endsWith(".enc.tmp"))) || rel == "sealed/SEALED"
       assert(allowed, s"unexpected file $rel")
@@ -339,8 +340,9 @@ class PilotRunnerSuite extends munit.FunSuite:
       // resuming past a reached ceiling needs the owner's typed authorization; a plain number above 60 is refused
       intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
       // the raise authorizes exactly the third invocation (two were refused at the ceiling) and is recorded
-      val outputId = runner(plan, out, fin, clk).stampSha256
-      assertEquals(outputId, Fs.sha256(Files.readAllBytes(out.resolve("stamp.json"))), "the owner can compute it as sha256sum stamp.json")
+      val outputId = runner(plan, out, fin, clk).outputIdentity.getOrElse(fail("the first invocation created the output identity"))
+      assertEquals(outputId, Fs.sha256(Files.readAllBytes(out.resolve("stamp.json")) ++ Files.readAllBytes(out.resolve("output-id"))),
+        "the owner can compute it as cat stamp.json output-id | sha256sum")
       val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop", outputId, 3).fold(e => fail(e), identity)
       val lines = new java.util.concurrent.ConcurrentLinkedQueue[String]()
       val r3 = new PilotRunner(plan, out, stamp, openStore(out), root, fin, CpuGuard.raised(45.0, raise), clk, threads, log = lines.add(_): Unit)
@@ -896,7 +898,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     assert(rep.totalCpuSeconds >= 100.0, s"the charged CPU counts: ${rep.totalCpuSeconds}")
     assert(!Files.exists(out.resolve("accounting.open")))
     assertEquals(cost(out)("accounting_recoveries").arr.map(_("uncertain_run_id").str).toVector, Vector("uncertain1"))
-    assert(read(out).contains(SealedNames.accountingRecovery(r.runId)))
+    assert(read(out).contains(SealedNames.accountingRecovery("uncertain1")))
   }
 
   test("re-review 1b: a process death mid-run (accounting.open on disk) makes the resume refuse uncertain accounting") {
@@ -946,9 +948,11 @@ class PilotRunnerSuite extends munit.FunSuite:
   test("review3 H2: an owner ceiling raise is bound to one output: accepted for output A, refused for output B") {
     val plan = mkPlan(1, 2, 1); val clk = clock()
     val a = tmp(); val b = tmp()
-    val idA = runner(plan, a, new Counting(clk, 1.0, ok), clk).stampSha256
-    assertNotEquals(idA, runner(plan, b, new Counting(clk, 1.0, ok), clk).stampSha256)
-    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "output A only", idA, 1).fold(e => fail(e), identity)
+    assert(runner(plan, a, new Counting(clk, 1.0, ok), clk).run().isRight)
+    assert(runner(plan, b, new Counting(clk, 1.0, ok), clk).run().isRight)
+    val idA = runner(plan, a, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    assertNotEquals(Some(idA), runner(plan, b, new Counting(clk, 1.0, ok), clk).outputIdentity)
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "output A only", idA, 2).fold(e => fail(e), identity)
     assert(runner(plan, a, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight)
     runner(plan, b, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
       case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
@@ -1001,11 +1005,62 @@ class PilotRunnerSuite extends munit.FunSuite:
   test("review3 hardening: cost.json authorization records are validated; L3: the retry cap is bounded") {
     val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
     Files.createDirectories(out)
-    val badRaise = """{"cpu_seconds_total":0,"invocations":1,"ceiling_raises":[{"invocation":0,"run_id":"../x","output_stamp_sha256":"zz","hard_core_hours":1e6,"approver":"","reason":""}]}"""
+    val badRaise = """{"cpu_seconds_total":0,"invocations":1,"ceiling_raises":[{"invocation":0,"run_id":"../x","output_identity":"zz","hard_core_hours":1e6,"approver":"","reason":""}]}"""
     Files.writeString(out.resolve("cost.json"), badRaise + "\n")
     runner(plan, out, new Counting(clk, 1.0, ok), clk).run() match
       case Left(_: PilotRefusal.CostStateLost) => ()
       case other => fail(s"expected CostStateLost, got $other")
     intercept[IllegalArgumentException](mkPlan(1, 2, 1).copy(maxRetries = Int.MaxValue))
     assertEquals(mkPlan(1, 2, 1).copy(maxRetries = PilotPlan.MaxRetries).maxRetries, PilotPlan.MaxRetries)
+  }
+
+  // ---- fourth independent review 2026-10-10 (H2, M, L2) ----
+
+  test("review4 H2: an output recreated at the same path has a new identity, so the old output's raise is refused") {
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val base = tmp()
+    val out = base.resolve("output")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    val id = runner(plan, out, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "the original output", id, 2).fold(e => fail(e), identity)
+    // move the whole output away, then build a fresh one at the same path with the same key and stamp inputs
+    Files.move(out, base.resolve("archive"))
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    assertEquals(Files.readString(out.resolve("stamp.json")), Files.readString(base.resolve("archive/stamp.json")), "identical stamp bytes")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
+      case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
+      case other => fail(s"expected CeilingNotAuthorized, got $other")
+    // the original output (moved back) still accepts it
+    Fs.deleteTree(out)
+    Files.move(base.resolve("archive"), out)
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight)
+  }
+
+  test("review4 H2: an adopted output without a well-formed output-id is refused") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    Files.writeString(out.resolve("output-id"), "not-an-id\n")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption.exists(_.isInstanceOf[PilotRefusal.Failure]))
+  }
+
+  test("review4 M: a replayed recovery completes its sealed accounting record") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 0.0, ok), clk).run().fold(x => fail(x.message), identity)
+    Files.writeString(out.resolve("cost.json"), craftedCost(100.0, 2, Some("dead")))
+    Files.writeString(out.resolve("accounting.open"), "dead\n")
+    val rec = OwnerAccountingRecovery.of("dead", 100.0, "owner-bb", "power loss").fold(e => fail(e), identity)
+    new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 0.0, ok), roomy, clk, accountingRecovery = Some(rec))
+      .run().fold(x => fail(x.message), identity)
+    val sealedRecord = read(out).get(SealedNames.accountingRecovery("dead")).map(b => ujson.read(new String(b, UTF_8)))
+    assertEquals(sealedRecord.map(r => (r("uncertain_run_id").str, r("invocation").num.toInt)), Some(("dead", 2)))
+  }
+
+  test("review4 L2: journal names and recovery agree for every dataset index a plan accepts") {
+    intercept[IllegalArgumentException](mkPlan(1, SealedNames.MaxDatasets + 1, 1))
+    val plan = mkPlan(1, SealedNames.MaxDatasets, 1)
+    val out = tmp()
+    val progress = new PilotProgress(out)
+    val last = Job(cell("C0"), plan.datasets - 1)
+    progress.markDispatched(last)
+    assertEquals(progress.recover(Set(cell("C0"))).map(_.dispatched), Right(Set(last)))
   }

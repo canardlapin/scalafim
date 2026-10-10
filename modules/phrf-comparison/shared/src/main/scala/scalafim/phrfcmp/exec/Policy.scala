@@ -50,10 +50,10 @@ final class OwnerCeilingRaise private (
     val hardCoreHours: Double,
     val approver: String,
     val reason: String,
-    val outputStampSha256: String,
+    val outputIdentity: String,
     val invocation: Int
 ):
-  require(OwnerCeilingRaise.problem(hardCoreHours, approver, reason, outputStampSha256, invocation).isEmpty, "invalid OwnerCeilingRaise")
+  require(OwnerCeilingRaise.problem(hardCoreHours, approver, reason, outputIdentity, invocation).isEmpty, "invalid OwnerCeilingRaise")
   override def toString: String = f"OwnerCeilingRaise($hardCoreHours%.3f core-h, $approver, invocation $invocation)"
 
 object OwnerCeilingRaise:
@@ -62,23 +62,23 @@ object OwnerCeilingRaise:
     */
   val MaxRaisedCoreHours: Double = 240.0
 
-  private def problem(hardCoreHours: Double, approver: String, reason: String, outputStampSha256: String, invocation: Int): Option[String] =
+  private def problem(hardCoreHours: Double, approver: String, reason: String, outputIdentity: String, invocation: Int): Option[String] =
     if hardCoreHours.isNaN || hardCoreHours.isInfinite || hardCoreHours <= CpuGuard.MaxHardCoreHours || hardCoreHours > MaxRaisedCoreHours then
       Some(s"a raise names a finite ceiling above ${CpuGuard.MaxHardCoreHours} and at most $MaxRaisedCoreHours core-hours")
-    else if outputStampSha256 == null || !LedgerRecord.isSha256(outputStampSha256) then
+    else if outputIdentity == null || !LedgerRecord.isSha256(outputIdentity) then
       Some("a raise names its output by the SHA-256 of its stamp.json")
     else if approver == null || !SafeName.valid(approver) then Some("the approver is a safe name")
     else if reason == null || reason.trim.isEmpty || reason.length > 500 then Some("a raise states its reason (at most 500 characters)")
     else if invocation < 1 || invocation == Int.MaxValue then Some("a raise names the invocation it authorizes")
     else None
 
-  /** @param outputStampSha256 SHA-256 of the output's `stamp.json` as written (`PilotRunner.stampSha256`): the raise
+  /** @param outputIdentity SHA-256 of the output's `stamp.json` as written (`PilotRunner.stampSha256`): the raise
     *                          is valid for that output only
     * @param invocation        the one invocation ordinal it authorizes on that output
     */
-  def of(hardCoreHours: Double, approver: String, reason: String, outputStampSha256: String, invocation: Int): Either[String, OwnerCeilingRaise] =
-    problem(hardCoreHours, approver, reason, outputStampSha256, invocation)
-      .toLeft(new OwnerCeilingRaise(hardCoreHours, approver, reason.trim, outputStampSha256, invocation))
+  def of(hardCoreHours: Double, approver: String, reason: String, outputIdentity: String, invocation: Int): Either[String, OwnerCeilingRaise] =
+    problem(hardCoreHours, approver, reason, outputIdentity, invocation)
+      .toLeft(new OwnerCeilingRaise(hardCoreHours, approver, reason.trim, outputIdentity, invocation))
 
 /** The owner's explicit decision to resume after an invocation whose CPU accounting is uncertain (its
   * `accounting.open` marker survived: a crash, a power loss, or a failed cost checkpoint). It names that invocation's

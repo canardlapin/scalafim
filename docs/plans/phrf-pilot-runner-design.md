@@ -471,7 +471,10 @@ not stamped).
   final checkpoint; a surviving marker makes the resume refuse until the owner's
   `OwnerAccountingRecovery` charges the uncertain run. Third review: the raise also names the output
   (SHA-256 of its `stamp.json`); a fatal throwable leaves the accounting open; a recovery is applied
-  once per uncertain run id; plans allow at most 100 retries.]*
+  once per uncertain run id; plans allow at most 100 retries. Fourth review: the output identity
+  adds a random, write-once `output-id`; a fatal throwable in any thread sets a sticky
+  accounting-uncertain flag; authorization records are re-sealed under their own run ids; plans
+  have at most 10000 datasets (4-digit `dNNNN` names).]*
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit
   attempt.]*

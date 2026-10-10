@@ -49,12 +49,12 @@ private[exec] final case class CeilingRaiseRecord(
     hardCoreHours: Double,
     approver: String,
     reason: String,
-    outputStampSha256: String
+    outputIdentity: String
 ):
   def json: ujson.Obj = ujson.Obj(
     "invocation" -> ujson.Num(invocation.toDouble),
     "run_id" -> ujson.Str(runId),
-    "output_stamp_sha256" -> ujson.Str(outputStampSha256),
+    "output_identity" -> ujson.Str(outputIdentity),
     "hard_core_hours" -> ujson.Num(hardCoreHours),
     "approver" -> ujson.Str(approver),
     "reason" -> ujson.Str(reason)
@@ -132,7 +132,7 @@ private[exec] object CostState:
                 .filterOrElse(h => h > CpuGuard.MaxHardCoreHours && h <= OwnerCeilingRaise.MaxRaisedCoreHours, "raised ceiling out of range")
               a <- safe(r("approver"), "raise approver")
               why <- prose(r("reason"), "raise reason")
-              stampSha = r("output_stamp_sha256").str
+              stampSha = r("output_identity").str
               _ <- Either.cond(LedgerRecord.isSha256(stampSha), (), "raise output stamp hash")
             yield CeilingRaiseRecord(i, rid, h, a, why, stampSha)
           })
@@ -264,6 +264,7 @@ final class PilotRunner(
   private val cellById: Map[CellId, PilotCell] = plan.cells.map(c => c.id -> c).toMap
   private def costFile = output.resolve("cost.json")
   private def accountingFile = output.resolve(PilotRunner.AccountingOpenName)
+  private def outputIdFile = output.resolve(PilotRunner.OutputIdName)
   private def stampFile = output.resolve("stamp.json")
   private def selectionFile = output.resolve("selection.json")
   private val busy = new AtomicBoolean(false)
@@ -274,6 +275,15 @@ final class PilotRunner(
     * every measured CPU is known to be in the meter.
     */
   @volatile private var finalCheckpoint: Option[() => Unit] = None
+
+  /** Sticky: set as soon as any thread of this invocation ends with a fatal throwable, i.e. a path on which a measured
+    * child CPU may not have reached the meter. Whatever exception finally escapes (a caller interrupt may win the
+    * selection in `runWave`), `accounting.open` then stays (fourth review H1).
+    */
+  private val accountingUncertain = new AtomicBoolean(false)
+
+  private def noteThrowable(t: Throwable): Unit =
+    if !PilotRunner.accountable(t) then accountingUncertain.set(true)
 
   private val storePath: String = store.dir.toAbsolutePath.normalize.toString
 
@@ -287,10 +297,15 @@ final class PilotRunner(
       "sealed_store_path_sha256" -> Fs.sha256(storePath.getBytes(UTF_8))
     ))
 
-  /** SHA-256 of `stamp.json` exactly as written (`sha256sum stamp.json`): the output identity an owner ceiling raise
-    * names in advance.
+  /** The output identity an owner ceiling raise names in advance: SHA-256 of `stamp.json` followed by `output-id`,
+    * exactly as written (`cat stamp.json output-id | sha256sum`). `output-id` is 128 random bits drawn by the first
+    * invocation on a fresh output, before its stamp, and never rewritten once the stamp exists, so a fresh output at
+    * the same path (same stamp bytes) has another identity. `None` until the first invocation has created the output; the first invocation runs at
+    * the 60 core-hour ceiling, so the identity always exists before any raise is needed.
     */
-  lazy val stampSha256: String = Fs.sha256((effectiveStamp.json + "\n").getBytes(UTF_8))
+  def outputIdentity: Option[String] =
+    if !Files.exists(stampFile) || !Files.exists(outputIdFile) then None
+    else Some(Fs.sha256(Files.readAllBytes(stampFile) ++ Files.readAllBytes(outputIdFile)))
 
   /** The sealed `meta/stamp`: the plaintext stamp plus the full store path. */
   val sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
@@ -353,12 +368,19 @@ final class PilotRunner(
     if !CpuGuard.admissible(guard) then Left(PilotRefusal.CeilingNotAuthorized("the guard's ceiling is not authorized"))
     else
       guard.raise match
-        case Some(r) if r.outputStampSha256 != stampSha256 =>
-          Left(PilotRefusal.CeilingNotAuthorized("the raise names another output (stamp.json SHA-256)"))
+        case Some(r) if !outputIdentity.contains(r.outputIdentity) =>
+          Left(PilotRefusal.CeilingNotAuthorized("the raise names another output (stamp.json and output-id)"))
         case Some(r) if r.invocation != inv => Left(PilotRefusal.CeilingNotAuthorized(s"the raise authorizes invocation ${r.invocation}, not $inv"))
         case _ => Right(())
 
+  /** The stamp check, then the output instance id: an adopted output must carry a well-formed `output-id`. */
   private def checkStamp(): Either[PilotRefusal, Unit] =
+    checkStampFile().flatMap { _ =>
+      val id = if Files.exists(outputIdFile) then new String(Files.readAllBytes(outputIdFile), UTF_8) else ""
+      Either.cond(PilotRunner.validOutputId(id), (), PilotRefusal.Failure("output-id is missing or malformed; refusing to adopt the output"))
+    }
+
+  private def checkStampFile(): Either[PilotRefusal, Unit] =
     Files.createDirectories(output)
     if Files.exists(stampFile) then
       val text = new String(Files.readAllBytes(stampFile), UTF_8).trim
@@ -369,6 +391,8 @@ final class PilotRunner(
           case Left(_) => Left(PilotRefusal.StampMismatch("stamp"))
     else if progress.exists || store.hasBlobs then Left(PilotRefusal.Failure("output holds data but no stamp.json; refusing to adopt it"))
     else
+      // a fresh output: its instance id first (never rewritten), then the stamp
+      Fs.writeAtomic(outputIdFile, PilotRunner.freshOutputId() + "\n")
       Fs.writeAtomic(stampFile, effectiveStamp.json + "\n")
       Right(())
 
@@ -394,12 +418,12 @@ final class PilotRunner(
             inv = loaded.invocations + 1
             prior <- reconcileAccounting(loaded, inv)
             _ <- admitGuard(inv)
-            raise = guard.raise.map(r => CeilingRaiseRecord(inv, rid, r.hardCoreHours, r.approver, r.reason, r.outputStampSha256))
+            raise = guard.raise.map(r => CeilingRaiseRecord(inv, rid, r.hardCoreHours, r.approver, r.reason, r.outputIdentity))
             state = prior.copy(invocations = inv, raises = prior.raises ++ raise)
             _ = open(state, rid)
             journal <- progress.recover(cellById.keySet)
             _ = try sweepStale() catch case NonFatal(_) => () // stale RAM scratch of a dead earlier runner (S6)
-            _ <- sealMeta(rid, state)
+            _ <- sealMeta(state)
             _ = raise.foreach(r => log(s"PILOT_CEILING_RAISE,run_id=$rid,invocation=$inv,hard_core_hours=${r.hardCoreHours},approver=${r.approver},reason=${ujson.write(ujson.Str(r.reason))}"))
             report <- schedule(journal, state)
           yield report
@@ -432,10 +456,10 @@ final class PilotRunner(
         catch case e: RunAborted => Left(e.refusal)
       catch
         case t: Throwable =>
-          val known = NonFatal(t) || t.isInstanceOf[InterruptedException]
-          try closeUninterrupted(removeMarker = known) catch case NonFatal(_) => ()
+          noteThrowable(t)
+          try closeUninterrupted(removeMarker = !accountingUncertain.get()) catch case NonFatal(_) => ()
           throw t
-    closeUninterrupted(removeMarker = true)
+    closeUninterrupted(removeMarker = !accountingUncertain.get())
     result
 
   /** The final checkpoint (and marker removal) with the caller's interrupt flag cleared (an interrupted thread cannot
@@ -454,14 +478,20 @@ final class PilotRunner(
     * another root makes the owner's reader refuse a differing duplicate of `meta/root-check`, and `meta/stamp` binds
     * the plaintext `stamp.json` to the sealed tree.
     */
-  private def sealMeta(rid: String, state: CostState): Either[PilotRefusal, Unit] =
+  private def sealMeta(state: CostState): Either[PilotRefusal, Unit] =
     val check = Fs.hex(MessageDigest.getInstance("SHA-256").digest(s"${root.value}\n".getBytes(UTF_8)))
-    def mine[A](xs: Vector[A])(inv: A => Int): Option[A] = xs.find(inv(_) == state.invocations)
+    // every authorization record of cost.json is (re-)sealed under its own run id, not only this invocation's: a
+    // record written by an invocation that died before sealing it is completed here (fourth review M); a repeat is
+    // an identical duplicate, which the reader accepts
+    val records =
+      state.raises.map(r => SealedNames.ceilingRaise(r.runId) -> r.json) ++
+        state.recoveries.map(r => SealedNames.accountingRecovery(r.uncertainRunId) -> r.json)
     for
       _ <- seal(SealedNames.RootCheck, check.getBytes(UTF_8))
       _ <- seal(SealedNames.Stamp, (sealedStamp.json + "\n").getBytes(UTF_8))
-      _ <- mine(state.raises)(_.invocation).fold(Right(""))(r => seal(SealedNames.ceilingRaise(rid), (ujson.write(r.json) + "\n").getBytes(UTF_8)))
-      _ <- mine(state.recoveries)(_.invocation).fold(Right(""))(r => seal(SealedNames.accountingRecovery(rid), (ujson.write(r.json) + "\n").getBytes(UTF_8)))
+      _ <- records.foldLeft[Either[PilotRefusal, String]](Right("")) { (acc, r) =>
+        acc.flatMap(_ => seal(r._1, (ujson.write(r._2) + "\n").getBytes(UTF_8)))
+      }
     yield ()
 
   /** Closes the sealed store (CLOSE record and SEALED receipt): once, after the last run and the aggregation. It
@@ -617,6 +647,7 @@ final class PilotRunner(
           catch
             case _: StopRequested => finished = true
             case t: Throwable =>
+              noteThrowable(t)
               crashed.set(true)
               checkpointOnCrash()
               throw t
@@ -698,6 +729,7 @@ final class PilotRunner(
               catch
                 case e: ExecutionException =>
                   crashed.set(true)
+                  noteThrowable(Option(e.getCause).getOrElse(e)) // recorded before any exception selection
                   if failure.isEmpty then failure = Some(Option(e.getCause).getOrElse(e))
                   joined = true
                 case _: InterruptedException =>
@@ -773,6 +805,20 @@ final class PilotRunner(
     ujson.write(ujson.Obj("D" -> ujson.Num(d.D.toDouble), "df" -> ujson.Num(d.df.toDouble), "ucl_factor" -> ujson.Str(f"${d.uclFactor}%.12f"))) + "\n"
 
 object PilotRunner:
+  /** Ends with every measured CPU in the meter: a result, a non-fatal exception or an interrupt. */
+  private[exec] def accountable(t: Throwable): Boolean = NonFatal(t) || t.isInstanceOf[InterruptedException]
+
+  /** Plaintext output instance id: 32 lowercase hex characters and a newline, written once. */
+  val OutputIdName: String = "output-id"
+
+  private[exec] def freshOutputId(): String =
+    val b = new Array[Byte](16)
+    new java.security.SecureRandom().nextBytes(b)
+    Fs.hex(b)
+
+  private[exec] def validOutputId(text: String): Boolean =
+    text.length == 33 && text.endsWith("\n") && text.init.forall(c => c.isDigit || c >= 'a' && c <= 'f')
+
   /** Plaintext marker present while an invocation's CPU accounting is open (content: its run id). */
   val AccountingOpenName: String = "accounting.open"
 

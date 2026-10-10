@@ -263,6 +263,43 @@ class PilotArmsSuite extends munit.FunSuite:
     assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal1")))
   }
 
+  test("review4 H1: a fatal throwable after GLMsingle ran keeps accounting.open even when a caller interrupt wins the exit") {
+    val owner = TestOwner.random()
+    val entered = new java.util.concurrent.CountDownLatch(1)
+    val release = new java.util.concurrent.CountDownLatch(1)
+    val fatal = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit =
+        entered.countDown()
+        var released = false
+        while !released do
+          try released = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
+          catch case _: InterruptedException => ()
+        throw new OutOfMemoryError("synthetic")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val out = Files.createTempDirectory("phrf-s7-fatalint-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 0)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val stamp = PilotStamp(Vector("k" -> "v"))
+    val r = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e, fatal), CpuGuard(), new FakeClock, runIds = () => "fatalint1")
+    @volatile var result: Option[Either[PilotRefusal, PilotReport]] = None
+    val t = new Thread(() => result = Some(r.run()))
+    t.start()
+    assert(entered.await(10, java.util.concurrent.TimeUnit.SECONDS))
+    t.interrupt()
+    Thread.sleep(200L)
+    release.countDown()
+    t.join(20000L)
+    assert(!t.isAlive)
+    assertEquals(result.flatMap(_.left.toOption), Some(PilotRefusal.Interrupted), "the caller interrupt wins the exit")
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "fatalint1", "the 37 s may be missing: accounting stays open")
+    val resume = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e), CpuGuard(), new FakeClock).run()
+    assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("fatalint1")))
+  }
+
   test("real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates") {
     val owner = TestOwner.random()
     val out = Files.createTempDirectory("phrf-s7-real-")
