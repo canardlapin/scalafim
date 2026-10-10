@@ -25,7 +25,8 @@ regression that failed before the change. "Open" is not resolved and says why.
 | 2c | GIFTI coordinates lose precision (Float64 payloads unsupported) | **Resolved here** (C6 re-port) | `NIFTI_TYPE_FLOAT64` reader extension (`GiftiPayloadDecoder.scala:27,62,129`). Integer and byte APIs refuse it. Covered by `GiftiFloat64Suite` (width overflow, short/long/misaligned, ASCII coercion) and `GiftiFloat64Reader{,Js}Suite` (ASCII, base64, gzip and zlib in both endians, exact to 0.0) |
 | 3 | `TriangleMesh` lacks structural equality; `SurfaceGeometry ==` compares array identity | Resolved on main (`fa2193ab`) | `TriangleMesh.equals/hashCode` (`modules/surface/shared/src/main/scala/scalafim/surface/TriangleMesh.scala:18,30`); `TriangleMeshEqualitySuite.scala:8,15,20` |
 | 4a | `SurfaceProjectionReceipt.requestedSamples` computed, not observed; `acceptedSamples` counts non-finite values | Resolved on main (`fa2193ab`) | `SurfaceSampleTally` with a checked partition invariant (`modules/surface/shared/src/main/scala/scalafim/surface/SurfaceSampling.scala:46`), carried on CPU and GPU (`ThreeVolumeProjector.scala:197`); `SurfaceSamplingSuite.scala:224,240` |
-| 4b | `minimumSamples` can qualify a vertex whose only sample is NaN; Average propagates NaN | **Resolved here** for qualification (owner decision 2026-10-10: NaN is not an observation). Average propagation remains open (see below) | `SurfaceSampleResult.sampleCounts` now counts finite samples only, and the new `nonFiniteCounts` field counts non-finite in-mask samples per vertex (`modules/surface/shared/src/main/scala/scalafim/surface/SurfaceSampling.scala`). The CPU projection (`SurfaceVolumeProjection.materialize`) and the GPU projector (`ThreeVolumeProjector`) both qualify on finite samples. Both report the typed partition `SurfaceVertexTally(vertices, qualified, nonFiniteOnly, insufficient)` on `SurfaceProjectionReceipt.vertexTally`, so a NaN-only vertex stays visible as `nonFiniteOnly`. `SurfaceProjectionResult.nonFiniteCounts` carries the per-vertex counts. `SurfaceRoute` already admitted only finite voxels through its admission mask, so it is unchanged. Regressions: `SurfaceProjectionNetworkSuite` "a vertex whose only sample is non-finite…" and "non-finite ribbon samples do not count…", `SurfaceSamplingSuite` "per-vertex finite and non-finite counts…", and `ThreeVolumeProjectorSuite` "valid zero and non-finite texels…" (GPU against the CPU oracle). Before the change, old-API probes of the two projection cases failed 2/2 on base sources, and the GPU expectation `(true, false, false)` failed 1/4 |
+| 4b | `minimumSamples` can qualify a vertex whose only sample is NaN; Average propagates NaN | **Resolved here** (owner decisions 2026-10-10: NaN is not an observation for qualification, and every reducer skips non-finite samples) | `SurfaceSampleResult.sampleCounts` now counts finite samples only, and the new `nonFiniteCounts` field counts non-finite in-mask samples per vertex (`modules/surface/shared/src/main/scala/scalafim/surface/SurfaceSampling.scala`). The CPU projection (`SurfaceVolumeProjection.materialize`) and the GPU projector (`ThreeVolumeProjector`) both qualify on finite samples. Both report the typed partition `SurfaceVertexTally(vertices, qualified, nonFiniteOnly, insufficient)` on `SurfaceProjectionReceipt.vertexTally`, so a NaN-only vertex stays visible as `nonFiniteOnly`. `SurfaceProjectionResult.nonFiniteCounts` carries the per-vertex counts. `SurfaceRoute` already admitted only finite voxels through its admission mask, so it is unchanged. Regressions: `SurfaceProjectionNetworkSuite` "a vertex whose only sample is non-finite…" and "non-finite ribbon samples do not count…", `SurfaceSamplingSuite` "per-vertex finite and non-finite counts…", and `ThreeVolumeProjectorSuite` "valid zero and non-finite texels…" (GPU against the CPU oracle). Before the change, old-API probes of the two projection cases failed 2/2 on base sources, and the GPU expectation `(true, false, false)` failed 1/4. Reducers (second decision): `Nearest`, `Average` and `Mode` reduce finite samples only, and a vertex with no finite sample reduces to NaN (contract in `SurfaceSampleAggregation`'s scaladoc). `Nearest` is the first finite sample in the path's declared order. Each sample's voxel is chosen by rounding half up per axis, and declared order is total, so no other tie rule is needed. `Mode` ties go to the smallest value. `SurfaceVertexSample.acceptedSampleIndices` now lists finite samples only. The GPU path (midpoint + `Nearest`, one sample) already matched, because its single texel is used exactly when it is finite. It now refuses (`InvalidPlan`) any volume with a finite value that overflows float32, which it would otherwise have dropped as an infinite texel while the CPU kept it. Regressions that failed before: `SurfaceSamplingSuite` "Average reduces over finite samples only" and "Nearest takes the first finite sample…", `SurfaceProjectionNetworkSuite` "a qualified vertex's value is reduced from its finite samples only", and `ThreeVolumeProjectorSuite` "GPU refuses finite volume values that float32 cannot represent…". Pins that already passed before: the `Mode` NaN test (boxed NaN keys never compare equal, so NaN could not win), "every reducer returns NaN…", and the GPU/CPU NaN-fill parity test |
+
 | 5 | `spatialJVM` fails to compile at consumer pin `7c3ff0a` against Gale `83cac90` (`DMatBuilder.writeLinear`) | Historical; current graph compiles | The historical pin failure was reproduced and archived in `volume-surface-ties-consumer-pin-20260930.md`. On this branch `scalafimCompileAll` exits 0 on both platforms. No downstream consumer was rebuilt or repinned |
 
 ## Declared caveats
@@ -43,14 +44,19 @@ declare this caveat id and admit `PassWithCaveats` only through an explicit
 policy. The cross-engine parity tests in `VolumeToSurfaceParitySuite` stay
 restricted to identity or exactly invertible grids. They are not loosened.
 
-### Remaining 4b policy gap (not decided)
+### 4b output-value change
 
-The owner decision covers qualification only. Aggregation is unchanged:
-`Average` and `Nearest` still see every in-mask sample, so a vertex with
-enough finite samples and also a NaN sample qualifies but carries a NaN value
-under `Average`, or under `Nearest` when the NaN comes first. `nonFiniteCounts`
-makes such vertices visible. Whether reducers should skip non-finite samples is
-a separate owner decision.
+Projected values change for every vertex that mixes finite and non-finite
+samples. Before, `Average` returned NaN, and `Nearest` returned NaN when the
+first in-mask sample was NaN. Both now return the reduction of the finite
+samples. A qualified vertex therefore always carries a finite value. A vertex
+with only non-finite samples is still NaN in `SurfaceSampleResult.values`, and
+the projection marks it `nonFiniteOnly` and fills it. `SurfaceRoute` output is
+unchanged, because its admission mask already excluded non-finite voxels. The
+spatial `VolumeToSurfaceOperator` is a data-independent linear operator. It
+has neither a reducer nor `minimumSamples`, so it was not changed: a NaN in the
+input vector still propagates through `forward`, as for any sparse matrix
+product.
 
 ## C6 reconciliation (wip `8242a97e`)
 
@@ -99,6 +105,10 @@ All gates ran through `python3 tools/build/sbt-warm` on the final source.
 | 4b follow-up: `surfaceJS/test spatialJS/test surfaceViewJS/test surfaceViewThreeJS/test` | exit 0. surface 259 total (257 passed, 2 skips), spatial 204/204, surface-view 73/73, surface-view-three 18/18 |
 | 4b follow-up: `scalafimCompileAll` | exit 0, with no `[warn]` or `[error]` lines |
 | 4b before the change (base sources, old-API probes) | `surfaceViewJVM` 2/2 probes failed: NaN-only midpoint vertex qualified, ribbon NaN counted toward `minimumSamples = 3`. `surfaceViewThreeJS` GPU quality `(true, false, false)` failed 1/4 |
+| 4b reducers: `surfaceJVM/test spatialJVM/test surfaceViewJVM/test` | exit 0. surface 318 total (306 passed, 12 skips), spatial 229/229, surface-view 74/74 |
+| 4b reducers: `surfaceJS/test spatialJS/test surfaceViewJS/test surfaceViewThreeJS/test` | exit 0. surface 263 total (261 passed, 2 skips), spatial 204/204, surface-view 74/74, surface-view-three 20/20 |
+| 4b reducers: `scalafimCompileAll` | exit 0, with no `[warn]` or `[error]` lines |
+| 4b reducers before the change | `SurfaceSamplingSuite` 2/23 failed (Average, Nearest got NaN). `SurfaceProjectionNetworkSuite` 1/11 failed (expected 101.0, got NaN). `ThreeVolumeProjectorSuite` 1/6 failed (GPU returned `Right`, with the float32-overflow vertex tallied `nonFiniteOnly` while the CPU qualified it) |
 | Placement mutant (first-transform fallback restored) | 2/23 `GiftiPlacementReaderSuite` tests fail. The source was restored byte-exact |
 
 ## Not qualified here
@@ -115,8 +125,9 @@ All gates ran through `python3 tools/build/sbt-warm` on the final source.
   Talairach)` for the single Talairach transform, has not been executed.
 - **N1** is a declared caveat that waits on the upstream image4s change. It is not
   patched here.
-- **4b reducers.** Whether `Average`/`Nearest` should skip non-finite samples
-  is not decided (see above).
+- **Spatial linear operator and NaN input.** `VolumeToSurfaceOperator.forward`
+  propagates NaN like any matrix product. It has no reducer or
+  `minimumSamples`, so the 4b decisions do not reach it.
 - **Hardware GPU, 4b.** The GPU qualification change is tested only through the
   JS texture-transport mock. It has not run against a real WebGL driver.
 - **Downstream consumers.** There is no rebuild of external consumers (for

@@ -39,6 +39,12 @@ object ThreeVolumeProjector:
       ))
     else if policy.minimumSamples.value != 1 then
       Left(ThreeSurfaceError.InvalidPlan("GPU midpoint projection requires minimumSamples=1"))
+    else if !float32Representable(volume) then
+      // A finite value that overflows float32 would upload as an infinite texel,
+      // and the GPU would drop a sample that the CPU path keeps as an observation.
+      Left(ThreeSurfaceError.InvalidPlan(
+        "GPU volume projection requires every finite volume value to be representable in float32"
+      ))
     else
       attempt("GPU volume projection"):
         val started = nowNanos()
@@ -178,7 +184,9 @@ object ThreeVolumeProjector:
           while vertex < vertexCount do
             val valid = coordinates(vertex * 4 + 3) > 0.5f
             // A non-finite texel is not an observation: with minimumSamples=1 the
-            // vertex does not qualify, as in the shared CPU projection.
+            // vertex does not qualify, as in the shared CPU projection. With one
+            // midpoint sample, the CPU Nearest reducer (first finite sample) picks
+            // this texel exactly when it is finite, so the two paths agree.
             val finite = valid && output(vertex * 4).toDouble.isFinite
             if valid && !finite then nonFinite += 1L
             counts(vertex) = if finite then 1 else 0
@@ -238,6 +246,16 @@ object ThreeVolumeProjector:
             )
           )
         finally renderer.applyDynamic("dispose")()
+
+  private def float32Representable(volume: SomeScalarVolume[Double]): Boolean =
+    val count = volume.space.spatialDims.product
+    var ordinal = 0
+    var representable = true
+    while representable && ordinal < count do
+      val value = volume.valueAtCanonicalOrdinal(ordinal)
+      if value.isFinite && value.toFloat.isInfinite then representable = false
+      ordinal += 1
+    representable
 
   private def worldPoint(geometry: SurfaceGeometry, vertex: VertexId): WorldPoint =
     SurfaceWorldLink.worldPoint(geometry, vertex)

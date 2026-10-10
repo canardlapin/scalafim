@@ -157,6 +157,24 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
     // Two finite samples remain, so these vertices are insufficient, not non-finite only.
     assertEquals(projection.receipt.vertexTally, SurfaceVertexTally(vertices = 4, qualified = 2, nonFiniteOnly = 0, insufficient = 2))
 
+  test("a qualified vertex's value is reduced from its finite samples only"):
+    // Vertex 0's ribbon reads 1.0, NaN and 201.0; vertex 3's reads NaN, 201.0 and 301.0.
+    val average = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.5, 1.0)), SurfaceSampleAggregation.Average),
+      volumeWithNaNAt101,
+      SurfaceProjectionPolicy(SurfaceMinimumSamples.unsafe(2))
+    )
+    assertEquals(average.receipt.vertexTally, SurfaceVertexTally(vertices = 4, qualified = 4, nonFiniteOnly = 0, insufficient = 0))
+    assertEqualsDouble(average.values.valueAt(VertexId(0)).get, (1.0 + 201.0) / 2.0, 0.0)
+    assertEqualsDouble(average.values.valueAt(VertexId(3)).get, (201.0 + 301.0) / 2.0, 0.0)
+    val nearest = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.FractionalThickness(Vector(0.5, 0.0, 1.0)), SurfaceSampleAggregation.Nearest),
+      volumeWithNaNAt101
+    )
+    // Declared order for vertex 0 is NaN, 1.0, 201.0: the first finite sample wins.
+    assertEqualsDouble(nearest.values.valueAt(VertexId(0)).get, 1.0, 0.0)
+    assert((0 until 4).forall(i => nearest.values.valueAt(VertexId(i)).get.isFinite))
+
   test("vertex tallies must partition the vertices"):
     intercept[IllegalArgumentException](SurfaceVertexTally(vertices = 4, qualified = 3, nonFiniteOnly = 1, insufficient = 1))
     intercept[IllegalArgumentException](SurfaceVertexTally(vertices = 0, qualified = 1, nonFiniteOnly = -1, insufficient = 0))

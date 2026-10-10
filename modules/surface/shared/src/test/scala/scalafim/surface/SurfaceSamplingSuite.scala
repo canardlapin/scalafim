@@ -280,6 +280,48 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     assertEquals(ids.map(result.sampleCounts.valueAt(_).get).sum.toLong, result.tally.accepted)
     assertEquals(ids.map(result.nonFiniteCounts.valueAt(_).get).sum.toLong, result.tally.nonFinite)
 
+  private def volumeWithNaNAt(voxels: Vector[Int]*): SomeScalarVolume[Double] =
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(
+      PrimitiveBuffers.tabulate[Double](27) { idx =>
+        val g = space.indexToGrid3D(idx)
+        if voxels.contains(g) then Double.NaN else g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
+      },
+      space,
+      "with-nan"
+    )
+
+  // Vertex 0's ribbon at fractions (0, 0.5, 1) reads voxels (0, 0, 0), (0, 0, 1), (0, 0, 2) in that order.
+  private val ribbon = SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.5, 1.0))
+
+  test("Average reduces over finite samples only"):
+    val result = VolumeSurfaceSampler.sample(volumeWithNaNAt(Vector(0, 0, 1)), pair, ribbon, SurfaceSampleAggregation.Average)
+    assertEqualsDouble(result.values.valueAt(VertexId(0)).get, (0.0 + 200.0) / 2.0, 0.0)
+    assertEqualsDouble(result.values.valueAt(VertexId(1)).get, (1.0 + 101.0 + 201.0) / 3.0, 1e-12)
+
+  test("Nearest takes the first finite sample in declared path order"):
+    val result = VolumeSurfaceSampler.sample(volumeWithNaNAt(Vector(0, 0, 0)), pair, ribbon, SurfaceSampleAggregation.Nearest)
+    assertEqualsDouble(result.values.valueAt(VertexId(0)).get, 100.0, 0.0)
+    assertEqualsDouble(result.values.valueAt(VertexId(1)).get, 1.0, 0.0)
+    val inspected = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair, ribbon, SurfaceSampleAggregation.Nearest))
+      .inspectVertex(volumeWithNaNAt(Vector(0, 0, 0)), VertexId(0))
+    assertEqualsDouble(inspected.value, 100.0, 0.0)
+    assertEquals(inspected.contributingSampleIndices, Vector(1))
+
+  test("Mode ignores non-finite samples even when they are the most frequent"):
+    // Fractions (0, 0, 0.5, 1): the NaN voxel (0, 0, 0) is read twice, 100 and 200 once each.
+    val path = SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.0, 0.5, 1.0))
+    val result = VolumeSurfaceSampler.sample(volumeWithNaNAt(Vector(0, 0, 0)), pair, path, SurfaceSampleAggregation.Mode)
+    // Ties between finite values resolve to the smallest value.
+    assertEqualsDouble(result.values.valueAt(VertexId(0)).get, 100.0, 0.0)
+
+  test("every reducer returns NaN when a vertex has no finite sample"):
+    val allNaN = volumeWithNaNAt(Vector(0, 0, 0), Vector(0, 0, 1), Vector(0, 0, 2))
+    for aggregation <- SurfaceSampleAggregation.values do
+      val result = VolumeSurfaceSampler.sample(allNaN, pair, ribbon, aggregation)
+      assert(result.values.valueAt(VertexId(0)).exists(_.isNaN), aggregation.toString)
+      assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(0))
+      assertEquals(result.nonFiniteCounts.valueAt(VertexId(0)), Some(3))
+
   test("sample tallies must account for every requested sample"):
     intercept[IllegalArgumentException](SurfaceSampleTally(requested = 3, outsideVolume = 1, masked = 0, nonFinite = 0, accepted = 1))
     intercept[IllegalArgumentException](SurfaceSampleTally(requested = 0, outsideVolume = -1, masked = 0, nonFinite = 0, accepted = 1))
