@@ -269,4 +269,4 @@ An arm map is written as `int k` (the number of methods present), then, for each
 - `progress/<cell>/dNNNN.done` plus `.sha256` markers;
 - optionally the S6 scratch custody log: a hash-chained JSONL of scratch lifecycle events, holding paths, device names and residue counts but no result.
 
-The markers' contents are constant, but their modification times reveal when each job was dispatched and completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3).
+The markers' contents are constant, but their modification times reveal when each job was dispatched and completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3). The owner accepted the `.dispatched` marker on 2026-10-10 on this basis: it adds no leak of a new kind beyond `.done`.
