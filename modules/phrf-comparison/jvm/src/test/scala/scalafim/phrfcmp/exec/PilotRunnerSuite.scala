@@ -53,8 +53,10 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   private def runner(plan: PilotPlan, out: Path, arms: ArmRunner, clk: CpuClock, guard: CpuGuard = roomy, threads: Int = 1,
       hook: CommitHook = CommitHook.none, st: PilotStamp = stamp, store: Option[SealedStore] = None, rt: PilotRoot = root,
-      runId: String = PilotRunner.freshRunId(), wall: () => Double = () => System.nanoTime() / 1e9): PilotRunner =
-    new PilotRunner(plan, out, st, store.getOrElse(openStore(out)), rt, arms, guard, clk, threads, hook, _ => (), () => runId, wall)
+      runId: String = PilotRunner.freshRunId(), wall: () => Double = () => System.nanoTime() / 1e9,
+      outputId: String = PilotRunner.freshOutputId()): PilotRunner =
+    new PilotRunner(plan, out, st, store.getOrElse(openStore(out)), rt, arms, guard, clk, threads, hook, _ => (), () => runId, wall,
+      outputIds = () => outputId)
 
   private def read(out: Path, partial: Boolean = true): Map[String, Array[Byte]] =
     OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = partial).fold(e => fail(e), identity)
@@ -507,7 +509,7 @@ class PilotRunnerSuite extends munit.FunSuite:
         clk.advance(0.01)
         ctx.emit("out.bin", blobBytes(ctx.unit))
         behaviour(ctx.unit)(ctx.attempt)
-      val r = runner(plan, out, ex, clk, threads = threads, store = Some(openStore(out, entropy = new DerivedEntropy("seed"))), runId = "fixed", wall = () => 0.0)
+      val r = runner(plan, out, ex, clk, threads = threads, store = Some(openStore(out, entropy = new DerivedEntropy("seed"))), runId = "fixed", wall = () => 0.0, outputId = "0" * 32)
       r.run().fold(x => fail(x.message), identity)
       r.closeStore().fold(x => fail(x.message), identity)
       assertOnlyAllowedPlaintext(out)
@@ -1026,7 +1028,8 @@ class PilotRunnerSuite extends munit.FunSuite:
     // move the whole output away, then build a fresh one at the same path with the same key and stamp inputs
     Files.move(out, base.resolve("archive"))
     assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
-    assertEquals(Files.readString(out.resolve("stamp.json")), Files.readString(base.resolve("archive/stamp.json")), "identical stamp bytes")
+    def withoutId(p: Path) = ujson.read(Files.readString(p)).obj.toMap - "output_id"
+    assertEquals(withoutId(out.resolve("stamp.json")), withoutId(base.resolve("archive/stamp.json")), "identical stamps apart from the output id")
     runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
       case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
       case other => fail(s"expected CeilingNotAuthorized, got $other")
@@ -1063,4 +1066,44 @@ class PilotRunnerSuite extends munit.FunSuite:
     val last = Job(cell("C0"), plan.datasets - 1)
     progress.markDispatched(last)
     assertEquals(progress.recover(Set(cell("C0"))).map(_.dispatched), Right(Set(last)))
+  }
+
+  // ---- fifth independent review 2026-10-10 (D1 and its hardening) ----
+
+  test("review5 D1: substituting an archived output-id into a fresh output at the same path cannot transfer the raise") {
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val base = tmp()
+    val out = base.resolve("out")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    val id = runner(plan, out, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "the original output", id, 2).fold(e => fail(e), identity)
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight, "1-2: the raise is used")
+    Files.move(out, base.resolve("archive")) // 3
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight) // 4: a fresh output at the same path
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isLeft) // 5
+    Files.copy(base.resolve("archive/output-id"), out.resolve("output-id"), java.nio.file.StandardCopyOption.REPLACE_EXISTING) // 6
+    val costBefore = Files.readString(out.resolve("cost.json"))
+    assertEquals(
+      runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().left.toOption,
+      Some(PilotRefusal.StampMismatch("output_id"))
+    )
+    assertEquals(Files.readString(out.resolve("cost.json")), costBefore, "refused before any cost change")
+    assert(!Files.exists(out.resolve("accounting.open")))
+    // ordinary resumes of the substituted output are refused too, and both stores stay readable
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.StampMismatch("output_id")))
+    assert(OwnerReader.readAll(base.resolve("archive/sealed"), owner.priv, allowPartial = true).isRight)
+    assert(OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = true).isRight)
+  }
+
+  test("review5 hardening: an output-id left by a death before the stamp is kept, never redrawn; only ASCII hex is accepted") {
+    val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val out = tmp()
+    Files.writeString(out.resolve("output-id"), "ab" * 16 + "\n")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, outputId = "cd" * 16).run().isRight)
+    assertEquals(Files.readString(out.resolve("output-id")), "ab" * 16 + "\n")
+    assertEquals(ujson.read(Files.readString(out.resolve("stamp.json")))("output_id").str, "ab" * 16)
+    val other = tmp()
+    Files.writeString(other.resolve("output-id"), "\u0660" * 32 + "\n") // Arabic-Indic zeros: digits, not ASCII hex
+    assert(runner(plan, other, new Counting(clk, 1.0, ok), clk).run().left.toOption.exists(_.isInstanceOf[PilotRefusal.Failure]))
+    assert(!PilotRunner.validOutputId("AB" * 16 + "\n") && PilotRunner.validOutputId("09af" * 8 + "\n"))
   }

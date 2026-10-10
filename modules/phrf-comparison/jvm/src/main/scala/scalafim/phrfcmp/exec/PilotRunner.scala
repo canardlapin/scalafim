@@ -232,6 +232,8 @@ object UnitPayload:
   * @param runIds  draws the invocation's run id, once, inside [[run]]; it names every blob whose content may differ
   *                between invocations. Tests inject a fixed one
   * @param sweepStale called once at start: removes RAM scratch left by a dead runner (`RamScratch.sweepStale`, S6)
+  * @param outputIds draws the output instance id when this instance creates a fresh output (tests inject a fixed one);
+  *                an existing `output-id` file is never redrawn
   * @param accountingRecovery the owner's decision to resume after an invocation whose accounting stayed open
   *                (`accounting.open` survived a crash, a power loss or a failed checkpoint); without it such a resume
   *                refuses with `AccountingUncertain`
@@ -255,6 +257,7 @@ final class PilotRunner(
     runIds: () => String = () => PilotRunner.freshRunId(),
     wallSeconds: () => Double = () => System.nanoTime() / 1e9,
     sweepStale: () => Unit = () => (),
+    outputIds: () => String = () => PilotRunner.freshOutputId(),
     accountingRecovery: Option[OwnerAccountingRecovery] = None
 ):
   require(threads >= 1, "threads must be positive")
@@ -287,14 +290,24 @@ final class PilotRunner(
 
   private val storePath: String = store.dir.toAbsolutePath.normalize.toString
 
-  /** The plaintext stamp this runner enforces: the caller's fields plus the owner key fingerprint and the SHA-256 of
-    * the sealed store path (findings L2, F7), so a resume against another key or another store refuses without the
-    * releasable `stamp.json` naming the custodian's directory.
+  /** The output instance id this instance works with: the existing `output-id` file's content (never redrawn, also
+    * when an earlier invocation died between writing it and the stamp), or a fresh draw for a fresh output.
     */
-  val effectiveStamp: PilotStamp =
+  private lazy val outputId: String =
+    if Files.exists(outputIdFile) then new String(Files.readAllBytes(outputIdFile), UTF_8).stripSuffix("\n")
+    else outputIds()
+
+  /** The plaintext stamp this runner enforces: the caller's fields plus the owner key fingerprint, the SHA-256 of
+    * the sealed store path (findings L2, F7) and the output instance id, so a resume against another key, another
+    * store, or a substituted `output-id` refuses before any admission or cost change (fifth review D1), without the
+    * releasable `stamp.json` naming the custodian's directory. The sealed `meta/stamp` repeats it under a
+    * deterministic name, so a transplanted stamp and id also show at unseal as a differing duplicate.
+    */
+  lazy val effectiveStamp: PilotStamp =
     PilotStamp(stamp.fields ++ Vector(
       "recipient_fp" -> store.recipientFingerprint,
-      "sealed_store_path_sha256" -> Fs.sha256(storePath.getBytes(UTF_8))
+      "sealed_store_path_sha256" -> Fs.sha256(storePath.getBytes(UTF_8)),
+      "output_id" -> outputId
     ))
 
   /** The output identity an owner ceiling raise names in advance: SHA-256 of `stamp.json` followed by `output-id`,
@@ -308,7 +321,7 @@ final class PilotRunner(
     else Some(Fs.sha256(Files.readAllBytes(stampFile) ++ Files.readAllBytes(outputIdFile)))
 
   /** The sealed `meta/stamp`: the plaintext stamp plus the full store path. */
-  val sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
+  lazy val sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
 
   /** The 1-based invocation ordinal of this instance's [[run]] (0 before it). */
   def invocation: Int = invocationNo
@@ -373,15 +386,17 @@ final class PilotRunner(
         case Some(r) if r.invocation != inv => Left(PilotRefusal.CeilingNotAuthorized(s"the raise authorizes invocation ${r.invocation}, not $inv"))
         case _ => Right(())
 
-  /** The stamp check, then the output instance id: an adopted output must carry a well-formed `output-id`. */
+  /** The output instance id (well formed when present), then the stamp, which records the id: a substituted
+    * `output-id` fails the stamp comparison as `StampMismatch(output_id)`.
+    */
   private def checkStamp(): Either[PilotRefusal, Unit] =
-    checkStampFile().flatMap { _ =>
-      val id = if Files.exists(outputIdFile) then new String(Files.readAllBytes(outputIdFile), UTF_8) else ""
-      Either.cond(PilotRunner.validOutputId(id), (), PilotRefusal.Failure("output-id is missing or malformed; refusing to adopt the output"))
-    }
+    Files.createDirectories(output)
+    val idText = if Files.exists(outputIdFile) then Some(new String(Files.readAllBytes(outputIdFile), UTF_8)) else None
+    if idText.exists(t => !PilotRunner.validOutputId(t)) then Left(PilotRefusal.Failure("output-id is malformed; refusing to adopt the output"))
+    else if idText.isEmpty && Files.exists(stampFile) then Left(PilotRefusal.Failure("output-id is missing; refusing to adopt the output"))
+    else checkStampFile()
 
   private def checkStampFile(): Either[PilotRefusal, Unit] =
-    Files.createDirectories(output)
     if Files.exists(stampFile) then
       val text = new String(Files.readAllBytes(stampFile), UTF_8).trim
       if text == effectiveStamp.json then Right(())
@@ -391,10 +406,13 @@ final class PilotRunner(
           case Left(_) => Left(PilotRefusal.StampMismatch("stamp"))
     else if progress.exists || store.hasBlobs then Left(PilotRefusal.Failure("output holds data but no stamp.json; refusing to adopt it"))
     else
-      // a fresh output: its instance id first (never rewritten), then the stamp
-      Fs.writeAtomic(outputIdFile, PilotRunner.freshOutputId() + "\n")
-      Fs.writeAtomic(stampFile, effectiveStamp.json + "\n")
-      Right(())
+      // a fresh output: its instance id first (only if absent: an id written by an invocation that died before the
+      // stamp is kept, never redrawn), then the stamp, which records it
+      if !PilotRunner.validOutputId(outputId + "\n") then Left(PilotRefusal.Failure("output id draw is malformed"))
+      else
+        if !Files.exists(outputIdFile) then Fs.writeAtomic(outputIdFile, outputId + "\n")
+        Fs.writeAtomic(stampFile, effectiveStamp.json + "\n")
+        Right(())
 
   /** One invocation. Single-shot: a second call on the same instance is refused (`RunnerReused`), because the run id
     * and the invocation ordinal belong to the instance and a repeat would seal differing records under one name.
@@ -619,6 +637,11 @@ final class PilotRunner(
               Thread.currentThread().interrupt()
               ArmResult.Failed("interrupted")
             case NonFatal(e) => ArmResult.Failed("executor_exception:" + e.getClass.getSimpleName.take(40).filter(_.isLetterOrDigit))
+            case t: Throwable =>
+              // a fatal throwable: a measured child CPU may never reach the meter. Recorded here, at its origin,
+              // before any cleanup can replace it (fifth review D2)
+              noteThrowable(t)
+              throw t
         val wall = wallSeconds() - t0
         meter.addChild(result.childCpu)
         if Thread.currentThread().isInterrupted then
@@ -665,8 +688,20 @@ final class PilotRunner(
     def runJob(job: Job, phase: CommitPhase): Unit =
       val cell = cellById(job.cell)
       var allCommitted = true
+      var pending: Throwable = null
       try cell.arms.foreach(arm => allCommitted = allCommitted && !stopped && runUnit(job, WorkUnit(job.cell, job.dataset, arm), phase))
-      finally arms.jobFinished(job)
+      catch
+        case t: Throwable =>
+          noteThrowable(t)
+          pending = t
+          throw t
+      finally
+        // a cleanup failure never replaces the job's own throwable; it is attached to it instead (fifth review D2)
+        try arms.jobFinished(job)
+        catch
+          case c: Throwable =>
+            noteThrowable(c)
+            if pending != null then pending.addSuppressed(c) else throw c
       if allCommitted && !crashed.get() then
         phase match
           case CommitPhase.Rerun => rerunDone.add(job): Unit
@@ -817,13 +852,14 @@ object PilotRunner:
     Fs.hex(b)
 
   private[exec] def validOutputId(text: String): Boolean =
-    text.length == 33 && text.endsWith("\n") && text.init.forall(c => c.isDigit || c >= 'a' && c <= 'f')
+    // exactly 32 lowercase ASCII hex characters and a newline (no Unicode digits)
+    text.length == 33 && text.endsWith("\n") && text.init.forall(c => c >= '0' && c <= '9' || c >= 'a' && c <= 'f')
 
   /** Plaintext marker present while an invocation's CPU accounting is open (content: its run id). */
   val AccountingOpenName: String = "accounting.open"
 
   /** Stamp keys the runner adds itself; a caller's stamp must not carry them. */
-  val RunnerStampKeys: Set[String] = Set("recipient_fp", "sealed_store_path", "sealed_store_path_sha256")
+  val RunnerStampKeys: Set[String] = Set("recipient_fp", "sealed_store_path", "sealed_store_path_sha256", "output_id")
 
   def freshRunId(): String =
     val b = new Array[Byte](8)
