@@ -501,6 +501,9 @@ class PilotRunnerSuite extends munit.FunSuite:
     def go(threads: Int): (String, String) =
       val out = base.resolve("run") // one path for every run: the store path is part of the sealed stamp
       Fs.deleteTree(out)
+      Files.createDirectories(out)
+      // Hold the output identity fixed alongside the run id and encryption entropy in this determinism fixture.
+      Files.writeString(out.resolve("output-id"), "0123456789abcdef0123456789abcdef\n")
       val clk = clock()
       val ex: ArmRunner = ctx =>
         Thread.sleep(math.abs((ctx.unit.cell.value + ctx.unit.dataset).hashCode % 4).toLong + (if threads > 1 then util.Random.nextInt(3) else 0))
@@ -1075,7 +1078,9 @@ class PilotRunnerSuite extends munit.FunSuite:
     // move the whole output away, then build a fresh one at the same path with the same key and stamp inputs
     Files.move(out, base.resolve("archive"))
     assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
-    assertEquals(Files.readString(out.resolve("stamp.json")), Files.readString(base.resolve("archive/stamp.json")), "identical stamp bytes")
+    def configuration(path: java.nio.file.Path) =
+      PilotStamp.parse(Files.readString(path)).fold(e => fail(e), identity).fields.filterNot(_._1 == "output_id")
+    assertEquals(configuration(out.resolve("stamp.json")), configuration(base.resolve("archive/stamp.json")), "identical configuration")
     runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
       case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
       case other => fail(s"expected CeilingNotAuthorized, got $other")
@@ -1113,3 +1118,34 @@ class PilotRunnerSuite extends munit.FunSuite:
     progress.markDispatched(last)
     assertEquals(progress.recover(Set(cell("C0"))).map(_.dispatched), Right(Set(last)))
   }
+
+  test("review5: substituting another output's id refuses before accounting or work"):
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val base = tmp(); val out = base.resolve("output")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run().fold(x => fail(x.message), identity)
+    val original = runner(plan, out, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "the original output", original, 2).fold(e => fail(e), identity)
+    Files.move(out, base.resolve("archive"))
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run().fold(x => fail(x.message), identity)
+    val before = Files.readString(out.resolve("cost.json"))
+    val originalId = Files.readString(base.resolve("archive/output-id"))
+    Files.writeString(out.resolve("output-id"), originalId)
+    val arms = new Counting(clk, 1.0, ok)
+    val resumed = runner(plan, out, arms, clk, CpuGuard.raised(45.0, raise)).run()
+    assertEquals(resumed.left.toOption, Some(PilotRefusal.StampMismatch("output_id")))
+    assertEquals(arms.calls.get(), 0)
+    assertEquals(Files.readString(out.resolve("cost.json")), before)
+    assert(!Files.exists(out.resolve("accounting.open")))
+
+  test("review5: output ids use ASCII hex and survive initialization before the stamp"):
+    assert(!PilotRunner.validOutputId("\u0660" * 32 + "\n"))
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    val id = "0123456789abcdef0123456789abcdef\n"
+    Files.writeString(out.resolve("output-id"), id)
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run().fold(x => fail(x.message), identity)
+    assertEquals(Files.readString(out.resolve("output-id")), id)
+    val fields = PilotStamp.parse(Files.readString(out.resolve("stamp.json"))).fold(e => fail(e), identity).fields.toMap
+    assertEquals(fields("output_id"), id.trim)
+    val sealedFields = PilotStamp.parse(new String(read(out)(SealedNames.Stamp), UTF_8)).fold(e => fail(e), identity).fields.toMap
+    assertEquals(sealedFields("output_id"), id.trim)

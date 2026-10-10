@@ -258,13 +258,14 @@ final class PilotRunner(
     accountingRecovery: Option[OwnerAccountingRecovery] = None
 ):
   require(threads >= 1, "threads must be positive")
-  require(!stamp.fields.exists((k, _) => PilotRunner.RunnerStampKeys.contains(k)), "recipient_fp and the store path keys are added by the runner")
+  require(!stamp.fields.exists((k, _) => PilotRunner.RunnerStampKeys.contains(k)), "owner, store path and output identity keys are added by the runner")
   private val progress = new PilotProgress(output)
   private val retry = RetryPolicy(plan.maxRetries)
   private val cellById: Map[CellId, PilotCell] = plan.cells.map(c => c.id -> c).toMap
   private def costFile = output.resolve("cost.json")
   private def accountingFile = output.resolve(PilotRunner.AccountingOpenName)
   private def outputIdFile = output.resolve(PilotRunner.OutputIdName)
+  private def outputIdText: String = if Files.exists(outputIdFile) then Files.readString(outputIdFile, UTF_8) else ""
   private def stampFile = output.resolve("stamp.json")
   private def selectionFile = output.resolve("selection.json")
   private val busy = new AtomicBoolean(false)
@@ -287,15 +288,15 @@ final class PilotRunner(
 
   private val storePath: String = store.dir.toAbsolutePath.normalize.toString
 
-  /** The plaintext stamp this runner enforces: the caller's fields plus the owner key fingerprint and the SHA-256 of
-    * the sealed store path (findings L2, F7), so a resume against another key or another store refuses without the
-    * releasable `stamp.json` naming the custodian's directory.
+  /** The plaintext stamp this runner enforces: the caller's fields, owner key fingerprint, store path hash and,
+    * once initialized, the output instance id. A resume checks that id against the saved stamp before any work.
     */
-  val effectiveStamp: PilotStamp =
+  def effectiveStamp: PilotStamp =
+    val id = outputIdText
     PilotStamp(stamp.fields ++ Vector(
       "recipient_fp" -> store.recipientFingerprint,
       "sealed_store_path_sha256" -> Fs.sha256(storePath.getBytes(UTF_8))
-    ))
+    ) ++ Option.when(PilotRunner.validOutputId(id))("output_id" -> id.init))
 
   /** The output identity an owner ceiling raise names in advance: SHA-256 of `stamp.json` followed by `output-id`,
     * exactly as written (`cat stamp.json output-id | sha256sum`). `output-id` is 128 random bits drawn by the first
@@ -308,7 +309,7 @@ final class PilotRunner(
     else Some(Fs.sha256(Files.readAllBytes(stampFile) ++ Files.readAllBytes(outputIdFile)))
 
   /** The sealed `meta/stamp`: the plaintext stamp plus the full store path. */
-  val sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
+  def sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
 
   /** The 1-based invocation ordinal of this instance's [[run]] (0 before it). */
   def invocation: Int = invocationNo
@@ -362,7 +363,7 @@ final class PilotRunner(
     }
 
   /** The runner's own admission of its guard: invariants re-checked, and a raise only for this very output (the
-    * SHA-256 of its `stamp.json`, which binds the store path and the owner key) and this very invocation.
+    * SHA-256 of its `stamp.json` followed by `output-id`, binding the instance, store path and owner key) and this very invocation.
     */
   private def admitGuard(inv: Int): Either[PilotRefusal, Unit] =
     if !CpuGuard.admissible(guard) then Left(PilotRefusal.CeilingNotAuthorized("the guard's ceiling is not authorized"))
@@ -373,15 +374,21 @@ final class PilotRunner(
         case Some(r) if r.invocation != inv => Left(PilotRefusal.CeilingNotAuthorized(s"the raise authorizes invocation ${r.invocation}, not $inv"))
         case _ => Right(())
 
-  /** The stamp check, then the output instance id: an adopted output must carry a well-formed `output-id`. */
+  /** Retain an initialized id even if the first invocation died before writing its stamp. Adopted outputs must
+    * carry a well-formed id matching the saved stamp; replacing only `output-id` cannot transfer a ceiling raise.
+    */
   private def checkStamp(): Either[PilotRefusal, Unit] =
-    checkStampFile().flatMap { _ =>
-      val id = if Files.exists(outputIdFile) then new String(Files.readAllBytes(outputIdFile), UTF_8) else ""
-      Either.cond(PilotRunner.validOutputId(id), (), PilotRefusal.Failure("output-id is missing or malformed; refusing to adopt the output"))
-    }
+    Files.createDirectories(output)
+    if !Files.exists(stampFile) && (progress.exists || store.hasBlobs) then
+      Left(PilotRefusal.Failure("output holds data but no stamp.json; refusing to adopt it"))
+    else
+      if !Files.exists(stampFile) && !Files.exists(outputIdFile) then
+        Fs.writeAtomic(outputIdFile, PilotRunner.freshOutputId() + "\n")
+      if !PilotRunner.validOutputId(outputIdText) then
+        Left(PilotRefusal.Failure("output-id is missing or malformed; refusing to adopt the output"))
+      else checkStampFile()
 
   private def checkStampFile(): Either[PilotRefusal, Unit] =
-    Files.createDirectories(output)
     if Files.exists(stampFile) then
       val text = new String(Files.readAllBytes(stampFile), UTF_8).trim
       if text == effectiveStamp.json then Right(())
@@ -389,10 +396,7 @@ final class PilotRunner(
         PilotStamp.parse(text) match
           case Right(old) => Left(PilotRefusal.StampMismatch(old.firstDifference(effectiveStamp).getOrElse("stamp")))
           case Left(_) => Left(PilotRefusal.StampMismatch("stamp"))
-    else if progress.exists || store.hasBlobs then Left(PilotRefusal.Failure("output holds data but no stamp.json; refusing to adopt it"))
     else
-      // a fresh output: its instance id first (never rewritten), then the stamp
-      Fs.writeAtomic(outputIdFile, PilotRunner.freshOutputId() + "\n")
       Fs.writeAtomic(stampFile, effectiveStamp.json + "\n")
       Right(())
 
@@ -822,13 +826,13 @@ object PilotRunner:
     Fs.hex(b)
 
   private[exec] def validOutputId(text: String): Boolean =
-    text.length == 33 && text.endsWith("\n") && text.init.forall(c => c.isDigit || c >= 'a' && c <= 'f')
+    text.length == 33 && text.endsWith("\n") && text.init.forall(c => c >= '0' && c <= '9' || c >= 'a' && c <= 'f')
 
   /** Plaintext marker present while an invocation's CPU accounting is open (content: its run id). */
   val AccountingOpenName: String = "accounting.open"
 
   /** Stamp keys the runner adds itself; a caller's stamp must not carry them. */
-  val RunnerStampKeys: Set[String] = Set("recipient_fp", "sealed_store_path", "sealed_store_path_sha256")
+  val RunnerStampKeys: Set[String] = Set("recipient_fp", "sealed_store_path", "sealed_store_path_sha256", "output_id")
 
   def freshRunId(): String =
     val b = new Array[Byte](8)

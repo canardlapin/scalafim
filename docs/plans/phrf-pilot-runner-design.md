@@ -474,7 +474,9 @@ not stamped).
   once per uncertain run id; plans allow at most 100 retries. Fourth review: the output identity
   adds a random, write-once `output-id`; a fatal throwable in any thread sets a sticky
   accounting-uncertain flag; authorization records are re-sealed under their own run ids; plans
-  have at most 10000 datasets (4-digit `dNNNN` names).]*
+  have at most 10000 datasets (4-digit `dNNNN` names). Integration corrections after the fifth
+  review: the saved and sealed stamps retain `output_id`, checked before accounting or work;
+  fatal uncertainty is recorded before a job cleanup callback can mask the original error.]*
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit
   attempt.]*
