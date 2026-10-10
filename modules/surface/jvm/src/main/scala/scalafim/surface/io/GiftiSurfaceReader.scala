@@ -26,23 +26,29 @@ object GiftiSurfaceReader:
   ): Either[SurfaceError, SurfaceGeometry] =
     catchRead(path)(read(path, hemisphere, kind))
 
-  /** Read geometry together with the file's own coordinate declaration. */
+  /** Read geometry together with the file's own coordinate declaration and
+    * the placement chosen by `selection`.
+    */
   def readDeclaredEither(
     path: Path,
     hemisphere: Hemisphere,
-    kind: SurfaceKind
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
   ): Either[SurfaceError, DeclaredGiftiSurface] =
-    catchRead(path)(unsafe(GiftiReader.read(path).flatMap(declared(_, hemisphere, kind))))
+    catchRead(path)(unsafe(GiftiReader.read(path).flatMap(declared(_, hemisphere, kind, selection))))
 
   def declared(
     document: GiftiDocument,
     hemisphere: Hemisphere,
-    kind: SurfaceKind
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
   ): Either[GiftiError, DeclaredGiftiSurface] =
     for
-      surface <- geometry(document, hemisphere, kind)
-      coordinates <- GiftiCoordinateDeclaration.fromDocument(document)
-    yield DeclaredGiftiSurface(surface, coordinates)
+      arrays <- GiftiSurfaceCodec.geometryArrays(document)
+      coordinates <- GiftiReader.doubleMatrix(arrays.pointSet)
+      faces <- GiftiReader.intMatrix(arrays.triangles)
+      surface <- GiftiSurfaceCodec.declaredGeometry(document, coordinates, faces, hemisphere, kind, selection)
+    yield surface
 
   def readLabels(
     path: Path,

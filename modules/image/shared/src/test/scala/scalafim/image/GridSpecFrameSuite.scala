@@ -215,3 +215,15 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assertEquals(typed.grid.indexToFrame.rowMajor, vectors.grid.indexToFrame.rowMajor)
     assert(VoxelSpacing.make(1.0, 0.0, 1.0).isLeft, clue = "zero spacing must be rejected")
     assert(SampleSpaces.regular(Vector(4, 3), VoxelSpacing.OneMillimetre).isLeft, clue = "regular spaces are D3")
+
+  test("world-to-voxel returns Left, not an exception, when a finite point's voxel image overflows"):
+    val fine = GridSpec.in(Spaces.MNI152NLin2009cAsym)(shape, ProviderSpaces.affine(
+      Vector(
+        Vector(0.25, 0.0, 0.0, 0.0),
+        Vector(0.0, 0.25, 0.0, 0.0),
+        Vector(0.0, 0.0, 0.25, 0.0),
+        Vector(0.0, 0.0, 0.0, 1.0)
+      )
+    )).fold(error => fail(error.message), identity)
+    assert(fine.worldToVoxel(SpatialPoint(1.0e308, 0.0, 0.0)).isLeft)
+    assert(fine.worldToVoxel(SpatialPoint(0.0, 0.0, 0.0)).isRight)
