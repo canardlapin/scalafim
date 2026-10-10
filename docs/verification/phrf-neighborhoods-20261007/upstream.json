@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/canardlapin/gale",
+  "baseRevision": "0a981febc163e539b019aa9379935e21d8987a20",
+  "revision": "62c0aeb3374557874a17f870c9ae05e3290c21cf",
+  "pullRequest": "https://github.com/canardlapin/gale/pull/24",
+  "state": "merged",
+  "pinPolicy": "Pin the tested topic commit, preserved by a merge commit, to avoid importing unrelated optimizer additions.",
+  "localValidation": {
+    "coreJVM": 810,
+    "coreJS": 798,
+    "scalafmtCheckAll": true
+  },
+  "mergedAt": "2026-10-08T00:48:29Z",
+  "mergeCommit": "8b47aa8a432304a0fe33cc7baf879daf6f24d0a4",
+  "review": "Approved; security check passed. Bugbot skipped due to its usage limit; not treated as a review signal.",
+  "resolvedBuildRevision": "62c0aeb3374557874a17f870c9ae05e3290c21cf",
+  "resolvedSourceHashes": {
+    "core/shared/src/main/scala/gale/spectral/ValidatedLinearSystem.scala": "710b5987f578c64241a2c4a7f43cdd3bf9602795d4f867a7ffb3e452e4043dc8",
+    "core/shared/src/main/scala/gale/spectral/RealInterval.scala": "1c8cff7075c3ebd81207df81fa61fa11cdb79bf4fb72cc6110322eba9b0c5861",
+    "core/shared/src/test/scala/gale/spectral/RealIntervalExpSuite.scala": "6222628d0fe601c4e36a979a79fb42ea96aca085f2bb980d3eb30cad7fd75c63",
+    "core/shared/src/test/scala/gale/spectral/ValidatedLinearSystemSuite.scala": "fba3772dd112a3e5a61fa23e2ed375d6968b2b98bdbf493cae2ccb5f59aeb51c"
+  }
+}

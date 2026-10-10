@@ -1,0 +1,20 @@
+{
+  "jvmPassed": true,
+  "jsPassed": true,
+  "datasetJVM": 76,
+  "datasetJS": 62,
+  "workflowJVM": 8,
+  "workflowJS": 8,
+  "epicAdmitted": false,
+  "scientificScenarioStatus": "48 Fail; blocking caveats; no accepting CI policy",
+  "compilerWarnings": [],
+  "buildWarnings": [
+    "existing multiple main classes discovery warning"
+  ],
+  "otherLimitations": [
+    "no full certified workload",
+    "no measured engine peak",
+    "no new adaptive coverage or multi-family admission",
+    "local worktree, no hosted CI"
+  ]
+}

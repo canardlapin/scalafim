@@ -1,0 +1,8 @@
+{
+  "sha256": {
+    ".mote/ops/20261008T201718.772051Z-p63683-c0000-rb309-h748cc5.json": "1c9c73689bbc69765f4b797408ef89c5ed5cf80e06f03017a06e72c724925b3d",
+    "docs/verification/phrf-main-merge-20261008/README.md": "5dd14e5f8ee87ce36f9931dfe8b9c820c7ace06bf6576df9f5f1676f3eac0aa1",
+    "docs/verification/phrf-main-merge-20261008/gates.log.gz": "64d2c19c03e2e6f3cceb882712393f75bd397aa8853cdc92689e93695ed081d8",
+    "docs/verification/phrf-main-merge-20261008/merge.json": "cbe00a34f1eb05c4393de000c51d4820b6dcccbf045597b9aa7e378e6d67c5f4"
+  }
+}

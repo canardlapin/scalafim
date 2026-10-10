@@ -1,0 +1,13 @@
+{
+  "reviewer": "codex-root",
+  "reviewed_at": "2026-10-08T20:54:20.940239+00:00",
+  "artifact": "variance-decomposition.png",
+  "artifact_sha256": "80ac5350b19e4f61eed365e57165440e599f09f48805a980cb38af8e221009b7",
+  "disposition": "acceptable",
+  "checks": [
+    "Compact labels, interval bars, points and reference bounds are visible without clipping.",
+    "Paired sample counts and truth/load/censor/pooling key are explicit.",
+    "Figure endpoints are descriptive; the unplotted F gate remains decisive in the complete gate table."
+  ],
+  "prior_rendering": "variance-decomposition-v1.png"
+}

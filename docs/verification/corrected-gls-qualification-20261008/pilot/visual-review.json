@@ -1,0 +1,6 @@
+{
+  "reviewer": "codex-root",
+  "artifact": "qualification.png",
+  "opened": true,
+  "disposition": "Pilot is descriptive, not scientifically admitted. All twelve known/corrected comparisons and observed variance ratios are visible. Fixed margins/targets and CP intervals are shown; bootstrap intervals are uncomputed for pilot. Corrected a visualization-only bug in v1 where variance-panel limits omitted out-of-margin point estimates; the original clipped plot is retained as qualification-v1-clipped-variance.png. No numeric outcomes or acceptance bounds changed."
+}

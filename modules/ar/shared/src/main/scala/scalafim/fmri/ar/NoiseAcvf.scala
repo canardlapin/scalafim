@@ -97,7 +97,7 @@ object NoiseAcvf:
     val statuses = Vector.newBuilder[RunCorrection]
     var run = 0
     while run < layout.runCount do
-      oneUnit(residuals, layout, run, maxLag, prepared.usable(run)) match
+      oneUnit(residuals, layout, run, maxLag, prepared.correctionFor(run)) match
         case Left(error) => return Left(error)
         case Right(outcome) =>
           outcome.unit.foreach(units += _)
@@ -117,7 +117,7 @@ object NoiseAcvf:
         else
           fromPooled(
             ArEstimation.PooledAutocovariance(summary.sumsByRun(run).toArray,
-              summary.countsByRun(run).toArray, summary.correction.usable(run)),
+              summary.countsByRun(run).toArray, summary.correction.correctionFor(run)),
             run, segments, maxLag
           )
       outcome match
@@ -134,7 +134,7 @@ object NoiseAcvf:
     */
   private def finalStatus(gate: RunCorrection, outcome: RunOutcome): RunCorrection =
     gate match
-      case RunCorrection.Applied(_) =>
+      case RunCorrection.Applied(_) | RunCorrection.AppliedWithTailAnchor(_, _) =>
         outcome.skipped
           .map(RunCorrection.NotAttempted(_))
           .orElse(outcome.fallback.map(RunCorrection.SolveFallback(_)))
@@ -165,7 +165,7 @@ object NoiseAcvf:
       layout: NoiseEstimationLayout,
       run: Int,
       maxLag: Int,
-      correction: Option[DMat]
+      correction: Option[AcvfCorrection]
   ): Either[ArError, RunOutcome] =
     val segments = layout.segmentsForRun(run)
     val observations = segments.map(_.length).sum

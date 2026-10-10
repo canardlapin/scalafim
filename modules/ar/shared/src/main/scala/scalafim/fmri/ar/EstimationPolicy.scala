@@ -30,7 +30,12 @@ object CorrectionBudget:
   */
 enum EstimationPolicy:
   case Raw
-  case DesignCorrected(design: DMat, budget: CorrectionBudget = CorrectionBudget.Default)
+  case DesignCorrected(design: DMat, budget: CorrectionBudget = CorrectionBudget.Default, solve: AcvfCorrectionSolve = AcvfCorrectionSolve.Exact)
+
+/** The tail policy assumes short memory; it is distinct from an exact bias solve. */
+enum AcvfCorrectionSolve:
+  case Exact
+  case ShortMemoryTail
 
 /** Why the bias-system solve returned the raw autocovariance. fmriAR falls back silently in every one of these
   * cases (`.apply_acvf_correction_result`); here the reason is reported.
@@ -68,6 +73,7 @@ enum RunCorrection:
 
   /** The bias matrix passed the reciprocal-condition gate and is applied. */
   case Applied(reciprocalCondition: Double)
+  case AppliedWithTailAnchor(reciprocalCondition: Double, directions: Int)
 
   /** The bias matrix is too ill-conditioned to solve against; this run's estimates are left uncorrected. */
   case IllConditioned(reciprocalCondition: Double)
@@ -79,3 +85,7 @@ enum RunCorrection:
 
   /** The run has no usable data, so no solve was attempted and nothing was corrected. */
   case NotAttempted(reason: CorrectionSkip)
+
+  def wasApplied: Boolean = this match
+    case Applied(_) | AppliedWithTailAnchor(_, _) => true
+    case _ => false

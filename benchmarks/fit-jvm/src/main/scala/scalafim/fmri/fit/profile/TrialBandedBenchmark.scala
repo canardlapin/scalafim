@@ -10,10 +10,15 @@ import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{Cascade34Family, ShapePoint}
 
-/** PHRF-07 trial-backend workload on the frozen B0 dimensions. Responses are
+/** PHRF-07 component workload on the frozen B0 dimensions. Responses are
   * retained in a bounded 256-voxel input block and recycled; trial outputs are
   * converted to Float32 and consumed immediately, so increasing `voxels`
   * cannot create a `N x V` retained payload.
+  *
+  * The historical `complete*` names do not imply decoded-workload qualification:
+  * jets are consumed only for timing, and readout uses a node or the generating
+  * shape. The public decoded diagnostic lives in first-level-laws tests as
+  * DecodedTrialCheckpointMain; PHRF-33 owns the complete certificate gate.
   *
   * `dense` uses seeded uniform 0.1-second onsets. `regular` spaces the same
   * trial count evenly and supplies the sparse/dense bandwidth comparison.
@@ -168,7 +173,7 @@ class TrialBandedBenchmark:
   @Benchmark
   def oneReference(): Double = runOneReference(voxels)
 
-  /** Complete workload with the per-voxel exact-shape readout factor enabled. */
+  /** Component workload with a factor/readout at the fixed generating shape. */
   @Benchmark
   def completeExperimentalExact(): Double = runCompleteExact(voxels)
 

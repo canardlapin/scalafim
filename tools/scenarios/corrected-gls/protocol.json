@@ -1,0 +1,168 @@
+{
+  "QA_domain": 0,
+  "acceptance": {
+    "AR_RMSE_max": 0.1,
+    "AR_mean_bias_interval": [
+      -0.04,
+      0.04
+    ],
+    "all_corrected_statuses_applied": true,
+    "alpha": 0.05,
+    "bootstrap_domain": 4,
+    "bootstrap_resamples": 1999,
+    "confidence_interval": 0.95,
+    "coverage_interval": [
+      0.92,
+      0.98
+    ],
+    "equivalence_interval_confidence": 0.9,
+    "no_drop": true,
+    "null_rejection_interval": [
+      0.02,
+      0.08
+    ],
+    "standardized_effect_bias_interval": [
+      -0.1,
+      0.1
+    ],
+    "variance_ratio_interval": [
+      0.8,
+      1.2
+    ],
+    "whiteness_excess_over_known_phi_max": 0.025,
+    "whiteness_mean_abs_max": 0.1
+  },
+  "burn_in": 256,
+  "cells": [
+    {
+      "censored": false,
+      "id": "ar1-low-global",
+      "nuisance": 0,
+      "phi": [
+        0.5
+      ],
+      "pooling": "global"
+    },
+    {
+      "censored": false,
+      "id": "ar1-high-global",
+      "nuisance": 12,
+      "phi": [
+        0.5
+      ],
+      "pooling": "global"
+    },
+    {
+      "censored": true,
+      "id": "ar1-high-censored-run",
+      "nuisance": 12,
+      "phi": [
+        0.5
+      ],
+      "pooling": "run"
+    },
+    {
+      "censored": false,
+      "id": "ar2-low-global",
+      "nuisance": 0,
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "pooling": "global"
+    },
+    {
+      "censored": false,
+      "id": "ar2-high-global",
+      "nuisance": 12,
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "pooling": "global"
+    },
+    {
+      "censored": true,
+      "id": "ar2-high-censored-voxelwise",
+      "nuisance": 12,
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "pooling": "voxelwise"
+    }
+  ],
+  "censor_rule": "Within each run censor rows 23,24,60 and then every 37 rows beginning at 97 when in range; reset on the following row; censored response rows remain on the fitting axis.",
+  "decision": "Confirm corrected and known-phi engines only if all cases satisfy exact binomial/TOST count bounds and 90% bootstrap/mean-bias equivalence intervals. Raw results are paired descriptive comparisons, not pass requirements. Pilot/screen are engineering evidence only. No bounds, cases, seeds or budgets may be revised after outcomes; failures remain in receipts.",
+  "declaration_label": "scalafim-corrected-gls-known-truth-v1-20261008",
+  "design": "Two alternating 4-second task epochs at onsets 6+32k, sampled at TR=1 and convolved with public SPMG1; run intercepts and six run-local DCT nuisance terms per run in high-nuisance cells.",
+  "engines": [
+    "known-phi",
+    "raw",
+    "corrected"
+  ],
+  "metrics": [
+    "mean AR coefficient bias",
+    "AR RMSE",
+    "mean absolute within-segment residual ACF at lags 1..4",
+    "null t and joint two-row F rejection at alpha .05",
+    "95% interval coverage for task_a in voxel 1",
+    "mean reported variance / empirical task_a estimator variance",
+    "standardized effect bias",
+    "d_eff and d_inv (descriptive)",
+    "cor(beta_hat^2, variance_hat) (descriptive)"
+  ],
+  "mote": "bd-01M4E3E9KYX39Q2H6GSZMB3H5G",
+  "noise": "Independent Gaussian innovations with variance 1; continuous stationary AR noise within each run, independent run restarts after 256 burn-in draws. Censoring only affects estimator/whitener layout, not the data generator.",
+  "profiles": {
+    "confirmation": {
+      "domain": 3,
+      "replicates": 2048,
+      "scientific_admission": true
+    },
+    "pilot": {
+      "domain": 1,
+      "replicates": 16,
+      "scientific_admission": false
+    },
+    "screen": {
+      "domain": 2,
+      "replicates": 64,
+      "scientific_admission": false
+    }
+  },
+  "response_columns": 4,
+  "run_lengths": [
+    96,
+    144
+  ],
+  "schema_version": "scalafim-corrected-gls-qualification-protocol/v1",
+  "scope_limits": [
+    "No group/PM/mKH qualification or resumption of historical/spent calibration campaigns",
+    "No effective-df implementation or blanket FGLS-variance-independence claim",
+    "No corrected iterative/robust fit or ARMA estimation",
+    "No scientific admission from screen or pilot results",
+    "Known-phi censor-reset whitening is a known-parameter comparator, not an exact inverse of the continuous-noise covariance; its calibration is measured rather than presumed."
+  ],
+  "seed": 1149777122,
+  "seed_derivation": "(root + domain*10000019 + (cell+1)*1000003 + replicate*7919) mod 2147483646 + 1; uniform generator Park-Miller 48271/2147483647, Gaussian Box-Muller",
+  "simulator_acceptance": {
+    "AR_covariance_datasets": 128,
+    "AR_covariance_error_over_gamma0_max": 0.06,
+    "cross_run_covariance_over_gamma0_abs_max": 0.25,
+    "gaussian_draws": 32768,
+    "gaussian_mean_abs_max": 0.02,
+    "gaussian_variance_abs_error_max": 0.03,
+    "noiseless_coefficient_error_max": 1e-10
+  },
+  "simulator_controls": [
+    "innovation mean/variance and AR covariance against analytic AR(1)/AR(2) theory",
+    "noiseless coefficient recovery through public fit",
+    "independent run restart and censor-mask layout",
+    "known-phi inference controls in every confirmation cell"
+  ],
+  "sources": [
+    "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Binomial.html"
+  ],
+  "truth": "Voxel 0 task coefficients are both 0; voxel 1 task_a is 0.75, task_b is -0.25; nuisance and intercept coefficients fixed; independent replicate datasets are the sampling units."
+}

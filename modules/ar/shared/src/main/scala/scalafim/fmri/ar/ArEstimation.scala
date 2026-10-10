@@ -118,8 +118,8 @@ private object ArNoiseSummary:
       Left(ArError.IncompatibleNoiseSummaries("layouts differ"))
     else if left.maxOrder != right.maxOrder then
       Left(ArError.IncompatibleNoiseSummaries("maximum requested orders differ"))
-    else if left.correction.binding.map(b => (b.fingerprint, b.budget, b.targetOrder)) !=
-        right.correction.binding.map(b => (b.fingerprint, b.budget, b.targetOrder)) then
+    else if left.correction.binding.map(b => (b.fingerprint, b.budget, b.targetOrder, b.solvePolicy)) !=
+        right.correction.binding.map(b => (b.fingerprint, b.budget, b.targetOrder, b.solvePolicy)) then
       Left(ArError.IncompatibleNoiseSummaries("residual-bias correction bindings differ"))
     else
       val sums = Vector.newBuilder[Vector[ExactSum]]
@@ -152,7 +152,7 @@ object ArEstimation:
   private[ar] final case class PooledAutocovariance(
       sums: Array[Double],
       pairCounts: Array[Long],
-      correction: Option[DMat] = None
+      correction: Option[AcvfCorrection] = None
   ):
     require(sums.length == pairCounts.length, "autocovariance sums and pair counts must align")
     require(sums.nonEmpty, "pooled autocovariance must contain lag zero")
@@ -377,9 +377,9 @@ object ArEstimation:
     policy match
       case EstimationPolicy.Raw =>
         Right(uncorrected(layout))
-      case EstimationPolicy.DesignCorrected(design, budget) =>
+      case EstimationPolicy.DesignCorrected(design, budget, solve) =>
         if design.rows != residuals.rows then Left(ArError.DesignRowMismatch(design.rows, residuals.rows))
-        else AcvfBias.prepareChecked(design, layout, budget, targetOrder, Some(residuals))
+        else AcvfBias.prepareChecked(design, layout, budget, targetOrder, Some(residuals), solve)
 
   private[ar] def uncorrected(layout: NoiseEstimationLayout): PreparedCorrection =
     PreparedCorrection(
@@ -403,7 +403,7 @@ object ArEstimation:
       if observations <= 1 then
         estimates += RunEstimate(ArmaCoefficients.Iid, observations)
       else
-        estimateForSegmentsUnchecked(residuals, segments, options, correction.usable(run)) match
+        estimateForSegmentsUnchecked(residuals, segments, options, correction.correctionFor(run)) match
           case Left(error) => return Left(error)
           case Right(estimate) =>
             estimates += RunEstimate(estimate.coefficients, observations)
@@ -436,7 +436,7 @@ object ArEstimation:
     val pooled = PooledAutocovariance(
       summary.sumsByRun(run).toArray,
       summary.countsByRun(run).toArray,
-      summary.correction.usable(run)
+      summary.correction.correctionFor(run)
     )
     val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, pooled.maxLag.value))
     options.order match
@@ -483,7 +483,7 @@ object ArEstimation:
       residuals: DMat,
       segments: Vector[TimeSegment],
       options: ArFitOptions,
-      correction: Option[DMat] = None
+      correction: Option[AcvfCorrection] = None
   ): Either[ArError, YuleWalkerEstimate] =
     val observations = effectiveObservations(segments)
     if observations <= 1 then
@@ -616,7 +616,7 @@ object ArEstimation:
         case Right(estimate) =>
           val sigma2 = math.max(estimate.innovationVariance, 1e-12)
           val bic =
-            2.0 * observations.toDouble * math.log(sigma2) +
+            observations.toDouble * math.log(sigma2) +
               (order + 1).toDouble * math.log(observations.toDouble)
           best match
             case None => best = Some(bic -> estimate)
@@ -714,7 +714,7 @@ object ArEstimation:
       residuals: DMat,
       segments: Vector[TimeSegment],
       maxOrder: ArOrderValue,
-      correction: Option[DMat] = None
+      correction: Option[AcvfCorrection] = None
   ): Either[ArError, PooledAutocovariance] =
     if segments.isEmpty then Left(ArError.NoEstimableRows)
     else

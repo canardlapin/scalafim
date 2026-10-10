@@ -1,0 +1,11 @@
+{
+  "samples": 8240,
+  "seconds": 20.12675,
+  "shares": {
+    "addBlock": 28.326351745810925,
+    "bandMatrixProduct": 19.40124461226974,
+    "solveCComponent": 13.739192865216689,
+    "BandedCholesky__run": 14.862628094451415,
+    "(garbage collector)": 0.5171575142534189
+  }
+}
