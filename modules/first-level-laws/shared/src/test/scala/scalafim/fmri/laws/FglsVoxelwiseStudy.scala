@@ -160,7 +160,14 @@ private[laws] object FglsVoxelwiseStudy:
   val Alpha: Double = 0.05
 
   private def base(duration: GlsStudyDuration, censored: Boolean): GlsStudyCell =
-    GlsStudyCell("fgls-base", Phi, 12, censored, StudyPooling.Voxelwise, duration)
+    GlsStudyCell(
+      s"fgls-base-${duration.toString.toLowerCase}-${if censored then "censored" else "complete"}",
+      Phi,
+      12,
+      censored,
+      StudyPooling.Voxelwise,
+      duration
+    )
 
   val cells: Vector[FglsStudyCell] = Vector(
     FglsStudyCell(
