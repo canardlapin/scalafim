@@ -132,7 +132,14 @@ object SealedNames:
 
   val RootCheck: String = "meta/root-check"
 
-  /** The owner ceiling raise and the owner accounting recovery an invocation used, when any. */
+  /** The owner ceiling raise an invocation used, under that invocation's run id. */
   def ceilingRaise(runId: String): String = s"meta/ceiling-raise/$runId"
-  def accountingRecovery(runId: String): String = s"meta/accounting-recovery/$runId"
+
+  /** The owner accounting recovery applied for an uncertain run, under the uncertain run's id. */
+  def accountingRecovery(uncertainRunId: String): String = s"meta/accounting-recovery/$uncertainRunId"
+
+  /** The largest dataset count a plan may have: indices `0 until MaxDatasets` keep the fixed 4-digit `dNNNN` naming
+    * of journal markers and sealed names, so every name the writer emits is one recovery accepts.
+    */
+  val MaxDatasets: Int = 10000
   val Stamp: String = "meta/stamp"

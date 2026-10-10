@@ -366,8 +366,8 @@ class OwnerVerificationSuite extends munit.FunSuite:
       OwnerVerification.verify(withDatasets(all, rid, d), plan, wl, Vector(new Synthetic())) match
         case OwnerVerdict.Refused(VerificationRefusal.MalformedRecord(_, "datasets")) => ()
         case other => fail(s"D = $d: expected a malformed record, got $other")
-    val hugePlan = PilotPlan(plan.cells, datasets = Int.MaxValue)
-    OwnerVerification.verify(withDatasets(all, rid, ujson.Num(Int.MaxValue.toDouble)), hugePlan, wl, Vector(new Synthetic())) match
+    val hugePlan = PilotPlan(plan.cells, datasets = SealedNames.MaxDatasets)
+    OwnerVerification.verify(withDatasets(all, rid, ujson.Num(SealedNames.MaxDatasets.toDouble)), hugePlan, wl, Vector(new Synthetic())) match
       case OwnerVerdict.Refused(VerificationRefusal.UnitListMismatch(_)) => ()
       case other => fail(s"expected UnitListMismatch, got $other")
   }
@@ -396,5 +396,17 @@ class OwnerVerificationSuite extends munit.FunSuite:
       case OwnerVerdict.Refused(VerificationRefusal.ImpossibleLedger(n, d)) =>
         assertEquals(n, ledger)
         assert(d.contains("Failed"), d)
+      case other => fail(s"expected ImpossibleLedger, got $other")
+  }
+
+  // ---- fourth independent review 2026-10-10 (L1) ----
+
+  test("review4 L1: a ledger ordinal beyond the runner's largest invocation is an impossible history") {
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val all = items(p)
+    val maxed = all.keys.filter(_.startsWith("ledger/")).foldLeft(all)((acc, n) => rewriteLedger(acc, n)(o => o("invocation") = ujson.Num(Int.MaxValue)))
+    OwnerVerification.verify(maxed, plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.ImpossibleLedger(_, d)) => assert(d.contains("largest ordinal"), d)
       case other => fail(s"expected ImpossibleLedger, got $other")
   }

@@ -14,6 +14,7 @@ final case class PilotPlan(cells: Vector[PilotCell], datasets: Int, probeDataset
   require(cells.nonEmpty && cells.map(_.id).distinct.length == cells.length, "cells must be non-empty and distinct")
   require(datasets >= 1 && probeDatasets >= 1 && minDatasets >= 2 && maxRetries >= 0, "positive plan sizes")
   require(maxRetries <= PilotPlan.MaxRetries, s"at most ${PilotPlan.MaxRetries} retries")
+  require(datasets <= SealedNames.MaxDatasets, s"at most ${SealedNames.MaxDatasets} datasets (4-digit dNNNN names)")
 
   /** Canonical rendering, hashed into the stamp. */
   def canonical: String =

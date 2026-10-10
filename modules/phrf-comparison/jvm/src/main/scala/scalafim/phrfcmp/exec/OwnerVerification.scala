@@ -165,6 +165,8 @@ object OwnerVerification:
         if own != n || r.payload != payload then Left(VerificationRefusal.MalformedRecord(n, "record does not match its name"))
         else if !arms.get(r.unit.cell).exists(_.contains(r.unit.arm)) || r.unit.dataset >= plan.datasets then
           Left(VerificationRefusal.ImpossibleLedger(n, "unit outside the plan"))
+        else if r.invocation > CostState.MaxInvocations then
+          Left(VerificationRefusal.ImpossibleLedger(n, s"invocation ${r.invocation} exceeds the runner's largest ordinal ${CostState.MaxInvocations}"))
         else if r.attempts.toLong > plan.maxRetries.toLong + 1L then Left(VerificationRefusal.ImpossibleLedger(n, s"${r.attempts} attempts exceed the retry cap"))
         else if !items.get(payload).exists(b => Fs.sha256(b) == r.payloadSha256) then Left(VerificationRefusal.PayloadMismatch(payload))
         else
