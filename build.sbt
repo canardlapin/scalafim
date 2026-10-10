@@ -945,7 +945,9 @@ lazy val atlas =
         ).filter(_.tests.nonEmpty)
       }
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
+    // Test-only: the real-asset fsLR fixtures (locked asset gate, SimpleITK inverse oracle, qualification inputs)
+    // live with surface's JVM tests; atlas tests drive them through the public standard-route entry point.
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, surface.jvm % "test->test"))
     .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
