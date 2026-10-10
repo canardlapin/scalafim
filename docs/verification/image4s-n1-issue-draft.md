@@ -1,7 +1,7 @@
 # image4s issue draft: one canonical world-to-voxel routine with documented tie-breaking
 
 Drafted 2026-10-10 from scalafim mote `bd-01M37FQGV8ZPT30X37TA4MM8R7` (gap N1).
-image4s pin: `20c9515495e43dff9d17bc1283a8ca1d56355c4a`. The parent session files it.
+image4s pin: `20c9515495e43dff9d17bc1283a8ca1d56355c4a`. **Filed 2026-10-10 as [canardlapin/image4s#24](https://github.com/canardlapin/image4s/issues/24).**
 
 ---
 
