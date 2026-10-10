@@ -130,7 +130,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
 // so reframe4s resolves the same image4s build. reframe4s accepts only a local
 // path, so the default pinned-URI build still loads reframe4s's own image4s pin.
-lazy val reframe4sRevision = "292c9bc7e0c026d893a4101560aa9a46e0fbcf04"
+lazy val reframe4sRevision = "9662317912185c51e82dd04b2c87006ed2af82f2"
 lazy val reframe4sBuild = {
   sys.props
     .get("scalafim.image4s.build")
