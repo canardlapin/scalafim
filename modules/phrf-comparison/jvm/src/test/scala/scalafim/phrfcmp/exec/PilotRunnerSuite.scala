@@ -943,6 +943,55 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   // ---- third independent review 2026-10-10 (H2, M1, L1, L2, L3, hardening) ----
 
+  test("a caller interrupt cannot close accounting after a worker loses its child CPU handoff"):
+    val out = tmp()
+    val clk = clock()
+    val plan = mkPlan(1, 2, 1)
+    val entered = new CountDownLatch(1)
+    val release = new CountDownLatch(1)
+    val fatalThrown = new java.util.concurrent.atomic.AtomicBoolean(false)
+    val arms: ArmRunner = _ =>
+      entered.countDown()
+      if !release.await(20, TimeUnit.SECONDS) then throw new IllegalStateException("worker was never released")
+      fatalThrown.set(true)
+      throw new OutOfMemoryError("synthetic child CPU handoff failure")
+    val r = runner(plan, out, arms, clk, runId = "fatal-interrupted")
+    @volatile var result: Option[Either[PilotRefusal, PilotReport]] = None
+    @volatile var flagAfter = false
+    val caller = new Thread(() =>
+      result = Some(r.run())
+      flagAfter = Thread.currentThread().isInterrupted
+    )
+    caller.start()
+    try
+      assert(entered.await(10, TimeUnit.SECONDS))
+      caller.interrupt()
+      val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+      while caller.isInterrupted && System.nanoTime() < deadline do Thread.sleep(1L)
+      assert(!caller.isInterrupted, "the caller must observe its interrupt before the worker fails")
+    finally
+      release.countDown()
+      caller.join(20000L)
+    assert(!caller.isAlive, "the caller must join the failed worker")
+    assert(fatalThrown.get(), "the worker must exercise the fatal CPU handoff path")
+    assertEquals(result.flatMap(_.left.toOption), Some(PilotRefusal.Interrupted))
+    assert(flagAfter, "the caller's interrupt flag is preserved")
+    assert(Files.exists(out.resolve("accounting.open")), "the interrupt must not certify unknown CPU accounting")
+    val resumed = runner(plan, out, new Counting(clk, 0.0, ok), clk).run()
+    assertEquals(resumed.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal-interrupted")))
+
+  test("a job cleanup exception cannot close accounting after a fatal arm failure"):
+    val out = tmp()
+    val clk = clock()
+    val plan = mkPlan(1, 2, 1)
+    val arms = new ArmRunner:
+      def run(ctx: ArmContext): ArmResult = throw new OutOfMemoryError("synthetic child CPU handoff failure")
+      override def jobFinished(job: Job): Unit = throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms, clk, runId = "fatal-cleanup").run())
+    assert(Files.exists(out.resolve("accounting.open")), "cleanup must not certify unknown CPU accounting")
+    val resumed = runner(plan, out, new Counting(clk, 0.0, ok), clk).run()
+    assertEquals(resumed.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal-cleanup")))
+
   test("review3 H2: an owner ceiling raise is bound to one output: accepted for output A, refused for output B") {
     val plan = mkPlan(1, 2, 1); val clk = clock()
     val a = tmp(); val b = tmp()

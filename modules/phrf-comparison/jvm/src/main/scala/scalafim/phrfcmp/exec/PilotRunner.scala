@@ -268,6 +268,8 @@ final class PilotRunner(
   private def selectionFile = output.resolve("selection.json")
   private val busy = new AtomicBoolean(false)
   private val used = new AtomicBoolean(false)
+  // A later interrupt or cleanup exception must not hide a worker's lost CPU handoff.
+  private val accountingUncertain = new AtomicBoolean(false)
   @volatile private var invocationNo = 0
   @volatile private var currentRunId: Option[String] = None
   /** Writes the final cost; set once `accounting.open` is down. The marker is removed after it only on exits where
@@ -419,6 +421,9 @@ final class PilotRunner(
     Files.deleteIfExists(accountingFile): Unit
     Fs.fsyncDir(output.toAbsolutePath)
 
+  private def recordAccountingFailure(t: Throwable): Unit =
+    if !NonFatal(t) && !t.isInstanceOf[InterruptedException] then accountingUncertain.set(true)
+
   /** Runs `body` and, on every exit, writes the final cost checkpoint. The marker is then removed only when the run
     * ended by a result, a typed refusal, an ordinary (non-fatal) exception or an interrupt: those paths hand every
     * measured child CPU to the meter first. On a fatal throwable (an `OutOfMemoryError`, a `LinkageError`, ...) a
@@ -446,7 +451,7 @@ final class PilotRunner(
     try
       finalCheckpoint.foreach { checkpoint =>
         checkpoint()
-        if removeMarker then closeMarker()
+        if removeMarker && !accountingUncertain.get() then closeMarker()
       }
     finally if wasInterrupted then Thread.currentThread().interrupt()
 
@@ -635,6 +640,10 @@ final class PilotRunner(
       val cell = cellById(job.cell)
       var allCommitted = true
       try cell.arms.foreach(arm => allCommitted = allCommitted && !stopped && runUnit(job, WorkUnit(job.cell, job.dataset, arm), phase))
+      catch
+        case t: Throwable =>
+          recordAccountingFailure(t)
+          throw t
       finally arms.jobFinished(job)
       if allCommitted && !crashed.get() then
         phase match
@@ -698,7 +707,9 @@ final class PilotRunner(
               catch
                 case e: ExecutionException =>
                   crashed.set(true)
-                  if failure.isEmpty then failure = Some(Option(e.getCause).getOrElse(e))
+                  val cause = Option(e.getCause).getOrElse(e)
+                  recordAccountingFailure(cause)
+                  if failure.isEmpty then failure = Some(cause)
                   joined = true
                 case _: InterruptedException =>
                   crashed.set(true) // workers stop at their next check; keep joining
