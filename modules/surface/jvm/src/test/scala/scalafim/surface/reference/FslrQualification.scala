@@ -54,7 +54,7 @@ object FslrQualification:
       run(Path.of(args(0)), Path.of(args(1)))
 
   /** A parsed declaration spec: every volume and the optional support, read and digest-checked. */
-  private[reference] final case class Inputs(
+  final case class Inputs(
     name: String,
     specSha256: String,
     spec: ujson.Value,
@@ -81,7 +81,7 @@ object FslrQualification:
         val d = json("derived")
         orFail(FrameBasis.derived(d("recipe").str, d("inputs").arr.toVector.map(asset)))
 
-  private[reference] def readInputs(specPath: Path): Inputs =
+  def readInputs(specPath: Path): Inputs =
     val bytes = Files.readAllBytes(specPath)
     val spec = ujson.read(bytes)
     require(spec("schema").str == "scalafim.fslr-qualification-input/1", s"unknown spec schema ${spec("schema")}")

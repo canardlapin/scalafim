@@ -269,6 +269,86 @@ steps. `scalafim-atlas` does not execute Workbench or projection backends from
 the shared core; the TemplateFlow 6Asym/2009c composite runs through
 `MniTemplateBridge` once the JVM loader has read it.
 
+## Standard Surface Routes
+
+`StandardSurfaceRoutes` is the public way to obtain the qualified
+MNI152NLin2009cAsym -> fsLR 32k volume-to-surface route. The atlas module
+composes it from `scalafim.surface.reference` primitives; surface does not
+depend on atlas. On the JVM, `StandardSurfaceRouteFiles` reads the locked
+TemplateFlow assets from local caches (`TemplateFlowCache.roots`:
+`$TEMPLATEFLOW_HOME`, `~/.cache/templateflow`, `~/Library/Caches/templateflow`)
+and never downloads:
+
+```scala
+import scalafim.atlas.*
+import scalafim.atlas.io.StandardSurfaceRouteFiles
+import scalafim.surface.CorticalHemisphere
+import scalafim.surface.reference.*
+
+// `volume`: the consumer's DeclaredVolume, declared in Fslr32kFrom2009c.sourceFrame
+val source = VolumeReference.make(Fslr32kFrom2009c.sourceFrame, volume.volume.space)
+
+val mapped =
+  for
+    route <- StandardSurfaceRouteFiles.fsLR32kFrom2009c()   // StandardRoutePolicy.Frozen
+    left  <- route.admit(source.toOption.get, CorticalHemisphere.Left)
+  yield (route.identity.token, route.disclosure.fields, left.map(volume))
+```
+
+What it loads and checks (`Fslr32kFrom2009c` is the lock):
+
+- fsLR 32k midthickness and `desc-nomedialwall` labels for both hemispheres
+  at `templateflow@d79aacb1`, each digest-checked before decoding, and the
+  templateflow4s point map under
+  `.templateflow4s/derived/point-map/<sha256>` whose source must be the
+  admitted `TemplateFlowXfm.Mni6ToMni2009c` composite and whose manifest must
+  match the locked digest.
+- The anatomy frame is `FrameBasis.PublisherMethods` (Van Essen et al. 2012,
+  Cereb Cortex 22:2241, p. 2245: affine-aligned 69-subject Conte69 average in
+  MNI152NLin6Asym). The bridge is the point map's pointwise inverse, so
+  `BridgeExactness.Approximate(PointwiseFixedPoint(policy))`, with per-vertex
+  residual, iteration and status receipts in each admitted route's
+  `bridgePlacement`.
+- `StandardRoutePolicy.Frozen` (reframe4s defaults: 1e-8 mm, 100 iterations,
+  divergence ratio 4) is the policy P1-P6 passed under (ticket
+  bd-01M3WCQD1MFW1WRTJP6C6A2ZFS). `StandardRoutePolicy.overriding(policy,
+  reason)` is the explicit, reasoned alternative; it is labelled
+  not budget-qualified and changes the route identity.
+- Refusals are typed `StandardRouteRefusal`s: `AssetsMissing` (every missing
+  locked path, zero-byte TemplateFlow placeholders included), `AssetRefused`
+  (digest, decoding or declaration), `NotLocked` (an input that is not the
+  locked asset), `PolicyRefused`, `Route` (the surface route's own refusal),
+  and `PlacementGate` (any cortical vertex left unplaced by the inverse).
+
+`admit` binds the route to one source grid, which must be declared in
+`Fslr32kFrom2009c.sourceFrame` (MNI152NLin2009cAsym at the locked release);
+`admitBoth` admits left then right. Shared composition from already-loaded
+inputs is `StandardSurfaceRoutes.fsLR32kFrom2009c(pointMap, hemispheres,
+policy)`; it runs on both platforms, but the medial-wall reader is JVM-only, so
+assembling the real route from files is JVM-only today.
+
+A consumer must persist and show, with every result and export:
+
+- `route.identity.token` (`scalafim-route:sha256:...`), the SHA-256 of
+  `route.identity.canonical`: locked asset digests, point-map manifest and
+  stage digests, anatomy basis, bridge method and policy, mapping method and
+  target mesh;
+- `route.disclosure.fields`: route, identity, source and anatomy frames,
+  anatomy basis, bridge and its exactness, policy and its qualification,
+  method, every locked asset receipt, and the remaining limits (publisher
+  frame declaration, not a registration proof; numerical inverse placements;
+  source-volume provenance and consumer qualification belong to the consumer);
+- each admitted route's `disclosure` (source grid, hemisphere, semantics,
+  lookup, medial-wall asset) and, where vertices are inspected,
+  `bridgePlacement` evidence.
+
+The P1-P3, P5 and P6 budgets run through this entry point in
+`Fslr32kRouteBudgetSuite`; P4 consumer fixtures are measured with
+`sbt "atlasJVM/Test/runMain scalafim.atlas.reference.FslrBridgeDisagreement pointwise <spec.json> <out.json>"`,
+and `scalafim.atlas.reference.Fslr32kRouteExample <templateflow-home> <receipt.json>`
+is a consumer example. Real-asset suites skip when the locked cache is absent
+unless `SCALAFIM_REQUIRE_REAL_ASSETS=1`.
+
 ## JVM Loading
 
 The JVM loader surface is intentionally explicit:
