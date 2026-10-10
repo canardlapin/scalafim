@@ -989,11 +989,17 @@ class PilotRunnerSuite extends munit.FunSuite:
     val out = tmp()
     val clk = clock()
     val plan = mkPlan(1, 2, 1)
+    val fatal = new OutOfMemoryError("synthetic child CPU handoff failure")
     val arms = new ArmRunner:
-      def run(ctx: ArmContext): ArmResult = throw new OutOfMemoryError("synthetic child CPU handoff failure")
+      def run(ctx: ArmContext): ArmResult = throw fatal
       override def jobFinished(job: Job): Unit = throw new SimulatedCrash
-    val thrown = intercept[OutOfMemoryError](runner(plan, out, arms, clk, runId = "fatal-cleanup").run())
-    assert(thrown.getSuppressed.exists(_.isInstanceOf[SimulatedCrash]))
+    val thrown =
+      try
+        runner(plan, out, arms, clk, runId = "fatal-cleanup").run()
+        None
+      catch case t: Throwable => Some(t)
+    assert(thrown.contains(fatal))
+    assert(fatal.getSuppressed.exists(_.isInstanceOf[SimulatedCrash]))
     assert(Files.exists(out.resolve("accounting.open")), "cleanup must not certify unknown CPU accounting")
     val resumed = runner(plan, out, new Counting(clk, 0.0, ok), clk).run()
     assertEquals(resumed.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal-cleanup")))
@@ -1173,9 +1179,13 @@ class PilotRunnerSuite extends munit.FunSuite:
     val arms = new ArmRunner:
       def run(ctx: ArmContext): ArmResult = throw fatal
       override def jobFinished(job: Job): Unit = throw fatal
-    val thrown = intercept[OutOfMemoryError](runner(plan, out, arms, clk).run())
-    assert(thrown eq fatal)
-    assertEquals(thrown.getSuppressed.length, 0)
+    val thrown =
+      try
+        runner(plan, out, arms, clk).run()
+        None
+      catch case t: Throwable => Some(t)
+    assert(thrown.contains(fatal))
+    assertEquals(fatal.getSuppressed.length, 0)
     assert(Files.exists(out.resolve("accounting.open")))
     val resumed = new Counting(clk, 1.0, ok)
     assert(runner(plan, out, resumed, clk).run().left.toOption.exists(_.isInstanceOf[PilotRefusal.AccountingUncertain]))
