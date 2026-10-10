@@ -1,9 +1,10 @@
 """Clean-checkout build preparation for the custodian (design 4.2, F10; review F12).
 
 ``git clone --no-hardlinks`` the repository, ``git checkout --detach <full reviewed SHA>``, then
-refuse unless HEAD equals the SHA, the tree is clean, no tracked symlink (mode 120000) or
-submodule (160000) exists, and no scalafim override reaches sbt through the environment, the
-tree's opts files, or the user's global sbt configuration.  The stamp records the SHA, the
+refuse unless HEAD equals the SHA, the tree is clean, no submodule (160000) exists, every tracked
+symlink (120000) is an in-tree alias of a tracked regular file (``check_tracked_symlink``), and no
+scalafim override reaches sbt through the environment, the tree's opts files, or the user's global
+sbt configuration.  The stamp records the SHA, the
 build.sbt hash, toolchain identities and the hashes of the custody tool and its lockfile.  Builds
 run under ``env -i`` plus an allowlist (``run_build``).  This module never runs sbt itself.
 """
@@ -12,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -38,6 +40,9 @@ ENV_VARS = (
 OPTS_FILES = (".jvmopts", ".sbtopts", ".sbt/jvmopts")
 GLOBAL_OPTS = (".sbtopts", ".jvmopts")
 NOHOOKS = ("-c", "core.hooksPath=/dev/null")
+# accepted tracked symlinks are materialised as real symlinks, never as plain files holding the target
+SYMLINKS = ("-c", "core.symlinks=true")
+REGULAR_MODES = ("100644", "100755")
 ENV_ALLOWLIST = (
     "PATH",
     "HOME",
@@ -106,15 +111,90 @@ def check_clean(tree: Path) -> None:
         raise CheckoutError("working tree is not clean:\n" + out)
 
 
-def check_no_links_or_submodules(tree: Path) -> None:
-    for line in _run(["git", "ls-files", "-s"], cwd=tree).splitlines():
-        mode = line.split()[0]
-        if mode == "120000":
-            raise CheckoutError("tracked symlink refused")
-        if mode == "160000":
-            raise CheckoutError("submodule refused")
-    if (Path(tree) / ".gitmodules").exists():
+def _tree_entries(tree: Path) -> dict[str, tuple[str, str]]:
+    """Every entry of HEAD's tree, directories included: ``{path: (mode, object id)}``."""
+    r = subprocess.run(
+        ["git", "ls-tree", "-r", "-t", "-z", "--full-tree", "HEAD"],
+        cwd=tree,
+        capture_output=True,
+    )
+    if r.returncode:
+        raise CheckoutError(f"git ls-tree: {r.stderr.decode(errors='replace').strip()}")
+    entries = {}
+    for rec in r.stdout.split(b"\0"):
+        if not rec:
+            continue
+        meta, _, path = rec.partition(b"\t")
+        mode, _kind, oid = meta.decode().split()
+        entries[path.decode("utf-8", "surrogateescape")] = (mode, oid)
+    return entries
+
+
+def check_tracked_symlink(link: str, target: bytes, entries: dict[str, tuple[str, str]]) -> str:
+    """Return the in-tree path a tracked symlink resolves to, or raise ``CheckoutError``.
+
+    The rule is deliberately strict: the target must be a canonical relative path (no absolute
+    path, no ``..``, ``.`` or empty component, no backslash or NUL), resolved against the link's
+    own directory inside the commit's tree, and it must name a tracked regular file (100644 or
+    100755).  A target that is another symlink is refused (no chains, not even in-tree ones), as is
+    a dangling target, a directory, or a submodule."""
+    try:
+        text = target.decode("utf-8")
+    except UnicodeDecodeError:
+        raise CheckoutError(f"tracked symlink {link}: target is not UTF-8") from None
+    if not text or "\0" in text or "\\" in text or "\n" in text:
+        raise CheckoutError(f"tracked symlink {link}: malformed target {text!r}")
+    if text.startswith("/"):
+        raise CheckoutError(f"tracked symlink {link}: absolute target {text!r} refused")
+    parts = text.split("/")
+    if ".." in parts:
+        raise CheckoutError(f"tracked symlink {link}: '..' in target {text!r} refused (escape)")
+    if any(c in ("", ".") for c in parts):
+        raise CheckoutError(f"tracked symlink {link}: non-canonical target {text!r} refused")
+    resolved = posixpath.join(posixpath.dirname(link), text)
+    entry = entries.get(resolved)
+    if entry is None:
+        raise CheckoutError(f"tracked symlink {link}: dangling target {resolved!r} is not tracked")
+    mode = entry[0]
+    if mode == "120000":
+        raise CheckoutError(f"tracked symlink {link}: target {resolved!r} is a symlink (chain refused)")
+    if mode == "040000":
+        raise CheckoutError(f"tracked symlink {link}: target {resolved!r} is a directory")
+    if mode == "160000":
+        raise CheckoutError(f"tracked symlink {link}: target {resolved!r} is a submodule")
+    if mode not in REGULAR_MODES:
+        raise CheckoutError(f"tracked symlink {link}: target {resolved!r} has mode {mode}")
+    return resolved
+
+
+def check_no_links_or_submodules(tree: Path) -> dict[str, str]:
+    """Refuse submodules and unsafe tracked symlinks in HEAD; return the accepted symlinks as
+    ``{link path: target text}``.  Each accepted link must also be materialised on disk as a real
+    symlink whose target text matches the commit and resolves to the tracked file inside ``tree``."""
+    tree = Path(tree)
+    entries = _tree_entries(tree)
+    if any(mode == "160000" for mode, _ in entries.values()):
+        raise CheckoutError("submodule refused")
+    if (tree / ".gitmodules").exists() or ".gitmodules" in entries:
         raise CheckoutError("submodule configuration refused")
+    accepted = {}
+    root = tree.resolve()
+    for link, (mode, oid) in sorted(entries.items()):
+        if mode != "120000":
+            continue
+        r = subprocess.run(["git", "cat-file", "blob", oid], cwd=tree, capture_output=True)
+        if r.returncode:
+            raise CheckoutError(f"tracked symlink {link}: cannot read target")
+        resolved = check_tracked_symlink(link, r.stdout, entries)
+        text = r.stdout.decode("utf-8")
+        p = tree / link
+        if not p.is_symlink() or os.readlink(p) != text:
+            raise CheckoutError(f"tracked symlink {link}: not materialised as the committed symlink")
+        real = p.resolve(strict=True)
+        if real != root / resolved or real.is_symlink() or not real.is_file():
+            raise CheckoutError(f"tracked symlink {link}: does not resolve to {resolved} in the tree")
+        accepted[link] = text
+    return accepted
 
 
 def tool_hashes() -> dict:
@@ -174,7 +254,7 @@ def stamp_for(tree: Path, sha: str, *, env=None, home: Path | None = None) -> di
     if head != sha:
         raise CheckoutError(f"HEAD {head} is not the reviewed SHA {sha}")
     check_clean(tree)
-    check_no_links_or_submodules(tree)
+    links = check_no_links_or_submodules(tree)
     check_no_override(tree, env, home)
     bs = tree / "build.sbt"
     text = bs.read_text() if bs.is_file() else ""
@@ -207,6 +287,7 @@ def stamp_for(tree: Path, sha: str, *, env=None, home: Path | None = None) -> di
             else (home or Path.home())
         ),
         "custody_tool_sha256_in_checkout": in_tree_hash,
+        "tracked_symlinks": links,
         "clean": True,
         "scalafim_override": False,
     }
@@ -235,6 +316,7 @@ def prepare(
         [
             "git",
             *NOHOOKS,
+            *SYMLINKS,
             "clone",
             "-q",
             "--no-hardlinks",
@@ -245,7 +327,10 @@ def prepare(
         ]
     )
     try:
-        _run(["git", *NOHOOKS, "checkout", "-q", "--detach", sha], cwd=checkout_dir)
+        _run(
+            ["git", *NOHOOKS, *SYMLINKS, "checkout", "-q", "--detach", sha],
+            cwd=checkout_dir,
+        )
         stamp = stamp_for(Path(checkout_dir), sha, env=env, home=home)
     except CheckoutError:
         shutil.rmtree(checkout_dir, ignore_errors=True)
