@@ -51,7 +51,8 @@ object Measure:
 /** The measurable receipt of one condition-fit pass: attempted and accepted
   * counts, every counted operation, phase timings, and an engine-memory
   * estimate where the platform provides one. Budgets are checked against
-  * counters, never against wall time.
+  * counters, never against wall time. `firstOrderAttempts` is included in the
+  * legacy `jets` derivative-request counter and spends the same maxJets quota.
   */
 final case class WorkReceipt(
     label: String,
@@ -66,7 +67,8 @@ final case class WorkReceipt(
     engineBytes: Option[Long],
     notes: Vector[String],
     candidateAttempts: Long = 0L,
-    terminalVerifications: Long = 0L):
+    terminalVerifications: Long = 0L,
+    firstOrderAttempts: Long = 0L):
   def perVoxel(value: Long): Double = if voxels == 0L then 0.0 else value.toDouble / voxels
   def acceptedFraction: Double = if voxels == 0L then 0.0 else accepted.toDouble / voxels
   def phaseMillis(phase: String): Double = phases.find(_.phase == phase).map(_.millis).getOrElse(Double.NaN)
@@ -78,14 +80,18 @@ final case class WorkReceipt(
     if perVoxel(nodeScores) > maxNodeScores + 1e-9 then out += f"node scores ${perVoxel(nodeScores)}%.2f > $maxNodeScores"
     if perVoxel(jets) > budget.maxJets + 1e-9 then out += f"jets ${perVoxel(jets)}%.2f > ${budget.maxJets}"
     if perVoxel(exactEvaluations) > budget.maxExactEvaluations + 1e-9 then out += f"exact evaluations ${perVoxel(exactEvaluations)}%.2f > ${budget.maxExactEvaluations}"
-    val maxCandidates = budget.maxNewtonSteps.toLong * budget.maxCandidateAttempts + 1L
+    val initializationAttempts = budget.initialization match
+      case DecodeInitialization.BankNode => 0L
+      case DecodeInitialization.ChartCenterProbe => 1L
+      case DecodeInitialization.BoundedMultistart => budget.maxJets.toLong
+    val maxCandidates = budget.maxNewtonSteps.toLong * budget.maxCandidateAttempts + 1L + initializationAttempts
     if perVoxel(candidateAttempts) > maxCandidates + 1e-9 then out += f"candidate attempts ${perVoxel(candidateAttempts)}%.2f > $maxCandidates"
     out.result()
 
   def render: String =
     val phaseText = phases.map(p => f"${p.phase}=${p.millis}%.1fms").mkString(", ")
-    f"[$label] voxels=$voxels accepted=${100 * acceptedFraction}%.1f%% per-voxel: nodes=${perVoxel(nodeScores)}%.2f jets=${perVoxel(jets)}%.2f exact=${perVoxel(exactEvaluations)}%.2f candidates=${perVoxel(candidateAttempts)}%.2f terminal-jets=${perVoxel(terminalVerifications)}%.2f newton=${perVoxel(newtonSteps)}%.2f fallbacks=$fallbacks; phases: $phaseText; engine=${engineBytes.map(b => f"${b / 1048576.0}%.1f MiB").getOrElse("n/a")}${if notes.isEmpty then "" else "; " + notes.mkString("; ")}"
+    f"[$label] voxels=$voxels accepted=${100 * acceptedFraction}%.1f%% per-voxel: nodes=${perVoxel(nodeScores)}%.2f derivatives=${perVoxel(jets)}%.2f first-order=${perVoxel(firstOrderAttempts)}%.2f exact=${perVoxel(exactEvaluations)}%.2f candidates=${perVoxel(candidateAttempts)}%.2f terminal-jets=${perVoxel(terminalVerifications)}%.2f newton=${perVoxel(newtonSteps)}%.2f fallbacks=$fallbacks; phases: $phaseText; engine=${engineBytes.map(b => f"${b / 1048576.0}%.1f MiB").getOrElse("n/a")}${if notes.isEmpty then "" else "; " + notes.mkString("; ")}"
 
 object WorkReceipt:
   def from(label: String, counters: DecoderCounters, accepted: Long, clock: PhaseClock, engineBytes: Option[Long], notes: Vector[String] = Vector.empty): WorkReceipt =
-    WorkReceipt(label, counters.voxels, accepted, counters.nodeScores, counters.jets, counters.exactEvaluations, counters.newtonSteps, counters.fallbacks, clock.timings, engineBytes, notes, counters.candidateAttempts, counters.terminalVerifications)
+    WorkReceipt(label, counters.voxels, accepted, counters.nodeScores, counters.jets, counters.exactEvaluations, counters.newtonSteps, counters.fallbacks, clock.timings, engineBytes, notes, counters.candidateAttempts, counters.terminalVerifications, counters.firstOrderAttempts)

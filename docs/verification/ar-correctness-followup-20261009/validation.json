@@ -1,0 +1,54 @@
+{
+  "status": "complete",
+  "jvm_completed": {
+    "ar": 172,
+    "model": 99,
+    "fit": 744,
+    "phrf_preparation": 19,
+    "ar_gls_laws": 18
+  },
+  "aborted_gate": {
+    "target": "firstLevelLawsJVM/test",
+    "reason": "Stopped the unrelated long default PHRF milestone/throughput campaign; targeted affected AR/GLS laws will replace this gate.",
+    "log": "/private/tmp/scalafim-ar041-final-jvm-gates.log"
+  },
+  "receipt_checks": 14,
+  "python_tests": {
+    "receipt_regressions": 6,
+    "manifest_regressions": 6
+  },
+  "js_completed": {
+    "ar": 170,
+    "model": 99,
+    "fit": 686,
+    "phrf_preparation": 19,
+    "ar_gls_laws": 18
+  },
+  "js_ignored": "One empty historical opt-in qualification suite; its negative campaign was not requested in the ordinary regression gate.",
+  "formatting": "firstLevelLaws JVM and JS checks pass",
+  "archived_logs": {
+    "scalafim-ar041-final-jvm-gates.log.gz": {
+      "decoded_sha256": "26752930c9c1e1b751cbc70f7c1ee7d82827478bf86e627680d160eb8088755f",
+      "stored_sha256": "5d83bcbdf4d65aa4a596385a2ee57b8e3ed6cbd8534f985c9b0929cb2b31f6a0"
+    },
+    "scalafim-ar041-final-js-ar-model-gates.log.gz": {
+      "decoded_sha256": "b6aedca3442b28a9f3a31ca34b26646edf1048bc841c64c35ff189f985a618d4",
+      "stored_sha256": "7a4cbe925be10867a3d95dc123258ba15305d58c81e0a70351f0f64583f7497e"
+    },
+    "scalafim-ar041-final-fit-laws-gates.log.gz": {
+      "decoded_sha256": "8688f7a49aa53f7ddaa8c139370052c19f7bd4d8c270cb03eb98bae669ce3b1b",
+      "stored_sha256": "b0c2d71ea26d1d80830aebc847b53da8cf6e6b1a016938e1e205e8af4a228cf9"
+    },
+    "scalafim-gls-continuity-confirmation-analysis.log.gz": {
+      "decoded_sha256": "0582e725ae40cb647c7cc3914d5446aae70e6b984dd939dbab79034c4d418c2e",
+      "stored_sha256": "0750c1d2ad14f8d3ea2a431aea30e3a7374b6db260ba96d0acff5d349e741f73"
+    },
+    "scalafim-ar041-final-compile-all.log.gz": {
+      "decoded_sha256": "17a322207d643020db0c5cd68f610a8a8daa42f0e1b003cf3c7dda0fa86d7c42",
+      "stored_sha256": "f4445194c2a5a8a29ebea2a7f723f7bbc5b16deb9aae9bc77946bfcdb735ad0a"
+    }
+  },
+  "evidence_integrity": "All source archive entries and decoded/stored compressed evidence hashes verified; compressed R pilot replay matches all summary fields.",
+  "compile_all": "passed, both platforms, no compiler warnings (inherited external unused-build-key notices retained in log)",
+  "current_scala_source_matches_confirmation": true
+}

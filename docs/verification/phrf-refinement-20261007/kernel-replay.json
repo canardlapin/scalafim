@@ -1,0 +1,79 @@
+{
+  "format": "phrf-kernel-replay/1",
+  "qualification": "not-admitted",
+  "node": "v24.21.0",
+  "geometry": {
+    "n": 300,
+    "bandwidth": 40,
+    "columns": 9,
+    "basisRank": 10,
+    "jetComponents": 10
+  },
+  "sourceMainSha256": "e4bb47d19d14c6b00f20544748e057f0bc59f63cbc4886c7b17735678bc21a26",
+  "note": "Synthetic finite arrays at B0 dimensions; copied emitted fastopt kernels with equivalent checked array helpers. Same summation order. Not a fullOpt or end-to-end experiment; concurrent Scala.js test sweep active.",
+  "errors": {
+    "addDirect": 0,
+    "bandDirect": 0,
+    "bandBatched": 0
+  },
+  "milliseconds": {
+    "addBaseline": [
+      18.558270800000003,
+      10.9190875,
+      7.759793750000005,
+      8.052391699999987,
+      8.042447949999996,
+      7.721354150000002,
+      7.924225000000002
+    ],
+    "addDirect": [
+      7.626002099999999,
+      7.330537500000003,
+      7.334464600000001,
+      7.484225000000004,
+      7.624643749999995,
+      7.412349999999992,
+      7.327670849999981
+    ],
+    "bandBaseline": [
+      0.6323166499999957,
+      0.620304150000004,
+      0.6063750000000028,
+      0.6065645999999901,
+      0.632291650000002,
+      0.6333937500000048,
+      0.6063625000000001
+    ],
+    "bandDirect": [
+      0.23425000000000865,
+      0.23181040000000622,
+      0.22230204999999614,
+      0.22212295000000495,
+      0.2322166500000094,
+      0.23219375000001036,
+      0.2228208499999937
+    ],
+    "bandBatched": [
+      0.19287080000000287,
+      0.19269580000000133,
+      0.18459169999999858,
+      0.18452704999999697,
+      0.19253959999998643,
+      0.1928541500000165,
+      0.18459164999999303
+    ]
+  },
+  "medianMilliseconds": {
+    "addBaseline": 8.042447949999996,
+    "addDirect": 7.412349999999992,
+    "bandBaseline": 0.620304150000004,
+    "bandDirect": 0.23181040000000622,
+    "bandBatched": 0.19253959999998643
+  },
+  "speedup": {
+    "addDirect": 1.0850065026611,
+    "bandDirect": 2.6759116502106353,
+    "bandBatched": 3.221696471790986
+  },
+  "checksum": -278.3518591278232
+}

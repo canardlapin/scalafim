@@ -1,0 +1,33 @@
+{
+  "sourceBase": "f678b80d46dc711dc1830026b67353e769a21185",
+  "fitJVM": 712,
+  "fitJS": 654,
+  "lawsJVM": 12,
+  "lawsJS": 12,
+  "compileAll": true,
+  "productionAdmitted": false,
+  "defaultsChanged": false,
+  "galeRevisionChanged": false,
+  "compilerWarnings": [],
+  "buildMessages": [
+    "existing multiple-main discovery warning"
+  ],
+  "commands": [
+    "fitJVM/test",
+    "fitJS/test",
+    "firstLevelLawsJVM/testOnly *TrialReferencePlacementSuite *TrialDomainGateSuite *TrialNeighborhoodAuditSuite *DecodedTrialCheckpointSuite",
+    "firstLevelLawsJS/testOnly *TrialReferencePlacementSuite *TrialDomainGateSuite *TrialNeighborhoodAuditSuite *DecodedTrialCheckpointSuite",
+    "scalafimCompileAll"
+  ],
+  "numericalRuns": [
+    "TrialReferencePlacementMain development",
+    "TrialReferencePlacementMain confirmation",
+    "run-stress.py (isolated agent, all curvature workers warmed)"
+  ],
+  "initialFailuresResolved": [
+    "Disjointness test caught overlapping response-seed ranges before measurements; protocol corrected before development.",
+    "Inherited receipt arity contract updated from 24 to 26 for the two added work fields; all final tests pass."
+  ],
+  "allocationFollowup": "Confirmation used the identical arithmetic with eagerly allocated scratch; only buffer allocation became demand-driven afterward. Both platforms revalidated curvature/readout/transpose and worker isolation. The initial stress receipt is retained; final graph warms every curvature worker with a distinct response.",
+  "memoryScope": "Retained reachable JVM graph; no peak-live-memory, continuous-shape concurrent temporary, JS heap or full B0 throughput admission."
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "scalafim-parity-environment-lock/v1",
+  "r": {
+    "locale": "C",
+    "version": "4.5.1",
+    "packages": {
+      "fmriAR": {
+        "environment_variable": "FMRIAR_041_R",
+        "repository": "bbuchsbaum/fmriAR",
+        "revision": "de42cd9dc3e290d0653c5145749c27e03085f7d6",
+        "version": "0.4.1"
+      }
+    }
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "protocolSha256": "c8e01ddbcb4b934beae315716589adf3979bb9a7d1c1ba0941deb41c16815a33",
+  "selectionSha256": "8a60ff8c946f9db8609af8f7ffe6202a9456975640baecd095cd0251faaf5156",
+  "productionAdmitted": false,
+  "results": [
+    {
+      "trials": 30,
+      "rank": 8,
+      "setupReferenceAttempts": "8",
+      "attemptedVoxels": 8,
+      "nodeScores": "16",
+      "jets": "8",
+      "continuousFactors": "0",
+      "factorAttempts": "0",
+      "reconstructedBands": "48",
+      "readoutExactFactors": "0",
+      "records": [
+        {
+          "voxel": 0,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 1,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 2,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 3,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 4,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 5,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 6,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 7,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        }
+      ]
+    },
+    {
+      "trials": 300,
+      "rank": 8,
+      "setupReferenceAttempts": "8",
+      "attemptedVoxels": 8,
+      "nodeScores": "16",
+      "jets": "8",
+      "continuousFactors": "0",
+      "factorAttempts": "0",
+      "reconstructedBands": "48",
+      "readoutExactFactors": "0",
+      "records": [
+        {
+          "voxel": 0,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 1,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 2,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 3,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 4,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 5,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 6,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        },
+        {
+          "voxel": 7,
+          "status": "CurvatureNotPositive",
+          "coordinates": [
+            -0.845196596100507,
+            0,
+            0.25
+          ],
+          "startingReference": 6,
+          "budgetExit": null,
+          "output": "DecodeRefused(CurvatureNotPositive)"
+        }
+      ]
+    }
+  ]
+}

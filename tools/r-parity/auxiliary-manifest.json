@@ -22,6 +22,12 @@
       "exporter_path": "modules/fit/tools/generate_fmriar_corrected_gls_parity.R",
       "finalizer_path": "tools/r-parity/finalize_fmriar_corrected_gls_receipt.py",
       "lock_path": "tools/r-parity/ar-reference-lock.json"
+    },
+    {
+      "description": "fmriAR 0.4.1 standard BIC, voxel ACF and stationary AR/ARMA whitening",
+      "exporter_path": "modules/ar/tools/generate_fmriar_041_parity.R",
+      "finalizer_path": "tools/r-parity/finalize_fmriar_041_receipt.py",
+      "lock_path": "tools/r-parity/ar-041-reference-lock.json"
     }
   ]
 }

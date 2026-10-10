@@ -1,0 +1,633 @@
+{
+  "qualification": "not-admitted",
+  "rows": [
+    {
+      "noiseRatio": 0,
+      "referenceInterior": 16,
+      "referenceBoundary": 0,
+      "statuses": {
+        "Accepted": 16
+      },
+      "maxAbsoluteEnergyGapScaled": 9.423679254346905e-14,
+      "maxShapeDifferenceInChartWidths": 1.0370749046042759e-08,
+      "searchEvaluations": 8011,
+      "searchStops": {
+        "LineSearchLimit": 86,
+        "Stationary": 42,
+        "EvaluationLimit": 16
+      },
+      "chargedJets": 8027,
+      "executionSeconds": 99.352005083
+    },
+    {
+      "noiseRatio": 0.1,
+      "referenceInterior": 16,
+      "referenceBoundary": 0,
+      "statuses": {
+        "Accepted": 16
+      },
+      "maxAbsoluteEnergyGapScaled": 9.26244043683318e-14,
+      "maxShapeDifferenceInChartWidths": 1.1891432958092032e-08,
+      "searchEvaluations": 7213,
+      "searchStops": {
+        "Stationary": 72,
+        "LineSearchLimit": 36,
+        "EvaluationLimit": 36
+      },
+      "chargedJets": 7229,
+      "executionSeconds": 89.312686625
+    },
+    {
+      "noiseRatio": 0.5,
+      "referenceInterior": 15,
+      "referenceBoundary": 1,
+      "statuses": {
+        "Accepted": 15,
+        "CurvatureNotPositive": 1
+      },
+      "maxAbsoluteEnergyGapScaled": 8.052307712412961e-14,
+      "maxShapeDifferenceInChartWidths": 0.5808008936423608,
+      "searchEvaluations": 6340,
+      "searchStops": {
+        "Stationary": 83,
+        "LineSearchLimit": 46,
+        "EvaluationLimit": 15
+      },
+      "chargedJets": 6356,
+      "executionSeconds": 78.280922083
+    },
+    {
+      "noiseRatio": 1,
+      "referenceInterior": 10,
+      "referenceBoundary": 6,
+      "statuses": {
+        "Accepted": 10,
+        "Boundary": 4,
+        "CurvatureNotPositive": 2
+      },
+      "maxAbsoluteEnergyGapScaled": 8.94406339649895e-14,
+      "maxShapeDifferenceInChartWidths": 0.2354985654288873,
+      "searchEvaluations": 5813,
+      "searchStops": {
+        "Stationary": 102,
+        "EvaluationLimit": 18,
+        "LineSearchLimit": 24
+      },
+      "chargedJets": 5829,
+      "executionSeconds": 71.957660834
+    },
+    {
+      "noiseRatio": 2,
+      "referenceInterior": 3,
+      "referenceBoundary": 13,
+      "statuses": {
+        "Boundary": 11,
+        "Accepted": 3,
+        "CurvatureNotPositive": 2
+      },
+      "maxAbsoluteEnergyGapScaled": 1.6089503440868314e-13,
+      "maxShapeDifferenceInChartWidths": 0.17714868286992083,
+      "searchEvaluations": 4879,
+      "searchStops": {
+        "Stationary": 119,
+        "IterationLimit": 7,
+        "EvaluationLimit": 14,
+        "LineSearchLimit": 4
+      },
+      "chargedJets": 4895,
+      "executionSeconds": 60.202228334
+    }
+  ],
+  "counterexamples": [
+    {
+      "noiseRatio": 0.1,
+      "voxel": 10,
+      "coordinates": [
+        -0.6724676274601056,
+        0.06726799634020253,
+        0.2538439757816873
+      ],
+      "energy": 1.7900486410443364,
+      "status": "Accepted",
+      "hessian": [
+        71.16442004619694,
+        3.7213876408312103,
+        19.971957612300873,
+        3.7213876408312103,
+        0.35583612510126095,
+        0.4006631756515411,
+        19.971957612300873,
+        0.4006631756515411,
+        16.04028446093389
+      ],
+      "budgetExit": null,
+      "search": {
+        "requestedStarts": 9,
+        "scale": 8.886561114898655,
+        "energyTieToleranceScaled": 1e-12,
+        "trajectories": [
+          {
+            "initialUnit": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "status": "EvaluationLimit",
+            "evaluations": 90,
+            "iterations": 15,
+            "rejectedSteps": 74,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171444409573,
+                0.6319186838677457,
+                0.31730496992634644
+              ],
+              "energyScaled": 0.20143322235672373,
+              "gradientScaled": [
+                4.2333293336666733e-10,
+                -1.449004934055358e-10,
+                3.6150285178553844e-10
+              ],
+              "projectedGradient": 4.2333293336666733e-10
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.25,
+              0.25
+            ],
+            "status": "EvaluationLimit",
+            "evaluations": 90,
+            "iterations": 16,
+            "rejectedSteps": 73,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171378214834,
+                0.6319187860838624,
+                0.3173050052404878
+              ],
+              "energyScaled": 0.20143322235672373,
+              "gradientScaled": [
+                1.9921447757349002e-07,
+                4.320874190129352e-08,
+                3.786955761685714e-08
+              ],
+              "projectedGradient": 1.9921447757349002e-07
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.25,
+              0.25
+            ],
+            "status": "LineSearchLimit",
+            "evaluations": 86,
+            "iterations": 19,
+            "rejectedSteps": 74,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171443817736,
+                0.6319186845967175,
+                0.31730496943524755
+              ],
+              "energyScaled": 0.20143322235671093,
+              "gradientScaled": [
+                -1.950044066223579e-10,
+                4.333386842173784e-11,
+                -2.589941443656881e-10
+              ],
+              "projectedGradient": 2.589941443656881e-10
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.75,
+              0.25
+            ],
+            "status": "EvaluationLimit",
+            "evaluations": 90,
+            "iterations": 14,
+            "rejectedSteps": 75,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171064468777,
+                0.6319189606712905,
+                0.3173050161457755
+              ],
+              "energyScaled": 0.20143322235673652,
+              "gradientScaled": [
+                1.0674174125569406e-07,
+                6.912171578936909e-08,
+                -5.167120471364027e-09
+              ],
+              "projectedGradient": 1.0674174125569406e-07
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.75,
+              0.25
+            ],
+            "status": "Stationary",
+            "evaluations": 17,
+            "iterations": 12,
+            "rejectedSteps": 4,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171443552529,
+                0.6319186845442359,
+                0.3173049697219185
+              ],
+              "energyScaled": 0.20143322235683886,
+              "gradientScaled": [
+                2.0539380849513105e-12,
+                -1.7449519338353569e-12,
+                -7.368836795356652e-13
+              ],
+              "projectedGradient": 2.0539380849513105e-12
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.25,
+              0.75
+            ],
+            "status": "Stationary",
+            "evaluations": 28,
+            "iterations": 22,
+            "rejectedSteps": 5,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171443524694,
+                0.631918684557597,
+                0.31730496972710914
+              ],
+              "energyScaled": 0.2014332223567621,
+              "gradientScaled": [
+                -3.214474067112143e-14,
+                2.8652741113881066e-15,
+                3.070348664731938e-14
+              ],
+              "projectedGradient": 3.214474067112143e-14
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.25,
+              0.75
+            ],
+            "status": "Stationary",
+            "evaluations": 41,
+            "iterations": 23,
+            "rejectedSteps": 17,
+            "metricResets": 2,
+            "point": {
+              "unit": [
+                0.5149171443533943,
+                0.631918684553592,
+                0.3173049697246532
+              ],
+              "energyScaled": 0.2014332223567621,
+              "gradientScaled": [
+                -2.0506127669508494e-13,
+                -4.666815208923379e-13,
+                -1.043918546008859e-12
+              ],
+              "projectedGradient": 1.043918546008859e-12
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.75,
+              0.75
+            ],
+            "status": "LineSearchLimit",
+            "evaluations": 46,
+            "iterations": 18,
+            "rejectedSteps": 35,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171444038193,
+                0.631918684358628,
+                0.3173049697854554
+              ],
+              "energyScaled": 0.20143322235673652,
+              "gradientScaled": [
+                5.21814442828982e-10,
+                1.2043821567955983e-11,
+                1.6967770170863603e-10
+              ],
+              "projectedGradient": 5.21814442828982e-10
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.75,
+              0.75
+            ],
+            "status": "EvaluationLimit",
+            "evaluations": 90,
+            "iterations": 18,
+            "rejectedSteps": 71,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5149171449596605,
+                0.6319186835612953,
+                0.3173049667216943
+              ],
+              "energyScaled": 0.20143322235664696,
+              "gradientScaled": [
+                -2.1885580420033e-10,
+                3.6239037838787375e-10,
+                -2.0871002083381824e-09
+              ],
+              "projectedGradient": 2.0871002083381824e-09
+            }
+          }
+        ]
+      }
+    },
+    {
+      "noiseRatio": 1,
+      "voxel": 3,
+      "coordinates": [
+        -0.6730388962980945,
+        -2.197224577336219,
+        0.5970357882973248
+      ],
+      "energy": 3.9263841233589964,
+      "status": "Boundary",
+      "hessian": [
+        8.024489744544738,
+        -0.023428483930863386,
+        -0.022781017440015816,
+        -0.023428483930863386,
+        0.05172642720490739,
+        0.054372437411714714,
+        -0.022781017440015816,
+        0.054372437411714714,
+        0.060495424107648854
+      ],
+      "budgetExit": null,
+      "search": {
+        "requestedStarts": 9,
+        "scale": 4.901773162836957,
+        "energyTieToleranceScaled": 1e-12,
+        "trajectories": [
+          {
+            "initialUnit": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "status": "Stationary",
+            "evaluations": 33,
+            "iterations": 28,
+            "rejectedSteps": 5,
+            "metricResets": 1,
+            "point": {
+              "unit": [
+                0.5145050609926788,
+                0,
+                0.746294735371656
+              ],
+              "energyScaled": 0.8010130197633538,
+              "gradientScaled": [
+                -6.3917824745072595e-12,
+                0.0018311624512226475,
+                7.018782412524383e-13
+              ],
+              "projectedGradient": 6.3917824745072595e-12
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.25,
+              0.25
+            ],
+            "status": "LineSearchLimit",
+            "evaluations": 85,
+            "iterations": 24,
+            "rejectedSteps": 62,
+            "metricResets": 1,
+            "point": {
+              "unit": [
+                0.5145050618989028,
+                0,
+                0.7462947447123802
+              ],
+              "energyScaled": 0.80101301976334,
+              "gradientScaled": [
+                2.7966045287011165e-09,
+                0.0018311627267596276,
+                6.981238739561892e-11
+              ],
+              "projectedGradient": 2.7966045287011165e-09
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.25,
+              0.25
+            ],
+            "status": "LineSearchLimit",
+            "evaluations": 88,
+            "iterations": 25,
+            "rejectedSteps": 64,
+            "metricResets": 1,
+            "point": {
+              "unit": [
+                0.514505059625858,
+                0,
+                0.7462947446043162
+              ],
+              "energyScaled": 0.8010130197633357,
+              "gradientScaled": [
+                -4.354103522552126e-09,
+                0.0018311627772810283,
+                8.067577238014202e-11
+              ],
+              "projectedGradient": 4.354103522552126e-09
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.75,
+              0.25
+            ],
+            "status": "LineSearchLimit",
+            "evaluations": 86,
+            "iterations": 24,
+            "rejectedSteps": 62,
+            "metricResets": 1,
+            "point": {
+              "unit": [
+                0.5145050703939824,
+                0,
+                0.7462950723792666
+              ],
+              "energyScaled": 0.8010130197633473,
+              "gradientScaled": [
+                2.783421672019748e-08,
+                0.0018311729447935694,
+                2.614132608437009e-09
+              ],
+              "projectedGradient": 2.783421672019748e-08
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.75,
+              0.25
+            ],
+            "status": "EvaluationLimit",
+            "evaluations": 90,
+            "iterations": 26,
+            "rejectedSteps": 63,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5167257393568678,
+                0.3364333017491123,
+                0.7039043990575727
+              ],
+              "energyScaled": 0.8016008947453442,
+              "gradientScaled": [
+                1.3177958475039194e-10,
+                8.427613996195411e-11,
+                -2.6604113460045952e-11
+              ],
+              "projectedGradient": 1.3177958475039194e-10
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.25,
+              0.75
+            ],
+            "status": "EvaluationLimit",
+            "evaluations": 90,
+            "iterations": 22,
+            "rejectedSteps": 67,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5167257409254977,
+                0.3364332855652879,
+                0.7039044379207652
+              ],
+              "energyScaled": 0.8016008947453428,
+              "gradientScaled": [
+                1.3943289398523364e-09,
+                -1.3097517422522712e-09,
+                3.3532385179914815e-10
+              ],
+              "projectedGradient": 1.3943289398523364e-09
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.25,
+              0.75
+            ],
+            "status": "LineSearchLimit",
+            "evaluations": 62,
+            "iterations": 20,
+            "rejectedSteps": 41,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5167257382505589,
+                0.33643318559459756,
+                0.7039041757302097
+              ],
+              "energyScaled": 0.8016008947453457,
+              "gradientScaled": [
+                -1.2602384064748334e-08,
+                -5.539465056614831e-09,
+                1.9617801251164805e-10
+              ],
+              "projectedGradient": 1.2602384064748334e-08
+            }
+          },
+          {
+            "initialUnit": [
+              0.25,
+              0.75,
+              0.75
+            ],
+            "status": "Stationary",
+            "evaluations": 37,
+            "iterations": 30,
+            "rejectedSteps": 6,
+            "metricResets": 1,
+            "point": {
+              "unit": [
+                0.5145050609854688,
+                0,
+                0.7462947354328658
+              ],
+              "energyScaled": 0.8010130197633559,
+              "gradientScaled": [
+                -2.9367133249217664e-11,
+                0.0018311624533394206,
+                1.223430887271908e-12
+              ],
+              "projectedGradient": 2.9367133249217664e-11
+            }
+          },
+          {
+            "initialUnit": [
+              0.75,
+              0.75,
+              0.75
+            ],
+            "status": "Stationary",
+            "evaluations": 44,
+            "iterations": 27,
+            "rejectedSteps": 16,
+            "metricResets": 0,
+            "point": {
+              "unit": [
+                0.5167257393907189,
+                0.33643330165405994,
+                0.7039044054101741
+              ],
+              "energyScaled": 0.8016008947453471,
+              "gradientScaled": [
+                -2.2079606991636726e-13,
+                4.029660723341093e-12,
+                8.981780170277486e-12
+              ],
+              "projectedGradient": 8.981780170277486e-12
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "totalExecutionSeconds": 399.105502959,
+  "totalFloat32BytesConsumed": 72000
+}

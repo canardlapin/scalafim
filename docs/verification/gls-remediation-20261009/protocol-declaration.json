@@ -1,0 +1,7 @@
+{
+  "declared_at": "2026-10-10T00:01:49.904359+00:00",
+  "protocol_sha256": "ff2f7d9ac4d6b1d8b802e42df911b908c61cf45691b5bbebd24dbb24c019841b",
+  "root": 1283197733,
+  "outcomes_observed": false,
+  "purpose": "Declare the stationary-whitening candidate and unchanged margins before observing its calibration"
+}

@@ -60,6 +60,7 @@ class ModelDocumentTextSuite extends munit.FunSuite:
       FitStrategy.SeparateRunsThenFixedEffects(FitControls(volumeWeighting = ModelVolumeWeighting.estimatedDvars(DvarsWeightFunction.TukeyBisquare()))),
       FitStrategy.GeneralizedLeastSquares(AutocorrelationConfig.unsafe(order = 1, iterations = 1, biasCorrection = ArBiasCorrection.olsDesign(3).toOption.get)),
       FitStrategy.GeneralizedLeastSquares(AutocorrelationConfig.unsafe(order = 1, iterations = 0, coefficients = ArCoefficientSpec.Rho(0.35))),
+      FitStrategy.GeneralizedLeastSquares(AutocorrelationConfig.withInitialization(ArInitialization.Stationary, order = 2).toOption.get),
       FitStrategy.LeastSquaresSeparate(LssStrategyConfig.unsafe(trialTerm = Some("trials"))),
       FitStrategy.LeastSquaresSeparate(LssStrategyConfig.unsafe(), FitControls(nuisanceProjection = ModelNuisanceProjection.MatrixProjection(NuisanceMatrix.unsafe(Matrix.dense(1, 1, Vector(2.0))), Regularization.Gcv)))
     ).foreach: strategy =>

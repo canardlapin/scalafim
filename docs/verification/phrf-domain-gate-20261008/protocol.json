@@ -1,0 +1,80 @@
+{
+  "id": "canonical-like-fixed-shape/v1",
+  "frozenAtUtc": "2026-10-08T01:16:07.735655+00:00",
+  "baseRevision": "61029ed3847b93827405482f11be704d3408f379",
+  "scope": "experimental conditional readout gate; no default change or physiological calibration",
+  "family": "Cascade34",
+  "positiveComponentModeSeconds": [
+    4,
+    6
+  ],
+  "kappaP": [
+    0.3333333333333333,
+    0.5
+  ],
+  "undershootRateRatio": [
+    0.4,
+    0.6
+  ],
+  "undershootAreaRatio": [
+    0.1,
+    0.3
+  ],
+  "anchor": {
+    "positiveComponentMode": 5,
+    "undershootComponentMode": 15,
+    "undershootAreaRatio": 0.16666666666666666
+  },
+  "supportSeconds": 96,
+  "basis": {
+    "tolerance": 0.001,
+    "maxRank": 24,
+    "compilation": "BlockedPartial(96)",
+    "lowering": "Blocked(32)"
+  },
+  "referenceBank": {
+    "count": 8,
+    "placement": "two centers per axis, unit chart coordinates .25 and .75",
+    "router": "nearest squared Euclidean distance in normalized candidate chart; smallest index breaks ties",
+    "evaluatedReferences": 1,
+    "corrections": 1,
+    "exactFallback": false
+  },
+  "coverage": {
+    "N30": 64,
+    "N300": 256,
+    "shapeSeeds": {
+      "N30": 2026100803,
+      "N300": 2026100804
+    },
+    "primaryNoiseRatio": 0.1,
+    "sensitivityNoiseRatios": [
+      0,
+      1
+    ],
+    "sensitivityShapes": {
+      "N30": 32,
+      "N300": 64
+    },
+    "boundaryGrid": [
+      0,
+      0.5,
+      1
+    ],
+    "responseSeed": 2026100805,
+    "amplitudeRelativeL2": 0.001,
+    "requiredFreshPassFraction": 0.95,
+    "signedQueryExploratoryAbsolute": 1e-06
+  },
+  "stressTrials": 1200,
+  "retainedPreparationScalarCap": 16000000,
+  "engineByteCap": 268435456,
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/spm/spm12/main/spm_hrf.m",
+      "accessed": "2026-10-08",
+      "use": "Canonical component modes 5 and 15 seconds and undershoot area ratio 1/6 anchor the proposal; selected bounds are our declared sensitivity envelope, not SPM defaults or empirical population quantiles."
+    }
+  ],
+  "stopRule": "Run the frozen proposal once. Retain failures. Do not narrow the domain, add references, increase correction count or retune placement after observing the fresh cohort."
+}

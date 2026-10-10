@@ -1,0 +1,721 @@
+{
+  "format": "phrf-finite-observation-bound-audit/1",
+  "qualification": "not-admitted",
+  "rows": 600,
+  "trials": 30,
+  "referenceNodes": 8,
+  "result": {
+    "records": [
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 0,
+        "mode": "ExactShape",
+        "preparedResidual": 1.49597676596263E-14,
+        "preparedQrMaxError": 3.863576125695545E-14,
+        "originalQrMaxError": 0.009962631324512916,
+        "originalQrError2": 0.03993104454472601,
+        "finiteNormalResidualUpper": 0.2513431013570688,
+        "finiteCoefficientError2Upper": 16.740860023978986,
+        "signedQueryError": 8.063835833229671E-4,
+        "signedQueryErrorUpper": 91.69346667169773,
+        "signedQueryArithmeticUpper": 9.992874583364399E-15,
+        "finiteSigmaLower": 0.12253061187537888,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 0,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.016969232643547032,
+        "preparedQrMaxError": 0.03961624967107902,
+        "originalQrMaxError": 0.03068443528474285,
+        "originalQrError2": 0.1257329967094748,
+        "finiteNormalResidualUpper": 0.22674487729836207,
+        "finiteCoefficientError2Upper": 15.10248036055521,
+        "signedQueryError": 8.762154641311914E-5,
+        "signedQueryErrorUpper": 82.7196916775485,
+        "signedQueryArithmeticUpper": 1.0881053003064524E-14,
+        "finiteSigmaLower": 0.12253061187537888,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 1,
+        "mode": "ExactShape",
+        "preparedResidual": 1.4363674634159096E-14,
+        "preparedQrMaxError": 3.835126660689525E-14,
+        "originalQrMaxError": 2.8542639224377053E-4,
+        "originalQrError2": 0.0010210123407519923,
+        "finiteNormalResidualUpper": 0.0024583444807778063,
+        "finiteCoefficientError2Upper": 0.11297286677963751,
+        "signedQueryError": 6.378488745556465E-5,
+        "signedQueryErrorUpper": 0.6187778752123452,
+        "signedQueryArithmeticUpper": 9.992224062060908E-15,
+        "finiteSigmaLower": 0.14751435846832717,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 1,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.3815597853327753,
+        "preparedQrMaxError": 0.4431169597972673,
+        "originalQrMaxError": 0.44292281668768996,
+        "originalQrError2": 1.8117091950327668,
+        "finiteNormalResidualUpper": 0.3831102418509674,
+        "finiteCoefficientError2Upper": 17.60577602242716,
+        "signedQueryError": 0.007017286105278575,
+        "signedQueryErrorUpper": 96.43080669866941,
+        "signedQueryArithmeticUpper": 6.1634725101455964E-15,
+        "finiteSigmaLower": 0.14751435846832717,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 2,
+        "mode": "ExactShape",
+        "preparedResidual": 7.397122081867615E-15,
+        "preparedQrMaxError": 6.378231276471524E-14,
+        "originalQrMaxError": 0.0027518290864672057,
+        "originalQrError2": 0.008778998731010422,
+        "finiteNormalResidualUpper": 0.05023564713619402,
+        "finiteCoefficientError2Upper": 0.9374771059628892,
+        "signedQueryError": 0.0012130881890654588,
+        "signedQueryErrorUpper": 5.134773580805367,
+        "signedQueryArithmeticUpper": 1.0436963793214461E-14,
+        "finiteSigmaLower": 0.23148649823501596,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 2,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.04508249254256298,
+        "preparedQrMaxError": 0.0189577339991851,
+        "originalQrMaxError": 0.020489359459520795,
+        "originalQrError2": 0.08735789362801,
+        "finiteNormalResidualUpper": 0.025198312002154322,
+        "finiteCoefficientError2Upper": 0.47024059522684386,
+        "signedQueryError": 0.0017923741932770465,
+        "signedQueryErrorUpper": 2.5756138146039973,
+        "signedQueryArithmeticUpper": 9.992874583364399E-15,
+        "finiteSigmaLower": 0.23148649823501596,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 3,
+        "mode": "ExactShape",
+        "preparedResidual": 7.410130864573873E-15,
+        "preparedQrMaxError": 1.4731271757995046E-13,
+        "originalQrMaxError": 3.768013022564798E-5,
+        "originalQrError2": 1.1329227411450926E-4,
+        "finiteNormalResidualUpper": 5.575729197614872E-5,
+        "finiteCoefficientError2Upper": 0.0014257155368398993,
+        "signedQueryError": 1.0240765005387065E-5,
+        "signedQueryErrorUpper": 0.007808965601138447,
+        "signedQueryArithmeticUpper": 1.043783115495245E-14,
+        "finiteSigmaLower": 0.19775815205991124,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "shape": 3,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.025953663084120837,
+        "preparedQrMaxError": 0.007102814933731716,
+        "originalQrMaxError": 0.007074266590127221,
+        "originalQrError2": 0.03058924699678215,
+        "finiteNormalResidualUpper": 0.02590154532401811,
+        "finiteCoefficientError2Upper": 0.662303248378925,
+        "signedQueryError": 3.630850661933138E-4,
+        "signedQueryErrorUpper": 3.6275842904608533,
+        "signedQueryArithmeticUpper": 1.043783115495245E-14,
+        "finiteSigmaLower": 0.19775815205991124,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 0,
+        "mode": "ExactShape",
+        "preparedResidual": 7.289267588326693E-15,
+        "preparedQrMaxError": 3.47499806707674E-14,
+        "originalQrMaxError": 0.0010426290032013175,
+        "originalQrError2": 0.002120406918567928,
+        "finiteNormalResidualUpper": 0.034357368147858655,
+        "finiteCoefficientError2Upper": 2.288393386769355,
+        "signedQueryError": 1.9970556765142033E-4,
+        "signedQueryErrorUpper": 12.534046783792217,
+        "signedQueryArithmeticUpper": 9.992874583364399E-15,
+        "finiteSigmaLower": 0.12253061187537888,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 0,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.04332114625653245,
+        "preparedQrMaxError": 0.04685317866427474,
+        "originalQrMaxError": 0.04732711682669,
+        "originalQrError2": 0.15686273918503102,
+        "finiteNormalResidualUpper": 0.014039382615033943,
+        "finiteCoefficientError2Upper": 0.9351016117505118,
+        "signedQueryError": 6.656367061592117E-4,
+        "signedQueryErrorUpper": 5.121762463151946,
+        "signedQueryArithmeticUpper": 9.992874583364399E-15,
+        "finiteSigmaLower": 0.12253061187537888,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 1,
+        "mode": "ExactShape",
+        "preparedResidual": 7.178409831004016E-15,
+        "preparedQrMaxError": 3.142625049079584E-14,
+        "originalQrMaxError": 5.580409261296548E-6,
+        "originalQrError2": 2.1611998896659846E-5,
+        "finiteNormalResidualUpper": 1.5492248986708408E-5,
+        "finiteCoefficientError2Upper": 7.119440723533703E-4,
+        "signedQueryError": 1.0911217523945638E-7,
+        "signedQueryErrorUpper": 0.003899478281110305,
+        "signedQueryArithmeticUpper": 9.992224062060908E-15,
+        "finiteSigmaLower": 0.14751435846832717,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 1,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.4322695984768473,
+        "preparedQrMaxError": 0.4777296960686377,
+        "originalQrMaxError": 0.4777340448958527,
+        "originalQrError2": 1.8562670436468105,
+        "finiteNormalResidualUpper": 0.43226168736411613,
+        "finiteCoefficientError2Upper": 19.86452362651668,
+        "signedQueryError": 0.006644921343516019,
+        "signedQueryErrorUpper": 108.80247684337519,
+        "signedQueryArithmeticUpper": 6.1634725101455964E-15,
+        "finiteSigmaLower": 0.14751435846832717,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 2,
+        "mode": "ExactShape",
+        "preparedResidual": 2.210528012948314E-15,
+        "preparedQrMaxError": 5.857814233678482E-14,
+        "originalQrMaxError": 6.385570762934556E-6,
+        "originalQrError2": 1.507058652794769E-5,
+        "finiteNormalResidualUpper": 6.677822097703092E-5,
+        "finiteCoefficientError2Upper": 0.001246187854874725,
+        "signedQueryError": 2.727775977318103E-7,
+        "signedQueryErrorUpper": 0.0068256519900486085,
+        "signedQueryArithmeticUpper": 9.992874583364399E-15,
+        "finiteSigmaLower": 0.23148649823501596,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 2,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.03510938537238614,
+        "preparedQrMaxError": 0.018777173068244002,
+        "originalQrMaxError": 0.01877554807487103,
+        "originalQrError2": 0.07587975897222259,
+        "finiteNormalResidualUpper": 0.03508737622410281,
+        "finiteCoefficientError2Upper": 0.6547862681896983,
+        "signedQueryError": 8.489977782562552E-4,
+        "signedQueryErrorUpper": 3.5864120943212643,
+        "signedQueryArithmeticUpper": 1.0436963793214461E-14,
+        "finiteSigmaLower": 0.23148649823501596,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 3,
+        "mode": "ExactShape",
+        "preparedResidual": 7.382711123800977E-15,
+        "preparedQrMaxError": 1.4913764667667806E-13,
+        "originalQrMaxError": 2.1123827012470286E-5,
+        "originalQrError2": 6.816372315036578E-5,
+        "finiteNormalResidualUpper": 4.665647718601212E-5,
+        "finiteCoefficientError2Upper": 0.0011930074446005832,
+        "signedQueryError": 6.043934423494157E-7,
+        "signedQueryErrorUpper": 0.006534370886803339,
+        "signedQueryArithmeticUpper": 9.993741945102387E-15,
+        "finiteSigmaLower": 0.19775815205991124,
+        "residualGateEmits": true,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 1,
+        "exactFactorAttempts": 1
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "shape": 3,
+        "mode": "CorrectedReference",
+        "preparedResidual": 0.025918367791200034,
+        "preparedQrMaxError": 0.007093687673752291,
+        "originalQrMaxError": 0.007081447206679803,
+        "originalQrError2": 0.030601461591644875,
+        "finiteNormalResidualUpper": 0.02588044288176329,
+        "finiteCoefficientError2Upper": 0.661763658332105,
+        "signedQueryError": 3.745265206648307E-4,
+        "signedQueryErrorUpper": 3.624628834056368,
+        "signedQueryArithmeticUpper": 1.043783115495245E-14,
+        "finiteSigmaLower": 0.19775815205991124,
+        "residualGateEmits": false,
+        "queryRetainedTrialValues": 0,
+        "referenceInverseAttempts": 3,
+        "exactFactorAttempts": 0
+      }
+    ],
+    "geometry": [
+      {
+        "horizon": 48,
+        "maximumRank": 32,
+        "subspace": 96,
+        "rank": 10,
+        "bandwidth": 6,
+        "preparationBytes": 254456,
+        "bankAndPreparationBytes": 824760,
+        "searchReferenceBytes": 10736,
+        "fullReferenceBytes": 71288,
+        "preparationSeconds": 1.204218333,
+        "onsets": [
+          29.6,
+          57.1,
+          79,
+          100.1,
+          216.6,
+          225.2,
+          260.6,
+          299.4,
+          306.8,
+          325.9,
+          326.3,
+          334.9,
+          367.5,
+          379.7,
+          384.2,
+          397.9,
+          400.8,
+          409.8,
+          411.4,
+          452.9,
+          457.6,
+          472.5,
+          482.9,
+          488.7,
+          490.9,
+          491.7,
+          505,
+          506.9,
+          534.6,
+          537.3
+        ]
+      },
+      {
+        "horizon": 96,
+        "maximumRank": 24,
+        "subspace": 96,
+        "rank": 12,
+        "bandwidth": 10,
+        "preparationBytes": 525752,
+        "bankAndPreparationBytes": 1189496,
+        "searchReferenceBytes": 13632,
+        "fullReferenceBytes": 82968,
+        "preparationSeconds": 0.7101105,
+        "onsets": [
+          29.6,
+          57.1,
+          79,
+          100.1,
+          216.6,
+          225.2,
+          260.6,
+          299.4,
+          306.8,
+          325.9,
+          326.3,
+          334.9,
+          367.5,
+          379.7,
+          384.2,
+          397.9,
+          400.8,
+          409.8,
+          411.4,
+          452.9,
+          457.6,
+          472.5,
+          482.9,
+          488.7,
+          490.9,
+          491.7,
+          505,
+          506.9,
+          534.6,
+          537.3
+        ]
+      }
+    ],
+    "preparationRefusals": [
+      {
+        "variant": {
+          "horizon": 96,
+          "maximumRank": 32,
+          "subspace": 96
+        },
+        "detail": "kernel compiler requests 1.027299E8 certification work, maximum is 100000000"
+      },
+      {
+        "variant": {
+          "horizon": 192,
+          "maximumRank": 32,
+          "subspace": 96
+        },
+        "detail": "kernel compiler requests 2.0510961E7 storage cells, maximum is 16000000"
+      },
+      {
+        "variant": {
+          "horizon": 192,
+          "maximumRank": 15,
+          "subspace": 96
+        },
+        "detail": "kernel compiler requests 2.0314662E7 storage cells, maximum is 16000000"
+      },
+      {
+        "variant": {
+          "horizon": 192,
+          "maximumRank": 15,
+          "subspace": 48
+        },
+        "detail": "kernel compiler requests 3.267964E7 training work, maximum is 20000000"
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "phrf-finite-bound-48.0-32-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.03993104454472601; upper=16.740860023978986 pass=true",
+          "signed query error enclosed: observed=8.063835833229671E-4; upper=91.69346667169773 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.1257329967094748; upper=15.10248036055521 pass=true",
+          "signed query error enclosed: observed=8.762154641311914E-5; upper=82.7196916775485 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.0010210123407519923; upper=0.11297286677963751 pass=true",
+          "signed query error enclosed: observed=6.378488745556465E-5; upper=0.6187778752123452 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=1.8117091950327668; upper=17.60577602242716 pass=true",
+          "signed query error enclosed: observed=0.007017286105278575; upper=96.43080669866941 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-2-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.008778998731010422; upper=0.9374771059628892 pass=true",
+          "signed query error enclosed: observed=0.0012130881890654588; upper=5.134773580805367 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-2-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.08735789362801; upper=0.47024059522684386 pass=true",
+          "signed query error enclosed: observed=0.0017923741932770465; upper=2.5756138146039973 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-3-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=1.1329227411450926E-4; upper=0.0014257155368398993 pass=true",
+          "signed query error enclosed: observed=1.0240765005387065E-5; upper=0.007808965601138447 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-48.0-32-3-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.03058924699678215; upper=0.662303248378925 pass=true",
+          "signed query error enclosed: observed=3.630850661933138E-4; upper=3.6275842904608533 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-0-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.002120406918567928; upper=2.288393386769355 pass=true",
+          "signed query error enclosed: observed=1.9970556765142033E-4; upper=12.534046783792217 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-0-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.15686273918503102; upper=0.9351016117505118 pass=true",
+          "signed query error enclosed: observed=6.656367061592117E-4; upper=5.121762463151946 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-1-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=2.1611998896659846E-5; upper=7.119440723533703E-4 pass=true",
+          "signed query error enclosed: observed=1.0911217523945638E-7; upper=0.003899478281110305 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-1-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=1.8562670436468105; upper=19.86452362651668 pass=true",
+          "signed query error enclosed: observed=0.006644921343516019; upper=108.80247684337519 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-2-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=1.507058652794769E-5; upper=0.001246187854874725 pass=true",
+          "signed query error enclosed: observed=2.727775977318103E-7; upper=0.0068256519900486085 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-2-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.07587975897222259; upper=0.6547862681896983 pass=true",
+          "signed query error enclosed: observed=8.489977782562552E-4; upper=3.5864120943212643 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-3-ExactShape",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=6.816372315036578E-5; upper=0.0011930074446005832 pass=true",
+          "signed query error enclosed: observed=6.043934423494157E-7; upper=0.006534370886803339 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-finite-bound-96.0-24-3-CorrectedReference",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "finite coefficient error enclosed: observed=0.030601461591644875; upper=0.661763658332105 pass=true",
+          "signed query error enclosed: observed=3.745265206648307E-4; upper=3.624628834056368 pass=true"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-horizon-96.0-32-96",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "preparation admitted: kernel compiler requests 1.027299E8 certification work, maximum is 100000000 pass=false"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-horizon-192.0-32-96",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "preparation admitted: kernel compiler requests 2.0510961E7 storage cells, maximum is 16000000 pass=false"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-horizon-192.0-15-96",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "preparation admitted: kernel compiler requests 2.0314662E7 storage cells, maximum is 16000000 pass=false"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      },
+      {
+        "id": "phrf-horizon-192.0-15-48",
+        "status": "Fail",
+        "ciPass": false,
+        "observations": [
+          "preparation admitted: kernel compiler requests 3.267964E7 training work, maximum is 20000000 pass=false"
+        ],
+        "caveats": [
+          "caveat=original-family-enclosure kind=PublicApiGap severity=Blocking owner=fit/profile detail=finite rounded arrays do not enclose the original observation pipeline followUp=PHRF-11",
+          "caveat=fixed-shape-exploration kind=DiagnosticsGap severity=Blocking owner=first-level-laws detail=fixed-shape exploratory horizon probes are not adaptive scientific qualification followUp=PHRF-14"
+        ]
+      }
+    ]
+  },
+  "seconds": 4.954974833,
+  "limitations": [
+    "fixed-shape exploratory data",
+    "finite rounded arrays only",
+    "dense per-shape SVD validation is outside the corrected readout work budget",
+    "no enclosure of family evaluation, convolution or whitening",
+    "no adaptive coverage claim"
+  ]
+}

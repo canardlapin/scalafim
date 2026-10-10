@@ -78,7 +78,7 @@ private[profile] final case class TrialConditionalSummary(
   * operator uses only packed trial Gram blocks and basis/nuisance crosses; it
   * never builds or factors a continuous-shape reference.
   */
-private[profile] final class TrialConditionalSolve(val worker: TrialBandedObjective):
+private[profile] final class TrialConditionalSolve(val worker: TrialReferenceBank):
   private val prep = worker.preparation
   private val n = prep.trials
   private val f = prep.nuisanceColumns
@@ -190,8 +190,8 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
       Left(error)
     if output.length != size then return refuse(TrialConditionalError.OutputLength(size, output.length))
     if !(encoded.owner eq prep) then return refuse(TrialConditionalError.ForeignResponse)
-    if referenceNode < 0 || referenceNode >= worker.grid.count then
-      return refuse(TrialConditionalError.InvalidReferenceNode(referenceNode, worker.grid.count))
+    if referenceNode < 0 || referenceNode >= worker.points.count then
+      return refuse(TrialConditionalError.InvalidReferenceNode(referenceNode, worker.points.count))
     val actualPoint = prep.basis.family.chart.point(actualCoordinates) match
       case Left(error) => return refuse(TrialConditionalError.InvalidShape(error))
       case Right(point) => point
@@ -210,7 +210,7 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
         case Left(error) => return refuse(TrialConditionalError.ReferenceSolve(error))
         case Right(_) => return finish(output, before, beforeNormalActions, residualCorrections = 0)
 
-    worker.grid.coordinatesInto(referenceNode, referenceCoordinates)
+    worker.points.coordinatesInto(referenceNode, referenceCoordinates)
     prep.basis.coefficientJetInto(
       ShapePoint.unsafe(referenceCoordinates.toVector), kernelScratch, referenceCoefficients, 1 + d)
     if !finite(referenceCoefficients) then
@@ -366,8 +366,8 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
       return refuse(TrialConditionalError.OutputLength(prep.rows, out.length))
     if !finite(coefficientWeights) then
       return refuse(TrialConditionalError.NonFiniteAssembly("transpose coefficient weights"))
-    if referenceNode < 0 || referenceNode >= worker.grid.count then
-      return refuse(TrialConditionalError.InvalidReferenceNode(referenceNode, worker.grid.count))
+    if referenceNode < 0 || referenceNode >= worker.points.count then
+      return refuse(TrialConditionalError.InvalidReferenceNode(referenceNode, worker.points.count))
     val actualPoint = prep.basis.family.chart.point(actualCoordinates) match
       case Left(error) => return refuse(TrialConditionalError.InvalidShape(error))
       case Right(point) => point
@@ -384,7 +384,7 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
       if !finite(out) then return refuse(TrialConditionalError.NonFiniteAssembly("exact transpose rows"))
       return Right(receipt(before, beforeNormalActions, residualCorrections = 0))
 
-    worker.grid.coordinatesInto(referenceNode, referenceCoordinates)
+    worker.points.coordinatesInto(referenceNode, referenceCoordinates)
     prep.basis.coefficientJetInto(
       ShapePoint.unsafe(referenceCoordinates.toVector), kernelScratch, referenceCoefficients, 1 + d)
     if !finite(referenceCoefficients) then

@@ -1,0 +1,34 @@
+{
+  "schema_version": "scalafim-corrected-gls-bounds/v1",
+  "r_version": "4.3.3",
+  "profiles": {
+    "pilot": {
+      "replicates": 16,
+      "rejection_count_bounds": [0, 5],
+      "coverage_count_bounds": [11, 16],
+      "mean_90_percent_critical": 1.7530503556925727
+    },
+    "screen": {
+      "replicates": 64,
+      "rejection_count_bounds": [0, 11],
+      "coverage_count_bounds": [53, 64],
+      "mean_90_percent_critical": 1.6694022217068127
+    },
+    "confirmation": {
+      "replicates": 2048,
+      "rejection_count_bounds": [53, 143],
+      "coverage_count_bounds": [1905, 1995],
+      "mean_90_percent_critical": 1.6455983573762272
+    }
+  },
+  "criticals": {
+    "df236": {
+      "t": 1.9700668531021246,
+      "f": 3.0340833010084411
+    },
+    "df224": {
+      "t": 1.9706109611023626,
+      "f": 3.0361562220739913
+    }
+  }
+}

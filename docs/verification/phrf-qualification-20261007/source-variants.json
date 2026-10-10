@@ -1,0 +1,30 @@
+{
+  "numericalCoreBase": "650acfa3",
+  "numericalProvider": "0a981febc163e539b019aa9379935e21d8987a20",
+  "unchanged": [
+    "HRF/basis math",
+    "Gale provider",
+    "decoder and readout math",
+    "budgets and admission rules"
+  ],
+  "initialIntegration": [
+    "stress-high-noise.json",
+    "stress-low-noise.json"
+  ],
+  "initialIntegrationScope": "repaired budget exposed; precedes reader and acquisition allocation fixes; initial high-noise runner predates optional noise/deadline instrumentation",
+  "beforeBothAllocationFixes": [
+    "b0-baseline-before-allocation-fixes.json"
+  ],
+  "beforeAcquisitionFixOnly": [
+    "b0-repaired-before-acquisition-fix.json"
+  ],
+  "afterBothAllocationFixes": [
+    "b0-baseline.json",
+    "b0-repaired.json",
+    "stress-resource.json",
+    "family-audit.json"
+  ],
+  "stressResourceScope": "after both allocation fixes; before test-only ScenarioResult dependency and extra final heap-configuration metadata; runner behavior otherwise identical",
+  "finalSourceTests": "final-tests.log.gz",
+  "notes": "Only final source files are hashed below. Initial receipts retain their narrower version labels and are not presented as final-source timings."
+}

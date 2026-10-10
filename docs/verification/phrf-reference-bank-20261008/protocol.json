@@ -1,0 +1,60 @@
+{
+  "id": "phrf-explicit-reference-bank/v1",
+  "sourceBase": "f678b80d",
+  "domainProtocolSha256": "29fc8e066b28d3d15cf1879868b7096555e059e318d93d868f849cdc2c586aa3",
+  "domainChanges": null,
+  "targetRelativeAmplitudeL2": 0.001,
+  "requiredPrimaryCoverage": 0.95,
+  "referenceLimit": 8,
+  "routing": "nearest normalized Euclidean coordinates; smallest-index exact tie; no response dependence",
+  "readout": "one corrected readout; three inverse applications; one residual correction; no exact fallback",
+  "storage": "full coefficient/cross/release jets, value and first normal bands retained; second bands reconstructed in one worker band",
+  "development": {
+    "candidates": [
+      "4x2x1",
+      "4x1x2",
+      "8x1x1"
+    ],
+    "placement": "tensor cell centers; axis 0 fastest",
+    "trials": 300,
+    "fresh": 256,
+    "sensitivities": 0,
+    "boundaries": 27,
+    "cohort": "prior domain gate fresh seed 2026100804; already development evidence",
+    "selection": "largest fresh original-equation amplitude pass count; then smallest fresh p95 error; then candidate order; boundaries reported only"
+  },
+  "confirmation": {
+    "trials": [
+      30,
+      300
+    ],
+    "fresh": [
+      64,
+      256
+    ],
+    "sensitivitiesPerNoise": [
+      32,
+      64
+    ],
+    "noiseRatios": [
+      0.1,
+      0.0,
+      1.0
+    ],
+    "boundaries": 27,
+    "shapeSeeds": [
+      2026100813,
+      2026100814
+    ],
+    "responseSeedFormula": "2026200815 + 10000*N + pointIndex",
+    "freeze": "selected.json written from development results before confirmation; no retuning on confirmation"
+  },
+  "resources": {
+    "trials": 1200,
+    "workers": 8,
+    "budgetBytes": 268435456,
+    "scope": "retained numeric arrays plus separately measured reachable JVM bank/worker graph; build scratch and ML determinant scratch separately disclosed; no full throughput sweep"
+  },
+  "qualification": "fixed-shape diagnostic only; original-equation certified error, decoder/scientific calibration, live peak memory and B0 throughput remain unqualified",
+  "preMeasurementCorrection": "Response seed base moved before any development or confirmation run: regression caught overlap with prior index ranges."
+}

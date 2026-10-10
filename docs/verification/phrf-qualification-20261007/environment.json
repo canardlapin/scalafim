@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-07",
+  "sourceBase": "650acfa370538ef189a3b852e1010fd6a73ef745",
+  "galeRevision": "0a981febc163e539b019aa9379935e21d8987a20",
+  "cpu": "Apple M2 Pro",
+  "physicalCores": 10,
+  "hostMemoryBytes": 34359738368,
+  "os": "macOS 15.1.1 (24B91)",
+  "arch": "arm64",
+  "java": "Temurin 21.0.12.1+1",
+  "node": "24.21.0",
+  "hostQualification": "different from the frozen 2026-09-10 M3 Max/macOS14.3/JDK22/Node26.7.0 host",
+  "publication": "local worktree; no hosted CI qualification",
+  "timing": "exploratory single runs; build warm but no controlled warmup, no idle-host or thermal guarantee"
+}

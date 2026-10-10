@@ -1,7 +1,7 @@
 package scalafim.fmri.ar
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.fmri.ar.fixtures.FmriArRFixture
+import scalafim.fmri.ar.fixtures.{FmriArRFixture, FmriAr041RFixture}
 
 class FmriArParitySuite extends munit.FunSuite:
 
@@ -83,7 +83,7 @@ class FmriArParitySuite extends munit.FunSuite:
     assertMatrixClose(out.response, expectedY)
   }
 
-  test("ACF diagnostics match fmriAR exported helper fixtures") {
+  test("ACF diagnostics match the updated fmriAR voxel-aggregation fixture") {
     val noneResiduals = matrix(
       Vector(
         Vector(0.0, 1.0),
@@ -113,11 +113,11 @@ class FmriArParitySuite extends munit.FunSuite:
     )
     val median = AcorrDiagnostics.compute(medianResiduals, maxLag = 2, aggregation = AcfAggregation.Median)
 
-    assertClose(median.acf.col(0).toSeq.toVector, FmriArRFixture.acfMedian)
+    assertClose(median.acf.col(0).toSeq.toVector, FmriAr041RFixture.legacyMedian)
     assertEqualsDouble(median.confidenceInterval, FmriArRFixture.acfMedianCi, 1e-12)
   }
 
-  test("fixed AR(1)-AR(4) and automatic-order estimation match fmriAR 0.3.3") {
+  test("fixed AR(1)-AR(4) retain 0.3.3 parity; automatic BIC matches 0.4.1") {
     val residuals = matrix(estimationSeries.map(v => Vector(v)))
     val segments = TimeSegments.continuous(estimationSeries.length)
 
@@ -150,8 +150,8 @@ class FmriArParitySuite extends munit.FunSuite:
         ArFitOptions(order = ArOrder.Auto(4), exactFirstAr1 = false)
       )
     )
-    assertEquals(automatic.coefficients.head.arOrder, FmriArRFixture.fitNoiseAutoOrder)
-    assertClose(automatic.coefficients.head.phi, FmriArRFixture.fitNoiseAutoPhi)
+    assertEquals(automatic.coefficients.head.arOrder, FmriAr041RFixture.legacyAutoOrder)
+    assertClose(automatic.coefficients.head.phi, FmriAr041RFixture.legacyAutoPhi)
   }
 
   test("run-weighted censored AR estimates match fmriAR 0.3.3") {

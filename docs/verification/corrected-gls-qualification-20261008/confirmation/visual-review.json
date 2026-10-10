@@ -1,0 +1,14 @@
+{
+  "artifact": "qualification.png",
+  "sha256": "3f464d337cdc2d0b3553b49d043171698ba4f2eef2c7b2ccee6e5cdbf6cad2ed",
+  "reviewer": "codex-root",
+  "reviewed_at": "2026-10-08T17:45:25.796722+00:00",
+  "disposition": "acceptable",
+  "checks": [
+    "All plotted points and confidence intervals are visible without clipping.",
+    "Axes, target lines, equivalence margins and case/engine labels are readable.",
+    "The adverse corrected AR(2) coverage interval crosses the lower margin visibly.",
+    "The four-panel plot does not display the failed F-rejection or RMSE endpoints; the README and complete summary retain those endpoints."
+  ],
+  "scope": "Visual rendering review only; scientific acceptance comes from the complete frozen gate analysis."
+}
