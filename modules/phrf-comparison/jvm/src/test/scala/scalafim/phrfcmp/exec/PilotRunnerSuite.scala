@@ -49,7 +49,7 @@ class PilotRunnerSuite extends munit.FunSuite:
       r
 
   private val ok: WorkUnit => Int => ArmResult = _ => _ => ArmResult.Done()
-  private val roomy: CpuGuard = CpuGuard(1000.0, 2000.0)
+  private val roomy: CpuGuard = CpuGuard()
 
   private def runner(plan: PilotPlan, out: Path, arms: ArmRunner, clk: CpuClock, guard: CpuGuard = roomy, threads: Int = 1,
       hook: CommitHook = CommitHook.none, st: PilotStamp = stamp, store: Option[SealedStore] = None, rt: PilotRoot = root,
@@ -159,7 +159,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     runner(mkPlan(2, 6, 1), full, new Counting(c0, 10.0, ok), c0).run().fold(r => fail(r.message), identity)
     val out = tmp(); val plan = mkPlan(2, 6, 1)
     val c1 = clock(); val e1 = new Counting(c1, 10.0, ok)
-    val soft = CpuGuard(45.0 / 3600, 1000.0)
+    val soft = CpuGuard(45.0 / 3600, 60.0)
     val strict = plan.copy(minDatasets = 3)
     val first = runner(strict, out, e1, c1, soft).run()
     assertEquals(first.left.toOption.map(_.isInstanceOf[PilotRefusal.TooFewDatasets]), Some(true))
@@ -188,10 +188,10 @@ class PilotRunnerSuite extends munit.FunSuite:
     val out = tmp(); val plan = mkPlan(1, 4, 1, min = 4)
     val clk = clock()
     val e1 = new Counting(clk, 10.0, ok)
-    val r1 = runner(plan, out, e1, clk, CpuGuard(15.0 / 3600, 1000.0))
+    val r1 = runner(plan, out, e1, clk, CpuGuard(15.0 / 3600, 60.0))
     assert(r1.run().left.toOption.exists(_.isInstanceOf[PilotRefusal.TooFewDatasets]))
     val e2 = new Counting(clk, 10.0, ok)
-    val r2 = runner(plan, out, e2, clk, CpuGuard(25.0 / 3600, 1000.0))
+    val r2 = runner(plan, out, e2, clk, CpuGuard(25.0 / 3600, 60.0))
     assert(r2.run().left.toOption.exists(_.isInstanceOf[PilotRefusal.TooFewDatasets]))
     assertEquals((e1.calls.get(), e2.calls.get()), (2, 1), "soft-stopped runs: new jobs only, no recomputation")
     val e3 = new Counting(clk, 10.0, ok)
@@ -208,7 +208,7 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   test("soft stop with D >= minimum accepts a uniform reverse-index drop; plaintext selection holds D, df, UCL only") {
     val out = tmp(); val clk = clock(); val plan = mkPlan(2, 6, 1, min = 2)
-    val rep = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     assert(rep.outcome.isInstanceOf[PilotOutcome.Partial])
     val d = rep.outcome.decision
     assertEquals(d.D, 2)
@@ -222,7 +222,7 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   test("partial pilot below the minimum D is refused") {
     val out = tmp(); val clk = clock(); val plan = mkPlan(2, 20, 1, min = 15)
-    val r = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 1000.0)).run()
+    val r = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 60.0)).run()
     assertEquals(r.left.toOption.map(_.isInstanceOf[PilotRefusal.TooFewDatasets]), Some(true))
   }
 
@@ -320,7 +320,7 @@ class PilotRunnerSuite extends munit.FunSuite:
   }
 
   for threads <- Seq(1, 4) do
-    test(s"CPU guard hard stop at a tiny ceiling (threads=$threads): refuses, nothing dispatched after the trip, resumable with a raised ceiling") {
+    test(s"CPU guard hard stop at a tiny ceiling (threads=$threads): refuses, nothing dispatched after the trip, resumable with an owner-authorized ceiling") {
       val out = tmp(); val clk = clock(); val plan = mkPlan(2, 4, 2)
       val tiny = CpuGuard(1.0 / 3600, 5.0 / 3600)
       val ex = new Counting(clk, 10.0, ok)
@@ -336,7 +336,10 @@ class PilotRunnerSuite extends munit.FunSuite:
       assert(runner(plan, out, again, clk, tiny, threads).run().isLeft)
       assertEquals(again.calls.get(), 0)
       val fin = new Counting(clk, 10.0, ok)
-      val rep = runner(plan, out, fin, clk, CpuGuard(1000.0, 2000.0), threads).run().fold(x => fail(x.message), identity)
+      // resuming past a reached ceiling needs the owner's typed authorization; a plain number above 60 is refused
+      intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
+      val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop").fold(e => fail(e), identity)
+      val rep = runner(plan, out, fin, clk, CpuGuard.raised(45.0, raise), threads).run().fold(x => fail(x.message), identity)
       assertEquals(rep.outcome.decision.D, 4)
     }
 
@@ -538,7 +541,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     runner(plan, out, okArm, clk).run().fold(r => fail(r.message), identity)
     Files.delete(out.resolve("progress/C0/d0001.done.sha256"))
     Files.delete(out.resolve("progress/C0/d0001.done"))
-    val rep = runner(plan, out, okArm, clock(), CpuGuard(30.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, okArm, clock(), CpuGuard(30.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     val d = rep.outcome.decision
     assertEquals(d.D, 4)
     assertEquals(d.kept(cell("C0")), (0 until d.D).toVector)
@@ -553,7 +556,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     Vector("progress/C1/d0002.done", "progress/C1/d0002.done.sha256", "progress/C0/d0004.done", "progress/C0/d0004.done.sha256").foreach(p => Files.delete(out.resolve(p)))
     val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
     val arms: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
-    val rep = runner(plan, out, arms, clock(), CpuGuard(1.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, arms, clock(), CpuGuard(1.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     assertEquals(rep.outcome.decision.D, 6)
     assert(seen.contains(("C1", 2)) && seen.contains(("C0", 4)))
   }
@@ -746,7 +749,7 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   // ---- independent probes of the 2026-10-03 blocker notes (H1, M2, M4), kept as regressions ----
 
-  test("probe H1: successful bytes that change per invocation, crashed after LedgerSealed, resume into a store the owner reads; the first attempt is scored") {
+  test("probe H1: successful bytes that change per invocation, crashed after LedgerSealed, resume into a store the owner reads; both scheduled commits survive") {
     val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
     def arms(tag: String): ArmRunner = ctx => { ctx.emit("o", s"${ctx.unit.dataset}-$tag".getBytes(UTF_8)); ArmResult.Done() }
     val crash: CommitHook = (s, j) => if s == CommitStage.LedgerSealed && j.dataset == 1 then throw new SimulatedCrash
@@ -772,7 +775,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     // C0 completed 0..2, C1 completed 0..1; (C1, 2) was dispatched and in flight
     val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
     val arms: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
-    val rep = runner(plan, out, arms, clock(), CpuGuard(30.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, arms, clock(), CpuGuard(30.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     assert(seen.contains(("C1", 2)), "the in-flight job is finished before the soft stop is honoured")
     assert(!seen.contains(("C0", 3)) && !seen.contains(("C1", 3)), "no new dataset is dispatched past the soft stop")
     assertEquals(rep.outcome.decision.D, 3)
@@ -796,7 +799,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     assert(!Files.exists(out.resolve("progress/C0/d0002.done")) && !Files.exists(out.resolve("progress/C1/d0002.done")))
     val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
     val arms2: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
-    val rep = runner(plan, out, arms2, clock(), CpuGuard(30.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, arms2, clock(), CpuGuard(30.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     assert(seen.contains(("C0", 2)) && seen.contains(("C1", 2)), s"both in-flight jobs are finished: $seen")
     assert(!seen.contains(("C0", 3)) && !seen.contains(("C1", 3)), "no new dataset is dispatched past the soft stop")
     assertEquals(rep.outcome.decision.D, 3)
@@ -840,4 +843,15 @@ class PilotRunnerSuite extends munit.FunSuite:
     worker.join(5000L)
     assert(!worker.isAlive, "the worker thread terminates once run() has returned")
     assert(!Files.exists(out.resolve("progress/C0/d0000.done")), "nothing after the interrupt is marked complete")
+  }
+
+  // ---- independent re-review 2026-10-10 (failure 2) ----
+
+  test("review 2: a commit exception after the attempt's CPU was metered checkpoints that CPU durably before the crash propagates") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val arms: ArmRunner = ctx => { clk.advance(10.0); ctx.emit("o", blobBytes(ctx.unit)); ArmResult.Done(7.0) }
+    val crashed = new AtomicInteger(0)
+    val hook: CommitHook = (s, _) => if s == CommitStage.DataSealed && crashed.incrementAndGet() == 1 then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms, clk, hook = hook).run())
+    assertEqualsDouble(cost(out)("cpu_seconds_total").num, 17.0, 1e-9)
   }

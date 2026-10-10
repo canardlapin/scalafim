@@ -36,6 +36,20 @@ object RetryPolicy:
     case Commit(status: UnitStatus, code: String)
     case Retry(code: String)
 
+/** The owner's explicit authorization to run past the 60 core-hour ceiling (owner decision 2026-10-03: "do not raise
+  * the ceiling without the owner"; runbook section 6). It names the new ceiling, the approving owner and the reason;
+  * there is no other way to build a [[CpuGuard]] above 60 core-hours.
+  */
+final case class OwnerCeilingRaise private (hardCoreHours: Double, approver: String, reason: String)
+
+object OwnerCeilingRaise:
+  def of(hardCoreHours: Double, approver: String, reason: String): Either[String, OwnerCeilingRaise] =
+    if hardCoreHours.isNaN || hardCoreHours.isInfinite || hardCoreHours <= CpuGuard.MaxHardCoreHours then
+      Left("a raise names a finite ceiling above 60 core-hours")
+    else if !SafeName.valid(approver) then Left("the approver is a safe name")
+    else if reason.trim.isEmpty then Left("a raise states its reason")
+    else Right(new OwnerCeilingRaise(hardCoreHours, approver, reason.trim))
+
 /** Cumulative CPU guard: soft stop at 45 core-hours, hard ceiling at 60 (design 5.1, 5.2).
   *
   * The runner checks the hard ceiling before every attempt of every unit, whenever an arm polls
@@ -44,8 +58,10 @@ object RetryPolicy:
   * unit attempt (every in-flight attempt may run to its end when its arm does not poll `shouldAbort`), plus the
   * child CPU those attempts report.
   */
-final case class CpuGuard(softCoreHours: Double = 45.0, hardCoreHours: Double = 60.0):
+final case class CpuGuard private (softCoreHours: Double, hardCoreHours: Double, raise: Option[OwnerCeilingRaise]):
   require(softCoreHours > 0.0 && softCoreHours <= hardCoreHours, "need 0 < soft <= hard")
+  require(raise.forall(_.hardCoreHours == hardCoreHours), "a raised ceiling is the authorization's")
+  require(raise.isDefined || CpuGuard.withinOwnerCeiling(hardCoreHours), "the hard ceiling above 60 core-hours needs an OwnerCeilingRaise")
 
   def check(totalCpuSeconds: Double): CpuGuard.State =
     val hours = totalCpuSeconds / 3600.0
@@ -54,6 +70,18 @@ final case class CpuGuard(softCoreHours: Double = 45.0, hardCoreHours: Double = 
     else CpuGuard.State.Ok
 
 object CpuGuard:
+  /** The binding ceiling of the owner decision of 2026-10-03 ("do not raise the ceiling without the owner"). */
+  val MaxHardCoreHours: Double = 60.0
+
+  private[exec] def withinOwnerCeiling(hard: Double): Boolean = !hard.isNaN && hard <= MaxHardCoreHours
+
+  /** Ceilings at or below [[MaxHardCoreHours]]; a plain number above it is refused. */
+  def apply(softCoreHours: Double = 45.0, hardCoreHours: Double = MaxHardCoreHours): CpuGuard =
+    new CpuGuard(softCoreHours, hardCoreHours, None)
+
+  /** A ceiling above 60 core-hours, only from the owner's explicit, typed authorization. */
+  def raised(softCoreHours: Double, raise: OwnerCeilingRaise): CpuGuard = new CpuGuard(softCoreHours, raise.hardCoreHours, Some(raise))
+
   enum State:
     case Ok, SoftStop, HardStop
 

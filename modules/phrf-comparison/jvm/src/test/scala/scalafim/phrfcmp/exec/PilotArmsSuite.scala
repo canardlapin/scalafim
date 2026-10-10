@@ -184,7 +184,7 @@ class PilotArmsSuite extends munit.FunSuite:
     val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("can"), arm("glmsingle")))), 3, maxRetries = 0)
     val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
     val clk = new FakeClock
-    val r = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e), CpuGuard(1000.0, 2000.0), clk)
+    val r = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e), CpuGuard(), clk)
     val rep = r.run().fold(x => fail(x.message), identity)
     assertEquals(rep.outcome.decision.D, 3)
     assertEquals(rep.totalCpuSeconds, 3 * 4.0, 1e-9) // child CPU of the three failed GLMsingle units
@@ -197,6 +197,26 @@ class PilotArmsSuite extends munit.FunSuite:
     Fs.listFiles(out).foreach(p => assert(!new String(Files.readAllBytes(p), "ISO-8859-1").contains("SECRET-TAIL"), p.toString))
   }
 
+  test("review 3: a feed exception after GLMsingle ran keeps the measured child CPU, on every attempt") {
+    val owner = TestOwner.random()
+    val throwing = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new IllegalStateException("feed broke")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = throw new IllegalStateException("feed broke")
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val direct = new PilotArmRunner(new Source, e, throwing).run(ctx("glmsingle"))
+    assertEquals(direct.childCpu, 37.0)
+    for retries <- Vector(0, 2) do
+      val out = Files.createTempDirectory("phrf-s7-feedcpu-")
+      val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = retries)
+      val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+      val rep = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e, throwing), CpuGuard(), new FakeClock)
+        .run().fold(x => fail(x.message), identity)
+      assertEqualsDouble(rep.totalCpuSeconds, 2 * (retries + 1) * 37.0, 1e-9)
+  }
+
   test("real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates") {
     val owner = TestOwner.random()
     val out = Files.createTempDirectory("phrf-s7-real-")
@@ -206,7 +226,7 @@ class PilotArmsSuite extends munit.FunSuite:
     val arms = new PilotArmRunner(new Source, PilotEngines.real(dummy, clock), feed)
     val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("can")))), 2, probeDatasets = 1)
     val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
-    new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, arms, CpuGuard(1000.0, 2000.0), CpuClock.system, threads = 2).run().fold(x => fail(x.message), identity)
+    new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, arms, CpuGuard(), CpuClock.system, threads = 2).run().fold(x => fail(x.message), identity)
     assert(feed.conditions.nonEmpty && feed.conditions.forall(_.statuses.forall(_.isEstimated)))
     val items = OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = true).fold(x => fail(x), identity)
     assertEquals(items.keys.count(_.startsWith("data/C-X/")), 2)

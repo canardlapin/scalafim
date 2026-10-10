@@ -84,7 +84,10 @@ object UnitPayload:
     o.flush()
     bytes.toByteArray
 
-  /** Inverse of [[encode]] (owner side and tests): the status and the named entries. */
+  /** Inverse of [[encode]] (owner side and tests): the status and the named entries. Every count and length is
+    * checked against the bytes that remain before anything is narrowed or allocated, so a malformed payload is a
+    * `Left`, never an exception.
+    */
   def decode(payload: Array[Byte]): Either[String, (UnitStatus, Vector[(String, Array[Byte])])] =
     try
       val in = new DataInputStream(new ByteArrayInputStream(payload))
@@ -92,13 +95,21 @@ object UnitPayload:
       else
         UnitStatus.fromCode(in.readUTF()).toRight("unknown status").flatMap { status =>
           val n = in.readInt()
-          val entries = Vector.fill(n) {
-            val name = in.readUTF()
-            val data = new Array[Byte](in.readLong().toInt)
-            in.readFully(data)
-            name -> data
-          }
-          if in.available() != 0 then Left("trailing bytes") else Right((status, entries))
+          if n < 0 || n > in.available() then Left("entry count out of range")
+          else
+            val entries = Vector.newBuilder[(String, Array[Byte])]
+            var error: Option[String] = None
+            var i = 0
+            while error.isEmpty && i < n do
+              val name = in.readUTF()
+              val length = in.readLong()
+              if length < 0L || length > in.available().toLong then error = Some("entry length out of range")
+              else
+                val data = new Array[Byte](length.toInt)
+                in.readFully(data)
+                entries += name -> data
+              i += 1
+            error.toLeft(entries.result()).flatMap(es => if in.available() != 0 then Left("trailing bytes") else Right((status, es)))
         }
     catch case e: IOException => Left(s"truncated payload (${e.getClass.getSimpleName})")
 
@@ -130,7 +141,8 @@ object UnitPayload:
   * @param stamp   computed by [[StampBuilder.build]]; the runner adds `recipient_fp` and `sealed_store_path_sha256`
   *                (plaintext) and the full `sealed_store_path` (sealed `meta/stamp` only); a resume must match exactly
   * @param threads datasets run in parallel (one dataset single-threaded); results must not depend on it (F11)
-  * @param guard   ceilings; deliberately not stamped, so an approved raise can resume the same output
+  * @param guard   ceilings; deliberately not stamped, so an owner-authorized raise ([[OwnerCeilingRaise]]) can resume
+  *                the same output; a ceiling above 60 core-hours cannot be built without one
   * @param runIds  draws the invocation's run id, once, inside [[run]]; it names every blob whose content may differ
   *                between invocations. Tests inject a fixed one
   * @param sweepStale called once at start: removes RAM scratch left by a dead runner (`RamScratch.sweepStale`, S6)
@@ -234,6 +246,7 @@ final class PilotRunner(
           journal <- progress.recover(cellById.keySet)
           _ = try sweepStale() catch case NonFatal(_) => () // stale RAM scratch of a dead earlier runner (S6)
           _ <- sealMeta()
+          _ = guard.raise.foreach(r => log(f"PILOT_CEILING_RAISE,hard_core_hours=${r.hardCoreHours}%.3f,approver=${r.approver}"))
           report <- schedule(journal, prior.cpuSecondsTotal, inv)
         yield report
       catch case e: RunAborted => Left(e.refusal)
@@ -299,6 +312,13 @@ final class PilotRunner(
     def stopNow(): Boolean =
       if !hard.get() && guard.check(meter.totalSeconds) == CpuGuard.State.HardStop then hard.set(true)
       stopped
+
+    /** Persists the CPU spent so far on a crash path (re-review failure 2): the crash propagates whatever happens, but
+      * the cumulative guard never loses CPU that was metered before it.
+      */
+    def checkpointOnCrash(): Unit =
+      try checkpoint()
+      catch case NonFatal(_) => ()
 
     /** A stop flag up at a seal abandons the commit (finding M4): nothing is written after a crash elsewhere. */
     def sealOrAbort(name: String, bytes: Array[Byte]): Unit =
@@ -382,6 +402,7 @@ final class PilotRunner(
             case _: StopRequested => finished = true
             case t: Throwable =>
               crashed.set(true)
+              checkpointOnCrash()
               throw t
           checkpoint()
       committed
@@ -467,6 +488,7 @@ final class PilotRunner(
                   crashed.set(true) // workers stop at their next check; keep joining
                   interrupted = true
           }
+          if interrupted || failure.nonEmpty then checkpointOnCrash() // every worker has stopped: the final CPU
           if interrupted then
             Thread.currentThread().interrupt()
             throw new RunAborted(PilotRefusal.Interrupted)

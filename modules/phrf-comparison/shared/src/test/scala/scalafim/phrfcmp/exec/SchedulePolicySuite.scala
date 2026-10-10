@@ -168,3 +168,19 @@ class SchedulePolicySuite extends munit.FunSuite:
     assertEquals(a.firstDifference(PilotStamp(Vector("git_sha" -> "abc", "java_version" -> "17"))), Some("java_version"))
     assertEquals(a.firstDifference(a), None)
   }
+
+  test("review 4: the hard ceiling is at most 60 core-hours unless the owner's typed authorization raises it") {
+    assertEquals(CpuGuard().hardCoreHours, 60.0)
+    intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
+    intercept[IllegalArgumentException](CpuGuard(45.0, Double.PositiveInfinity))
+    assertEquals(CpuGuard(1.0, 60.0).check(60.0 * 3600), CpuGuard.State.HardStop)
+    assert(OwnerCeilingRaise.of(60.0, "owner", "no raise").isLeft, "a raise must exceed 60")
+    assert(OwnerCeilingRaise.of(Double.NaN, "owner", "r").isLeft)
+    assert(OwnerCeilingRaise.of(70.0, "", "r").isLeft, "an approver is required")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "  ").isLeft, "a reason is required")
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "crash late in the pilot").fold(sys.error, identity)
+    val g = CpuGuard.raised(45.0, raise)
+    assertEquals((g.hardCoreHours, g.raise), (70.0, Some(raise)))
+    assertEquals(g.check(65.0 * 3600), CpuGuard.State.SoftStop)
+    assertEquals(g.check(70.0 * 3600), CpuGuard.State.HardStop)
+  }

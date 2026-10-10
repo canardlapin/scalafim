@@ -3,7 +3,7 @@ package scalafim.phrfcmp.exec
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import scalafim.phrfcmp.score.ScoreSynth
 import scalafim.phrfcmp.score.PilotCell as ScoreCell
@@ -23,7 +23,7 @@ class OwnerVerificationSuite extends munit.FunSuite:
   private val plan = PilotPlan(Vector(PilotCell(c0, Vector(a0))), datasets = 15)
   private val stamp = PilotStamp(Vector("k" -> "v"))
   private val root = new PilotRoot(7L)
-  private val roomy = CpuGuard(1000.0, 2000.0)
+  private val roomy = CpuGuard()
   private def unit(d: Int): WorkUnit = WorkUnit(c0, d, a0)
 
   private def enc(x: Double): Array[Byte] = ByteBuffer.allocate(8).putDouble(x).array()
@@ -57,8 +57,10 @@ class OwnerVerificationSuite extends munit.FunSuite:
 
   private final case class Pilot(out: Path, store: SealedStore, report: PilotReport)
 
-  /** One pilot, optionally crashed once after the marker data of dataset `crashAt`, then resumed to the end. */
-  private def pilot(arms: ArmRunner, crashAt: Option[Int] = Some(7)): Pilot =
+  /** One pilot, optionally crashed once after the marker data of dataset `crashAt`, then (after `between`) resumed
+    * to the end.
+    */
+  private def pilot(arms: ArmRunner, crashAt: Option[Int] = Some(7), between: () => Unit = () => ()): Pilot =
     val out = Files.createTempDirectory("phrf-s10-owner-")
     val st = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(e => fail(e.message), identity)
     val clk = new FakeClock
@@ -66,6 +68,7 @@ class OwnerVerificationSuite extends munit.FunSuite:
       val crash: CommitHook = (s, j) => if s == CommitStage.MarkerWritten && j.dataset == d then throw new SimulatedCrash
       intercept[SimulatedCrash](new PilotRunner(plan, out, stamp, st, root, arms, roomy, clk, hook = crash).run())
     }
+    between()
     val rep = new PilotRunner(plan, out, stamp, st, root, arms, roomy, clk).run().fold(x => fail(x.message), identity)
     Pilot(out, st, rep)
 
@@ -194,4 +197,133 @@ class OwnerVerificationSuite extends munit.FunSuite:
     OwnerVerification.verify(items(q), plan, wlShort, Vector(new Synthetic())) match
       case OwnerVerdict.Refused(VerificationRefusal.UnitListMismatch(_)) => ()
       case other => fail(s"expected UnitListMismatch, got $other")
+  }
+
+  // ---- independent re-review 2026-10-10 (failures 1, 5, 6 and the coverage gaps) ----
+
+  /** An assembler that fills a missing contribution with a default: it must not be able to make absent evidence
+    * acceptable to the owner.
+    */
+  private final class Defaulting extends CorpusAssembler:
+    val schema = "synthetic-v1"
+    def outcomes(datasets: Int, cs: Vector[UnitContribution]): Either[String, CorpusOutcomes] =
+      val filled = cs.map(u => new UnitContribution(u.unit, Some(u.payload.getOrElse(enc(0.1)))))
+      new Synthetic().outcomes(datasets, filled)
+
+  test("review 1: missing scorer contributions are Unverifiable even when the assembler supplies defaults") {
+    val silent: ArmRunner = ctx => { ctx.emit("o", s"${ctx.unit.dataset}".getBytes(UTF_8)); ArmResult.Done() }
+    val p = pilot(silent)
+    assert(p.report.contributions.forall(_.payload.isEmpty))
+    val wl = aggregate(p, new Defaulting)
+    OwnerVerification.verify(items(p), plan, wl, Vector(new Defaulting)) match
+      case OwnerVerdict.Unverifiable(_, UnverifiableReason.MissingContribution(u), _) => assertEquals(u, unit(0))
+      case other => fail(s"expected Unverifiable(MissingContribution), got $other")
+  }
+
+  test("review 5a: an aggregate D outside the plan's dataset bounds refuses") {
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val cells = plan.cells
+    for bad <- Vector(PilotPlan(cells, datasets = 14, minDatasets = 2), PilotPlan(cells, datasets = 20, minDatasets = 16)) do
+      assertEquals(OwnerVerification.verify(items(p), bad, wl, Vector(new Synthetic())), OwnerVerdict.Refused(VerificationRefusal.DatasetsOutOfPlan(15)))
+    // a partial pilot within the bounds verifies
+    assertEquals(
+      OwnerVerification.verify(items(p), PilotPlan(cells, datasets = 20, minDatasets = 15), wl, Vector(new Synthetic())),
+      OwnerVerdict.Valid(p.report.runId, 15, 15, Vector.empty)
+    )
+  }
+
+  private def rewriteLedger(all: Map[String, Array[Byte]], name: String)(f: ujson.Value => Unit): Map[String, Array[Byte]] =
+    val v = ujson.read(new String(all(name), UTF_8))
+    f(v)
+    all.updated(name, (ujson.write(v) + "\n").getBytes(UTF_8))
+
+  test("review 5b: a ledger status or entry inventory that disagrees with its payload refuses") {
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val all = items(p)
+    val ledger = SealedNames.ledger(unit(0), p.report.runId)
+    val statusChanged = rewriteLedger(all, ledger)(o => o("status") = ujson.Str("failed"))
+    assertEquals(OwnerVerification.verify(statusChanged, plan, wl, Vector(new Synthetic())), OwnerVerdict.Refused(VerificationRefusal.PayloadLedgerMismatch(ledger)))
+    val entriesChanged = rewriteLedger(all, ledger)(o => o("entries") = ujson.Arr(ujson.Str("o")))
+    assertEquals(OwnerVerification.verify(entriesChanged, plan, wl, Vector(new Synthetic())), OwnerVerdict.Refused(VerificationRefusal.PayloadLedgerMismatch(ledger)))
+  }
+
+  private def malformedPayload(length: Long): Array[Byte] =
+    val b = new java.io.ByteArrayOutputStream()
+    val o = new java.io.DataOutputStream(b)
+    o.writeUTF(UnitPayload.Tag)
+    o.writeUTF("done")
+    o.writeInt(1)
+    o.writeUTF("o")
+    o.writeLong(length)
+    o.flush()
+    b.toByteArray
+
+  test("review 6: a malformed payload length decodes to a typed refusal, never an exception") {
+    for len <- Vector(-1L, Int.MaxValue.toLong + 1L, 1L << 40, 3L) do
+      assert(UnitPayload.decode(malformedPayload(len)).isLeft, s"length $len")
+    assert(UnitPayload.decode(malformedPayload(0L)).isRight, "a zero-length entry is well formed")
+    val p = pilot(contributing(steady), crashAt = None)
+    val wl = aggregate(p)
+    val all = items(p)
+    val rid = p.report.runId
+    val bad = malformedPayload(-1L)
+    val sha = Fs.sha256(bad)
+    val withPayload = rewriteLedger(all.updated(SealedNames.data(unit(0), rid), bad), SealedNames.ledger(unit(0), rid))(o => o("payload_sha256") = ujson.Str(sha))
+    val recordName = SealedNames.aggregateRecord(rid)
+    val rec = ujson.read(new String(withPayload(recordName), UTF_8))
+    rec("units").arr.foreach(u => if u("dataset").num == 0 then u("payload_sha256") = ujson.Str(sha))
+    val tampered = withPayload.updated(recordName, (ujson.write(rec) + "\n").getBytes(UTF_8))
+    OwnerVerification.verify(tampered, plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.MalformedRecord(name, _)) => assertEquals(name, SealedNames.data(unit(0), rid))
+      case other => fail(s"expected a malformed-record refusal, got $other")
+  }
+
+  test("an attempt abandoned at the hard ceiling seals no contribution and none reaches the scorer; the resumed attempt's is verified") {
+    val out = Files.createTempDirectory("phrf-s10-abort-")
+    val st = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(e => fail(e.message), identity)
+    val clk = new FakeClock
+    val aborting = new AtomicBoolean(true)
+    val arms: ArmRunner = ctx =>
+      ctx.emit("o", s"${ctx.unit.dataset}".getBytes(UTF_8))
+      if ctx.unit.dataset == 1 && aborting.get() then
+        ctx.contribute(enc(99.0))
+        while !ctx.shouldAbort do clk.advance(5.0)
+      else
+        clk.advance(1.0)
+        ctx.contribute(enc(steady(ctx.unit, ctx.attempt)))
+      ArmResult.Done()
+    val tiny = CpuGuard(10.0 / 3600, 10.0 / 3600)
+    new PilotRunner(plan, out, stamp, st, root, arms, tiny, clk).run() match
+      case Left(_: PilotRefusal.CpuCeilingReached) => ()
+      case other => fail(s"expected CpuCeilingReached, got $other")
+    val afterAbort = OwnerReader.readAll(st.dir, owner.priv, allowPartial = true).fold(e => fail(e), identity)
+    assert(!afterAbort.keys.exists(_.contains("C0/d0001/")), "nothing of the aborted attempt is sealed")
+    aborting.set(false)
+    val rep = new PilotRunner(plan, out, stamp, st, root, arms, roomy, clk).run().fold(x => fail(x.message), identity)
+    assertEquals(rep.contributions.find(_.unit == unit(1)).flatMap(_.payload).map(dec), Some(steady(unit(1), 1)))
+    val p = Pilot(out, st, rep)
+    val wl = aggregate(p)
+    val all = items(p)
+    val u1Payloads = all.filter(_._1.startsWith("data/C0/d0001/")).values.toVector
+    assertEquals(u1Payloads.length, 1)
+    assertEquals(OwnerVerification.verify(all, plan, wl, Vector(new Synthetic())), OwnerVerdict.Valid(rep.runId, 15, 15, Vector.empty))
+  }
+
+  test("the first completed attempt is the earliest scheduled commit even when it failed and a later one succeeded") {
+    val second = new AtomicBoolean(false)
+    val arms = contributing(
+      (u, a) => if u.dataset == 4 && !second.get() then 0.9 else steady(u, a),
+      (u, _) => if u.dataset == 4 && !second.get() then ArmResult.Failed("first_try") else ArmResult.Done()
+    )
+    val p = pilot(arms, crashAt = Some(4), between = () => second.set(true))
+    val wl = aggregate(p)
+    val all = items(p)
+    val recs = all.toVector.filter(_._1.startsWith("ledger/C0/d0004/a0/")).map((_, d) => LedgerRecord.parse(new String(d, UTF_8)).fold(e => fail(e), identity)).sortBy(_.invocation)
+    assertEquals(recs.map(r => (r.invocation, r.status)), Vector((1, UnitStatus.Failed), (2, UnitStatus.Done)))
+    assertEquals(
+      OwnerVerification.verify(all, plan, wl, Vector(new Synthetic())),
+      OwnerVerdict.Invalidated(p.report.runId, Vector(unit(4)), DigestCheck.Mismatched, Vector(unit(4)))
+    )
   }

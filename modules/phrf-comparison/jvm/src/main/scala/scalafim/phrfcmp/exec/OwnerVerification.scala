@@ -1,6 +1,7 @@
 package scalafim.phrfcmp.exec
 
 import java.nio.charset.StandardCharsets.UTF_8
+import scala.util.control.NonFatal
 
 /** Why the owner cannot verify an aggregate although the store is well formed. Such a store is never `Valid`: the
   * whitelist released from it stands unverified, and the owner treats it as the deviation report requires.
@@ -13,6 +14,9 @@ enum UnverifiableReason(val message: String):
       extends UnverifiableReason("the aggregate record carries no contribution schema; its corpus is not bound to sealed contributions")
   case UnknownSchema(schema: String) extends UnverifiableReason(s"no corpus assembler for contribution schema '$schema'")
   case RebuildFailed(code: String) extends UnverifiableReason(s"the corpus could not be rebuilt from the first completed attempts ($code)")
+  /** A first completed attempt sealed no scorer contribution: nothing binds its share of the corpus. */
+  case MissingContribution(unit: WorkUnit)
+      extends UnverifiableReason(s"the first completed attempt of ${OwnerVerification.path(unit)} sealed no scorer contribution")
 
 /** Why the owner refuses the store or the aggregate outright: it is malformed, ambiguous or self-inconsistent. */
 enum VerificationRefusal(val message: String):
@@ -21,6 +25,9 @@ enum VerificationRefusal(val message: String):
       extends VerificationRefusal(s"several aggregate records carry the manifest's whitelist hash (${runIds.mkString(", ")})")
   case MalformedRecord(name: String, detail: String) extends VerificationRefusal(s"malformed record $name: $detail")
   case PayloadMismatch(name: String) extends VerificationRefusal(s"payload $name is missing or does not match its ledger hash")
+  case PayloadLedgerMismatch(ledger: String)
+      extends VerificationRefusal(s"ledger record $ledger disagrees with its payload's status or entry inventory")
+  case DatasetsOutOfPlan(datasets: Int) extends VerificationRefusal(s"aggregate D = $datasets is outside the plan's dataset bounds")
   case UnitListMismatch(detail: String) extends VerificationRefusal(s"the aggregate's unit list is not the kept set: $detail")
   case ConsumedCommitMissing(unit: WorkUnit)
       extends VerificationRefusal(s"the commit the scorer consumed for ${OwnerVerification.path(unit)} is not in the store")
@@ -46,7 +53,9 @@ enum OwnerVerdict:
   * (`name -> plaintext` after the section 6 reader checks). It holds no key material and the runner never calls it.
   *
   *   1. The authoritative aggregate is the one whose `whitelist_sha256` the manifest records; none or several refuse.
-  *   2. Every ledger record must name its own payload and match its SHA-256.
+  *      Its D must be one the runner can produce for the plan (the full plan, or at least `minDatasets`).
+  *   2. Every ledger record must name its own payload, match its SHA-256, and agree with the payload's status and
+  *      entry inventory; a payload that does not decode refuses (never an exception).
   *   3. The scored commit of a unit is its first completed attempt: the `scheduled` record with the smallest
   *      invocation (then the smallest run id), whatever its status, failures and refusals included.
   *   4. The aggregate's `units` must be exactly the plan's cells and arms over datasets `0 until D`, each naming a
@@ -56,7 +65,8 @@ enum OwnerVerdict:
   *      sealed in the first attempts' payloads, and its [[CorpusDigest.outcomes]] must equal `corpus_outcomes_sha256`.
   *
   * Any difference in 5 or 6 invalidates the whitelist. A store whose aggregate binds no contributions (a legacy,
-  * pre-S10 aggregate) or whose schema has no assembler is [[OwnerVerdict.Unverifiable]], never `Valid`.
+  * pre-S10 aggregate), whose schema has no assembler, or whose first attempts lack a contribution is
+  * [[OwnerVerdict.Unverifiable]], never `Valid`, whatever defaults an assembler would supply.
   */
 object OwnerVerification:
   private[exec] def path(u: WorkUnit): String = s"${u.cell.value}/${SealedNames.dataset(u.dataset)}/${u.arm.value}"
@@ -74,6 +84,7 @@ object OwnerVerification:
   ): OwnerVerdict =
     val result = for
       agg <- authoritative(items, manifestWhitelistSha256)
+      _ <- datasetBounds(agg, plan)
       ledgers <- ledgerRecords(items)
       _ <- unitList(agg, plan)
       firsts <- firstAttempts(agg, ledgers)
@@ -149,10 +160,25 @@ object OwnerVerification:
           case CommitPhase.Rerun => (SealedNames.rerunLedger(r.unit, r.runId), SealedNames.rerunData(r.unit, r.runId))
         if own != n || r.payload != payload then Left(VerificationRefusal.MalformedRecord(n, "record does not match its name"))
         else if !items.get(payload).exists(b => Fs.sha256(b) == r.payloadSha256) then Left(VerificationRefusal.PayloadMismatch(payload))
-        else Right(r)
+        else
+          decode(items, payload).flatMap { (status, entries) =>
+            if status != r.status || entries.map(_._1) != r.entries then Left(VerificationRefusal.PayloadLedgerMismatch(n))
+            else Right(r)
+          }
       }
     }
     parsed.collectFirst { case Left(e) => e }.toLeft(parsed.collect { case Right(r) => r })
+
+  /** A unit payload, decoded with every failure contained in a typed refusal. */
+  private def decode(items: Map[String, Array[Byte]], payload: String): Either[VerificationRefusal, (UnitStatus, Vector[(String, Array[Byte])])] =
+    try UnitPayload.decode(items(payload)).left.map(VerificationRefusal.MalformedRecord(payload, _))
+    catch case NonFatal(e) => Left(VerificationRefusal.MalformedRecord(payload, e.getClass.getSimpleName))
+
+  /** D as the runner can produce it for this plan: the full plan, or a partial pilot of at least `minDatasets`. */
+  private def datasetBounds(agg: Aggregate, plan: PilotPlan): Either[VerificationRefusal, Unit] =
+    val d = agg.datasets
+    val ok = d >= 2 && d <= plan.datasets && (d == plan.datasets || d >= plan.minDatasets)
+    Either.cond(ok, (), VerificationRefusal.DatasetsOutOfPlan(d))
 
   private def unitList(agg: Aggregate, plan: PilotPlan): Either[VerificationRefusal, Unit] =
     val expected = for
@@ -193,15 +219,21 @@ object OwnerVerification:
           case Some(assembler) =>
             val decoded = agg.units.map { c =>
               val rec = firsts(c.unit)
-              UnitPayload.decode(items(rec.payload)) match
-                case Left(e) => Left(VerificationRefusal.MalformedRecord(rec.payload, e))
-                case Right((_, entries)) =>
-                  Right(UnitContribution(c.unit, entries.collectFirst { case (n, b) if n == ScorerContribution.EntryName => b }))
+              decode(items, rec.payload).map((_, entries) =>
+                new UnitContribution(c.unit, entries.collectFirst { case (n, b) if n == ScorerContribution.EntryName => b })
+              )
             }
             decoded.collectFirst { case Left(e) => e } match
               case Some(e) => Left(e)
               case None =>
-                val contributions = decoded.collect { case Right(u) => u }.sortBy(u => path(u.unit))
-                Right(assembler.outcomes(agg.datasets, contributions) match
-                  case Left(code) => DigestCheck.NotChecked(UnverifiableReason.RebuildFailed(code))
-                  case Right(o) => if CorpusDigest.outcomes(agg.datasets, o) == agg.outcomes then DigestCheck.Matched else DigestCheck.Mismatched)
+                val contributions = UnitContribution.canonical(decoded.collect { case Right(u) => u })
+                // absent evidence is never made acceptable by an assembler's defaults (re-review failure 1)
+                contributions.find(_.payload.isEmpty) match
+                  case Some(missing) => Right(DigestCheck.NotChecked(UnverifiableReason.MissingContribution(missing.unit)))
+                  case None =>
+                    val rebuilt =
+                      try assembler.outcomes(agg.datasets, contributions).map(CorpusDigest.outcomes(agg.datasets, _))
+                      catch case NonFatal(e) => Left("assembler_" + e.getClass.getSimpleName)
+                    Right(rebuilt match
+                      case Left(code) => DigestCheck.NotChecked(UnverifiableReason.RebuildFailed(code.take(64)))
+                      case Right(digest) => if digest == agg.outcomes then DigestCheck.Matched else DigestCheck.Mismatched)

@@ -222,11 +222,11 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 
 **Owner verification** (`OwnerVerification.verify`, over the decrypted store; reference implementation of this section):
 
-1. The authoritative aggregate is the one whose `whitelist_sha256` manifest v1 records. **No** such record, or **several** (for example the same pilot aggregated twice), refuses.
-2. Every ledger record must sit under its own name and name its own payload, and that payload must match `payload_sha256`; otherwise the store is refused.
+1. The authoritative aggregate is the one whose `whitelist_sha256` manifest v1 records. **No** such record, or **several** (for example the same pilot aggregated twice), refuses. Its `datasets` (D) must be one the runner can produce for the plan: the full plan, or a partial pilot with `minDatasets <= D < datasets`; otherwise refused.
+2. Every ledger record must sit under its own name and name its own payload, that payload must match `payload_sha256`, decode as a unit payload (every count and length checked against the remaining bytes; a malformed payload is a typed refusal, never an exception), and carry the ledger's `status` and `entries`; otherwise the store is refused.
 3. `units` must be exactly the plan's cells and arms over datasets `0 until D`, each naming an existing commit of the aggregating invocation; otherwise refused.
 4. Primary check: as above. Secondary check: rebuild from the `scorer-contribution` entries of the first completed attempts with the assembler for `contribution_schema`.
-5. Verdict: any unit mismatch or a digest mismatch is **Invalidated** (the primary check alone suffices for that, even on a legacy aggregate). Otherwise, an aggregate without `contribution_schema` (legacy, pre-S10), with a schema the owner has no assembler for, or whose rebuild fails is **Unverifiable**, never Valid. Only an aggregate that passes both checks is **Valid**. Units whose scheduled commits differ in `payload_sha256` are listed for the deviation report in every verdict.
+5. Verdict: any unit mismatch or a digest mismatch is **Invalidated** (the primary check alone suffices for that, even on a legacy aggregate). Otherwise, an aggregate without `contribution_schema` (legacy, pre-S10), with a schema the owner has no assembler for, with a first completed attempt that sealed no `scorer-contribution` (whatever defaults an assembler would supply), or whose rebuild fails is **Unverifiable**, never Valid. Only an aggregate that passes both checks is **Valid**. Units whose scheduled commits differ in `payload_sha256` are listed for the deviation report in every verdict.
 
 The runner seals at most one aggregate per run id: a second `aggregateAndSeal` with the same run id is refused with `AlreadyAggregated`. Several aggregates may exist, for example a partial pilot and then the full one. The authoritative aggregate is the one whose `whitelist_sha256` is recorded in manifest v1.
 

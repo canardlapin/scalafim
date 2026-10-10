@@ -104,8 +104,8 @@ class PilotAggregationSuite extends munit.FunSuite:
         ArmResult.Done()
       val crash: CommitHook = (s, j) => if s == CommitStage.MarkerWritten && j.dataset == 2 then throw new SimulatedCrash
       val clk = new FakeClock
-      intercept[SimulatedCrash](new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), st, new PilotRoot(1L), arms, CpuGuard(1000.0, 2000.0), clk, hook = crash).run())
-      val r2 = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), st, new PilotRoot(1L), arms, CpuGuard(1000.0, 2000.0), clk)
+      intercept[SimulatedCrash](new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), st, new PilotRoot(1L), arms, CpuGuard(), clk, hook = crash).run())
+      val r2 = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), st, new PilotRoot(1L), arms, CpuGuard(), clk)
       val rep = r2.run().fold(x => fail(x.message), identity)
       assertEquals(rep.scorerInputs.length, 6)
       assert(rep.scorerInputs.exists(_.phase == CommitPhase.Rerun) && rep.scorerInputs.exists(_.phase == CommitPhase.Scheduled))

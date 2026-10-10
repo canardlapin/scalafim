@@ -460,6 +460,10 @@ not stamped).
   the highest completed index, so the runner writes a durable constant-content dispatch marker
   before a job's first arm, and a resume past the soft stop finishes every dispatched incomplete job.]*
 - **Hard stop (60):** `CpuCeilingReached`, resumable only with an owner-approved raised ceiling.
+  *[2026-10-10, owner decision of 2026-10-03 "do not raise the ceiling without the owner": `CpuGuard`
+  refuses a hard ceiling above 60 core-hours. The only way past 60 is `CpuGuard.raised` with an
+  `OwnerCeilingRaise` value naming the new ceiling, the approving owner and the reason; the runner
+  logs `PILOT_CEILING_RAISE` with the ceiling and the approver. No code path raises the ceiling by itself.]*
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit
   attempt.]*
