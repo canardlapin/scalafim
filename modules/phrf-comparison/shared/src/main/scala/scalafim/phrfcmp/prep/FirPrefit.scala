@@ -134,6 +134,7 @@ object ArFitProvenance:
     c match
       case RunCorrection.Uncorrected       => "uncorrected"
       case RunCorrection.Applied(r)        => s"applied:${bits(r)}"
+      case RunCorrection.AppliedWithTailAnchor(r, directions) => s"tail-applied:${bits(r)}:$directions"
       case RunCorrection.IllConditioned(r) => s"ill-conditioned:${bits(r)}"
       case RunCorrection.SolveFallback(w)  => s"solve-fallback:${w.toString}"
       case RunCorrection.NotAttempted(w)   => s"not-attempted:${w.toString}"

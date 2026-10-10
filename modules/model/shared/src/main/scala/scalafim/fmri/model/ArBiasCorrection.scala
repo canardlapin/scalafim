@@ -21,9 +21,14 @@ object ArCorrectionMaxLag:
 enum ArBiasCorrection:
   case Raw
   case OlsDesign(ceiling: ArCorrectionMaxLag)
+  /** Fixed wider budget with fmriAR 0.4.1 short-memory tail anchoring. */
+  case OlsTailAnchored(maxLag: ArCorrectionMaxLag)
 
 object ArBiasCorrection:
   def olsDesign(ceiling: Int = 25): Either[ModelError, ArBiasCorrection] =
     ArCorrectionMaxLag(ceiling).map(OlsDesign.apply)
+
+  def olsTailAnchored(maxLag: Int = 25): Either[ModelError, ArBiasCorrection] =
+    ArCorrectionMaxLag(maxLag).map(OlsTailAnchored.apply)
 
   val Ols: ArBiasCorrection = OlsDesign(ArCorrectionMaxLag.unsafe(25))

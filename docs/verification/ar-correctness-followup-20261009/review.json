@@ -1,0 +1,25 @@
+{
+  "reviewed_at": "2026-10-10T01:08:43.756709+00:00",
+  "reviewer": "/root/ar_consumer_review",
+  "scope": "read-only numerical and consumer review; reviewer started no builds",
+  "findings": [
+    {
+      "issue": "Robust engines silently ignore GLS-only stationary/EstimateOnly requests",
+      "resolution": "Explicit refusals in typed model and direct execution boundaries; public regressions."
+    },
+    {
+      "issue": "Unconditional ar_options/v3 identity migration",
+      "resolution": "Documented legacy/raw/IID preparation invalidation and pinned profile goldens."
+    },
+    {
+      "issue": "Continuity protocol all-cases wording conflicts with restricted admission",
+      "resolution": "Reconciled decision before outcomes; only long AR2 corrected+known-phi cell eligible."
+    }
+  ],
+  "remaining_numerical_defects": [],
+  "scientific_limits": [
+    "Tail25 short-run negative corrected variance is an estimator failure, not a scaling bug.",
+    "Restricted long-run qualification cannot clear short-run voxelwise or heterogeneous truth failures.",
+    "Do not relax fallback gates or acceptance margins."
+  ]
+}

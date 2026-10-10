@@ -67,6 +67,7 @@ private[profile] object ProfileFitIdentity:
     val first = initial match
       case InitialConditionPolicy.Identity => record("identity")
       case InitialConditionPolicy.ExactAr1 => record("exact_ar1")
+      case InitialConditionPolicy.Stationary => record("stationary")
       case InitialConditionPolicy.PrecomputedScale(scale) => record("precomputed_scale", number(scale))
     val methodId = method match
       case WhiteningMethod.Fixed => "fixed"

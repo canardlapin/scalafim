@@ -33,19 +33,24 @@ final case class PreparedBinding private[ar] (
     fingerprint: DesignFingerprint,
     budget: CorrectionBudget,
     targetOrder: Int,
-    private[ar] basis: AcvfBias.DesignBasis
+    private[ar] basis: AcvfBias.DesignBasis,
+    solvePolicy: AcvfCorrectionSolve = AcvfCorrectionSolve.Exact
 )
 
 final case class PreparedCorrection private[ar] (
     matrices: AcvfBiasMatrices,
     runs: Vector[RunCorrection],
     layout: NoiseEstimationLayout,
-    binding: Option[PreparedBinding]
+    binding: Option[PreparedBinding],
+    private[ar] operators: Vector[Option[AcvfCorrection]] = Vector.empty
 ):
   /** The matrix to solve against for `run`, or `None` when the run is left uncorrected. */
-  def usable(run: Int): Option[DMat] =
+  def usable(run: Int): Option[DMat] = correctionFor(run).map(_.matrix)
+
+  private[ar] def correctionFor(run: Int): Option[AcvfCorrection] =
     runs(run) match
-      case RunCorrection.Applied(_) => Some(matrices.byRun(run))
+      case RunCorrection.Applied(_) | RunCorrection.AppliedWithTailAnchor(_, _) =>
+        if operators.isEmpty then Some(AcvfCorrection(matrices.byRun(run))) else operators(run)
       case _                        => None
 
 /** Design-aware residual-bias correction of the raw autocovariance, mirroring fmriAR's `acvf_bias_matrix()`.
@@ -171,9 +176,10 @@ object AcvfBias:
       design: DMat,
       layout: NoiseEstimationLayout,
       budget: CorrectionBudget,
-      targetOrder: Int
+      targetOrder: Int,
+      solvePolicy: AcvfCorrectionSolve = AcvfCorrectionSolve.Exact
   ): Either[ArError, PreparedCorrection] =
-    prepareChecked(design, layout, budget, targetOrder, None)
+    prepareChecked(design, layout, budget, targetOrder, None, solvePolicy)
 
   /** The policy path: the basis is computed and the residuals validated before any bias matrix is built, so bad
     * residuals fail fast.
@@ -183,7 +189,8 @@ object AcvfBias:
       layout: NoiseEstimationLayout,
       budget: CorrectionBudget,
       targetOrder: Int,
-      residuals: Option[DMat]
+      residuals: Option[DMat],
+      solvePolicy: AcvfCorrectionSolve = AcvfCorrectionSolve.Exact
   ): Either[ArError, PreparedCorrection] =
     if design.rows != layout.rows then Left(ArError.DesignRowMismatch(design.rows, layout.rows))
     else
@@ -192,15 +199,19 @@ object AcvfBias:
         _ <- residuals.fold[Either[ArError, Double]](Right(0.0))(validateResiduals(_, basis, OrthogonalityTolerance))
         lag <- resolveLag(budget, design, layout, targetOrder)
         built <- buildMatrices(basis, layout, lag)
+        operators <- AcvfCorrection.prepare(built, layout, solvePolicy)
       yield PreparedCorrection(
         built,
-        built.byRun.map { matrix =>
+        built.byRun.zipWithIndex.map { (matrix, run) =>
           val rcond = reciprocalCondition(matrix)
-          if rcond.isFinite && rcond >= ReciprocalConditionFloor then RunCorrection.Applied(rcond)
+          val directions = operators(run).fold(0)(_.anchoredDirections)
+          if rcond.isFinite && rcond >= ReciprocalConditionFloor && directions > 0 then RunCorrection.AppliedWithTailAnchor(rcond, directions)
+          else if rcond.isFinite && rcond >= ReciprocalConditionFloor then RunCorrection.Applied(rcond)
           else RunCorrection.IllConditioned(rcond)
         },
         layout,
-        Some(PreparedBinding(fingerprint(design, basis.rank), budget, targetOrder, basis))
+        Some(PreparedBinding(fingerprint(design, basis.rank), budget, targetOrder, basis, solvePolicy)),
+        operators
       )
 
   private[ar] def fingerprint(design: DMat, rank: Int): DesignFingerprint =
@@ -333,105 +344,98 @@ object AcvfBias:
   ): DMat =
     val n = basis.rows
     val nv = keep.length
+    val rank = basis.rank
     val dim = maxLag + 1
+    val qKeep = Matrix.tabulate(nv, rank)((row, col) => basis.q(keep(row), col))
+    val qMeans = Array.tabulate(rank): col =>
+      var total = 0.0
+      var row = 0
+      while row < nv do
+        total += qKeep(row, col)
+        row += 1
+      total / nv.toDouble
+    val u = Matrix.tabulate(nv, rank)((row, col) => qKeep(row, col) - qMeans(col))
+    val selected = new Array[Double](n)
+    keep.foreach(row => selected(row) = 1.0)
 
-    // R = C (I - QQ')[keep, :], with C centering the surviving rows (one group per run).
-    val resid = new Array[Double](nv * n)
-    if basis.rank > 0 then
-      val qKeep = Matrix.tabulate(nv, basis.rank)((row, col) => basis.q(keep(row), col))
-      val projection = qKeep * basis.q.t
-      var a = 0
-      while a < nv do
-        var j = 0
-        while j < n do
-          resid(a * n + j) = -projection(a, j)
-          j += 1
-        a += 1
-    var a = 0
-    while a < nv do
-      resid(a * n + keep(a)) += 1.0
-      a += 1
-    var j = 0
-    while j < n do
-      var sum = 0.0
-      a = 0
-      while a < nv do
-        sum += resid(a * n + j)
-        a += 1
-      val mean = sum / nv.toDouble
-      a = 0
-      while a < nv do
-        resid(a * n + j) -= mean
-        a += 1
-      j += 1
-
-    // Lag-h pairs actually used by the estimator: (hi, lo) positions within the surviving rows.
     val pairHi = new Array[Array[Int]](dim)
     val pairLo = new Array[Array[Int]](dim)
-    pairHi(0) = Array.tabulate(nv)(i => i)
-    pairLo(0) = pairHi(0)
-    var lag = 1
-    while lag <= maxLag do
-      if nv <= lag then
-        pairHi(lag) = Array.emptyIntArray
-        pairLo(lag) = Array.emptyIntArray
-      else
-        val hi = Array.newBuilder[Int]
-        val lo = Array.newBuilder[Int]
-        var i = lag
-        while i < nv do
-          if segmentOf(i) == segmentOf(i - lag) then
-            hi += i
-            lo += i - lag
-          i += 1
-        pairHi(lag) = hi.result()
-        pairLo(lag) = lo.result()
-      lag += 1
+    var h = 0
+    while h < dim do
+      val hi = Array.newBuilder[Int]
+      val lo = Array.newBuilder[Int]
+      var row = h
+      while row < nv do
+        if segmentOf(row) == segmentOf(row - h) then
+          hi += row
+          lo += row - h
+        row += 1
+      pairHi(h) = hi.result()
+      pairLo(h) = lo.result()
+      h += 1
+    val out = Matrix.newBuilder(dim, dim)
+    var diagonal = 0
+    while diagonal < dim do
+      out(diagonal, diagonal) = 1.0
+      diagonal += 1
 
-    val out = new Array[Double](dim * dim)
-    var d = 0
-    while d < dim do
-      out(d * dim + d) = 1.0
-      d += 1
-
-    val shifted = new Array[Double](nv * n)
+    // R = B - U Q', where B selects and centers valid rows. Expand R S_k R'
+    // through the rank-sized design basis, avoiding both n_valid-by-n buffers.
     var k = 0
-    while k <= maxLag do
-      // R S_k: (S_k v)[j] = v[j - k] + v[j + k], keeping only neighbours inside the same run.
-      if k == 0 then System.arraycopy(resid, 0, shifted, 0, nv * n)
-      else
-        java.util.Arrays.fill(shifted, 0.0)
-        if k < n then
-          var b = 0
-          while b < nv do
-            val base = b * n
-            var col = k
-            while col < n do
-              if runOf(col) == runOf(col - k) then
-                shifted(base + col) += resid(base + col - k)
-                shifted(base + col - k) += resid(base + col)
-              col += 1
-            b += 1
-      var h = 0
-      while h <= maxLag do
+    while k < dim do
+      val skq = Matrix.tabulate(n, rank): (row, col) =>
+        if k == 0 then basis.q(row, col)
+        else
+          var total = 0.0
+          if row >= k && runOf(row) == runOf(row - k) then total += basis.q(row - k, col)
+          if row + k < n && runOf(row) == runOf(row + k) then total += basis.q(row + k, col)
+          total
+      val e = Array.tabulate(nv): position =>
+        val row = keep(position)
+        if k == 0 then selected(row)
+        else
+          var total = 0.0
+          if row >= k && runOf(row) == runOf(row - k) then total += selected(row - k)
+          if row + k < n && runOf(row) == runOf(row + k) then total += selected(row + k)
+          total
+      val means = Array.tabulate(rank): col =>
+        var total = 0.0
+        var row = 0
+        while row < nv do
+          total += skq(keep(row), col)
+          row += 1
+        total / nv.toDouble
+      val x = Matrix.tabulate(nv, rank)((row, col) => skq(keep(row), col) - means(col))
+      val g = basis.q.t * skq
+      val ug = u * g // Hoist this rank-squared product outside the observed-lag loop.
+      val msm = e.sum
+      h = 0
+      while h < dim do
         val hi = pairHi(h)
         val lo = pairLo(h)
-        if hi.length > 0 then
-          var total = 0.0
-          var p = 0
-          while p < hi.length do
-            val left = hi(p) * n
-            val right = lo(p) * n
+        if hi.nonEmpty then
+          var centering = 0.0
+          var t2 = 0.0
+          var t3 = 0.0
+          var t4 = 0.0
+          var pair = 0
+          while pair < hi.length do
+            val a = hi(pair)
+            val b = lo(pair)
+            centering += e(a) + e(b)
             var col = 0
-            while col < n do
-              total += resid(left + col) * shifted(right + col)
+            while col < rank do
+              t2 += x(a, col) * u(b, col)
+              t3 += x(b, col) * u(a, col)
+              t4 += ug(a, col) * u(b, col)
               col += 1
-            p += 1
-          out(h * dim + k) = total / hi.length.toDouble
+            pair += 1
+          val count = hi.length.toDouble
+          val t1 = (if h == k then count else 0.0) - centering / nv.toDouble + count * msm / (nv.toDouble * nv.toDouble)
+          out(h, k) = (t1 - t2 - t3 + t4) / count
         h += 1
       k += 1
-
-    Matrix.tabulate(dim, dim)((row, col) => out(row * dim + col))
+    out.result()
 
   /** Solve `A gamma_true = gamma_raw`, mirroring fmriAR's `.apply_acvf_correction_result()`.
     *
@@ -440,6 +444,9 @@ object AcvfBias:
     * non-finite solution or a non-positive variance, the caller keeps the raw vector (as fmriAR does) and the
     * typed reason is reported. `solve` is a test seam for forcing solver failures.
     */
+  private[ar] def correct(gamma: Vector[Double], correction: AcvfCorrection): Either[CorrectionFallback, Vector[Double]] =
+    correct(gamma, correction.matrix, correction.solve)
+
   private[ar] def correct(
       gamma: Vector[Double],
       matrix: DMat,

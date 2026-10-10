@@ -238,6 +238,23 @@ class RobustSuite extends munit.FunSuite:
       }
   }
 
+  test("robust AR refuses unsupported GLS policies through direct and bounded entry points") {
+    val configs = Vector(
+      AutocorrelationConfig.withInitialization(scalafim.fmri.model.ArInitialization.Stationary).toOption.get,
+      AutocorrelationConfig.unsafe(censorTreatment = scalafim.fmri.model.ArCensorTreatment.EstimateOnly)
+    )
+    configs.foreach: config =>
+      val direct = Robust.fit(robustArDesign, robustArResponse, robustArPartitions,
+        RobustOptions(reestimateAutocorrelation = true), Some(config.toLegacy))
+      assert(direct.left.toOption.exists {
+        case FitError.UnsupportedRobust(message) => message.contains("does not support")
+        case _ => false
+      })
+      val strategy = FitStrategy.RobustLeastSquares(
+        RobustConfig.huber().toOption.get, autocorrelation = RobustAutocorrelation.Reestimate(config))
+      assert(FitPlan.make(robustArModel, strategy).isLeft)
+  }
+
   private def designMatrix(): DesignMatrix =
     DesignMatrix.unsafe(
       scalafim.fmri.fit.GaleTestMatrix.fromRows(rows.map(i => Vector(i.toDouble, 1.0)))

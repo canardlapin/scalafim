@@ -1,7 +1,7 @@
 package scalafim.fmri.fit
 
 import scalafim.dataset.DatasetSeriesReader
-import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArNoiseSummary, ArOrder, ArOrderValue, NoiseEstimationLayout, NoiseFit, NoisePooling, PreparedCorrection, RunCorrection, WhiteningPlan, WhiteningMethod, InitialConditionPolicy}
+import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArNoiseSummary, ArOrder, ArOrderValue, NoiseEstimationLayout, NoiseFit, NoisePooling, PreparedCorrection, RunCorrection, WhiteningPlan, WhiteningMethod}
 import scalafim.fmri.design.CoefficientAxis
 import scalafim.fmri.model.{ArBiasCorrection, ArOptions, AutocorrelationConfig, FitPlan, FitStrategy}
 
@@ -28,9 +28,9 @@ private[fit] object PooledGlsPreparation:
       run.fold(input)(value => ResponseBlock.unsafe(RunwiseGls.selectRows(input.value, value.partition.rowIndices)))
 
     def noiseOptions: ArFitOptions =
-      ArFitOptions(ArOrder.Fixed(config.order.value),
+      ArFitOptions.withInitialCondition(ArOrder.Fixed(config.order.value),
         if config.global then NoisePooling.Global else NoisePooling.Run,
-        exactFirstAr1 = config.exactFirst)
+        initialCondition = Gls.initialCondition(config))
 
     def summarize(residuals: gale.linalg.DMat): Either[FitError, ArNoiseSummary] =
       val order = ArOrderValue.unsafe(config.order.value)
@@ -129,7 +129,7 @@ private[fit] object PooledGlsPreparation:
         unit.partitions.map(p => s"${p.runIndex}:${p.rowIndices.mkString(",")}:${p.timepoints.mkString(",")}").mkString(";"),
         unit.run.flatMap(_.projection).fold("")(_.sourceColumnIndices.mkString(",")),
         PreparedGlsArtifact.policyIdentity(unit.initial.diagnostics.policy)
-      ) ++ (if unit.config.biasCorrection == ArBiasCorrection.Raw then Vector.empty else Vector(ResponsePreparationIdentity.biasCorrection(unit.config.biasCorrection))))
+      ) ++ (if unit.config.censorTreatment == scalafim.fmri.model.ArCensorTreatment.EstimateOnly then Vector("censorTreatment=estimate-only") else Vector.empty) ++ (if unit.config.initialization == scalafim.fmri.model.ArInitialization.Stationary then Vector("initialization=stationary") else Vector.empty) ++ (if unit.config.biasCorrection == ArBiasCorrection.Raw then Vector.empty else Vector(ResponsePreparationIdentity.biasCorrection(unit.config.biasCorrection))))
     }
     FitWorkDescriptor.frame(header ++ designs)
 
@@ -155,7 +155,7 @@ private[fit] object PooledGlsPreparation:
       val snapshot = saved(index)
       val w = snapshot.whitening
       val pooling = if unit.config.global then NoisePooling.Global else NoisePooling.Run
-      val initial = InitialConditionPolicy.fromExactFirstAr1(unit.config.exactFirst)
+      val initial = Gls.initialCondition(unit.config)
       val order = unit.config.order.value
       if unit.layout.retainedRows == 0 || (0 until unit.layout.runCount).exists { run =>
           val segments = unit.layout.segmentsForRun(run)
@@ -187,7 +187,7 @@ private[fit] object PooledGlsPreparation:
     val prepared = for
       config <- Gls.autocorrelationConfig(options)
       _ <- Gls.validatePartitions(partitions)
-      layout <- Gls.noiseEstimationLayout(partitions, options.censoredTimepoints)
+      layout <- Gls.noiseEstimationLayout(partitions, options.censoredTimepoints, options.censorTreatment)
       initial <- Ols.prepare(design)
       _ <- ResidualDegreesOfFreedom(design.timepoints - initial.diagnostics.rank)
       correction <- Gls.preparedCorrection(design.value, layout, config)

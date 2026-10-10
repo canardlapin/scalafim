@@ -57,6 +57,7 @@ jobs:
           echo "fmrireg=$(jq -r '.r.packages.fmrireg.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmriar_ar=$(jq -r '.r.packages.fmriAR.revision' tools/r-parity/ar-reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmrireg_ar=$(jq -r '.r.packages.fmrireg.revision' tools/r-parity/ar-reference-lock.json)" >> "$GITHUB_OUTPUT"
+          echo "fmriar_041=$(jq -r '.r.packages.fmriAR.revision' tools/r-parity/ar-041-reference-lock.json)" >> "$GITHUB_OUTPUT"
 
       - name: Check out fmriAR at the locked revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -99,6 +100,13 @@ jobs:
           repository: bbuchsbaum/fmrireg
           ref: ${{ steps.lock.outputs.fmrireg_ar }}
           path: reference/ar-fmrireg
+
+      - name: Check out fmriAR 0.4.1 at its independent locked revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bbuchsbaum/fmriAR
+          ref: ${{ steps.lock.outputs.fmriar_041 }}
+          path: reference/ar041-fmriAR
 
       - name: Set up locked R
         uses: r-lib/actions/setup-r@aae88a2d9cd3d63571eb05980b09f44611788515 # v2-branch
@@ -167,6 +175,16 @@ jobs:
         run: >-
           python3 tools/r-parity/check_receipts.py --regenerate r
           --lock-path tools/r-parity/ar-reference-lock.json
+
+      - name: Install the locked fmriAR 0.4.1 reference
+        run: R CMD INSTALL reference/ar041-fmriAR
+
+      - name: Regenerate the fmriAR 0.4.1 algorithm receipts
+        env:
+          FMRIAR_041_R: ${{ github.workspace }}/reference/ar041-fmriAR
+        run: >-
+          python3 tools/r-parity/check_receipts.py --regenerate r
+          --lock-path tools/r-parity/ar-041-reference-lock.json
 
       - name: Capture the R receipt diff
         if: always()

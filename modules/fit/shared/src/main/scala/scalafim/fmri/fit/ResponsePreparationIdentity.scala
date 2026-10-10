@@ -114,28 +114,28 @@ private[fit] object ResponsePreparationIdentity:
         values.copyRowMajorTo(rowMajor)
         record("matrix_projection", matrix(values.rows, values.cols, rowMajor), regularization(lambda))
 
-  /** Raw policies keep the historical v1 form, whose correction is implicitly
-    * Raw. Corrected policies use an explicit v2 nested record; this avoids
-    * changing old immutable preparation identities when the default is used.
-    */
+  /** Scientific correction policy encoded in the versioned AR options record. */
   private[fit] def biasCorrection(value: ArBiasCorrection): String =
     value match
       case ArBiasCorrection.Raw => record("raw")
       case ArBiasCorrection.OlsDesign(ceiling) => record("ols_design", s"ceiling=${ceiling.value}")
+      case ArBiasCorrection.OlsTailAnchored(maxLag) => record("ols_tail_anchored", s"maxLag=${maxLag.value}")
 
   private[fit] def autocorrelation(value: ArOptions): String =
     value match
-      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, correction) =>
+      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, correction, initialization, censorTreatment) =>
         val order = structure match
           case ArStructure.Iid => record("iid")
           case ArStructure.Ar(order) => record("ar", order.toString)
         record(
-          if correction == ArBiasCorrection.Raw then "ar_options" else "ar_options/v2",
+          "ar_options/v3",
           (Vector(s"structure=$order",
           s"iterations=$iterations",
           s"global=$global",
           s"voxelwise=$voxelwise",
           s"exactFirst=$exactFirst",
+          s"initialization=${initialization.fold("legacy")(_.toString)}",
+          s"censorTreatment=$censorTreatment",
           s"censoredTimepoints=${ints("timepoints", censoredTimepoints)}",
           s"rho=${option(rho.map(number))}",
           s"phi=${option(phi.map(numbers))}"

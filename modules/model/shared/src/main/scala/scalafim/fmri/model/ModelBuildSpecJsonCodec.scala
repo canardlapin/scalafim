@@ -84,26 +84,39 @@ object ModelBuildSpecJsonCodec:
       val encoded = Obj("order" -> Num(value.order.value), "iterations" -> Num(value.iterations), "global" -> Bool(value.global),
         "voxelwise" -> Bool(value.voxelwise), "exactFirst" -> Bool(value.exactFirst),
         "censoredTimepoints" -> Arr.from(value.censoredTimepoints.values.map(Num(_))), "coefficients" -> coefficients)
+      if value.censorTreatment != ArCensorTreatment.RestartWhitening then encoded("censorTreatment") = Str(value.censorTreatment.toString)
+      if value.initialization == ArInitialization.Stationary then encoded("initialization") = Str("Stationary")
       value.biasCorrection match
         case ArBiasCorrection.Raw => ()
         case ArBiasCorrection.OlsDesign(ceiling) =>
           encoded("biasCorrection") = Obj("kind" -> Str("ols-design"), "ceiling" -> Num(ceiling.value))
+        case ArBiasCorrection.OlsTailAnchored(maxLag) =>
+          encoded("biasCorrection") = Obj("kind" -> Str("ols-tail-anchored"), "maxLag" -> Num(maxLag.value))
       encoded
 
   private def readBiasCorrection(value: Cursor): Result[ArBiasCorrection] =
-    for
-      _ <- value.fields(Set("kind", "ceiling"))
-      kind <- str(value, "kind")
-      _ <- ensure(kind == "ols-design", s"${value.path}.kind", "unknown AR bias correction")
-      ceiling <- value.field("ceiling").flatMap(_.integer)
-      policy <- admit(ArBiasCorrection.olsDesign(ceiling), s"${value.path}.ceiling")(_.message)
-    yield policy
+    str(value, "kind").flatMap:
+      case "ols-design" =>
+        for
+          _ <- value.fields(Set("kind", "ceiling"))
+          ceiling <- value.field("ceiling").flatMap(_.integer)
+          policy <- admit(ArBiasCorrection.olsDesign(ceiling), s"${value.path}.ceiling")(_.message)
+        yield policy
+      case "ols-tail-anchored" =>
+        for
+          _ <- value.fields(Set("kind", "maxLag"))
+          maxLag <- value.field("maxLag").flatMap(_.integer)
+          policy <- admit(ArBiasCorrection.olsTailAnchored(maxLag), s"${value.path}.maxLag")(_.message)
+        yield policy
+      case other => fail(s"${value.path}.kind", s"unknown AR bias correction $other")
 
   private[model] def readAutocorrelation(value: Cursor): Result[AutocorrelationConfig] =
     for
       fields <- value.obj
       _ <- value.fields(Set("order", "iterations", "global", "voxelwise", "exactFirst", "censoredTimepoints", "coefficients") ++
-        (if fields.contains("biasCorrection") then Set("biasCorrection") else Set.empty))
+        (if fields.contains("biasCorrection") then Set("biasCorrection") else Set.empty) ++
+        (if fields.contains("initialization") then Set("initialization") else Set.empty) ++
+        (if fields.contains("censorTreatment") then Set("censorTreatment") else Set.empty))
       order <- value.field("order").flatMap(_.integer)
       iterations <- value.field("iterations").flatMap(_.integer)
       global <- value.field("global").flatMap(_.bool)
@@ -112,7 +125,9 @@ object ModelBuildSpecJsonCodec:
       censored <- value.field("censoredTimepoints").flatMap(_.arr).flatMap(items => traverse(items)(_.integer))
       coefficients <- value.field("coefficients").flatMap(readArCoefficients)
       policy <- if fields.contains("biasCorrection") then value.field("biasCorrection").flatMap(readBiasCorrection) else Right(ArBiasCorrection.Raw)
-      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, policy), value.path)(_.message)
+      initialization <- if fields.contains("initialization") then value.field("initialization").flatMap(c => enumCase(c, "AR initialization", ArInitialization.values)).map(Some(_)) else Right(None)
+      censorTreatment <- if fields.contains("censorTreatment") then value.field("censorTreatment").flatMap(c => enumCase(c, "AR censor treatment", ArCensorTreatment.values)) else Right(ArCensorTreatment.RestartWhitening)
+      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, policy, initialization, censorTreatment), value.path)(_.message)
     yield config
 
   private[model] def lss(value: LssStrategyConfig, path: String): Result[Value] =

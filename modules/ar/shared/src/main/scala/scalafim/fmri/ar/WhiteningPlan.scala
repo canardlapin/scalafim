@@ -52,6 +52,8 @@ enum CoefficientScope:
 enum InitialConditionPolicy:
   case Identity
   case ExactAr1
+  /** Exact stationary covariance within each segment for the admitted AR/ARMA filter. */
+  case Stationary
   case PrecomputedScale(scale: Double)
 
   def firstScale(coefficients: ArmaCoefficients): Either[ArError, Double] =
@@ -60,6 +62,8 @@ enum InitialConditionPolicy:
         Right(1.0)
       case ExactAr1 =>
         coefficients.exactAr1FirstScale
+      case Stationary =>
+        Left(ArError.StationaryWhiteningRequiresFactor)
       case PrecomputedScale(scale) =>
         if scale >= 0.0 && scale.isFinite then Right(scale)
         else Left(ArError.InvalidInitialScale(scale))
@@ -200,6 +204,8 @@ object WhiteningTransform:
       response: DMat
   ): Either[ArError, WhitenedMatrices] =
     if design.rows != response.rows then Left(ArError.RowMismatch(design.rows, response.rows))
+    else if plan.initialCondition == InitialConditionPolicy.Stationary then
+      StationaryWhitening.apply(plan, design, response)
     else
       for
         x <- matrix(plan, design)
@@ -207,6 +213,8 @@ object WhiteningTransform:
       yield WhitenedMatrices(x, y)
 
   def matrix(plan: WhiteningPlan, input: DMat): Either[ArError, DMat] =
+    if plan.initialCondition == InitialConditionPolicy.Stationary then
+      return StationaryWhitening.matrix(plan, input, transpose = false)
     plan.coveredSegments.validateRows(input.rows).flatMap { _ =>
       val out = DMat.newBuilder(input.rows, input.cols)
       var segmentIndex = 0
@@ -240,6 +248,8 @@ object WhiteningTransform:
     * The input may be strided and is not modified.
     */
   def transposeMatrix(plan: WhiteningPlan, input: DMat): Either[ArError, DMat] =
+    if plan.initialCondition == InitialConditionPolicy.Stationary then
+      return StationaryWhitening.matrix(plan, input, transpose = true)
     plan.coveredSegments.validateRows(input.rows).flatMap { _ =>
       val segments = plan.segments
       val scales = new Array[Double](segments.length)
