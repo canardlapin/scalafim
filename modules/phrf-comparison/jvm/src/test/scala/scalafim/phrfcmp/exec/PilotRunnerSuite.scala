@@ -49,7 +49,7 @@ class PilotRunnerSuite extends munit.FunSuite:
       r
 
   private val ok: WorkUnit => Int => ArmResult = _ => _ => ArmResult.Done()
-  private val roomy: CpuGuard = CpuGuard(1000.0, 2000.0)
+  private val roomy: CpuGuard = CpuGuard()
 
   private def runner(plan: PilotPlan, out: Path, arms: ArmRunner, clk: CpuClock, guard: CpuGuard = roomy, threads: Int = 1,
       hook: CommitHook = CommitHook.none, st: PilotStamp = stamp, store: Option[SealedStore] = None, rt: PilotRoot = root,
@@ -87,12 +87,15 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   private def cost(out: Path): ujson.Value = ujson.read(Files.readString(out.resolve("cost.json")))
 
-  /** Plaintext files the runner may leave next to the sealed store: stamp, CPU total, D, journal markers. */
+  /** Plaintext files the runner may leave next to the sealed store: stamp, CPU total, D, journal markers (dispatch
+    * and completion).
+    */
   private def assertOnlyAllowedPlaintext(out: Path): Unit =
     Fs.listFiles(out).foreach { p =>
       val rel = out.relativize(p).toString
       val allowed = rel == "stamp.json" || rel == "cost.json" || rel == "selection.json" ||
-        (rel.startsWith("progress/") && (rel.endsWith(".done") || rel.endsWith(".done.sha256"))) ||
+        rel == "output-id" ||
+        (rel.startsWith("progress/") && Vector(".done", ".done.sha256", ".dispatched", ".dispatched.sha256").exists(rel.endsWith)) ||
         (rel.startsWith("sealed/blobs/") && (rel.endsWith(".enc") || rel.endsWith(".enc.tmp"))) || rel == "sealed/SEALED"
       assert(allowed, s"unexpected file $rel")
     }
@@ -157,7 +160,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     runner(mkPlan(2, 6, 1), full, new Counting(c0, 10.0, ok), c0).run().fold(r => fail(r.message), identity)
     val out = tmp(); val plan = mkPlan(2, 6, 1)
     val c1 = clock(); val e1 = new Counting(c1, 10.0, ok)
-    val soft = CpuGuard(45.0 / 3600, 1000.0)
+    val soft = CpuGuard(45.0 / 3600, 60.0)
     val strict = plan.copy(minDatasets = 3)
     val first = runner(strict, out, e1, c1, soft).run()
     assertEquals(first.left.toOption.map(_.isInstanceOf[PilotRefusal.TooFewDatasets]), Some(true))
@@ -186,10 +189,10 @@ class PilotRunnerSuite extends munit.FunSuite:
     val out = tmp(); val plan = mkPlan(1, 4, 1, min = 4)
     val clk = clock()
     val e1 = new Counting(clk, 10.0, ok)
-    val r1 = runner(plan, out, e1, clk, CpuGuard(15.0 / 3600, 1000.0))
+    val r1 = runner(plan, out, e1, clk, CpuGuard(15.0 / 3600, 60.0))
     assert(r1.run().left.toOption.exists(_.isInstanceOf[PilotRefusal.TooFewDatasets]))
     val e2 = new Counting(clk, 10.0, ok)
-    val r2 = runner(plan, out, e2, clk, CpuGuard(25.0 / 3600, 1000.0))
+    val r2 = runner(plan, out, e2, clk, CpuGuard(25.0 / 3600, 60.0))
     assert(r2.run().left.toOption.exists(_.isInstanceOf[PilotRefusal.TooFewDatasets]))
     assertEquals((e1.calls.get(), e2.calls.get()), (2, 1), "soft-stopped runs: new jobs only, no recomputation")
     val e3 = new Counting(clk, 10.0, ok)
@@ -206,7 +209,7 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   test("soft stop with D >= minimum accepts a uniform reverse-index drop; plaintext selection holds D, df, UCL only") {
     val out = tmp(); val clk = clock(); val plan = mkPlan(2, 6, 1, min = 2)
-    val rep = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     assert(rep.outcome.isInstanceOf[PilotOutcome.Partial])
     val d = rep.outcome.decision
     assertEquals(d.D, 2)
@@ -220,7 +223,7 @@ class PilotRunnerSuite extends munit.FunSuite:
 
   test("partial pilot below the minimum D is refused") {
     val out = tmp(); val clk = clock(); val plan = mkPlan(2, 20, 1, min = 15)
-    val r = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 1000.0)).run()
+    val r = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard(45.0 / 3600, 60.0)).run()
     assertEquals(r.left.toOption.map(_.isInstanceOf[PilotRefusal.TooFewDatasets]), Some(true))
   }
 
@@ -278,7 +281,8 @@ class PilotRunnerSuite extends munit.FunSuite:
         case CommitStage.MarkerWritten =>
           assert(markers.exists(_.endsWith("d0001.done")) && !markers.exists(_.endsWith("d0001.done.sha256")), "marker written, sha missing")
         case CommitStage.DataSealed | CommitStage.LedgerSealed =>
-          assert(!markers.exists(_.contains("d0001")), "no marker before the job's blobs are sealed")
+          assert(!markers.exists(_.contains("d0001.done")), "no completion marker before the job's blobs are sealed")
+          assert(markers.exists(_.endsWith("d0001.dispatched.sha256")), "the dispatch marker precedes the job's first seal")
         case CommitStage.MarkerSealed => assert(markers.exists(_.endsWith("d0001.done.sha256")))
       val ex = new Counting(clk, 1.0, ok)
       val rep = runner(plan, out, ex, clk).run().fold(r => fail(r.message), identity)
@@ -317,7 +321,7 @@ class PilotRunnerSuite extends munit.FunSuite:
   }
 
   for threads <- Seq(1, 4) do
-    test(s"CPU guard hard stop at a tiny ceiling (threads=$threads): refuses, nothing dispatched after the trip, resumable with a raised ceiling") {
+    test(s"CPU guard hard stop at a tiny ceiling (threads=$threads): refuses, nothing dispatched after the trip, resumable with an owner-authorized ceiling") {
       val out = tmp(); val clk = clock(); val plan = mkPlan(2, 4, 2)
       val tiny = CpuGuard(1.0 / 3600, 5.0 / 3600)
       val ex = new Counting(clk, 10.0, ok)
@@ -333,7 +337,24 @@ class PilotRunnerSuite extends munit.FunSuite:
       assert(runner(plan, out, again, clk, tiny, threads).run().isLeft)
       assertEquals(again.calls.get(), 0)
       val fin = new Counting(clk, 10.0, ok)
-      val rep = runner(plan, out, fin, clk, CpuGuard(1000.0, 2000.0), threads).run().fold(x => fail(x.message), identity)
+      // resuming past a reached ceiling needs the owner's typed authorization; a plain number above 60 is refused
+      intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
+      // the raise authorizes exactly the third invocation (two were refused at the ceiling) and is recorded
+      val outputId = runner(plan, out, fin, clk).outputIdentity.getOrElse(fail("the first invocation created the output identity"))
+      assertEquals(outputId, Fs.sha256(Files.readAllBytes(out.resolve("stamp.json")) ++ Files.readAllBytes(out.resolve("output-id"))),
+        "the owner can compute it as cat stamp.json output-id | sha256sum")
+      val raise = OwnerCeilingRaise.of(61.0, "owner-bb", "test: resume after a forced low-ceiling stop", outputId, 3).fold(e => fail(e), identity)
+      val lines = new java.util.concurrent.ConcurrentLinkedQueue[String]()
+      val r3 = new PilotRunner(plan, out, stamp, openStore(out), root, fin, CpuGuard.raised(45.0, raise), clk, threads, log = lines.add(_): Unit)
+      val rep = r3.run().fold(x => fail(x.message), identity)
+      val logged = lines.toArray.map(_.toString).find(_.startsWith("PILOT_CEILING_RAISE")).getOrElse(fail("no raise log line"))
+      assert(logged.contains(s"run_id=${r3.runId}") && logged.contains("forced low-ceiling stop") && logged.contains("approver=owner-bb"), logged)
+      val recorded = cost(out)("ceiling_raises").arr
+      assertEquals(recorded.map(r => (r("invocation").num.toInt, r("run_id").str, r("approver").str)).toVector, Vector((3, r3.runId, "owner-bb")))
+      assert(read(out).contains(SealedNames.ceilingRaise(r3.runId)), "the raise is sealed with the run")
+      // the same authorization cannot be used by a later invocation
+      val reuse = runner(plan, out, new Counting(clk, 10.0, ok), clk, CpuGuard.raised(45.0, raise), threads).run()
+      assertEquals(reuse.left.toOption.map(_.isInstanceOf[PilotRefusal.CeilingNotAuthorized]), Some(true))
       assertEquals(rep.outcome.decision.D, 4)
     }
 
@@ -497,11 +518,15 @@ class PilotRunnerSuite extends munit.FunSuite:
     assertEquals(c, a)
   }
 
-  test("ArmContext: unsafe or duplicate blob names are refused; RawBlob and PilotRoot never print their contents") {
+  test("ArmContext: unsafe or duplicate blob names are refused; one scorer contribution per attempt; RawBlob and PilotRoot never print their contents") {
     val ctx = new ArmContext(WorkUnit(cell("C0"), 0, arm("a0")), 1, root, () => false)
     intercept[IllegalArgumentException](ctx.emit("../x", Array[Byte](1)))
     ctx.emit("ok", Array[Byte](1))
     intercept[IllegalArgumentException](ctx.emit("ok", Array[Byte](2)))
+    intercept[IllegalArgumentException](ctx.emit(ScorerContribution.EntryName, Array[Byte](3)))
+    ctx.contribute(Array[Byte](4))
+    intercept[IllegalArgumentException](ctx.contribute(Array[Byte](5)))
+    assertEquals(ctx.emitted.map(_.name), Vector("ok", ScorerContribution.EntryName))
     assertEquals(ctx.emitted.head.toString, "RawBlob(redacted)")
     assert(!root.toString.contains("0123"))
   }
@@ -531,7 +556,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     runner(plan, out, okArm, clk).run().fold(r => fail(r.message), identity)
     Files.delete(out.resolve("progress/C0/d0001.done.sha256"))
     Files.delete(out.resolve("progress/C0/d0001.done"))
-    val rep = runner(plan, out, okArm, clock(), CpuGuard(30.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, okArm, clock(), CpuGuard(30.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     val d = rep.outcome.decision
     assertEquals(d.D, 4)
     assertEquals(d.kept(cell("C0")), (0 until d.D).toVector)
@@ -546,7 +571,7 @@ class PilotRunnerSuite extends munit.FunSuite:
     Vector("progress/C1/d0002.done", "progress/C1/d0002.done.sha256", "progress/C0/d0004.done", "progress/C0/d0004.done.sha256").foreach(p => Files.delete(out.resolve(p)))
     val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
     val arms: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
-    val rep = runner(plan, out, arms, clock(), CpuGuard(1.0 / 3600, 1000.0)).run().fold(r => fail(r.message), identity)
+    val rep = runner(plan, out, arms, clock(), CpuGuard(1.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
     assertEquals(rep.outcome.decision.D, 6)
     assert(seen.contains(("C1", 2)) && seen.contains(("C0", 4)))
   }
@@ -735,4 +760,307 @@ class PilotRunnerSuite extends munit.FunSuite:
     assert(finishedAtReturn, "run() returned before the in-flight worker finished")
     assert(flagAfter, "the interrupt flag is restored for the caller")
     assert(!Files.exists(out.resolve("progress/C0/d0001.done")), "nothing after the interrupt is marked complete")
+  }
+
+  // ---- independent probes of the 2026-10-03 blocker notes (H1, M2, M4), kept as regressions ----
+
+  test("probe H1: successful bytes that change per invocation, crashed after LedgerSealed, resume into a store the owner reads; both scheduled commits survive") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    def arms(tag: String): ArmRunner = ctx => { ctx.emit("o", s"${ctx.unit.dataset}-$tag".getBytes(UTF_8)); ArmResult.Done() }
+    val crash: CommitHook = (s, j) => if s == CommitStage.LedgerSealed && j.dataset == 1 then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms("inv1"), clk, hook = crash, runId = "h1first").run())
+    val rep = runner(plan, out, arms("inv2"), clk, runId = "h1second").run().fold(x => fail(x.message), identity)
+    val items = OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = true).fold(e => fail(s"the store must stay readable: $e"), identity)
+    val u1 = WorkUnit(cell("C0"), 1, arm("a0"))
+    val recs = ledgersOf(items, u1)
+    assertEquals(recs.map(r => (r.invocation, r.runId)), Vector((1, "h1first"), (2, "h1second")))
+    assertNotEquals(recs(0).payloadSha256, recs(1).payloadSha256)
+    assert(!items.contains(SealedNames.timing(u1, "h1first")), "the crash hit between ledger and timing; the scheduled record counts without it")
+    assertEquals(Fs.sha256(items(recs(0).payload)), recs(0).payloadSha256)
+    // the earlier completed dataset was recomputed with other bytes under rerun/: no differing duplicate either
+    val u0 = WorkUnit(cell("C0"), 0, arm("a0"))
+    assertNotEquals(Fs.sha256(items(SealedNames.rerunData(u0, "h1second"))), ledgersOf(items, u0).head.payloadSha256)
+    assertEquals(rep.scorerInputs.map(_.unit).toSet, Set(u0, u1))
+  }
+
+  test("probe M2a: a job in flight at the highest completed index when the run crashed is finished on a resume past the soft stop") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(2, 4, 1)
+    val crash: CommitHook = (s, j) => if s == CommitStage.DataSealed && j == Job(cell("C1"), 2) then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, new Counting(clk, 10.0, ok), clk, hook = crash).run())
+    // C0 completed 0..2, C1 completed 0..1; (C1, 2) was dispatched and in flight
+    val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
+    val arms: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
+    val rep = runner(plan, out, arms, clock(), CpuGuard(30.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
+    assert(seen.contains(("C1", 2)), "the in-flight job is finished before the soft stop is honoured")
+    assert(!seen.contains(("C0", 3)) && !seen.contains(("C1", 3)), "no new dataset is dispatched past the soft stop")
+    assertEquals(rep.outcome.decision.D, 3)
+  }
+
+  test("probe M2b: every job in flight when the run crashed is finished on a resume past the soft stop, even above the highest completed index") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(2, 4, 1)
+    val c0Entered = new CountDownLatch(1)
+    val arms1: ArmRunner = ctx =>
+      clk.advance(10.0)
+      ctx.unit match
+        case WorkUnit(c, 2, _) if c.value == "C0" =>
+          c0Entered.countDown()
+          val t0 = System.nanoTime()
+          while !ctx.shouldAbort && System.nanoTime() - t0 < 10000000000L do Thread.sleep(5L)
+        case WorkUnit(c, 2, _) if c.value == "C1" => assert(c0Entered.await(10, TimeUnit.SECONDS))
+        case _ => ()
+      ArmResult.Done()
+    val crash: CommitHook = (s, j) => if s == CommitStage.DataSealed && j == Job(cell("C1"), 2) then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms1, clk, threads = 2, hook = crash).run())
+    assert(!Files.exists(out.resolve("progress/C0/d0002.done")) && !Files.exists(out.resolve("progress/C1/d0002.done")))
+    val seen = java.util.concurrent.ConcurrentHashMap.newKeySet[(String, Int)]()
+    val arms2: ArmRunner = ctx => { seen.add((ctx.unit.cell.value, ctx.unit.dataset)); ArmResult.Done() }
+    val rep = runner(plan, out, arms2, clock(), CpuGuard(30.0 / 3600, 60.0)).run().fold(r => fail(r.message), identity)
+    assert(seen.contains(("C0", 2)) && seen.contains(("C1", 2)), s"both in-flight jobs are finished: $seen")
+    assert(!seen.contains(("C0", 3)) && !seen.contains(("C1", 3)), "no new dataset is dispatched past the soft stop")
+    assertEquals(rep.outcome.decision.D, 3)
+  }
+
+  test("probe M4: repeated interrupts of the run() thread never return it while a latch-blocked worker is alive") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val entered = new CountDownLatch(1)
+    val release = new CountDownLatch(1)
+    val armFinished = new java.util.concurrent.atomic.AtomicBoolean(false)
+    @volatile var worker: Thread = null
+    val arms: ArmRunner = ctx =>
+      worker = Thread.currentThread()
+      entered.countDown()
+      var released = false
+      while !released do
+        try released = release.await(30, TimeUnit.SECONDS)
+        catch case _: InterruptedException => () // a worker interrupt must not end the arm early either
+      armFinished.set(true)
+      ctx.emit("o", blobBytes(ctx.unit))
+      ArmResult.Done()
+    val r = runner(plan, out, arms, clk)
+    @volatile var result: Option[Either[PilotRefusal, PilotReport]] = None
+    @volatile var finishedAtReturn = false
+    val t = new Thread(() =>
+      result = Some(r.run())
+      finishedAtReturn = armFinished.get()
+    )
+    t.start()
+    assert(entered.await(10, TimeUnit.SECONDS))
+    (1 to 3).foreach { _ =>
+      t.interrupt()
+      Thread.sleep(200L)
+      assert(t.isAlive, "run() returned while its worker was still blocked")
+    }
+    release.countDown()
+    t.join(20000L)
+    assert(!t.isAlive)
+    assertEquals(result.flatMap(_.left.toOption), Some(PilotRefusal.Interrupted))
+    assert(finishedAtReturn, "run() returned before the blocked worker finished")
+    worker.join(5000L)
+    assert(!worker.isAlive, "the worker thread terminates once run() has returned")
+    assert(!Files.exists(out.resolve("progress/C0/d0000.done")), "nothing after the interrupt is marked complete")
+  }
+
+  // ---- independent re-review 2026-10-10 (failure 2) ----
+
+  test("review 2: a commit exception after the attempt's CPU was metered checkpoints that CPU durably before the crash propagates") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    val arms: ArmRunner = ctx => { clk.advance(10.0); ctx.emit("o", blobBytes(ctx.unit)); ArmResult.Done(7.0) }
+    val crashed = new AtomicInteger(0)
+    val hook: CommitHook = (s, _) => if s == CommitStage.DataSealed && crashed.incrementAndGet() == 1 then throw new SimulatedCrash
+    intercept[SimulatedCrash](runner(plan, out, arms, clk, hook = hook).run())
+    assertEqualsDouble(cost(out)("cpu_seconds_total").num, 17.0, 1e-9)
+  }
+
+  // ---- second independent re-review 2026-10-10 (failures 1, 2, 3, 5) ----
+
+  test("re-review 1a: a failed cost checkpoint leaves accounting.open; the resume refuses until the owner charges that run") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 3, 1)
+    val arms: ArmRunner = ctx =>
+      clk.advance(10.0)
+      if ctx.unit.dataset == 1 && !Files.isDirectory(out.resolve("cost.json")) then
+        // the cost file becomes unwritable for the rest of the run: every checkpoint fails from here on
+        Files.delete(out.resolve("cost.json"))
+        Files.createDirectories(out.resolve("cost.json").resolve("blocker")): Unit
+      ctx.emit("o", blobBytes(ctx.unit))
+      ArmResult.Done()
+    val r1 = runner(plan, out, arms, clk, runId = "uncertain1")
+    intercept[java.io.IOException](r1.run())
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "uncertain1")
+    Fs.deleteTree(out.resolve("cost.json"))
+    Files.writeString(out.resolve("cost.json"), "{\"cpu_seconds_total\":0,\"invocations\":1}\n") // stale but parseable
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.AccountingUncertain("uncertain1")))
+    val wrong = OwnerAccountingRecovery.of("someother", 100.0, "owner-bb", "power loss").fold(e => fail(e), identity)
+    val w = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 1.0, ok), roomy, clk, accountingRecovery = Some(wrong))
+    assertEquals(w.run().left.toOption, Some(PilotRefusal.AccountingRecoveryMismatch("someother", "uncertain1")))
+    val rec = OwnerAccountingRecovery.of("uncertain1", 100.0, "owner-bb", "cost checkpoint failed").fold(e => fail(e), identity)
+    val r = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 1.0, ok), roomy, clk, accountingRecovery = Some(rec))
+    val rep = r.run().fold(x => fail(x.message), identity)
+    assert(rep.totalCpuSeconds >= 100.0, s"the charged CPU counts: ${rep.totalCpuSeconds}")
+    assert(!Files.exists(out.resolve("accounting.open")))
+    assertEquals(cost(out)("accounting_recoveries").arr.map(_("uncertain_run_id").str).toVector, Vector("uncertain1"))
+    assert(read(out).contains(SealedNames.accountingRecovery("uncertain1")))
+  }
+
+  test("re-review 1b: a process death mid-run (accounting.open on disk) makes the resume refuse uncertain accounting") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 3, 1)
+    val snap = tmp()
+    val arms: ArmRunner = ctx =>
+      clk.advance(10.0)
+      if ctx.unit.dataset == 1 then
+        // what the disk holds if the power fails now
+        Files.copy(out.resolve("cost.json"), snap.resolve("cost.json"))
+        Files.copy(out.resolve("accounting.open"), snap.resolve("accounting.open")): Unit
+      ctx.emit("o", blobBytes(ctx.unit))
+      ArmResult.Done()
+    val r1 = runner(plan, out, arms, clk, runId = "died1")
+    r1.run().fold(x => fail(x.message), identity)
+    assert(!Files.exists(out.resolve("accounting.open")), "a clean exit closes the accounting")
+    Files.copy(snap.resolve("cost.json"), out.resolve("cost.json"), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(snap.resolve("accounting.open"), out.resolve("accounting.open"))
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.AccountingUncertain("died1")))
+  }
+
+  test("re-review 5b: a cost.json whose invocation count would overflow is refused, never incremented") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    Files.writeString(out.resolve("cost.json"), s"{\"cpu_seconds_total\":0,\"invocations\":${Int.MaxValue}}\n")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run() match
+      case Left(_: PilotRefusal.CostStateLost) => ()
+      case other => fail(s"expected CostStateLost, got $other")
+    assertEquals(cost(out)("invocations").num, Int.MaxValue.toDouble)
+  }
+
+  test("re-review 3: CpuGuard and the owner authorizations are not Serializable, and reflective construction re-checks every invariant") {
+    for c <- Vector(classOf[CpuGuard], classOf[OwnerCeilingRaise], classOf[OwnerAccountingRecovery]) do
+      assert(!classOf[java.io.Serializable].isAssignableFrom(c), s"${c.getSimpleName} must not be Serializable")
+    val ctor = classOf[OwnerCeilingRaise].getDeclaredConstructors.head
+    ctor.setAccessible(true)
+    val e = intercept[java.lang.reflect.InvocationTargetException](ctor.newInstance(Double.box(Double.PositiveInfinity), "", "", "", Int.box(1)))
+    assert(e.getCause.isInstanceOf[IllegalArgumentException])
+    val g = classOf[CpuGuard].getDeclaredConstructors.head
+    g.setAccessible(true)
+    val e2 = intercept[java.lang.reflect.InvocationTargetException](g.newInstance(Double.box(45.0), Double.box(61.0), None))
+    assert(e2.getCause.isInstanceOf[IllegalArgumentException])
+  }
+
+  // ---- third independent review 2026-10-10 (H2, M1, L1, L2, L3, hardening) ----
+
+  test("review3 H2: an owner ceiling raise is bound to one output: accepted for output A, refused for output B") {
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val a = tmp(); val b = tmp()
+    assert(runner(plan, a, new Counting(clk, 1.0, ok), clk).run().isRight)
+    assert(runner(plan, b, new Counting(clk, 1.0, ok), clk).run().isRight)
+    val idA = runner(plan, a, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    assertNotEquals(Some(idA), runner(plan, b, new Counting(clk, 1.0, ok), clk).outputIdentity)
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "output A only", idA, 2).fold(e => fail(e), identity)
+    assert(runner(plan, a, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight)
+    runner(plan, b, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
+      case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
+      case other => fail(s"expected CeilingNotAuthorized, got $other")
+  }
+
+  private def craftedCost(cpu: Double, invocations: Int, recovered: Option[String]): String =
+    val rec = recovered.fold("")(id =>
+      s""","accounting_recoveries":[{"invocation":$invocations,"uncertain_run_id":"$id","charged_cpu_seconds":$cpu,"approver":"owner-bb","reason":"power loss"}]""")
+    s"""{"cpu_seconds_total":$cpu,"invocations":$invocations$rec}\n"""
+
+  test("review3 M1: an accounting recovery already recorded for the uncertain run is not charged twice") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 0.0, ok), clk).run().fold(x => fail(x.message), identity)
+    // the state a death leaves between the recovery's cost write and the marker replacement
+    Files.writeString(out.resolve("cost.json"), craftedCost(100.0, 2, Some("dead")))
+    Files.writeString(out.resolve("accounting.open"), "dead\n")
+    val rec = OwnerAccountingRecovery.of("dead", 100.0, "owner-bb", "power loss").fold(e => fail(e), identity)
+    val r = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 0.0, ok), roomy, clk, accountingRecovery = Some(rec))
+    r.run().fold(x => fail(x.message), identity)
+    assertEqualsDouble(cost(out)("cpu_seconds_total").num, 100.0, 1e-9)
+    assertEquals(cost(out)("accounting_recoveries").arr.length, 1)
+    assert(!Files.exists(out.resolve("accounting.open")))
+  }
+
+  test("review3 L2: a recovery whose charge makes the total non-finite is refused; the marker and the cost stay") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 0.0, ok), clk).run().fold(x => fail(x.message), identity)
+    Files.writeString(out.resolve("cost.json"), craftedCost(1e308, 2, None))
+    Files.writeString(out.resolve("accounting.open"), "dead\n")
+    val before = Files.readString(out.resolve("cost.json"))
+    val rec = OwnerAccountingRecovery.of("dead", 1e308, "owner-bb", "power loss").fold(e => fail(e), identity)
+    val r = new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 0.0, ok), roomy, clk, accountingRecovery = Some(rec))
+    r.run() match
+      case Left(_: PilotRefusal.AccountingRecoveryInvalid) => ()
+      case other => fail(s"expected AccountingRecoveryInvalid, got $other")
+    assertEquals(Files.readString(out.resolve("cost.json")), before)
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "dead")
+  }
+
+  test("review3 L1: the runner never writes an invocation count its parser rejects") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    val last = s"{\"cpu_seconds_total\":0,\"invocations\":${Int.MaxValue - 1}}\n"
+    Files.writeString(out.resolve("cost.json"), last)
+    assertEquals(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption, Some(PilotRefusal.InvocationsExhausted(Int.MaxValue - 1)))
+    assertEquals(Files.readString(out.resolve("cost.json")), last)
+  }
+
+  test("review3 hardening: cost.json authorization records are validated; L3: the retry cap is bounded") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    Files.createDirectories(out)
+    val badRaise = """{"cpu_seconds_total":0,"invocations":1,"ceiling_raises":[{"invocation":0,"run_id":"../x","output_identity":"zz","hard_core_hours":1e6,"approver":"","reason":""}]}"""
+    Files.writeString(out.resolve("cost.json"), badRaise + "\n")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk).run() match
+      case Left(_: PilotRefusal.CostStateLost) => ()
+      case other => fail(s"expected CostStateLost, got $other")
+    intercept[IllegalArgumentException](mkPlan(1, 2, 1).copy(maxRetries = Int.MaxValue))
+    assertEquals(mkPlan(1, 2, 1).copy(maxRetries = PilotPlan.MaxRetries).maxRetries, PilotPlan.MaxRetries)
+  }
+
+  // ---- fourth independent review 2026-10-10 (H2, M, L2) ----
+
+  test("review4 H2: an output recreated at the same path has a new identity, so the old output's raise is refused") {
+    val plan = mkPlan(1, 2, 1); val clk = clock()
+    val base = tmp()
+    val out = base.resolve("output")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    val id = runner(plan, out, new Counting(clk, 1.0, ok), clk).outputIdentity.getOrElse(fail("no identity"))
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "the original output", id, 2).fold(e => fail(e), identity)
+    // move the whole output away, then build a fresh one at the same path with the same key and stamp inputs
+    Files.move(out, base.resolve("archive"))
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    assertEquals(Files.readString(out.resolve("stamp.json")), Files.readString(base.resolve("archive/stamp.json")), "identical stamp bytes")
+    runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run() match
+      case Left(PilotRefusal.CeilingNotAuthorized(d)) => assert(d.contains("another output"), d)
+      case other => fail(s"expected CeilingNotAuthorized, got $other")
+    // the original output (moved back) still accepts it
+    Fs.deleteTree(out)
+    Files.move(base.resolve("archive"), out)
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk, CpuGuard.raised(45.0, raise)).run().isRight)
+  }
+
+  test("review4 H2: an adopted output without a well-formed output-id is refused") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().isRight)
+    Files.writeString(out.resolve("output-id"), "not-an-id\n")
+    assert(runner(plan, out, new Counting(clk, 1.0, ok), clk).run().left.toOption.exists(_.isInstanceOf[PilotRefusal.Failure]))
+  }
+
+  test("review4 M: a replayed recovery completes its sealed accounting record") {
+    val out = tmp(); val clk = clock(); val plan = mkPlan(1, 2, 1)
+    runner(plan, out, new Counting(clk, 0.0, ok), clk).run().fold(x => fail(x.message), identity)
+    Files.writeString(out.resolve("cost.json"), craftedCost(100.0, 2, Some("dead")))
+    Files.writeString(out.resolve("accounting.open"), "dead\n")
+    val rec = OwnerAccountingRecovery.of("dead", 100.0, "owner-bb", "power loss").fold(e => fail(e), identity)
+    new PilotRunner(plan, out, stamp, openStore(out), root, new Counting(clk, 0.0, ok), roomy, clk, accountingRecovery = Some(rec))
+      .run().fold(x => fail(x.message), identity)
+    val sealedRecord = read(out).get(SealedNames.accountingRecovery("dead")).map(b => ujson.read(new String(b, UTF_8)))
+    assertEquals(sealedRecord.map(r => (r("uncertain_run_id").str, r("invocation").num.toInt)), Some(("dead", 2)))
+  }
+
+  test("review4 L2: journal names and recovery agree for every dataset index a plan accepts") {
+    intercept[IllegalArgumentException](mkPlan(1, SealedNames.MaxDatasets + 1, 1))
+    val plan = mkPlan(1, SealedNames.MaxDatasets, 1)
+    val out = tmp()
+    val progress = new PilotProgress(out)
+    val last = Job(cell("C0"), plan.datasets - 1)
+    progress.markDispatched(last)
+    assertEquals(progress.recover(Set(cell("C0"))).map(_.dispatched), Right(Set(last)))
   }

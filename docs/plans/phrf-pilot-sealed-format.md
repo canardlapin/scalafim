@@ -163,6 +163,10 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 |---|---|
 | `meta/root-check` | `hex(SHA-256(root64 decimal + "\n"))`, the acknowledgement hash, never the root |
 | `meta/stamp` | the sealed stamp: every `stamp.json` field plus `sealed_store_path` (the full absolute path, which the plaintext stamp holds only as `sealed_store_path_sha256`) |
+| `meta/ceiling-raise/<runId>` | per invocation that ran under an `OwnerCeilingRaise`, under that invocation's run id: JSON `invocation run_id output_identity hard_core_hours approver reason` |
+| `meta/accounting-recovery/<uncertainRunId>` | per applied `OwnerAccountingRecovery`, under the uncertain run's id: JSON `invocation uncertain_run_id charged_cpu_seconds approver reason` |
+
+Every invocation re-seals every authorization record that `cost.json` holds, as an identical duplicate. A record written by an invocation that died before sealing it is therefore completed by the next one.
 | `data/<unit>/<runId>` | unit payload of a scheduled commit, any status (a status placeholder when the arm emitted nothing) |
 | `ledger/<unit>/<runId>` | ledger record: JSON with keys exactly `cell dataset arm invocation run_id phase attempts status code payload payload_sha256 entries`; `phase` is `scheduled` here |
 | `timing/<unit>/<runId>` | timing record: every attempt of this invocation (status `retried`/`done`/`refused`/`failed`, code, wall and child CPU seconds, named timings, result-adjacent notes) |
@@ -205,13 +209,28 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 *What the owner checks at unseal.*
 
 - **Primary check, which needs only this spec.** For every listed unit, the owner compares `payload_sha256` with that of the first completed attempt, as defined above. This requires nothing beyond the sealed records and this section.
-- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. This depends on the S10 `ScoreFeed` mapping, which turns the payload arms and the generator truth into per-voxel outcomes. That mapping is not yet specified (design section 6, slice S10), so this check becomes available once S10 specifies it.
+- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. It is possible only for an aggregate that carries `contribution_schema` (see *Scorer contributions* below): the corpus is then a pure function, named by that schema, of the scorer contributions sealed in the payloads. The production mapping for the pilot arms (generator truth to `ConditionDataset`, `TrialDataset`, `CoverageObs`) is still an S10 deliverable; until it exists, no real pilot aggregate is verifiable.
 
 *Policy:*
 
 - any mismatch, of a unit or of the outcome digest, **invalidates the whitelist released from that aggregate**;
 - the owner records the exact list of mismatching units in the deviation report;
 - recomputing the whitelist owner-side from the first attempts, after the confirmatory analysis is closed, is allowed only as a documented deviation.
+
+**Scorer contributions (S10 seam).**
+
+- An arm hands its truth-free scorer contribution for the attempt to `ArmContext.contribute`, at most once per attempt. It is sealed inside the unit payload as the reserved entry `scorer-contribution`, so `payload_sha256` covers it.
+- Only the committing attempt's contribution exists: a retried or abandoned attempt's contribution is discarded with the attempt and never reaches the scorer.
+- `PilotAggregation.aggregateContributions` assembles the in-process corpus from the contributions of the commits the scorer consumed (the `units` list), by a deterministic `CorpusAssembler`, and adds `contribution_schema` (the assembler's name) to `aggregate/<runId>/record`. The assembler receives the contributions sorted by (cell, dataset, arm) path; a unit whose committing attempt contributed nothing is passed as absent.
+- An aggregate sealed with `aggregateAndSeal` from a corpus built out of sight has no `contribution_schema`.
+
+**Owner verification** (`OwnerVerification.verify`, over the decrypted store; reference implementation of this section):
+
+1. The authoritative aggregate is the one whose `whitelist_sha256` manifest v1 records. **No** such record, or **several** (for example the same pilot aggregated twice), refuses. Its `datasets` (D) must be one the runner can produce for the plan: the full plan, or a partial pilot with `minDatasets <= D < datasets`; otherwise refused.
+2. Every ledger record must sit under its own name and name its own payload, that payload must match `payload_sha256`, decode as a unit payload (every count and length checked against the remaining bytes; a malformed payload is a typed refusal, never an exception), and carry the ledger's `status` and `entries`; otherwise the store is refused.
+3. `units` must be exactly the plan's cells and arms over datasets `0 until D`, each naming an existing commit of the aggregating invocation; otherwise refused.
+4. Primary check: as above. Secondary check: rebuild from the `scorer-contribution` entries of the first completed attempts with the assembler for `contribution_schema`.
+5. Verdict: any unit mismatch or a digest mismatch is **Invalidated** (the primary check alone suffices for that, even on a legacy aggregate). Otherwise, an aggregate without `contribution_schema` (legacy, pre-S10), with a schema the owner has no assembler for, with a first completed attempt that sealed no `scorer-contribution` (whatever defaults an assembler would supply), or whose rebuild fails is **Unverifiable**, never Valid. Only an aggregate that passes both checks is **Valid**. Units whose scheduled commits differ in `payload_sha256` are listed for the deviation report in every verdict.
 
 The runner seals at most one aggregate per run id: a second `aggregateAndSeal` with the same run id is refused with `AlreadyAggregated`. Several aggregates may exist, for example a partial pilot and then the full one. The authoritative aggregate is the one whose `whitelist_sha256` is recorded in manifest v1.
 
@@ -248,9 +267,12 @@ An arm map is written as `int k` (the number of methods present), then, for each
 **Plaintext outside the store** (runner output directory):
 
 - `stamp.json`: hashes and versions, `recipient_fp` (the owner key fingerprint, already public), and `sealed_store_path_sha256`, never the path itself;
-- `cost.json`: `cpu_seconds_total` and `invocations`;
+- `cost.json`: `cpu_seconds_total` and `invocations` (always below `Int.MaxValue`), plus `ceiling_raises` and `accounting_recoveries` when the owner authorized any (the same records as the sealed `meta/...` blobs; owner decisions, no results);
+- `output-id`: 32 lowercase hex characters (128 random bits) and a newline. The first invocation on a fresh output writes it before `stamp.json`, and it is never rewritten after that. An `OwnerCeilingRaise` names the output by `SHA-256(stamp.json bytes ++ output-id bytes)`, so a fresh output at the same path gets another identity;
+- `accounting.open`: the run id of the invocation whose CPU accounting is open. The runner writes it, durably, before any metered work. It removes it only after a successful final cost checkpoint, and only when no thread of the invocation ended with a fatal throwable (for example `OutOfMemoryError`). Such a throwable sets a sticky flag before any exception is selected, so the marker stays even when a caller interrupt or another exception ends the run, because a measured child CPU may never have reached the meter. A marker that survives (crash, power loss, failed checkpoint, fatal error) makes the next resume refuse with `AccountingUncertain` until the owner supplies an `OwnerAccountingRecovery` for that run id. The recovery charges a stated CPU amount once: a recovery already recorded for that run id is never charged again, and a charge that would make the total non-finite is refused;
 - `selection.json`: D, df and the UCL factor;
+- `progress/<cell>/dNNNN.dispatched` plus `.sha256` markers, written before a job's first arm runs, so that a resume past the soft stop finishes every job that was in flight (blocker probe M2);
 - `progress/<cell>/dNNNN.done` plus `.sha256` markers;
 - optionally the S6 scratch custody log: a hash-chained JSONL of scratch lifecycle events, holding paths, device names and residue counts but no result.
 
-The markers' contents are constant, but their modification times reveal when each job completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3).
+The markers' contents are constant, but their modification times reveal when each job was dispatched and completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3). The owner accepted the `.dispatched` marker on 2026-10-10 on this basis: it adds no leak of a new kind beyond `.done`.

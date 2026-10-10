@@ -19,7 +19,9 @@ enum PilotOutcome(val decision: PartialDecision):
 /** What one invocation returns, in process only. `rerunJobs` counts the jobs completed by earlier invocations that
   * this one recomputed so that every kept dataset reached the scorer in memory (decision D1). `scorerInputs` lists,
   * for every kept unit, the commit of this invocation whose payload the scorer consumed (finding F4); pass it with
-  * `runId` to [[PilotAggregation.aggregateAndSeal]], which seals it. Nothing here is written in plaintext.
+  * `runId` to [[PilotAggregation.aggregateAndSeal]], which seals it. `contributions` holds, in the same order, the
+  * scorer contribution sealed in each of those commits (S10); [[PilotAggregation.aggregateContributions]] assembles
+  * the corpus from them and nothing else. Nothing here is written in plaintext.
   */
 final case class PilotReport(
     outcome: PilotOutcome,
@@ -28,7 +30,8 @@ final case class PilotReport(
     invocation: Int,
     rerunJobs: Int,
     runId: String,
-    scorerInputs: Vector[ScorerInput]
+    scorerInputs: Vector[ScorerInput],
+    contributions: Vector[UnitContribution] = Vector.empty
 )
 
 /** Raised inside a worker when the sealed store refuses a write; turned into a `Left` by [[PilotRunner.run]]. */
@@ -39,24 +42,110 @@ private final class RunAborted(val refusal: PilotRefusal) extends RuntimeExcepti
   */
 private final class StopRequested extends RuntimeException("stop requested", null, false, false)
 
-/** The runner's persistent plaintext state in `cost.json`: cumulative CPU (design 3.2 releases the total) and the
-  * number of invocations so far (the custody log records every runner launch, so the count is public too).
+/** An owner ceiling raise as one invocation used it: durable in `cost.json` and sealed as `meta/ceiling-raise/<runId>`. */
+private[exec] final case class CeilingRaiseRecord(
+    invocation: Int,
+    runId: String,
+    hardCoreHours: Double,
+    approver: String,
+    reason: String,
+    outputIdentity: String
+):
+  def json: ujson.Obj = ujson.Obj(
+    "invocation" -> ujson.Num(invocation.toDouble),
+    "run_id" -> ujson.Str(runId),
+    "output_identity" -> ujson.Str(outputIdentity),
+    "hard_core_hours" -> ujson.Num(hardCoreHours),
+    "approver" -> ujson.Str(approver),
+    "reason" -> ujson.Str(reason)
+  )
+
+/** An owner accounting recovery as one invocation applied it: the uncertain run and the CPU charged for it. */
+private[exec] final case class RecoveryRecord(invocation: Int, uncertainRunId: String, chargedCpuSeconds: Double, approver: String, reason: String):
+  def json: ujson.Obj = ujson.Obj(
+    "invocation" -> ujson.Num(invocation.toDouble),
+    "uncertain_run_id" -> ujson.Str(uncertainRunId),
+    "charged_cpu_seconds" -> ujson.Num(chargedCpuSeconds),
+    "approver" -> ujson.Str(approver),
+    "reason" -> ujson.Str(reason)
+  )
+
+/** The runner's persistent plaintext state in `cost.json`: cumulative CPU (design 3.2 releases the total), the
+  * number of invocations so far (the custody log records every runner launch, so the count is public too) and, when
+  * any exist, the owner ceiling raises and accounting recoveries each invocation used (owner decisions, no results).
   */
-private[exec] final case class CostState(cpuSecondsTotal: Double, invocations: Int):
+private[exec] final case class CostState(
+    cpuSecondsTotal: Double,
+    invocations: Int,
+    raises: Vector[CeilingRaiseRecord] = Vector.empty,
+    recoveries: Vector[RecoveryRecord] = Vector.empty
+):
   def json: String =
-    ujson.write(ujson.Obj("cpu_seconds_total" -> ujson.Num(cpuSecondsTotal), "invocations" -> ujson.Num(invocations.toDouble))) + "\n"
+    val base = Vector[(String, ujson.Value)]("cpu_seconds_total" -> ujson.Num(cpuSecondsTotal), "invocations" -> ujson.Num(invocations.toDouble))
+    val extra = Option.when(raises.nonEmpty)("ceiling_raises" -> ujson.Arr.from(raises.map(_.json))).toVector ++
+      Option.when(recoveries.nonEmpty)("accounting_recoveries" -> ujson.Arr.from(recoveries.map(_.json))).toVector
+    ujson.write(ujson.Obj.from(base ++ extra)) + "\n"
 
 private[exec] object CostState:
+  /** The largest invocation count `cost.json` may hold. */
+  val MaxInvocations: Int = Int.MaxValue - 1
+
+  private val Base = Set("cpu_seconds_total", "invocations")
+  private val Optional = Set("ceiling_raises", "accounting_recoveries")
+
+  private def whole(v: ujson.Value, max: Int): Either[String, Int] =
+    val d = v.num
+    if d.isWhole && d >= 0 && d <= max then Right(d.toInt) else Left("count out of range")
+
+  private def finite(v: ujson.Value): Either[String, Double] =
+    val d = v.num
+    if d.isNaN || d.isInfinite || d < 0.0 then Left("value out of range") else Right(d)
+
+  private def prose(v: ujson.Value, what: String): Either[String, String] =
+    val s = v.str
+    if s.trim.isEmpty || s.length > 500 then Left(s"$what out of range") else Right(s)
+
+  private def safe(v: ujson.Value, what: String): Either[String, String] =
+    val s = v.str
+    if SafeName.valid(s) then Right(s) else Left(s"$what is not a safe name")
+
+  private def sequence[A](xs: Vector[Either[String, A]]): Either[String, Vector[A]] =
+    xs.collectFirst { case Left(e) => e }.toLeft(xs.collect { case Right(a) => a })
+
+  /** Refuses every out-of-range number before narrowing; the invocation count stays below `Int.MaxValue`, so the
+    * next invocation's ordinal can never overflow.
+    */
   def parse(text: String): Either[String, CostState] =
     try
       val o = ujson.read(text).obj
-      if o.keySet != Set("cpu_seconds_total", "invocations") then Left("unexpected keys")
+      val keys = o.keySet.toSet
+      if !Base.subsetOf(keys) || !keys.subsetOf(Base ++ Optional) then Left("unexpected keys")
       else
-        val cpu = o("cpu_seconds_total").num
-        val inv = o("invocations").num
-        if cpu.isNaN || cpu.isInfinite || cpu < 0.0 then Left("CPU total out of range")
-        else if !inv.isWhole || inv < 0 || inv > Int.MaxValue then Left("invocation count out of range")
-        else Right(CostState(cpu, inv.toInt))
+        for
+          cpu <- finite(o("cpu_seconds_total")).left.map(_ => "CPU total out of range")
+          inv <- whole(o("invocations"), MaxInvocations).left.map(_ => "invocation count out of range")
+          raises <- sequence(o.get("ceiling_raises").fold(Vector.empty[ujson.Value])(_.arr.toVector).map { r =>
+            for
+              i <- whole(r("invocation"), inv).filterOrElse(_ >= 1, "raise invocation out of range")
+              rid <- safe(r("run_id"), "raise run id")
+              h <- finite(r("hard_core_hours"))
+                .filterOrElse(h => h > CpuGuard.MaxHardCoreHours && h <= OwnerCeilingRaise.MaxRaisedCoreHours, "raised ceiling out of range")
+              a <- safe(r("approver"), "raise approver")
+              why <- prose(r("reason"), "raise reason")
+              stampSha = r("output_identity").str
+              _ <- Either.cond(LedgerRecord.isSha256(stampSha), (), "raise output stamp hash")
+            yield CeilingRaiseRecord(i, rid, h, a, why, stampSha)
+          })
+          recoveries <- sequence(o.get("accounting_recoveries").fold(Vector.empty[ujson.Value])(_.arr.toVector).map { r =>
+            for
+              i <- whole(r("invocation"), inv).filterOrElse(_ >= 1, "recovery invocation out of range")
+              rid <- safe(r("uncertain_run_id"), "recovery run id")
+              c <- finite(r("charged_cpu_seconds"))
+              a <- safe(r("approver"), "recovery approver")
+              why <- prose(r("reason"), "recovery reason")
+            yield RecoveryRecord(i, rid, c, a, why)
+          })
+        yield CostState(cpu, inv, raises, recoveries)
     catch case e: Exception => Left(s"unparsable (${e.getClass.getSimpleName})")
 
 /** The single payload blob of one unit commit: the terminal status and every blob the arm emitted, in name order.
@@ -81,7 +170,10 @@ object UnitPayload:
     o.flush()
     bytes.toByteArray
 
-  /** Inverse of [[encode]] (owner side and tests): the status and the named entries. */
+  /** Inverse of [[encode]] (owner side and tests): the status and the named entries. Every count and length is
+    * checked against the bytes that remain before anything is narrowed or allocated, so a malformed payload is a
+    * `Left`, never an exception.
+    */
   def decode(payload: Array[Byte]): Either[String, (UnitStatus, Vector[(String, Array[Byte])])] =
     try
       val in = new DataInputStream(new ByteArrayInputStream(payload))
@@ -89,13 +181,21 @@ object UnitPayload:
       else
         UnitStatus.fromCode(in.readUTF()).toRight("unknown status").flatMap { status =>
           val n = in.readInt()
-          val entries = Vector.fill(n) {
-            val name = in.readUTF()
-            val data = new Array[Byte](in.readLong().toInt)
-            in.readFully(data)
-            name -> data
-          }
-          if in.available() != 0 then Left("trailing bytes") else Right((status, entries))
+          if n < 0 || n > in.available() then Left("entry count out of range")
+          else
+            val entries = Vector.newBuilder[(String, Array[Byte])]
+            var error: Option[String] = None
+            var i = 0
+            while error.isEmpty && i < n do
+              val name = in.readUTF()
+              val length = in.readLong()
+              if length < 0L || length > in.available().toLong then error = Some("entry length out of range")
+              else
+                val data = new Array[Byte](length.toInt)
+                in.readFully(data)
+                entries += name -> data
+              i += 1
+            error.toLeft(entries.result()).flatMap(es => if in.available() != 0 then Left("trailing bytes") else Right((status, es)))
         }
     catch case e: IOException => Left(s"truncated payload (${e.getClass.getSimpleName})")
 
@@ -106,7 +206,7 @@ object UnitPayload:
   * stamp.json                       plaintext, releasable (hashes and versions, recipient fingerprint, store path hash)
   * cost.json                        {"cpu_seconds_total": x, "invocations": n}: totals only, releasable (design 3.2)
   * selection.json                   D, df and UCL factor only (manifest v1 records D)
-  * progress/<cell>/dNNNN.done(+sha) completion markers, see [[PilotProgress]]
+  * progress/<cell>/dNNNN.{dispatched,done}(+sha) dispatch and completion markers, see [[PilotProgress]]
   * <store dir>/blobs/<hash>.enc    every payload, ledger record, timing record and meta blob, sealed at write time
   * }}}
   * Nothing result-bearing is ever written in plaintext: arms hand bytes to the scheduler in memory, and the scheduler
@@ -127,10 +227,18 @@ object UnitPayload:
   * @param stamp   computed by [[StampBuilder.build]]; the runner adds `recipient_fp` and `sealed_store_path_sha256`
   *                (plaintext) and the full `sealed_store_path` (sealed `meta/stamp` only); a resume must match exactly
   * @param threads datasets run in parallel (one dataset single-threaded); results must not depend on it (F11)
-  * @param guard   ceilings; deliberately not stamped, so an approved raise can resume the same output
+  * @param guard   ceilings; deliberately not stamped, so an owner-authorized raise ([[OwnerCeilingRaise]]) can resume
+  *                the same output; a ceiling above 60 core-hours cannot be built without one
   * @param runIds  draws the invocation's run id, once, inside [[run]]; it names every blob whose content may differ
   *                between invocations. Tests inject a fixed one
   * @param sweepStale called once at start: removes RAM scratch left by a dead runner (`RamScratch.sweepStale`, S6)
+  * @param accountingRecovery the owner's decision to resume after an invocation whose accounting stayed open
+  *                (`accounting.open` survived a crash, a power loss or a failed checkpoint); without it such a resume
+  *                refuses with `AccountingUncertain`
+  *
+  * Accounting: before any metered work the runner durably writes `accounting.open` (its run id) and removes it only
+  * after a successful final cost checkpoint, on every exit path. A marker that survives therefore means `cost.json`
+  * may undercount, and a resume refuses until the owner charges the uncertain run explicitly.
   */
 final class PilotRunner(
     plan: PilotPlan,
@@ -146,7 +254,8 @@ final class PilotRunner(
     log: String => Unit = _ => (),
     runIds: () => String = () => PilotRunner.freshRunId(),
     wallSeconds: () => Double = () => System.nanoTime() / 1e9,
-    sweepStale: () => Unit = () => ()
+    sweepStale: () => Unit = () => (),
+    accountingRecovery: Option[OwnerAccountingRecovery] = None
 ):
   require(threads >= 1, "threads must be positive")
   require(!stamp.fields.exists((k, _) => PilotRunner.RunnerStampKeys.contains(k)), "recipient_fp and the store path keys are added by the runner")
@@ -154,12 +263,27 @@ final class PilotRunner(
   private val retry = RetryPolicy(plan.maxRetries)
   private val cellById: Map[CellId, PilotCell] = plan.cells.map(c => c.id -> c).toMap
   private def costFile = output.resolve("cost.json")
+  private def accountingFile = output.resolve(PilotRunner.AccountingOpenName)
+  private def outputIdFile = output.resolve(PilotRunner.OutputIdName)
   private def stampFile = output.resolve("stamp.json")
   private def selectionFile = output.resolve("selection.json")
   private val busy = new AtomicBoolean(false)
   private val used = new AtomicBoolean(false)
   @volatile private var invocationNo = 0
   @volatile private var currentRunId: Option[String] = None
+  /** Writes the final cost; set once `accounting.open` is down. The marker is removed after it only on exits where
+    * every measured CPU is known to be in the meter.
+    */
+  @volatile private var finalCheckpoint: Option[() => Unit] = None
+
+  /** Sticky: set as soon as any thread of this invocation ends with a fatal throwable, i.e. a path on which a measured
+    * child CPU may not have reached the meter. Whatever exception finally escapes (a caller interrupt may win the
+    * selection in `runWave`), `accounting.open` then stays (fourth review H1).
+    */
+  private val accountingUncertain = new AtomicBoolean(false)
+
+  private def noteThrowable(t: Throwable): Unit =
+    if !PilotRunner.accountable(t) then accountingUncertain.set(true)
 
   private val storePath: String = store.dir.toAbsolutePath.normalize.toString
 
@@ -172,6 +296,16 @@ final class PilotRunner(
       "recipient_fp" -> store.recipientFingerprint,
       "sealed_store_path_sha256" -> Fs.sha256(storePath.getBytes(UTF_8))
     ))
+
+  /** The output identity an owner ceiling raise names in advance: SHA-256 of `stamp.json` followed by `output-id`,
+    * exactly as written (`cat stamp.json output-id | sha256sum`). `output-id` is 128 random bits drawn by the first
+    * invocation on a fresh output, before its stamp, and never rewritten once the stamp exists, so a fresh output at
+    * the same path (same stamp bytes) has another identity. `None` until the first invocation has created the output; the first invocation runs at
+    * the 60 core-hour ceiling, so the identity always exists before any raise is needed.
+    */
+  def outputIdentity: Option[String] =
+    if !Files.exists(stampFile) || !Files.exists(outputIdFile) then None
+    else Some(Fs.sha256(Files.readAllBytes(stampFile) ++ Files.readAllBytes(outputIdFile)))
 
   /** The sealed `meta/stamp`: the plaintext stamp plus the full store path. */
   val sealedStamp: PilotStamp = PilotStamp(effectiveStamp.fields :+ ("sealed_store_path" -> storePath))
@@ -187,7 +321,7 @@ final class PilotRunner(
     * would silently restart from zero.
     */
   private def loadCost(): Either[PilotRefusal, CostState] =
-    val hasWork = progress.exists || store.hasBlobs
+    val hasWork = progress.exists || store.hasBlobs || Files.exists(accountingFile)
     if !Files.exists(costFile) then
       if hasWork then Left(PilotRefusal.CostStateLost("cost.json is missing")) else Right(CostState(0.0, 0))
     else
@@ -196,7 +330,57 @@ final class PilotRunner(
         catch case e: IOException => Left(s"unreadable (${e.getClass.getSimpleName})")
       text.flatMap(CostState.parse).left.map(PilotRefusal.CostStateLost(_))
 
+  /** An open accounting marker from an earlier invocation needs the owner's recovery for exactly that run; the
+    * charged CPU is added to the durable total and recorded. A recovery without an open marker is refused too.
+    */
+  private def reconcileAccounting(prior: CostState, inv: Int): Either[PilotRefusal, CostState] =
+    val open =
+      if !Files.exists(accountingFile) then Right(None)
+      else
+        val id = new String(Files.readAllBytes(accountingFile), UTF_8).trim
+        if SafeName.valid(id) then Right(Some(id)) else Left(PilotRefusal.AccountingUncertain("unreadable"))
+    open.flatMap {
+      case None =>
+        accountingRecovery.fold(Right(prior))(r => Left(PilotRefusal.AccountingRecoveryMismatch(r.runId, "none")))
+      case Some(id) =>
+        accountingRecovery match
+          case Some(r) if r.runId != id => Left(PilotRefusal.AccountingRecoveryMismatch(r.runId, id))
+          case _ if prior.recoveries.exists(_.uncertainRunId == id) =>
+            // the owner's charge for this run is already durable (a death between the cost write and the marker
+            // replacement): finish the transition without charging again (third review M1)
+            log(s"PILOT_ACCOUNTING_RECOVERY_ALREADY_APPLIED,uncertain_run_id=$id")
+            Right(prior)
+          case None => Left(PilotRefusal.AccountingUncertain(id))
+          case Some(r) if (prior.cpuSecondsTotal + r.chargedCpuSeconds).isInfinite =>
+            Left(PilotRefusal.AccountingRecoveryInvalid("the charged CPU makes the total non-finite"))
+          case Some(r) =>
+            log(s"PILOT_ACCOUNTING_RECOVERY,uncertain_run_id=$id,charged_cpu_s=${r.chargedCpuSeconds},approver=${r.approver},reason=${ujson.write(ujson.Str(r.reason))}")
+            Right(prior.copy(
+              cpuSecondsTotal = prior.cpuSecondsTotal + r.chargedCpuSeconds,
+              recoveries = prior.recoveries :+ RecoveryRecord(inv, id, r.chargedCpuSeconds, r.approver, r.reason)
+            ))
+    }
+
+  /** The runner's own admission of its guard: invariants re-checked, and a raise only for this very output (the
+    * SHA-256 of its `stamp.json`, which binds the store path and the owner key) and this very invocation.
+    */
+  private def admitGuard(inv: Int): Either[PilotRefusal, Unit] =
+    if !CpuGuard.admissible(guard) then Left(PilotRefusal.CeilingNotAuthorized("the guard's ceiling is not authorized"))
+    else
+      guard.raise match
+        case Some(r) if !outputIdentity.contains(r.outputIdentity) =>
+          Left(PilotRefusal.CeilingNotAuthorized("the raise names another output (stamp.json and output-id)"))
+        case Some(r) if r.invocation != inv => Left(PilotRefusal.CeilingNotAuthorized(s"the raise authorizes invocation ${r.invocation}, not $inv"))
+        case _ => Right(())
+
+  /** The stamp check, then the output instance id: an adopted output must carry a well-formed `output-id`. */
   private def checkStamp(): Either[PilotRefusal, Unit] =
+    checkStampFile().flatMap { _ =>
+      val id = if Files.exists(outputIdFile) then new String(Files.readAllBytes(outputIdFile), UTF_8) else ""
+      Either.cond(PilotRunner.validOutputId(id), (), PilotRefusal.Failure("output-id is missing or malformed; refusing to adopt the output"))
+    }
+
+  private def checkStampFile(): Either[PilotRefusal, Unit] =
     Files.createDirectories(output)
     if Files.exists(stampFile) then
       val text = new String(Files.readAllBytes(stampFile), UTF_8).trim
@@ -207,6 +391,8 @@ final class PilotRunner(
           case Left(_) => Left(PilotRefusal.StampMismatch("stamp"))
     else if progress.exists || store.hasBlobs then Left(PilotRefusal.Failure("output holds data but no stamp.json; refusing to adopt it"))
     else
+      // a fresh output: its instance id first (never rewritten), then the stamp
+      Fs.writeAtomic(outputIdFile, PilotRunner.freshOutputId() + "\n")
       Fs.writeAtomic(stampFile, effectiveStamp.json + "\n")
       Right(())
 
@@ -223,28 +409,89 @@ final class PilotRunner(
         val rid = runIds()
         require(SafeName.valid(rid), "run id must be a safe name")
         currentRunId = Some(rid)
-        for
-          _ <- checkStamp()
-          prior <- loadCost()
-          inv = prior.invocations + 1
-          _ = { invocationNo = inv; Fs.writeAtomic(costFile, CostState(prior.cpuSecondsTotal, inv).json) }
-          done <- progress.recover(cellById.keySet)
-          _ = try sweepStale() catch case NonFatal(_) => () // stale RAM scratch of a dead earlier runner (S6)
-          _ <- sealMeta()
-          report <- schedule(done, prior.cpuSecondsTotal, inv)
-        yield report
-      catch case e: RunAborted => Left(e.refusal)
+        accounted {
+          for
+            _ <- checkStamp()
+            loaded <- loadCost()
+            // the written ordinal must stay one the parser accepts (always below Int.MaxValue; third review L1)
+            _ <- Either.cond(loaded.invocations < CostState.MaxInvocations, (), PilotRefusal.InvocationsExhausted(loaded.invocations))
+            inv = loaded.invocations + 1
+            prior <- reconcileAccounting(loaded, inv)
+            _ <- admitGuard(inv)
+            raise = guard.raise.map(r => CeilingRaiseRecord(inv, rid, r.hardCoreHours, r.approver, r.reason, r.outputIdentity))
+            state = prior.copy(invocations = inv, raises = prior.raises ++ raise)
+            _ = open(state, rid)
+            journal <- progress.recover(cellById.keySet)
+            _ = try sweepStale() catch case NonFatal(_) => () // stale RAM scratch of a dead earlier runner (S6)
+            _ <- sealMeta(state)
+            _ = raise.foreach(r => log(s"PILOT_CEILING_RAISE,run_id=$rid,invocation=$inv,hard_core_hours=${r.hardCoreHours},approver=${r.approver},reason=${ujson.write(ujson.Str(r.reason))}"))
+            report <- schedule(journal, state)
+          yield report
+        }
       finally busy.set(false)
+
+  /** Bumps the invocation in `cost.json`, then durably opens the accounting (`accounting.open` holds the run id) before
+    * any metered work; until [[schedule]] takes over, closing rewrites the same state.
+    */
+  private def open(state: CostState, rid: String): Unit =
+    invocationNo = state.invocations
+    Fs.writeAtomic(costFile, state.json)
+    Fs.writeAtomic(accountingFile, rid + "\n")
+    finalCheckpoint = Some(() => Fs.writeAtomic(costFile, state.json))
+
+  private def closeMarker(): Unit =
+    Files.deleteIfExists(accountingFile): Unit
+    Fs.fsyncDir(output.toAbsolutePath)
+
+  /** Runs `body` and, on every exit, writes the final cost checkpoint. The marker is then removed only when the run
+    * ended by a result, a typed refusal, an ordinary (non-fatal) exception or an interrupt: those paths hand every
+    * measured child CPU to the meter first. On a fatal throwable (an `OutOfMemoryError`, a `LinkageError`, ...) a
+    * measured child CPU may never have reached the meter, so the marker stays and the next resume refuses with
+    * `AccountingUncertain` (third review H1). A failed checkpoint also leaves the marker and propagates.
+    */
+  private def accounted(body: => Either[PilotRefusal, PilotReport]): Either[PilotRefusal, PilotReport] =
+    val result =
+      try
+        try body
+        catch case e: RunAborted => Left(e.refusal)
+      catch
+        case t: Throwable =>
+          noteThrowable(t)
+          try closeUninterrupted(removeMarker = !accountingUncertain.get()) catch case NonFatal(_) => ()
+          throw t
+    closeUninterrupted(removeMarker = !accountingUncertain.get())
+    result
+
+  /** The final checkpoint (and marker removal) with the caller's interrupt flag cleared (an interrupted thread cannot
+    * write through a `FileChannel`) and restored afterwards, so an interrupted run still closes its accounting.
+    */
+  private def closeUninterrupted(removeMarker: Boolean): Unit =
+    val wasInterrupted = Thread.interrupted()
+    try
+      finalCheckpoint.foreach { checkpoint =>
+        checkpoint()
+        if removeMarker then closeMarker()
+      }
+    finally if wasInterrupted then Thread.currentThread().interrupt()
 
   /** Seals the root check (the ack hash, never the root) and the stamp. Both are deterministic: resuming under
     * another root makes the owner's reader refuse a differing duplicate of `meta/root-check`, and `meta/stamp` binds
     * the plaintext `stamp.json` to the sealed tree.
     */
-  private def sealMeta(): Either[PilotRefusal, Unit] =
+  private def sealMeta(state: CostState): Either[PilotRefusal, Unit] =
     val check = Fs.hex(MessageDigest.getInstance("SHA-256").digest(s"${root.value}\n".getBytes(UTF_8)))
+    // every authorization record of cost.json is (re-)sealed under its own run id, not only this invocation's: a
+    // record written by an invocation that died before sealing it is completed here (fourth review M); a repeat is
+    // an identical duplicate, which the reader accepts
+    val records =
+      state.raises.map(r => SealedNames.ceilingRaise(r.runId) -> r.json) ++
+        state.recoveries.map(r => SealedNames.accountingRecovery(r.uncertainRunId) -> r.json)
     for
       _ <- seal(SealedNames.RootCheck, check.getBytes(UTF_8))
       _ <- seal(SealedNames.Stamp, (sealedStamp.json + "\n").getBytes(UTF_8))
+      _ <- records.foldLeft[Either[PilotRefusal, String]](Right("")) { (acc, r) =>
+        acc.flatMap(_ => seal(r._1, (ujson.write(r._2) + "\n").getBytes(UTF_8)))
+      }
     yield ()
 
   /** Closes the sealed store (CLOSE record and SEALED receipt): once, after the last run and the aggregation. It
@@ -270,24 +517,28 @@ final class PilotRunner(
       val notes: Vector[String]
   )
 
-  private def schedule(alreadyDone: Set[Job], priorCpu: Double, inv: Int): Either[PilotRefusal, PilotReport] =
-    val meter = new CpuMeter(clock, priorCpu)
+  private def schedule(journal: JournalState, state: CostState): Either[PilotRefusal, PilotReport] =
+    val inv = state.invocations
+    val alreadyDone = journal.completed
+    val meter = new CpuMeter(clock, state.cpuSecondsTotal)
     val hard = new AtomicBoolean(guard.check(meter.totalSeconds) == CpuGuard.State.HardStop)
     val crashed = new AtomicBoolean(false)
     val costLock = new Object
     val completed = java.util.concurrent.ConcurrentHashMap.newKeySet[Job]()
     alreadyDone.foreach(j => completed.add(j): Unit)
     val rerunDone = java.util.concurrent.ConcurrentHashMap.newKeySet[Job]()
-    val consumed = new java.util.concurrent.ConcurrentHashMap[WorkUnit, ScorerInput]()
+    val consumed = new java.util.concurrent.ConcurrentHashMap[WorkUnit, (ScorerInput, UnitContribution)]()
     val order = Dispatch.order(plan.cells, plan.datasets)
     val (probe, rest) = Dispatch.waves(order, plan.probeDatasets)
-    val mustFinish = Dispatch.mustFinish(order, alreadyDone)
+    val mustFinish = Dispatch.mustFinish(order, alreadyDone, journal.dispatched)
 
     def checkpoint(): Unit = costLock.synchronized {
       val total = meter.totalSeconds
-      Fs.writeAtomic(costFile, CostState(total, inv).json)
+      Fs.writeAtomic(costFile, state.copy(cpuSecondsTotal = total).json)
       if guard.check(total) == CpuGuard.State.HardStop then hard.set(true)
     }
+    // the schedule-wide final checkpoint: on every exit of the invocation, after every worker has stopped
+    finalCheckpoint = Some(() => checkpoint())
 
     def stopped: Boolean = hard.get() || crashed.get()
 
@@ -295,6 +546,13 @@ final class PilotRunner(
     def stopNow(): Boolean =
       if !hard.get() && guard.check(meter.totalSeconds) == CpuGuard.State.HardStop then hard.set(true)
       stopped
+
+    /** Persists the CPU spent so far on a crash path (re-review failure 2). A failure here is not lost either:
+      * `accounting.open` stays down until the final checkpoint succeeds, so a resume after it refuses.
+      */
+    def checkpointOnCrash(): Unit =
+      try checkpoint()
+      catch case NonFatal(_) => ()
 
     /** A stop flag up at a seal abandons the commit (finding M4): nothing is written after a crash elsewhere. */
     def sealOrAbort(name: String, bytes: Array[Byte]): Unit =
@@ -339,8 +597,9 @@ final class PilotRunner(
       sealOrAbort(ledgerName, (record.json + "\n").getBytes(UTF_8))
       hook.at(CommitStage.LedgerSealed, job)
       sealOrAbort(timingName, timingJson(u, phase, attempts))
-      // the committed attempt is the last one the arm fed to the scorer (ScoreFeed: last call wins)
-      consumed.put(u, ScorerInput(u, runId, phase, payloadSha)): Unit
+      // only the committed attempt reaches the scorer: its contribution is the one sealed in this payload (S10)
+      val contribution = raws.find(_.name == ScorerContribution.EntryName).map(_.bytes)
+      consumed.put(u, (ScorerInput(u, runId, phase, payloadSha), new UnitContribution(u, contribution))): Unit
 
     /** Runs one unit to a commit; false when it stopped without committing. Retries seal nothing: their timings and
       * notes are buffered and sealed in the one timing record at commit.
@@ -355,9 +614,21 @@ final class PilotRunner(
         val t0 = wallSeconds()
         val result =
           try arms.run(ctx)
-          catch case NonFatal(e) => ArmResult.Failed("executor_exception:" + e.getClass.getSimpleName.take(40).filter(_.isLetterOrDigit))
+          catch
+            case _: InterruptedException =>
+              Thread.currentThread().interrupt()
+              ArmResult.Failed("interrupted")
+            case NonFatal(e) => ArmResult.Failed("executor_exception:" + e.getClass.getSimpleName.take(40).filter(_.isLetterOrDigit))
         val wall = wallSeconds() - t0
         meter.addChild(result.childCpu)
+        if Thread.currentThread().isInterrupted then
+          // the measured child CPU is in the meter; persist it (with the flag cleared, or the write would fail), restore
+          // the flag and end the run
+          crashed.set(true)
+          val _ = Thread.interrupted()
+          checkpointOnCrash()
+          Thread.currentThread().interrupt()
+          throw new RunAborted(PilotRefusal.Interrupted)
         if stopNow() then
           // the attempt ran into a stop (an arm that saw shouldAbort, or the ceiling crossed during it): discarded
           checkpoint()
@@ -376,10 +647,20 @@ final class PilotRunner(
           catch
             case _: StopRequested => finished = true
             case t: Throwable =>
+              noteThrowable(t)
               crashed.set(true)
+              checkpointOnCrash()
               throw t
           checkpoint()
       committed
+
+    /** Durable dispatch marker before the job's first arm (blocker probe M2); a failure to write it is a crash. */
+    def dispatch(job: Job): Unit =
+      try progress.markDispatched(job)
+      catch
+        case t: Throwable =>
+          crashed.set(true)
+          throw t
 
     def runJob(job: Job, phase: CommitPhase): Unit =
       val cell = cellById(job.cell)
@@ -423,10 +704,15 @@ final class PilotRunner(
                       case CommitPhase.Rerun => runJob(job, phase) // the soft stop does not apply: the scorer needs every kept job
                       case CommitPhase.Scheduled =>
                         guard.check(meter.totalSeconds) match
-                          case CpuGuard.State.Ok => runJob(job, phase)
+                          case CpuGuard.State.Ok =>
+                            dispatch(job)
+                            runJob(job, phase)
                           case CpuGuard.State.SoftStop =>
-                            // no new datasets past the soft stop; jobs abandoned below completed ones are finished (D2)
-                            if mustFinish.contains(job) then runJob(job, phase)
+                            // no new datasets past the soft stop; jobs an earlier invocation dispatched and abandoned
+                            // are finished (D2, M2)
+                            if mustFinish.contains(job) then
+                              dispatch(job)
+                              runJob(job, phase)
                           case CpuGuard.State.HardStop =>
                             hard.set(true)
                             go = false
@@ -443,12 +729,14 @@ final class PilotRunner(
               catch
                 case e: ExecutionException =>
                   crashed.set(true)
+                  noteThrowable(Option(e.getCause).getOrElse(e)) // recorded before any exception selection
                   if failure.isEmpty then failure = Some(Option(e.getCause).getOrElse(e))
                   joined = true
                 case _: InterruptedException =>
                   crashed.set(true) // workers stop at their next check; keep joining
                   interrupted = true
           }
+          if interrupted || failure.nonEmpty then checkpointOnCrash() // every worker has stopped: the final CPU
           if interrupted then
             Thread.currentThread().interrupt()
             throw new RunAborted(PilotRefusal.Interrupted)
@@ -485,7 +773,7 @@ final class PilotRunner(
           else
             Fs.writeAtomic(selectionFile, selectionJson(decision))
             val outcome = if full then PilotOutcome.Complete(decision) else PilotOutcome.Partial(decision)
-            Right(PilotReport(outcome, meter.totalSeconds, projected, inv, reruns.length, runId, inputs))
+            Right(PilotReport(outcome, meter.totalSeconds, projected, inv, reruns.length, runId, inputs.map(_._1), inputs.map(_._2)))
       }
 
     if hard.get() then
@@ -517,6 +805,23 @@ final class PilotRunner(
     ujson.write(ujson.Obj("D" -> ujson.Num(d.D.toDouble), "df" -> ujson.Num(d.df.toDouble), "ucl_factor" -> ujson.Str(f"${d.uclFactor}%.12f"))) + "\n"
 
 object PilotRunner:
+  /** Ends with every measured CPU in the meter: a result, a non-fatal exception or an interrupt. */
+  private[exec] def accountable(t: Throwable): Boolean = NonFatal(t) || t.isInstanceOf[InterruptedException]
+
+  /** Plaintext output instance id: 32 lowercase hex characters and a newline, written once. */
+  val OutputIdName: String = "output-id"
+
+  private[exec] def freshOutputId(): String =
+    val b = new Array[Byte](16)
+    new java.security.SecureRandom().nextBytes(b)
+    Fs.hex(b)
+
+  private[exec] def validOutputId(text: String): Boolean =
+    text.length == 33 && text.endsWith("\n") && text.init.forall(c => c.isDigit || c >= 'a' && c <= 'f')
+
+  /** Plaintext marker present while an invocation's CPU accounting is open (content: its run id). */
+  val AccountingOpenName: String = "accounting.open"
+
   /** Stamp keys the runner adds itself; a caller's stamp must not carry them. */
   val RunnerStampKeys: Set[String] = Set("recipient_fp", "sealed_store_path", "sealed_store_path_sha256")
 

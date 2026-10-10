@@ -10,14 +10,15 @@ object Dispatch:
   def waves(order: Vector[Job], probe: Int): (Vector[Job], Vector[Job]) = order.partition(_.dataset < probe)
 
   /** Jobs a resume finishes even past the soft stop (design 5.2: the runner "finishes in-flight datasets"): every
-    * incomplete job, in any cell, whose index is below the highest index completed by an earlier invocation. Such a
-    * job was dispatched before the interruption (dispatch is round-robin in index order) and abandoned by a crash or
-    * a hard stop; without it a cell's completed set has a hole and the kept prefix shrinks (decision D2).
+    * incomplete job that an earlier invocation dispatched (its durable dispatch marker exists) and abandoned by a
+    * crash or a hard stop, whatever its index; and, for journals without dispatch markers, every incomplete job
+    * whose index is below the highest completed one (dispatch is round-robin in index order, so it was dispatched
+    * too). Without them a cell's completed set has a hole or a short tail and the kept prefix shrinks (decision D2;
+    * blocker probe M2: a job in flight at or above the highest completed index was skipped).
     */
-  def mustFinish(order: Vector[Job], completed: Set[Job]): Set[Job] =
-    completed.iterator.map(_.dataset).maxOption match
-      case None => Set.empty
-      case Some(top) => order.iterator.filter(j => j.dataset < top && !completed.contains(j)).toSet
+  def mustFinish(order: Vector[Job], completed: Set[Job], dispatched: Set[Job] = Set.empty): Set[Job] =
+    val top = completed.iterator.map(_.dataset).maxOption.getOrElse(-1)
+    order.iterator.filter(j => !completed.contains(j) && (dispatched.contains(j) || j.dataset < top)).toSet
 
 /** Retry cap: at most `maxRetries` retries after the first attempt (design 5.2: 2). Refusals are never retried. */
 final case class RetryPolicy(maxRetries: Int = 2):
@@ -35,6 +36,70 @@ object RetryPolicy:
     case Commit(status: UnitStatus, code: String)
     case Retry(code: String)
 
+/** The owner's explicit authorization to run past the 60 core-hour ceiling (owner decision 2026-10-03: "do not raise
+  * the ceiling without the owner"; runbook section 6). It names the new ceiling, the approving owner, the reason, the
+  * output (the SHA-256 of its `stamp.json`, which binds the store path and the owner key) and the one runner
+  * invocation on it (the 1-based ordinal of `cost.json`), so it cannot be reused by another output or a later
+  * invocation. The runner records it, with its run id, in `cost.json` and in the sealed `meta/ceiling-raise/<runId>`.
+  *
+  * A plain class, not a case class: there is no generated `apply`, `copy` or `Mirror.fromProduct`, and it is not
+  * `Serializable`, so the only way to obtain one is the validated [[OwnerCeilingRaise.of]]; the constructor re-checks
+  * every invariant in case of reflective construction.
+  */
+final class OwnerCeilingRaise private (
+    val hardCoreHours: Double,
+    val approver: String,
+    val reason: String,
+    val outputIdentity: String,
+    val invocation: Int
+):
+  require(OwnerCeilingRaise.problem(hardCoreHours, approver, reason, outputIdentity, invocation).isEmpty, "invalid OwnerCeilingRaise")
+  override def toString: String = f"OwnerCeilingRaise($hardCoreHours%.3f core-h, $approver, invocation $invocation)"
+
+object OwnerCeilingRaise:
+  /** No raise may exceed this, whoever approves it: a typo must not unbound the guard. Pending owner decision; the
+    * single place the cap is defined.
+    */
+  val MaxRaisedCoreHours: Double = 240.0
+
+  private def problem(hardCoreHours: Double, approver: String, reason: String, outputIdentity: String, invocation: Int): Option[String] =
+    if hardCoreHours.isNaN || hardCoreHours.isInfinite || hardCoreHours <= CpuGuard.MaxHardCoreHours || hardCoreHours > MaxRaisedCoreHours then
+      Some(s"a raise names a finite ceiling above ${CpuGuard.MaxHardCoreHours} and at most $MaxRaisedCoreHours core-hours")
+    else if outputIdentity == null || !LedgerRecord.isSha256(outputIdentity) then
+      Some("a raise names its output by the SHA-256 of its stamp.json")
+    else if approver == null || !SafeName.valid(approver) then Some("the approver is a safe name")
+    else if reason == null || reason.trim.isEmpty || reason.length > 500 then Some("a raise states its reason (at most 500 characters)")
+    else if invocation < 1 || invocation == Int.MaxValue then Some("a raise names the invocation it authorizes")
+    else None
+
+  /** @param outputIdentity SHA-256 of the output's `stamp.json` as written (`PilotRunner.stampSha256`): the raise
+    *                          is valid for that output only
+    * @param invocation        the one invocation ordinal it authorizes on that output
+    */
+  def of(hardCoreHours: Double, approver: String, reason: String, outputIdentity: String, invocation: Int): Either[String, OwnerCeilingRaise] =
+    problem(hardCoreHours, approver, reason, outputIdentity, invocation)
+      .toLeft(new OwnerCeilingRaise(hardCoreHours, approver, reason.trim, outputIdentity, invocation))
+
+/** The owner's explicit decision to resume after an invocation whose CPU accounting is uncertain (its
+  * `accounting.open` marker survived: a crash, a power loss, or a failed cost checkpoint). It names that invocation's
+  * run id and the CPU seconds the owner charges for it on top of the last durable total, so the cumulative guard
+  * never silently undercounts. Like [[OwnerCeilingRaise]] it can only come from the validated factory.
+  */
+final class OwnerAccountingRecovery private (val runId: String, val chargedCpuSeconds: Double, val approver: String, val reason: String):
+  require(OwnerAccountingRecovery.problem(runId, chargedCpuSeconds, approver, reason).isEmpty, "invalid OwnerAccountingRecovery")
+  override def toString: String = f"OwnerAccountingRecovery($runId, $chargedCpuSeconds%.1f s, $approver)"
+
+object OwnerAccountingRecovery:
+  private def problem(runId: String, charged: Double, approver: String, reason: String): Option[String] =
+    if runId == null || !SafeName.valid(runId) then Some("the run id is a safe name")
+    else if charged.isNaN || charged.isInfinite || charged < 0.0 then Some("the charged CPU is finite and non-negative")
+    else if approver == null || !SafeName.valid(approver) then Some("the approver is a safe name")
+    else if reason == null || reason.trim.isEmpty || reason.length > 500 then Some("a recovery states its reason (at most 500 characters)")
+    else None
+
+  def of(runId: String, chargedCpuSeconds: Double, approver: String, reason: String): Either[String, OwnerAccountingRecovery] =
+    problem(runId, chargedCpuSeconds, approver, reason).toLeft(new OwnerAccountingRecovery(runId, chargedCpuSeconds, approver, reason.trim))
+
 /** Cumulative CPU guard: soft stop at 45 core-hours, hard ceiling at 60 (design 5.1, 5.2).
   *
   * The runner checks the hard ceiling before every attempt of every unit, whenever an arm polls
@@ -42,9 +107,12 @@ object RetryPolicy:
   * not committed. Overshoot bound: CPU past the ceiling is at most `threads` times the CPU of the longest single
   * unit attempt (every in-flight attempt may run to its end when its arm does not poll `shouldAbort`), plus the
   * child CPU those attempts report.
+  *
+  * A plain, non-`Serializable` class whose constructor checks every invariant: a hard ceiling above 60 core-hours
+  * exists only with the owner's [[OwnerCeilingRaise]]. The runner re-checks [[CpuGuard.admissible]] before it starts.
   */
-final case class CpuGuard(softCoreHours: Double = 45.0, hardCoreHours: Double = 60.0):
-  require(softCoreHours > 0.0 && softCoreHours <= hardCoreHours, "need 0 < soft <= hard")
+final class CpuGuard private (val softCoreHours: Double, val hardCoreHours: Double, val raise: Option[OwnerCeilingRaise]):
+  require(CpuGuard.admissible(softCoreHours, hardCoreHours, raise), "need 0 < soft <= hard <= 60, or a raise naming the hard ceiling")
 
   def check(totalCpuSeconds: Double): CpuGuard.State =
     val hours = totalCpuSeconds / 3600.0
@@ -52,7 +120,28 @@ final case class CpuGuard(softCoreHours: Double = 45.0, hardCoreHours: Double = 
     else if hours >= softCoreHours then CpuGuard.State.SoftStop
     else CpuGuard.State.Ok
 
+  override def toString: String = s"CpuGuard($softCoreHours, $hardCoreHours, $raise)"
+
 object CpuGuard:
+  /** The binding ceiling of the owner decision of 2026-10-03 ("do not raise the ceiling without the owner"). */
+  val MaxHardCoreHours: Double = 60.0
+
+  private def admissible(soft: Double, hard: Double, raise: Option[OwnerCeilingRaise]): Boolean =
+    !soft.isNaN && !hard.isNaN && soft > 0.0 && soft <= hard &&
+      (raise match
+        case None => hard <= MaxHardCoreHours
+        case Some(r) => r != null && r.hardCoreHours == hard)
+
+  /** The runner's own admission check of a guard it was handed. */
+  def admissible(g: CpuGuard): Boolean = g != null && admissible(g.softCoreHours, g.hardCoreHours, g.raise)
+
+  /** Ceilings at or below [[MaxHardCoreHours]]; a plain number above it is refused. */
+  def apply(softCoreHours: Double = 45.0, hardCoreHours: Double = MaxHardCoreHours): CpuGuard =
+    new CpuGuard(softCoreHours, hardCoreHours, None)
+
+  /** A ceiling above 60 core-hours, only from the owner's explicit, typed authorization. */
+  def raised(softCoreHours: Double, raise: OwnerCeilingRaise): CpuGuard = new CpuGuard(softCoreHours, raise.hardCoreHours, Some(raise))
+
   enum State:
     case Ok, SoftStop, HardStop
 

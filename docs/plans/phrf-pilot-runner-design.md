@@ -456,8 +456,25 @@ not stamped).
   `D`. *[S7 review, D2: `D` is the smallest per-cell **longest completed prefix**. A cell keeps
   exactly `0..D-1`, and a hole is never kept. On resume, incomplete jobs below the highest completed
   index were in flight when the run was interrupted; they are finished before the soft stop is
-  honoured.]*
+  honoured. 2026-10-10 (blocker probe M2): the completed set alone misses a job in flight at or above
+  the highest completed index, so the runner writes a durable constant-content dispatch marker
+  before a job's first arm, and a resume past the soft stop finishes every dispatched incomplete job.]*
 - **Hard stop (60):** `CpuCeilingReached`, resumable only with an owner-approved raised ceiling.
+  *[2026-10-10, owner decision of 2026-10-03 "do not raise the ceiling without the owner": `CpuGuard`
+  refuses a hard ceiling above 60 core-hours. The only way past 60 is `CpuGuard.raised` with an
+  `OwnerCeilingRaise` value naming the new ceiling, the approving owner and the reason; the runner
+  logs `PILOT_CEILING_RAISE` with the ceiling and the approver. No code path raises the ceiling by itself.
+  Second re-review: the raise also names the one invocation it authorizes, at most 240 core-hours, and
+  is recorded in `cost.json` and the sealed `meta/ceiling-raise/<runId>`; `CpuGuard` and the
+  authorization are plain non-serializable classes whose constructors re-check every invariant. The
+  accounting is opened durably (`accounting.open`) before metered work and closed only by a successful
+  final checkpoint; a surviving marker makes the resume refuse until the owner's
+  `OwnerAccountingRecovery` charges the uncertain run. Third review: the raise also names the output
+  (SHA-256 of its `stamp.json`); a fatal throwable leaves the accounting open; a recovery is applied
+  once per uncertain run id; plans allow at most 100 retries. Fourth review: the output identity
+  adds a random, write-once `output-id`; a fatal throwable in any thread sets a sticky
+  accounting-uncertain flag; authorization records are re-sealed under their own run ids; plans
+  have at most 10000 datasets (4-digit `dNNNN` names).]*
   *[S7: checked before every unit attempt and when an arm polls `shouldAbort`; an attempt that
   ends past the ceiling is discarded. The overshoot is bounded by threads x the longest unit
   attempt.]*
