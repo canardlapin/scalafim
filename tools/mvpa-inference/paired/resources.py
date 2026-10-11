@@ -14,6 +14,9 @@ def base_for(root):
     return cache/'bases'/hashlib.sha256(str(root.resolve()).encode()).hexdigest()[:16]
 
 
+_commands = {}
+
+
 def owned_jvms(root):
     marker='-Dsbt.global.base='+str(base_for(root))
     ps=subprocess.check_output(['ps','-axo','pid=,rss=,command='],text=True)
@@ -22,6 +25,7 @@ def owned_jvms(root):
         parts=line.split(None,2)
         if len(parts)==3 and re.search(r'(?:^|/)java(?:\s|$)',parts[2]) and marker in parts[2].split():
             found[int(parts[0])]=int(parts[1])*1024
+            _commands[int(parts[0])]=parts[2]
     return found
 
 
@@ -71,7 +75,7 @@ def monitor(root,command,env,log,limits,deadline,other_root):
             for pid,rss in own.items():
                 samples.append(dict(seconds=now-start,pid=pid,rss_bytes=rss));seen.add(pid)
                 if str(pid) not in commands:
-                    commands[str(pid)]=subprocess.check_output(['ps','-p',str(pid),'-o','command='],text=True).strip()
+                    commands[str(pid)]=_commands.get(pid,'unknown')
                 if rss>limits['rss_bytes']: violation='rss-limit'
             if now-start>limits['cell_wall_seconds']: violation='cell-wall-limit'
             if now>deadline: violation='campaign-wall-limit'
@@ -82,8 +86,9 @@ def monitor(root,command,env,log,limits,deadline,other_root):
     finally:
         if violation:
             stop_owned(root)
-            try: os.killpg(worker.pid,signal.SIGTERM)
-            except ProcessLookupError: pass
+            if worker.poll() is None:
+                try: os.killpg(worker.pid,signal.SIGTERM)
+                except ProcessLookupError: pass
         try: code=worker.wait(timeout=10)
         except subprocess.TimeoutExpired:
             os.killpg(worker.pid,signal.SIGKILL);code=worker.wait()
