@@ -10,6 +10,7 @@ import importlib.machinery
 import importlib.util
 import io
 import json
+import re
 import shutil
 import socket
 import subprocess
@@ -355,7 +356,7 @@ class ShutdownSuite(WarmCase):
         code, client = self.shutdown([True, True, False])
         self.assertEqual(code, 0)
         client.assert_called_once_with(
-            self.root, base, "shutdown", timeout=self.sw.STOP_SECONDS
+            self.root, base, "shutdown", timeout=self.sw.STOP_SECONDS, verify_completion=False
         )
         self.assertEqual(before, sorted(str(p) for p in base.rglob("*")))
 
@@ -394,7 +395,7 @@ class ShutdownSuite(WarmCase):
             json.dumps({"uri": "local:///nonexistent/sock"})
         )
 
-        def client(root, base_, command, timeout=None):
+        def client(root, base_, command, timeout=None, verify_completion=True):
             listener.close()
             (sock_dir / "sock").unlink()
             return 0
@@ -425,7 +426,7 @@ class ShutdownSuite(WarmCase):
                 self.addCleanup(listener.close)
                 (target / "active.json").write_text(payload)
 
-                def client(root, base_, command, timeout=None):
+                def client(root, base_, command, timeout=None, verify_completion=True):
                     listener.close()
                     (sock_dir / "sock").unlink()
                     return 0
@@ -435,7 +436,7 @@ class ShutdownSuite(WarmCase):
                 ) as run_client:
                     code, _, _ = self.run_main("--shutdown")
                 self.assertEqual(code, 0)
-                run_client.assert_called_once_with(self.root, base, "shutdown", timeout=self.sw.STOP_SECONDS)
+                run_client.assert_called_once_with(self.root, base, "shutdown", timeout=self.sw.STOP_SECONDS, verify_completion=False)
                 self.assertEqual(self.sw.active_uri(self.root), f"local://{sock_dir / 'sock'}")
 
     def test_shutdown_does_not_launch_client_for_ambiguous_base_with_malformed_active(self):
@@ -451,6 +452,28 @@ class ShutdownSuite(WarmCase):
 
 
 class ClientIoSuite(WarmCase):
+    def server_receipt(self, args):
+        command = args[-1]
+        match = re.search(r'Paths\.get\(("(?:[^"\\]|\\.)*")\), "([0-9a-f]{32})"\.getBytes', command)
+        self.assertIsNotNone(match, command)
+        return Path(json.loads(match.group(1))), match.group(2)
+
+    def completed(self, args, **kwargs):
+        path, token = self.server_receipt(args)
+        path.write_text(token)
+        return 0
+
+    def test_zero_exit_after_disconnect_is_not_success(self):
+        def disconnected(*args, **kwargs):
+            print("[success] Total time: 1 s (an earlier nested task)")
+            print("java.nio.channels.ClosedChannelException")
+            return 0
+
+        with mock.patch.object(self.sw.subprocess, "call", side_effect=disconnected), contextlib.redirect_stdout(
+            io.StringIO()
+        ), contextlib.redirect_stderr(io.StringIO()):
+            self.assertNotEqual(self.sw.run_client(self.root, self.make_base(), "compile"), 0)
+
     def test_non_tty_forces_dumb_terminal_and_devnull_stdin(self):
         env = {"TERM": "xterm-256color"}
         with mock.patch.object(self.sw.sys, "stdin", io.StringIO()):
@@ -471,13 +494,67 @@ class ClientIoSuite(WarmCase):
         base = self.make_base()
         with mock.patch.object(self.sw.sys, "stdin", io.StringIO()), mock.patch.dict(
             self.sw.os.environ, {"TERM": "xterm"}
-        ), mock.patch.object(self.sw.subprocess, "call", return_value=0) as call:
+        ), mock.patch.object(self.sw.subprocess, "call", side_effect=self.completed) as call:
             self.assertEqual(self.sw.run_client(self.root, base, "compile"), 0)
         args, kwargs = call.call_args
-        self.assertEqual(args[0], ["sbt", "--client", "compile"])
+        self.assertEqual(args[0][:2], ["sbt", "--client"])
+        self.assertTrue(args[0][2].startswith(";compile;eval "))
         self.assertIs(kwargs["stdin"], subprocess.DEVNULL)
         self.assertEqual(kwargs["env"]["TERM"], "dumb")
         self.assertIn(f"-Dsbt.global.base={base}", kwargs["env"]["SBT_OPTS"])
+        self.assertFalse(self.server_receipt(args[0])[0].exists())
+
+    def test_wrong_receipt_refused(self):
+        def wrong(args, **kwargs):
+            path, _ = self.server_receipt(args)
+            path.write_text("previous completion")
+            return 0
+
+        with mock.patch.object(self.sw.subprocess, "call", side_effect=wrong), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(self.sw.run_client(self.root, self.make_base(), "compile"), 1)
+
+    def test_completed_receipt_does_not_override_client_failure(self):
+        def failed(args, **kwargs):
+            self.completed(args)
+            return 7
+
+        with mock.patch.object(self.sw.subprocess, "call", side_effect=failed):
+            self.assertEqual(self.sw.run_client(self.root, self.make_base(), "compile"), 7)
+
+    def test_every_command_requires_its_own_receipt(self):
+        paths = []
+
+        def first_only(args, **kwargs):
+            path, token = self.server_receipt(args)
+            paths.append(path)
+            if len(paths) == 1:
+                path.write_text(token)
+            return 0
+
+        base = self.make_base()
+        with mock.patch.object(self.sw.subprocess, "call", side_effect=first_only), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(self.sw.run_client(self.root, base, "compile"), 0)
+            self.assertEqual(self.sw.run_client(self.root, base, "test"), 1)
+        self.assertNotEqual(paths[0], paths[1])
+        self.assertFalse(any(path.parent.exists() for path in paths))
+
+    def test_receipt_survives_clean_and_a_semicolon_batch(self):
+        base = self.make_base()
+        target = self.root / "target"
+        target.mkdir()
+
+        def clean(args, **kwargs):
+            self.assertTrue(args[-1].startswith(';clean;show name;eval '))
+            shutil.rmtree(target)
+            return self.completed(args)
+
+        with mock.patch.object(self.sw.subprocess, "call", side_effect=clean):
+            self.assertEqual(self.sw.run_client(self.root, base, ";clean;show name"), 0)
+
+    def test_shutdown_does_not_enqueue_a_receipt_after_termination(self):
+        with mock.patch.object(self.sw.subprocess, "call", return_value=0) as call:
+            self.assertEqual(self.sw.run_client(self.root, self.make_base(), "shutdown", verify_completion=False), 0)
+        self.assertEqual(call.call_args.args[0], ["sbt", "--client", "shutdown"])
 
     def test_run_client_timeout_returns_124(self):
         with mock.patch.object(

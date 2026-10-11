@@ -171,7 +171,9 @@ Use a JDK 21 installation for local development and an sbt launcher;
 `project/build.properties` selects sbt 1.11.7 for this build. CI checks the
 JDK 17 API baseline, and Scala.js tests require Node.js (CI uses Node 24).
 For repeated local gates, use `python3 tools/build/sbt-warm hrfJVM/test hrfJS/test`
-to reuse a worktree-specific server. Run large test campaigns in bounded
+to reuse a worktree-specific server. Each command must produce its own server
+completion receipt; a disconnected client cannot report a successful gate just
+because it exited zero. Use `--shutdown` to stop the server. Run large test campaigns in bounded
 batches, as described in `AGENTS.md`. The
 [local sbt/Mill comparison](docs/benchmarks/build-tools-20261005.md) records
 the rationale for retaining the current build.
