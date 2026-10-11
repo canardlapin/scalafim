@@ -63,6 +63,18 @@ class PairedPilotProtocolTest(unittest.TestCase):
         roots=[protocol.assignment('pilot',c['id'],i)['root_seed64'] for c in cells for i in range(200)]
         self.assertEqual(len(roots),12800);self.assertEqual(len(set(roots)),12800)
 
+    def test_startup_helper_is_recorded_but_not_a_second_numerical_lifetime(self):
+        worker=type('Worker',(),{'pid':999,'poll':lambda self:0,'wait':lambda self,timeout:0})()
+        flags=type('Flags',(),{'returncode':0,'stdout':'-XX:ActiveProcessorCount=4 -XX:MaxHeapSize=3221225472','stderr':''})()
+        resources._commands.update({123:'java sbt-launch.jar --rt-ext-dir',124:'java sbt-launch.jar --detach-stdio'})
+        with patch.object(resources.subprocess,'Popen',return_value=worker), \
+             patch.object(resources.subprocess,'run',return_value=flags), \
+             patch.object(resources,'owned_jvms',side_effect=[{}, {123:100,124:200}, {}, {124:200}]):
+            result=resources.monitor(Path('/tmp/a'),['sbt'],{},None,protocol.LIMITS,float('inf'),Path('/tmp/b'))
+        self.assertIsNone(result['resource_refusal'])
+        self.assertEqual([s['startup_helper'] for s in result['samples']],[True,False])
+        self.assertEqual(set(result['process_commands']),{'123','124'})
+
     def test_shutdown_waits_for_process_exit_after_socket_closes(self):
         result=type('Result',(),{'returncode':0})()
         with patch.object(resources.subprocess,'run',return_value=result), \
