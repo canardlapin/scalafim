@@ -410,3 +410,77 @@ class OwnerVerificationSuite extends munit.FunSuite:
       case OwnerVerdict.Refused(VerificationRefusal.ImpossibleLedger(_, d)) => assert(d.contains("largest ordinal"), d)
       case other => fail(s"expected ImpossibleLedger, got $other")
   }
+
+  // ---- targeted review 6, owner decision 2026-10-10: detect output-identity substitution at unseal ----
+
+  private def storeAt(out: Path): SealedStore =
+    SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(e => fail(e.message), identity)
+
+  private def runAt(out: Path, guard: CpuGuard = roomy): PilotReport =
+    new PilotRunner(plan, out, stamp, storeAt(out), root, contributing(steady), guard, new FakeClock).run().fold(x => fail(x.message), identity)
+
+  private def records(out: Path): Vector[(String, Array[Byte])] = OwnerReader.readRecords(out.resolve("sealed"), owner.priv).fold(e => fail(e), identity)
+
+  /** Output A, run once, then resumed under a raise bound to it and aggregated; returns its whitelist hash. */
+  private def raisedOutput(out: Path): (String, OwnerCeilingRaise, PilotReport) =
+    runAt(out)
+    val id = new PilotRunner(plan, out, stamp, storeAt(out), root, contributing(steady), roomy, new FakeClock).outputIdentity.getOrElse(fail("no identity"))
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "resume output A", id, 2).fold(e => fail(e), identity)
+    val rep = runAt(out, CpuGuard.raised(45.0, raise))
+    (aggregate(Pilot(out, storeAt(out), rep)), raise, rep)
+
+  test("review6: a clean raised store, one sealed stamp, verifies Valid through verifyRecords") {
+    val out = Files.createTempDirectory("phrf-s7-r6-clean-").resolve("out")
+    val (wl, _, rep) = raisedOutput(out)
+    val recs = records(out)
+    assert(recs.exists(_._1 == SealedNames.ceilingRaise(rep.runId)), "the raise is sealed")
+    assertEquals(recs.filter(_._1 == SealedNames.Stamp).map(r => new String(r._2, UTF_8)).distinct.length, 1)
+    assertEquals(OwnerVerification.verifyRecords(recs, plan, wl, Vector(new Synthetic())), OwnerVerdict.Valid(rep.runId, 15, 15, Vector.empty))
+  }
+
+  test("review6: a consistent hand edit of output-id and stamp.json lets the runner proceed (documented limit) but the owner refuses the store") {
+    val base = Files.createTempDirectory("phrf-s7-r6-edit-")
+    val out = base.resolve("out")
+    val (_, raise, _) = raisedOutput(out)
+    Files.move(out, base.resolve("archive"))
+    runAt(out) // a fresh output at the same path
+    val archivedId = Files.readString(base.resolve("archive/output-id"))
+    Files.writeString(out.resolve("output-id"), archivedId)
+    val st = ujson.read(Files.readString(out.resolve("stamp.json")))
+    st("output_id") = ujson.Str(archivedId.trim)
+    Files.writeString(out.resolve("stamp.json"), ujson.write(st) + "\n")
+    // the runner cannot authenticate against the owner-encrypted sealed stamp: it proceeds under the reused raise
+    val rep = runAt(out, CpuGuard.raised(45.0, raise))
+    assertEquals(rep.invocation, 2)
+    val wl = aggregate(Pilot(out, storeAt(out), rep))
+    // the owner, at unseal, sees two differing sealed stamps and refuses the store
+    assertEquals(
+      OwnerVerification.verifyRecords(records(out), plan, wl, Vector(new Synthetic())),
+      OwnerVerdict.Refused(VerificationRefusal.SealedStampConflict(Vector("output_id")))
+    )
+  }
+
+  test("review6: a sealed raise naming another output identity, or a run absent from the history, refuses") {
+    val out = Files.createTempDirectory("phrf-s7-r6-bind-").resolve("out")
+    val (wl, _, rep) = raisedOutput(out)
+    val recs = records(out)
+    val raiseName = SealedNames.ceilingRaise(rep.runId)
+    def rewritten(f: ujson.Value => Unit): Vector[(String, Array[Byte])] = recs.map { (n, b) =>
+      if n != raiseName then n -> b
+      else
+        val v = ujson.read(new String(b, UTF_8))
+        f(v)
+        n -> (ujson.write(v) + "\n").getBytes(UTF_8)
+    }
+    OwnerVerification.verifyRecords(rewritten(_("output_identity") = ujson.Str("ab" * 32)), plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.CeilingRaiseNotBound(rid, d)) => assertEquals(rid, rep.runId); assert(d.contains("output identity"), d)
+      case other => fail(s"expected CeilingRaiseNotBound, got $other")
+    val ghost = "0123456789abcdef"
+    val raiseBytes = recs.find(_._1 == raiseName).get._2
+    val v = ujson.read(new String(raiseBytes, UTF_8))
+    v("run_id") = ujson.Str(ghost)
+    val withGhost = recs :+ (SealedNames.ceilingRaise(ghost) -> (ujson.write(v) + "\n").getBytes(UTF_8))
+    OwnerVerification.verifyRecords(withGhost, plan, wl, Vector(new Synthetic())) match
+      case OwnerVerdict.Refused(VerificationRefusal.CeilingRaiseNotBound(rid, d)) => assertEquals(rid, ghost); assert(d.contains("committed nothing"), d)
+      case other => fail(s"expected CeilingRaiseNotBound, got $other")
+  }
