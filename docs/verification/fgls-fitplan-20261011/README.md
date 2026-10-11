@@ -41,7 +41,31 @@ The corrected pilot in `pilot-corrected/` passes on both platforms: 80
 records each, no refusals, unchanged committed source, identical decisions,
 and maximum scaled numerical difference 1.54e-12.
 
-The full integration replay is pending. These
-replay the already observed confirmation streams through FitPlan: they are
-integration evidence, not fresh scientific confirmation. The original four
-admission cells and the run-varying failure boundary remain unchanged.
+## Full replay result
+
+The replay passes on JVM and Scala.js: 2,048 datasets per cell, five cells,
+and two engines produce **20,480 records on each platform**, with no refusals
+or missing/duplicate slots. Source was committed at
+`a5b865e5c217e5da003b3e8ea63cc2c6e267ca90` and remained unchanged throughout.
+Both independent R analyses pass every original criterion in all four
+admission cells. The run-varying scope boundary still fails AR RMSE
+(0.1348 versus 0.10) and whiteness (0.1075 versus 0.10).
+
+[`replay-comparison.json`](replay-comparison.json) audits every retained trial
+against the original standalone run. All decisions and per-cell criteria
+match exactly. Maximum scaled numerical differences are 3.12e-11 against
+the original and 3.50e-12 between platforms, below the 1e-9 comparison
+tolerance. Both platforms retain the same boundary failure.
+
+These are already observed confirmation streams replayed through FitPlan:
+they establish integration equivalence, not fresh scientific confirmation.
+Qualification remains restricted to the original AR(2), continuous-missing,
+across-run coefficient pooling, KR policy and its four admitted cells.
+
+Each phase retains its source hashes, execution receipt, independent
+analysis, and gzip-compressed original records/logs. `archives.json` binds
+compressed and uncompressed hashes. Reproduce the final audit with:
+
+```sh
+python3 docs/verification/fgls-fitplan-20261011/compare_replay.py --original docs/verification/fgls-voxelwise-20261010/confirmation --replay docs/verification/fgls-fitplan-20261011/replay --protocol tools/scenarios/fgls-voxelwise/protocol.json --output /tmp/fgls-replay-comparison.json
+```
