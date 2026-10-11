@@ -1,0 +1,41 @@
+{
+  "schema_version": "scalafim-fgls-run-varying-verdict/v1",
+  "candidate": "run-shrink-075-kr",
+  "qualification": "not-admitted",
+  "scientific_pass": false,
+  "engineering_pass": true,
+  "criteria_identical": true,
+  "identical_decisions": true,
+  "numerical_source_commit": "d8b4743628d9d00ca5f515ca8bc558edbfce3054",
+  "execution_commit": "4fe937bcb085c6dad3fbebb2a4d951ceb4ad968a",
+  "protocol_sha256": "bc6987dc2af362aae154e8971038af9df002ccff2f9236728710fc37c3b24a1f",
+  "freeze_sha256": "2268c90de909c2f27bf388b03b7dd22f89cb4beba3d792d5ea42152cab3d5584",
+  "independent_analysis_sha256": {
+    "jvm": "761317baf2b59a33492f681dabd4f1ca27e03e02365c04538c8251c4a61a3b0c",
+    "js": "45310a3f373ee402d44173d8acd96cbbfb1a501e782a93f84303f0ac27d09965"
+  },
+  "candidate_failures": [
+    {
+      "cell": "ar2-high-censored-long",
+      "criteria": [
+        "effect_bias"
+      ]
+    },
+    {
+      "cell": "ar2-high-censored-short-run-heterogeneous",
+      "criteria": [
+        "coverage"
+      ]
+    }
+  ],
+  "known_control_failures": [
+    {
+      "cell": "ar2-high-censored-long",
+      "criteria": [
+        "effect_bias"
+      ]
+    }
+  ],
+  "policy": "Original margins binding; no replacement stream or post-confirmation tuning; Mote remains open.",
+  "full_record_parity_audit_sha256": "3dc8e8b338074fa9fe15b0768c683fae2a3e23b54b19af5e9a0854a1814db98f"
+}

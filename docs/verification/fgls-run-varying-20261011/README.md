@@ -1,9 +1,10 @@
 # Prospective run-varying AR(2) study
 
 This work implements an **experimental** estimator for Mote
-`bd-01M4K6KEPYEMP9XHFT2J0WCYEE`. It has no scientific admission yet and is not
-exposed as a qualified FitPlan policy. The previous pooled estimator's failure
-on run-varying coefficients remains a binding scope limit.
+`bd-01M4K6KEPYEMP9XHFT2J0WCYEE`. **Confirmation failed the original margins
+on both platforms. The estimator is not scientifically admitted**, and the
+Mote remains open. It is not exposed as a qualified FitPlan policy. The
+previous pooled estimator's run-varying scope limit remains unchanged.
 
 ## Method and frozen protocol
 
@@ -90,3 +91,43 @@ python3 tools/scenarios/fgls-run-varying/run_study.py --profile confirmation --c
 
 Retained `.log.gz` and `.jsonl.gz` files decompress to the original bytes;
 each phase's `archives.json` binds both compressed and uncompressed hashes.
+
+## Confirmation verdict: not admitted
+
+The single-use confirmation completed **20,480 unique records on each
+platform** (2,048 datasets × 5 cells × 2 engines), with no fit refusals or
+missing/duplicate trials. Both eight-test execution gates passed. The frozen
+source remained byte-identical throughout; subsequent Git merges contained
+only documentation, retained receipts, and Mote operations.
+
+Both independent R analyses return scientific failure. Every decision and
+every per-cell criterion agrees between JVM and Scala.js; the largest scaled
+numeric difference is 3.70e-12. This is a scientific admission failure, not
+an execution or cross-platform discrepancy.
+
+| Candidate cell | Criteria passed | Failed criterion |
+| --- | ---: | --- |
+| Short, censored, homogeneous | 11/11 | None |
+| Long, censored, homogeneous | 10/11 | Standardized effect bias |
+| Short, complete, homogeneous | 11/11 | None |
+| Short, censored, voxel-heterogeneous | 11/11 | None |
+| Short, censored, run-heterogeneous | 10/11 | Coverage |
+
+In the run-heterogeneous cell, AR RMSE is **0.09931** (limit 0.10) and mean
+absolute whiteness is **0.08505** (limit 0.10). Coverage is 1,901/2,048
+(92.82%), with a 90% exact Clopper–Pearson interval of **[91.813%, 93.739%]**.
+The lower endpoint is below the binding 92% margin, so this cell fails.
+
+The long homogeneous cell's standardized effect bias is **0.17679** for the
+candidate and **0.17555** for the known-coefficient control. Each mean alone
+already exceeds the 0.10 bound, before its confidence allowance. The shared
+control failure calls for investigation of the simulation/protocol and
+metric before attributing this bias to shrinkage.
+
+All adverse evidence is retained in `confirmation/` and summarized in
+[`verdict.json`](verdict.json). No margin, cell, candidate setting, or seed
+was changed after confirmation. `confirmation-spend.json` remains committed;
+the stream is spent. Further work must address the coverage failure and the
+known-control bias under a separately declared protocol. This result does
+not authorize a qualified run-varying FitPlan policy or a broader inference
+claim.
