@@ -86,6 +86,8 @@ object ModelBuildSpecJsonCodec:
         "censoredTimepoints" -> Arr.from(value.censoredTimepoints.values.map(Num(_))), "coefficients" -> coefficients)
       if value.censorTreatment != ArCensorTreatment.RestartWhitening then encoded("censorTreatment") = Str(value.censorTreatment.toString)
       if value.initialization == ArInitialization.Stationary then encoded("initialization") = Str("Stationary")
+      value.fgls.foreach: policy =>
+        encoded("fgls") = Obj("scope" -> Str(policy.scope.toString), "uncertainty" -> Str(policy.uncertainty.toString))
       value.biasCorrection match
         case ArBiasCorrection.Raw => ()
         case ArBiasCorrection.OlsDesign(ceiling) =>
@@ -116,7 +118,8 @@ object ModelBuildSpecJsonCodec:
       _ <- value.fields(Set("order", "iterations", "global", "voxelwise", "exactFirst", "censoredTimepoints", "coefficients") ++
         (if fields.contains("biasCorrection") then Set("biasCorrection") else Set.empty) ++
         (if fields.contains("initialization") then Set("initialization") else Set.empty) ++
-        (if fields.contains("censorTreatment") then Set("censorTreatment") else Set.empty))
+        (if fields.contains("censorTreatment") then Set("censorTreatment") else Set.empty) ++
+        (if fields.contains("fgls") then Set("fgls") else Set.empty))
       order <- value.field("order").flatMap(_.integer)
       iterations <- value.field("iterations").flatMap(_.integer)
       global <- value.field("global").flatMap(_.bool)
@@ -127,7 +130,14 @@ object ModelBuildSpecJsonCodec:
       policy <- if fields.contains("biasCorrection") then value.field("biasCorrection").flatMap(readBiasCorrection) else Right(ArBiasCorrection.Raw)
       initialization <- if fields.contains("initialization") then value.field("initialization").flatMap(c => enumCase(c, "AR initialization", ArInitialization.values)).map(Some(_)) else Right(None)
       censorTreatment <- if fields.contains("censorTreatment") then value.field("censorTreatment").flatMap(c => enumCase(c, "AR censor treatment", ArCensorTreatment.values)) else Right(ArCensorTreatment.RestartWhitening)
-      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, policy, initialization, censorTreatment), value.path)(_.message)
+      fgls <- if fields.contains("fgls") then value.field("fgls").flatMap: c =>
+        for
+          _ <- c.fields(Set("scope", "uncertainty"))
+          scope <- c.field("scope").flatMap(enumCase(_, "voxel AR scope", VoxelArScope.values))
+          uncertainty <- c.field("uncertainty").flatMap(enumCase(_, "covariance uncertainty", CovarianceUncertainty.values))
+        yield Some(VoxelwiseFglsOptions(scope, uncertainty))
+      else Right(None)
+      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, policy, initialization, censorTreatment, fgls), value.path)(_.message)
     yield config
 
   private[model] def lss(value: LssStrategyConfig, path: String): Result[Value] =
@@ -304,7 +314,7 @@ object ModelBuildSpecJsonCodec:
       _ <- ensure(spec.derived.isEmpty, "$.derived", "derived declarations require the scalafim.model-document envelope")
       formula <- formulaValue(spec, "$.formula")
       body <- encodeBody(spec, "$", strategy)
-      text <- PortableJson.render(Obj.from(Vector("schema" -> Str("scalafim.model-build"), "version" -> Num(1), "formula" -> formula) ++ body))
+      text <- PortableJson.render(Obj.from(Vector("schema" -> Str("scalafim.model-build"), "version" -> Num(if spec.strategy.config.autocorrelation.fgls.nonEmpty then 2 else 1), "formula" -> formula) ++ body))
     yield text
 
   private[model] def formulaValue(spec: ModelBuildSpec, path: String): Result[Value] =
@@ -361,9 +371,10 @@ object ModelBuildSpecJsonCodec:
       schema <- str(v, "schema")
       _ <- ensure(schema == "scalafim.model-build", "$.schema", "unsupported model-build schema")
       version <- v.field("version").flatMap(_.integer)
-      _ <- ensure(version == 1, "$.version", "unsupported model-build version")
+      _ <- ensure(version == 1 || version == 2, "$.version", "unsupported model-build version")
       formula <- v.field("formula").flatMap(readFormula)
       spec <- readBody(v, formula, readStrategy)
+      _ <- ensure(version >= 2 || spec.strategy.config.autocorrelation.fgls.isEmpty, "$.version", "voxelwise FGLS requires model-build version 2")
     yield spec
 
   private[model] def readFormula(cursor: Cursor): Result[String] =

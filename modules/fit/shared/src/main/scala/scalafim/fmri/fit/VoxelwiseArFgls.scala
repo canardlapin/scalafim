@@ -31,9 +31,8 @@ enum CensorContinuity:
   case ContinuousMissing
 
 /** Rows that share one estimated AR filter within a voxel. */
-enum VoxelArScope:
-  case PerRun
-  case AcrossRuns
+type VoxelArScope = scalafim.fmri.model.VoxelArScope
+val VoxelArScope = scalafim.fmri.model.VoxelArScope
 
 /** Source of the AR coefficients used to whiten each voxel. */
 enum VoxelArCoefficients:
@@ -54,9 +53,8 @@ enum VoxelArCoefficients:
   *     REML information evaluated at the estimate; the Yule-Walker estimator shares that first-order covariance. With
   *     known coefficients it reproduces the exact `F(q, n - rank)` test.
   */
-enum CovarianceUncertainty:
-  case Conditional
-  case KenwardRoger
+type CovarianceUncertainty = scalafim.fmri.model.CovarianceUncertainty
+val CovarianceUncertainty = scalafim.fmri.model.CovarianceUncertainty
 
 final case class VoxelwiseArSpec(
     order: Int,

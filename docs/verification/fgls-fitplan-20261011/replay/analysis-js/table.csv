@@ -1,0 +1,11 @@
+"cell","engine","n","tRej","fRej","cov","vratio","vlo","rmse","white","df","passed","all"
+"ar2-high-censored-short","known-continuous",2048,103,99,1953,1.0155,0.9657,0,0.097,216,11,TRUE
+"ar2-high-censored-short","pooled-continuous-kr",2048,119,124,1941,0.9579,0.9117,0.0771,0.0893,37.3,11,TRUE
+"ar2-high-censored-long","known-continuous",2048,101,89,1959,1.0404,0.9908,0,0.0619,449,11,TRUE
+"ar2-high-censored-long","pooled-continuous-kr",2048,104,90,1954,1.0254,0.9751,0.0497,0.0557,82.3,11,TRUE
+"ar2-high-complete-short","known-continuous",2048,93,100,1928,1.033,0.9804,0,0.0925,224,11,TRUE
+"ar2-high-complete-short","pooled-continuous-kr",2048,103,106,1909,0.9829,0.9321,0.0726,0.0854,37.2,11,TRUE
+"ar2-high-censored-short-voxel-heterogeneous","known-continuous",2048,109,113,1955,0.9789,0.931,0,0.0962,216,11,TRUE
+"ar2-high-censored-short-voxel-heterogeneous","pooled-continuous-kr",2048,127,132,1941,0.9322,0.8852,0.0766,0.0889,37.3,11,TRUE
+"ar2-high-censored-short-run-heterogeneous","known-continuous",2048,113,106,1933,0.9531,0.9068,0,0.0968,216,11,TRUE
+"ar2-high-censored-short-run-heterogeneous","pooled-continuous-kr",2048,130,135,1924,0.8976,0.8535,0.1348,0.1075,36.6,9,FALSE
