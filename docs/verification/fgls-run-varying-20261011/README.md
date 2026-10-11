@@ -65,3 +65,28 @@ python3 tools/scenarios/fgls-run-varying/freeze_candidate.py --development docs/
 Commit `freeze.json` before running confirmation with its candidate and the
 `--freeze` path. A failed scientific confirmation keeps the Mote open; it
 does not authorize another seed or adjusted margins.
+
+## Development decision, before confirmation
+
+Development completed 7,680 records on JVM (512 datasets × 5 cells × 3
+engines), with no refusals, complete unique trial slots, and unchanged
+committed source `d8b4743628d9d00ca5f515ca8bc558edbfce3054`.
+
+The declared selection rule chooses **retention 0.75**: it passes 46 of 55
+criteria across the five cells, compared with 45 for retention 0.50. The
+retained summaries include every failure. These development results do not
+qualify the estimator; in particular, the short censored homogeneous cell
+misses null-t, null-F, coverage, and effect-bias criteria at this development
+sample size. The run-heterogeneous cell passes AR recovery but misses null-F.
+No margin, candidate setting, or cell has changed in response.
+
+[`freeze.json`](freeze.json) binds the selected engine to the exact protocol,
+source, development records, and independent analysis. It is committed before
+the one-use confirmation run on the separate domain, with both platforms:
+
+```sh
+python3 tools/scenarios/fgls-run-varying/run_study.py --profile confirmation --candidate run-shrink-075-kr --freeze docs/verification/fgls-run-varying-20261011/freeze.json --output docs/verification/fgls-run-varying-20261011/confirmation
+```
+
+Retained `.log.gz` and `.jsonl.gz` files decompress to the original bytes;
+each phase's `archives.json` binds both compressed and uncompressed hashes.
