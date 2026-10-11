@@ -17,7 +17,11 @@ import scalafim.fmri.fit.{
 }
 import ujson.{Arr, Bool, Null, Num, Obj, Str, Value}
 
-private[laws] enum FglsStudyProfile(val label: String, private val ordinaryReplicates: Int, private val ordinaryDomain: Int):
+private[laws] enum FglsStudyProfile(
+    val label: String,
+    private val ordinaryReplicates: Int,
+    private val ordinaryDomain: Int
+):
   case Pilot extends FglsStudyProfile("pilot", 8, 10)
   case Development extends FglsStudyProfile("development", 1024, 11)
   case Confirmation extends FglsStudyProfile("confirmation", 2048, 12)
@@ -28,9 +32,9 @@ private[laws] enum FglsStudyProfile(val label: String, private val ordinaryRepli
 
 private[laws] object FglsStudyProfile:
   val runShrinkage: Boolean = LawEnvironment.get("SCALAFIM_FGLS_PROTOCOL") match
-    case None => false
+    case None                     => false
     case Some("run-shrinkage-v1") => true
-    case Some(other) => throw new IllegalArgumentException(s"unknown FGLS protocol: $other")
+    case Some(other)              => throw new IllegalArgumentException(s"unknown FGLS protocol: $other")
   val current: FglsStudyProfile = LawEnvironment.get("SCALAFIM_FGLS_STUDY_PROFILE") match
     case None | Some("pilot") => Pilot
     case Some("development")  => Development
@@ -166,7 +170,8 @@ private[laws] object FglsVoxelwiseStudy:
   val selectedEngines: Vector[FglsEngine] = LawEnvironment.get("SCALAFIM_FGLS_ENGINES") match
     case None =>
       FglsEngine.values.toVector.filter(e =>
-        if FglsStudyProfile.runShrinkage then e.runShrinkage || e == FglsEngine.KnownContinuous else !e.runShrinkage)
+        if FglsStudyProfile.runShrinkage then e.runShrinkage || e == FglsEngine.KnownContinuous else !e.runShrinkage
+      )
     case Some(raw) =>
       raw.split(',').toVector.map(_.trim).filter(_.nonEmpty).map { label =>
         FglsEngine.values
@@ -241,8 +246,12 @@ private[laws] object FglsVoxelwiseStudy:
         estimated(VoxelArScope.AcrossRuns, CensorContinuity.ContinuousMissing, CovarianceUncertainty.KenwardRoger)
       case FglsEngine.RunShrink075Kr | FglsEngine.RunShrink050Kr =>
         val retention = if engine == FglsEngine.RunShrink075Kr then 0.75 else 0.5
-        VoxelwiseArSpec(2, VoxelArCoefficients.RunShrunk(RunArRetention.unsafe(retention), 25),
-          CensorContinuity.ContinuousMissing, CovarianceUncertainty.KenwardRoger)
+        VoxelwiseArSpec(
+          2,
+          VoxelArCoefficients.RunShrunk(RunArRetention.unsafe(retention), 25),
+          CensorContinuity.ContinuousMissing,
+          CovarianceUncertainty.KenwardRoger
+        )
       case FglsEngine.PooledRestartConditional =>
         estimated(VoxelArScope.AcrossRuns, CensorContinuity.RestartAfterCensor, CovarianceUncertainty.Conditional)
       case other => throw new IllegalArgumentException(s"${other.label} is measured by the existing executor")
@@ -301,38 +310,79 @@ private[laws] object FglsVoxelwiseStudy:
     }
     failure.toLeft(total / count)
 
-  /** Replay the previously observed confirmation cells through the public plan
-    * route. This is integration evidence, not a new held-out scientific stream.
+  /** Replay the previously observed confirmation cells through the public plan route. This is integration evidence, not
+    * a new held-out scientific stream.
     */
-  private def fitPlanCandidate(cell: FglsStudyCell, data: DMat, spec: VoxelwiseArSpec): Either[String, VoxelwiseArFit] =
+  private[laws] def fitPlanCandidate(
+      cell: FglsStudyCell,
+      data: DMat,
+      spec: VoxelwiseArSpec
+  ): Either[String, VoxelwiseArFit] =
     import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
     import scalafim.image.SampleSpaces
-    import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
+    import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, BaselineSpec, Intercept}
     import scalafim.fmri.design.event.EventModel
     import scalafim.fmri.hrf.design.SamplingFrame
     import scalafim.fmri.hrf.linalg.Mat
-    import scalafim.fmri.model.{ArBiasCorrection, ArCensorTreatment, ArInitialization, AutocorrelationConfig, FitPlan, FitStrategy, FmriModel, VoxelwiseFglsOptions}
+    import scalafim.fmri.model.{
+      ArBiasCorrection,
+      ArCensorTreatment,
+      ArInitialization,
+      AutocorrelationConfig,
+      FitPlan,
+      FitStrategy,
+      FmriModel,
+      VoxelwiseFglsOptions
+    }
     spec.coefficients match
       case VoxelArCoefficients.Estimated(scope, ceiling) =>
         val frame = SamplingFrame(cell.base.runLengths, Vector.fill(cell.base.runLengths.length)(1.0))
         val design = cell.base.design
         val names = Vector.tabulate(design.cols)(i => s"x$i")
-        val events = EventModel(Vector.empty, frame,
+        val events = EventModel(
+          Vector.empty,
+          frame,
           Mat.fromRows(Vector.tabulate(design.rows)(i => Vector.tabulate(design.cols)(j => design(i, j)))),
-          names, names.indices.map(i => i -> (i + 1)).toVector, names.zipWithIndex.map((n, i) => n -> Vector(i)).toMap)
-        val baseline = BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.None)
-        val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("fgls-integration-replay"), data, SampleSpaces(Vector(data.cols, 1, 1))), frame)
+          names,
+          names.indices.map(i => i -> (i + 1)).toVector,
+          names.zipWithIndex.map((n, i) => n -> Vector(i)).toMap
+        )
+        // The supplied study design already includes every run intercept and
+        // drift column. Constant basis would add another intercept per run.
+        val baseline = BaselineModel(
+          Vector.empty,
+          BaselineSpec(basis = BaselineBasis.Constant, intercept = Intercept.None),
+          frame,
+          Mat.zeros(design.rows, 0),
+          Vector.empty,
+          Vector.empty,
+          Map.empty
+        )
+        val dataset = FmriDataset.unsafe(
+          InMemoryDatasetBackend(DatasetId("fgls-integration-replay"), data, SampleSpaces(Vector(data.cols, 1, 1))),
+          frame
+        )
         for
-          ar <- AutocorrelationConfig(order = spec.order, voxelwise = true,
-            initialization = Some(if spec.censor == CensorContinuity.ContinuousMissing then ArInitialization.Stationary else ArInitialization.ExactAr1),
-            censoredTimepoints = cell.base.censorRows, biasCorrection = ArBiasCorrection.olsDesign(ceiling).toOption.get,
-            censorTreatment = if spec.censor == CensorContinuity.ContinuousMissing then ArCensorTreatment.ContinuousMissing else ArCensorTreatment.RestartWhitening,
-            fgls = Some(VoxelwiseFglsOptions(scope, spec.uncertainty))).left.map(_.message)
-          plan <- FitPlan.make(FmriModel(events, baseline, dataset), FitStrategy.GeneralizedLeastSquares(ar)).left.map(_.message)
+          ar <- AutocorrelationConfig(
+            order = spec.order,
+            voxelwise = true,
+            initialization = Some(if spec.censor == CensorContinuity.ContinuousMissing then ArInitialization.Stationary
+            else ArInitialization.ExactAr1),
+            censoredTimepoints = cell.base.censorRows,
+            biasCorrection = ArBiasCorrection.olsDesign(ceiling).toOption.get,
+            censorTreatment =
+              if spec.censor == CensorContinuity.ContinuousMissing then ArCensorTreatment.ContinuousMissing
+              else ArCensorTreatment.RestartWhitening,
+            fgls = Some(VoxelwiseFglsOptions(scope, spec.uncertainty))
+          ).left.map(_.message)
+          plan <- FitPlan
+            .make(FmriModel(events, baseline, dataset), FitStrategy.GeneralizedLeastSquares(ar))
+            .left
+            .map(_.message)
           result <- FitPlanExecutor.fit(plan).left.map(_.message)
           fit <- result match
             case value: VoxelwiseArFmriFitResult => Right(value.fit)
-            case _ => Left("FitPlan did not select voxelwise FGLS")
+            case _                               => Left("FitPlan did not select voxelwise FGLS")
         yield fit
       case _ => Left("FitPlan replay requires estimated coefficients")
 
@@ -347,8 +397,9 @@ private[laws] object FglsVoxelwiseStudy:
       val column = Matrix.tabulate(data.rows, 1)((row, _) => data(row, voxel))
       val policy = spec(cell, engine, voxel)
       val fitted =
-        if LawEnvironment.get("SCALAFIM_FGLS_FITPLAN").contains("true") && policy.coefficients.isInstanceOf[VoxelArCoefficients.Estimated] then
-          fitPlanCandidate(cell, column, policy)
+        if LawEnvironment.get("SCALAFIM_FGLS_FITPLAN").contains("true") && policy.coefficients
+            .isInstanceOf[VoxelArCoefficients.Estimated]
+        then fitPlanCandidate(cell, column, policy)
         else VoxelwiseArFgls.fit(cell.base.design, column, runs, cell.base.censorRows, policy).left.map(_.message)
       fitted.left.map(error => s"voxel $voxel: $error").map(_.voxels.head)
     }

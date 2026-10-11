@@ -41,6 +41,17 @@ confirmation receipt.
 - The ordinary JVM study smoke suite passes; this does not consume the new
   development or confirmation domains.
 
+## Pilot outcome
+
+The retained pilot has 120 records on each platform (8 datasets × 5 cells ×
+3 engines), no refusals or missing/duplicate slots, unchanged source bytes,
+and identical t/F/coverage decisions. The largest scaled numeric difference
+is 2.45e-12. These are engineering checks, not admission evidence.
+
+The shared FitPlan replay harness was then corrected to avoid duplicate
+baseline intercepts and formatted before development. The shrinkage method,
+candidate settings, random domains, and acceptance margins did not change.
+
 ## Reproduction
 
 Commit source first, then run from the repository root:
