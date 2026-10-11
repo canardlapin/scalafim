@@ -37,7 +37,11 @@ corrected adapter explicitly supplies a zero-column baseline; a regression
 compares its column count, coefficients, AR estimates, and covariance to the
 standalone route. No production estimator or scientific margin changed.
 
-Corrected pilot and full integration replay receipts will be retained here. These
+The corrected pilot in `pilot-corrected/` passes on both platforms: 80
+records each, no refusals, unchanged committed source, identical decisions,
+and maximum scaled numerical difference 1.54e-12.
+
+The full integration replay is pending. These
 replay the already observed confirmation streams through FitPlan: they are
 integration evidence, not fresh scientific confirmation. The original four
 admission cells and the run-varying failure boundary remain unchanged.
