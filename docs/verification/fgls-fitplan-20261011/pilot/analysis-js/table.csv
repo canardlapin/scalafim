@@ -1,0 +1,6 @@
+"cell","engine","n","tRej","fRej","cov","vratio","vlo","rmse","white","df","passed","all"
+"ar2-high-censored-short","known-continuous",8,0,0,8,1.6257,1.09,0,0.0952,216,5,FALSE
+"ar2-high-censored-long","known-continuous",8,0,0,8,3.0651,2.1585,0,0.059,449,5,FALSE
+"ar2-high-complete-short","known-continuous",8,1,0,7,1.2773,0.7352,0,0.098,224,5,FALSE
+"ar2-high-censored-short-voxel-heterogeneous","known-continuous",8,0,0,8,1.3211,0.8933,0,0.0943,216,5,FALSE
+"ar2-high-censored-short-run-heterogeneous","known-continuous",8,1,0,7,1.3385,0.8877,0,0.0977,216,5,FALSE
