@@ -40,6 +40,8 @@ def main():
     probe=json.loads(a.probe.read_text())
     if not probe.get('preflight_pass'): raise ValueError('resource/adapter preflight must pass before pilot freeze')
     sources={}
+    for name,repo in [('current',root),('historical',historical)]:
+        verify_sources(repo,probe['source_snapshots'][name]['locks'])
     for name,repo,classpath in [('current',root,a.current_classpath),('historical',historical,a.historical_classpath)]:
         locks=source_locks(repo)
         changed=subprocess.check_output(['git','diff','HEAD','--name-only','--',*locks],cwd=repo,text=True)

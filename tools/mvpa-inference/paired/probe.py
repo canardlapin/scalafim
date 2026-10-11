@@ -123,4 +123,16 @@ def main():
     print(json.dumps({k:v for k,v in summary.items() if k!='source_snapshots'}))
     if not passed:raise SystemExit(1)
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    try:
+        main()
+    finally:
+        # A validation failure must not leave either provider resident.
+        if '--historical' in sys.argv and '--output' in sys.argv:
+            old=Path(sys.argv[sys.argv.index('--historical')+1]).resolve()
+            root=Path(__file__).resolve().parents[3]
+            out=Path(sys.argv[sys.argv.index('--output')+1]).resolve()
+            if out.exists():
+                with (out/'cleanup.log').open('a') as log:
+                    for repo in (root,old):
+                        shutdown(repo,log,dict(os.environ))

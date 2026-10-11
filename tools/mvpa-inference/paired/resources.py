@@ -40,6 +40,9 @@ def stop_owned(root):
 def shutdown(root,log,env):
     result=subprocess.run(['python3','tools/build/sbt-warm','--shutdown'],cwd=root,env=env,
         stdout=log,stderr=subprocess.STDOUT,timeout=65)
+    until=time.monotonic()+10
+    while owned_jvms(root) and time.monotonic()<until:
+        time.sleep(.2)
     if result.returncode or owned_jvms(root):
         raise RuntimeError('server shutdown did not establish an empty provider lifetime')
 
