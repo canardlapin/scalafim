@@ -286,3 +286,8 @@ is carried in `geometry.surfaceToWorld` and must be applied exactly once. Prefer
 the declared result whenever placement provenance matters; geometry-only APIs
 cannot retain the distinction between native coordinates and a declared
 identity map.
+
+The reusable fsLR/point-map oracle fixtures and their dependent qualification courts live in the unpublished
+[`surface-test-fixtures`](../surface-test-fixtures/README.md) module. Run `surfaceTestFixturesJVM/test` and
+`surfaceTestFixturesJS/test` alongside the surface gates; whole-repository aliases and bounded CI include them.
+The ordinary file-reader and portable surface unit tests remain here. Oracle bytes and qualification budgets are unchanged.

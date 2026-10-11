@@ -1,5 +1,7 @@
 package scalafim.surface.reference
 
+import scalafim.testkit.RealAssetGate
+
 import scalafim.image.WorldPoint
 import scalafim.surface.*
 
