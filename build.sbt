@@ -1211,7 +1211,8 @@ lazy val mvpa =
     .dependsOn(response, locusData, pipeline, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
-      name := "scalafim-fmri-mvpa"
+      name := "scalafim-fmri-mvpa",
+      libraryDependencies += "com.lihaoyi" %%% "ujson" % "4.1.0" % Test
     )
     .jvmConfigure(
       _.dependsOn(

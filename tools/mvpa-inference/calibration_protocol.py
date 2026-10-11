@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -38,13 +39,49 @@ class ProtocolError(ValueError):
 RANK_SCOPES = {"raw-stage": "raw_reject", "closed-sequential": "closed_reject"}
 POWER_METRICS = ("standard-power", "descriptive-power")
 INFERENTIAL_FIELDS = ("p_values", "reject", "raw_p_values", "closed_p_values",
-                      "raw_reject", "closed_reject", "raw_exceedances")
+                      "raw_reject", "closed_reject", "raw_exceedances", "observed_statistics")
+
+
+def validate_rank_provenance(row: dict[str, Any], expected: dict[str, str] | None = None) -> None:
+    """Validate portable receipt identities; expected binds independently retained bytes."""
+    for field, length in (("source_commit", 40), ("source_lock_sha256", 64), ("case_input_sha256", 64)):
+        if not isinstance(row.get(field), str) or not re.fullmatch(r"[0-9a-f]{%d}" % length, row[field]):
+            raise ProtocolError("rank provenance requires " + field)
+    if expected is not None and any(row.get(key) != value for key, value in expected.items()):
+        raise ProtocolError("rank record provenance differs from independently bound source/input")
+    if row.get("provenance_version") != 1 or row.get("seed_receipts_verified") is not True:
+        raise ProtocolError("rank record lacks verified actual seed receipts")
+    methods = {
+        "canonical-rank-score-orthogonal-permutation/v2": (0, "canonical-rank-distinct-nonidentity/v1"),
+        "canonical-rank-gaussian-interlacing-wilks/v1": (1, "gaussian-canonical-interlacing-splitmix64-boxmuller52/v1"),
+    }
+    if row.get("rank_method") not in methods:
+        raise ProtocolError("rank provenance requires the actual known rank method")
+    method, algorithm = methods[row["rank_method"]]
+    try:
+        root = int(row["root_seed64"])
+        if str(root) != row["root_seed64"] or not 0 < root < 2**63:
+            raise ValueError("noncanonical root")
+    except (KeyError, TypeError, ValueError) as error:
+        raise ProtocolError("invalid rank root seed") from error
+    resampling = child_seed(root, [(103, method)])
+    values = row.get("raw_p_values")
+    if not isinstance(values, list):
+        raise ProtocolError("rank seed receipts require a complete stage vector")
+    count = len(values)
+    observed = row.get("observed_statistics")
+    if not isinstance(observed, list) or len(observed) != count or any(type(x) not in (int, float) or not math.isfinite(x) for x in observed):
+        raise ProtocolError("rank provenance requires actual finite observed statistics")
+    seeds = [str(resampling if method == 0 else child_seed(resampling, [(1011, k)])) for k in range(count)]
+    if not count or row.get("receipt_seed64") != seeds or row.get("receipt_algorithm") != algorithm:
+        raise ProtocolError("rank seed receipts disagree with method-specific derivation")
 
 
 def validate_rank_record(row: dict[str, Any]) -> None:
     """Check actual stage counts and closure; never reconstruct missing raw tests."""
     if row.get("record_schema") != 2 or row.get("p_value_scope") != "closed-sequential":
         raise ProtocolError("rank records require schema 2 with explicit closed aliases")
+    validate_rank_provenance(row)
     members = row.get("member_ids")
     if not isinstance(members, list) or not members or members != [f"rank-{i+1}" for i in range(len(members))]:
         raise ProtocolError("rank family must retain every ordered stage")
