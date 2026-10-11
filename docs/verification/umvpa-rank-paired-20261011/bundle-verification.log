@@ -1,0 +1,6 @@
+docs/verification/umvpa-rank-paired-20261011/historical-paired.bundle is okay
+The bundle contains this ref:
+8dc005d3dfc65d60fc437743dd360142e8f47b5f refs/heads/work/rank-historical-paired-20261011
+The bundle requires this ref:
+6dd0d0310b28e5cafdd024758e940ce9b2c771ee 
+The bundle uses this hash algorithm: sha1
