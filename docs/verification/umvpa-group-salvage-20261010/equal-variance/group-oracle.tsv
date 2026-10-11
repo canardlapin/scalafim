@@ -1,0 +1,12 @@
+key	value
+subject_count	3
+mean	1
+sample_variance	4
+fixed_se	0.577350269189626
+q_fixed	8
+tau_squared_PM	3
+i_squared	0.75
+mixed_se_mKH	1.15470053837925
+mixed_df	2
+equal_subject_loss	1.25
+pooled_row_loss	1.75

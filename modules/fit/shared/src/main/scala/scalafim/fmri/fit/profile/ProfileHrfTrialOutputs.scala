@@ -73,32 +73,38 @@ object ProfileTrialExecutionDeclaration:
   */
 final class ProfileTrialReference private (
     private[profile] val owner: PreparedProfileHrf,
-    private[profile] val bank: TrialBandedObjective,
+    private[profile] val bank: TrialReferenceBank,
     val axis: ProfileTrialAxis,
     val actualCoordinates: Vector[Double],
     val index: Int,
     val coordinates: Vector[Double])
 
 private object ProfileTrialReference:
-  def select(owner: PreparedProfileHrf, bank: TrialBandedObjective, axis: ProfileTrialAxis,
+  def select(owner: PreparedProfileHrf, bank: TrialReferenceBank, axis: ProfileTrialAxis,
       actual: Vector[Double]): Either[ProfileTrialReadoutError, ProfileTrialReference] =
-    bank.grid.chart.point(actual).map { _ =>
-      val indices = new Array[Int](bank.grid.dimension)
-      var dimension = 0
-      while dimension < indices.length do
-        val position = (actual(dimension) - bank.grid.chart.lower(dimension)) / bank.grid.step(dimension)
-        val lower = math.max(0, math.min(bank.grid.nodesPerAxis(dimension) - 1, math.floor(position).toInt))
-        val upper = math.min(bank.grid.nodesPerAxis(dimension) - 1, lower + 1)
-        // Strict comparison preserves the lower bank index at an exact half step.
-        indices(dimension) = if position - lower > upper - position then upper else lower
-        dimension += 1
-      val index = bank.grid.indexOf(indices)
-      new ProfileTrialReference(owner, bank, axis, actual, index, bank.grid.point(index).coordinates)
-    }.left.map(error => ProfileTrialReadoutError.InvalidShape(error.message))
+    val selected = bank match
+      case gridded: TrialBandedObjective => gridded.grid.chart.point(actual).map: _ =>
+        val grid = gridded.grid
+        val indices = new Array[Int](grid.dimension)
+        var dimension = 0
+        while dimension < indices.length do
+          val position = (actual(dimension) - grid.chart.lower(dimension)) / grid.step(dimension)
+          val lower = math.max(0, math.min(grid.nodesPerAxis(dimension) - 1, math.floor(position).toInt))
+          val upper = math.min(grid.nodesPerAxis(dimension) - 1, lower + 1)
+          indices(dimension) = if position - lower > upper - position then upper else lower
+          dimension += 1
+        grid.indexOf(indices)
+      case _ => bank.points.nearestAmong(actual, owner.policy.trialReferences.get.candidates)
+    selected.map(index => new ProfileTrialReference(owner, bank, axis, actual, index, bank.points.coordinates(index)))
+      .left.map(error => ProfileTrialReadoutError.InvalidShape(error.message))
 
 enum ProfileTrialOutputOutcome:
   case Emitted(reference: ProfileTrialReference, value: ProfileTrialReadoutResult)
   case DecodeRefused(status: DecodeStatus)
+  /** Shape selection succeeded, but the explicit empirical readout limit did
+    * not. Keep this attempted voxel in its block without emitting coefficients.
+    */
+  case ReadoutRefused(error: ProfileTrialReadoutError.PreparedResidualExceeded)
 
 /** Selection is the full, raw decoder result, including both Hessians and exit.
   * Conditional coefficients never replace its amplitudes or objective energy.
@@ -132,6 +138,8 @@ final case class ProfileTrialOutputStorage(
 /** `numerical` overlaps `ProfileRunProgress.trial`: never add it to that total.
   * The local actions/row visits below describe completed results only; failed
   * operations retain their actual numerical attempted/failure counters instead.
+  * Residual-limit refusals occur after a complete numerical solve; their local
+  * actions/row visits are counted separately from emitted-result work.
   */
 final case class ProfileTrialOutputProgress(
     attempts: Long,
@@ -146,7 +154,10 @@ final case class ProfileTrialOutputProgress(
     storage: ProfileTrialOutputStorage,
     residualMeasurementAttempts: Long = 0L,
     residualMeasurementFailures: Long = 0L,
-    residualMeasurementNormalActions: Long = 0L)
+    residualMeasurementNormalActions: Long = 0L,
+    residualGateRefusals: Long = 0L,
+    residualGateNormalActions: Long = 0L,
+    residualGateResponseRowsEncoded: Long = 0L)
 
 private[profile] final class ProfileTrialOutputWork:
   var attempts = 0L
@@ -166,6 +177,14 @@ private[profile] final class ProfileTrialOutputWork:
   var measurementActions = 0L
   var measurementScratch = 0
   var memoizedRawTrials = 0L
+  var gateRefusals = 0L
+  var gateNormalActions = 0L
+  var gateRowsEncoded = 0L
+
+  def refusedByResidual(work: ProfileTrialReadoutWork): Unit =
+    gateRefusals += 1L
+    gateNormalActions += work.normalActionApplications
+    gateRowsEncoded += work.responseRowsEncoded
 
   def completed(work: ProfileTrialReadoutWork): Unit =
     successes += 1
@@ -183,7 +202,8 @@ object ProfileTrialOutputProgress:
       parts.map(_.rowsEncoded).sum, parts.map(_.forwardRows).sum, parts.map(_.transposeRows).sum,
       ProfileTrialOutputStorage(parts.map(_.coefficientHighWater), parts.map(_.adjointHighWater),
         parts.map(_.retainedTrials).sum, emitted, parts.map(_.measurementScratch), parts.map(_.memoizedRawTrials).sum),
-      parts.map(_.measurementAttempts).sum, parts.map(_.measurementFailures).sum, parts.map(_.measurementActions).sum)
+      parts.map(_.measurementAttempts).sum, parts.map(_.measurementFailures).sum, parts.map(_.measurementActions).sum,
+      parts.map(_.gateRefusals).sum, parts.map(_.gateNormalActions).sum, parts.map(_.gateRowsEncoded).sum)
 
 /** Checked public output over one exact prepared bank and physical axis.
   * PenalizedProfile freezes an ephemeral conditional worker; native ML reuses
@@ -192,7 +212,7 @@ object ProfileTrialOutputProgress:
   */
 final class PreparedProfileTrialOutputs private (
     private[profile] val prepared: PreparedProfileHrf,
-    private[profile] val bank: TrialBandedObjective,
+    private[profile] val bank: TrialReferenceBank,
     val axis: ProfileTrialAxis):
 
   private[profile] val nativeMl: Boolean = prepared.plan.criterion.usesDeterminant
@@ -309,11 +329,15 @@ final class PreparedProfileTrialOutputs private (
                       finally work.numerical = ProfileHrfFit.sumTrialWork(Vector(work.numerical, worker.workSnapshot))
                   yield value
                 result.map(value => reference -> value)
-              evaluated.map { (reference, value) =>
-                work.completed(value.work)
-                succeeded = true
-                ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.Emitted(reference, value))
-              }.left.map(ProfileWorkFailure.TrialReadout.apply)
+              evaluated match
+                case Right((reference, value)) =>
+                  work.completed(value.work)
+                  succeeded = true
+                  Right(ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.Emitted(reference, value)))
+                case Left(error: ProfileTrialReadoutError.PreparedResidualExceeded) =>
+                  work.refusedByResidual(error.work)
+                  Right(ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.ReadoutRefused(error)))
+                case Left(error) => Left(ProfileWorkFailure.TrialReadout(error))
             catch case NonFatal(error) => Left(ProfileWorkFailure.TrialReadout(ProfileTrialReadoutError.Conditional(error.toString)))
             finally if !succeeded then work.failures += 1
         def block(ordinal: Int, ids: Vector[Int], values: Vector[ProfileTrialOutputVoxel]): ProfileTrialOutputBlock =
@@ -328,7 +352,7 @@ final class PreparedProfileTrialOutputs private (
 
 object PreparedProfileTrialOutputs:
   private[profile] def make(owner: PreparedProfileHrf, preparation: TrialBandedPreparation,
-      bank: TrialBandedObjective): Either[ProfileFitError, PreparedProfileTrialOutputs] =
+      bank: TrialReferenceBank): Either[ProfileFitError, PreparedProfileTrialOutputs] =
     if !(bank.preparation eq preparation) || !owner.ownsTrialBank(preparation, bank) then
       return Left(ProfileFitError.Preparation("public trial bank differs from the supplied preparation"))
     owner.plan.source match

@@ -20,7 +20,7 @@ import scalafim.fmri.ar.{
   WhiteningPlan,
   WhiteningTransform
 }
-import scalafim.fmri.model.{ArBiasCorrection, ArCoefficientSpec, ArOptions, AutocorrelationConfig}
+import scalafim.fmri.model.{ArBiasCorrection, ArCoefficientSpec, ArInitialization, ArCensorTreatment, ArOptions, AutocorrelationConfig}
 import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 final case class GlsFit(
@@ -98,7 +98,7 @@ object Gls:
       _ <- validateVoxelIndices(response, selectedVoxelIndices)
       config <- autocorrelationConfig(options)
       _ <- validatePartitions(partitions)
-      noiseLayout <- noiseEstimationLayout(partitions, options.censoredTimepoints)
+      noiseLayout <- noiseEstimationLayout(partitions, options.censoredTimepoints, options.censorTreatment)
       initial <- Ols.fit(design, response)
       whiteningAndMethod <- whiteningPlan(design.value, response.value, initial.coefficients.value, noiseLayout, config)
       (whitening, method) = whiteningAndMethod
@@ -158,6 +158,17 @@ object Gls:
             coefficientCovariance = fit.coefficientCovariance
           )
     }
+
+  private[fit] def initialCondition(config: AutocorrelationConfig): InitialConditionPolicy =
+    initialCondition(config.initialization)
+
+  private[fit] def initialCondition(options: ArOptions): InitialConditionPolicy =
+    initialCondition(options.initialization.getOrElse(ArInitialization.fromExactFirst(options.exactFirst)))
+
+  private def initialCondition(value: ArInitialization): InitialConditionPolicy = value match
+    case ArInitialization.Identity => InitialConditionPolicy.Identity
+    case ArInitialization.ExactAr1 => InitialConditionPolicy.ExactAr1
+    case ArInitialization.Stationary => InitialConditionPolicy.Stationary
 
   private[fit] def autocorrelationConfig(options: ArOptions): Either[FitError, AutocorrelationConfig] =
     AutocorrelationConfig
@@ -229,10 +240,16 @@ object Gls:
 
   private[fit] def noiseEstimationLayout(
       partitions: Vector[RunPartition],
-      censoredTimepoints: Vector[Int]
+      censoredTimepoints: Vector[Int],
+      treatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
   ): Either[FitError, NoiseEstimationLayout] =
     for
-      segments <- timeSegments(partitions, censoredTimepoints)
+      _ <- if treatment == ArCensorTreatment.EstimateOnly && partitions.exists(_.timepoints.sliding(2).exists {
+        case Vector(left, right) => right != left + 1
+        case _ => false
+      }) then Left(FitError.UnsupportedAutocorrelation("estimation-only continuity requires contiguous selected timepoints within each run")) else Right(())
+      _ <- timeSegments(partitions, censoredTimepoints).map(_ => ())
+      segments <- timeSegments(partitions, if treatment == ArCensorTreatment.EstimateOnly then Vector.empty else censoredTimepoints)
       excludedRows =
         censoredTimepoints.flatMap { timepoint =>
           partitions.iterator
@@ -259,7 +276,7 @@ object Gls:
           .globalWithInitialCondition(
             ArmaCoefficients(Vector(rho)),
             noiseLayout.whiteningSegments,
-            initialCondition = InitialConditionPolicy.fromExactFirstAr1(config.exactFirst),
+            initialCondition = initialCondition(config),
             method = WhiteningMethod.Fixed
           )
           .left
@@ -271,7 +288,7 @@ object Gls:
           .globalWithInitialCondition(
             ArmaCoefficients(phi),
             noiseLayout.whiteningSegments,
-            initialCondition = InitialConditionPolicy.fromExactFirstAr1(config.exactFirst),
+            initialCondition = initialCondition(config),
             method = WhiteningMethod.Fixed
           )
           .left
@@ -298,6 +315,9 @@ object Gls:
       case ArBiasCorrection.OlsDesign(ceiling) =>
         AcvfBias.prepare(design, layout, CorrectionBudget.Adaptive(ceiling.value), config.order.value)
           .left.map(arToFitError).map(Some(_))
+      case ArBiasCorrection.OlsTailAnchored(maxLag) =>
+        AcvfBias.prepare(design, layout, CorrectionBudget.Fixed(maxLag.value), config.order.value, scalafim.fmri.ar.AcvfCorrectionSolve.ShortMemoryTail)
+          .left.map(arToFitError).map(Some(_))
 
   private def iterateEstimatedWhitening(
       design: DMat,
@@ -309,10 +329,10 @@ object Gls:
   ): Either[FitError, (WhiteningPlan, Vector[RunCorrection])] =
     val pooling = if config.global then NoisePooling.Global else NoisePooling.Run
     val arOptions =
-      ArFitOptions(
+      ArFitOptions.withInitialCondition(
         order = ArOrder.Fixed(config.order.value),
         pooling = pooling,
-        exactFirstAr1 = config.exactFirst
+        initialCondition = initialCondition(config)
       )
 
     def estimate(coefficients: DMat): Either[FitError, (WhiteningPlan, Vector[RunCorrection])] =

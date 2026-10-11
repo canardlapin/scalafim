@@ -1,0 +1,14 @@
+{
+  "r_version": "4.5.1",
+  "image": "rocker/r-ver:4.5.1",
+  "sha256": {
+    "tools/scenarios/corrected-gls/analyze.R": "753c0a1ea7e718f1e1f293d64c80a9e9b6895ecaf2bcc6e256b2081e1ac95711",
+    "tools/scenarios/gls-remediation/protocol.json": "ff2f7d9ac4d6b1d8b802e42df911b908c61cf45691b5bbebd24dbb24c019841b",
+    "docs/verification/gls-remediation-20261009/screen/records-jvm.jsonl": "8c513cb6f44f7dcf07e5ccaa5bcea2d48444f646fc740ae835c7dd639d776e8a",
+    "docs/verification/gls-remediation-20261009/screen/records-js.jsonl": "4cb4fe76bddb51f8f188fbd799232b81d13f3310c8316cae8f8147398a7568a2",
+    "docs/verification/gls-remediation-20261009/screen/analysis/summary.json": "7d81c49075e51bac0dc8875f93731876e52e14bfb35f405205e35ded9d362769",
+    "docs/verification/gls-remediation-20261009/screen/analysis/replicate-records.json": "1e20316f8987472cd17ea18d3b5547213ca933047548dec0b8bd4c16b79ed6be"
+  },
+  "identical_failure_records": true,
+  "refusals_per_platform": 0
+}

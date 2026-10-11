@@ -2,10 +2,22 @@ package scalafim.fmri.fit.profile
 
 import gale.linalg.{BandedCholesky, DMat, DMatBuilder}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
-import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, TrialMembership}
+import scalafim.fmri.design.hrf.{HrfKernelBasis, TrialBasisDesign, TrialDesignLowering, TrialMembership}
 import scalafim.fmri.hrf.family.{JetLayout, ShapePoint}
 
+/** Bounds preparation-owned numeric storage, counting Int entries as Doubles
+  * conservatively. Excludes the caller's source, basis, whitening metadata,
+  * convolution/whitening scratch and later node-bank/worker allocations.
+  */
+final case class TrialPreparationPolicy(
+    lowering: TrialDesignLowering = TrialDesignLowering.Dense,
+    maxRetainedValues: Long = 16000000L):
+  require(maxRetainedValues > 0L && maxRetainedValues <= Int.MaxValue.toLong,
+    "trial preparation limit must be positive and fit an array index")
+
 enum TrialBandedError:
+  case Lowering(detail: String)
+  case StorageLimit(required: Long, limit: Long)
   case InvalidLambda(value: Double)
   case NuisanceRows(expected: Int, actual: Int)
   case ResponseLength(expectedAtLeast: Int, actual: Int)
@@ -20,6 +32,8 @@ enum TrialBandedError:
 
   def message: String =
     this match
+      case Lowering(detail) => s"trial lowering failed: $detail"
+      case StorageLimit(required, limit) => s"trial preparation needs $required retained numeric values; limit is $limit"
       case InvalidLambda(value) => s"lambda must be finite and > 0, got $value"
       case NuisanceRows(expected, actual) => s"nuisance has $actual rows; expected $expected"
       case ResponseLength(expected, actual) => s"response storage has $actual entries; expected at least $expected"
@@ -43,7 +57,9 @@ final case class TrialBandedPreparationReceipt(
     nuisanceColumns: Int,
     bandwidth: Int,
     gramBlocks: Int,
-    retainedDoubles: Long):
+    retainedDoubles: Long,
+    loweredBlocks: Int,
+    maxLoweredBlockValues: Long):
   def estimatedBytes: Long = retainedDoubles * 8L
 
 /** Per-worker counters. Shared node factors are preparation, while continuous
@@ -75,6 +91,10 @@ final case class TrialBandedWorkSnapshot(
   * Conditional requests, reference inverses and residual corrections have
   * separate counters; they do not change legacy readout/amplitude counters.
   *
+  * First-order search requests/failures are separate from full-jet counters.
+  * Reconstructed bands count omitted derivative components contracted on demand;
+  * reconstructedBandProducts counts their scalar weight-times-Gram additions.
+  * These do not add inverse/factor attempts or include coefficient-weight assembly.
   * Small release solves, profile reduction and curvature checks are excluded.
   * Failed bank construction returns an error without exposing its setup receipt.
   */
@@ -100,7 +120,11 @@ final case class TrialBandedAttemptedWorkSnapshot(
     conditionalInverseAttempts: Long,
     conditionalInverseFailures: Long,
     conditionalCorrectionAttempts: Long,
-    conditionalCorrectionFailures: Long)
+    conditionalCorrectionFailures: Long,
+    firstOrderAttempts: Long = 0L,
+    firstOrderFailures: Long = 0L,
+    reconstructedBands: Long = 0L,
+    reconstructedBandProducts: Long = 0L)
 
 final class TrialBandedWork private[profile] ():
   private[profile] var voxels: Long = 0L
@@ -134,7 +158,11 @@ final class TrialBandedWork private[profile] ():
   private[profile] var conditionalInverseFailures: Long = 0L
   private[profile] var conditionalCorrectionAttempts: Long = 0L
   private[profile] var conditionalCorrectionFailures: Long = 0L
-  // ML accounting outside the 22-field attempted snapshot (whose schema is unchanged):
+  private[profile] var firstOrderAttempts: Long = 0L
+  private[profile] var firstOrderFailures: Long = 0L
+  private[profile] var reconstructedBands: Long = 0L
+  private[profile] var reconstructedBandProducts: Long = 0L
+  // Additional ML accounting outside the attempted snapshot:
   // N-sized accepted-band factorisations within `factorAttempts`, and legacy scalar
   // constrained-determinant membership RHS columns within `rightHandSideAttempts`.
   private[profile] var bandFactorAttempts: Long = 0L
@@ -183,7 +211,11 @@ final class TrialBandedWork private[profile] ():
       conditionalInverseAttempts,
       conditionalInverseFailures,
       conditionalCorrectionAttempts,
-      conditionalCorrectionFailures)
+      conditionalCorrectionFailures,
+      firstOrderAttempts,
+      firstOrderFailures,
+      reconstructedBands,
+      reconstructedBandProducts)
 
   def snapshot: TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(voxels, trialBasisScores, bankValueEvaluations, jetEvaluations, amplitudeCorrections,
@@ -224,7 +256,7 @@ final case class TrialBandedReadout(
   * Source storage is shared, not copied or counted once per worker.
   */
 final class TrialBandedPreparation private[profile] (
-    val source: ExpandedTrialDesign,
+    val source: TrialBasisDesign,
     val basis: HrfKernelBasis,
     val membership: TrialMembership,
     val rows: Int,
@@ -238,7 +270,8 @@ final class TrialBandedPreparation private[profile] (
     private[profile] val basisNuisanceCross: Array[Double],
     private[profile] val nuisanceGram: Array[Double],
     private[profile] val starts: Array[Int],
-    private[profile] val ends: Array[Int]):
+    private[profile] val ends: Array[Int],
+    maxLoweredBlockValues: Long):
 
   val trials: Int = membership.trials
   val basisRank: Int = basis.rank
@@ -248,12 +281,13 @@ final class TrialBandedPreparation private[profile] (
   val packedBandSize: Int = trials * bandWidth
   val gramBlockCount: Int = basisRank * (basisRank + 1) / 2
 
-  /** Actual retained expanded-design Double data length, normally T*N*m.
+  /** Actual retained source-design Double data length: T*N*m for dense sources,
+    * zero for schedule-backed blocked sources.
     * This scoped count excludes the source's basis, membership, event row maps,
     * convolved-term metadata and object/collection overhead. It is separate
     * from receipt/engine estimates; it is not total source storage.
     */
-  val retainedSourceDesignDataValues: Long = source.term.data.data.length.toLong
+  val retainedSourceDesignDataValues: Long = source.retainedDesignDataValues
   val retainedSourceDesignDataBytes: Long = 8L * retainedSourceDesignDataValues
 
   /** Preparation-owned packed/sparse array estimate, excluding the retained
@@ -269,7 +303,9 @@ final class TrialBandedPreparation private[profile] (
       bandwidth,
       gramBlockCount,
       gramBlocksData.length.toLong + sparseDesign.length + whitenedNuisance.length +
-        basisNuisanceCross.length + nuisanceGram.length + trialOffsets.length + starts.length + ends.length
+        basisNuisanceCross.length + nuisanceGram.length + trialOffsets.length + starts.length + ends.length,
+      source.blockCount,
+      maxLoweredBlockValues
     )
 
   /** Copy one cross-basis Gram block as `bands(i,d)=B(i,i-d)`. */
@@ -343,79 +379,117 @@ final class TrialBandedPreparation private[profile] (
       out.energyValue = energy
       Right(out)
 
-  def objective(grid: NodeGrid): Either[TrialBandedError, TrialBandedObjective] =
-    TrialBandedObjective.make(this, grid)
+  def objective(grid: NodeGrid, storage: TrialReferenceStorage = TrialReferenceStorage.FullJets): Either[TrialBandedError, TrialBandedObjective] =
+    TrialBandedObjective.make(this, grid, storage)
+
+  /** Explicit readout/curvature references, independent of the decoder grid. */
+  def referenceBank(points: TrialReferencePoints,
+      storage: TrialReferenceStorage = TrialReferenceStorage.FullJets): Either[TrialBandedError, TrialReferenceBank] =
+    TrialBandedObjective.buildBank(this, points, storage).map: (references, receipt) =>
+      new TrialReferenceBank(this, points, storage, references, receipt)
 
 object TrialBandedPreparation:
 
   def prepare(
-      expanded: ExpandedTrialDesign,
+      expanded: TrialBasisDesign,
       whitening: Option[WhiteningPlan],
       nuisance: Option[DMat],
-      lambda: Double
-  ): Either[TrialBandedError, TrialBandedPreparation] =
-    if !(lambda > 0.0 && lambda.isFinite) then Left(TrialBandedError.InvalidLambda(lambda))
-    else if nuisance.exists(_.rows != expanded.rows) then
-      Left(TrialBandedError.NuisanceRows(expanded.rows, nuisance.map(_.rows).getOrElse(0)))
-    else
-      val rows = expanded.rows
-      val n = expanded.trials
-      val m = expanded.rank
-      val rawDesign = expanded.term.data.data
-      val f = nuisance.map(_.cols).getOrElse(0)
-      val rawNuisance = nuisance.fold(new Array[Double](0)) { matrix =>
-        val out = new Array[Double](rows * f)
-        matrix.copyRowMajorTo(out)
-        out
-      }
-      def whiten(cols: Int, values: Array[Double]): Either[TrialBandedError, Array[Double]] =
-        if cols == 0 then Right(new Array[Double](0))
-        else
-          whitening match
-            case None => Right(java.util.Arrays.copyOf(values, values.length))
-            case Some(plan) =>
-              WhiteningTransform.matrix(plan, toDMat(rows, cols, values)) match
-                case Left(error) => Left(TrialBandedError.Whitening(error.toString))
-                case Right(matrix) =>
-                  val out = new Array[Double](values.length)
-                  matrix.copyRowMajorTo(out)
-                  Right(out)
-      for
-        x <- whiten(n * m, rawDesign)
-        nuisanceData <- whiten(f, rawNuisance)
-        prepared <- build(expanded, whitening, lambda, x, nuisanceData)
-      yield prepared
-
-  private def build(
-      expanded: ExpandedTrialDesign,
-      whitening: Option[WhiteningPlan],
       lambda: Double,
-      x: Array[Double],
-      nuisance: Array[Double]): Either[TrialBandedError, TrialBandedPreparation] =
+      maxRetainedValues: Long = TrialPreparationPolicy().maxRetainedValues
+  ): Either[TrialBandedError, TrialBandedPreparation] =
+    require(maxRetainedValues > 0L && maxRetainedValues <= Int.MaxValue.toLong,
+      "trial preparation limit must be positive and fit an array index")
+    if !(lambda > 0.0 && lambda.isFinite) then return Left(TrialBandedError.InvalidLambda(lambda))
+    if nuisance.exists(_.rows != expanded.rows) then
+      return Left(TrialBandedError.NuisanceRows(expanded.rows, nuisance.map(_.rows).getOrElse(0)))
     val rows = expanded.rows
     val n = expanded.trials
     val m = expanded.rank
-    val cols = n * m
-    val f = if rows == 0 then 0 else nuisance.length / rows
+    val f = nuisance.map(_.cols).getOrElse(0)
+    val fixedCount = 3.0 * n + 1.0 + rows.toDouble * f + m.toDouble * n * f + f.toDouble * f
+    if fixedCount > maxRetainedValues then return Left(TrialBandedError.StorageLimit(fixedCount.toLong, maxRetainedValues))
+    val fixedValues = fixedCount.toLong
+    def whiten(cols: Int, values: Array[Double]): Either[TrialBandedError, Array[Double]] =
+      if cols == 0 then Right(Array.emptyDoubleArray)
+      else whitening match
+        case None => Right(values)
+        case Some(plan) =>
+          WhiteningTransform.matrix(plan, toDMat(rows, cols, values)) match
+            case Left(error) => Left(TrialBandedError.Whitening(error.toString))
+            case Right(matrix) =>
+              val out = new Array[Double](values.length)
+              matrix.copyRowMajorTo(out)
+              Right(out)
+    val rawNuisance = new Array[Double](rows * f)
+    nuisance.foreach(_.copyRowMajorTo(rawNuisance))
+    val nuisanceData = whiten(f, rawNuisance) match
+      case Left(error) => return Left(error)
+      case Right(values) => values
     val starts = Array.fill(n)(rows)
     val ends = Array.fill(n)(-1)
+    val offsets = new Array[Int](n + 1)
+    val chunks = Array.fill(n)(Array.emptyDoubleArray)
+    var packedValues = 0L
+    var largestBlock = 0L
+    var block = 0
+    while block < expanded.blockCount do
+      val raw = expanded.block(block) match
+        case Left(error) => return Left(TrialBandedError.Lowering(error.message))
+        case Right(matrix) => matrix
+      largestBlock = math.max(largestBlock, raw.data.length.toLong)
+      val x = whiten(raw.cols, raw.data) match
+        case Left(error) => return Left(error)
+        case Right(values) => values
+      val count = expanded.trialsInBlock(block)
+      var local = 0
+      while local < count do
+        val trial = block * expanded.trialsPerBlock + local
+        var t = 0
+        while t < rows do
+          var p = 0
+          while p < m do
+            if x(t * raw.cols + p * count + local) != 0.0 then
+              starts(trial) = math.min(starts(trial), t)
+              ends(trial) = t
+            p += 1
+          t += 1
+        if ends(trial) < 0 then return Left(TrialBandedError.UnobservedTrial(trial))
+        val values = (ends(trial) - starts(trial) + 1).toLong * m
+        packedValues += values
+        if fixedValues + packedValues > maxRetainedValues then
+          return Left(TrialBandedError.StorageLimit(fixedValues + packedValues, maxRetainedValues))
+        val chunk = new Array[Double](values.toInt)
+        t = starts(trial)
+        while t <= ends(trial) do
+          var p = 0
+          while p < m do
+            chunk((t - starts(trial)) * m + p) = x(t * raw.cols + p * count + local)
+            p += 1
+          t += 1
+        chunks(trial) = chunk
+        offsets(trial + 1) = packedValues.toInt
+        local += 1
+      block += 1
+    build(expanded, whitening, lambda, chunks, offsets, starts, ends, nuisanceData,
+      fixedValues, maxRetainedValues, largestBlock)
+
+  private def build(
+      expanded: TrialBasisDesign,
+      whitening: Option[WhiteningPlan],
+      lambda: Double,
+      chunks: Array[Array[Double]],
+      offsets: Array[Int],
+      starts: Array[Int],
+      ends: Array[Int],
+      nuisance: Array[Double],
+      fixedValues: Long,
+      maxRetainedValues: Long,
+      largestBlock: Long): Either[TrialBandedError, TrialBandedPreparation] =
+    val rows = expanded.rows
+    val n = expanded.trials
+    val m = expanded.rank
+    val f = if rows == 0 then 0 else nuisance.length / rows
     var t = 0
-    while t < rows do
-      var p = 0
-      while p < m do
-        val base = t * cols + p * n
-        var trial = 0
-        while trial < n do
-          if x(base + trial) != 0.0 then
-            starts(trial) = math.min(starts(trial), t)
-            ends(trial) = math.max(ends(trial), t)
-          trial += 1
-        p += 1
-      t += 1
-    var trial = 0
-    while trial < n do
-      if ends(trial) < 0 then return Left(TrialBandedError.UnobservedTrial(trial))
-      trial += 1
     var bandwidth = 0
     var i = 0
     while i < n do
@@ -425,9 +499,22 @@ object TrialBandedPreparation:
         j += 1
       i += 1
     val width = bandwidth + 1
+    val blockCountLong = m.toLong * (m + 1L) / 2L
+    // Check in Double before narrowing: hostile dimensions must not wrap Long
+    // products. Every admitted count is <= Int.MaxValue and exactly represented.
+    val gramCount = blockCountLong.toDouble * n * width
+    val retainedCount = fixedValues.toDouble + offsets(n) + gramCount
+    if retainedCount > maxRetainedValues then
+      return Left(TrialBandedError.StorageLimit(retainedCount.toLong, maxRetainedValues))
+    val gramValues = gramCount.toInt
     val bandSize = n * width
-    val blockCount = m * (m + 1) / 2
-    val blocks = new Array[Double](blockCount * bandSize)
+    val sparse = new Array[Double](offsets(n))
+    var trial = 0
+    while trial < n do
+      System.arraycopy(chunks(trial), 0, sparse, offsets(trial), chunks(trial).length)
+      chunks(trial) = Array.emptyDoubleArray
+      trial += 1
+    val blocks = new Array[Double](gramValues)
     var q = 0
     while q < m do
       var p = 0
@@ -443,11 +530,12 @@ object TrialBandedPreparation:
             var sum = 0.0
             t = from
             while t <= until do
-              val row = t * cols
-              if p == q then sum += x(row + p * n + i) * x(row + p * n + other)
+              val row = offsets(i) + (t - starts(i)) * m
+              val otherRow = offsets(other) + (t - starts(other)) * m
+              if p == q then sum += sparse(row + p) * sparse(otherRow + p)
               else
-                sum += x(row + p * n + i) * x(row + q * n + other) +
-                  x(row + q * n + i) * x(row + p * n + other)
+                sum += sparse(row + p) * sparse(otherRow + q) +
+                  sparse(row + q) * sparse(otherRow + p)
               t += 1
             blocks(blockOffset + i * width + delta) = sum
             delta += 1
@@ -464,7 +552,7 @@ object TrialBandedPreparation:
           var sum = 0.0
           t = starts(i)
           while t <= ends(i) do
-            sum += x(t * cols + p * n + i) * nuisance(t * f + nuisanceCol)
+            sum += sparse(offsets(i) + (t - starts(i)) * m + p) * nuisance(t * f + nuisanceCol)
             t += 1
           xf((p * n + i) * f + nuisanceCol) = sum
           nuisanceCol += 1
@@ -484,23 +572,8 @@ object TrialBandedPreparation:
         ff(j * f + i) = sum
         j += 1
       i += 1
-    val offsets = new Array[Int](n + 1)
-    trial = 0
-    while trial < n do
-      offsets(trial + 1) = offsets(trial) + (ends(trial) - starts(trial) + 1) * m
-      trial += 1
-    val sparse = new Array[Double](offsets(n))
-    trial = 0
-    while trial < n do
-      t = starts(trial)
-      while t <= ends(trial) do
-        p = 0
-        while p < m do
-          sparse(offsets(trial) + (t - starts(trial)) * m + p) = x(t * cols + p * n + trial)
-          p += 1
-        t += 1
-      trial += 1
-    Right(new TrialBandedPreparation(expanded, expanded.basis, expanded.membership, rows, whitening, lambda, bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends))
+    Right(new TrialBandedPreparation(expanded, expanded.basis, expanded.membership, rows, whitening, lambda,
+      bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends, largestBlock))
 
   private[profile] def pairIndex(p: Int, q: Int): Int = q * (q + 1) / 2 + p
 
@@ -547,7 +620,7 @@ private[profile] final class TrialMlResidualEnergy(val preparation: TrialBandedP
     System.arraycopy(response, 0, residual, 0, response.length)
     java.util.Arrays.fill(conditionSums, 0.0)
 
-private final case class TrialBandedReference(
+private[profile] final case class TrialBandedReference(
     coefficients: Array[Double],
     accepted: TrialAcceptedTrialBand,
     aJets: Array[Double],
@@ -561,11 +634,12 @@ private final case class TrialBandedReference(
 /** Trial-sized profile objective. Its node factors and releases are immutable
   * and shared; each worker owns only response statistics and primitive scratch.
   */
-final class TrialBandedObjective private (
+sealed class TrialReferenceBank private[profile] (
     val preparation: TrialBandedPreparation,
-    val grid: NodeGrid,
+    val points: TrialReferencePoints,
+    val storage: TrialReferenceStorage,
     private val references: Vector[TrialBandedReference],
-    val setupReceipt: TrialBandedSetupReceipt) extends ShapeObjective:
+    val setupReceipt: TrialBandedSetupReceipt):
 
   private val n = preparation.trials
   private val m = preparation.basisRank
@@ -575,6 +649,17 @@ final class TrialBandedObjective private (
   private val d = preparation.basis.family.dimension
   private val comps = JetLayout.components(d)
   private val bandSize = preparation.packedBandSize
+  private val reconstructionCapacity =
+    if storage == TrialReferenceStorage.ReconstructSecondBands then bandSize else 0
+  // A readout-only worker never uses derivative bands. Capacity is still charged
+  // in its worker estimate, but the buffer is retained only after curvature work.
+  private var reconstructedBandData: Array[Double] = Array.emptyDoubleArray
+  private def reconstructedBand: Array[Double] =
+    if reconstructedBandData.length != reconstructionCapacity then
+      reconstructedBandData = new Array[Double](reconstructionCapacity)
+    reconstructedBandData
+
+  def retainedReconstructionScratchBytes: Long = 8L * reconstructedBandData.length
   private val responseB = new Array[Double](comps * n)
   private val zTy = new Array[Double](comps * k)
   private val wbJets = new Array[Double](comps * n)
@@ -605,7 +690,13 @@ final class TrialBandedObjective private (
     components.toLong * m + components.toLong * bandSize + 2L * components * n * k +
       components.toLong * k * k + 2L * bandSize + k.toLong * k
 
-  val estimatedReferenceBytes: Long = 8L * referenceDoubles(comps)
+  val estimatedFullReferenceBytes: Long = 8L * referenceDoubles(comps)
+  val estimatedReferenceBytes: Long = estimatedFullReferenceBytes -
+    (if storage == TrialReferenceStorage.ReconstructSecondBands then 8L * (comps - 1 - d) * bandSize else 0L)
+  /** Largest derivative reconstruction buffer retained by each worker. */
+  val reconstructionScratchBytes: Long = 8L * reconstructionCapacity
+  /** Hypothetical lower-order references, not the compact full-jet storage. */
+  val estimatedFirstOrderReferenceBytes: Long = 8L * referenceDoubles(1 + d)
   val estimatedValueReferenceBytes: Long = 8L * referenceDoubles(1)
   val estimatedValueBuildBytes: Long = estimatedValueReferenceBytes + 8L * n * (k + c)
 
@@ -621,7 +712,7 @@ final class TrialBandedObjective private (
     val worker = responseB.length.toLong + zTy.length + wbJets.length +
       s.length + b.length + g.length + n.toLong + n.toLong + n.toLong +
       scoreRelease.length + scoreSolved.length + conditionalRelease.length +
-      comps.toLong * preparation.basis.fineCount + coefficients.length
+      comps.toLong * preparation.basis.fineCount + coefficients.length + reconstructionCapacity
     8L * worker
 
   /** Scoped shared estimate plus one listed objective-array estimate. */
@@ -630,7 +721,7 @@ final class TrialBandedObjective private (
   /** A new mutable worker over the same immutable preparation and reference
     * factors. No Gram block, factor or response-independent jet is rebuilt.
     */
-  def newWorker(): TrialBandedObjective = new TrialBandedObjective(preparation, grid, references, setupReceipt)
+  def newWorker(): TrialReferenceBank = new TrialReferenceBank(preparation, points, storage, references, setupReceipt)
 
   def amplitudeCount: Int = c
 
@@ -673,6 +764,86 @@ final class TrialBandedObjective private (
         val completed = fullJet(reference, currentResponse, out)
         if !completed then work.jetFailures += 1L
         completed
+
+  /** Search-only envelope gradient. At the conditional optimum, coefficient
+    * derivatives cancel: dE = a' d(X'X) a + 2 a' d(X'F) gamma - 2 a' d(X'y).
+    * One value reference and one response solve suffice. The basis-pair
+    * quadratics are contracted once and shared by all shape coordinates.
+    * Full jets remain mandatory for terminal curvature admission.
+    */
+  def gradientAt(coordinates: Array[Double], out: ProfileGradientBuffer): Boolean =
+    work.firstOrderAttempts += 1L
+    val completed = buildReference(coordinates, 1, None) match
+      case Left(_) => false
+      case Right(reference) =>
+        work.continuousFactors += 1L
+        envelopeGradient(reference, coordinates, currentResponse, out)
+    if !completed then work.firstOrderFailures += 1L
+    completed
+
+  private def envelopeGradient(ref: TrialBandedReference, coordinates: Array[Double],
+      encoded: TrialBandedResponse, out: ProfileGradientBuffer): Boolean =
+    out.energy = scoreReference(ref, encoded, null)
+    if !out.energy.isFinite then return false
+    preparation.basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector),
+      kernelScratch, coefficients, 1 + d)
+    java.util.Arrays.fill(out.gradient, 0.0)
+    var trial = 0
+    while trial < n do
+      var amplitude = scoreBuilder(trial, 0) + scoreSolved(f + preparation.membership.conditionOfTrial(trial))
+      var col = 0
+      while col < k do
+        amplitude -= ref.wcJets(trial * k + col) * scoreSolved(col)
+        col += 1
+      // Reuse the full-jet solve buffer; no coefficient vector is retained.
+      jetSolveBuilder.writeLinear(trial, amplitude)
+      trial += 1
+    var q = 0
+    while q < m do
+      var p = 0
+      while p <= q do
+        val block = TrialBandedPreparation.pairIndex(p, q) * bandSize
+        var quadratic = 0.0
+        trial = 0
+        while trial < n do
+          val amplitude = jetSolveBuilder(trial, 0)
+          var delta = 0
+          while delta <= math.min(trial, preparation.bandwidth) do
+            val product = amplitude * preparation.gramBlocksData(block + trial * preparation.bandWidth + delta) *
+              jetSolveBuilder(trial - delta, 0)
+            quadratic += (if delta == 0 then product else 2.0 * product)
+            delta += 1
+          trial += 1
+        var axis = 0
+        while axis < d do
+          val derivative = JetLayout.first(axis) * m
+          out.gradient(axis) += quadratic *
+            (coefficients(derivative + p) * coefficients(q) + coefficients(p) * coefficients(derivative + q))
+          axis += 1
+        p += 1
+      q += 1
+    var p = 0
+    while p < m do
+      var cross = 0.0
+      trial = 0
+      while trial < n do
+        var residualScore = -encoded.trialBasisScores(p * n + trial)
+        var col = 0
+        while col < f do
+          residualScore += preparation.basisNuisanceCross((p * n + trial) * f + col) * scoreSolved(col)
+          col += 1
+        cross += jetSolveBuilder(trial, 0) * residualScore
+        trial += 1
+      var axis = 0
+      while axis < d do
+        out.gradient(axis) += 2.0 * coefficients(JetLayout.first(axis) * m + p) * cross
+        axis += 1
+      p += 1
+    var condition = 0
+    while condition < c do
+      out.amplitudes(condition) = scoreSolved(f + condition)
+      condition += 1
+    out.gradient.forall(_.isFinite) && out.amplitudes.forall(_.isFinite)
 
   def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
     buildReference(coordinates, 1, None) match
@@ -757,10 +928,10 @@ final class TrialBandedObjective private (
     val width = preparation.bandWidth
     def band(component: Int): DMat =
       val out = DMatBuilder.zeros(n, width)
-      val base = component * bandSize
+      val (bands, base) = derivativeBand(reference, component)
       var i = 0
       while i < bandSize do
-        out.writeLinear(i, reference.aJets(base + i))
+        out.writeLinear(i, bands(base + i))
         i += 1
       out.result()
     val first = Vector.tabulate(d)(axis => band(JetLayout.first(axis)))
@@ -1189,7 +1360,12 @@ final class TrialBandedObjective private (
     result
 
   private def fullJet(ref: TrialBandedReference, encoded: TrialBandedResponse, out: ProfileJetBuffer): Boolean =
-    contractResponse(ref, encoded, comps)
+    reducedJet(ref, encoded, out, full = true)
+
+  private def reducedJet(ref: TrialBandedReference, encoded: TrialBandedResponse,
+      out: ProfileGradientBuffer, full: Boolean): Boolean =
+    val active = if full then comps else 1 + d
+    contractResponse(ref, encoded, active)
     java.util.Arrays.fill(wbJets, 0.0)
     if !solveResponseComponent(ref, JetLayout.Value, -1, -1) then return false
     var p = 0
@@ -1197,7 +1373,7 @@ final class TrialBandedObjective private (
       if !solveResponseComponent(ref, JetLayout.first(p), p, -1) then return false
       p += 1
     p = 0
-    while p < d do
+    while full && p < d do
       var q = p
       while q < d do
         if !solveResponseComponent(ref, JetLayout.second(d, p, q), p, q) then return false
@@ -1205,7 +1381,7 @@ final class TrialBandedObjective private (
       p += 1
     java.util.Arrays.fill(s, 0.0)
     java.util.Arrays.fill(b, 0.0)
-    System.arraycopy(ref.hJets, 0, g, 0, g.length)
+    System.arraycopy(ref.hJets, 0, g, 0, active * k * k)
     assembleReducedComponent(ref, encoded, JetLayout.Value, 1,
       JetLayout.Value, JetLayout.Value, 0, 0, 0, 0, 0, 0)
     p = 0
@@ -1216,7 +1392,7 @@ final class TrialBandedObjective private (
         0, 0, 0, 0)
       p += 1
     p = 0
-    while p < d do
+    while full && p < d do
       var q = p
       while q < d do
         assembleReducedComponent(ref, encoded, JetLayout.second(d, p, q), 4,
@@ -1226,29 +1402,38 @@ final class TrialBandedObjective private (
           JetLayout.Value, JetLayout.second(d, p, q))
         q += 1
       p += 1
-    if !releaseReduction.reduce(s, b, g, releaseOut) then
+    val completed =
+      if full then releaseReduction.reduce(s, b, g, releaseOut)
+      else releaseReduction.reduceGradient(s, b, g, releaseOut)
+    if !completed then
       out.energy = Double.PositiveInfinity
-      out.curvature = CurvatureStatus.GramNotPositiveDefinite
+      out match
+        case jet: ProfileJetBuffer => jet.curvature = CurvatureStatus.GramNotPositiveDefinite
+        case _ => ()
       false
     else
       out.energy = releaseOut.energy
       System.arraycopy(releaseOut.gradient, 0, out.gradient, 0, d)
-      System.arraycopy(releaseOut.hessian, 0, out.hessian, 0, d * d)
       var i = 0
       while i < c do
         out.amplitudes(i) = releaseOut.amplitudes(f + i)
         i += 1
-      out.curvature = releaseOut.curvature
+      out match
+        case jet: ProfileJetBuffer if full =>
+          System.arraycopy(releaseOut.hessian, 0, jet.hessian, 0, d * d)
+          jet.curvature = releaseOut.curvature
+        case _ => ()
       true
 
   /** Solve the differentiated `A w = b` system for one response RHS. */
   private def solveResponseComponent(ref: TrialBandedReference, comp: Int, axisP: Int, axisQ: Int): Boolean =
     val target = comp * n
+    val (bands, bandOffset) = derivativeBand(ref, comp)
     var i = 0
     while i < n do
       var value = responseB(target + i)
       if comp != JetLayout.Value then
-        value -= bandVectorProduct(ref.aJets, comp, wbJets, 0, i)
+        value -= bandVectorProduct(bands, bandOffset / bandSize, wbJets, 0, i)
         if axisQ >= 0 then
           value -= bandVectorProduct(ref.aJets, JetLayout.first(axisP), wbJets, JetLayout.first(axisQ) * n, i)
           value -= bandVectorProduct(ref.aJets, JetLayout.first(axisQ), wbJets, JetLayout.first(axisP) * n, i)
@@ -1267,6 +1452,48 @@ final class TrialBandedObjective private (
           wbJets(target + i) = jetSolveBuilder(i, 0)
           i += 1
         true
+
+  /** Same basis-pair contraction and summation order as setup; only the second
+    * bands are omitted from immutable storage. One buffer is reused between
+    * components, with no additional inverse or factorisation.
+    */
+  private def derivativeBand(ref: TrialBandedReference, component: Int): (Array[Double], Int) =
+    if (component + 1) * bandSize <= ref.aJets.length then (ref.aJets, component * bandSize)
+    else
+      val scratch = reconstructedBand
+      require(scratch.length == bandSize)
+      java.util.Arrays.fill(scratch, 0.0)
+      var axisP = 0
+      var axisQ = 0
+      var p = 0
+      while p < d do
+        var q = p
+        while q < d do
+          if JetLayout.second(d, p, q) == component then
+            axisP = p
+            axisQ = q
+          q += 1
+        p += 1
+      val coefficients = ref.coefficients
+      var q = 0
+      while q < m do
+        p = 0
+        while p <= q do
+          val weight = coefficients(component * m + p) * coefficients(q) +
+            coefficients(JetLayout.first(axisP) * m + p) * coefficients(JetLayout.first(axisQ) * m + q) +
+            coefficients(JetLayout.first(axisQ) * m + p) * coefficients(JetLayout.first(axisP) * m + q) +
+            coefficients(p) * coefficients(component * m + q)
+          if weight != 0.0 then
+            val block = TrialBandedPreparation.pairIndex(p, q) * bandSize
+            var i = 0
+            while i < bandSize do
+              scratch(i) += weight * preparation.gramBlocksData(block + i)
+              i += 1
+            work.reconstructedBandProducts += bandSize.toLong
+          p += 1
+        q += 1
+      work.reconstructedBands += 1L
+      (scratch, 0)
 
   private def bandVectorProduct(bands: Array[Double], comp: Int, vector: Array[Double], vectorOffset: Int, row: Int): Double =
     val width = preparation.bandWidth
@@ -1335,32 +1562,54 @@ final class TrialBandedObjective private (
       i += 1
     sum
 
+/** Regular-grid decoder objective. Explicit point banks do not implement
+  * ShapeObjective and therefore cannot accidentally masquerade as a grid.
+  */
+final class TrialBandedObjective private (
+    preparation: TrialBandedPreparation,
+    val grid: NodeGrid,
+    storage: TrialReferenceStorage,
+    references: Vector[TrialBandedReference],
+    receipt: TrialBandedSetupReceipt)
+    extends TrialReferenceBank(preparation, TrialReferencePoints.fromGrid(grid), storage, references, receipt)
+    with FirstOrderShapeObjective:
+  override def newWorker(): TrialBandedObjective =
+    new TrialBandedObjective(preparation, grid, storage, references, receipt)
+
 object TrialBandedObjective:
 
-  def make(preparation: TrialBandedPreparation, grid: NodeGrid): Either[TrialBandedError, TrialBandedObjective] =
+  def make(preparation: TrialBandedPreparation, grid: NodeGrid,
+      storage: TrialReferenceStorage = TrialReferenceStorage.FullJets): Either[TrialBandedError, TrialBandedObjective] =
+    buildBank(preparation, TrialReferencePoints.fromGrid(grid), storage).map: (references, receipt) =>
+      new TrialBandedObjective(preparation, grid, storage, references, receipt)
+
+  private[profile] def buildBank(preparation: TrialBandedPreparation, points: TrialReferencePoints,
+      storage: TrialReferenceStorage): Either[TrialBandedError, (Vector[TrialBandedReference], TrialBandedSetupReceipt)] =
     val basis = preparation.basis
-    if grid.dimension != basis.family.dimension then
-      Left(TrialBandedError.Factorisation(s"grid dimension ${grid.dimension} does not match family dimension ${basis.family.dimension}"))
+    if points.chart.dimension != basis.family.dimension || points.coordinates.exists(p => basis.family.chart.point(p).isLeft) then
+      Left(TrialBandedError.Factorisation("reference coordinates must lie inside the family chart"))
     else
       val comps = basis.family.jetComponents
       val scratch = new Array[Double](comps * basis.fineCount)
       val coefficients = new Array[Double](comps * basis.rank)
-      val coords = new Array[Double](grid.dimension)
       val refs = Vector.newBuilder[TrialBandedReference]
       val setupWork = new TrialBandedWork
       var node = 0
-      while node < grid.count do
-        grid.coordinatesInto(node, coords)
-        basis.coefficientJetInto(ShapePoint.unsafe(coords.toVector), scratch, coefficients, comps)
-        reference(preparation, coords.toVector, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node),
+      while node < points.count do
+        val coords = points.coordinates(node)
+        basis.coefficientJetInto(ShapePoint.unsafe(coords), scratch, coefficients, comps)
+        reference(preparation, coords, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node),
           setupWork) match
           case Left(error) => return Left(error)
-          case Right(ref) => refs += ref
+          case Right(ref) =>
+            val retained = if storage == TrialReferenceStorage.FullJets then ref else
+              ref.copy(aJets = java.util.Arrays.copyOf(ref.aJets, (1 + basis.family.dimension) * preparation.packedBandSize))
+            refs += retained
         node += 1
       val setup = setupWork.snapshot.attempted
-      Right(new TrialBandedObjective(preparation, grid, refs.result(), TrialBandedSetupReceipt(setup.referenceAttempts, setup)))
+      Right((refs.result(), TrialBandedSetupReceipt(setup.referenceAttempts, setup)))
 
-  private def reference(
+  private[profile] def reference(
       prep: TrialBandedPreparation,
       coordinates: Vector[Double],
       coefficients: Array[Double],

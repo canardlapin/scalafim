@@ -1,0 +1,39 @@
+# host: Apple M2 Pro Mac14,12 macOS 15.1.1 24B91
+pinned 398d45a249590ef9d41eca2e659eb2fcc8c3a5d9aca8d3eb749b9f826d98e27f
+unpinned 398d45a249590ef9d41eca2e659eb2fcc8c3a5d9aca8d3eb749b9f826d98e27f
+veclib8 398d45a249590ef9d41eca2e659eb2fcc8c3a5d9aca8d3eb749b9f826d98e27f
+pinned2 398d45a249590ef9d41eca2e659eb2fcc8c3a5d9aca8d3eb749b9f826d98e27f
+ob1 c170f924f162b56ca95c3807ccf3632fcbac622d1b6b47e6c2019b194a478f57
+ob2 c170f924f162b56ca95c3807ccf3632fcbac622d1b6b47e6c2019b194a478f57
+obarmv8 8d9ff97295274685dec2a603c23874c2c7c94ea7cf8e114fc019cd022dcc403f
+obnv1 c170f924f162b56ca95c3807ccf3632fcbac622d1b6b47e6c2019b194a478f57
+== r-pinned vs r-ob1
+  d_FRACvalue        identical
+  d_HRFindex         identical
+  d_R2               n_diff=3/3 max_abs=2.480e-05 max_rel=8.444e-07 median_rel(diff)=2.907e-07 max_ulp=6979321856
+  d_beta_data        n_diff=418/432 max_abs=1.355e-05 max_rel=2.150e-03 median_rel(diff)=1.396e-06 max_ulp=15219818737829
+  d_beta_psc         n_diff=418/432 max_abs=1.357e-05 max_rel=2.150e-03 median_rel(diff)=1.396e-06 max_ulp=15249281384448
+  hrf_library        identical
+  meanvol            identical
+  noisepool          identical
+  trial_cond         identical
+  trial_event_index  identical
+  trial_run          identical
+  trial_vol          identical
+  HRFindex [19. 14. 14.] [19. 14. 14.] FRAC [0.64999998 0.15000001 0.15000001] [0.64999998 0.15000001 0.15000001]
+  meta diffs: {'R2': ([72.39057159423828, 29.366138458251953, 26.244625091552734], [72.39055633544922, 29.36616325378418, 26.244632720947266])}
+== r-pinned vs r-obarmv8
+  d_FRACvalue        identical
+  d_HRFindex         identical
+  d_R2               n_diff=3/3 max_abs=2.670e-05 max_rel=9.093e-07 median_rel(diff)=2.907e-07 max_ulp=7516192768
+  d_beta_data        n_diff=418/432 max_abs=1.355e-05 max_rel=2.150e-03 median_rel(diff)=1.425e-06 max_ulp=15219818737829
+  d_beta_psc         n_diff=418/432 max_abs=1.357e-05 max_rel=2.150e-03 median_rel(diff)=1.425e-06 max_ulp=15249281384448
+  hrf_library        identical
+  meanvol            identical
+  noisepool          identical
+  trial_cond         identical
+  trial_event_index  identical
+  trial_run          identical
+  trial_vol          identical
+  HRFindex [19. 14. 14.] [19. 14. 14.] FRAC [0.64999998 0.15000001 0.15000001] [0.64999998 0.15000001 0.15000001]
+  meta diffs: {'R2': ([72.39057159423828, 29.366138458251953, 26.244625091552734], [72.39055633544922, 29.366165161132812, 26.244632720947266])}

@@ -1,0 +1,33 @@
+{
+  "sourceBase": "e5aeae2c3fcf45a45c24ca4be354378ebde159fd",
+  "fitJVM": 720,
+  "fitJS": 662,
+  "lawsJVM": 13,
+  "lawsJS": 13,
+  "compileAll": true,
+  "productionAdmitted": false,
+  "compilerWarnings": [],
+  "buildMessages": [
+    "Existing multiple-main discovery warning"
+  ],
+  "commands": [
+    "fitJVM/test",
+    "firstLevelLawsJVM/testOnly *TrialReferencePlacementSuite *TrialDomainGateSuite *TrialNeighborhoodAuditSuite *DecodedTrialCheckpointSuite",
+    "fitJS/test",
+    "firstLevelLawsJS/testOnly *TrialReferencePlacementSuite *TrialDomainGateSuite *TrialNeighborhoodAuditSuite *DecodedTrialCheckpointSuite",
+    "scalafimCompileAll",
+    "fitJVM/testOnly *RoutedShapeDecoderSuite *TrialReferenceBankSuite *ProfileHrfTrialOutputsSuite",
+    "fitJS/testOnly *RoutedShapeDecoderSuite *TrialReferenceBankSuite *ProfileHrfTrialOutputsSuite",
+    "firstLevelLawsJVM/Test/runMain scalafim.fmri.laws.profile.TrialReferenceDecodeMain docs/verification/phrf-reference-decode-20261008"
+  ],
+  "scope": "Opt-in shared-bank integration; exact continuous factors remain counted. No accuracy, peak-memory or throughput admission.",
+  "finalFollowup": "Routing kernel allocation cleanup recompiled by compileAll and revalidated with all three affected fit suites on both platforms.",
+  "finalFollowupJVM": 53,
+  "finalFollowupJS": 53,
+  "defaultBoundaryDiagnostic": {
+    "attempted": 16,
+    "emitted": 0,
+    "CurvatureNotPositive": 16,
+    "continuousFactors": 0
+  }
+}

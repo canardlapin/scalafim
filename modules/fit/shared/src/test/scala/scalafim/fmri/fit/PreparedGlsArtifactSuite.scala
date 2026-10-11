@@ -50,6 +50,21 @@ class PreparedGlsArtifactSuite extends munit.FunSuite:
     )
   }
 
+  test("stationary preparation round trips v3 and refuses restoration under legacy initialization") {
+    val plan = FitPlan(sharedPlan.model, engine = FitEngine.GeneralizedLeastSquares,
+      config = sharedPlan.config.copy(autocorrelation = sharedPlan.config.autocorrelation.copy(
+        initialization = Some(scalafim.fmri.model.ArInitialization.Stationary))))
+    val artifact = PreparedGlsArtifact.prepare(descriptorFor(plan), resolver(plan, boundedReader(plan.model.dataset))).toOption.get
+    assert(artifact.encode.contains("prepared-gls-v3"))
+    assert(artifact.units.forall(_.whitening.initialCondition == scalafim.fmri.ar.InitialConditionPolicy.Stationary))
+    val decoded = PreparedGlsArtifact.decode(artifact.encode).toOption.get
+    assertEquals(decoded.encode, artifact.encode)
+    assert(decoded.restore(resolver(sharedPlan, denyingReader(sharedPlan.model.dataset))).isLeft)
+    val restored = decoded.restore(resolver(plan, boundedReader(plan.model.dataset))).toOption.get.fit().toOption.get.asInstanceOf[DenseFmriFitResult]
+    val dense = FitPlanExecutor.fit(plan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
+    assertDenseClose(restored, dense)
+  }
+
   test("prepared GLS artifact codec rejects truncated, unknown-version, and nonfinite state") {
     val artifact = PreparedGlsArtifact.prepare(descriptorFor(sharedPlan), resolver(sharedPlan, boundedReader(sharedPlan.model.dataset))).toOption.get
     Vector(

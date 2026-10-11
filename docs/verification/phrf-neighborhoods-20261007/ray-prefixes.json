@@ -1,0 +1,965 @@
+{
+  "scope": "empirical prefixes on four inward rays; not uniform certified accuracy radii or volume coverage",
+  "records": [
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 30,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.001,
+        0.003,
+        0.01,
+        0.03,
+        0.1,
+        0.25
+      ],
+      "allDirectionsPreparedPrefix": 0.03,
+      "allDirectionsOriginalPrefix": 0.03
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "corners",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 48,
+      "layout": "quarters",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "corners",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 0,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 1,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 2,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 3,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 4,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": null
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 5,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 6,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    },
+    {
+      "trials": 300,
+      "horizon": 96,
+      "layout": "quarters",
+      "node": 7,
+      "sampledRadii": [
+        0,
+        0.01,
+        0.1
+      ],
+      "allDirectionsPreparedPrefix": 0.01,
+      "allDirectionsOriginalPrefix": 0.01
+    }
+  ]
+}

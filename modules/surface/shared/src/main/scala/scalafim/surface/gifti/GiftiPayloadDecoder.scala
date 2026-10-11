@@ -24,6 +24,7 @@ private[surface] object GiftiPayloadDecoder:
       array.dataType match
         case GiftiDataType.Float32 | GiftiDataType.Int32 => Right(4L)
         case GiftiDataType.UInt8 => Right(1L)
+        case GiftiDataType.Float64 => Right(8L)
         case other => Left(GiftiError.UnsupportedDataType(other))
     for
       width <- bytesPerValue
@@ -58,7 +59,8 @@ private[surface] object GiftiPayloadDecoder:
     array: GiftiDataArray,
     data: EncodedData
   ): Either[GiftiError, GiftiPayload[Int]] =
-    intValues(array, data).flatMap(values => GiftiPayload.from(array, values.toVector))
+    if array.dataType == GiftiDataType.Float64 then Left(GiftiError.UnsupportedDataType(array.dataType))
+    else intValues(array, data).flatMap(values => GiftiPayload.from(array, values.toVector))
 
   def bytePayload(
     array: GiftiDataArray,
@@ -124,7 +126,7 @@ private[surface] object GiftiPayloadDecoder:
 
   private def parseAscii(array: GiftiDataArray): Either[GiftiError, Array[Double]] =
     array.dataType match
-      case GiftiDataType.Float32 | GiftiDataType.Int32 | GiftiDataType.UInt8 =>
+      case GiftiDataType.Float32 | GiftiDataType.Float64 | GiftiDataType.Int32 | GiftiDataType.UInt8 =>
         parseDoubles(array.dataText, array.intent.code).flatMap(validateCount(array, _))
       case other => Left(GiftiError.UnsupportedDataType(other))
 
@@ -137,6 +139,15 @@ private[surface] object GiftiPayloadDecoder:
     bytes: Array[Byte]
   ): Either[GiftiError, Array[Double]] =
     array.dataType match
+      case GiftiDataType.Float64 =>
+        withBuffer(array, bytes, 8) { buffer =>
+          val out = Array.ofDim[Double](bytes.length / 8)
+          var i = 0
+          while i < out.length do
+            out(i) = buffer.getDouble()
+            i += 1
+          out
+        }
       case GiftiDataType.Float32 =>
         withBuffer(array, bytes, 4) { buffer =>
           val out = Array.ofDim[Double](bytes.length / 4)

@@ -1,0 +1,394 @@
+{
+  "format": "phrf-neighborhood-feasibility/1",
+  "qualification": "not-admitted",
+  "mode": "certificate",
+  "result": [
+    {
+      "points": [
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 0,
+          "preparedRelativeError": 7.297649832336939E-15,
+          "originalRelativeError": 2.4998145769778503E-4,
+          "originalQueryError": 3.371238777777341E-5,
+          "etaUpper": 0.03521256989477487,
+          "relativeBound": 2.615170508277356E-4,
+          "queryBound": 3.407717720622599E-5,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.2346065
+        },
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 0.001,
+          "preparedRelativeError": 2.6720330990336397E-9,
+          "originalRelativeError": 2.4110328666351747E-4,
+          "originalQueryError": 3.3328141942456924E-5,
+          "etaUpper": 0.027279458828033534,
+          "relativeBound": 2.495384401675773E-4,
+          "queryBound": 3.382239527439959E-5,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.084423625
+        },
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 0.01,
+          "preparedRelativeError": 2.6847441288557263E-6,
+          "originalRelativeError": 1.7103855428609235E-4,
+          "originalQueryError": 3.065349164632636E-5,
+          "etaUpper": 0.5371713792828388,
+          "relativeBound": 4.242097422544582E-4,
+          "queryBound": 3.868940451312023E-5,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.082724625
+        },
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 0.1,
+          "preparedRelativeError": 0.0030082005039320904,
+          "originalRelativeError": 0.0021071221498597213,
+          "originalQueryError": 1.348464652456971E-4,
+          "etaUpper": null,
+          "relativeBound": null,
+          "queryBound": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 6.137072854460863 must be below one",
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.07806
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 0,
+          "preparedRelativeError": 1.1567687501412656E-15,
+          "originalRelativeError": 1.2057657679304932E-5,
+          "originalQueryError": 1.2667956334810881E-5,
+          "etaUpper": 1.2556231427333112E-4,
+          "relativeBound": 1.2059263405838801E-5,
+          "queryBound": 1.2669014527114228E-5,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.120566667
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 0.001,
+          "preparedRelativeError": 4.1566942144098955E-9,
+          "originalRelativeError": 1.0602536987853978E-5,
+          "originalQueryError": 1.1587097572429705E-5,
+          "etaUpper": 0.019673552252856632,
+          "relativeBound": 1.0829330333604326E-5,
+          "queryBound": 1.1618209685803466E-5,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.106689333
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 0.01,
+          "preparedRelativeError": 4.0559657743827585E-6,
+          "originalRelativeError": 3.1491441290486035E-6,
+          "originalQueryError": 2.537734842100736E-6,
+          "etaUpper": 0.19688822220863086,
+          "relativeBound": 4.248823377331559E-6,
+          "queryBound": 2.687655373976244E-6,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.062983625
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 0.1,
+          "preparedRelativeError": 0.002974025120739547,
+          "originalRelativeError": 0.0029470526916031943,
+          "originalQueryError": 1.3261064310837734E-4,
+          "etaUpper": null,
+          "relativeBound": null,
+          "queryBound": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 1.9794217711592115 must be below one",
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.063203792
+        }
+      ],
+      "boxes": [
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 1.0E-6,
+          "etaUpper": 0.037159066501874484,
+          "refusal": null,
+          "seconds": 0.048574291
+        },
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 1.0E-5,
+          "etaUpper": 0.05467774911105094,
+          "refusal": null,
+          "seconds": 0.053714375
+        },
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 1.0E-4,
+          "etaUpper": 0.23287342994033983,
+          "refusal": null,
+          "seconds": 0.05582
+        },
+        {
+          "horizon": 48,
+          "node": 0,
+          "radius": 0.001,
+          "etaUpper": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 2.0275845722390566 must be below one",
+          "seconds": 0.043453041
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 1.0E-6,
+          "etaUpper": 0.0013808554292796269,
+          "refusal": null,
+          "seconds": 0.051027209
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 1.0E-5,
+          "etaUpper": 0.013754308505267864,
+          "refusal": null,
+          "seconds": 0.046142458
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 1.0E-4,
+          "etaUpper": 0.1375488453109539,
+          "refusal": null,
+          "seconds": 0.042931125
+        },
+        {
+          "horizon": 48,
+          "node": 7,
+          "radius": 0.001,
+          "etaUpper": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 1.3754690334750395 must be below one",
+          "seconds": 0.081919375
+        }
+      ]
+    },
+    {
+      "points": [
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 0,
+          "preparedRelativeError": 1.3115874894849855E-14,
+          "originalRelativeError": 3.596282430545733E-5,
+          "originalQueryError": 2.9957165258998053E-6,
+          "etaUpper": 8.862463791876568E-4,
+          "relativeBound": 3.5995534647736047E-5,
+          "queryBound": 3.0002064181662546E-6,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.046823583
+        },
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 0.001,
+          "preparedRelativeError": 2.931917723440189E-9,
+          "originalRelativeError": 3.750271108959016E-5,
+          "originalQueryError": 3.3086504069856915E-7,
+          "etaUpper": 0.05577235311963698,
+          "relativeBound": 3.9909595533739056E-5,
+          "queryBound": 3.983403716113948E-7,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.044053333
+        },
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 0.01,
+          "preparedRelativeError": 2.95981951582162E-6,
+          "originalRelativeError": 8.899038993581094E-5,
+          "originalQueryError": 3.194920270799262E-5,
+          "etaUpper": 0.5661321725089656,
+          "relativeBound": 4.5397744043813604E-4,
+          "queryBound": 4.210038936202999E-5,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.046814042
+        },
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 0.1,
+          "preparedRelativeError": 0.0034949421411656877,
+          "originalRelativeError": 0.00424162251222531,
+          "originalQueryError": 3.3861902701115554E-4,
+          "etaUpper": null,
+          "relativeBound": null,
+          "queryBound": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 6.167405179081568 must be below one",
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.052489084
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 0,
+          "preparedRelativeError": 1.6472276265085904E-15,
+          "originalRelativeError": 7.320979211761684E-6,
+          "originalQueryError": 5.033206176729976E-6,
+          "etaUpper": 1.5542661666027608E-4,
+          "relativeBound": 7.322220049554898E-6,
+          "queryBound": 5.03404026807129E-6,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.062352917
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 0.001,
+          "preparedRelativeError": 4.15674802342261E-9,
+          "originalRelativeError": 6.478433601142959E-6,
+          "originalQueryError": 4.640355513285677E-6,
+          "etaUpper": 0.01968841692131087,
+          "relativeBound": 6.648969194926286E-6,
+          "queryBound": 4.662584356096009E-6,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.048833791
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 0.01,
+          "preparedRelativeError": 4.056142670226934E-6,
+          "originalRelativeError": 4.811854837577786E-6,
+          "originalQueryError": 1.5060398192434654E-6,
+          "etaUpper": 0.19691390251319998,
+          "relativeBound": 6.363255017654637E-6,
+          "queryBound": 1.7150716220146222E-6,
+          "refusal": null,
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.067921167
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 0.1,
+          "preparedRelativeError": 0.002974785419249094,
+          "originalRelativeError": 0.0029636065084369017,
+          "originalQueryError": 1.4999553762506945E-4,
+          "etaUpper": null,
+          "relativeBound": null,
+          "queryBound": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 1.979533911542831 must be below one",
+          "retainedScalars": 45864,
+          "normalProductTerms": 421200,
+          "seconds": 0.053350709
+        }
+      ],
+      "boxes": [
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 1.0E-6,
+          "etaUpper": 0.0026831923997650536,
+          "refusal": null,
+          "seconds": 0.057085584
+        },
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 1.0E-5,
+          "etaUpper": 0.020730103140466034,
+          "refusal": null,
+          "seconds": 0.064026458
+        },
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 1.0E-4,
+          "etaUpper": 0.20323422057471688,
+          "refusal": null,
+          "seconds": 0.046670375
+        },
+        {
+          "horizon": 96,
+          "node": 0,
+          "radius": 0.001,
+          "etaUpper": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 2.0337478024142164 must be below one",
+          "seconds": 0.044025708
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 1.0E-6,
+          "etaUpper": 0.0013843907808410193,
+          "refusal": null,
+          "seconds": 0.047048125
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 1.0E-5,
+          "etaUpper": 0.013760918267244154,
+          "refusal": null,
+          "seconds": 0.045442208
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 1.0E-4,
+          "etaUpper": 0.13755168896137285,
+          "refusal": null,
+          "seconds": 0.049488334
+        },
+        {
+          "horizon": 96,
+          "node": 7,
+          "radius": 0.001,
+          "etaUpper": null,
+          "refusal": "gale.linalg.LinAlgError$InvalidArgument: reference inverse defect 1.3754713496523523 must be below one",
+          "seconds": 0.0650045
+        }
+      ]
+    }
+  ],
+  "seconds": 4.118451125,
+  "limitations": [
+    "fixed shapes, no decoder",
+    "exploratory cohort, no scientific confirmation",
+    "all-eight reference comparison is an offline oracle, not runtime routing",
+    "dense certificate work exceeds the fast-path budget"
+  ]
+}

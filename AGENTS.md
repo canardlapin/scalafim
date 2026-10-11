@@ -151,9 +151,12 @@ test, and per-module commands live in `README.md` ("Common Commands") and the
   Never `pkill -f` and never touch the `/exec-daemon` Node process.
 - Headless VM: the JavaFX modules/examples (`imageViewJavafxJVM`,
   `surfaceViewJavafxJVM`, and the `examples/surface-view` JavaFX app) need
-  OpenJFX natives + a display and are not runnable here; they are excluded from
-  `scalafimCompileAll`/`scalafimTestAll` anyway. The core library and its Java2D/Canvas/Three.js
-  view backends need no display.
+  OpenJFX natives + a display to run. Note that `scalafimCompileAll` and
+  `scalafimTestAll` do include `imageViewJavafxJVM` and `surfaceViewJavafxJVM`
+  (the aliases in `build.sbt`); compiling them needs only the OpenJFX jars. On a
+  headless VM, leave their `test` tasks out of your bounded batches if they need
+  a display. The core library and its Java2D/Canvas/Three.js view backends need
+  no display.
 - Quick end-to-end smoke of core functionality (atlas → MVPA) without a GUI:
   `sbt "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"`
   (also `atlasExamplesJVM/runMain scalafim.examples.atlas.{queryToyAtlas,atlasToMvpaRegions}`).

@@ -1,0 +1,184 @@
+{
+  "declared_at": "2026-10-10T01:07:25.441806+00:00",
+  "protocol_sha256": "0c0480b2fa1c4a17f2cd7a57c648955bc946890dd86a1b01245e0f7bc1a34daa",
+  "protocol": {
+    "QA_domain": 0,
+    "acceptance": {
+      "AR_RMSE_max": 0.1,
+      "AR_mean_bias_interval": [
+        -0.04,
+        0.04
+      ],
+      "all_corrected_statuses_applied": true,
+      "alpha": 0.05,
+      "bootstrap_domain": 4,
+      "bootstrap_resamples": 1999,
+      "confidence_interval": 0.95,
+      "coverage_interval": [
+        0.92,
+        0.98
+      ],
+      "equivalence_interval_confidence": 0.9,
+      "no_drop": true,
+      "null_rejection_interval": [
+        0.02,
+        0.08
+      ],
+      "standardized_effect_bias_interval": [
+        -0.1,
+        0.1
+      ],
+      "variance_ratio_interval": [
+        0.8,
+        1.2
+      ],
+      "whiteness_excess_over_known_phi_max": 0.025,
+      "whiteness_mean_abs_max": 0.1
+    },
+    "burn_in": 256,
+    "cells": [
+      {
+        "id": "ar2-high-complete-voxelwise-adaptive-continuous",
+        "phi": [
+          0.45,
+          -0.1
+        ],
+        "nuisance": 12,
+        "censored": false,
+        "pooling": "voxelwise",
+        "run_lengths": [
+          96,
+          144
+        ],
+        "initialization": "stationary",
+        "correction": "adaptive-exact",
+        "censor_treatment": "estimate-only"
+      },
+      {
+        "id": "ar2-high-censored-voxelwise-adaptive-continuous",
+        "phi": [
+          0.45,
+          -0.1
+        ],
+        "nuisance": 12,
+        "censored": true,
+        "pooling": "voxelwise",
+        "run_lengths": [
+          96,
+          144
+        ],
+        "initialization": "stationary",
+        "correction": "adaptive-exact",
+        "censor_treatment": "estimate-only"
+      },
+      {
+        "id": "ar2-high-censored-voxelwise-long-adaptive-continuous",
+        "phi": [
+          0.45,
+          -0.1
+        ],
+        "nuisance": 12,
+        "censored": true,
+        "pooling": "voxelwise",
+        "run_lengths": [
+          192,
+          288
+        ],
+        "initialization": "stationary",
+        "correction": "adaptive-exact",
+        "censor_treatment": "estimate-only"
+      },
+      {
+        "id": "ar1-high-censored-voxelwise-adaptive-continuous",
+        "phi": [
+          0.5
+        ],
+        "nuisance": 12,
+        "censored": true,
+        "pooling": "voxelwise",
+        "run_lengths": [
+          96,
+          144
+        ],
+        "initialization": "stationary",
+        "correction": "adaptive-exact",
+        "censor_treatment": "estimate-only"
+      }
+    ],
+    "censor_rule": "Within each run exclude rows 23,24,60 and every 37 rows beginning at 97 from AR estimation; retain all response rows and whiten continuously within each run.",
+    "decision": "Only the declared long AR2 candidate can gain admission: its corrected and known-phi engines must satisfy every original exact binomial/TOST, recovery, whiteness, bootstrap variance-ratio and mean-bias margin in fresh confirmation. Other cases are retained adverse-domain diagnostics and confer no admission. Pilot/screen are engineering evidence only. No bounds, cases, seeds or budgets may be revised after outcomes; all failures remain in receipts.",
+    "declaration_label": "scalafim-gls-continuity-20261009",
+    "design": "Two alternating 4-second task epochs at onsets 6+32k, sampled at TR=1 and convolved with public SPMG1; run intercepts and six run-local DCT nuisance terms per run in high-nuisance cells.",
+    "engines": [
+      "known-phi",
+      "corrected"
+    ],
+    "metrics": [
+      "mean AR coefficient bias",
+      "AR RMSE",
+      "mean absolute within-segment residual ACF at lags 1..4",
+      "null t and joint two-row F rejection at alpha .05",
+      "95% interval coverage for task_a in voxel 1",
+      "mean reported variance / empirical task_a estimator variance",
+      "standardized effect bias",
+      "d_eff and d_inv (descriptive)",
+      "cor(beta_hat^2, variance_hat) (descriptive)"
+    ],
+    "mote": "bd-01M4EMEBCBMBHA7BF4BQY6AFPB",
+    "noise": "Independent Gaussian innovations with variance 1; continuous stationary AR noise within each run, independent run restarts after 256 burn-in draws. Censoring only affects estimator/whitener layout, not the data generator.",
+    "profiles": {
+      "confirmation": {
+        "domain": 3,
+        "replicates": 2048,
+        "scientific_admission": true
+      },
+      "pilot": {
+        "domain": 1,
+        "replicates": 16,
+        "scientific_admission": false
+      },
+      "screen": {
+        "domain": 2,
+        "replicates": 64,
+        "scientific_admission": false
+      }
+    },
+    "response_columns": 4,
+    "run_lengths": [
+      96,
+      144
+    ],
+    "schema_version": "scalafim-gls-continuity-protocol/v1",
+    "scope_limits": [
+      "Gaussian stationary pure AR truth; homogeneous across four independent response columns",
+      "All responses retained, including rows excluded from lag estimation; this is estimation-only censoring, not physical observation removal",
+      "Non-contiguous selected source timepoints are refused under estimation-only continuity",
+      "Historical negative qualification receipts remain binding for their old recipes",
+      "No inference admission from pilot or screen",
+      "Only the declared long AR2 cell is eligible; no short-run or heterogeneous-voxel qualification."
+    ],
+    "seed": 1427738621,
+    "seed_derivation": "(root + domain*10000019 + (cell+1)*1000003 + replicate*7919) mod 2147483646 + 1; uniform generator Park-Miller 48271/2147483647, Gaussian Box-Muller",
+    "simulator_acceptance": {
+      "AR_covariance_datasets": 128,
+      "AR_covariance_error_over_gamma0_max": 0.06,
+      "cross_run_covariance_over_gamma0_abs_max": 0.25,
+      "gaussian_draws": 32768,
+      "gaussian_mean_abs_max": 0.02,
+      "gaussian_variance_abs_error_max": 0.03,
+      "noiseless_coefficient_error_max": 1e-10
+    },
+    "simulator_controls": [
+      "innovation mean/variance and AR covariance against analytic AR(1)/AR(2) theory",
+      "noiseless coefficient recovery through public fit",
+      "independent run restart and censor-mask layout",
+      "known-phi inference controls in every confirmation cell"
+    ],
+    "sources": [
+      "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Binomial.html"
+    ],
+    "truth": "Voxel 0 task coefficients are both 0; voxel 1 task_a is 0.75, task_b is -0.25; nuisance and intercept coefficients fixed; independent replicate datasets are the sampling units.",
+    "scientific_admission": "Only ar2-high-censored-voxelwise-long-adaptive-continuous is eligible for admission after all original margins pass for corrected and known-phi controls in fresh confirmation. Short-run cells remain diagnostics with retained historical failures. No SE/df adjustment or new estimator is declared.",
+    "pairing": "Domains51/52/53 for pilot/screen/confirmation; duration groups0/1 and root1427738621 are disjoint from historical/stationary/tail campaigns."
+  }
+}

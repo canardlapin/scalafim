@@ -37,12 +37,36 @@ private[surface] object GiftiSurfaceCodec:
     hemisphere: Hemisphere,
     kind: SurfaceKind
   ): Either[GiftiError, SurfaceGeometry] =
+    val systems = coordinates.array.transforms.map(GiftiCoordinateSystem.from)
+    placed(coordinates, faces, hemisphere, kind, systems, GiftiTransformSelection.Unambiguous).map(_._1)
+
+  /** Geometry with the pointset's full declaration and the placement chosen by `selection`. */
+  def declaredGeometry(
+    document: GiftiDocument,
+    coordinates: GiftiMatrix[Double],
+    faces: GiftiMatrix[Int],
+    hemisphere: Hemisphere,
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection
+  ): Either[GiftiError, DeclaredGiftiSurface] =
+    val declaration = GiftiCoordinateDeclaration.fromPointSet(document, coordinates.array)
+    placed(coordinates, faces, hemisphere, kind, declaration.coordinateSystems, selection)
+      .map((surface, placement) => DeclaredGiftiSurface(surface, declaration, placement))
+
+  private def placed(
+    coordinates: GiftiMatrix[Double],
+    faces: GiftiMatrix[Int],
+    hemisphere: Hemisphere,
+    kind: SurfaceKind,
+    systems: Vector[GiftiCoordinateSystem],
+    selection: GiftiTransformSelection
+  ): Either[GiftiError, (SurfaceGeometry, GiftiPlacement)] =
     for
       _ <- requireColumns(coordinates, 3, "GIFTI POINTSET array must have Dim1=3")
       _ <- requireColumns(faces, 3, "GIFTI TRIANGLE array must have Dim1=3")
-      transform <- transformMatrix(coordinates.array)
-      surface <- buildGeometry(coordinates, faces, hemisphere, kind, transform)
-    yield surface
+      resolved <- GiftiPlacementResolver.resolve(systems, selection)
+      surface <- buildGeometry(coordinates, faces, hemisphere, kind, resolved._1)
+    yield (surface, resolved._2)
 
   def labeledSurface(
     document: GiftiDocument,
@@ -76,15 +100,6 @@ private[surface] object GiftiSurfaceCodec:
   ): Either[GiftiError, Unit] =
     if payload.columns == columns then Right(())
     else Left(GiftiError.InvalidDataArray(message))
-
-  private def transformMatrix(pointSet: GiftiDataArray): Either[GiftiError, Affine[D3]] =
-    pointSet.transforms.headOption match
-      case None => Right(Affine.identity[D3])
-      case Some(transform) =>
-        Affine
-          .fromRowMajor[D3](transform.matrixData)
-          .left
-          .map(GiftiError.Geometry.apply)
 
   private def buildGeometry(
     coordinates: GiftiMatrix[Double],

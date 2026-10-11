@@ -140,3 +140,35 @@ class TrialBandedWorkReceiptSuite extends munit.FunSuite:
         trial += 1
       row += 1
     out
+
+  test("first-order calls match full jets, spend fewer solves and charge a refused reference"):
+    val fx = fixture()
+    val prep = TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), lambda = 2.5)
+      .fold(e => fail(e.message), identity)
+    val objective = prep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(e => fail(e.message), identity)
+    val response = Array.tabulate(fx.response.length)(i => math.sin(i * 0.37) + 0.3 * math.cos(i * 0.11))
+    objective.pointAt(prep.encodeWhitened(response).fold(e => fail(e.message), identity))
+    val full = new ProfileJetBuffer(2, 3)
+    val first = new ProfileGradientBuffer(2, 3)
+    for point <- Vector(Vector(4.0, 0.0), Vector(6.0, 0.4), Vector(7.0, 0.6)) do
+      val before = objective.work.snapshot.attempted
+      assert(objective.jetAt(point.toArray, full))
+      val middle = objective.work.snapshot.attempted
+      assert(objective.gradientAt(point.toArray, first))
+      val after = objective.work.snapshot.attempted
+      assertEqualsDouble(first.energy, full.energy, 1e-10 * math.max(1.0, math.abs(full.energy)))
+      first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
+      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 1e-10 * math.max(1.0, math.abs(b))))
+      assertEquals(middle.solveAttempts - before.solveAttempts, 13L)
+      assertEquals(after.solveAttempts - middle.solveAttempts, 3L)
+      assertEquals(after.jetAttempts, middle.jetAttempts)
+      assertEquals(after.firstOrderAttempts - middle.firstOrderAttempts, 1L)
+      assertEquals(after.firstOrderFailures, 0L)
+    val before = objective.work.snapshot.attempted
+    assert(!objective.gradientAt(fx.underflowProbe.coordinates.toArray, first))
+    val after = objective.work.snapshot.attempted
+    assertEquals(after.firstOrderAttempts - before.firstOrderAttempts, 1L)
+    assertEquals(after.firstOrderFailures - before.firstOrderFailures, 1L)
+    assertEquals(after.referenceFailures - before.referenceFailures, 1L)
+    assert(after.solveAttempts > before.solveAttempts)
+    assertEquals(after.jetAttempts, before.jetAttempts)

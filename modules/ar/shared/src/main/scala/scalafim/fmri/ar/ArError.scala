@@ -35,6 +35,9 @@ enum ArError:
   case InvalidStationarityBound(bound: Double)
   case InvalidExactFirstAr1(phi: Double)
   case InvalidInitialScale(scale: Double)
+  case StationaryWhiteningFailed(detail: String)
+  case StationaryWhiteningRequiresFactor
+  case CorrectionSolverPreparationFailed(detail: String)
   case NonStationaryArCoefficients(maxRootMagnitude: Double)
   case NonInvertibleMaCoefficients(maxRootMagnitude: Double)
   case StationarityCheckFailed(detail: String)
@@ -113,6 +116,12 @@ enum ArError:
         s"exact AR(1) first-row scaling requires abs(phi) < 1, got $phi"
       case InvalidInitialScale(scale) =>
         s"initial-condition scale must be finite and non-negative, got $scale"
+      case StationaryWhiteningFailed(detail) =>
+        s"stationary whitening failed: $detail"
+      case StationaryWhiteningRequiresFactor =>
+        "stationary whitening requires its covariance factor, not a scalar first-sample scale"
+      case CorrectionSolverPreparationFailed(detail) =>
+        s"could not prepare residual-bias correction solver: $detail"
       case NonStationaryArCoefficients(maxRootMagnitude) =>
         s"AR coefficients are not stationary; recurrence-root magnitude is $maxRootMagnitude"
       case NonInvertibleMaCoefficients(maxRootMagnitude) =>

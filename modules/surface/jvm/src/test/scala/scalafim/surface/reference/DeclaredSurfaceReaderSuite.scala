@@ -61,6 +61,12 @@ class DeclaredSurfaceReaderSuite extends munit.FunSuite, RealAssetGate:
       assertEquals(declared.geometry.vertexCount, GiftiSurfaceReader.read(path, Hemisphere.Left, SurfaceKind.Midthickness).vertexCount)
       assertEquals(declared.coordinates.geometricType, Some(GiftiGeometricType.Anatomical))
       assertEquals(declared.coordinates.coordinateSystems.size, 2)
+      // Identity-only Workbench pair: nothing is applied and no frame is claimed.
+      assertEquals(declared.placement, GiftiPlacement.NativeCoordinates)
+      val talairach = GiftiSurfaceReader.readDeclaredEither(path, Hemisphere.Left, SurfaceKind.Midthickness,
+        GiftiTransformSelection.Target(GiftiTargetSpace.Talairach)).fold(e => fail(e.message), d => d)
+      assertEquals(talairach.placement,
+        GiftiPlacement.Transformed(1, declared.coordinates.coordinateSystems(1), GiftiTargetSpace.Talairach))
     }
 
   test("matching digests cannot relabel display or foreign structural coordinates as cortical anatomy"):
@@ -89,6 +95,8 @@ class DeclaredSurfaceReaderSuite extends munit.FunSuite, RealAssetGate:
     assertEquals(declared.coordinates.geometricType, Some(GiftiGeometricType.Anatomical))
     assertEquals(declared.coordinates.declaredSpaces,
       Vector((Some(GiftiDeclaredSpace.Talairach), Some(GiftiDeclaredSpace.Talairach))))
+    assertEquals(declared.placement,
+      GiftiPlacement.Transformed(0, declared.coordinates.coordinateSystems(0), GiftiTargetSpace.Talairach))
 
     val declaration = FrameDeclaration.make(nlin6,
       FrameBasis.literature("10.1093/cercor/bhr291", "DECLARED MNI152NLin6Asym synthetic/candidate frame; exact Conte69 volumetric registration, release and cohort remain unqualified")

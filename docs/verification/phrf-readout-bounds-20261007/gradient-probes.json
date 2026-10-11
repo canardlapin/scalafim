@@ -1,0 +1,88 @@
+{
+  "JVM": {
+    "callsPerBatch": 64,
+    "warmupBatchesPerMode": 1,
+    "repetitions": [
+      {
+        "fullSeconds": 0.800500917,
+        "envelopeSeconds": 0.120738125,
+        "fullChecksum": 12207.257383036891,
+        "envelopeChecksum": 12207.257383036891
+      },
+      {
+        "fullSeconds": 0.799227,
+        "envelopeSeconds": 0.114038709,
+        "fullChecksum": 12207.257383036891,
+        "envelopeChecksum": 12207.257383036891
+      },
+      {
+        "fullSeconds": 0.814579667,
+        "envelopeSeconds": 0.117349333,
+        "fullChecksum": 12207.257383036891,
+        "envelopeChecksum": 12207.257383036891
+      },
+      {
+        "fullSeconds": 0.812518792,
+        "envelopeSeconds": 0.115298417,
+        "fullChecksum": 12207.257383036891,
+        "envelopeChecksum": 12207.257383036891
+      },
+      {
+        "fullSeconds": 0.803428875,
+        "envelopeSeconds": 0.113545208,
+        "fullChecksum": 12207.257383036891,
+        "envelopeChecksum": 12207.257383036891
+      }
+    ],
+    "searchReferenceBytes": 339776,
+    "previousFirstOrderReferenceBytes": 766760,
+    "fullReferenceBytes": 1620728,
+    "qualification": "not-admitted",
+    "medianFullSeconds": 0.803428875,
+    "medianEnvelopeSeconds": 0.115298417,
+    "ratioOfMedians": 6.968255904155216
+  },
+  "Scala.js": {
+    "callsPerBatch": 64,
+    "warmupBatchesPerMode": 1,
+    "repetitions": [
+      {
+        "fullSeconds": 3.506587208,
+        "envelopeSeconds": 0.660741459,
+        "fullChecksum": 12207.257383036935,
+        "envelopeChecksum": 12207.257383036935
+      },
+      {
+        "fullSeconds": 3.455400875,
+        "envelopeSeconds": 0.610615791,
+        "fullChecksum": 12207.257383036935,
+        "envelopeChecksum": 12207.257383036935
+      },
+      {
+        "fullSeconds": 3.396816209,
+        "envelopeSeconds": 0.629505291,
+        "fullChecksum": 12207.257383036935,
+        "envelopeChecksum": 12207.257383036935
+      },
+      {
+        "fullSeconds": 3.364953625,
+        "envelopeSeconds": 0.624503792,
+        "fullChecksum": 12207.257383036935,
+        "envelopeChecksum": 12207.257383036935
+      },
+      {
+        "fullSeconds": 3.372207625,
+        "envelopeSeconds": 0.611737625,
+        "fullChecksum": 12207.257383036935,
+        "envelopeChecksum": 12207.257383036935
+      }
+    ],
+    "searchReferenceBytes": 339776,
+    "previousFirstOrderReferenceBytes": 766760,
+    "fullReferenceBytes": 1620728,
+    "qualification": "not-admitted",
+    "medianFullSeconds": 3.396816209,
+    "medianEnvelopeSeconds": 0.624503792,
+    "ratioOfMedians": 5.43922431298864
+  }
+}

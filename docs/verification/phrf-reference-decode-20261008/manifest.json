@@ -1,0 +1,31 @@
+{
+  "sourceBase": "e5aeae2c3fcf45a45c24ca4be354378ebde159fd",
+  "sha256": {
+    ".mote/ops/20261008T112005.358182Z-p23493-c0000-rf67d-hd41906.json": "00b9948ff9d79729467c3df8822e7519912656e17e607e3b3f91404ca6b88e08",
+    ".mote/ops/20261008T112044.676627Z-p25763-c0000-rb602-h63384a.json": "5295eaf62b1d5d6a8d193c5c10c06d72df3a74eaa2c9aa393f8e7fd64d538a18",
+    ".mote/ops/20261008T112046.279708Z-p25779-c0000-rc77a-h95d3d2.json": "76ebf7a30f458c43d32ad2cb6215147f44c4206c10dda6da1901d09732c8226f",
+    "docs/verification/phrf-reference-bank-20261008/confirmation.json": "882cfed1409c93883c31c372021701ce9aaf0774c6a72f3dd86a58e0ecb357ca",
+    "docs/verification/phrf-reference-bank-20261008/protocol.json": "3d68e7e4fe106f877608c09468c3cfd62b97b35ec578347bdf5ab92adc88eda1",
+    "docs/verification/phrf-reference-bank-20261008/selected.json": "8a60ff8c946f9db8609af8f7ffe6202a9456975640baecd095cd0251faaf5156",
+    "docs/verification/phrf-reference-bank-20261008/stress.json": "eb1cb4601a8b4e64adf9daceb6ac2d1e0840f7f7a5faade20e44544e9e37498b",
+    "docs/verification/phrf-reference-decode-20261008/README.md": "886f7bbf09f83701670078c4a15f0eb2ff9faece18977918a76eb95a88b90dff",
+    "docs/verification/phrf-reference-decode-20261008/diagnostic.json": "6316f55ff3cc183121de3a32404389cfc712051889822ae95b1980a4c1647cf5",
+    "docs/verification/phrf-reference-decode-20261008/final-followup.log.gz": "7f14efe5c09b5a36587f42b9bd67abf9b14fd0dc875d15c40cde48878baab344",
+    "docs/verification/phrf-reference-decode-20261008/final-gates.log.gz": "a7d2843e9dbc47ad040632d183707fa6e1952810ecfcbdf83994d60eeb0cd578",
+    "docs/verification/phrf-reference-decode-20261008/protocol.json": "c8e01ddbcb4b934beae315716589adf3979bb9a7d1c1ba0941deb41c16815a33",
+    "docs/verification/phrf-reference-decode-20261008/protocol.sha256": "073091b064a4cda272a76588da8c9a5c0a02bfdfc1373790a9339ab9130a517d",
+    "docs/verification/phrf-reference-decode-20261008/validation.json": "5ac3b5cf2381f9c1bfa4b0cfc5f46797fcc6c28381367ae4394b6566c667a37d",
+    "docs/verification/phrf-reference-decode-20261008/verify.py": "54cbf434811e8541f8630c759902721d1a6e645b767a9f8af86c19b5a30fca25",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/TrialReferenceDecodeMain.scala": "da18f41456d47ba3aca32b63cb794cc47fd0ab79af3bcf0691551b8b73879b7c",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/DecodedTrialCheckpoint.scala": "c0ae31c9e53ebed3d5c01bd198ac86a41d2490b9ad19367812b4f4221fa48cf3",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialReferencePlacementSuite.scala": "b656f76ef8b5d9c3227a1baa215c1eb402d9ad33ed91fb25697f0ee196392e87",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileFitIdentity.scala": "92d280a0cd005c7016c5eff97426ca937f1db20140439eb27c17903e5a6a4dfe",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "7c9323bd4360f97bec118a4db0fe81ea062821ef0c68421892c18c2a9b2b6e4c",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputs.scala": "c58fc7dcc2bf8ef04648854c3a896dfb5b9a1cfe28f5aaf3e34764e6bcc4e25a",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "d871ff79a716752b07e76cb5be222a3fa37b987f79b1bc805fee977c296d7065",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialReferencePoints.scala": "e5bd96d751376d6991434b3b050b537cd0325691d378d6c040d82fa89f65f5f3",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputsSuite.scala": "71d2025b59da99165f8f1b7dfaf6ff5ed7b88aff8a7277ccc36f487afe53de14",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/RoutedShapeDecoderSuite.scala": "25d8513c9ee71c9b17d4830a5fca8e69fab706d1a7437f6a04941d69bd683bda",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialReferenceBankSuite.scala": "9cd3b573702dfa66e2bdffe6ec6d15c8e2646a29bc66dd83b24c8af2a6a86c2e"
+  }
+}

@@ -227,6 +227,8 @@ def file_locks(repository: Path, paths: list[str]) -> dict[str, str]:
 
 
 def validate_manifest(manifest: dict[str, Any], repository: Path, phase: str, operation: str = "execute") -> None:
+    if phase not in PHASES or operation not in ("plan", "execute"):
+        raise ProtocolError("phase or operation is not recognized")
     if manifest.get("namespace") != NAMESPACE or manifest.get("criteria") != CRITERIA:
         raise ProtocolError("namespace or frozen criteria changed")
     if manifest.get("confirmation_counts") != CONFIRMATION_COUNTS or manifest.get("draws") != DRAWS:
@@ -260,6 +262,12 @@ def validate_manifest(manifest: dict[str, Any], repository: Path, phase: str, op
             raise ProtocolError("the declared campaign inventory is not complete")
         if any(c.get("definition_status") != "frozen" for c in cells):
             raise ProtocolError("unresolved truth/HRF/nuisance parameters cannot enter confirmation")
+        # Bare "passed" strings and a nonempty budget do not establish scoped,
+        # source-bound prerequisites, runtime or measured resource admission.
+        from calibration_readiness import admission_errors
+        errors = admission_errors(manifest, repository)
+        if errors:
+            raise ProtocolError("confirmation admission incomplete: " + "; ".join(errors))
     if operation == "execute" and phase in ("simulator", "pilot") and not manifest.get("resource_approval"):
         raise ProtocolError("simulator/pilot execution requires an explicit resource approval")
     if operation == "execute" and phase in ("simulator", "pilot"):

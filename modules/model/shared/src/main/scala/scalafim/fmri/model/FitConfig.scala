@@ -145,6 +145,19 @@ object RobustOptions:
   ): Either[ModelError, RobustOptions] =
     catchModelError(RobustOptions(psi, maxIterations, scaleScope, reestimateAutocorrelation))
 
+/** Both policies retain response rows. EstimateOnly keeps their continuous-run
+  * covariance while excluding the specified rows from AR lag estimation.
+  */
+enum ArCensorTreatment:
+  case RestartWhitening, EstimateOnly
+
+enum ArInitialization:
+  case Identity, ExactAr1, Stationary
+  def exactFirst: Boolean = this != Identity
+
+object ArInitialization:
+  def fromExactFirst(value: Boolean): ArInitialization = if value then ArInitialization.ExactAr1 else ArInitialization.Identity
+
 final case class ArOptions(
     structure: ArStructure = ArStructure.Iid,
     iterations: Int = 1,
@@ -154,9 +167,12 @@ final case class ArOptions(
     censoredTimepoints: Vector[Int] = Vector.empty,
     rho: Option[Double] = None,
     phi: Option[Vector[Double]] = None,
-    biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw
+    biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
+    initialization: Option[ArInitialization] = None,
+    censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
 ):
   require(iterations >= 0, "AR iterations must be non-negative")
+  require(initialization.forall(_.exactFirst == exactFirst), "AR initialization must agree with exactFirst")
   require(censoredTimepoints.forall(_ >= 0), "censored timepoints must be non-negative")
   require(rho.isEmpty || phi.isEmpty, "use either AR rho or AR phi, not both")
   rho.foreach(r => require(r.isFinite && math.abs(r) < 1.0, "AR rho must be finite and satisfy abs(rho) < 1"))
@@ -181,9 +197,11 @@ object ArOptions:
       censoredTimepoints: Vector[Int] = Vector.empty,
       rho: Option[Double] = None,
       phi: Option[Vector[Double]] = None,
-      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw
+      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
+      initialization: Option[ArInitialization] = None,
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
   ): Either[ModelError, ArOptions] =
-    catchModelError(ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, biasCorrection))
+    catchModelError(ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, biasCorrection, initialization, censorTreatment))
 
 final case class LssConfig(
     trialTerm: Option[String] = None,
@@ -317,12 +335,14 @@ final class AutocorrelationConfig private (
     val iterations: Int,
     val global: Boolean,
     val voxelwise: Boolean,
-    val exactFirst: Boolean,
+    val initialization: ArInitialization,
     val censoredTimepoints: CensoredTimepoints,
     val coefficients: ArCoefficientSpec,
-    val biasCorrection: ArBiasCorrection
+    val biasCorrection: ArBiasCorrection,
+    val censorTreatment: ArCensorTreatment
 ):
   require(iterations >= 0, "AR iterations must be non-negative")
+  def exactFirst: Boolean = initialization.exactFirst
 
   override def equals(other: Any): Boolean =
     other match
@@ -331,15 +351,15 @@ final class AutocorrelationConfig private (
           iterations == that.iterations &&
           global == that.global &&
           voxelwise == that.voxelwise &&
-          exactFirst == that.exactFirst &&
+          initialization == that.initialization &&
           censoredTimepoints == that.censoredTimepoints &&
           coefficients == that.coefficients &&
-          biasCorrection == that.biasCorrection
+          biasCorrection == that.biasCorrection && censorTreatment == that.censorTreatment
       case _ => false
 
   override def hashCode(): Int =
-    ((((((31 * order.hashCode() + iterations.hashCode()) * 31 + global.hashCode()) * 31 + voxelwise.hashCode()) * 31 + exactFirst.hashCode()) * 31 +
-      censoredTimepoints.hashCode()) * 31 + coefficients.hashCode()) * 31 + biasCorrection.hashCode()
+    (((((((31 * order.hashCode() + iterations.hashCode()) * 31 + global.hashCode()) * 31 + voxelwise.hashCode()) * 31 + initialization.ordinal.hashCode()) * 31 +
+      censoredTimepoints.hashCode()) * 31 + coefficients.hashCode()) * 31 + biasCorrection.hashCode()) * 31 + censorTreatment.ordinal.hashCode()
 
   def toLegacy: ArOptions =
     val (rho, phi) = coefficients.toLegacy
@@ -352,7 +372,9 @@ final class AutocorrelationConfig private (
       censoredTimepoints = censoredTimepoints.values,
       rho = rho,
       phi = phi,
-      biasCorrection = biasCorrection
+      biasCorrection = biasCorrection,
+      initialization = if initialization == ArInitialization.Stationary then Some(initialization) else None,
+      censorTreatment = censorTreatment
     )
 
   def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
@@ -370,14 +392,30 @@ object AutocorrelationConfig:
       exactFirst: Boolean = true,
       censoredTimepoints: Vector[Int] = Vector.empty,
       coefficients: ArCoefficientSpec = ArCoefficientSpec.Estimate,
-      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw
+      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
+      initialization: Option[ArInitialization] = None,
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
   ): Either[ModelError, AutocorrelationConfig] =
     for
       arOrder <- ArOrder(order)
       censored <- CensoredTimepoints(censoredTimepoints)
       checkedCoefficients <- validateCoefficients(arOrder, iterations, coefficients)
-      config <- make(arOrder, iterations, global, voxelwise, exactFirst, censored, checkedCoefficients, biasCorrection)
+      _ <- if initialization.exists(_.exactFirst != exactFirst) then Left(ModelError.InvalidParameter("AR initialization", "must agree with exactFirst")) else Right(())
+      config <- make(arOrder, iterations, global, voxelwise, initialization.getOrElse(ArInitialization.fromExactFirst(exactFirst)), censored, checkedCoefficients, biasCorrection, censorTreatment)
     yield config
+
+  def withInitialization(
+      initialization: ArInitialization,
+      order: Int = 1,
+      iterations: Int = 1,
+      global: Boolean = false,
+      voxelwise: Boolean = false,
+      censoredTimepoints: Vector[Int] = Vector.empty,
+      coefficients: ArCoefficientSpec = ArCoefficientSpec.Estimate,
+      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
+  ): Either[ModelError, AutocorrelationConfig] =
+    apply(order, iterations, global, voxelwise, initialization.exactFirst, censoredTimepoints, coefficients, biasCorrection, Some(initialization), censorTreatment)
 
   def fromLegacy(options: ArOptions): Either[ModelError, AutocorrelationConfig] =
     options.structure match
@@ -399,7 +437,9 @@ object AutocorrelationConfig:
           exactFirst = options.exactFirst,
           censoredTimepoints = options.censoredTimepoints,
           coefficients = coefficients,
-          biasCorrection = options.biasCorrection
+          biasCorrection = options.biasCorrection,
+          initialization = options.initialization,
+          censorTreatment = options.censorTreatment
         )
 
   def unsafe(
@@ -410,9 +450,11 @@ object AutocorrelationConfig:
       exactFirst: Boolean = true,
       censoredTimepoints: Vector[Int] = Vector.empty,
       coefficients: ArCoefficientSpec = ArCoefficientSpec.Estimate,
-      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw
+      biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
+      initialization: Option[ArInitialization] = None,
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
   ): AutocorrelationConfig =
-    apply(order, iterations, global, voxelwise, exactFirst, censoredTimepoints, coefficients, biasCorrection)
+    apply(order, iterations, global, voxelwise, exactFirst, censoredTimepoints, coefficients, biasCorrection, initialization, censorTreatment)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def make(
@@ -420,10 +462,11 @@ object AutocorrelationConfig:
       iterations: Int,
       global: Boolean,
       voxelwise: Boolean,
-      exactFirst: Boolean,
+      initialization: ArInitialization,
       censoredTimepoints: CensoredTimepoints,
       coefficients: ArCoefficientSpec,
-      biasCorrection: ArBiasCorrection
+      biasCorrection: ArBiasCorrection,
+      censorTreatment: ArCensorTreatment
   ): Either[ModelError, AutocorrelationConfig] =
     if iterations < 0 then Left(ModelError.InvalidParameter("AR iterations", "must be non-negative"))
     else if global && voxelwise then Left(ModelError.InvalidParameter("AR pooling", "global and voxelwise estimation cannot both be enabled"))
@@ -433,7 +476,7 @@ object AutocorrelationConfig:
       Left(ModelError.InvalidParameter("AR iterations", "fixed coefficients cannot be re-estimated"))
     else if biasCorrection != ArBiasCorrection.Raw && (iterations != 1 || coefficients != ArCoefficientSpec.Estimate) then
       Left(ModelError.InvalidParameter("AR residual-bias correction", "requires one OLS estimation pass and estimated coefficients"))
-    else Right(new AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censoredTimepoints, coefficients, biasCorrection))
+    else Right(new AutocorrelationConfig(order, iterations, global, voxelwise, initialization, censoredTimepoints, coefficients, biasCorrection, censorTreatment))
 
   private def validateCoefficients(
       order: ArOrder,
@@ -526,6 +569,9 @@ object RobustAutocorrelation:
   private[model] def validateReestimate(autocorrelation: AutocorrelationConfig): Either[ModelError, Unit] =
     if autocorrelation.biasCorrection != ArBiasCorrection.Raw then
       Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "OLS residual-bias correction is not valid for robust residuals"))
+    else if autocorrelation.initialization == ArInitialization.Stationary ||
+        autocorrelation.censorTreatment == ArCensorTreatment.EstimateOnly then
+      Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "robust AR re-estimation does not support stationary initialization or estimation-only censoring"))
     else if autocorrelation.voxelwise then
       Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "robust AR re-estimation currently requires shared or run-pooled AR"))
     else

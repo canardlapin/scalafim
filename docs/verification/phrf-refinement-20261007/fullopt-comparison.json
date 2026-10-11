@@ -1,0 +1,18 @@
+{
+  "format": "phrf-fullopt-diagnostic/1",
+  "qualification": "not-admitted",
+  "selectedNoiseRatio": 0.1,
+  "voxels": 16,
+  "testsPassed": 1,
+  "fullOptConfirmed": true,
+  "seconds": {
+    "jvm": 89.957,
+    "fastOpt": 388.818,
+    "fullOpt": 156.107
+  },
+  "fastOptOverFullOpt": 2.4907147020953575,
+  "fullOptOverJvm": 1.7353513345264961,
+  "originalSuiteSha256": "b8bf13c939efb2b50fa54cb69a04b6e1e683a1439986bf4f69d913d874883988",
+  "temporarySuiteSha256": "4582871ab7af38acefc385645a390907385e5b07fd26985660c8ce6f4bc73c06",
+  "limitations": "Single diagnostic batch; no controlled repetitions or oracle-count normalization. FullOpt has fresh fixture preparation; fastopt reuses prior noiseless preparation. Profiles and kernel replay are fastopt only."
+}

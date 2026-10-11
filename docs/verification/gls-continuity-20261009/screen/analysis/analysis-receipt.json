@@ -1,0 +1,22 @@
+{
+  "r_version": "4.5.1",
+  "image": "rocker/r-ver:4.5.1",
+  "sha256": {
+    "tools/scenarios/corrected-gls/analyze.R": "753c0a1ea7e718f1e1f293d64c80a9e9b6895ecaf2bcc6e256b2081e1ac95711",
+    "tools/scenarios/gls-continuity/analyze.R": "ef8c79efef769c14da7398b6bde8c626cb1f9942fb5e18cdcbf5be79e0e9f288",
+    "tools/scenarios/gls-continuity/protocol.json": "0c0480b2fa1c4a17f2cd7a57c648955bc946890dd86a1b01245e0f7bc1a34daa",
+    "docs/verification/gls-continuity-20261009/screen/records-jvm.jsonl": "bfd4c17da5aefec43b2b28975bc3827e332a1ac4af82b8ac06b3e6fa981cb39f",
+    "docs/verification/gls-continuity-20261009/screen/records-js.jsonl": "293cd80103f87e392965c6c438d3edeb8998b8e84d787695470f206abb00b470",
+    "docs/verification/gls-continuity-20261009/screen/analysis/summary.json": "4a5bf11418eed5378e6a6972eaef9bf731cc6b411244b90595ab2abdd3638300",
+    "docs/verification/gls-continuity-20261009/screen/analysis/replicate-records.json": "178a4bd58e439b7b351b47f1132c90ced02b37ff439a6bd01e1e16699d2df21d"
+  },
+  "identical_failure_records": true,
+  "refusals_per_platform": 0,
+  "post_run_metadata_migration": {
+    "reason": "Use a dedicated summary namespace for restricted long-cell admission; every statistic, gate and admission decision is unchanged.",
+    "previous_adapter_sha256": "24f675fbd728f232cef4236924181d7520f69c7bb41283620726f83475e3a654",
+    "current_adapter_sha256": "ef8c79efef769c14da7398b6bde8c626cb1f9942fb5e18cdcbf5be79e0e9f288",
+    "previous_summary_sha256": "730edc4f7b3a79e08a7f8e0598c063c890b4b294dfea7bb74e675365e1b1b0eb",
+    "acceptance_values_unchanged": true
+  }
+}

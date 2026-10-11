@@ -54,7 +54,7 @@ stdin from /dev/null so a server started there cannot block on terminal probes.
 
 Environment knobs (defaults in brackets):
   SBT_WARM_HOME   cache root            [~/.cache/scalafim-sbt]
-  SBT_WARM_HEAP   server -Xmx            [3g]
+  SBT_WARM_HEAP   server -Xmx            [6g]
   SBT_WARM_CPUS   server processor count [4]
   SBT_WARM_SLOTS  concurrent commands    [3]
   SBT_WARM_IDLE_MINUTES  server idle shutdown [30]
@@ -75,7 +75,7 @@ import time
 from pathlib import Path
 
 HOME = Path(os.environ.get("SBT_WARM_HOME", Path.home() / ".cache" / "scalafim-sbt"))
-HEAP = os.environ.get("SBT_WARM_HEAP", "3g")
+HEAP = os.environ.get("SBT_WARM_HEAP", "6g")
 CPUS = os.environ.get("SBT_WARM_CPUS", "4")
 SLOTS = int(os.environ.get("SBT_WARM_SLOTS", "3"))
 IDLE_MINUTES = int(os.environ.get("SBT_WARM_IDLE_MINUTES", "30"))

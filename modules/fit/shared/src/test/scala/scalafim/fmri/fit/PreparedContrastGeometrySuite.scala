@@ -115,7 +115,7 @@ class PreparedContrastGeometrySuite extends munit.FunSuite:
     assertMatrixClose(actualResponse.value, expected.response, 0.0)
     assertEquals(
       geometry.receipt.whitening,
-      TemporalWhiteningReceipt.Shared(WhiteningMethod.Fixed, scalafim.fmri.ar.NoisePooling.Global, 1, 2, true)
+      TemporalWhiteningReceipt.Shared(WhiteningMethod.Fixed, scalafim.fmri.ar.NoisePooling.Global, 1, 2, scalafim.fmri.ar.InitialConditionPolicy.ExactAr1)
     )
     assertEquals(geometry.receipt.provenance.deferred, Vector.empty)
 

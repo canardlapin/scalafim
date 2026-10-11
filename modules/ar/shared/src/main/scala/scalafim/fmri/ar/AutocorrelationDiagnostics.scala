@@ -17,49 +17,22 @@ final case class AcorrDiagnostics(
   require(acf.rows == lags.length, "ACF rows must match lag count")
 
 object AcorrDiagnostics:
-
   def compute(
       residuals: DMat,
       maxLag: Int = 20,
       aggregation: AcfAggregation = AcfAggregation.Mean
   ): AcorrDiagnostics =
     require(residuals.rows > 1, "ACF diagnostics require at least two rows")
-    require(residuals.cols > 0, "ACF diagnostics require at least one column")
-    require(maxLag >= 1, "maxLag must be at least one")
-    val lagCount = math.min(maxLag, residuals.rows - 1)
-    val values =
-      aggregation match
-        case AcfAggregation.None =>
-          val out = DMat.newBuilder(lagCount, residuals.cols)
-          var col = 0
-          while col < residuals.cols do
-            val series = column(residuals, col)
-            val acf = acfSeries(series, lagCount)
-            var lag = 0
-            while lag < lagCount do
-              out(lag, col) = acf(lag)
-              lag += 1
-            col += 1
-          out.result()
+    compute(residuals, TimeSegments.continuous(residuals.rows), maxLag, aggregation)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-        case AcfAggregation.Mean =>
-          val series = rowAggregate(residuals, median = false)
-          columnMatrix(acfSeries(series, lagCount))
-
-        case AcfAggregation.Median =>
-          val series = rowAggregate(residuals, median = true)
-          columnMatrix(acfSeries(series, lagCount))
-
-    AcorrDiagnostics(
-      lags = (1 to lagCount).toVector,
-      acf = values,
-      confidenceInterval = 1.96 / math.sqrt(residuals.rows.toDouble),
-      aggregation = aggregation
-    )
-
-  /** Run-aware diagnostics. Means are removed once per run while lag products
-    * stay inside the supplied contiguous segments, so neither run boundaries
-    * nor censor resets create artificial autocorrelation.
+  /** Per-voxel autocorrelations, centered once per run and confined to each
+    * segment. Every lag uses the same lag-zero energy denominator, matching
+    * stats::acf and fmriAR 0.4.1. Aggregation follows normalization, so shared
+    * fluctuations do not replace the voxel-level noise estimand.
+    *
+    * Constant columns report zero in None mode and are excluded from mean and
+    * median aggregation; an entirely constant block reports finite zeros.
     */
   def compute(
       residuals: DMat,
@@ -70,98 +43,81 @@ object AcorrDiagnostics:
     if residuals.rows <= 1 then Left(ArError.NonPositiveRows(residuals.rows))
     else if maxLag < 1 then Left(ArError.InvalidArLag(maxLag))
     else
-      val maxEstimable = segments.map(_.length - 1).maxOption.getOrElse(0)
-      val lagCount = math.min(maxLag, residuals.rows - 1)
-      val covarianceLag = math.min(lagCount, maxEstimable)
-      if lagCount < 1 then Left(ArError.ArOrderNotEstimable(ArOrderValue.unsafe(1), ArLag.Zero))
-      else
-        val source =
-          aggregation match
-            case AcfAggregation.None   => residuals
-            case AcfAggregation.Mean   => columnMatrix(rowAggregate(residuals, median = false))
-            case AcfAggregation.Median => columnMatrix(rowAggregate(residuals, median = true))
-        val out = Matrix.newBuilder(lagCount, source.cols)
-        var col = 0
-        var error = Option.empty[ArError]
-        while col < source.cols && error.isEmpty do
-          val series = Matrix.tabulate(source.rows, 1)((row, _) => source(row, col))
-          ArEstimation.autocovariances(series, segments, ArLag.unsafe(covarianceLag)) match
-            case Left(value) => error = Some(value)
-            case Right(gamma) =>
-              val gamma0 = gamma.lagZero
-              var lag = 1
-              while lag <= lagCount do
-                out(lag - 1, col) =
-                  if gamma0 <= 0.0 then 0.0
-                  else if lag > covarianceLag then 0.0
-                  else gamma.at(ArLag.unsafe(lag)) / gamma0
-                lag += 1
-          col += 1
-        error match
-          case Some(value) => Left(value)
-          case None =>
-            Right(
-              AcorrDiagnostics(
-                lags = (1 to lagCount).toVector,
-                acf = out.result(),
-                confidenceInterval = 1.96 / math.sqrt(residuals.rows.toDouble),
-                aggregation = aggregation
-              )
-            )
+      for
+        layout <- NoiseEstimationLayout.allRows(segments, residuals.rows)
+        _ <- ArEstimation.validateInputs(residuals, layout)
+        acf <- correlations(residuals, layout, math.min(maxLag, residuals.rows - 1), aggregation)
+      yield AcorrDiagnostics(
+        (1 to acf.rows).toVector,
+        acf,
+        1.96 / math.sqrt(residuals.rows.toDouble),
+        aggregation
+      )
 
-  private def acfSeries(values: Vector[Double], maxLag: Int): Vector[Double] =
-    val mean = values.sum / values.length.toDouble
-    var denom = 0.0
-    values.foreach { value =>
-      val centered = value - mean
-      denom += centered * centered
-    }
-    (1 to maxLag).map { lag =>
-      if denom == 0.0 then 0.0
-      else
-        var num = 0.0
-        var row = lag
-        while row < values.length do
-          num += (values(row) - mean) * (values(row - lag) - mean)
+  private def correlations(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      lags: Int,
+      aggregation: AcfAggregation
+  ): Either[ArError, DMat] =
+    val out = Matrix.newBuilder(lags, residuals.cols)
+    val usable = new Array[Boolean](residuals.cols)
+    val means = new Array[Double](layout.runCount)
+    var col = 0
+    while col < residuals.cols do
+      var run = 0
+      while run < layout.runCount do
+        var total = 0.0
+        var count = 0
+        layout.segmentsForRun(run).foreach: segment =>
+          var row = segment.start
+          while row < segment.endExclusive do
+            total += residuals(row, col)
+            count += 1
+            row += 1
+        means(run) = total / count.toDouble
+        run += 1
+      var energy = 0.0
+      layout.estimationSegments.foreach: segment =>
+        var row = segment.start
+        while row < segment.endExclusive do
+          val centered = residuals(row, col) - means(segment.runIndex)
+          energy += centered * centered
           row += 1
-        num / denom
-    }.toVector
-
-  private def columnMatrix(values: Vector[Double]): DMat =
-    Matrix.tabulate(values.length, 1)((row, _) => values(row))
-
-  private def column(matrix: DMat, col: Int): Vector[Double] =
-    val out = Vector.newBuilder[Double]
-    out.sizeHint(matrix.rows)
-    var row = 0
-    while row < matrix.rows do
-      out += matrix(row, col)
-      row += 1
-    out.result()
-
-  private def rowAggregate(matrix: DMat, median: Boolean): Vector[Double] =
-    val out = Vector.newBuilder[Double]
-    out.sizeHint(matrix.rows)
-    var row = 0
-    while row < matrix.rows do
-      if median then
-        val values = new Array[Double](matrix.cols)
-        var col = 0
-        while col < matrix.cols do
-          values(col) = matrix(row, col)
-          col += 1
-        scala.util.Sorting.quickSort(values)
-        val mid = values.length / 2
-        out += (
-          if values.length % 2 == 1 then values(mid)
-          else (values(mid - 1) + values(mid)) / 2.0
+      if !energy.isFinite then return Left(ArError.NonFiniteAutocovariance(ArLag.Zero, energy))
+      usable(col) = energy > 0.0
+      var lag = 1
+      while lag <= lags do
+        var product = 0.0
+        layout.estimationSegments.foreach: segment =>
+          var row = segment.start + lag
+          while row < segment.endExclusive do
+            val mean = means(segment.runIndex)
+            product += (residuals(row, col) - mean) * (residuals(row - lag, col) - mean)
+            row += 1
+        out(lag - 1, col) = if usable(col) then product / energy else 0.0
+        lag += 1
+      col += 1
+    val perVoxel = out.result()
+    aggregation match
+      case AcfAggregation.None => Right(perVoxel)
+      case other =>
+        val count = usable.count(identity)
+        val values = new Array[Double](count)
+        Right(Matrix.tabulate(lags, 1): (lag, _) =>
+          if count == 0 then 0.0
+          else
+            var index = 0
+            var col = 0
+            while col < residuals.cols do
+              if usable(col) then
+                values(index) = perVoxel(lag, col)
+                index += 1
+              col += 1
+            if other == AcfAggregation.Mean then values.sum / count.toDouble
+            else
+              scala.util.Sorting.quickSort(values)
+              val mid = count / 2
+              if count % 2 == 1 then values(mid)
+              else (values(mid - 1) + values(mid)) / 2.0
         )
-      else
-        var sum = 0.0
-        var col = 0
-        while col < matrix.cols do
-          sum += matrix(row, col)
-          col += 1
-        out += sum / matrix.cols.toDouble
-      row += 1
-    out.result()

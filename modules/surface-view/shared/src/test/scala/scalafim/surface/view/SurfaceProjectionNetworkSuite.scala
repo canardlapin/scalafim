@@ -117,6 +117,68 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
     assertEquals(projection.receipt.rejectedSamples, 1L)
     assertEquals(projection.receipt.tally.nonFinite, 1L)
 
+  private val volumeWithNaNAt101 = SomeScalarVolume.unsafeCopyFromCanonicalArray(
+    PrimitiveBuffers.tabulate[Double](125): index =>
+      val grid = volumeSpace.indexToGrid3D(index)
+      if grid == Vector(1, 0, 1) then Double.NaN
+      else grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
+    volumeSpace,
+    "volume-with-nan"
+  )
+
+  test("a vertex whose only sample is non-finite does not qualify and is tallied apart"):
+    // Vertex 0's midpoint (1, 0, 1) is its only sample, and it is NaN.
+    val projection = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest),
+      volumeWithNaNAt101,
+      SurfaceProjectionPolicy(SurfaceMinimumSamples.unsafe(1), SurfaceProjectionFill.constant(-99.0).toOption.get)
+    )
+    assertEquals(projection.quality.valueAt(VertexId(0)), Some(false))
+    assertEquals(projection.values.valueAt(VertexId(0)), Some(-99.0))
+    assertEquals(projection.receipt.qualifiedVertices, 3)
+    assertEquals(projection.sampleCounts.valueAt(VertexId(0)), Some(0))
+    assertEquals(projection.nonFiniteCounts.valueAt(VertexId(0)), Some(1))
+    assertEquals(projection.receipt.nonFiniteOnlyVertices, 1)
+    assertEquals(projection.receipt.vertexTally, SurfaceVertexTally(vertices = 4, qualified = 3, nonFiniteOnly = 1, insufficient = 0))
+    (1 until 4).foreach(i => assertEquals(projection.quality.valueAt(VertexId(i)), Some(true)))
+
+  test("non-finite ribbon samples do not count toward the minimum sample rule"):
+    // Vertex 0's ribbon reads (1, 0, 0), (1, 0, 1) and (1, 0, 2). Vertex 3's reads
+    // (1, 0, 1), (1, 0, 2) and (1, 0, 3) after half-up rounding. (1, 0, 1) is NaN.
+    val projection = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.5, 1.0)), SurfaceSampleAggregation.Average),
+      volumeWithNaNAt101,
+      SurfaceProjectionPolicy(SurfaceMinimumSamples.unsafe(3))
+    )
+    assertEquals((0 until 4).map(i => projection.quality.valueAt(VertexId(i)).get).toVector, Vector(false, true, true, false))
+    assertEquals(projection.receipt.qualifiedVertices, 2)
+    assertEquals((0 until 4).map(i => projection.sampleCounts.valueAt(VertexId(i)).get).toVector, Vector(2, 3, 3, 2))
+    assertEquals((0 until 4).map(i => projection.nonFiniteCounts.valueAt(VertexId(i)).get).toVector, Vector(1, 0, 0, 1))
+    // Two finite samples remain, so these vertices are insufficient, not non-finite only.
+    assertEquals(projection.receipt.vertexTally, SurfaceVertexTally(vertices = 4, qualified = 2, nonFiniteOnly = 0, insufficient = 2))
+
+  test("a qualified vertex's value is reduced from its finite samples only"):
+    // Vertex 0's ribbon reads 1.0, NaN and 201.0; vertex 3's reads NaN, 201.0 and 301.0.
+    val average = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.5, 1.0)), SurfaceSampleAggregation.Average),
+      volumeWithNaNAt101,
+      SurfaceProjectionPolicy(SurfaceMinimumSamples.unsafe(2))
+    )
+    assertEquals(average.receipt.vertexTally, SurfaceVertexTally(vertices = 4, qualified = 4, nonFiniteOnly = 0, insufficient = 0))
+    assertEqualsDouble(average.values.valueAt(VertexId(0)).get, (1.0 + 201.0) / 2.0, 0.0)
+    assertEqualsDouble(average.values.valueAt(VertexId(3)).get, (201.0 + 301.0) / 2.0, 0.0)
+    val nearest = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.FractionalThickness(Vector(0.5, 0.0, 1.0)), SurfaceSampleAggregation.Nearest),
+      volumeWithNaNAt101
+    )
+    // Declared order for vertex 0 is NaN, 1.0, 201.0: the first finite sample wins.
+    assertEqualsDouble(nearest.values.valueAt(VertexId(0)).get, 1.0, 0.0)
+    assert((0 until 4).forall(i => nearest.values.valueAt(VertexId(i)).get.isFinite))
+
+  test("vertex tallies must partition the vertices"):
+    intercept[IllegalArgumentException](SurfaceVertexTally(vertices = 4, qualified = 3, nonFiniteOnly = 1, insufficient = 1))
+    intercept[IllegalArgumentException](SurfaceVertexTally(vertices = 0, qualified = 1, nonFiniteOnly = -1, insufficient = 0))
+
   test("materialized projection is an ordinary layer on topology-compatible display geometry"):
     val projection = SurfaceVolumeProjection.materialize(
       morphism(SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest),

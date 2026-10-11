@@ -283,7 +283,9 @@ object ComponentConfirmation:
     val r = BigInt(plan.associationMembers.size)
     24 * BigInt(rows) * (z + 2 * r) + 24 * z * z
 
-  private[pattern] def incrementalOwnedCells(heads: ComponentPredictionHeads, rows: Int, targets: Int): BigInt =
+  /** The owned-cell count `incremental` admits against its budget, exposed so
+    * instrumented adapters can refuse before an exposure-recorded read. */
+  def incrementalOwnedCells(heads: ComponentPredictionHeads, rows: Int, targets: Int): BigInt =
     val r = BigInt(heads.reduced.size)
     val units = BigInt(heads.plan.design.confirmation.samples.units.size)
     val m = BigInt(heads.trainingNuisanceColumns) + r

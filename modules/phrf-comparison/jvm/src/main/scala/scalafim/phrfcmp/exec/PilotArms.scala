@@ -3,6 +3,7 @@ package scalafim.phrfcmp.exec
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
 import java.util.concurrent.ConcurrentHashMap
+import scala.util.control.NonFatal
 
 import scalafim.phrfcmp.ingest.FitInputs
 import scalafim.phrfcmp.prep.{CommonPrep, NativeArm}
@@ -35,6 +36,11 @@ trait PilotDatasetSource:
 /** Where per-voxel arm outcomes go for scoring (S8). Truth lives on the other side of this seam: the S10 harness
   * implements it with the generator truth and assembles the `PilotCorpus`. The scheduler calls it once per attempt;
   * the LAST call per (job, method) is the terminal attempt, so implementations overwrite.
+  *
+  * It is not transactional (a call made by an attempt that is later discarded still lands) and nothing binds it to
+  * the sealed payloads, so an aggregate built through it is unverifiable to the owner. The verifiable S10 path is
+  * [[ArmContext.contribute]] plus [[PilotAggregation.aggregateContributions]]; the production contribution encoding
+  * and `CorpusAssembler` for the pilot arms are still to be written (S10).
   */
 trait ScoreFeed:
   def condition(job: Job, result: ConditionArmResult): Unit
@@ -232,17 +238,28 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
       case Some(inputs) =>
         val run = engines.glm(inputs)
         val guard = run.attempt.guardCpuSeconds // what the machine spent, for the section 5.2 guard
-        run.result match
-          case Right(o) =>
-            ctx.emit("result", RawEncoding.glm(o))
-            ctx.recordTiming("glmsingle_timing_cpu_s", o.timingCpuSeconds) // the GLMsingle call alone, for the timing endpoint
-            ctx.recordTiming("glmsingle_guard_cpu_s", o.guardCpuSeconds)
-            feed.trial(job, Method.GlmsD, o.voxels)
-            feed.timing(job, TimingQuantity.GlmsingleDataset, o.timingCpuSeconds)
-            ArmResult.Done(guard)
-          case Left(refusal) =>
-            ctx.note(refusal.message) // result-adjacent (tail, CPU): sealed timing record only
-            run.attempt.sidecarCpuSeconds.foreach(s => ctx.recordTiming("glmsingle_timing_cpu_s", s))
-            ctx.recordTiming("glmsingle_guard_cpu_s", guard)
-            feed.trial(job, Method.GlmsD, refusal.asVoxels(d.inputs.y.rows))
-            ArmResult.Failed(token("glmsingle_" + refusal.productPrefix), guard)
+        // the child already ran: whatever the adapter or the feed throws from here on, the measured CPU stays with the
+        // attempt's result (re-review failure 3); the scheduler would otherwise substitute a zero-CPU failure
+        // an interrupt is handed back the same way, with the flag restored, so the scheduler meters the CPU first
+        try glmResult(job, ctx, d, run, guard)
+        catch
+          case _: InterruptedException =>
+            Thread.currentThread().interrupt()
+            ArmResult.Failed("glmsingle_interrupted", guard)
+          case NonFatal(e) => ArmResult.Failed(token("glmsingle_adapter_" + e.getClass.getSimpleName), guard)
+
+  private def glmResult(job: Job, ctx: ArmContext, d: LoadedDataset, run: GlmSingleRun, guard: Double): ArmResult =
+    run.result match
+      case Right(o) =>
+        ctx.emit("result", RawEncoding.glm(o))
+        ctx.recordTiming("glmsingle_timing_cpu_s", o.timingCpuSeconds) // the GLMsingle call alone, for the timing endpoint
+        ctx.recordTiming("glmsingle_guard_cpu_s", o.guardCpuSeconds)
+        feed.trial(job, Method.GlmsD, o.voxels)
+        feed.timing(job, TimingQuantity.GlmsingleDataset, o.timingCpuSeconds)
+        ArmResult.Done(guard)
+      case Left(refusal) =>
+        ctx.note(refusal.message) // result-adjacent (tail, CPU): sealed timing record only
+        run.attempt.sidecarCpuSeconds.foreach(s => ctx.recordTiming("glmsingle_timing_cpu_s", s))
+        ctx.recordTiming("glmsingle_guard_cpu_s", guard)
+        feed.trial(job, Method.GlmsD, refusal.asVoxels(d.inputs.y.rows))
+        ArmResult.Failed(token("glmsingle_" + refusal.productPrefix), guard)

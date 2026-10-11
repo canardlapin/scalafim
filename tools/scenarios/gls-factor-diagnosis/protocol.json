@@ -1,0 +1,844 @@
+{
+  "schema_version": "scalafim-gls-factor-diagnosis-protocol/v1",
+  "mote": "bd-01M4E9Q1YRN88KS4BCK5N912YA",
+  "declaration_label": "scalafim-gls-ar2-factor-diagnosis-v1-20261008",
+  "seed": 973860617,
+  "seed_derivation": "(root + domain*10000019 + (innovation_group+1)*1000003 + replicate*7919) mod 2147483646 + 1; uniform generator Park-Miller 48271/2147483647, Gaussian Box-Muller",
+  "seed_collision_check": {
+    "old_roots": [
+      1149777122
+    ],
+    "overlap": 0
+  },
+  "diagnostic_cells": [
+    {
+      "id": "ar1-low-complete-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-complete-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-complete-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-censored-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-censored-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-censored-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-complete-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-complete-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-complete-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-censored-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-censored-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-censored-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-complete-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-complete-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-complete-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-censored-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-censored-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-censored-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-complete-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-complete-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-complete-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    }
+  ],
+  "confirmation_cells": [
+    {
+      "id": "ar2-high-censored-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-voxelwise-long",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        192,
+        288
+      ],
+      "innovation_group": 1
+    }
+  ],
+  "cells": [
+    {
+      "id": "ar1-low-complete-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-complete-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-complete-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-censored-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-censored-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-low-censored-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-complete-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-complete-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-complete-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-censored-global",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-censored-run",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar1-high-censored-voxelwise",
+      "phi": [
+        0.5
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-complete-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-complete-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-complete-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-censored-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-censored-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-low-censored-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 0,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-complete-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-complete-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-complete-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": false,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-global",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "global",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-run",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "run",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    },
+    {
+      "id": "ar2-high-censored-voxelwise",
+      "phi": [
+        0.45,
+        -0.1
+      ],
+      "nuisance": 12,
+      "censored": true,
+      "pooling": "voxelwise",
+      "run_lengths": [
+        96,
+        144
+      ],
+      "innovation_group": 0
+    }
+  ],
+  "engines": [
+    "known-phi",
+    "corrected"
+  ],
+  "profiles": {
+    "pilot": {
+      "domain": 1,
+      "replicates": 8,
+      "bootstrap_analysis": false,
+      "scientific_admission": false
+    },
+    "diagnostic": {
+      "domain": 2,
+      "replicates": 512,
+      "bootstrap_analysis": true,
+      "scientific_admission": false
+    },
+    "confirmation": {
+      "domain": 3,
+      "replicates": 2048,
+      "bootstrap_analysis": true,
+      "scientific_admission": true
+    }
+  },
+  "response_columns": 4,
+  "burn_in": 256,
+  "acceptance": {
+    "AR_RMSE_max": 0.1,
+    "AR_mean_bias_interval": [
+      -0.04,
+      0.04
+    ],
+    "all_corrected_statuses_applied": true,
+    "alpha": 0.05,
+    "bootstrap_domain": 4,
+    "bootstrap_resamples": 1999,
+    "confidence_interval": 0.95,
+    "coverage_interval": [
+      0.92,
+      0.98
+    ],
+    "equivalence_interval_confidence": 0.9,
+    "no_drop": true,
+    "null_rejection_interval": [
+      0.02,
+      0.08
+    ],
+    "standardized_effect_bias_interval": [
+      -0.1,
+      0.1
+    ],
+    "variance_ratio_interval": [
+      0.8,
+      1.2
+    ],
+    "whiteness_excess_over_known_phi_max": 0.025,
+    "whiteness_mean_abs_max": 0.1
+  },
+  "noise": "Independent Gaussian innovations with variance 1; continuous stationary AR noise within each run, independent run restarts after 256 burn-in draws. Censoring only affects estimator/whitener layout, not the data generator.",
+  "design": "Two alternating 4-second task epochs at onsets 6+32k, sampled at TR=1 and convolved with public SPMG1; run intercepts and six run-local DCT nuisance terms per run in high-nuisance cells.",
+  "censor_rule": "Within each run censor rows 23,24,60 and then every 37 rows beginning at 97 when in range; reset on the following row; censored response rows remain on the fitting axis.",
+  "truth": "Voxel 0 task coefficients are both 0; voxel 1 task_a is 0.75, task_b is -0.25; nuisance and intercept coefficients fixed; independent replicate datasets are the sampling units.",
+  "pairing": "One independent innovation sequence per replicate is reused across all 24 diagnostic cells; differences in AR order filter the same innovations. Pooling, nuisance and censor comparisons are paired. Each cell has 512 independent replicates; there are 512 independent diagnostic innovation blocks, not 12288 independent experiments. Short confirmation pooling cells share 2048 fresh blocks; long confirmation has a separate 2048-block stream.",
+  "diagnostic_endpoints": [
+    "all original measurement endpoints",
+    "reported variance / empirical estimator variance decomposition against known-phi",
+    "mean variance scale, normalized task-a covariance geometry and their covariance",
+    "paired factor main effects and conditional effects with dataset-bootstrap 90% intervals",
+    "AR coefficient MSE per run/voxel rather than averaging coefficient accuracy across voxels"
+  ],
+  "diagnostic_decision": "Diagnostic data identify measured factor effects and variance decomposition; they confer no scientific admission. Do not ascribe cause when paired effects or variance decomposition do not support it. Confirmation evaluates all three predeclared existing-configuration mitigations independently against original frozen margins, regardless of diagnostic outcome. Retain every failure. No nominal-df replacement or production estimator/inference change is declared.",
+  "scope_limits": [
+    "No group/PM/mKH qualification or resumption of historical/spent calibration campaigns",
+    "No effective-df implementation or blanket FGLS-variance-independence claim",
+    "No corrected iterative/robust fit or ARMA estimation",
+    "No scientific admission from screen or pilot results",
+    "Known-phi censor-reset whitening is a known-parameter comparator, not an exact inverse of the continuous-noise covariance; its calibration is measured rather than presumed.",
+    "Homogeneous AR truth across four independent response columns; pooling recommendations do not apply to heterogeneous noise.",
+    "Long-run confirmation doubles run duration while keeping six DCT terms per run and extending the same task/censor rule; this is a configuration mitigation, not isolated identification of a pure sample-size effect.",
+    "Original short-run voxelwise failure remains binding; no broad corrected-GLS admission."
+  ],
+  "sources": [
+    "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Binomial.html"
+  ]
+}

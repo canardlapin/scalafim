@@ -175,6 +175,13 @@ enum PilotRefusal(val message: String):
   case CostStateLost(detail: String)
       extends PilotRefusal(s"output holds progress or sealed blobs but the cumulative CPU state is unusable ($detail); refusing to resume, because the CPU guard would restart from zero")
   case SealFailed(detail: String) extends PilotRefusal(s"sealed store refused a write: $detail")
+  case AccountingUncertain(runId: String)
+      extends PilotRefusal(s"the CPU accounting of run $runId was never closed (crash, power loss or failed checkpoint); resuming needs the owner's OwnerAccountingRecovery for that run")
+  case AccountingRecoveryMismatch(recoveryRunId: String, openRunId: String)
+      extends PilotRefusal(s"the accounting recovery names run $recoveryRunId but the open accounting is $openRunId")
+  case CeilingNotAuthorized(detail: String) extends PilotRefusal(s"CPU ceiling not authorized: $detail")
+  case AccountingRecoveryInvalid(detail: String) extends PilotRefusal(s"the accounting recovery cannot be applied: $detail")
+  case InvocationsExhausted(invocations: Int) extends PilotRefusal(s"cost.json already records $invocations invocations; no further ordinal can be written")
   case Failure(detail: String) extends PilotRefusal(detail)
 
 /** Everything a pilot run depends on; a resume must reproduce it field for field. Ceilings are not stamped. */

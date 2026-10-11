@@ -34,16 +34,41 @@ final case class SurfaceProjectionPolicy(
   fill: SurfaceProjectionFill = SurfaceProjectionFill.NaN
 )
 
+/** How a projection classified its vertices. Every vertex is exactly one of:
+  *
+  *  - `qualified`: at least `minimumSamples` finite samples;
+  *  - `nonFiniteOnly`: no finite sample but at least one non-finite one. A
+  *    non-finite value is not an observation, so such a vertex never qualifies,
+  *    and it is tallied here rather than hidden among the unsupported vertices;
+  *  - `insufficient`: every other vertex, with fewer finite samples than the
+  *    minimum (including none at all).
+  */
+final case class SurfaceVertexTally(
+  vertices: Int,
+  qualified: Int,
+  nonFiniteOnly: Int,
+  insufficient: Int
+):
+  require(
+    vertices >= 0 && qualified >= 0 && nonFiniteOnly >= 0 && insufficient >= 0,
+    "vertex tallies must be non-negative"
+  )
+  require(
+    qualified + nonFiniteOnly + insufficient == vertices,
+    "every vertex must be qualified, non-finite only, or insufficient"
+  )
+
+  def unqualified: Int =
+    nonFiniteOnly + insufficient
+
 /** Sample accounting is the sampler's observed [[SurfaceSampleTally]]:
   * `acceptedSamples` counts finite values only, and `rejectedSamples` counts
   * samples outside the volume, excluded by the mask, or non-finite.
-  * `qualifiedVertices` follows the per-vertex `sampleCounts`, which include
-  * non-finite samples, so a qualified vertex can still carry a NaN value.
+  * Vertex qualification counts finite samples only (see [[SurfaceVertexTally]]).
   */
 final case class SurfaceProjectionReceipt(
-  vertices: Int,
+  vertexTally: SurfaceVertexTally,
   tally: SurfaceSampleTally,
-  qualifiedVertices: Int,
   sourceVolumeValues: Long,
   sourceBytes: Long,
   materializedBytes: Long,
@@ -51,6 +76,15 @@ final case class SurfaceProjectionReceipt(
   path: SurfaceSamplingPath,
   reducer: SurfaceSampleAggregation
 ):
+  def vertices: Int =
+    vertexTally.vertices
+
+  def qualifiedVertices: Int =
+    vertexTally.qualified
+
+  def nonFiniteOnlyVertices: Int =
+    vertexTally.nonFiniteOnly
+
   def requestedSamples: Long =
     tally.requested
 
@@ -60,9 +94,13 @@ final case class SurfaceProjectionReceipt(
   def rejectedSamples: Long =
     tally.rejected
 
+/** `sampleCounts` holds finite samples per vertex and `nonFiniteCounts` the
+  * non-finite in-mask samples; `quality` marks the qualified vertices.
+  */
 final case class SurfaceProjectionResult(
   values: SurfaceField[Double],
   sampleCounts: SurfaceField[Int],
+  nonFiniteCounts: SurfaceField[Int],
   quality: SurfaceField[Boolean],
   receipt: SurfaceProjectionReceipt
 )
@@ -79,20 +117,25 @@ object SurfaceVolumeProjection:
     val vertexCount = sampled.values.geometry.vertexCount
     val values = new Array[Double](vertexCount)
     val counts = new Array[Int](vertexCount)
+    val nonFiniteCounts = new Array[Int](vertexCount)
     val quality = new Array[Boolean](vertexCount)
     var qualified = 0
+    var nonFiniteOnly = 0
     var vertex = 0
     while vertex < vertexCount do
       val id = VertexId.unsafe(vertex)
       val count = sampled.sampleCounts.valueAt(id).getOrElse(0)
+      val nonFinite = sampled.nonFiniteCounts.valueAt(id).getOrElse(0)
       val observed = sampled.values.valueAt(id).getOrElse(Double.NaN)
       val keep = count >= policy.minimumSamples.value
       counts(vertex) = count
+      nonFiniteCounts(vertex) = nonFinite
       quality(vertex) = keep
       if keep then
         values(vertex) = observed
         qualified += 1
       else
+        if count == 0 && nonFinite > 0 then nonFiniteOnly += 1
         values(vertex) = policy.fill match
           case SurfaceProjectionFill.NaN => Double.NaN
           case SurfaceProjectionFill.Constant(value) => value
@@ -101,14 +144,14 @@ object SurfaceVolumeProjection:
     SurfaceProjectionResult(
       SurfaceField.full(sampled.values.geometry, values.toIndexedSeq, sampled.values.label),
       SurfaceField.full(sampled.values.geometry, counts.toIndexedSeq, sampled.sampleCounts.label),
+      SurfaceField.full(sampled.values.geometry, nonFiniteCounts.toIndexedSeq, sampled.nonFiniteCounts.label),
       SurfaceField.full(sampled.values.geometry, quality.toIndexedSeq, "surface-projection-quality"),
       SurfaceProjectionReceipt(
-        vertexCount,
+        SurfaceVertexTally(vertexCount, qualified, nonFiniteOnly, vertexCount - qualified - nonFiniteOnly),
         sampled.tally,
-        qualified,
         volumeValues,
         volumeValues * 8L,
-        vertexCount.toLong * (8L + 4L + 1L),
+        vertexCount.toLong * (8L + 4L + 4L + 1L),
         System.nanoTime() - started,
         morphism.plan.path,
         morphism.plan.aggregation

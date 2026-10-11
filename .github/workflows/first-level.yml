@@ -104,7 +104,9 @@ jobs:
   scientific-coverage:
     name: scoped first-level scientific coverage
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # Instrumented tests took 164 minutes in run 38076297937; its six failures
+    # were per-test timeouts. Keep all tests and floors with headroom.
+    timeout-minutes: 240
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

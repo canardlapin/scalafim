@@ -1,0 +1,13 @@
+{
+  "commands": [
+    {
+      "command": "firstLevelLawsJVM/Test/scalafmtOnly /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsQualification.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorBounds.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorStudy.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorStudySuite.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorSimulatorSuite.scala",
+      "exit_code": 0
+    },
+    {
+      "command": "firstLevelLawsJS/Test/scalafmtOnly /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/CorrectedGlsQualification.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorBounds.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorStudy.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorStudySuite.scala /Users/bbuchsbaum/code/scala/scalafim/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/GlsFactorSimulatorSuite.scala",
+      "exit_code": 0
+    }
+  ],
+  "source_unchanged": true
+}

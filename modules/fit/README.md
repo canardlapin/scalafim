@@ -510,3 +510,15 @@ needed to execute each work item. The shared module provides local sequential an
 bounded `Future` interpreters over chunk programs. `FitChunkProgram` and its typed
 interpreter state are process-local; durable schedulers should persist
 `FitWorkDescriptor` and bind runtime capabilities separately.
+
+
+GLS can explicitly request exact stationary initialization with
+`AutocorrelationConfig.withInitialization(ArInitialization.Stationary, ...)`
+and continuous run whitening with `censorTreatment = ArCensorTreatment.EstimateOnly`.
+The latter retains flagged response rows but excludes them from AR estimation;
+it refuses selected time axes with physically omitted observations. The older
+restart policy remains the default. `ArBiasCorrection.olsTailAnchored(25)` is an
+explicit short-memory estimation policy with observable fallback diagnostics,
+not an inference qualification. Robust fitting refuses these new GLS policies.
+The [dated calibration report](../../docs/verification/ar-correctness-followup-20261009.md)
+records the domains tested and all remaining voxelwise failures.

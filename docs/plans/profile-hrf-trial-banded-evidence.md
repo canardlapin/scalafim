@@ -1,10 +1,39 @@
 # TrialBanded backend evidence (PHRF-07)
 
 Date: 2026-09-12. Scope: the shared trial-level ridge-and-release backend,
-including its dense numerical laws and the B0 checkpoint that decides whether
-the finite-state PHRF-10 backend must be activated. This is engineering and
-same-model numerical evidence, not PHRF-14 scientific calibration or the
+including its dense numerical laws and historical B0 component timings. This
+is engineering and same-model numerical evidence, not PHRF-14 scientific calibration or the
 PHRF-29 executor integration.
+
+## Current qualification status — 2026-10-07
+
+The historical `Complete prepared` and `Complete exact readout` labels below
+measure components. Their jets do not drive `ShapeDecoder`; readout uses the
+best bank node or the fixed generating shape. Those timings cannot establish
+the complete decoded readout/certification gate or a finite-state decision.
+PHRF-33 owns that still-open checkpoint.
+
+The [current public-path diagnostic](../verification/phrf-checkpoint-20261007/README.md)
+executes the reader, decoder, returned-shape readout and Float32 sink, and
+retains every refusal. Its receipts are explicitly **not admitted**. They
+also expose the current dense basis compiler's array-cap refusal and an
+explicit blocked-compilation alternative without reducing the domain, rank
+budget, or held-out tolerance.
+
+The [bounded refinement follow-up](../verification/phrf-refinement-20261007/README.md)
+adds an opt-in nine-start search through the merged Gale provider. All 80 matched
+noise-ladder objectives agree with the independent reference; 60 interior fits
+emit and 20 boundary-preferred fits remain refused. Both earlier search
+counterexamples are repaired. This substantially more expensive diagnostic
+route preserves default behavior and does not qualify the full workload;
+PHRF-33 remains open for cost reduction, preparation/certification prerequisites
+and the complete measurement.
+
+The [first-order search follow-up](../verification/phrf-gradient-20261007/README.md)
+removes unused second-order band/reference work during the penalized-profile
+search. Full jets still govern terminal admission. It preserves the search
+budget and records first-order attempts separately; its fixed-call timing and
+public recovery receipts remain diagnostic evidence, not B0 qualification.
 
 ## Estimand and implementation
 
@@ -64,8 +93,8 @@ stream rather than retained. Setup and input acquisition are reported
 separately from measured compute.
 
 The one-shot checkpoint runner performs a 32-voxel warmup. PHRF-15 still owns
-five-run distributions and end-to-end IO qualification; these complete cells
-are the earlier PHRF-07 activation decision required by the plan.
+five-run distributions and end-to-end IO qualification. These historical
+component cells do not complete the PHRF-33 activation decision.
 
 ### N = 300 absolute and ratio cells
 
@@ -79,10 +108,10 @@ Float32 output workload.
 | Complete prepared | 30.422 s | 6.871 s | 19.063 MiB | 33.968 MiB | 8 values, 2 jets, 1 correction, 30 solves | 9.06x |
 | Complete exact readout | 48.198 s | 7.346 s | 21.124 MiB | 36.029 MiB | prepared work plus 1 exact factor; 32 solves / 42 RHS | 14.35x |
 
-The prepared backend passes the absolute `<= 120 s`, engine `<= 256 MiB`,
-one-reference `<= 12x`, and complete/two-reference `<= 24x` gates. Including
+The historical prepared component workload meets the numerical targets of
+`<= 120 s`, engine `<= 256 MiB`, one-reference `<= 12x`, and complete/two-reference `<= 24x` gates. Including
 setup, prepared and exact-readout elapsed times are 37.293 s and 55.544 s.
-The exact mode therefore passes PHRF-07's full measured engineering gate and
+The historical exact component mode meets those same timing targets and
 may remain an explicit opt-in mode; it does not become the default and carries
 no scientific-calibration claim.
 
@@ -116,11 +145,12 @@ the JVM heap and is not substituted for engine live state.
 
 ## Decision and remaining boundaries
 
-The primary dense B0 geometry passes both runtime and memory gates, including
-the full exact-readout option. PHRF-10 therefore remains deferred; no
-finite-state implementation is activated by this checkpoint. The N=1,200
-stress result remains visible for later scaling work and is not promoted into
-an unmeasured full-scale claim.
+The historical component results meet the timing and estimated-memory targets,
+including fixed-generating-shape exact readout. The original inference that
+this completed the finite-state decision is superseded by PHRF-33: actual
+decoding, returned-shape readout and certification must be measured together.
+PHRF-10 remains deferred pending that decision. The N=1,200 component result
+remains visible for later scaling work and is not a full-workload pass.
 
 Sparse support storage, shared whitening, run-reset behavior and exact shape
 readout are present. PHRF-11 still owns normalized/public trial query output;

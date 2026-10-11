@@ -3,7 +3,8 @@ package scalafim.fmri.mvpa.group
 import gale.linalg.DMat
 import multivar.core.SemanticSpace
 import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.analysis.{EvidenceExposure, ExposureControl, ExposureScope}
+import scalafim.fmri.mvpa.analysis.{EvidenceExposure, ExposureActorRole, ExposureAssurance, ExposureAttempt, ExposureControl,
+  ExposurePayload, ExposurePurpose, ExposureRequest, ExposureScope}
 import scalafim.fmri.mvpa.pattern.*
 
 enum SubjectPredictionError:
@@ -12,6 +13,8 @@ enum SubjectPredictionError:
   case Invalid(detail: String)
   case Component(cause: ComponentConfirmationError)
   case Budget(cells: BigInt, allowed: Long)
+  /** The instrumented assessment read was attempted and failed. */
+  case Evidence(detail: String)
 
   def message: String = this match
     case Binding(detail) => s"subject prediction binding: $detail"
@@ -19,6 +22,7 @@ enum SubjectPredictionError:
     case Invalid(detail) => s"invalid subject prediction: $detail"
     case Component(cause) => cause.toString
     case Budget(cells, allowed) => s"subject prediction summary requires $cells cells, allowed $allowed"
+    case Evidence(detail) => s"subject prediction assessment read: $detail"
 
 enum SubjectHeadTraining:
   /** Heads are trained only on subjects in the shared learning cohort. */
@@ -43,53 +47,105 @@ final class HeldOutSubjectPrediction private (
 ):
   val subjectKeys: Vector[SubjectCoordinateKey] = assessmentSubjects.values.distinct
 
-  /** Current exposure must still match the frozen untouched account. Checks
-    * and reducer admission precede the existing procedure's operator reads. */
+  /** Current exposure must still match the frozen untouched account. Binding,
+    * exposure and budget checks precede the existing procedure's operator
+    * reads. The assessment payload read and the returned derived losses are
+    * recorded in the assessment ledger, which this evaluation returns. */
   def evaluate[S <: SemanticSpace, N <: SemanticSpace, Q <: SemanticSpace](
       observations: Observations[S, N], targets: MultiResponse[S, Q], currentExposure: EvidenceExposure,
       budget: ComponentConfirmationBudget = ComponentConfirmationBudget(), maximumSummaryCells: Long = 1_000_000L
-  ): Either[SubjectPredictionError, HeldOutSubjectResult] =
+  ): HeldOutSubjectEvaluation =
     val r = heads.plan.incrementalMembers.size
+    val rows = heads.plan.design.confirmation.samples.rows.descriptor
+    val discovery = heads.plan.design.discovery
     // Two subject-by-component matrices, one loss column and integer count/
     // ownership arrays. Borrowed native results and M4.06 workspace are separate.
     val cells = BigInt(subjectKeys.size) * (2 * BigInt(r) + 3) + 2 * BigInt(heads.plan.design.confirmation.samples.units.size)
-    for
+    val native = ComponentConfirmation.incrementalOwnedCells(heads, observations.rows, targets.columns)
+    val preflight = for
       _ <- if currentExposure.identity == assessmentExposure.identity &&
           ExposureControl.untouchedConfirmation(currentExposure, ExposureScope.Holdout).isRight then Right(())
         else Left(SubjectPredictionError.Leakage("assessment exposure changed after the subject prediction plan was frozen"))
+      _ <- if observations.sampleAxis == rows && targets.sampleAxis == rows &&
+          observations.neuralAxis == discovery.brainProjection.input.descriptor &&
+          targets.featureAxis == discovery.targetProjection.input.descriptor then Right(())
+        else Left(SubjectPredictionError.Binding("assessment brain/target sources must use the frozen assessment rows and endpoints"))
       _ <- if cells <= maximumSummaryCells && cells <= Int.MaxValue then Right(())
         else Left(SubjectPredictionError.Budget(cells, maximumSummaryCells))
-      result <- ComponentConfirmation.incremental(heads, observations, targets, budget).left.map(SubjectPredictionError.Component.apply)
-    yield
-      val mapping = result.rowUnitOrdinals
-      val unitCount = result.independentUnits.size
-      val subjectIndex = subjectKeys.zipWithIndex.toMap
-      val unitRows = Array.fill(unitCount)(0)
-      val unitSubjects = Array.fill(unitCount)(0)
-      val subjectRows = Array.fill(subjectKeys.size)(0)
-      mapping.indices.foreach: row =>
-        val s = subjectIndex(assessmentSubjects.values(row))
-        unitRows(mapping(row)) += 1
-        unitSubjects(mapping(row)) = s
-        subjectRows(s) += 1
-      // M4.06 averages rows within each unit. Reweight those unit means by
-      // row count to recover equal rows within a subject, then equal subjects.
-      def reduce(at: (Int, Int) => Double, columns: Int): DMat =
-        val out = DMat.newBuilder(subjectKeys.size, columns)
-        var u = 0
-        while u < unitCount do
-          val s = unitSubjects(u)
-          val weight = unitRows(u).toDouble / subjectRows(s)
-          var k = 0
-          while k < columns do
-            out(s, k) = out(s, k) + weight * at(u, k)
-            k += 1
-          u += 1
-        out.result()
-      val full = reduce((u, _) => result.fullUnitLoss(u), 1)
-      val reduced = reduce(result.reducedUnitLoss.apply, r)
-      val improvement = reduce(result.unitImprovements.apply, r)
-      new HeldOutSubjectResult(this, result, subjectRows.toVector, full, reduced, improvement)
+      _ <- if native <= budget.maximumOwnedCells && native <= Int.MaxValue then Right(())
+        else Left(SubjectPredictionError.Component(ComponentConfirmationError.Budget(native, budget.maximumOwnedCells)))
+    yield ()
+    preflight match
+      case Left(error) => HeldOutSubjectEvaluation(Left(error), currentExposure, false)
+      case Right(()) =>
+        val payload = ExposureRequest(ExposurePurpose.PayloadRead, ExposureActorRole.Model, ExposureScope.Holdout,
+          ExposurePayload.Payload, ExposureAssurance.Instrumented, (BigInt(observations.rows) * (BigInt(observations.columns) + targets.columns)).min(Long.MaxValue).toLong)
+        ExposureControl.permit(currentExposure, payload) match
+          case Left(error) => HeldOutSubjectEvaluation(Left(SubjectPredictionError.Leakage(error.toString)), currentExposure, false)
+          case Right(permit) =>
+            // The ledger callback carries text; keep the typed procedure error.
+            var procedureError: Option[ComponentConfirmationError] = None
+            val attempt = ExposureControl.read(currentExposure, permit, payload):
+              ComponentConfirmation.incremental(heads, observations, targets, budget) match
+                case Left(error) =>
+                  procedureError = Some(error); Left(error.toString)
+                case Right(value) => Right(reduce(value))
+            attempt match
+              case ExposureAttempt.Refused(error, ledger) => HeldOutSubjectEvaluation(Left(SubjectPredictionError.Leakage(error.toString)), ledger, false)
+              case ExposureAttempt.Failed(detail, ledger) =>
+                val error = procedureError.fold(SubjectPredictionError.Evidence(detail))(SubjectPredictionError.Component.apply)
+                HeldOutSubjectEvaluation(Left(error), ledger, true)
+              case ExposureAttempt.Completed(result, ledger) =>
+                val score = ExposureRequest(ExposurePurpose.DerivedScoreView, ExposureActorRole.Model, ExposureScope.Holdout,
+                  ExposurePayload.DerivedScore, ExposureAssurance.Instrumented, BigInt(subjectKeys.size).toLong * (2L * r + 1L))
+                ExposureControl.permit(ledger, score) match
+                  case Left(error) => HeldOutSubjectEvaluation(Left(SubjectPredictionError.Leakage(error.toString)), ledger, true)
+                  case Right(scorePermit) =>
+                    ExposureControl.read(ledger, scorePermit, score)(Right(result)) match
+                      case ExposureAttempt.Completed(value, viewed) => HeldOutSubjectEvaluation(Right(value), viewed, true)
+                      case ExposureAttempt.Refused(error, viewed) => HeldOutSubjectEvaluation(Left(SubjectPredictionError.Leakage(error.toString)), viewed, true)
+                      case ExposureAttempt.Failed(detail, viewed) => HeldOutSubjectEvaluation(Left(SubjectPredictionError.Evidence(detail)), viewed, true)
+
+  private def reduce(result: ComponentIncrementalResult): HeldOutSubjectResult =
+    val r = heads.plan.incrementalMembers.size
+    val mapping = result.rowUnitOrdinals
+    val unitCount = result.independentUnits.size
+    val subjectIndex = subjectKeys.zipWithIndex.toMap
+    val unitRows = Array.fill(unitCount)(0)
+    val unitSubjects = Array.fill(unitCount)(0)
+    val subjectRows = Array.fill(subjectKeys.size)(0)
+    mapping.indices.foreach: row =>
+      val s = subjectIndex(assessmentSubjects.values(row))
+      unitRows(mapping(row)) += 1
+      unitSubjects(mapping(row)) = s
+      subjectRows(s) += 1
+    // M4.06 averages rows within each unit. Reweight those unit means by
+    // row count to recover equal rows within a subject, then equal subjects.
+    def combine(at: (Int, Int) => Double, columns: Int): DMat =
+      val out = DMat.newBuilder(subjectKeys.size, columns)
+      var u = 0
+      while u < unitCount do
+        val s = unitSubjects(u)
+        val weight = unitRows(u).toDouble / subjectRows(s)
+        var k = 0
+        while k < columns do
+          out(s, k) = out(s, k) + weight * at(u, k)
+          k += 1
+        u += 1
+      out.result()
+    val full = combine((u, _) => result.fullUnitLoss(u), 1)
+    val reduced = combine(result.reducedUnitLoss.apply, r)
+    val improvement = combine(result.unitImprovements.apply, r)
+    new HeldOutSubjectResult(this, result, subjectRows.toVector, full, reduced, improvement)
+
+/** Pre-read refusals return the supplied ledger unchanged. Once the payload
+  * read is attempted, the returned ledger records it even when evaluation
+  * fails; a completed evaluation also records the derived loss view. Callers
+  * must carry this returned ledger into every later choice and handoff: the
+  * snapshot passed in no longer describes the assessment evidence. */
+final case class HeldOutSubjectEvaluation(
+    result: Either[SubjectPredictionError, HeldOutSubjectResult], exposure: EvidenceExposure, readAttempted: Boolean
+)
 
 object HeldOutSubjectPrediction:
   def freeze(shared: SharedTaskCoordinates, heads: ComponentPredictionHeads,

@@ -96,12 +96,13 @@ class SubjectGroupSummarySuite extends munit.FunSuite:
     MetaInference.ModifiedKnappHartung, "explicit plug-in estimated-variance arithmetic; qualification remains separate")
 
   private def cohort(estimated: Boolean = false, count: Int = 3, flat: Boolean = false,
-      kind: SubjectComparisonKind = SubjectComparisonKind.SharedComponentCoefficients, overflow: Boolean = false): SubjectGroupInput =
+      kind: SubjectComparisonKind = SubjectComparisonKind.SharedComponentCoefficients, overflow: Boolean = false,
+      offset: Double = 1.0, variances: Vector[Vector[Double]] = Vector(Vector(1.0, 4.0), Vector(4.0, 1.0), Vector(1.0, 1.0))
+  ): SubjectGroupInput =
     val context = new Context
     val subjects = Vector.tabulate(count)(i => new context.Subject(s"subject-$i"))
-    val variances = Vector(Vector(1.0, 4.0), Vector(4.0, 1.0), Vector(1.0, 1.0))
     val inputs = subjects.indices.toVector.map: i =>
-      val mean = DMat.tabulate(2, 2)((j, k) => (if flat then 2.0 else 1.0 + 2 * i + k) *
+      val mean = DMat.tabulate(2, 2)((j, k) => (if flat then 2.0 else offset + 2 * i + k) *
         (if j == 0 then 1.0 else if overflow then 1e160 else 10.0))
       val covariance = joint(DMat.dense(2, 2, Vector(variances(i)(0), .2, .2, variances(i)(1))))
       val origin = if estimated then SubjectCovarianceOrigin.Estimated("estimated fixture") else SubjectCovarianceOrigin.Known("known covariance fixture")
@@ -196,3 +197,46 @@ class SubjectGroupSummarySuite extends munit.FunSuite:
     val native = right(right(input.marginalModel(GroupDesign.intercept(3), input.data.subjects, mixed)).fit())
     assert(native.native.fits.values.forall(_.failures.map(_.sample) == Vector(1)))
     assert(SubjectGroupSummary.fit(input, contract, mixed).left.toOption.exists(_.isInstanceOf[SubjectGroupError.Numerical]))
+
+  test("equal known variances match the unmerged branch's analytic oracle and metafor"):
+    // docs/verification/umvpa-group-salvage-20261010/equal-variance/group-oracle.tsv
+    // (closed-form PM root var(y) - v) and metafor-crosscheck.tsv p-values.
+    // Measurement one has y = (-1, 1, 3) + k with v = 1; measurement two has
+    // ten times the effects and nine times the variances.
+    val input = cohort(offset = -1.0, variances = Vector.fill(3)(Vector(1.0, 1.0)))
+    val fixed = right(SubjectGroupSummary.fit(input, contract, SubjectGroupCalculation.KnownVarianceGaussianFixedEffects))
+    val pm = right(SubjectGroupSummary.fit(input, contract, mixed))
+    // metafor rma(method = "FE") and rma(method = "PM", test = "adhoc") p-values.
+    val fixedP = DMat.dense(2, 2, Vector(.0832645166635504, .000532005505139251, 7.76403653793065e-9, 7.64375838563106e-31))
+    val pmP = Vector(.477767032132907, .225403330758517)
+    for k <- 0 until 2 do
+      assertEqualsDouble(fixed.mean(0, k), 1.0 + k, 1e-12)
+      assertEqualsDouble(fixed.standardErrors(0, k), .577350269189626, 1e-12)
+      assertEqualsDouble(fixed.heterogeneity.cochranQ(0, k), 8.0, 1e-12)
+      assertEqualsDouble(fixed.heterogeneity.iSquared(0, k), .75, 1e-12)
+      assertEqualsDouble(fixed.heterogeneity.tauSquared(0, k), 0.0, 0.0)
+      assertEqualsDouble(fixed.empiricalVariance(0, k), 4.0, 1e-12)
+      assertEqualsDouble(fixed.pointwisePValues(0, k), fixedP(0, k), 1e-12 * fixedP(0, k))
+      assertEqualsDouble(pm.mean(0, k), 1.0 + k, 1e-12)
+      assertEqualsDouble(pm.heterogeneity.tauSquared(0, k), 3.0, 1e-9)
+      assertEqualsDouble(pm.standardErrors(0, k), 1.15470053837925, 1e-9)
+      assertEqualsDouble(pm.pointwisePValues(0, k), pmP(k), 1e-9)
+      // Equal variances: Q-based and tau-based I² coincide (metafor .75).
+      assertEqualsDouble(pm.heterogeneity.iSquared(0, k), .75, 1e-12)
+      assertEqualsDouble(fixed.mean(1, k), 10.0 * (1 + k), 1e-11)
+      assertEqualsDouble(fixed.standardErrors(1, k), math.sqrt(3.0), 1e-12)
+      assertEqualsDouble(fixed.heterogeneity.cochranQ(1, k), 800.0 / 9, 1e-10)
+      assertEqualsDouble(fixed.heterogeneity.iSquared(1, k), .9775, 1e-12)
+      assertEqualsDouble(fixed.pointwisePValues(1, k), fixedP(1, k), 1e-9 * fixedP(1, k))
+      assertEqualsDouble(pm.heterogeneity.tauSquared(1, k), 391.0, 1e-9 * 391.0)
+      assertEqualsDouble(pm.standardErrors(1, k), 11.5470053837925, 1e-8)
+      assertEqualsDouble(pm.pointwisePValues(1, k), pmP(k), 1e-9)
+    assertEquals(pm.fit.native.fits.values.head.statistic, GroupStatistic.unsafeStudentT(2))
+
+  test("I² is the Higgins-Thompson Q statistic, not metafor's tau-based PM I²"):
+    // Unequal variances (1, 4, 1): metafor rma(method = "PM") reports
+    // I² = tau²/(tau² + s²) = 3/4.5, while the summary keeps (Q - df)/Q = .75
+    // under every calculation. See metafor-crosscheck.tsv.
+    val pm = right(SubjectGroupSummary.fit(cohort(estimated = true), contract, mixed))
+    assertEqualsDouble(pm.heterogeneity.iSquared(0, 0), .75, 1e-12)
+    assert(math.abs(pm.heterogeneity.iSquared(0, 0) - 2.0 / 3) > .08)

@@ -1,6 +1,7 @@
 package scalafim.phrfcmp.exec
 
 class SchedulePolicySuite extends munit.FunSuite:
+  private val Sha = "ab" * 32
 
   private def cell(s: String): CellId = CellId.parse(s).fold(sys.error, identity)
   private def arm(s: String): ArmId = ArmId.parse(s).fold(sys.error, identity)
@@ -81,6 +82,18 @@ class SchedulePolicySuite extends munit.FunSuite:
     assertEquals(Dispatch.mustFinish(order, Set(j("A", 0), j("B", 0))), Set.empty[Job])
   }
 
+  test("M2: a resume also finishes every dispatched incomplete job, at or above the highest completed index") {
+    val cells = Vector(pilotCell("A"), pilotCell("B"))
+    val order = Dispatch.order(cells, 6)
+    def j(c: String, d: Int) = Job(cell(c), d)
+    val done = Set(j("A", 0), j("A", 1), j("A", 2), j("B", 0), j("B", 1))
+    // (B, 2) at the highest completed index and (A, 3) above it were in flight
+    val dispatched = done ++ Set(j("B", 2), j("A", 3))
+    assertEquals(Dispatch.mustFinish(order, done), Set.empty[Job], "the completed set alone cannot see them")
+    assertEquals(Dispatch.mustFinish(order, done, dispatched), Set(j("B", 2), j("A", 3)))
+    assertEquals(Dispatch.mustFinish(order, done, done), Set.empty[Job], "a completed job is never finished again")
+  }
+
   test("D < 15 refuses a partial pilot; D = 15 is accepted with df 14") {
     val bad = completed("A" -> (0 until 20), "B" -> (0 until 14))
     assertEquals(PartialPilot.decide(bad), Left(PilotRefusal.TooFewDatasets(14, 15)))
@@ -156,3 +169,37 @@ class SchedulePolicySuite extends munit.FunSuite:
     assertEquals(a.firstDifference(PilotStamp(Vector("git_sha" -> "abc", "java_version" -> "17"))), Some("java_version"))
     assertEquals(a.firstDifference(a), None)
   }
+
+  test("review 4: the hard ceiling is at most 60 core-hours unless the owner's typed authorization raises it") {
+    assertEquals(CpuGuard().hardCoreHours, 60.0)
+    intercept[IllegalArgumentException](CpuGuard(45.0, 61.0))
+    intercept[IllegalArgumentException](CpuGuard(45.0, Double.PositiveInfinity))
+    assertEquals(CpuGuard(1.0, 60.0).check(60.0 * 3600), CpuGuard.State.HardStop)
+    assert(OwnerCeilingRaise.of(60.0, "owner", "no raise", Sha, 1).isLeft, "a raise must exceed 60")
+    assert(OwnerCeilingRaise.of(Double.NaN, "owner", "r", Sha, 1).isLeft)
+    assert(OwnerCeilingRaise.of(70.0, "", "r", Sha, 1).isLeft, "an approver is required")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "  ", Sha, 1).isLeft, "a reason is required")
+    val raise = OwnerCeilingRaise.of(70.0, "owner-bb", "crash late in the pilot", Sha, 1).fold(sys.error, identity)
+    val g = CpuGuard.raised(45.0, raise)
+    assertEquals((g.hardCoreHours, g.raise), (70.0, Some(raise)))
+    assertEquals(g.check(65.0 * 3600), CpuGuard.State.SoftStop)
+    assertEquals(g.check(70.0 * 3600), CpuGuard.State.HardStop)
+  }
+
+  test("re-review 6: OwnerCeilingRaise and OwnerAccountingRecovery hold their invariants; no generated constructor bypasses them") {
+    assert(OwnerCeilingRaise.of(Double.PositiveInfinity, "owner", "r", Sha, 1).isLeft, "an infinite ceiling is refused")
+    assert(OwnerCeilingRaise.of(1e6, "owner", "r", Sha, 1).isLeft, "a ceiling above the sane cap is refused")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "r", Sha, 0).isLeft, "the authorized invocation is 1-based")
+    assert(OwnerCeilingRaise.of(70.0, "owner", "r", "not-a-hash", 1).isLeft, "the output is named by a SHA-256")
+    assert(OwnerCeilingRaise.of(OwnerCeilingRaise.MaxRaisedCoreHours, "owner", "r", Sha, 1).isRight, "the cap itself is allowed")
+    assert(compileErrors("summon[scala.deriving.Mirror.ProductOf[OwnerCeilingRaise]]").nonEmpty, "no Mirror, so no fromProduct")
+    assert(compileErrors("""OwnerCeilingRaise(1e9, "", "", 1)""").nonEmpty, "no public apply")
+    assert(compileErrors("""new OwnerCeilingRaise(1e9, "", "", 1)""").nonEmpty, "no public constructor")
+    assert(compileErrors("summon[scala.deriving.Mirror.ProductOf[CpuGuard]]").nonEmpty)
+    assert(compileErrors("summon[scala.deriving.Mirror.ProductOf[OwnerAccountingRecovery]]").nonEmpty)
+    assert(OwnerAccountingRecovery.of("abc", -1.0, "owner", "r").isLeft)
+    assert(OwnerAccountingRecovery.of("../x", 1.0, "owner", "r").isLeft)
+    assert(OwnerAccountingRecovery.of("abc", 1.0, "owner", " ").isLeft)
+    assert(OwnerAccountingRecovery.of("abc", 1.0, "owner", "power loss").isRight)
+  }
+

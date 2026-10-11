@@ -114,7 +114,47 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
     assert(result.projection.values.valueAt(VertexId(1)).get.isNaN)
     assert(result.projection.values.valueAt(VertexId(2)).get.isNaN)
     assertEquals(result.projection.receipt.tally, SurfaceSampleTally(3, 1, 0, 1, 1))
-    assertEquals((0 until 3).map(i => result.projection.quality.valueAt(VertexId(i)).get).toVector, Vector(true, true, false))
+    // A non-finite texel is not an observation, so vertex 1 does not qualify.
+    assertEquals((0 until 3).map(i => result.projection.quality.valueAt(VertexId(i)).get).toVector, Vector(true, false, false))
+    assertEquals((0 until 3).map(i => result.projection.sampleCounts.valueAt(VertexId(i)).get).toVector, Vector(1, 0, 0))
+    assertEquals((0 until 3).map(i => result.projection.nonFiniteCounts.valueAt(VertexId(i)).get).toVector, Vector(0, 1, 0))
+    assertEquals(result.projection.receipt.vertexTally, SurfaceVertexTally(vertices = 3, qualified = 1, nonFiniteOnly = 1, insufficient = 1))
+    val cpu = SurfaceVolumeProjection.materialize(
+      morphism(Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(3.0, 0.0, 0.0))), input
+    )
+    (0 until 3).foreach: i =>
+      val id = VertexId(i)
+      assertEquals(result.projection.quality.valueAt(id), cpu.quality.valueAt(id))
+      assertEquals(result.projection.sampleCounts.valueAt(id), cpu.sampleCounts.valueAt(id))
+      assertEquals(result.projection.nonFiniteCounts.valueAt(id), cpu.nonFiniteCounts.valueAt(id))
+    assertEquals(result.projection.receipt.vertexTally, cpu.receipt.vertexTally)
+
+  test("GPU refuses finite volume values that float32 cannot represent instead of dropping them"):
+    // 1e300 is a finite observation on the CPU path but would upload as an infinite texel.
+    val data = PrimitiveBuffers.tabulate[Double](24): ordinal =>
+      if ordinal == space.gridToIndex3D(1, 0, 0) then 1e300 else 0.0
+    val input = SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "float32-overflow")
+    val points = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0))
+    val cpu = SurfaceVolumeProjection.materialize(morphism(points), input)
+    assertEquals(cpu.quality.valueAt(VertexId(1)), Some(true))
+    ThreeVolumeProjector.project(textureRuntime(), js.Dynamic.literal(), morphism(points), input) match
+      case Left(ThreeSurfaceError.InvalidPlan(reason)) => assert(reason.contains("float32"), reason)
+      case other => fail(s"expected a float32 range refusal; got $other")
+
+  test("GPU and CPU fill a NaN-only vertex identically"):
+    val data = PrimitiveBuffers.tabulate[Double](24): ordinal =>
+      if ordinal == space.gridToIndex3D(1, 0, 0) then Double.NaN else 7.0
+    val input = SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "nan")
+    val points = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0))
+    val policy = SurfaceProjectionPolicy(fill = SurfaceProjectionFill.constant(-1.0).toOption.get)
+    val gpu = ThreeVolumeProjector.project(textureRuntime(), js.Dynamic.literal(), morphism(points), input, policy)
+      .fold(error => fail(error.message), identity)
+    val cpu = SurfaceVolumeProjection.materialize(morphism(points), input, policy)
+    (0 until 3).foreach: i =>
+      val id = VertexId(i)
+      assertEquals(gpu.projection.values.valueAt(id), cpu.values.valueAt(id))
+      assertEquals(gpu.projection.quality.valueAt(id), cpu.quality.valueAt(id))
+    assertEquals(gpu.projection.values.valueAt(VertexId(1)), Some(-1.0))
 
   test("GPU nearest transport rejects far-outside coordinates before narrowing indices"):
     val result = project(Vector(Vector(4294967296.0, 0.0, 0.0), Vector(-4294967296.0, 1.0, 0.0), Vector(2.0, 0.0, 1.0)))

@@ -1,0 +1,28 @@
+{
+  "format": "phrf-decoded-diagnostic/1",
+  "source": "9ba2c57f+checkpoint",
+  "qualification": "not-admitted",
+  "geometry": "B0Dense",
+  "voxels": 4,
+  "trials": 1200,
+  "workersRequested": 1,
+  "criterion": "PenalizedProfile(1.0)",
+  "readout": "ExactShape",
+  "java": "21.0.12.1+1-LTS",
+  "os": "Mac OS X",
+  "arch": "aarch64",
+  "decodeBudget": "DecodeBudget(2,2,2,6,Vector(),0.0,4,1.0E-9)",
+  "nodesPerAxis": 2,
+  "budgetProfile": "baseline",
+  "compilation": "BlockedPartial(96)",
+  "limitations": [
+    "original-family certification unavailable",
+    "no measured engine peak",
+    "single diagnostic run, no warmup",
+    "no scientific calibration",
+    "input block recycled"
+  ],
+  "failure": "java.lang.IllegalArgumentException: convolved term output requires 7200000.0 cells; sampled convolution permits at most 4000004",
+  "totalSeconds": 0.820485166,
+  "heapUsedAtEndBytes": 3031489512
+}

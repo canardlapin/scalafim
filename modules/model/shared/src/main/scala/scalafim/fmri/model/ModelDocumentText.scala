@@ -126,7 +126,7 @@ object ModelDocumentText:
       case other => Left(ModelTextError(None, s"strategy ${other.engine} has no portable text form"))
 
   private def autocorrelation(ar: AutocorrelationConfig): ArgValue =
-    call("ar",
+    call("ar", (Vector(
       "order" -> int(ar.order.value), "iterations" -> int(ar.iterations), "global" -> bool(ar.global),
       "voxelwise" -> bool(ar.voxelwise), "exact_first" -> bool(ar.exactFirst),
       "censored" -> vector(ar.censoredTimepoints.values.map(int)),
@@ -138,7 +138,8 @@ object ModelDocumentText:
       "bias" -> (ar.biasCorrection match
         case ArBiasCorrection.Raw => call("raw")
         case ArBiasCorrection.OlsDesign(ceiling) => call("ols_design", "ceiling" -> int(ceiling.value))
-      ))
+        case ArBiasCorrection.OlsTailAnchored(maxLag) => call("ols_tail_anchored", "max_lag" -> int(maxLag.value))
+      )) ++ (if ar.initialization == ArInitialization.Stationary then Vector("initialization" -> text("stationary")) else Vector.empty) ++ (if ar.censorTreatment == ArCensorTreatment.EstimateOnly then Vector("censor_treatment" -> text("estimate_only")) else Vector.empty))*)
 
   private def controlArgs(controls: FitControls): Vector[(String, ArgValue)] =
     val weights = controls.volumeWeighting match
@@ -365,7 +366,7 @@ object ModelDocumentText:
 
   private def readAutocorrelation(value: ArgValue): Read[AutocorrelationConfig] =
     for
-      args <- named(value, Set("order", "iterations", "global", "voxelwise", "exact_first", "censored", "coefficients", "bias"))
+      args <- named(value, Set("order", "iterations", "global", "voxelwise", "exact_first", "censored", "coefficients", "bias"), Set("initialization", "censor_treatment"))
       _ <- if args.fun == "ar" then Right(()) else Left(s"expected ar(...), got ${args.fun}")
       order <- args.integer("order")
       iterations <- args.integer("iterations")
@@ -383,8 +384,11 @@ object ModelDocumentText:
       bias <- fun(biasValue) match
         case "raw" => named(biasValue, Set.empty).map(_ => ArBiasCorrection.Raw)
         case "ols_design" => named(biasValue, Set("ceiling")).flatMap(_.integer("ceiling")).flatMap(c => ArBiasCorrection.olsDesign(c).left.map(_.message))
+        case "ols_tail_anchored" => named(biasValue, Set("max_lag")).flatMap(_.integer("max_lag")).flatMap(c => ArBiasCorrection.olsTailAnchored(c).left.map(_.message))
         case other => Left(s"unknown AR bias correction '$other'")
-      config <- AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, bias).left.map(_.message)
+      initialization <- if args.args.contains("initialization") then args.choice("initialization", ArInitialization.values).map(Some(_)) else Right(None)
+      censorTreatment <- if args.args.contains("censor_treatment") then args.choice("censor_treatment", ArCensorTreatment.values) else Right(ArCensorTreatment.RestartWhitening)
+      config <- AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, bias, initialization, censorTreatment).left.map(_.message)
     yield config
 
   private def readWeights(value: ArgValue): Read[ModelVolumeWeighting] =

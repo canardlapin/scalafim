@@ -20,7 +20,7 @@ cross-compiled sbt build.
 - `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
-- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, affine/dense-field spatial morphisms, statistics, clustering, and image IO.
+- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, world-space frame identity and toolkit coordinate conventions, provider-backed (image4s/reframe4s) resampling, statistics, clustering, and image IO.
 - `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
 - `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
@@ -86,7 +86,11 @@ neuroimaging integrations.
 
 Nonlinear registration and the experimental HalfFlow engine now live in
 standalone [`reframe4s`](https://github.com/canardlapin/reframe4s). ScalaFIM
-does not retain a registration module or depend on reframe4s.
+does not retain a registration module. Its `image` and `transform` modules
+consume the reframe4s `lie`, `field` and `resample` capabilities (generic
+spatial maps, dense fields, numerical inverses and resampling execution)
+through an immutable source revision; the HalfFlow and registration modules
+are not dependencies. `provider-spike` composes `lie` and `resample` directly.
 
 Renderer-neutral graphics, plotting, and the SVG/Canvas/Java2D/JavaFX backends
 live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).
@@ -113,20 +117,27 @@ spectral algorithms now live in standalone
 revision and keeps only neuroimaging-specific numerical policy and adapters; it
 does not retain local `linalg` or Breeze-adapter modules.
 
-An ordinary build loads both libraries from their pinned GitHub revisions. To
-test coordinated changes in sibling checkouts, select those checkouts
-explicitly:
+An ordinary build loads every standalone provider from its pinned GitHub
+revision. To test coordinated changes in sibling checkouts, select those
+checkouts explicitly:
 
 ```sh
 sbt \
   -Dscalafim.alder.build=../alder \
   -Dscalafim.gale.build=../gale \
   -Dscalafim.graph4s.build=../graph4s \
+  -Dscalafim.image4s.build=../image4s \
   -Dscalafim.linop4s.build=../linop4s \
   -Dscalafim.locus4s.build=../locus4s \
+  -Dscalafim.reframe4s.build=../reframe4s \
   -Dscalafim.resample4s.build=../resample4s \
   scalafimCompileAll
 ```
+
+`build.sbt` also honours `scalafim.ravel.build`, `scalafim.multivar.build`,
+`scalafim.intaglio.build`, `scalafim.bids4s.build` and `scalafim.zarr4s.build`.
+An image4s override is forwarded to a local reframe4s checkout; with the pinned
+reframe4s URI, reframe4s loads its own image4s pin.
 
 The override applies only to that sbt process. Removing the properties restores
 the immutable GitHub source dependencies.
@@ -234,6 +245,8 @@ sbt surfaceViewJavafxJVM/test
 sbt surfaceViewThreeJS/test
 sbt surfaceViewConnectivityJVM/test
 sbt surfaceViewConnectivityJS/test
+sbt transformJVM/test
+sbt transformJS/test
 sbt spatialJVM/test
 sbt spatialJS/test
 sbt atlasJVM/test

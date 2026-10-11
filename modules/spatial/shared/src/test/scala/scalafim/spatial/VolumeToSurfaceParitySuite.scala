@@ -176,3 +176,24 @@ class VolumeToSurfaceParitySuite extends munit.FunSuite:
         assertEquals(weights.values.length, expectedColumns.length)
         weights.values.foreach(value => assertEqualsDouble(value, 1.0, 0.0))
         assertEqualsDouble(weights.coverage, if expectedIndex.isDefined then 1.0 else 0.0, 0.0)
+
+  // N3: a finite world point whose inverse-affine image overflows to infinity
+  // (0.25 mm voxels scale 1e308 by 4) is outside the grid, never an exception.
+  private val fineSpace = SampleSpaces(Vector(3, 4, 5), spacing = Some(Vector(0.25, 0.25, 0.25)))
+  private val overflowPoints = Vector(
+    Vector(1.0e308, 0.0, 0.0), Vector(0.0, -1.0e308, 0.0), Vector(0.0, 0.0, Double.MaxValue)
+  )
+
+  test("nearest and trilinear spatial weights reject world points whose voxel image overflows"):
+    for point <- overflowPoints; sampling <- Vector(SamplingPolicy.Nearest, SamplingPolicy.Trilinear) do
+      val weights = VolumeToSurfaceOperatorCompiler.sourcePointWeights(
+        GridSpec.fromSpace(fineSpace), None, SpatialPoint(point(0), point(1), point(2)), sampling
+      )
+      assertEquals(weights.cols, Vector.empty, s"$sampling $point")
+      assertEqualsDouble(weights.coverage, 0.0, 0.0)
+
+  test("eager nearest sampling rejects world points whose voxel image overflows"):
+    val surfaces = pair(overflowPoints :+ Vector(0.0, 0.0, 0.0))
+    val eager = VolumeSurfaceSampler.sample(volume(fineSpace), surfaces, SurfaceSamplingPath.White)
+    assertEquals((0 until 4).map(i => eager.sampleCounts.valueAt(VertexId(i)).get).toVector, Vector(0, 0, 0, 1))
+    assertEquals(eager.tally, SurfaceSampleTally(4, 3, 0, 0, 1))

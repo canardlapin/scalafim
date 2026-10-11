@@ -6,9 +6,15 @@ import java.nio.file.{Files, Path}
 import scalafim.phrfcmp.run.GlmSingleEnv
 
 /** The frozen pilot cell table: cells, their arms, and the dataset counts. Part of the stamp (design 5.2, 5.3). */
+object PilotPlan:
+  /** A sane bound, so that `maxRetries + 1` attempts never overflows anywhere (third review L3). */
+  val MaxRetries: Int = 100
+
 final case class PilotPlan(cells: Vector[PilotCell], datasets: Int, probeDatasets: Int = 2, minDatasets: Int = PartialPilot.MinDatasets, maxRetries: Int = 2):
   require(cells.nonEmpty && cells.map(_.id).distinct.length == cells.length, "cells must be non-empty and distinct")
   require(datasets >= 1 && probeDatasets >= 1 && minDatasets >= 2 && maxRetries >= 0, "positive plan sizes")
+  require(maxRetries <= PilotPlan.MaxRetries, s"at most ${PilotPlan.MaxRetries} retries")
+  require(datasets <= SealedNames.MaxDatasets, s"at most ${SealedNames.MaxDatasets} datasets (4-digit dNNNN names)")
 
   /** Canonical rendering, hashed into the stamp. */
   def canonical: String =

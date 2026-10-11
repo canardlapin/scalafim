@@ -1,0 +1,67 @@
+{
+  "schema": "scalafim-ar-reference-delta-audit/v1",
+  "date": "2026-10-09",
+  "purpose": "Observed semantic differences; no scientific admission or production change",
+  "scalafim_assessed_head": "4756c99c0965f3a026ea3a1ab6e94171c98056ea",
+  "scalafim_probe_head": "a7ec63cff22b1368eaec30bc451b6227f32f6497",
+  "ar_sources_identical_between_heads": true,
+  "old_fmriar_revision": "ca27f2772bb4675573fae717a992c993c2f986c8",
+  "new_fmriar_revision": "de42cd9dc3e290d0653c5145749c27e03085f7d6",
+  "r_runtime": "R 4.3.3; isolated fmriAR 0.4.1 installation",
+  "old_reference_method": "Sourced locked 0.3.3 R estimators with unchanged Yule-Walker/PACF exports from the isolated 0.4.1 library. Old whitening not called. Scala legacy-estimator comparisons pass at 1e-10 (bias solve at 1e-8).",
+  "gates": {
+    "upstream_regression_cases": 39,
+    "upstream_assertions_passed": 180,
+    "upstream_failures": 0,
+    "jvm_observation_tests_passed": 10,
+    "js_observation_tests_passed": 10,
+    "max_platform_observation_difference": 4.440892098500626e-16
+  },
+  "limits": [
+    "Targeted observations, not a Monte Carlo inference qualification",
+    "R runtime differs from the locked R 4.5.1 fixture-regeneration environment",
+    "No reference locks or historical qualification receipts changed",
+    "Single selected bias realization demonstrates semantic change, not an RMSE estimate",
+    "Higher-order stationary start-up is exact within segments; cross-gap covariance remains a separate problem",
+    "Initial scratch constructor compile error and subsequent empty-discovery attempt are retained; neither counted as a passed gate"
+  ],
+  "source_sha256": {
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/AcvfBias.scala": "96b967274b8a6bd688d07ad5ad6d6e568454d525fa3e03d40bc2b0b23c05fc93",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala": "22b213a29ed09040c4cc50280ce1fac38ab3d404a816d61ad5dd4ddcee7e960d",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala": "396883b0bc52ad32e7abf6b7ca826c33f7ccb61967bf40d0821bbc0381fa553c",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArTypes.scala": "823008c26887a377caf5ad942fc1d2ebb2787b949e132ac1e7d1fc2d85b46a0b",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArmaCoefficients.scala": "27cd8a2ea07604bb50451a91b4deb437c6b79fbb93a7482a2d4fc13679cbfc39",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/AutocorrelationDiagnostics.scala": "2cc0d0ede9d57c4f0d763cacaa0f9c79a8bf27a0ff9a34ba062c26f672f13681",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/EstimationPolicy.scala": "f7345550f6372cd975f9b9d29ff80157b8a3ca3097146e47ead99d5c41316a5e",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/NoiseAcvf.scala": "fce25d4d5c346816adc65a5eb92a78c1ed616f1cfff86bc206e65adca82aeed2",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/NoiseFit.scala": "55a0f8899b3da861d65e3cff51d3ca13dde4c8f5ee248f34e1b4043eb07d53d0",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/Pacf.scala": "989d59094625b872d26590590064dfc4b48b641d35ce8e4a29f206a76524dafc",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/TimeSegment.scala": "9ae256fc11b44fbc1ae2f8ad6ea544616138df40533c9703bf8cde08127e9baf",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala": "a0d887e7cf81dce3541fa8af34c5bf511542a0c146217a761f0b2d111649ee49"
+  },
+  "files": {
+    "FmriArRecentChangesProbeSuite.scala.gz": "754636cdfdd74d942d696163cd3b78dfcc93d6d2e084e8bbca6a44a09a9e5474",
+    "fmriar-install.log.gz": "625b9ef32a3fb72835284f4f2e4094e63adf0496aa5ff87fade4155a585c1c87",
+    "generate-probes.R": "f84e6cb6ab18f84d6815f8b13f408ad76e27a23c8793a86979fe27c05d6ebf03",
+    "generate-scala-probe.py": "d0d86f8786f8cf17deaf34c5c3bdbb383cf2c0b5e357fff5ca51bf6ff65f9e87",
+    "inputs.json.gz": "8682894200cbdf00d0e5fc93435f16e2e4a2f7eb2c5a885255de076d7516093d",
+    "observations.json": "b93d692942a10aa158ace47a42a7b0709e10c0d90f27bde3da7bd694fd3f699b",
+    "reference-probes.log.gz": "8bec16f80371901d348b496a220fce978ad714ff1e1065bdd8d571db38b55330",
+    "scala-probes.log.gz": "21f22d860ca899ee1d9c4b4a536e62fe41bb07beea46963f27ed4466e37bc71b",
+    "scratch-constructor-error.log.gz": "4c552e696d85524efcbb6f2a3299568a77d93bc431f54b6f3c729b5c18596e8e",
+    "scratch-empty-discovery.log.gz": "9250dbd2ec049b7f22b93615bdf1c2fdbdabb68f8365ad39b77b49c5b8c7a8f1",
+    "upstream-regressions.log.gz": "2a1a525df879ab4001100c85f147fad036c68c1fed443b5f4b5df41a2f1286ac"
+  },
+  "replay": {
+    "inputs_regenerated_byte_identically": true,
+    "scala_probe_regenerated_byte_identically": true,
+    "reference_generation": "Rscript generate-probes.R <isolated-0.4.1-library> <locked-0.3.3-source-root> <inputs.json>",
+    "scala_generation": "python3 generate-scala-probe.py <inputs.json> <scratch-source-directory>",
+    "probe_suite": "scalafim.fmri.ar.FmriArRecentChangesProbeSuite",
+    "probe_commands": [
+      "arJVM/testOnly scalafim.fmri.ar.FmriArRecentChangesProbeSuite",
+      "arJS/testOnly scalafim.fmri.ar.FmriArRecentChangesProbeSuite"
+    ],
+    "probe_installation": "Place the decoded scratch suite in an isolated worktree shared AR test directory for these commands, then remove it. These assertions observe historical behavior, not a desired permanent CI contract."
+  }
+}
