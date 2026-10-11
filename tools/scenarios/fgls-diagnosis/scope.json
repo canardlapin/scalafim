@@ -1,0 +1,23 @@
+{
+  "schema": "scalafim-fgls-retained-diagnosis/v1",
+  "role": "Exploratory deterministic diagnosis of previously observed records; no fresh confirmation or admission",
+  "original_study": "docs/verification/fgls-run-varying-20261011/confirmation",
+  "root": 1499711011,
+  "domain": 22,
+  "groups": [0, 1, 2, 3, 4],
+  "replicates": 2048,
+  "exported_replicates": [0, 1, 1024, 2047],
+  "voxels": [0, 1],
+  "steps": [
+    "Check known-GLS sign symmetry about the exact planted coefficients and invariance to arbitrary censored values on JVM and JS",
+    "Export actual design, truth, run layout, censor rows and fixed retained noise inputs on both platforms",
+    "Independently reconstruct the exact retained Park-Miller/Box-Muller streams and continuous AR recurrence in R",
+    "Fit retained rows by dense stationary-covariance GLS independently of Scala whitening, compare all known-control estimates, reported variances, test probabilities and decisions against both platforms",
+    "Decompose the observed coefficient mean through the deterministic GLS linear weights and time-indexed ensemble innovation means",
+    "Inspect the affine seed schedule and uniform-state progression across the retained ensemble; do not replace seeds or redefine passing criteria",
+    "Describe candidate/control paired coverage and variance differences as observed diagnostics without claiming a causal estimator repair",
+    "Propose a separately versioned protocol addressing demonstrated defects and remaining coverage limitations"
+  ],
+  "numeric_tolerance": 1e-8,
+  "prohibitions": ["No changed original source or records", "No replacement or new confirmation seeds", "No retrospective admission", "No outcome-driven estimator tuning"]
+}
