@@ -304,7 +304,8 @@ private[laws] object FglsVoxelwiseStudy:
         val baseline = BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.None)
         val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("fgls-integration-replay"), data, SampleSpaces(Vector(data.cols, 1, 1))), frame)
         for
-          ar <- AutocorrelationConfig(order = spec.order, voxelwise = true, initialization = Some(ArInitialization.Stationary),
+          ar <- AutocorrelationConfig(order = spec.order, voxelwise = true,
+            initialization = Some(if spec.censor == CensorContinuity.ContinuousMissing then ArInitialization.Stationary else ArInitialization.ExactAr1),
             censoredTimepoints = cell.base.censorRows, biasCorrection = ArBiasCorrection.olsDesign(ceiling).toOption.get,
             censorTreatment = if spec.censor == CensorContinuity.ContinuousMissing then ArCensorTreatment.ContinuousMissing else ArCensorTreatment.RestartWhitening,
             fgls = Some(VoxelwiseFglsOptions(scope, spec.uncertainty))).left.map(_.message)
