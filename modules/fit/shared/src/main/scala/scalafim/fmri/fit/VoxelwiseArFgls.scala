@@ -34,6 +34,18 @@ enum CensorContinuity:
 type VoxelArScope = scalafim.fmri.model.VoxelArScope
 val VoxelArScope = scalafim.fmri.model.VoxelArScope
 
+/** Fixed retention of a run's own AR estimate; the remainder shrinks to the
+  * length-weighted voxel mean. It is declared before observing study outcomes.
+  */
+opaque type RunArRetention = Double
+object RunArRetention:
+  def apply(value: Double): Either[FitError, RunArRetention] =
+    if value.isFinite && value >= 0.0 && value <= 1.0 then Right(value)
+    else Left(FitError.UnsupportedAutocorrelation("run AR retention must be finite in [0,1]"))
+  def unsafe(value: Double): RunArRetention =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+  extension (retention: RunArRetention) def value: Double = retention
+
 /** Source of the AR coefficients used to whiten each voxel. */
 enum VoxelArCoefficients:
   /** Known coefficients, one vector per run: a control whose only estimated covariance parameter is the scale. */
@@ -41,6 +53,13 @@ enum VoxelArCoefficients:
 
   /** Per-voxel estimates from the one-pass OLS residual-bias-corrected Yule-Walker estimator. */
   case Estimated(scope: VoxelArScope, correctionCeiling: Int)
+
+  /** Experimental run-varying AR(2): linear shrinkage of run-local corrected
+    * estimates toward their length-weighted mean within the same voxel.
+    * KR uses the corresponding linear transform of parameter covariance.
+    * Scientific admission requires the prospective run-varying protocol.
+    */
+  case RunShrunk(retention: RunArRetention, correctionCeiling: Int)
 
 /** How inference treats the estimated noise covariance.
   *
@@ -70,6 +89,9 @@ final case class VoxelwiseArSpec(
         "known AR coefficients must match the order for every run"
       )
     case VoxelArCoefficients.Estimated(_, ceiling) =>
+      require(ceiling >= 1, "AR residual-bias correction ceiling must be positive")
+    case VoxelArCoefficients.RunShrunk(_, ceiling) =>
+      require(order == 2, "experimental run shrinkage is restricted to AR(2)")
       require(ceiling >= 1, "AR residual-bias correction ceiling must be positive")
 
 object VoxelwiseArSpec:
@@ -156,7 +178,7 @@ object VoxelwiseArFgls:
           if initial.diagnostics.fullRank then Right(())
           else Left(FitError.UnsupportedAutocorrelation("voxelwise AR FGLS requires a full-rank augmented design"))
         residuals = Gls.residualMatrix(augmented, response, initial.coefficients.value)
-        coefficientSets <- coefficientsByVoxel(augmented, residuals, layout, runs.length, spec)
+        coefficientSets <- coefficientsByVoxel(augmented, residuals, layout, runs, spec)
         voxels <- traverse(coefficientSets.indices.toVector) { voxel =>
           val (phi, corrections) = coefficientSets(voxel)
           fitVoxel(augmented, design.cols, column(response, voxel), segments, phi, corrections, spec)
@@ -167,14 +189,23 @@ object VoxelwiseArFgls:
       design: DMat,
       residuals: DMat,
       layout: NoiseEstimationLayout,
-      runCount: Int,
+      runs: Vector[TimeSegment],
       spec: VoxelwiseArSpec
   ): Either[FitError, Vector[(Vector[Vector[Double]], Vector[RunCorrection])]] =
+    val runCount = runs.length
     spec.coefficients match
       case VoxelArCoefficients.Known(phiByRun) =>
         if phiByRun.length != runCount then
           Left(FitError.UnsupportedAutocorrelation(s"known AR coefficients cover ${phiByRun.length} of $runCount runs"))
         else Right(Vector.fill(residuals.cols)((phiByRun, Vector.empty)))
+      case VoxelArCoefficients.RunShrunk(retention, ceiling) =>
+        coefficientsByVoxel(design, residuals, layout, runs,
+          spec.copy(coefficients = VoxelArCoefficients.Estimated(VoxelArScope.PerRun, ceiling))).map: estimates =>
+          val total = runs.map(_.length).sum.toDouble
+          estimates.map: (phi, corrections) =>
+            val mean = Vector.tabulate(spec.order)(lag => runs.indices.map(r => runs(r).length * phi(r)(lag)).sum / total)
+            val shrunk = phi.map(run => run.indices.map(lag => retention.value * run(lag) + (1.0 - retention.value) * mean(lag)).toVector)
+            (shrunk, corrections)
       case VoxelArCoefficients.Estimated(scope, ceiling) =>
         val options = ArFitOptions(
           order = ArOrder.Fixed(spec.order),
@@ -478,7 +509,13 @@ private[fit] object KenwardRoger:
             information(j + 1, i + 1) = information(i + 1, j + 1)
             j += 1
           i += 1
-        VoxelwiseArFgls.symmetricInverse(information.result()).flatMap { w =>
+        VoxelwiseArFgls.symmetricInverse(information.result()).flatMap { rawCovariance =>
+          val w = spec.coefficients match
+            case VoxelArCoefficients.RunShrunk(retention, _) =>
+              val lengths = Vector.tabulate(model.runCount)(r => runBounds(model, r)._2)
+              val jacobian = runShrinkageJacobian(lengths, model.order, retention)
+              jacobian * rawCovariance * jacobian.t
+            case _ => rawCovariance
           val zz = z.t * z
           val pScale = scale(zz, -1.0 / (sigma2 * sigma2))
           val pTerms = pScale +: sz.map(t => scale(z.t * t, 1.0 / sigma2))
@@ -552,13 +589,27 @@ private[fit] object KenwardRoger:
       Left(FitError.UnsupportedAutocorrelation(s"Kenward-Roger moments are degenerate: A2=$a2 df=$df scale=$scaleValue"))
     else Right(scaleValue -> df)
 
+  /** Exact Jacobian of the declared linear shrinkage, including unchanged scale.
+    * Applying it to working REML information is a first-order approximation for
+    * the corrected Yule–Walker estimator; it does not remove shrinkage bias.
+    */
+  private[fit] def runShrinkageJacobian(lengths: Vector[Int], order: Int, retention: RunArRetention): DMat =
+    val total = lengths.sum.toDouble
+    Matrix.tabulate(1 + lengths.length * order, 1 + lengths.length * order): (i, j) =>
+      if i == 0 || j == 0 then if i == j then 1.0 else 0.0
+      else
+        val row = i - 1
+        val col = j - 1
+        if row % order != col % order then 0.0
+        else (if row == col then retention.value else 0.0) + (1.0 - retention.value) * lengths(col / order) / total
+
   /** One estimated coefficient: `phi(run)(lag)`, shared by `runs`. */
   private final case class Parameter(runs: Vector[Int], lag: Int)
 
   private def estimatedParameters(model: ArWhiteningModel, spec: VoxelwiseArSpec): Vector[Parameter] =
     spec.coefficients match
       case VoxelArCoefficients.Known(_) => Vector.empty
-      case VoxelArCoefficients.Estimated(VoxelArScope.PerRun, _) =>
+      case VoxelArCoefficients.Estimated(VoxelArScope.PerRun, _) | VoxelArCoefficients.RunShrunk(_, _) =>
         for
           run <- (0 until model.runCount).toVector
           lag <- 0 until model.order

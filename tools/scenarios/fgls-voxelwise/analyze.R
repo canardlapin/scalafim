@@ -86,7 +86,7 @@ for (cell in cells) {
 }
 admission <- vapply(protocol$cells, function(c) if (c$role == "admission") c$id else NA_character_, "")
 admission <- admission[!is.na(admission)]
-candidates <- c("run-continuous-conditional", "run-continuous-kr", "pooled-continuous-conditional", "pooled-continuous-kr")
+candidates <- if (!is.null(protocol$candidate_engines)) unlist(protocol$candidate_engines) else c("run-continuous-conditional", "run-continuous-kr", "pooled-continuous-conditional", "pooled-continuous-kr")
 score <- sapply(candidates, function(e) sum(sapply(results, function(r) if (r$engine == e && r$cell %in% admission) r$passed else 0)))
 selected <- candidates[which.max(score)] # ties resolve to the declared order
 summary <- list(profile = unique(d$profile), records = records, failures = data$failures, results = results, paired = paired,
