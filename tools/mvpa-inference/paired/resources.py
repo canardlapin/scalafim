@@ -71,9 +71,13 @@ def monitor(root,command,env,log,limits,deadline,other_root):
             now=time.monotonic()
             own=owned_jvms(root)
             if owned_jvms(other_root): violation='other-provider-resident'
-            if len(own)>1: violation='multiple-owned-JVMs'
+            servers={pid:rss for pid,rss in own.items() if '--rt-ext-dir' not in _commands.get(pid,'').split()}
+            if len(servers)>1: violation='multiple-owned-JVMs'
+            if sum(own.values())>limits['rss_bytes']: violation='rss-limit'
             for pid,rss in own.items():
-                samples.append(dict(seconds=now-start,pid=pid,rss_bytes=rss));seen.add(pid)
+                helper='--rt-ext-dir' in _commands.get(pid,'').split()
+                samples.append(dict(seconds=now-start,pid=pid,rss_bytes=rss,startup_helper=helper))
+                if not helper: seen.add(pid)
                 if str(pid) not in commands:
                     commands[str(pid)]=_commands.get(pid,'unknown')
                 if rss>limits['rss_bytes']: violation='rss-limit'
@@ -103,4 +107,4 @@ def monitor(root,command,env,log,limits,deadline,other_root):
     return dict(command=command,worker_exit=code,elapsed_seconds=time.monotonic()-start,
         resource_refusal=violation,peak_rss_bytes=max((s['rss_bytes'] for s in samples),default=0),
         samples=samples,effective_jvm_flags=flags,process_commands=commands,
-        scope='Owned resident JVM, sampled from launch by unique global-base identity every 0.2s, including startup; not an instantaneous memory bound. Thin client and R generation recorded separately.')
+        scope='Owned JVMs sampled from launch by unique global-base identity every 0.2s, including startup. Aggregate sampled RSS is capped. The sbt --rt-ext-dir discovery helper is recorded and counted for memory, but is not a numerical worker lifetime. One resident numerical JVM, 3 GiB effective heap. Not an instantaneous memory bound. Thin client and R generation recorded separately.')
