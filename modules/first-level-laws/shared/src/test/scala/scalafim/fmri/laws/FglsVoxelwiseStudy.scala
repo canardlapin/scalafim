@@ -7,6 +7,7 @@ import scalafim.fmri.fit.{
   CensorContinuity,
   CovarianceUncertainty,
   VoxelArCoefficients,
+  RunArRetention,
   VoxelArScope,
   VoxelwiseArFgls,
   VoxelwiseArSpec,
@@ -16,12 +17,20 @@ import scalafim.fmri.fit.{
 }
 import ujson.{Arr, Bool, Null, Num, Obj, Str, Value}
 
-private[laws] enum FglsStudyProfile(val label: String, val replicates: Int, val domain: Int):
+private[laws] enum FglsStudyProfile(val label: String, private val ordinaryReplicates: Int, private val ordinaryDomain: Int):
   case Pilot extends FglsStudyProfile("pilot", 8, 10)
   case Development extends FglsStudyProfile("development", 1024, 11)
   case Confirmation extends FglsStudyProfile("confirmation", 2048, 12)
 
+  def replicates: Int =
+    if FglsStudyProfile.runShrinkage && this == Development then 512 else ordinaryReplicates
+  def domain: Int = ordinaryDomain + (if FglsStudyProfile.runShrinkage then 10 else 0)
+
 private[laws] object FglsStudyProfile:
+  val runShrinkage: Boolean = LawEnvironment.get("SCALAFIM_FGLS_PROTOCOL") match
+    case None => false
+    case Some("run-shrinkage-v1") => true
+    case Some(other) => throw new IllegalArgumentException(s"unknown FGLS protocol: $other")
   val current: FglsStudyProfile = LawEnvironment.get("SCALAFIM_FGLS_STUDY_PROFILE") match
     case None | Some("pilot") => Pilot
     case Some("development")  => Development
@@ -51,6 +60,10 @@ private[laws] enum FglsEngine(val label: String):
   case PooledContinuousConditional extends FglsEngine("pooled-continuous-conditional")
   case PooledContinuousKr extends FglsEngine("pooled-continuous-kr")
   case PooledRestartConditional extends FglsEngine("pooled-restart-conditional")
+  case RunShrink075Kr extends FglsEngine("run-shrink-075-kr")
+  case RunShrink050Kr extends FglsEngine("run-shrink-050-kr")
+
+  def runShrinkage: Boolean = this == RunShrink075Kr || this == RunShrink050Kr
 
   def existing: Boolean = this == ExistingKnown || this == ExistingVoxelwise
 
@@ -151,7 +164,9 @@ private[laws] object FglsVoxelwiseStudy:
 
   /** Engines selected by `SCALAFIM_FGLS_ENGINES` (comma-separated labels), or all of them. */
   val selectedEngines: Vector[FglsEngine] = LawEnvironment.get("SCALAFIM_FGLS_ENGINES") match
-    case None      => FglsEngine.values.toVector
+    case None =>
+      FglsEngine.values.toVector.filter(e =>
+        if FglsStudyProfile.runShrinkage then e.runShrinkage || e == FglsEngine.KnownContinuous else !e.runShrinkage)
     case Some(raw) =>
       raw.split(',').toVector.map(_.trim).filter(_.nonEmpty).map { label =>
         FglsEngine.values
@@ -224,6 +239,10 @@ private[laws] object FglsVoxelwiseStudy:
         estimated(VoxelArScope.AcrossRuns, CensorContinuity.ContinuousMissing, CovarianceUncertainty.Conditional)
       case FglsEngine.PooledContinuousKr =>
         estimated(VoxelArScope.AcrossRuns, CensorContinuity.ContinuousMissing, CovarianceUncertainty.KenwardRoger)
+      case FglsEngine.RunShrink075Kr | FglsEngine.RunShrink050Kr =>
+        val retention = if engine == FglsEngine.RunShrink075Kr then 0.75 else 0.5
+        VoxelwiseArSpec(2, VoxelArCoefficients.RunShrunk(RunArRetention.unsafe(retention), 25),
+          CensorContinuity.ContinuousMissing, CovarianceUncertainty.KenwardRoger)
       case FglsEngine.PooledRestartConditional =>
         estimated(VoxelArScope.AcrossRuns, CensorContinuity.RestartAfterCensor, CovarianceUncertainty.Conditional)
       case other => throw new IllegalArgumentException(s"${other.label} is measured by the existing executor")
