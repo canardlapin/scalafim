@@ -36,6 +36,31 @@ class FglsVoxelwiseStudySuite extends munit.FunSuite:
 
   private val profile = FglsStudyProfile.current
 
+  test("FitPlan replay preserves the complete study design without adding baseline columns"):
+    import gale.linalg.Matrix
+    import scalafim.fmri.ar.TimeSegments
+    import scalafim.fmri.fit.*
+    val cell = study.cells.head
+    val response = study.response(cell, study.noise(cell, study.seed(FglsStudyProfile.Pilot, cell.group, 0)))
+    val column = Matrix.tabulate(response.rows, 1)((i, _) => response(i, 0))
+    val spec = VoxelwiseArSpec(
+      2,
+      VoxelArCoefficients.Estimated(VoxelArScope.AcrossRuns, 25),
+      CensorContinuity.ContinuousMissing,
+      CovarianceUncertainty.KenwardRoger
+    )
+    val planned = study.fitPlanCandidate(cell, column, spec).fold(fail(_), identity).voxels.head
+    val direct = VoxelwiseArFgls
+      .fit(cell.base.design, column, TimeSegments.fromRunLengths(cell.base.runLengths), cell.base.censorRows, spec)
+      .fold(e => fail(e.message), identity)
+      .voxels
+      .head
+    assertEquals(planned.coefficients.length, cell.base.design.cols)
+    assertEquals(planned.phiByRun, direct.phiByRun)
+    planned.coefficients.zip(direct.coefficients).foreach((a, b) => assertEqualsDouble(a, b, 1e-10))
+    for i <- 0 until cell.base.design.cols; j <- 0 until cell.base.design.cols do
+      assertEqualsDouble(planned.adjustedCovariance(i, j), direct.adjustedCovariance(i, j), 1e-10)
+
   if LawEnvironment.get("SCALAFIM_FGLS_STUDY_PROFILE").isDefined then
     study.cells.foreach { cell =>
       test(s"FGLS voxelwise ${profile.label}: ${cell.id}"):
