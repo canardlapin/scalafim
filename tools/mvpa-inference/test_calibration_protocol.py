@@ -7,7 +7,7 @@ from pathlib import Path
 
 from calibration_protocol import (
     ProtocolError, child_seed, dataset_count, protocol_seed, proposal,
-    seed_record, summarize, validate_manifest, validate_rank_record, validate_metric_bindings,
+    seed_record, summarize, validate_manifest, validate_rank_record, validate_rank_provenance, validate_metric_bindings,
 )
 
 
@@ -28,7 +28,28 @@ class CalibrationProtocolTests(unittest.TestCase):
                "raw_reject": [False, True, True, True], "closed_reject": [False]*4, "reject": [False]*4,
                "declared_population_null": [False, False, True, True],
                "actual_conditional_null": [False, False, True, True]}
+        resampling = child_seed(int(row["root_seed64"]), [(103, 1)])
+        row.update(source_commit="a" * 40, source_lock_sha256="b" * 64, case_input_sha256="c" * 64,
+                   provenance_version=1, seed_receipts_verified=True, observed_statistics=[1.0, 2.0, 3.0, 4.0],
+                   rank_method="canonical-rank-gaussian-interlacing-wilks/v1",
+                   receipt_algorithm="gaussian-canonical-interlacing-splitmix64-boxmuller52/v1",
+                   receipt_seed64=[str(child_seed(resampling, [(1011, k)])) for k in range(4)])
         return cell, row
+
+    def test_rank_records_reject_unbound_or_mismatched_provenance(self):
+        _, row = self.rank_case()
+        for field in ("source_commit", "source_lock_sha256", "case_input_sha256", "receipt_seed64",
+                      "receipt_algorithm", "seed_receipts_verified"):
+            broken = copy.deepcopy(row)
+            broken.pop(field)
+            with self.subTest(field=field), self.assertRaises(ProtocolError):
+                validate_rank_record(broken)
+        with self.assertRaises(ProtocolError):
+            validate_rank_provenance(row, {"case_input_sha256": "d" * 64})
+        validate_rank_provenance(row, {"source_lock_sha256": "b" * 64, "case_input_sha256": "c" * 64})
+        row["receipt_seed64"].reverse()
+        with self.assertRaises(ProtocolError):
+            validate_rank_record(row)
 
     def test_raw_stage_and_closed_decisions_remain_distinct(self):
         cell, row = self.rank_case()

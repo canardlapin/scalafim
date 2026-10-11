@@ -196,6 +196,8 @@ object AnalysisProvenance:
                 statuses.update(voxelIndex, status)
             patterned.voxelIndices.map: voxelIndex =>
               VoxelFitStatusRecord(voxelIndex, statuses(voxelIndex))
+          case fgls: VoxelwiseArFmriFitResult =>
+            fgls.voxelIndices.map(VoxelFitStatusRecord(_, VoxelFitStatus.Estimable))
           case _: LssFmriFitResult =>
             Vector.empty
       val records = retained ++ result.fitExclusions.map(_.statusRecord)

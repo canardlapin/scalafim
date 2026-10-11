@@ -1,0 +1,16 @@
+"cell","engine","n","tRej","fRej","cov","vratio","vlo","rmse","white","df","passed","all"
+"ar2-high-censored-short","known-continuous",512,30,26,486,0.97,0.8828,0,0.0968,216,10,FALSE
+"ar2-high-censored-short","run-shrink-075-kr",512,31,33,481,0.9175,0.8358,0.0949,0.0845,37.5,7,FALSE
+"ar2-high-censored-short","run-shrink-050-kr",512,33,35,482,0.9225,0.8391,0.0849,0.0847,37.4,8,FALSE
+"ar2-high-censored-long","known-continuous",512,26,22,485,1.0632,0.9565,0,0.0626,449,10,FALSE
+"ar2-high-censored-long","run-shrink-075-kr",512,25,23,485,1.0318,0.9283,0.0622,0.0499,82.5,10,FALSE
+"ar2-high-censored-long","run-shrink-050-kr",512,23,24,483,1.0343,0.9299,0.0557,0.0508,82.6,10,FALSE
+"ar2-high-complete-short","known-continuous",512,29,14,484,1.0204,0.9289,0,0.0932,224,10,FALSE
+"ar2-high-complete-short","run-shrink-075-kr",512,29,23,482,0.9698,0.8782,0.0908,0.0813,37.5,11,TRUE
+"ar2-high-complete-short","run-shrink-050-kr",512,31,25,483,0.9665,0.8764,0.0815,0.0816,37.4,10,FALSE
+"ar2-high-censored-short-voxel-heterogeneous","known-continuous",512,36,34,485,0.8811,0.7918,0,0.0968,216,8,FALSE
+"ar2-high-censored-short-voxel-heterogeneous","run-shrink-075-kr",512,39,40,484,0.8247,0.7397,0.0952,0.0847,37.6,8,FALSE
+"ar2-high-censored-short-voxel-heterogeneous","run-shrink-050-kr",512,37,40,483,0.8263,0.7408,0.0851,0.085,37.5,8,FALSE
+"ar2-high-censored-short-run-heterogeneous","known-continuous",512,21,25,488,1.0567,0.9618,0,0.0967,216,11,TRUE
+"ar2-high-censored-short-run-heterogeneous","run-shrink-075-kr",512,24,43,487,0.9901,0.8978,0.0985,0.0855,36.9,10,FALSE
+"ar2-high-censored-short-run-heterogeneous","run-shrink-050-kr",512,26,45,484,0.9829,0.8916,0.101,0.0895,36.6,9,FALSE

@@ -24,7 +24,7 @@ W_build <- function(phis, restart) { W <- matrix(0, n, n); q <- length(phis[[1]]
       if (l < q) { for (j in 0:l) W[t + 1, a + j + 1] <- B[l + 1, j + 1] }
       else { W[t + 1, t + 1] <- 1; for (k in 1:q) W[t + 1, t - k + 1] <- -ph[k] } } }
   W }
-generic_kr <- function(Xd, vinv, th) {
+generic_kr <- function(Xd, vinv, th, parameter_transform = NULL) {
   k <- length(th); h <- 1e-4 * pmax(abs(th), 0.05); V0i <- vinv(th); V <- solve(V0i)
   D <- lapply(1:k, function(i) { e <- numeric(k); e[i] <- h[i]; (vinv(th + e) - vinv(th - e)) / (2 * h[i]) })
   D2 <- matrix(list(), k, k)
@@ -35,7 +35,9 @@ generic_kr <- function(Xd, vinv, th) {
   PV <- V0i - V0i %*% Xd %*% Phi %*% t(Xd) %*% V0i
   G <- lapply(D, function(Di) PV %*% (-(V %*% Di %*% V)))
   I <- matrix(0, k, k); for (i in 1:k) for (j in 1:k) I[i, j] <- 0.5 * sum(G[[i]] * t(G[[j]]))
-  Wt <- solve(I); U <- 0
+  Wt <- solve(I)
+  if (!is.null(parameter_transform)) Wt <- parameter_transform %*% Wt %*% t(parameter_transform)
+  U <- 0
   for (i in 1:k) for (j in 1:k) { R <- Q[[i, j]] + Q[[j, i]] - t(Xd) %*% D2[[i, j]] %*% Xd
     U <- U + Wt[i, j] * (Q[[i, j]] - P[[i]] %*% Phi %*% P[[j]] - 0.25 * R) }
   list(Phi = Phi, PhiA = Phi + 2 * Phi %*% U %*% Phi, P = P, W = Wt)

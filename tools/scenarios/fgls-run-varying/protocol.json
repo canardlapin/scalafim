@@ -1,0 +1,158 @@
+{
+  "schema_version": "scalafim-fgls-run-varying-protocol/v1",
+  "mote": "bd-01M4K6KEPYEMP9XHFT2J0WCYEE",
+  "declaration_label": "scalafim-fgls-run-shrinkage-20261011",
+  "declared_before_outcomes": "No development or confirmation outcome from these streams has been generated. Prior 2026-10-10 outcomes motivated shrinkage; their failures remain binding.",
+  "parent_protocol_sha256": "10e57f6ae511d0ece1084ed12f60725aeb724abe2749bf10360551bf32d5b28c",
+  "seed": 1499711011,
+  "seed_derivation": "(root + domain*10000019 + (group+1)*1000003 + replicate*7919) mod 2147483646 + 1; Park-Miller 48271/2147483647 uniforms, Box-Muller Gaussians, voxel-major columns, 256 burn-in draws per run",
+  "seed_collision_check": {
+    "prior_roots": [
+      1310161010,
+      1149777122,
+      973860617
+    ],
+    "new_domains": [
+      20,
+      21,
+      22,
+      23
+    ],
+    "groups": 5,
+    "replicates_checked": 2048,
+    "overlap": 0,
+    "new_unique": 40960
+  },
+  "profiles": {
+    "pilot": {
+      "domain": 20,
+      "replicates": 8,
+      "role": "runtime and JVM/JS parity only"
+    },
+    "development": {
+      "domain": 21,
+      "replicates": 512,
+      "role": "candidate selection on JVM; no admission"
+    },
+    "confirmation": {
+      "domain": 22,
+      "replicates": 2048,
+      "role": "one frozen candidate, all five cells, JVM and JS"
+    },
+    "bootstrap": {
+      "domain": 23,
+      "resamples": 1999
+    }
+  },
+  "cells": [
+    {
+      "id": "ar2-high-censored-short",
+      "group": 0,
+      "truth": "homogeneous phi=(0.45,-0.10)",
+      "runs": [
+        96,
+        144
+      ],
+      "censored": true,
+      "role": "admission"
+    },
+    {
+      "id": "ar2-high-censored-long",
+      "group": 1,
+      "truth": "homogeneous phi=(0.45,-0.10)",
+      "runs": [
+        192,
+        288
+      ],
+      "censored": true,
+      "role": "admission"
+    },
+    {
+      "id": "ar2-high-complete-short",
+      "group": 2,
+      "truth": "homogeneous phi=(0.45,-0.10)",
+      "runs": [
+        96,
+        144
+      ],
+      "censored": false,
+      "role": "admission"
+    },
+    {
+      "id": "ar2-high-censored-short-voxel-heterogeneous",
+      "group": 3,
+      "truth": "voxel phi (0.60,-0.20), (0.20,0.05), (0.45,-0.10), (0.30,0.10); same in both runs",
+      "runs": [
+        96,
+        144
+      ],
+      "censored": true,
+      "role": "admission"
+    },
+    {
+      "id": "ar2-high-censored-short-run-heterogeneous",
+      "group": 4,
+      "truth": "run phi (0.30,0.05) then (0.55,-0.15); same for every voxel",
+      "runs": [
+        96,
+        144
+      ],
+      "censored": true,
+      "role": "admission"
+    }
+  ],
+  "design": "Unchanged corrected-GLS study design: two SPMG1 task epochs, run intercepts and six run-local DCT terms per run (16 columns), censor rows 23,24,60 then every 37 from 97 per run; voxel 0 null, voxel 1 task_a=0.75. Noise is continuous within each run; censoring never changes the generator.",
+  "estimator": "One-pass OLS-design-corrected AR(2) per run, then phi_r(lambda) = lambda * phi_r + (1-lambda) * sum_s(n_s * phi_s) / sum_s n_s. Weights n_s are full run lengths fixed by the design. No spatial pooling, response-dependent weight fitting, clipping, rescue, or retry.",
+  "uncertainty": "Experimental KR working inference: use per-run AR covariance derivatives. Apply A W A-transpose to the inverse expected REML information W, with identity on the scale and A_(r,l),(s,k) = indicator(l=k) * (lambda*indicator(r=s)+(1-lambda)*n_s/sum(n)). This is a first-order working approximation; shrinkage bias and finite-sample coverage are not assumed qualified.",
+  "candidate_engines": [
+    "run-shrink-075-kr",
+    "run-shrink-050-kr"
+  ],
+  "engines": {
+    "known-continuous": "VoxelwiseArFgls Known(true phi per voxel/run), ContinuousMissing, Conditional",
+    "run-shrink-075-kr": "Run-shrunk lambda=0.75, correction ceiling 25, continuous missing covariance, transformed KR information",
+    "run-shrink-050-kr": "Run-shrunk lambda=0.50, correction ceiling 25, continuous missing covariance, transformed KR information"
+  },
+  "decisions": "Candidate engines use p-values from the portable F upper tail with the reported numerator/denominator df (KR: scaled statistic and KR df). Existing engines keep the original fixed t/F critical values. Coverage is acceptance of H0 task_a=0.75 for voxel 1 at alpha 0.05.",
+  "acceptance": {
+    "source": "original corrected-GLS margins, unchanged",
+    "alpha": 0.05,
+    "null_rejection_interval": [
+      0.02,
+      0.08
+    ],
+    "coverage_interval": [
+      0.92,
+      0.98
+    ],
+    "equivalence_interval_confidence": 0.9,
+    "interval_method": "exact Clopper-Pearson",
+    "AR_RMSE_max": 0.1,
+    "AR_mean_bias_interval": [
+      -0.04,
+      0.04
+    ],
+    "AR_mean_bias_rule": "|bias| + qt(0.95, n-1) * sd/sqrt(n) <= 0.04 for each lag",
+    "whiteness_mean_abs_max": 0.1,
+    "whiteness_excess_over_known_max": 0.025,
+    "whiteness_comparator": "known-continuous for candidate engines",
+    "variance_ratio_interval": [
+      0.8,
+      1.2
+    ],
+    "variance_ratio_rule": "90% percentile dataset-bootstrap interval of mean reported null variance / empirical null-estimate variance",
+    "standardized_effect_bias_interval": [
+      -0.1,
+      0.1
+    ],
+    "no_drop": true,
+    "no_refusals": true
+  },
+  "candidate_selection": "After development only, select the eligible candidate passing the largest total number of the eleven unchanged criteria across all five admission cells; ties choose lambda=0.75 (less shrinkage). Eligibility requires complete records and no refusals. Commit the chosen engine and source hashes before confirmation. If neither is eligible, retain the failures and do not consume confirmation.",
+  "confirmation_decision": "Scientific pass requires every original criterion in every one of the five cells on both platforms and identical t/F/coverage decisions. No changed margins, cells, selective omissions, reruns with new seeds, or post-confirmation parameter tuning. A failure keeps the Mote scientifically open.",
+  "scope_limits": [
+    "Experimental estimator; not exposed as a qualified FitPlan policy by this work.",
+    "No iterative/robust, arbitrary-order, spatial-pooling, or broader heterogeneity claim.",
+    "Previously observed streams and receipts are preserved and are not fresh confirmation evidence."
+  ]
+}

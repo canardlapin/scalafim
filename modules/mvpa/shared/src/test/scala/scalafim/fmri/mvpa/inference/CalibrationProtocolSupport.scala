@@ -28,12 +28,12 @@ object CalibrationProtocolSupport:
   ):
     val rawReject: Vector[Boolean] = raw.map(_ <= .05)
     val closedReject: Vector[Boolean] = closed.map(_ <= .05)
-    def jsonFields: String =
+    def jsonFields(provenance: RankRecordProvenance.Verified): String =
       ",\"record_schema\":2,\"p_value_scope\":\"closed-sequential\"" +
         ",\"raw_p_values\":[" + raw.mkString(",") + "],\"closed_p_values\":[" + closed.mkString(",") +
         "],\"raw_reject\":[" + rawReject.mkString(",") + "],\"closed_reject\":[" + closedReject.mkString(",") +
         "],\"raw_exceedances\":[" + exceedances.mkString(",") + "],\"p_values\":[" + closed.mkString(",") +
-        "],\"reject\":[" + closedReject.mkString(",") + "]"
+        "],\"reject\":[" + closedReject.mkString(",") + "]" + provenance.jsonFields
 
   def rankMetrics(raw: Vector[Double], closed: Vector[Double], exceedances: Vector[Int], draws: Int): Either[String, RankMetrics] =
     if draws <= 0 || raw.isEmpty || raw.size != closed.size || raw.size != exceedances.size then
@@ -80,8 +80,9 @@ object CalibrationProtocolSupport:
 
   final case class Case(
       phase: String, scenario: String, ordinal: Int, rootSeed: Long, draws: Int,
-      x: DMat, y: DMat, nuisance: DMat, populationCorrelations: Vector[Double]
-  )
+      x: DMat, y: DMat, nuisance: DMat, populationCorrelations: Vector[Double], inputSha256: String
+  ):
+    require(inputSha256.matches("[0-9a-f]{64}"), "case input requires an exact SHA-256 identity")
 
   /** Independent generated TSV input; raw values are shared with the external oracle. */
   def readCase(text: String, streamNamespace: String = namespace): Either[String, Case] =
@@ -121,6 +122,6 @@ object CalibrationProtocolSupport:
             else if phase == "pilot" && draws != 199 then Left("pilot B must be 199")
             else if draws <= 0 || correlations.size != math.min(x.cols, y.cols) || correlations.exists(v => !v.isFinite || v < 0.0 || v >= 1.0) then
               Left("invalid rank truth/reference count")
-            else Right(Case(phase, scenario, ordinal, root, draws, x, y, z, correlations))
+            else Right(Case(phase, scenario, ordinal, root, draws, x, y, z, correlations, CalibrationPlatform.sha256Utf8(text)))
         catch case error: NumberFormatException => Left(error.toString)
     yield out

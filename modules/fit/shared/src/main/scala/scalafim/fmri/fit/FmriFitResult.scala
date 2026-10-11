@@ -175,6 +175,27 @@ sealed trait FmriFitResult:
   def fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
   def voxels: Int = voxelIndices.length
 
+/** Voxelwise covariance inference retains the contrast-specific KR scale and df.
+  * Use `fit.voxels(position).test(contrast, hypothesis)` for a Wald test.
+  */
+final case class VoxelwiseArFmriFitResult(
+    fit: VoxelwiseArFit,
+    columnNames: Vector[String],
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    summary: FitSummary,
+    override val coefficientAxis: Option[CoefficientAxis] = None,
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
+) extends FmriFitResult:
+  val engine: FitEngine = FitEngine.GeneralizedLeastSquares
+  require(fit.voxels.nonEmpty && fit.voxels.length == voxelIndices.length, "FGLS voxel axis must match fits")
+  require(voxelIndices.distinct == voxelIndices, "FGLS voxel axis must be unique")
+  require(timepoints.nonEmpty, "FGLS requires a time axis")
+  require(fit.voxels.forall(_.predictors == columnNames.length), "FGLS predictor axis must match fits")
+  require(coefficientAxis.forall(_.predictors == columnNames.length), "FGLS structural axis must match fits")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "voxelwise FGLS result")
+
 final case class DenseFmriFitResult(
     coefficients: CoefficientBlock,
     inference: CoefficientInference,
@@ -658,6 +679,8 @@ private[fit] object FmriFitResults:
   ): Either[FitError, FmriFitResult] =
     VoxelInferenceExclusions.combine(ordered, result.fitExclusions).map { combined =>
       result match
+        case fgls: VoxelwiseArFmriFitResult =>
+          fgls.copy(fitExclusions = combined)
         case dense: DenseFmriFitResult =>
           dense.copy(fitExclusions = combined)
         case lss: LssFmriFitResult =>

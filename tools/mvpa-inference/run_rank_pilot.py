@@ -7,6 +7,7 @@ append to one immutable campaign stream, then are copied to per-cell receipts.
 """
 import argparse
 import gzip
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -15,7 +16,7 @@ import subprocess
 import tarfile
 import time
 
-from calibration_protocol import canonical, file_locks, seed_record, summarize, validate_manifest
+from calibration_protocol import canonical, file_locks, seed_record, summarize, validate_manifest, validate_rank_provenance
 from run_calibration import write_once
 
 
@@ -107,6 +108,10 @@ def main():
                OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', VECLIB_MAXIMUM_THREADS='1')
     env.pop('SCALAFIM_CALIBRATION_CASE_FILE', None)
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+    source_lock = scratch / 'source-lock.json'
+    source_lock.write_text(json.dumps(manifest['source_locks'], sort_keys=True, indent=2) + '\n')
+    env.update(SCALAFIM_CALIBRATION_SOURCE_COMMIT=commit, SCALAFIM_CALIBRATION_SOURCE_LOCK=str(source_lock),
+               SCALAFIM_CALIBRATION_SOURCE_ROOT=str(root))
     command = ['python3', 'tools/build/sbt-warm',
                'mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankConfirmationSuite']
     started = time.monotonic()
@@ -161,6 +166,14 @@ def main():
                 with gzip.open(destination/'records.jsonl.gz','xb') as out:
                     out.write(raw)
                 rows = [json.loads(line) for line in raw.splitlines()]
+                for row in rows:
+                    if row.get('status') == 'evaluated':
+                        ordinal = row['dataset_index']
+                        validate_rank_provenance(row, {
+                            'source_commit': commit,
+                            'source_lock_sha256': hashlib.sha256(source_lock.read_bytes()).hexdigest(),
+                            'case_input_sha256': hashlib.sha256(paths[ordinal].read_bytes()).hexdigest(),
+                        })
                 summary = summarize(cell,'pilot',rows)
                 write_once(destination/'summary.json',summary)
                 validate_manifest(manifest, root, 'pilot')

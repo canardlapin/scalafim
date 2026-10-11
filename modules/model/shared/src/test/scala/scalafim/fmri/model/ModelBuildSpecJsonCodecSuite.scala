@@ -29,7 +29,7 @@ class ModelBuildSpecJsonCodecSuite extends munit.FunSuite:
     assert(ModelBuildSpecJsonCodec.encode(spec.copy(strategy = FitStrategy.GeneralizedLeastSquares(controls = FitControls(missingData = MissingDataPolicy.ExcludeVoxel)))).isLeft)
     val json = ModelBuildSpecJsonCodec.encode(spec).toOption.get
     assert(ModelBuildSpecJsonCodec.decode(json.dropRight(1) + ",\"unknown\":1}").isLeft)
-    assert(ModelBuildSpecJsonCodec.decode(json.replace("\"version\":1", "\"version\":2")).isLeft)
+    assert(ModelBuildSpecJsonCodec.decode(json.replace("\"version\":1", "\"version\":99")).isLeft)
 
   test("portable AR(1) and AR(2) GLS strategies preserve every declared parameter"):
     val ar1 = AutocorrelationConfig.unsafe(
@@ -137,3 +137,34 @@ class ModelBuildSpecJsonCodecSuite extends munit.FunSuite:
     assertEquals(ModelBuildSpecJsonCodec.decode(json.replace(""""id":"m"""", """"id":" m"""")).swap.toOption.map(_.path), Some("$.contrastSets.effects[0].value.id"))
     assertEquals(ModelBuildSpecJsonCodec.encode(spec.copy(contrastSets = Map("effects" -> ContrastSpec.ContrastSet(Vector(ContrastSpec.Mask("", Vector(true))))))).swap.toOption.map(_.path),
       Some("$.contrastSets.effects[0].value.id"))
+
+  test("voxelwise FGLS has a versioned golden policy and refuses downgrade or ambiguous censoring"):
+    val ar = AutocorrelationConfig.unsafe(
+      order = 2, voxelwise = true, initialization = Some(ArInitialization.Stationary),
+      censoredTimepoints = Vector(5, 33), biasCorrection = ArBiasCorrection.olsDesign(25).toOption.get,
+      censorTreatment = ArCensorTreatment.ContinuousMissing,
+      fgls = Some(VoxelwiseFglsOptions(VoxelArScope.AcrossRuns, CovarianceUncertainty.KenwardRoger))
+    )
+    val golden = """{"order":2,"iterations":1,"global":false,"voxelwise":true,"exactFirst":true,"censoredTimepoints":[5,33],"coefficients":{"kind":"estimate"},"censorTreatment":"ContinuousMissing","initialization":"Stationary","fgls":{"scope":"AcrossRuns","uncertainty":"KenwardRoger"},"biasCorrection":{"kind":"ols-design","ceiling":25}}"""
+    assertEquals(ModelBuildSpecJsonCodec.autocorrelation(ar, "$.ar").map(ujson.write(_)), Right(golden))
+    val spec = ModelBuildSpec("onset ~ trialwise()", strategy = FitStrategy.GeneralizedLeastSquares(ar))
+    val json = roundTrip(spec)
+    assertEquals(ujson.read(json)("version").num, 2.0)
+    assert(ModelBuildSpecJsonCodec.decode(json.replace("\"version\":2", "\"version\":1")).isLeft)
+    assert(ModelBuildSpecJsonCodec.decode(json.replace("KenwardRoger", "unknown")).isLeft)
+    assert(ModelBuildSpecJsonCodec.decode(json.replace("ContinuousMissing", "EstimateOnly")).isLeft)
+    val document = ModelDocument(spec)
+    val encoded = ModelDocumentJsonCodec.encode(document).toOption.get
+    assertEquals(ModelDocumentJsonCodec.decode(encoded), Right(document))
+    assert(ModelDocumentJsonCodec.decode(encoded.replace("\"version\":2", "\"version\":1")).isLeft)
+    assertEquals(AutocorrelationConfig.fromLegacy(ar.toLegacy), Right(ar))
+    assert(AutocorrelationConfig.fromLegacy(ar.toLegacy.copy(voxelwise = false)).isLeft)
+    assert(AutocorrelationConfig.fromLegacy(ar.toLegacy.copy(fgls = None)).isLeft)
+
+  test("voxelwise FGLS restart initialization cannot silently claim a stationary factor"):
+    val policy = Some(VoxelwiseFglsOptions(VoxelArScope.AcrossRuns, CovarianceUncertainty.Conditional))
+    val correction = ArBiasCorrection.olsDesign(25).toOption.get
+    assert(AutocorrelationConfig(order = 2, voxelwise = true, biasCorrection = correction,
+      initialization = Some(ArInitialization.Stationary), fgls = policy).isLeft)
+    assert(AutocorrelationConfig(order = 2, voxelwise = true, biasCorrection = correction,
+      initialization = Some(ArInitialization.ExactAr1), fgls = policy).isRight)

@@ -66,6 +66,19 @@ sealed trait FitBlockResult:
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
   def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
 
+final case class VoxelwiseArFitBlockResult private[fit] (
+    fit: VoxelwiseArFit,
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    override val coefficientAxis: Option[CoefficientAxis],
+    override val preparationProvenance: Option[ResponsePreparationProvenance],
+    override val fitExclusions: Vector[VoxelInferenceExclusion]
+) extends FitBlockResult:
+  val engine: FitEngine = FitEngine.GeneralizedLeastSquares
+  require(fit.voxels.nonEmpty && fit.voxels.length == voxelIndices.length, "FGLS block axis must match fits")
+  require(voxelIndices.distinct == voxelIndices, "FGLS block voxel axis must be unique")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "voxelwise FGLS block")
+
 final case class DenseFitBlockResult(
     coefficients: CoefficientBlock,
     inference: CoefficientInference,

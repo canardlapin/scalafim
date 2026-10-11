@@ -170,6 +170,7 @@ object FitInterpreters:
 
   def forPlan(plan: FitPlan): Either[FitError, FitInterpreter] =
     plan.strategy match
+      case FitStrategy.GeneralizedLeastSquares(ar, _) if ar.fgls.nonEmpty => Right(VoxelwiseArInterpreter)
       case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) => Right(RunwiseGeneralizedLeastSquares)
       case _                                                => forEngine(plan.engine)
 

@@ -1,0 +1,14 @@
+{
+  "analysis-jvm.log": {
+    "uncompressed_sha256": "c56d0d1e46a0ae08c88974726e21f49a68bea3c47f8d5a24e2b73128e2db66f5",
+    "gzip_sha256": "86ca86437cac4d1308c6ec8c2a16c19c614fb45da0b3141188f4726f9d6e53ca"
+  },
+  "jvm.log": {
+    "uncompressed_sha256": "368ba6dced8952f02f14ae10cfba6073c64e20035089eb9288c60db17973dc99",
+    "gzip_sha256": "cb374f0b50d4869d324886427e716be4b639ab5154a5266ac07b30912e69a04b"
+  },
+  "records-jvm.jsonl": {
+    "uncompressed_sha256": "6489829253aff0c19359dfc834f4bb85353cbdfd16a826440fb317a860ce21a5",
+    "gzip_sha256": "e80ae454834b8707f8e5d9199b86d8d257558e9bf12bc9bee2d78aad126b9e63"
+  }
+}
