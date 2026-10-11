@@ -522,3 +522,37 @@ explicit short-memory estimation policy with observable fallback diagnostics,
 not an inference qualification. Robust fitting refuses these new GLS policies.
 The [dated calibration report](../../docs/verification/ar-correctness-followup-20261009.md)
 records the domains tested and all remaining voxelwise failures.
+
+Voxelwise FGLS is available through `FitPlanExecutor.fit` and its chunked variants
+with an explicit `AutocorrelationConfig` policy:
+
+```scala
+val ar = AutocorrelationConfig.unsafe(
+  order = 2, voxelwise = true,
+  initialization = Some(ArInitialization.Stationary),
+  biasCorrection = ArBiasCorrection.olsDesign(25).toOption.get,
+  censorTreatment = ArCensorTreatment.ContinuousMissing,
+  censoredTimepoints = censored,
+  fgls = Some(VoxelwiseFglsOptions(VoxelArScope.AcrossRuns, CovarianceUncertainty.KenwardRoger))
+)
+val plan = FitPlan(model, FitStrategy.GeneralizedLeastSquares(ar))
+```
+
+The result is `VoxelwiseArFmriFitResult`; `result.fit.voxels(position).test(L, h)`
+returns the Wald statistic, scale, numerator df and contrast-specific denominator
+df. `fitDense` refuses this result because its classical inference contract cannot
+represent those quantities. The full model time axis is required; censoring is
+specified explicitly. `ContinuousMissing` absorbs censored observations with
+indicator columns under their marginal covariance. `EstimateOnly` has a different
+meaning and is refused for this interpreter. Whole-voxel exclusion is supported.
+Weights, nuisance projection, robust fitting, runwise coefficients and per-voxel
+row omission are not supported in this opt-in path.
+
+Model-build and model-document JSON use version 2 for this policy and retain
+version 1 for earlier policies. Response-preparation AR identity is now v4,
+including every FGLS policy field. Existing GLS defaults remain unchanged.
+The qualified scope remains the four cells in the
+[voxelwise FGLS report](../../docs/verification/fgls-voxelwise-20261010/README.md):
+AR may differ across voxels but must be homogeneous across runs within a voxel
+for the qualified pooled policy. `PerRun` is available for explicit exploration;
+its short-run estimator has not met the existing scientific margins.

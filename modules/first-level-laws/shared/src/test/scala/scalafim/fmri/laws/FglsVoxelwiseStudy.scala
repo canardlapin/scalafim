@@ -9,7 +9,10 @@ import scalafim.fmri.fit.{
   VoxelArCoefficients,
   VoxelArScope,
   VoxelwiseArFgls,
-  VoxelwiseArSpec
+  VoxelwiseArSpec,
+  VoxelwiseArFit,
+  VoxelwiseArFmriFitResult,
+  FitPlanExecutor
 }
 import ujson.{Arr, Bool, Null, Num, Obj, Str, Value}
 
@@ -94,66 +97,10 @@ private[laws] final case class FglsTrial(
     "covered" -> Bool(covered)
   )
 
-/** Portable F upper tail through the regularized incomplete beta (Lentz continued fraction). */
+/** The standalone Gale implementation owns portable F tails. */
 private[laws] object FglsDistribution:
-  private val LanczosC = Array(
-    0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059,
-    12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
-  )
-
-  def logGamma(x: Double): Double =
-    if x < 0.5 then math.log(math.Pi / math.abs(math.sin(math.Pi * x))) - logGamma(1.0 - x)
-    else
-      val shifted = x - 1.0
-      var sum = LanczosC(0)
-      val t = shifted + 7.5
-      var i = 1
-      while i < 9 do
-        sum += LanczosC(i) / (shifted + i)
-        i += 1
-      0.5 * math.log(2.0 * math.Pi) + (shifted + 0.5) * math.log(t) - t + math.log(sum)
-
-  private def continuedFraction(x: Double, a: Double, b: Double): Double =
-    val tiny = 1e-300
-    var c = 1.0
-    var d = 1.0 - (a + b) * x / (a + 1.0)
-    if math.abs(d) < tiny then d = tiny
-    d = 1.0 / d
-    var h = d
-    var m = 1
-    var done = false
-    while !done && m <= 20000 do
-      val m2 = 2 * m
-      var aa = m * (b - m) * x / ((a - 1.0 + m2) * (a + m2))
-      d = 1.0 + aa * d
-      if math.abs(d) < tiny then d = tiny
-      c = 1.0 + aa / c
-      if math.abs(c) < tiny then c = tiny
-      d = 1.0 / d
-      h *= d * c
-      aa = -(a + m) * (a + b + m) * x / ((a + m2) * (a + 1.0 + m2))
-      d = 1.0 + aa * d
-      if math.abs(d) < tiny then d = tiny
-      c = 1.0 + aa / c
-      if math.abs(c) < tiny then c = tiny
-      d = 1.0 / d
-      val delta = d * c
-      h *= delta
-      if math.abs(delta - 1.0) < 1e-16 then done = true
-      m += 1
-    h
-
-  def regularizedBeta(x: Double, a: Double, b: Double): Double =
-    if x <= 0.0 then 0.0
-    else if x >= 1.0 then 1.0
-    else
-      val front = math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * math.log(x) + b * math.log1p(-x))
-      if x < (a + 1.0) / (a + b + 2.0) then front * continuedFraction(x, a, b) / a
-      else 1.0 - front * continuedFraction(1.0 - x, b, a) / b
-
-  /** `P(F(d1, d2) > f)`. */
   def fUpper(f: Double, d1: Double, d2: Double): Double =
-    if f <= 0.0 then 1.0 else regularizedBeta(d2 / (d2 + d1 * f), d2 / 2.0, d1 / 2.0)
+    gale.numeric.FDistribution(d1, d2).fold(error => throw new IllegalArgumentException(error.message), _.survival(f))
 
 private[laws] object FglsVoxelwiseStudy:
   val Phi: Vector[Double] = Vector(0.45, -0.10)
@@ -335,6 +282,40 @@ private[laws] object FglsVoxelwiseStudy:
     }
     failure.toLeft(total / count)
 
+  /** Replay the previously observed confirmation cells through the public plan
+    * route. This is integration evidence, not a new held-out scientific stream.
+    */
+  private def fitPlanCandidate(cell: FglsStudyCell, data: DMat, spec: VoxelwiseArSpec): Either[String, VoxelwiseArFit] =
+    import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
+    import scalafim.image.SampleSpaces
+    import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
+    import scalafim.fmri.design.event.EventModel
+    import scalafim.fmri.hrf.design.SamplingFrame
+    import scalafim.fmri.hrf.linalg.Mat
+    import scalafim.fmri.model.{ArBiasCorrection, ArCensorTreatment, ArInitialization, AutocorrelationConfig, FitPlan, FitStrategy, FmriModel, VoxelwiseFglsOptions}
+    spec.coefficients match
+      case VoxelArCoefficients.Estimated(scope, ceiling) =>
+        val frame = SamplingFrame(cell.base.runLengths, Vector.fill(cell.base.runLengths.length)(1.0))
+        val design = cell.base.design
+        val names = Vector.tabulate(design.cols)(i => s"x$i")
+        val events = EventModel(Vector.empty, frame,
+          Mat.fromRows(Vector.tabulate(design.rows)(i => Vector.tabulate(design.cols)(j => design(i, j)))),
+          names, names.indices.map(i => i -> (i + 1)).toVector, names.zipWithIndex.map((n, i) => n -> Vector(i)).toMap)
+        val baseline = BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.None)
+        val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("fgls-integration-replay"), data, SampleSpaces(Vector(data.cols, 1, 1))), frame)
+        for
+          ar <- AutocorrelationConfig(order = spec.order, voxelwise = true, initialization = Some(ArInitialization.Stationary),
+            censoredTimepoints = cell.base.censorRows, biasCorrection = ArBiasCorrection.olsDesign(ceiling).toOption.get,
+            censorTreatment = if spec.censor == CensorContinuity.ContinuousMissing then ArCensorTreatment.ContinuousMissing else ArCensorTreatment.RestartWhitening,
+            fgls = Some(VoxelwiseFglsOptions(scope, spec.uncertainty))).left.map(_.message)
+          plan <- FitPlan.make(FmriModel(events, baseline, dataset), FitStrategy.GeneralizedLeastSquares(ar)).left.map(_.message)
+          result <- FitPlanExecutor.fit(plan).left.map(_.message)
+          fit <- result match
+            case value: VoxelwiseArFmriFitResult => Right(value.fit)
+            case _ => Left("FitPlan did not select voxelwise FGLS")
+        yield fit
+      case _ => Left("FitPlan replay requires estimated coefficients")
+
   def measureCandidate(
       cell: FglsStudyCell,
       data: DMat,
@@ -344,11 +325,12 @@ private[laws] object FglsVoxelwiseStudy:
     val runs = TimeSegments.fromRunLengths(cell.base.runLengths)
     val fits = (0 until 4).toVector.map { voxel =>
       val column = Matrix.tabulate(data.rows, 1)((row, _) => data(row, voxel))
-      VoxelwiseArFgls
-        .fit(cell.base.design, column, runs, cell.base.censorRows, spec(cell, engine, voxel))
-        .left
-        .map(error => s"voxel $voxel: ${error.message}")
-        .map(_.voxels.head)
+      val policy = spec(cell, engine, voxel)
+      val fitted =
+        if LawEnvironment.get("SCALAFIM_FGLS_FITPLAN").contains("true") && policy.coefficients.isInstanceOf[VoxelArCoefficients.Estimated] then
+          fitPlanCandidate(cell, column, policy)
+        else VoxelwiseArFgls.fit(cell.base.design, column, runs, cell.base.censorRows, policy).left.map(_.message)
+      fitted.left.map(error => s"voxel $voxel: $error").map(_.voxels.head)
     }
     fits.collectFirst { case Left(error) => error } match
       case Some(error) => Left(error)

@@ -145,11 +145,26 @@ object RobustOptions:
   ): Either[ModelError, RobustOptions] =
     catchModelError(RobustOptions(psi, maxIterations, scaleScope, reestimateAutocorrelation))
 
-/** Both policies retain response rows. EstimateOnly keeps their continuous-run
-  * covariance while excluding the specified rows from AR lag estimation.
+/** All policies retain the time axis. EstimateOnly excludes rows only from AR
+  * estimation. ContinuousMissing additionally absorbs each censored response with
+  * an indicator column under its exact marginal continuous-run covariance.
   */
 enum ArCensorTreatment:
-  case RestartWhitening, EstimateOnly
+  case RestartWhitening, EstimateOnly, ContinuousMissing
+
+/** Rows sharing one estimated AR filter within a voxel. */
+enum VoxelArScope:
+  case PerRun, AcrossRuns
+
+/** Conditional plug-in inference or contrast-specific Kenward–Roger adjustment. */
+enum CovarianceUncertainty:
+  case Conditional, KenwardRoger
+
+/** Explicit opt-in to the one-pass, design-corrected voxelwise FGLS interpreter. */
+final case class VoxelwiseFglsOptions(
+    scope: VoxelArScope,
+    uncertainty: CovarianceUncertainty
+)
 
 enum ArInitialization:
   case Identity, ExactAr1, Stationary
@@ -169,7 +184,8 @@ final case class ArOptions(
     phi: Option[Vector[Double]] = None,
     biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
     initialization: Option[ArInitialization] = None,
-    censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
+    censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening,
+    fgls: Option[VoxelwiseFglsOptions] = None
 ):
   require(iterations >= 0, "AR iterations must be non-negative")
   require(initialization.forall(_.exactFirst == exactFirst), "AR initialization must agree with exactFirst")
@@ -199,9 +215,10 @@ object ArOptions:
       phi: Option[Vector[Double]] = None,
       biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
       initialization: Option[ArInitialization] = None,
-      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening,
+    fgls: Option[VoxelwiseFglsOptions] = None
   ): Either[ModelError, ArOptions] =
-    catchModelError(ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, biasCorrection, initialization, censorTreatment))
+    catchModelError(ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, biasCorrection, initialization, censorTreatment, fgls))
 
 final case class LssConfig(
     trialTerm: Option[String] = None,
@@ -339,7 +356,8 @@ final class AutocorrelationConfig private (
     val censoredTimepoints: CensoredTimepoints,
     val coefficients: ArCoefficientSpec,
     val biasCorrection: ArBiasCorrection,
-    val censorTreatment: ArCensorTreatment
+    val censorTreatment: ArCensorTreatment,
+    val fgls: Option[VoxelwiseFglsOptions]
 ):
   require(iterations >= 0, "AR iterations must be non-negative")
   def exactFirst: Boolean = initialization.exactFirst
@@ -354,12 +372,11 @@ final class AutocorrelationConfig private (
           initialization == that.initialization &&
           censoredTimepoints == that.censoredTimepoints &&
           coefficients == that.coefficients &&
-          biasCorrection == that.biasCorrection && censorTreatment == that.censorTreatment
+          biasCorrection == that.biasCorrection && censorTreatment == that.censorTreatment && fgls == that.fgls
       case _ => false
 
   override def hashCode(): Int =
-    (((((((31 * order.hashCode() + iterations.hashCode()) * 31 + global.hashCode()) * 31 + voxelwise.hashCode()) * 31 + initialization.ordinal.hashCode()) * 31 +
-      censoredTimepoints.hashCode()) * 31 + coefficients.hashCode()) * 31 + biasCorrection.hashCode()) * 31 + censorTreatment.ordinal.hashCode()
+    (order, iterations, global, voxelwise, initialization, censoredTimepoints, coefficients, biasCorrection, censorTreatment, fgls).hashCode()
 
   def toLegacy: ArOptions =
     val (rho, phi) = coefficients.toLegacy
@@ -374,7 +391,8 @@ final class AutocorrelationConfig private (
       phi = phi,
       biasCorrection = biasCorrection,
       initialization = if initialization == ArInitialization.Stationary then Some(initialization) else None,
-      censorTreatment = censorTreatment
+      censorTreatment = censorTreatment,
+      fgls = fgls
     )
 
   def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
@@ -394,14 +412,15 @@ object AutocorrelationConfig:
       coefficients: ArCoefficientSpec = ArCoefficientSpec.Estimate,
       biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
       initialization: Option[ArInitialization] = None,
-      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening,
+    fgls: Option[VoxelwiseFglsOptions] = None
   ): Either[ModelError, AutocorrelationConfig] =
     for
       arOrder <- ArOrder(order)
       censored <- CensoredTimepoints(censoredTimepoints)
       checkedCoefficients <- validateCoefficients(arOrder, iterations, coefficients)
       _ <- if initialization.exists(_.exactFirst != exactFirst) then Left(ModelError.InvalidParameter("AR initialization", "must agree with exactFirst")) else Right(())
-      config <- make(arOrder, iterations, global, voxelwise, initialization.getOrElse(ArInitialization.fromExactFirst(exactFirst)), censored, checkedCoefficients, biasCorrection, censorTreatment)
+      config <- make(arOrder, iterations, global, voxelwise, initialization.getOrElse(ArInitialization.fromExactFirst(exactFirst)), censored, checkedCoefficients, biasCorrection, censorTreatment, fgls)
     yield config
 
   def withInitialization(
@@ -413,9 +432,10 @@ object AutocorrelationConfig:
       censoredTimepoints: Vector[Int] = Vector.empty,
       coefficients: ArCoefficientSpec = ArCoefficientSpec.Estimate,
       biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
-      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening,
+    fgls: Option[VoxelwiseFglsOptions] = None
   ): Either[ModelError, AutocorrelationConfig] =
-    apply(order, iterations, global, voxelwise, initialization.exactFirst, censoredTimepoints, coefficients, biasCorrection, Some(initialization), censorTreatment)
+    apply(order, iterations, global, voxelwise, initialization.exactFirst, censoredTimepoints, coefficients, biasCorrection, Some(initialization), censorTreatment, fgls)
 
   def fromLegacy(options: ArOptions): Either[ModelError, AutocorrelationConfig] =
     options.structure match
@@ -439,7 +459,8 @@ object AutocorrelationConfig:
           coefficients = coefficients,
           biasCorrection = options.biasCorrection,
           initialization = options.initialization,
-          censorTreatment = options.censorTreatment
+          censorTreatment = options.censorTreatment,
+          fgls = options.fgls
         )
 
   def unsafe(
@@ -452,9 +473,10 @@ object AutocorrelationConfig:
       coefficients: ArCoefficientSpec = ArCoefficientSpec.Estimate,
       biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw,
       initialization: Option[ArInitialization] = None,
-      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening
+      censorTreatment: ArCensorTreatment = ArCensorTreatment.RestartWhitening,
+    fgls: Option[VoxelwiseFglsOptions] = None
   ): AutocorrelationConfig =
-    apply(order, iterations, global, voxelwise, exactFirst, censoredTimepoints, coefficients, biasCorrection, initialization, censorTreatment)
+    apply(order, iterations, global, voxelwise, exactFirst, censoredTimepoints, coefficients, biasCorrection, initialization, censorTreatment, fgls)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def make(
@@ -466,7 +488,8 @@ object AutocorrelationConfig:
       censoredTimepoints: CensoredTimepoints,
       coefficients: ArCoefficientSpec,
       biasCorrection: ArBiasCorrection,
-      censorTreatment: ArCensorTreatment
+      censorTreatment: ArCensorTreatment,
+      fgls: Option[VoxelwiseFglsOptions]
   ): Either[ModelError, AutocorrelationConfig] =
     if iterations < 0 then Left(ModelError.InvalidParameter("AR iterations", "must be non-negative"))
     else if global && voxelwise then Left(ModelError.InvalidParameter("AR pooling", "global and voxelwise estimation cannot both be enabled"))
@@ -476,7 +499,13 @@ object AutocorrelationConfig:
       Left(ModelError.InvalidParameter("AR iterations", "fixed coefficients cannot be re-estimated"))
     else if biasCorrection != ArBiasCorrection.Raw && (iterations != 1 || coefficients != ArCoefficientSpec.Estimate) then
       Left(ModelError.InvalidParameter("AR residual-bias correction", "requires one OLS estimation pass and estimated coefficients"))
-    else Right(new AutocorrelationConfig(order, iterations, global, voxelwise, initialization, censoredTimepoints, coefficients, biasCorrection, censorTreatment))
+    else if censorTreatment == ArCensorTreatment.ContinuousMissing && fgls.isEmpty then
+      Left(ModelError.InvalidParameter("AR censor treatment", "ContinuousMissing requires the voxelwise FGLS policy"))
+    else if fgls.nonEmpty && (!voxelwise || global || iterations != 1 || coefficients != ArCoefficientSpec.Estimate ||
+        initialization != ArInitialization.Stationary || !biasCorrection.isInstanceOf[ArBiasCorrection.OlsDesign] ||
+        censorTreatment == ArCensorTreatment.EstimateOnly) then
+      Left(ModelError.InvalidParameter("voxelwise FGLS", "requires voxelwise one-pass estimated AR, stationary initialization, OlsDesign correction, and restart or continuous-missing censoring"))
+    else Right(new AutocorrelationConfig(order, iterations, global, voxelwise, initialization, censoredTimepoints, coefficients, biasCorrection, censorTreatment, fgls))
 
   private def validateCoefficients(
       order: ArOrder,
@@ -1234,7 +1263,10 @@ enum FitStrategy:
 
   def validateFor(model: FmriModel): Either[ModelError, Unit] =
     val nTimepoints = model.nTimepoints
-    this match
+    if config.autocorrelation.fgls.nonEmpty && (!this.isInstanceOf[FitStrategy.GeneralizedLeastSquares] ||
+        config.missingData == MissingDataPolicy.OmitRowsPerVoxel) then
+      Left(ModelError.InvalidFitConfig(engine, "voxelwise FGLS requires shared-coefficient GLS and a complete selected time axis"))
+    else this match
       case OrdinaryLeastSquares(controls) =>
         FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = true)
       case RunwiseLeastSquares(controls) =>
