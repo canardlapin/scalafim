@@ -59,7 +59,7 @@ def host_profile():
 
 
 def monitor(root,command,env,log,limits,deadline,other_root):
-    start=time.monotonic(); samples=[]; violation=None; seen=set()
+    start=time.monotonic(); samples=[]; violation=None; seen=set(); commands={}
     if owned_jvms(other_root): raise RuntimeError('other provider is still resident')
     worker=subprocess.Popen(command,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
     try:
@@ -70,6 +70,8 @@ def monitor(root,command,env,log,limits,deadline,other_root):
             if len(own)>1: violation='multiple-owned-JVMs'
             for pid,rss in own.items():
                 samples.append(dict(seconds=now-start,pid=pid,rss_bytes=rss));seen.add(pid)
+                if str(pid) not in commands:
+                    commands[str(pid)]=subprocess.check_output(['ps','-p',str(pid),'-o','command='],text=True).strip()
                 if rss>limits['rss_bytes']: violation='rss-limit'
             if now-start>limits['cell_wall_seconds']: violation='cell-wall-limit'
             if now>deadline: violation='campaign-wall-limit'
@@ -95,5 +97,5 @@ def monitor(root,command,env,log,limits,deadline,other_root):
             violation=violation or 'effective-JVM-flags-mismatch'
     return dict(command=command,worker_exit=code,elapsed_seconds=time.monotonic()-start,
         resource_refusal=violation,peak_rss_bytes=max((s['rss_bytes'] for s in samples),default=0),
-        samples=samples,effective_jvm_flags=flags,
+        samples=samples,effective_jvm_flags=flags,process_commands=commands,
         scope='Owned resident JVM, sampled from launch by unique global-base identity every 0.2s, including startup; not an instantaneous memory bound. Thin client and R generation recorded separately.')
