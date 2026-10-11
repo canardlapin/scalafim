@@ -282,37 +282,79 @@ private[laws] object FglsVoxelwiseStudy:
     }
     failure.toLeft(total / count)
 
-  /** Replay the previously observed confirmation cells through the public plan
-    * route. This is integration evidence, not a new held-out scientific stream.
+  /** Replay the previously observed confirmation cells through the public plan route. This is integration evidence, not
+    * a new held-out scientific stream.
     */
-  private def fitPlanCandidate(cell: FglsStudyCell, data: DMat, spec: VoxelwiseArSpec): Either[String, VoxelwiseArFit] =
+  private[laws] def fitPlanCandidate(
+      cell: FglsStudyCell,
+      data: DMat,
+      spec: VoxelwiseArSpec
+  ): Either[String, VoxelwiseArFit] =
     import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
     import scalafim.image.SampleSpaces
-    import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
+    import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, BaselineSpec, Intercept}
     import scalafim.fmri.design.event.EventModel
     import scalafim.fmri.hrf.design.SamplingFrame
     import scalafim.fmri.hrf.linalg.Mat
-    import scalafim.fmri.model.{ArBiasCorrection, ArCensorTreatment, ArInitialization, AutocorrelationConfig, FitPlan, FitStrategy, FmriModel, VoxelwiseFglsOptions}
+    import scalafim.fmri.model.{
+      ArBiasCorrection,
+      ArCensorTreatment,
+      ArInitialization,
+      AutocorrelationConfig,
+      FitPlan,
+      FitStrategy,
+      FmriModel,
+      VoxelwiseFglsOptions
+    }
     spec.coefficients match
       case VoxelArCoefficients.Estimated(scope, ceiling) =>
         val frame = SamplingFrame(cell.base.runLengths, Vector.fill(cell.base.runLengths.length)(1.0))
         val design = cell.base.design
         val names = Vector.tabulate(design.cols)(i => s"x$i")
-        val events = EventModel(Vector.empty, frame,
+        val events = EventModel(
+          Vector.empty,
+          frame,
           Mat.fromRows(Vector.tabulate(design.rows)(i => Vector.tabulate(design.cols)(j => design(i, j)))),
-          names, names.indices.map(i => i -> (i + 1)).toVector, names.zipWithIndex.map((n, i) => n -> Vector(i)).toMap)
-        val baseline = BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.None)
-        val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("fgls-integration-replay"), data, SampleSpaces(Vector(data.cols, 1, 1))), frame)
+          names,
+          names.indices.map(i => i -> (i + 1)).toVector,
+          names.zipWithIndex.map((n, i) => n -> Vector(i)).toMap
+        )
+        // The supplied study design already includes every run intercept and
+        // drift column. Constant basis would add another intercept per run.
+        val baseline = BaselineModel(
+          Vector.empty,
+          BaselineSpec(basis = BaselineBasis.Constant, intercept = Intercept.None),
+          frame,
+          Mat.zeros(design.rows, 0),
+          Vector.empty,
+          Vector.empty,
+          Map.empty
+        )
+        val dataset = FmriDataset.unsafe(
+          InMemoryDatasetBackend(DatasetId("fgls-integration-replay"), data, SampleSpaces(Vector(data.cols, 1, 1))),
+          frame
+        )
         for
-          ar <- AutocorrelationConfig(order = spec.order, voxelwise = true, initialization = Some(ArInitialization.Stationary),
-            censoredTimepoints = cell.base.censorRows, biasCorrection = ArBiasCorrection.olsDesign(ceiling).toOption.get,
-            censorTreatment = if spec.censor == CensorContinuity.ContinuousMissing then ArCensorTreatment.ContinuousMissing else ArCensorTreatment.RestartWhitening,
-            fgls = Some(VoxelwiseFglsOptions(scope, spec.uncertainty))).left.map(_.message)
-          plan <- FitPlan.make(FmriModel(events, baseline, dataset), FitStrategy.GeneralizedLeastSquares(ar)).left.map(_.message)
+          ar <- AutocorrelationConfig(
+            order = spec.order,
+            voxelwise = true,
+            initialization = Some(if spec.censor == CensorContinuity.ContinuousMissing then ArInitialization.Stationary
+            else ArInitialization.ExactAr1),
+            censoredTimepoints = cell.base.censorRows,
+            biasCorrection = ArBiasCorrection.olsDesign(ceiling).toOption.get,
+            censorTreatment =
+              if spec.censor == CensorContinuity.ContinuousMissing then ArCensorTreatment.ContinuousMissing
+              else ArCensorTreatment.RestartWhitening,
+            fgls = Some(VoxelwiseFglsOptions(scope, spec.uncertainty))
+          ).left.map(_.message)
+          plan <- FitPlan
+            .make(FmriModel(events, baseline, dataset), FitStrategy.GeneralizedLeastSquares(ar))
+            .left
+            .map(_.message)
           result <- FitPlanExecutor.fit(plan).left.map(_.message)
           fit <- result match
             case value: VoxelwiseArFmriFitResult => Right(value.fit)
-            case _ => Left("FitPlan did not select voxelwise FGLS")
+            case _                               => Left("FitPlan did not select voxelwise FGLS")
         yield fit
       case _ => Left("FitPlan replay requires estimated coefficients")
 
@@ -327,8 +369,9 @@ private[laws] object FglsVoxelwiseStudy:
       val column = Matrix.tabulate(data.rows, 1)((row, _) => data(row, voxel))
       val policy = spec(cell, engine, voxel)
       val fitted =
-        if LawEnvironment.get("SCALAFIM_FGLS_FITPLAN").contains("true") && policy.coefficients.isInstanceOf[VoxelArCoefficients.Estimated] then
-          fitPlanCandidate(cell, column, policy)
+        if LawEnvironment.get("SCALAFIM_FGLS_FITPLAN").contains("true") && policy.coefficients
+            .isInstanceOf[VoxelArCoefficients.Estimated]
+        then fitPlanCandidate(cell, column, policy)
         else VoxelwiseArFgls.fit(cell.base.design, column, runs, cell.base.censorRows, policy).left.map(_.message)
       fitted.left.map(error => s"voxel $voxel: $error").map(_.voxels.head)
     }

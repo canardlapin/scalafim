@@ -502,9 +502,10 @@ object AutocorrelationConfig:
     else if censorTreatment == ArCensorTreatment.ContinuousMissing && fgls.isEmpty then
       Left(ModelError.InvalidParameter("AR censor treatment", "ContinuousMissing requires the voxelwise FGLS policy"))
     else if fgls.nonEmpty && (!voxelwise || global || iterations != 1 || coefficients != ArCoefficientSpec.Estimate ||
-        initialization != ArInitialization.Stationary || !biasCorrection.isInstanceOf[ArBiasCorrection.OlsDesign] ||
+        initialization != (if censorTreatment == ArCensorTreatment.ContinuousMissing then ArInitialization.Stationary else ArInitialization.ExactAr1) ||
+        !biasCorrection.isInstanceOf[ArBiasCorrection.OlsDesign] ||
         censorTreatment == ArCensorTreatment.EstimateOnly) then
-      Left(ModelError.InvalidParameter("voxelwise FGLS", "requires voxelwise one-pass estimated AR, stationary initialization, OlsDesign correction, and restart or continuous-missing censoring"))
+      Left(ModelError.InvalidParameter("voxelwise FGLS", "requires voxelwise one-pass estimated AR, OlsDesign correction, and matching initialization: Stationary for ContinuousMissing or ExactAr1 for RestartWhitening"))
     else Right(new AutocorrelationConfig(order, iterations, global, voxelwise, initialization, censoredTimepoints, coefficients, biasCorrection, censorTreatment, fgls))
 
   private def validateCoefficients(
@@ -1264,8 +1265,8 @@ enum FitStrategy:
   def validateFor(model: FmriModel): Either[ModelError, Unit] =
     val nTimepoints = model.nTimepoints
     if config.autocorrelation.fgls.nonEmpty && (!this.isInstanceOf[FitStrategy.GeneralizedLeastSquares] ||
-        config.missingData == MissingDataPolicy.OmitRowsPerVoxel) then
-      Left(ModelError.InvalidFitConfig(engine, "voxelwise FGLS requires shared-coefficient GLS and a complete selected time axis"))
+        config.missingData == MissingDataPolicy.OmitRowsPerVoxel || config.nuisanceProjection != NuisanceProjection.Disabled) then
+      Left(ModelError.InvalidFitConfig(engine, "voxelwise FGLS requires shared-coefficient GLS, a complete selected time axis, and no nuisance projection"))
     else this match
       case OrdinaryLeastSquares(controls) =>
         FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = true)

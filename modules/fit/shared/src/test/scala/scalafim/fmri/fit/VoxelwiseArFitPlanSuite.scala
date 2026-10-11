@@ -81,3 +81,10 @@ class VoxelwiseArFitPlanSuite extends munit.FunSuite:
     assertEquals(chunks.voxelIndices, whole.voxelIndices)
     assertEquals(chunks.fitExclusions, whole.fitExclusions)
     assertEquals(chunks.fitExclusions.map(_.voxelIndex), Vector(1))
+
+  test("voxelwise FGLS refuses a represented but unexecuted nuisance projection"):
+    import scalafim.fmri.model.{ModelNuisanceProjection, NuisanceMatrix, Regularization}
+    val controls = FitControls(nuisanceProjection = ModelNuisanceProjection.MatrixProjection(
+      NuisanceMatrix.unsafe(Matrix.tabulate(n, 1)((i, _) => math.sin(i * .01))), Regularization.Auto))
+    assert(FitPlan.make(model(), FitStrategy.GeneralizedLeastSquares(
+      AutocorrelationConfig.fromLegacy(options).toOption.get, controls)).isLeft)

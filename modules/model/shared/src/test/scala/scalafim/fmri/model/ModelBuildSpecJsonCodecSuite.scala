@@ -160,3 +160,11 @@ class ModelBuildSpecJsonCodecSuite extends munit.FunSuite:
     assertEquals(AutocorrelationConfig.fromLegacy(ar.toLegacy), Right(ar))
     assert(AutocorrelationConfig.fromLegacy(ar.toLegacy.copy(voxelwise = false)).isLeft)
     assert(AutocorrelationConfig.fromLegacy(ar.toLegacy.copy(fgls = None)).isLeft)
+
+  test("voxelwise FGLS restart initialization cannot silently claim a stationary factor"):
+    val policy = Some(VoxelwiseFglsOptions(VoxelArScope.AcrossRuns, CovarianceUncertainty.Conditional))
+    val correction = ArBiasCorrection.olsDesign(25).toOption.get
+    assert(AutocorrelationConfig(order = 2, voxelwise = true, biasCorrection = correction,
+      initialization = Some(ArInitialization.Stationary), fgls = policy).isLeft)
+    assert(AutocorrelationConfig(order = 2, voxelwise = true, biasCorrection = correction,
+      initialization = Some(ArInitialization.ExactAr1), fgls = policy).isRight)

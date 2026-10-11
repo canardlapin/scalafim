@@ -544,7 +544,9 @@ df. `fitDense` refuses this result because its classical inference contract cann
 represent those quantities. The full model time axis is required; censoring is
 specified explicitly. `ContinuousMissing` absorbs censored observations with
 indicator columns under their marginal covariance. `EstimateOnly` has a different
-meaning and is refused for this interpreter. Whole-voxel exclusion is supported.
+meaning and is refused for this interpreter. Whole-voxel exclusion is supported. The restart control uses `ExactAr1`
+initialization (the legacy truncated AR(p) factor); a request combining restart
+FGLS with `Stationary` is refused.
 Weights, nuisance projection, robust fitting, runwise coefficients and per-voxel
 row omission are not supported in this opt-in path.
 
