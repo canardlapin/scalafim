@@ -63,13 +63,14 @@ def host_profile():
 
 
 def monitor(root,command,env,log,limits,deadline,other_root):
-    start=time.monotonic(); samples=[]; violation=None; seen=set(); commands={}
+    start=time.monotonic(); samples=[]; violation=None; seen=set(); commands={}; aggregate_samples=[]
     if owned_jvms(other_root): raise RuntimeError('other provider is still resident')
     worker=subprocess.Popen(command,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
     try:
         while True:
             now=time.monotonic()
             own=owned_jvms(root)
+            aggregate_samples.append(dict(seconds=now-start,rss_bytes=sum(own.values())))
             if owned_jvms(other_root): violation='other-provider-resident'
             servers={pid:rss for pid,rss in own.items() if '--rt-ext-dir' not in _commands.get(pid,'').split()}
             if len(servers)>1: violation='multiple-owned-JVMs'
@@ -104,7 +105,9 @@ def monitor(root,command,env,log,limits,deadline,other_root):
         flags[str(pid)]=read.stdout+read.stderr
         if read.returncode or '-XX:ActiveProcessorCount=4' not in read.stdout or '-XX:MaxHeapSize=3221225472' not in read.stdout:
             violation=violation or 'effective-JVM-flags-mismatch'
+    if len(flags)!=1: violation=violation or 'missing-effective-worker-flags'
     return dict(command=command,worker_exit=code,elapsed_seconds=time.monotonic()-start,
-        resource_refusal=violation,peak_rss_bytes=max((s['rss_bytes'] for s in samples),default=0),
+        resource_refusal=violation,peak_rss_bytes=max((s['rss_bytes'] for s in aggregate_samples),default=0),
+        aggregate_samples=aggregate_samples,
         samples=samples,effective_jvm_flags=flags,process_commands=commands,
         scope='Owned JVMs sampled from launch by unique global-base identity every 0.2s, including startup. Aggregate sampled RSS is capped. The sbt --rt-ext-dir discovery helper is recorded and counted for memory, but is not a numerical worker lifetime. One resident numerical JVM, 3 GiB effective heap. Not an instantaneous memory bound. Thin client and R generation recorded separately.')

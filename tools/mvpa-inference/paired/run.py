@@ -39,6 +39,8 @@ def main():
     expected=[assignment('pilot',c['id'],i) for c in manifest['cells'] for i in range(200)]
     if assignments!=expected:raise ValueError('changed seed derivation or assignment inventory')
     if sha(manifest['probe_file'])!=manifest['probe_sha256']:raise ValueError('changed resource preflight')
+    if json.loads(Path(manifest['probe_file']).read_text()).get('preflight_pass') is not True:
+        raise ValueError('failed or incomplete preflight cannot launch pilot')
     repos={'current':root,'historical':old};snapshots=manifest['sources']
     for name,repo in repos.items():
         verify_sources(repo,snapshots[name]['locks']);verify_runtime(snapshots[name]['runtime']['files'])

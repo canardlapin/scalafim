@@ -1,5 +1,7 @@
 import copy
 import json
+import subprocess
+import tempfile
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -62,6 +64,19 @@ class PairedPilotProtocolTest(unittest.TestCase):
         with self.assertRaises(ValueError):protocol.validate_inventory(changed,proposal)
         roots=[protocol.assignment('pilot',c['id'],i)['root_seed64'] for c in cells for i in range(200)]
         self.assertEqual(len(roots),12800);self.assertEqual(len(set(roots)),12800)
+
+    def test_failed_preflight_cannot_freeze_or_assign_pilot_streams(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory=Path(tmp);probe=directory/'probe.json';probe.write_text('{"preflight_pass":false}')
+            output=directory/'manifest.json'
+            result=subprocess.run(['python3',str(HERE/'freeze.py'),'--historical',str(ROOT),
+                '--output',str(output),'--probe',str(probe),
+                '--current-classpath',str(directory/'absent-current'),'--historical-classpath',str(directory/'absent-old')],
+                capture_output=True,text=True)
+            self.assertNotEqual(result.returncode,0)
+            self.assertIn('preflight must pass',result.stderr)
+            self.assertFalse(output.exists())
+            self.assertFalse((directory/'assignments.jsonl.gz').exists())
 
     def test_startup_helper_is_recorded_but_not_a_second_numerical_lifetime(self):
         worker=type('Worker',(),{'pid':999,'poll':lambda self:0,'wait':lambda self,timeout:0})()

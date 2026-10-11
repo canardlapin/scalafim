@@ -1,0 +1,7 @@
+{
+  "R": "Rscript (R) version 4.3.3 (2024-02-29)\n",
+  "available_bytes": 10726801408,
+  "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)\n",
+  "machine": "Darwin BUC-GW01.local 24.1.0 Darwin Kernel Version 24.1.0: Thu Oct 10 21:03:11 PDT 2024; root:xnu-11215.41.3~2/RELEASE_ARM64_T6020 arm64",
+  "physical_memory_bytes": 34359738368
+}
