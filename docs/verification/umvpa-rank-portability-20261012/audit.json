@@ -1,0 +1,447 @@
+{
+  "schema": "scalafim-rank-portability-audit/v1",
+  "input_trace_sha256": [
+    "8aebe232c3a49a7f5af28fb3a75931669ae867a89905a1ab4b59da4641df53fa",
+    "d3cef87afc8d4f115c2f4f3dc60eed3edf7e32e197cb6da2ef99856dfe5ca939",
+    "df96234b6ce195c23a60e20bd53d63c3b190795b74de4f47c48965e3a2753567",
+    "637e1f2fe33629000ced4f2e2d4d23bfc7f3a68c27559b23aae5570a3736a5ab"
+  ],
+  "current_exact_count_gate_pass": true,
+  "new_datasets": 0,
+  "historical_comparator_modified": false,
+  "paired_pilot_authorized": false,
+  "fixtures": [
+    {
+      "scenario": "rank-v2-resource-n640-p4-q6-intercept",
+      "input_sha256": "a2739b0e361a7fc6723f305fd935b50c41b359ca47e215511d754ca3098bf454",
+      "before": {
+        "counts_jvm": [
+          0,
+          0,
+          6,
+          39
+        ],
+        "counts_js": [
+          0,
+          0,
+          6,
+          39
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 7.15532370800189e-18,
+        "projected_x_gap": 8.881784197001252e-16,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 4.996003610813204e-16,
+        "null_statistic_gap": 1.734723475976807e-16
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          0,
+          6,
+          40
+        ],
+        "counts_js": [
+          0,
+          0,
+          6,
+          40
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 0.0,
+        "projected_x_gap": 8.881784197001252e-16,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 1.1102230246251565e-16,
+        "null_statistic_gap": 1.8041124150158794e-16
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n640-p4-q6-three-column",
+      "input_sha256": "720e89e0f0fa1ce9f8f254fcdee91c61edcde8055dd3100c33ec015b5e460dbf",
+      "before": {
+        "counts_jvm": [
+          0,
+          0,
+          0,
+          151
+        ],
+        "counts_js": [
+          0,
+          0,
+          0,
+          152
+        ],
+        "exact_counts": false,
+        "reflector_column_gaps": [
+          0,
+          0,
+          1.3877787807814457e-17,
+          0.03944750345796466
+        ],
+        "basis_gap": 0.11991836451931237,
+        "projected_x_gap": 0.6393377659771651,
+        "projected_y_gap": 0.46794374671216155,
+        "observed_gap": 3.885780586188048e-16,
+        "null_statistic_gap": 0.0015060332577712596
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          0,
+          0,
+          148
+        ],
+        "counts_js": [
+          0,
+          0,
+          0,
+          148
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0,
+          1.3877787807814457e-17,
+          0.03944750345796466
+        ],
+        "basis_gap": 1.1102230246251565e-16,
+        "projected_x_gap": 8.881784197001252e-16,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 2.7755575615628914e-16,
+        "null_statistic_gap": 1.6653345369377348e-16
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n640-p6-q4-intercept",
+      "input_sha256": "97b695dcd7b76228b19b43dbb1fde97c60f73cc9cda86746d791690c777aaae5",
+      "before": {
+        "counts_jvm": [
+          0,
+          0,
+          0,
+          12
+        ],
+        "counts_js": [
+          0,
+          0,
+          0,
+          12
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 7.15532370800189e-18,
+        "projected_x_gap": 8.881784197001252e-16,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 1.1657341758564144e-15,
+        "null_statistic_gap": 1.0408340855860843e-16
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          0,
+          0,
+          11
+        ],
+        "counts_js": [
+          0,
+          0,
+          0,
+          11
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 0.0,
+        "projected_x_gap": 8.881784197001252e-16,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 6.106226635438361e-16,
+        "null_statistic_gap": 1.3183898417423734e-16
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n640-p6-q4-three-column",
+      "input_sha256": "25244769f543bec0fbf02f9186d59449f3a6775f167ff9c371462cdeba53396c",
+      "before": {
+        "counts_jvm": [
+          0,
+          0,
+          0,
+          115
+        ],
+        "counts_js": [
+          0,
+          0,
+          0,
+          115
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          6.938893903907228e-18,
+          1.3877787807814457e-17,
+          0.10474444411733695
+        ],
+        "basis_gap": 0.11302650721186115,
+        "projected_x_gap": 0.3747361812522544,
+        "projected_y_gap": 1.4323642091552673,
+        "observed_gap": 9.992007221626409e-16,
+        "null_statistic_gap": 0.0037067209233791996
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          0,
+          0,
+          113
+        ],
+        "counts_js": [
+          0,
+          0,
+          0,
+          113
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          6.938893903907228e-18,
+          1.3877787807814457e-17,
+          0.10474444411733695
+        ],
+        "basis_gap": 1.1102230246251565e-16,
+        "projected_x_gap": 1.3322676295501878e-15,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 8.881784197001252e-16,
+        "null_statistic_gap": 1.3877787807814457e-16
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n80-p4-q6-intercept",
+      "input_sha256": "516be5a8024fd9b7920666c8be25eb35fc228a6d150687f31fe013dd2eee8b42",
+      "before": {
+        "counts_jvm": [
+          0,
+          36,
+          71,
+          87
+        ],
+        "counts_js": [
+          0,
+          36,
+          71,
+          87
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 1.549104214046406e-17,
+        "projected_x_gap": 4.440892098500626e-16,
+        "projected_y_gap": 4.440892098500626e-16,
+        "observed_gap": 5.551115123125783e-16,
+        "null_statistic_gap": 1.2212453270876722e-15
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          31,
+          69,
+          79
+        ],
+        "counts_js": [
+          0,
+          31,
+          69,
+          79
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 0.0,
+        "projected_x_gap": 4.440892098500626e-16,
+        "projected_y_gap": 4.440892098500626e-16,
+        "observed_gap": 7.771561172376096e-16,
+        "null_statistic_gap": 1.1657341758564144e-15
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n80-p4-q6-three-column",
+      "input_sha256": "db3a6bf93164889909295ff9e8ce6832481c2388149d53f14cf0de9f53e46e8f",
+      "before": {
+        "counts_jvm": [
+          0,
+          179,
+          195,
+          176
+        ],
+        "counts_js": [
+          0,
+          178,
+          195,
+          177
+        ],
+        "exact_counts": false,
+        "reflector_column_gaps": [
+          0,
+          1.3877787807814457e-17,
+          2.7755575615628914e-17,
+          0.04128388617742683
+        ],
+        "basis_gap": 0.04636638511833064,
+        "projected_x_gap": 0.12178799864200712,
+        "projected_y_gap": 0.17180064598095734,
+        "observed_gap": 1.4432899320127035e-15,
+        "null_statistic_gap": 0.02295829972157193
+      },
+      "after": {
+        "counts_jvm": [
+          1,
+          184,
+          194,
+          174
+        ],
+        "counts_js": [
+          1,
+          184,
+          194,
+          174
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          1.3877787807814457e-17,
+          2.7755575615628914e-17,
+          0.04128388617742683
+        ],
+        "basis_gap": 1.1102230246251565e-16,
+        "projected_x_gap": 6.661338147750939e-16,
+        "projected_y_gap": 6.661338147750939e-16,
+        "observed_gap": 5.551115123125783e-16,
+        "null_statistic_gap": 8.881784197001252e-16
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n80-p6-q4-intercept",
+      "input_sha256": "a37455359764b16ab36378d4d701ba2be703ed0c4bc284d200d0d4aef47abbd5",
+      "before": {
+        "counts_jvm": [
+          0,
+          0,
+          10,
+          111
+        ],
+        "counts_js": [
+          0,
+          0,
+          10,
+          111
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 1.549104214046406e-17,
+        "projected_x_gap": 4.440892098500626e-16,
+        "projected_y_gap": 8.881784197001252e-16,
+        "observed_gap": 8.881784197001252e-16,
+        "null_statistic_gap": 9.992007221626409e-16
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          0,
+          8,
+          116
+        ],
+        "counts_js": [
+          0,
+          0,
+          8,
+          116
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          0
+        ],
+        "basis_gap": 0.0,
+        "projected_x_gap": 4.440892098500626e-16,
+        "projected_y_gap": 4.440892098500626e-16,
+        "observed_gap": 1.7763568394002505e-15,
+        "null_statistic_gap": 1.3322676295501878e-15
+      }
+    },
+    {
+      "scenario": "rank-v2-resource-n80-p6-q4-three-column",
+      "input_sha256": "a28514877d64dcdcd1d80baf912af1e9dbd121a7476b76b888563acd6c35727a",
+      "before": {
+        "counts_jvm": [
+          0,
+          2,
+          155,
+          187
+        ],
+        "counts_js": [
+          0,
+          2,
+          154,
+          181
+        ],
+        "exact_counts": false,
+        "reflector_column_gaps": [
+          0,
+          1.3877787807814457e-17,
+          8.326672684688674e-17,
+          0.35118593323868463
+        ],
+        "basis_gap": 0.6580889414465632,
+        "projected_x_gap": 1.6689145246023087,
+        "projected_y_gap": 1.9002143569770031,
+        "observed_gap": 8.881784197001252e-16,
+        "null_statistic_gap": 0.11132839753078261
+      },
+      "after": {
+        "counts_jvm": [
+          0,
+          4,
+          153,
+          181
+        ],
+        "counts_js": [
+          0,
+          4,
+          153,
+          181
+        ],
+        "exact_counts": true,
+        "reflector_column_gaps": [
+          0,
+          1.3877787807814457e-17,
+          8.326672684688674e-17,
+          0.35118593323868463
+        ],
+        "basis_gap": 1.1102230246251565e-16,
+        "projected_x_gap": 8.881784197001252e-16,
+        "projected_y_gap": 6.661338147750939e-16,
+        "observed_gap": 6.661338147750939e-16,
+        "null_statistic_gap": 1.9984014443252818e-15
+      }
+    }
+  ]
+}
