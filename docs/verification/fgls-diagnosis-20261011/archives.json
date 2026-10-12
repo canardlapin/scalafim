@@ -1,0 +1,34 @@
+{
+  "inputs-jvm.jsonl.gz": {
+    "sha256": "5e0afe9a8b01f0cb9ca3219f966308799c230f89349d17e5629126e185a7bec8",
+    "uncompressed_sha256": "cb8b13aab401454cf701bd94bf8dad9860cf7ba90e21a5f445aab284f376a2e5"
+  },
+  "inputs-js.jsonl.gz": {
+    "sha256": "f843a223307428784eb8ffd806f7e4eb23c775c4bff8593f1155ef13366ad8dc",
+    "uncompressed_sha256": "1ffdd8055f32574b48c4bd9d09701781b56cfc9ff7465f954308d0b98853d021"
+  },
+  "analysis.log.gz": {
+    "sha256": "660f50e9ab5447dbffe2e6d9f8f547ff5d747a931e2f3c6872b4af573f68d58a",
+    "uncompressed_sha256": "fce6c1faa8b3573db1bd1fa9a8962cc17f2eea9fda16d04ee43a49ff35e45bad"
+  },
+  "analysis-final.log.gz": {
+    "sha256": "660f50e9ab5447dbffe2e6d9f8f547ff5d747a931e2f3c6872b4af573f68d58a",
+    "uncompressed_sha256": "fce6c1faa8b3573db1bd1fa9a8962cc17f2eea9fda16d04ee43a49ff35e45bad"
+  },
+  "format.log.gz": {
+    "sha256": "9deadef0cadf19a6c28f9ff525d55c08fac152d3e8b5d210b2ff0e4947f24b48",
+    "uncompressed_sha256": "3648c626997042e46d973e5f64b9de6c5e37050892dfab865ee2517b99977bfa"
+  },
+  "format-final.log.gz": {
+    "sha256": "79017390b3295fbbe34961a87d0349b3669410581dbac1e6b3a250647f187a8d",
+    "uncompressed_sha256": "6914eae66a750caa58e6874a38db833b922ac43559aea57230769d3fa868c9e0"
+  },
+  "regression-tests.log.gz": {
+    "sha256": "10d35af4ea524530901c1bc76b234a99ffff4cdd2c2fdfb4c5b3364a3c669c31",
+    "uncompressed_sha256": "f3c2ff0ca46928c0779928f2a8139d02333c8ed03b004f21971ab58d08b7b17c"
+  },
+  "export-tests.log.gz": {
+    "sha256": "d1f4479e187416cf1bd982708ab65ebc85263e41238e864ee8a4946d7a5ab1b8",
+    "uncompressed_sha256": "eec64c35b7636e0418d38df1c610a2b63a56a082cf3c5126483bafac3b558d5a"
+  }
+}
