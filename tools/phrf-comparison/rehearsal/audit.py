@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 
@@ -27,7 +28,10 @@ def main():
     inventory = read(inventory_path)
     assert inventory["root_kind"] == "harness" and inventory["root_hex"] == "7a3c91d50b44e2f1"
     assert inventory["datasets_per_cell"] == 2 and inventory["no_deviation_datasets"] == 10
-    assert len(inventory["records"]) == 22
+    cells = {"C-TX-.5", "C-TS-1", "C-TS-.5", "C-TG-.5", "T-TX-fast", "T-TX-jit", "T-TS-fast"}
+    input_slots = {(cell, d) for cell in cells for d in range(10 if cell == "T-TX-fast" else 2)}
+    assert len(inventory["records"]) == 22 and {
+        (row["cell"], row["dataset"]) for row in inventory["records"]} == input_slots
     for row in inventory["records"]:
         stem = f"{row['cell']}__d{row['dataset']:04d}.npz"
         assert sha(args.inputs / stem) == row["npz_sha256"]
@@ -41,12 +45,32 @@ def main():
     assert guard["stop"] == "CpuCeilingReached" and guard["attempts_before_stop"] > 0
     assert guard["no_dispatch_on_unraised_resume"] and guard["resumed_units"] == 8
     assert not real["pilot_launch_authority"] and not guard["pilot_launch_authority"]
+    assert not real["scientific_admission"] and not real["whitelist_released"]
     expected = {(d, kind, method) for d in range(10) for kind in ("persistent", "no-deviation")
                 for method in ("phrf-ml", "rlss")}
     assert len(alpha) == 40 and {(r["dataset"], r["truth_case"], r["method"]) for r in alpha} == expected
     assert all(not r["pilot_launch_authority"] for r in alpha)
     hashes = {r["dataset"]: r["npz_sha256"] for r in inventory["records"] if r["cell"] == "T-TX-fast"}
     assert all(r["input_sha256"] == hashes[r["dataset"]] for r in alpha)
+    for row in alpha:
+        ix = row["selected_index"]
+        assert (ix is None) == (row["refusal"] is not None)
+        assert ix is None or (type(ix) is int and 0 <= ix <= 8)
+        assert math.isfinite(row["pair_cpu_seconds"]) and row["pair_cpu_seconds"] > 0
+    endpoint_counts = []
+    for kind in ("no-deviation", "persistent"):
+        for method in ("phrf-ml", "rlss"):
+            choices = [r["selected_index"] for r in sorted(alpha, key=lambda r: r["dataset"])
+                       if r["truth_case"] == kind and r["method"] == method and r["selected_index"] is not None]
+            endpoint_counts.append({"truth_case": kind, "method": method, "selected_indices": choices,
+                                    "lower": choices.count(0), "upper": choices.count(8)})
+    assert endpoint_counts == summary["endpoint_counts"]
+    nonconstant = all(any(r["selected_index"] != 0 for r in alpha
+                         if r["method"] == method and r["selected_index"] is not None)
+                      and any(r["selected_index"] != 8 for r in alpha
+                              if r["method"] == method and r["selected_index"] is not None)
+                      for method in ("phrf-ml", "rlss"))
+    assert summary["not_constant_endpoint"] == nonconstant
     glm = [r for r in events if r["arm"] == "glmsingle"]
     assert len(glm) == 4 and all(r["succeeded"] and r["child_cpu_seconds"] > 0 for r in glm)
     refused = [r for r in alpha if r["refusal"] is not None]

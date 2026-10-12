@@ -29,6 +29,18 @@ readiness **bd-01M3TNWW63XC71C3EF2PQME3P8** remains open. Do not drop or redraw 
 retained failures, tune the scientific policy, or interpret the successful
 engineering checks as a pilot authorization.
 
+## Module validation
+
+`phrfComparisonJVM/test`: 538 passed, zero failures, ten existing opt-in/platform
+skips. `phrfComparisonJS/test`: 254 passed, zero failures or skips. The shared
+truth-grid regressions pass on both platforms. The compressed full gate log is
+retained. No new source compiler warning was emitted.
+
+The independent audit verifies all 22 input hashes, all 40 alpha slots and
+recomputes the endpoint counts from raw records. An intentionally altered
+endpoint summary is rejected before a report is written. Its output remains
+identical to `audit.json`, including `alpha_complete: false`.
+
 ## Boundary correction found by real data
 
 NumPy's `arange` truth grid multiplies by 0.1; the Scala score grid divides by

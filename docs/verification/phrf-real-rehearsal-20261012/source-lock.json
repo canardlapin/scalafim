@@ -16,7 +16,7 @@
     "tools/phrf-comparison/generator/requirements.lock": "d4adbadfe17268641789f06e12cdbb5e36e80ff88047afe1d6a35a560da0fa51",
     "tools/phrf-comparison/glmsingle/requirements.lock": "383160e9b5a5fbf87a88cee2a72f4f2e5c29a8c474c0d4e6739329d99536e3ac",
     "tools/phrf-comparison/rehearsal/README.md": "c66607acc9fe49ae84bd4c2922197b6aa8a91b26932385ecb259ecf9b5e92c65",
-    "tools/phrf-comparison/rehearsal/audit.py": "e8a4b3dce2c311bcdbe3ee549e7ac9d16a477d8dd83b526656c8e459dc418c5c",
+    "tools/phrf-comparison/rehearsal/audit.py": "673e62506b227a440de53d8e3ec7c6a8d705c905912f70a726d35a91d8d72dd8",
     "tools/phrf-comparison/rehearsal/generate.py": "4e959a6d5629a0d8cc9ef4d231fe049bcba6c8afd3624551ee26c99ecfd51b33"
   },
   "note": "Real engine final run and JVM/JS module gates use these Scala sources. Alpha/CPU run began before the scoring-grid boundary correction, which does not participate in their fitting paths; prior failed attempts are retained separately."
