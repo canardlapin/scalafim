@@ -1,0 +1,5531 @@
+{
+  "schema": "scalafim-fgls-cmrg-qualification/v1",
+  "role": "simulator QA and known-control qualification only; no candidate selection or confirmation",
+  "phase": "qa",
+  "passed": true,
+  "source_locks": {
+    "qualify.R": "e905b3003a80b210218a71b0e1678b99230a81d83ab790ef011251f3a9fa00a7",
+    "protocol.json": "564d8bd3247c23b59a0b9a9fa4524e9a8fdfbc7b3e80855e40c2803de41b6144",
+    "cells.json": "c3e1037d04976a950562b607cf0cb4c67d4741a06646891d8ce6b9155b97d0d3"
+  },
+  "replicates": 2048,
+  "scalar_checks": 185184,
+  "bounds": {
+    "mean": 0.126632413893758,
+    "variance": [0.831111268540837, 1.18962071167027]
+  },
+  "failures": [],
+  "qa_reports": [
+    {
+      "label": "ar2-high-censored-short innovation 1",
+      "positions": 98,
+      "max_abs_mean": 0.0590669177078791,
+      "min_variance": 0.940860032819537,
+      "max_variance": 1.09431492345714,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 2",
+      "positions": 146,
+      "max_abs_mean": 0.0551884088787252,
+      "min_variance": 0.924240377268828,
+      "max_variance": 1.07360786309929,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 3",
+      "positions": 98,
+      "max_abs_mean": 0.0506239536853059,
+      "min_variance": 0.924762356130454,
+      "max_variance": 1.06818220213337,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 4",
+      "positions": 146,
+      "max_abs_mean": 0.0543873697137864,
+      "min_variance": 0.917497464140455,
+      "max_variance": 1.11045719903987,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 5",
+      "positions": 98,
+      "max_abs_mean": 0.0594298119330005,
+      "min_variance": 0.933561281399219,
+      "max_variance": 1.08637717667501,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 6",
+      "positions": 146,
+      "max_abs_mean": 0.0733589069648852,
+      "min_variance": 0.918369957444221,
+      "max_variance": 1.07775332307585,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 7",
+      "positions": 98,
+      "max_abs_mean": 0.0608453343947363,
+      "min_variance": 0.92775440281989,
+      "max_variance": 1.07495301503413,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short innovation 8",
+      "positions": 146,
+      "max_abs_mean": 0.0525420202877787,
+      "min_variance": 0.911352347672799,
+      "max_variance": 1.06666849615986,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1",
+      "positions": 96,
+      "max_abs_mean": 0.0641999598714341,
+      "min_variance": 0.919292883038607,
+      "max_variance": 1.10833793528945,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0534600536691128,
+      "min_variance": 0.928859160766238,
+      "max_variance": 1.0694230528947,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0589211735709092,
+      "min_variance": 0.915496727925659,
+      "max_variance": 1.06094997759048,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0717481188923648,
+      "min_variance": 0.943108103477238,
+      "max_variance": 1.0916414907562,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0610997562404766,
+      "min_variance": 0.943601535736616,
+      "max_variance": 1.06627806215952,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0560125716702638,
+      "min_variance": 0.945700718763854,
+      "max_variance": 1.09087657939931,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0651842476767909,
+      "min_variance": 0.930475999034526,
+      "max_variance": 1.10258390725439,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0570379434464368,
+      "min_variance": 0.953349950724365,
+      "max_variance": 1.0686772598997,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0552822583960734,
+      "min_variance": 0.940089662320479,
+      "max_variance": 1.07618948143168,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2",
+      "positions": 144,
+      "max_abs_mean": 0.0590928818170994,
+      "min_variance": 0.922554221787268,
+      "max_variance": 1.08010439866747,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0562554518074798,
+      "min_variance": 0.904628552820063,
+      "max_variance": 1.0735882992119,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0525400582938519,
+      "min_variance": 0.92514560389577,
+      "max_variance": 1.11486196183668,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0671145808430552,
+      "min_variance": 0.908255019847404,
+      "max_variance": 1.07389399749545,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0604926718904389,
+      "min_variance": 0.903672966282119,
+      "max_variance": 1.09143427106037,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0674152841035816,
+      "min_variance": 0.935359301981949,
+      "max_variance": 1.08155297588634,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0534812589742571,
+      "min_variance": 0.922680352128845,
+      "max_variance": 1.09596173994368,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0522206642313034,
+      "min_variance": 0.919831255635656,
+      "max_variance": 1.07920154208821,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 1 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0641149567129495,
+      "min_variance": 0.940636043804592,
+      "max_variance": 1.08221971413947,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.0556524147769082,
+      "min_variance": 0.931387277664094,
+      "max_variance": 1.07551457222854,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0490475875917675,
+      "min_variance": 0.926911665520539,
+      "max_variance": 1.08122062838937,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0496926858940193,
+      "min_variance": 0.92281088533825,
+      "max_variance": 1.09907066710233,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0480126139585342,
+      "min_variance": 0.923842759347908,
+      "max_variance": 1.08151216157841,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0614742994893426,
+      "min_variance": 0.939390715608781,
+      "max_variance": 1.09606424688186,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.04340489593614,
+      "min_variance": 0.903502710673163,
+      "max_variance": 1.10021171062248,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0609196084029703,
+      "min_variance": 0.933024981066234,
+      "max_variance": 1.09175405095448,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0523435916134478,
+      "min_variance": 0.920488464835969,
+      "max_variance": 1.08065785500945,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0567754538394174,
+      "min_variance": 0.935027646030465,
+      "max_variance": 1.10334946688319,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2",
+      "positions": 144,
+      "max_abs_mean": 0.0545321821148919,
+      "min_variance": 0.920189896941047,
+      "max_variance": 1.10219105389414,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0592563901578508,
+      "min_variance": 0.920694487655369,
+      "max_variance": 1.07987743517938,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0601138494404888,
+      "min_variance": 0.91333227091391,
+      "max_variance": 1.10501516369794,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0631205850940833,
+      "min_variance": 0.938926165286635,
+      "max_variance": 1.13746827887824,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0648427751815377,
+      "min_variance": 0.907760411246186,
+      "max_variance": 1.08290090319707,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0666877738878883,
+      "min_variance": 0.93272161326234,
+      "max_variance": 1.10845705262185,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0699136429977572,
+      "min_variance": 0.925016272078898,
+      "max_variance": 1.10069990072391,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0638775779810492,
+      "min_variance": 0.930205630357303,
+      "max_variance": 1.07623805082113,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 2 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0666049562586711,
+      "min_variance": 0.914643006444846,
+      "max_variance": 1.09879504371543,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.055489675263752,
+      "min_variance": 0.938955935169541,
+      "max_variance": 1.0860860359383,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0563755321130266,
+      "min_variance": 0.93261911962419,
+      "max_variance": 1.08597658583608,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0509976791137592,
+      "min_variance": 0.906845319751734,
+      "max_variance": 1.0612850350593,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0776491642114548,
+      "min_variance": 0.905585393447192,
+      "max_variance": 1.10015193881351,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0685547476011629,
+      "min_variance": 0.935579115589668,
+      "max_variance": 1.074839896106,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.054442696847908,
+      "min_variance": 0.900452086195508,
+      "max_variance": 1.07928286513179,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0503314215841046,
+      "min_variance": 0.923352009516751,
+      "max_variance": 1.09871402704313,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0698384322713195,
+      "min_variance": 0.932494291725856,
+      "max_variance": 1.07179054466629,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0614579010881311,
+      "min_variance": 0.934623200939919,
+      "max_variance": 1.06869854135779,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2",
+      "positions": 144,
+      "max_abs_mean": 0.0622478298859194,
+      "min_variance": 0.914028496284325,
+      "max_variance": 1.07694824748648,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0662609391460144,
+      "min_variance": 0.922874308835398,
+      "max_variance": 1.06295568982121,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0532231433319751,
+      "min_variance": 0.922505963767987,
+      "max_variance": 1.08309181080764,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0599780946655147,
+      "min_variance": 0.925310182198768,
+      "max_variance": 1.07340814557587,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0616918885282667,
+      "min_variance": 0.920886932086355,
+      "max_variance": 1.09255838919689,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0562071065308395,
+      "min_variance": 0.912749357502002,
+      "max_variance": 1.06088538690791,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0689316980954644,
+      "min_variance": 0.931866856555276,
+      "max_variance": 1.09891472312636,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0529605047578396,
+      "min_variance": 0.907616557017191,
+      "max_variance": 1.08238928604528,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 3 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0782223447994488,
+      "min_variance": 0.911023869926337,
+      "max_variance": 1.06541710371301,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0670887499445773,
+      "min_variance": 0.915317095794003,
+      "max_variance": 1.06616576188311,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0609426262754572,
+      "min_variance": 0.917266814139198,
+      "max_variance": 1.08686683122951,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0682358502672612,
+      "min_variance": 0.914192528412765,
+      "max_variance": 1.08257323876935,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0683519568885653,
+      "min_variance": 0.9209598279373,
+      "max_variance": 1.1074966287075,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0572908397976039,
+      "min_variance": 0.901702669891472,
+      "max_variance": 1.07672741607175,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0633024122076398,
+      "min_variance": 0.918602062240224,
+      "max_variance": 1.06904792710472,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0671637484558409,
+      "min_variance": 0.930573497340476,
+      "max_variance": 1.08947272934966,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0559169767165163,
+      "min_variance": 0.900814098455128,
+      "max_variance": 1.06466812924091,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0779646719995987,
+      "min_variance": 0.920328264500058,
+      "max_variance": 1.08305514863452,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2",
+      "positions": 144,
+      "max_abs_mean": 0.0549699940188861,
+      "min_variance": 0.918536032402037,
+      "max_variance": 1.07244383496925,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0732099198183924,
+      "min_variance": 0.916818733084944,
+      "max_variance": 1.07130419718913,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0569298402358269,
+      "min_variance": 0.894201072751266,
+      "max_variance": 1.08587496614399,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0599754554166977,
+      "min_variance": 0.923135042979214,
+      "max_variance": 1.07582003203791,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0639294258929676,
+      "min_variance": 0.920113673090284,
+      "max_variance": 1.06582508632234,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0608656183507315,
+      "min_variance": 0.910550887374966,
+      "max_variance": 1.0671032736667,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0580316859717261,
+      "min_variance": 0.919569827955374,
+      "max_variance": 1.0651206129192,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.056895772332244,
+      "min_variance": 0.928439886096679,
+      "max_variance": 1.08612981300371,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short stationary 4 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.052914838693866,
+      "min_variance": 0.897989022621239,
+      "max_variance": 1.06980182680904,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 2 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0673281650708075,
+      "min_variance": 0.936385702099611,
+      "max_variance": 1.07284685739577,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.058188671350481,
+      "min_variance": 0.923060354492509,
+      "max_variance": 1.08033944202209,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0456598042710515,
+      "min_variance": 0.94060725613462,
+      "max_variance": 1.07428731403599,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0579413738882779,
+      "min_variance": 0.920930815068184,
+      "max_variance": 1.08913844390656,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0564768488725709,
+      "min_variance": 0.909042256214508,
+      "max_variance": 1.11536122247635,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0837649259163095,
+      "min_variance": 0.934987677352888,
+      "max_variance": 1.07989581563263,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0686084158341692,
+      "min_variance": 0.934452992717102,
+      "max_variance": 1.08174046272312,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0516197619878448,
+      "min_variance": 0.924277917521187,
+      "max_variance": 1.10159086803088,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0507110039968848,
+      "min_variance": 0.923950196579342,
+      "max_variance": 1.06752355357669,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0563023884865744,
+      "min_variance": 0.93575276480679,
+      "max_variance": 1.07940400700694,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0476417406770439,
+      "min_variance": 0.922055176788113,
+      "max_variance": 1.06880457488458,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0812782035763964,
+      "min_variance": 0.935450130379263,
+      "max_variance": 1.08415921531653,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0712561911453771,
+      "min_variance": 0.875103931334952,
+      "max_variance": 1.07642251128105,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 1 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0690782058710896,
+      "min_variance": 0.927981207754455,
+      "max_variance": 1.11300284947782,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0670310028093474,
+      "min_variance": 0.930687799420414,
+      "max_variance": 1.07989622881137,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0632193886867326,
+      "min_variance": 0.935295919361564,
+      "max_variance": 1.07983221973763,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 4 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0609246279318003,
+      "min_variance": 0.879003924148975,
+      "max_variance": 1.08488826091765,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 4 1",
+      "positions": 144,
+      "max_abs_mean": 0.0568486398855674,
+      "min_variance": 0.9279967029173,
+      "max_variance": 1.07949694603302,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0598743651029488,
+      "min_variance": 0.923989132190348,
+      "max_variance": 1.08514140314864,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0624713020064433,
+      "min_variance": 0.917933882809605,
+      "max_variance": 1.07671949793737,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0564066605842986,
+      "min_variance": 0.924003674664396,
+      "max_variance": 1.08680597931055,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.060661790109094,
+      "min_variance": 0.909947226927378,
+      "max_variance": 1.08361099800159,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0743305485237624,
+      "min_variance": 0.920955035752712,
+      "max_variance": 1.07043623188886,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0582546900673807,
+      "min_variance": 0.910929085343923,
+      "max_variance": 1.09047761266423,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0474954581308268,
+      "min_variance": 0.930938060463546,
+      "max_variance": 1.08004264346764,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 2 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0520871049627002,
+      "min_variance": 0.926771011420126,
+      "max_variance": 1.08584833059647,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0655876874947832,
+      "min_variance": 0.921309928389593,
+      "max_variance": 1.07325659193417,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0537215433432083,
+      "min_variance": 0.915508366297585,
+      "max_variance": 1.07694169557211,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0567906212129145,
+      "min_variance": 0.920760887166147,
+      "max_variance": 1.08193047321839,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0676687741366099,
+      "min_variance": 0.941604046719914,
+      "max_variance": 1.08710504733528,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0550024356629443,
+      "min_variance": 0.928456975950615,
+      "max_variance": 1.0720881863558,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0481175280218044,
+      "min_variance": 0.920204343377889,
+      "max_variance": 1.09666967312794,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0562807925531576,
+      "min_variance": 0.913280981926166,
+      "max_variance": 1.10290732180265,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0553364827789417,
+      "min_variance": 0.912073612688579,
+      "max_variance": 1.07696817199098,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0684623139287012,
+      "min_variance": 0.904435402635175,
+      "max_variance": 1.06666312904793,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 3 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0583646332995062,
+      "min_variance": 0.912960196410392,
+      "max_variance": 1.07470422962081,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0611348956454362,
+      "min_variance": 0.918640201747501,
+      "max_variance": 1.07767245964127,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0617876454265482,
+      "min_variance": 0.925969444247834,
+      "max_variance": 1.06915230197996,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0617710985013018,
+      "min_variance": 0.890325207987559,
+      "max_variance": 1.07757531067834,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.059229228412131,
+      "min_variance": 0.920778138381615,
+      "max_variance": 1.09136961957718,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0599538273545154,
+      "min_variance": 0.921242637718224,
+      "max_variance": 1.08466722110496,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0742506755387155,
+      "min_variance": 0.923500704379141,
+      "max_variance": 1.07069831346412,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0617592834812029,
+      "min_variance": 0.932247993931679,
+      "max_variance": 1.07551941218724,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 4 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0502270468949405,
+      "min_variance": 0.934292943506262,
+      "max_variance": 1.0687087659253,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 5 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0790914249031917,
+      "min_variance": 0.913698313517121,
+      "max_variance": 1.06839951612564,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 5 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0538765823282249,
+      "min_variance": 0.926244011575693,
+      "max_variance": 1.07359814984274,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 5 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0679758304693865,
+      "min_variance": 0.916613586626217,
+      "max_variance": 1.07474328053699,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 5 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0726851728938076,
+      "min_variance": 0.923773063629084,
+      "max_variance": 1.07938484627029,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 5 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.063326477945288,
+      "min_variance": 0.932114901649773,
+      "max_variance": 1.07258143021348,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 5 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0595856097418114,
+      "min_variance": 0.933599324868452,
+      "max_variance": 1.1084193164831,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 6 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0594991483589817,
+      "min_variance": 0.912281959986806,
+      "max_variance": 1.07684652744086,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 6 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0593757160451749,
+      "min_variance": 0.920385108302334,
+      "max_variance": 1.07120302477793,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 6 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.059440273061744,
+      "min_variance": 0.915199402541159,
+      "max_variance": 1.08657559156231,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 6 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0705883564910624,
+      "min_variance": 0.922084455538842,
+      "max_variance": 1.06383080892153,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 7 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0604474373455768,
+      "min_variance": 0.923317753262758,
+      "max_variance": 1.0679936809398,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short independence 7 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0560734260454384,
+      "min_variance": 0.912831888450677,
+      "max_variance": 1.07139463152189,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 1",
+      "positions": 194,
+      "max_abs_mean": 0.0568828500685829,
+      "min_variance": 0.918372388872604,
+      "max_variance": 1.07591090959722,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 2",
+      "positions": 290,
+      "max_abs_mean": 0.0661255749131184,
+      "min_variance": 0.891504029738787,
+      "max_variance": 1.08426398665398,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 3",
+      "positions": 194,
+      "max_abs_mean": 0.0577625685496804,
+      "min_variance": 0.909239226682791,
+      "max_variance": 1.10948392933143,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 4",
+      "positions": 290,
+      "max_abs_mean": 0.0700313617099117,
+      "min_variance": 0.920628667132352,
+      "max_variance": 1.10868112087483,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 5",
+      "positions": 194,
+      "max_abs_mean": 0.0689542701432605,
+      "min_variance": 0.930627949195958,
+      "max_variance": 1.09169646712673,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 6",
+      "positions": 290,
+      "max_abs_mean": 0.0850063485287482,
+      "min_variance": 0.917354897481234,
+      "max_variance": 1.11240588976618,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 7",
+      "positions": 194,
+      "max_abs_mean": 0.0636142762294706,
+      "min_variance": 0.921726458223531,
+      "max_variance": 1.10646985626833,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long innovation 8",
+      "positions": 290,
+      "max_abs_mean": 0.0742542381772968,
+      "min_variance": 0.913213719897579,
+      "max_variance": 1.096025202734,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1",
+      "positions": 192,
+      "max_abs_mean": 0.0593550206050282,
+      "min_variance": 0.905474334548085,
+      "max_variance": 1.09906961690287,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 1 sign -1",
+      "positions": 191,
+      "max_abs_mean": 0.056742004868602,
+      "min_variance": 0.909864554620041,
+      "max_variance": 1.09074564605909,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 1 sign 1",
+      "positions": 191,
+      "max_abs_mean": 0.0588872433242236,
+      "min_variance": 0.929026393085562,
+      "max_variance": 1.08723243701128,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 2 sign -1",
+      "positions": 190,
+      "max_abs_mean": 0.0586693634624274,
+      "min_variance": 0.932901373849101,
+      "max_variance": 1.11268008431848,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 2 sign 1",
+      "positions": 190,
+      "max_abs_mean": 0.0608147673115463,
+      "min_variance": 0.921714133548123,
+      "max_variance": 1.11567811947015,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 3 sign -1",
+      "positions": 189,
+      "max_abs_mean": 0.0500049120697994,
+      "min_variance": 0.933580261446211,
+      "max_variance": 1.10648710073722,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 3 sign 1",
+      "positions": 189,
+      "max_abs_mean": 0.0727982948010046,
+      "min_variance": 0.941197952989431,
+      "max_variance": 1.10254628782801,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 4 sign -1",
+      "positions": 188,
+      "max_abs_mean": 0.0593863658568082,
+      "min_variance": 0.913838756908529,
+      "max_variance": 1.08411460614833,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 1 lag 4 sign 1",
+      "positions": 188,
+      "max_abs_mean": 0.06265109074785,
+      "min_variance": 0.92399376081508,
+      "max_variance": 1.09432402318344,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2",
+      "positions": 288,
+      "max_abs_mean": 0.0655998703909586,
+      "min_variance": 0.894316214283624,
+      "max_variance": 1.09622055726081,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 1 sign -1",
+      "positions": 287,
+      "max_abs_mean": 0.076888719438443,
+      "min_variance": 0.88688284747431,
+      "max_variance": 1.0815582651034,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 1 sign 1",
+      "positions": 287,
+      "max_abs_mean": 0.0633946358868435,
+      "min_variance": 0.914999771283688,
+      "max_variance": 1.10427000040869,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 2 sign -1",
+      "positions": 286,
+      "max_abs_mean": 0.080690619849911,
+      "min_variance": 0.932397674686796,
+      "max_variance": 1.07560550442957,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 2 sign 1",
+      "positions": 286,
+      "max_abs_mean": 0.0665924237346518,
+      "min_variance": 0.925960520314556,
+      "max_variance": 1.08773988165391,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 3 sign -1",
+      "positions": 285,
+      "max_abs_mean": 0.0599051461362297,
+      "min_variance": 0.89793504849194,
+      "max_variance": 1.09987672989243,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 3 sign 1",
+      "positions": 285,
+      "max_abs_mean": 0.0735462636545714,
+      "min_variance": 0.918559330760903,
+      "max_variance": 1.08166408213155,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 4 sign -1",
+      "positions": 284,
+      "max_abs_mean": 0.059813748236783,
+      "min_variance": 0.897424854406229,
+      "max_variance": 1.08592046115732,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 1 2 lag 4 sign 1",
+      "positions": 284,
+      "max_abs_mean": 0.07264905904048,
+      "min_variance": 0.900683924888866,
+      "max_variance": 1.08651413529562,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1",
+      "positions": 192,
+      "max_abs_mean": 0.0607039788998204,
+      "min_variance": 0.917698537824256,
+      "max_variance": 1.09786452576093,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 1 sign -1",
+      "positions": 191,
+      "max_abs_mean": 0.0651474998695692,
+      "min_variance": 0.912212353146322,
+      "max_variance": 1.08235942739584,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 1 sign 1",
+      "positions": 191,
+      "max_abs_mean": 0.055773555360567,
+      "min_variance": 0.912749434311783,
+      "max_variance": 1.07931398854264,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 2 sign -1",
+      "positions": 190,
+      "max_abs_mean": 0.0686823876320715,
+      "min_variance": 0.910622672348181,
+      "max_variance": 1.08169453396592,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 2 sign 1",
+      "positions": 190,
+      "max_abs_mean": 0.054078684030435,
+      "min_variance": 0.911378563959046,
+      "max_variance": 1.09700014420741,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 3 sign -1",
+      "positions": 189,
+      "max_abs_mean": 0.067598072636069,
+      "min_variance": 0.926235231746694,
+      "max_variance": 1.09726534040414,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 3 sign 1",
+      "positions": 189,
+      "max_abs_mean": 0.0571585930874691,
+      "min_variance": 0.885465622324605,
+      "max_variance": 1.10896605321115,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 4 sign -1",
+      "positions": 188,
+      "max_abs_mean": 0.0531703474584755,
+      "min_variance": 0.925655765451456,
+      "max_variance": 1.10620972646823,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 1 lag 4 sign 1",
+      "positions": 188,
+      "max_abs_mean": 0.0716795098189023,
+      "min_variance": 0.918497696176139,
+      "max_variance": 1.06922408610782,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2",
+      "positions": 288,
+      "max_abs_mean": 0.0746263455779033,
+      "min_variance": 0.916113066194873,
+      "max_variance": 1.08413011461647,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 1 sign -1",
+      "positions": 287,
+      "max_abs_mean": 0.0572325345419591,
+      "min_variance": 0.914528689609708,
+      "max_variance": 1.11546116990306,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 1 sign 1",
+      "positions": 287,
+      "max_abs_mean": 0.0708805769984239,
+      "min_variance": 0.916386953495618,
+      "max_variance": 1.08299545774005,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 2 sign -1",
+      "positions": 286,
+      "max_abs_mean": 0.0790581469449919,
+      "min_variance": 0.912278945539769,
+      "max_variance": 1.0870658160533,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 2 sign 1",
+      "positions": 286,
+      "max_abs_mean": 0.0597398677062717,
+      "min_variance": 0.925405527078957,
+      "max_variance": 1.08028687339149,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 3 sign -1",
+      "positions": 285,
+      "max_abs_mean": 0.0607208952234224,
+      "min_variance": 0.909589966158086,
+      "max_variance": 1.08259326996449,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 3 sign 1",
+      "positions": 285,
+      "max_abs_mean": 0.077166587798145,
+      "min_variance": 0.930068267586232,
+      "max_variance": 1.09744795609639,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 4 sign -1",
+      "positions": 284,
+      "max_abs_mean": 0.0770341758250109,
+      "min_variance": 0.913359447060936,
+      "max_variance": 1.07562069208094,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 2 2 lag 4 sign 1",
+      "positions": 284,
+      "max_abs_mean": 0.0604905860613788,
+      "min_variance": 0.929106809676952,
+      "max_variance": 1.10510873573551,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1",
+      "positions": 192,
+      "max_abs_mean": 0.0683449159037033,
+      "min_variance": 0.9284781328782,
+      "max_variance": 1.07573697315792,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 1 sign -1",
+      "positions": 191,
+      "max_abs_mean": 0.0620630147321235,
+      "min_variance": 0.925481221342231,
+      "max_variance": 1.07432479418694,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 1 sign 1",
+      "positions": 191,
+      "max_abs_mean": 0.0713480296880145,
+      "min_variance": 0.898078310436913,
+      "max_variance": 1.10337016403023,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 2 sign -1",
+      "positions": 190,
+      "max_abs_mean": 0.078778877482429,
+      "min_variance": 0.885621687380106,
+      "max_variance": 1.08748837548949,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 2 sign 1",
+      "positions": 190,
+      "max_abs_mean": 0.0645491313560053,
+      "min_variance": 0.894523976244034,
+      "max_variance": 1.08955013675467,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 3 sign -1",
+      "positions": 189,
+      "max_abs_mean": 0.0633362378945652,
+      "min_variance": 0.91688348528857,
+      "max_variance": 1.08615875434812,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 3 sign 1",
+      "positions": 189,
+      "max_abs_mean": 0.0720016660566282,
+      "min_variance": 0.904662052768609,
+      "max_variance": 1.08393002650688,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 4 sign -1",
+      "positions": 188,
+      "max_abs_mean": 0.0584887329664114,
+      "min_variance": 0.927541789156933,
+      "max_variance": 1.1101574079226,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 1 lag 4 sign 1",
+      "positions": 188,
+      "max_abs_mean": 0.0560131027812963,
+      "min_variance": 0.887022779905308,
+      "max_variance": 1.08196606511107,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2",
+      "positions": 288,
+      "max_abs_mean": 0.076456171152574,
+      "min_variance": 0.912353937341004,
+      "max_variance": 1.1211314382842,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 1 sign -1",
+      "positions": 287,
+      "max_abs_mean": 0.0839748550417802,
+      "min_variance": 0.923104692364373,
+      "max_variance": 1.12932422801391,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 1 sign 1",
+      "positions": 287,
+      "max_abs_mean": 0.0652216388250606,
+      "min_variance": 0.911032464437564,
+      "max_variance": 1.0901739347454,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 2 sign -1",
+      "positions": 286,
+      "max_abs_mean": 0.0738811236095268,
+      "min_variance": 0.890412118241525,
+      "max_variance": 1.0889700347941,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 2 sign 1",
+      "positions": 286,
+      "max_abs_mean": 0.0713330600767959,
+      "min_variance": 0.914882118536303,
+      "max_variance": 1.11578136097609,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 3 sign -1",
+      "positions": 285,
+      "max_abs_mean": 0.069958837009141,
+      "min_variance": 0.912294585660055,
+      "max_variance": 1.10513750992672,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 3 sign 1",
+      "positions": 285,
+      "max_abs_mean": 0.0854794394471766,
+      "min_variance": 0.915351447205755,
+      "max_variance": 1.08445410242758,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 4 sign -1",
+      "positions": 284,
+      "max_abs_mean": 0.0681591062577222,
+      "min_variance": 0.907994145892011,
+      "max_variance": 1.0838995437127,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 3 2 lag 4 sign 1",
+      "positions": 284,
+      "max_abs_mean": 0.0740620439163355,
+      "min_variance": 0.922971213685758,
+      "max_variance": 1.0968015771681,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1",
+      "positions": 192,
+      "max_abs_mean": 0.0604069153563778,
+      "min_variance": 0.943489596576217,
+      "max_variance": 1.07974931709318,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 1 sign -1",
+      "positions": 191,
+      "max_abs_mean": 0.0610435962754433,
+      "min_variance": 0.890139780717066,
+      "max_variance": 1.11433774562559,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 1 sign 1",
+      "positions": 191,
+      "max_abs_mean": 0.0531940016158279,
+      "min_variance": 0.923416143640284,
+      "max_variance": 1.07195613908388,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 2 sign -1",
+      "positions": 190,
+      "max_abs_mean": 0.0636520294267969,
+      "min_variance": 0.91140304403311,
+      "max_variance": 1.07403975998555,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 2 sign 1",
+      "positions": 190,
+      "max_abs_mean": 0.0682702657906041,
+      "min_variance": 0.920872774537492,
+      "max_variance": 1.09358864358607,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 3 sign -1",
+      "positions": 189,
+      "max_abs_mean": 0.0696310758828822,
+      "min_variance": 0.915075777386482,
+      "max_variance": 1.07984496449404,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 3 sign 1",
+      "positions": 189,
+      "max_abs_mean": 0.0637548404967382,
+      "min_variance": 0.924373650780517,
+      "max_variance": 1.07543293565594,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 4 sign -1",
+      "positions": 188,
+      "max_abs_mean": 0.0633163896622456,
+      "min_variance": 0.936560248223198,
+      "max_variance": 1.0906480651383,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 1 lag 4 sign 1",
+      "positions": 188,
+      "max_abs_mean": 0.0631673399365117,
+      "min_variance": 0.916067787630161,
+      "max_variance": 1.08884037301281,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2",
+      "positions": 288,
+      "max_abs_mean": 0.0608315746963156,
+      "min_variance": 0.909976756596351,
+      "max_variance": 1.09463180342646,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 1 sign -1",
+      "positions": 287,
+      "max_abs_mean": 0.070756863400283,
+      "min_variance": 0.896483951213042,
+      "max_variance": 1.08999223950067,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 1 sign 1",
+      "positions": 287,
+      "max_abs_mean": 0.0660501524775726,
+      "min_variance": 0.929331325623134,
+      "max_variance": 1.07936292702593,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 2 sign -1",
+      "positions": 286,
+      "max_abs_mean": 0.0612479876309937,
+      "min_variance": 0.910707090110535,
+      "max_variance": 1.09478181023401,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 2 sign 1",
+      "positions": 286,
+      "max_abs_mean": 0.0616985788400637,
+      "min_variance": 0.925555787727465,
+      "max_variance": 1.08678075680556,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 3 sign -1",
+      "positions": 285,
+      "max_abs_mean": 0.077413993491891,
+      "min_variance": 0.927851924657182,
+      "max_variance": 1.08375536445769,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 3 sign 1",
+      "positions": 285,
+      "max_abs_mean": 0.0803571925168213,
+      "min_variance": 0.924339529249575,
+      "max_variance": 1.07413072376931,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 4 sign -1",
+      "positions": 284,
+      "max_abs_mean": 0.0701747882709868,
+      "min_variance": 0.90901891393209,
+      "max_variance": 1.09896235398085,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long stationary 4 2 lag 4 sign 1",
+      "positions": 284,
+      "max_abs_mean": 0.0642380647585119,
+      "min_variance": 0.907786527956633,
+      "max_variance": 1.09100100426309,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 2 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0616006649313681,
+      "min_variance": 0.921043523738558,
+      "max_variance": 1.12846666461104,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 2 1",
+      "positions": 192,
+      "max_abs_mean": 0.0573897809908681,
+      "min_variance": 0.912944660406775,
+      "max_variance": 1.08767151526911,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 3 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0615364953559619,
+      "min_variance": 0.929156260124981,
+      "max_variance": 1.07791683961924,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 3 1",
+      "positions": 192,
+      "max_abs_mean": 0.0674218353080539,
+      "min_variance": 0.896095849031777,
+      "max_variance": 1.09682436824976,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 4 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0698142784583201,
+      "min_variance": 0.911428152547927,
+      "max_variance": 1.11110282153404,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 4 1",
+      "positions": 192,
+      "max_abs_mean": 0.065932571726109,
+      "min_variance": 0.912448662447407,
+      "max_variance": 1.08142443990598,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 5 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0642997098055519,
+      "min_variance": 0.88820573837272,
+      "max_variance": 1.10343156056813,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 5 1",
+      "positions": 192,
+      "max_abs_mean": 0.0626817066909254,
+      "min_variance": 0.901129436352641,
+      "max_variance": 1.09926056125109,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 6 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0581586251047433,
+      "min_variance": 0.939636776560308,
+      "max_variance": 1.10086846468909,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 6 1",
+      "positions": 192,
+      "max_abs_mean": 0.0710953846870687,
+      "min_variance": 0.901449259352754,
+      "max_variance": 1.1149683563638,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 7 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0647274665144808,
+      "min_variance": 0.925592072827295,
+      "max_variance": 1.11664162953409,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 7 1",
+      "positions": 192,
+      "max_abs_mean": 0.0662491642112874,
+      "min_variance": 0.936028742109642,
+      "max_variance": 1.10251495108352,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 8 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0643607574623426,
+      "min_variance": 0.921453199353568,
+      "max_variance": 1.08926747003503,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 1 8 1",
+      "positions": 192,
+      "max_abs_mean": 0.0804893886876931,
+      "min_variance": 0.93640099981132,
+      "max_variance": 1.08728427282126,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 3 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0691931193169659,
+      "min_variance": 0.924988714152331,
+      "max_variance": 1.08302792158492,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 3 1",
+      "positions": 192,
+      "max_abs_mean": 0.0592306082744659,
+      "min_variance": 0.91955271384234,
+      "max_variance": 1.10915794135586,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 4 -1",
+      "positions": 288,
+      "max_abs_mean": 0.0725608790739981,
+      "min_variance": 0.904083190315731,
+      "max_variance": 1.09655046082922,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 4 1",
+      "positions": 288,
+      "max_abs_mean": 0.0597022412330711,
+      "min_variance": 0.873587168533165,
+      "max_variance": 1.08789761450083,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 5 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0581030431214523,
+      "min_variance": 0.926842557927896,
+      "max_variance": 1.08647570652095,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 5 1",
+      "positions": 192,
+      "max_abs_mean": 0.0762409537394054,
+      "min_variance": 0.903631030910027,
+      "max_variance": 1.08870218919679,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 6 -1",
+      "positions": 288,
+      "max_abs_mean": 0.0749744665606311,
+      "min_variance": 0.935848663208287,
+      "max_variance": 1.08160640415861,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 6 1",
+      "positions": 288,
+      "max_abs_mean": 0.0856322619933543,
+      "min_variance": 0.915337861183666,
+      "max_variance": 1.108461226827,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 7 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0891002526774621,
+      "min_variance": 0.92977739386747,
+      "max_variance": 1.09226813709585,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 7 1",
+      "positions": 192,
+      "max_abs_mean": 0.0701424012808387,
+      "min_variance": 0.932957551664383,
+      "max_variance": 1.08823860134156,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 8 -1",
+      "positions": 288,
+      "max_abs_mean": 0.0786150768230243,
+      "min_variance": 0.930182216613106,
+      "max_variance": 1.07819524083846,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 2 8 1",
+      "positions": 288,
+      "max_abs_mean": 0.0713436266352928,
+      "min_variance": 0.887829022210094,
+      "max_variance": 1.09567642689825,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 4 -1",
+      "positions": 192,
+      "max_abs_mean": 0.062871452750966,
+      "min_variance": 0.902881427038175,
+      "max_variance": 1.07117691326581,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 4 1",
+      "positions": 192,
+      "max_abs_mean": 0.0602416302993452,
+      "min_variance": 0.926760277503764,
+      "max_variance": 1.13063551124635,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 5 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0652052632766134,
+      "min_variance": 0.924829436432626,
+      "max_variance": 1.0891707435931,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 5 1",
+      "positions": 192,
+      "max_abs_mean": 0.0640944477957886,
+      "min_variance": 0.92679408038504,
+      "max_variance": 1.08675164976774,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 6 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0716480636585414,
+      "min_variance": 0.905300333066232,
+      "max_variance": 1.0813715192837,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 6 1",
+      "positions": 192,
+      "max_abs_mean": 0.0593441098531673,
+      "min_variance": 0.926315438755513,
+      "max_variance": 1.0699007752475,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 7 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0712928422748322,
+      "min_variance": 0.907807868263656,
+      "max_variance": 1.09077685133035,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 7 1",
+      "positions": 192,
+      "max_abs_mean": 0.065521145597617,
+      "min_variance": 0.918660078797139,
+      "max_variance": 1.08343097292922,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 8 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0670759446243108,
+      "min_variance": 0.926936516791257,
+      "max_variance": 1.08259735467011,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 3 8 1",
+      "positions": 192,
+      "max_abs_mean": 0.0597040855210667,
+      "min_variance": 0.907430600697734,
+      "max_variance": 1.09011626507754,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 5 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0743629424555346,
+      "min_variance": 0.916301478697424,
+      "max_variance": 1.09727805461287,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 5 1",
+      "positions": 192,
+      "max_abs_mean": 0.0589177361255071,
+      "min_variance": 0.921867678731608,
+      "max_variance": 1.06113171496016,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 6 -1",
+      "positions": 288,
+      "max_abs_mean": 0.0707565937073512,
+      "min_variance": 0.895452232723532,
+      "max_variance": 1.08675816390361,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 6 1",
+      "positions": 288,
+      "max_abs_mean": 0.060417948312025,
+      "min_variance": 0.918044423360942,
+      "max_variance": 1.09107121431567,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 7 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0684580771880996,
+      "min_variance": 0.885762264748153,
+      "max_variance": 1.0738029833639,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 7 1",
+      "positions": 192,
+      "max_abs_mean": 0.0707596338801579,
+      "min_variance": 0.927616617297831,
+      "max_variance": 1.0973144005693,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 8 -1",
+      "positions": 288,
+      "max_abs_mean": 0.0600611451233244,
+      "min_variance": 0.916115187919866,
+      "max_variance": 1.08787876397863,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 4 8 1",
+      "positions": 288,
+      "max_abs_mean": 0.0716030250058571,
+      "min_variance": 0.927658848727492,
+      "max_variance": 1.07824435881281,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 5 6 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0683371540823489,
+      "min_variance": 0.919178124796514,
+      "max_variance": 1.09691076532844,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 5 6 1",
+      "positions": 192,
+      "max_abs_mean": 0.0683950010136086,
+      "min_variance": 0.915554518177471,
+      "max_variance": 1.08916405296202,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 5 7 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0747237298152265,
+      "min_variance": 0.926755105905632,
+      "max_variance": 1.07435896413331,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 5 7 1",
+      "positions": 192,
+      "max_abs_mean": 0.0620029762254252,
+      "min_variance": 0.895767079496978,
+      "max_variance": 1.08777938633317,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 5 8 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0744122937965558,
+      "min_variance": 0.924592678161011,
+      "max_variance": 1.10038943128082,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 5 8 1",
+      "positions": 192,
+      "max_abs_mean": 0.0621571898767135,
+      "min_variance": 0.908102398178113,
+      "max_variance": 1.08087415816461,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 6 7 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0736741371852857,
+      "min_variance": 0.921646322748981,
+      "max_variance": 1.11511555498796,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 6 7 1",
+      "positions": 192,
+      "max_abs_mean": 0.0586112508140359,
+      "min_variance": 0.930655206939592,
+      "max_variance": 1.1010380508856,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 6 8 -1",
+      "positions": 288,
+      "max_abs_mean": 0.0668650939552272,
+      "min_variance": 0.920487280400714,
+      "max_variance": 1.11669356549015,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 6 8 1",
+      "positions": 288,
+      "max_abs_mean": 0.0560888428333449,
+      "min_variance": 0.905734856397762,
+      "max_variance": 1.08826771825388,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 7 8 -1",
+      "positions": 192,
+      "max_abs_mean": 0.0676716529159441,
+      "min_variance": 0.920233556602429,
+      "max_variance": 1.09274015918892,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-long independence 7 8 1",
+      "positions": 192,
+      "max_abs_mean": 0.0568622767534096,
+      "min_variance": 0.912415396306112,
+      "max_variance": 1.07505521620493,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 1",
+      "positions": 98,
+      "max_abs_mean": 0.0553447269921294,
+      "min_variance": 0.906255063406743,
+      "max_variance": 1.06104383898719,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 2",
+      "positions": 146,
+      "max_abs_mean": 0.0564513780089534,
+      "min_variance": 0.929479147939069,
+      "max_variance": 1.11477932704591,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 3",
+      "positions": 98,
+      "max_abs_mean": 0.0502796860264072,
+      "min_variance": 0.918195306625702,
+      "max_variance": 1.0667206797116,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 4",
+      "positions": 146,
+      "max_abs_mean": 0.0700919044248039,
+      "min_variance": 0.919075988285866,
+      "max_variance": 1.07154318127958,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 5",
+      "positions": 98,
+      "max_abs_mean": 0.0649806051905494,
+      "min_variance": 0.931512025195521,
+      "max_variance": 1.07951753393553,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 6",
+      "positions": 146,
+      "max_abs_mean": 0.0599532391546602,
+      "min_variance": 0.902032192316584,
+      "max_variance": 1.09106377363424,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 7",
+      "positions": 98,
+      "max_abs_mean": 0.0559451917379347,
+      "min_variance": 0.920736267639202,
+      "max_variance": 1.08407064395413,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short innovation 8",
+      "positions": 146,
+      "max_abs_mean": 0.0749716399428604,
+      "min_variance": 0.912541826153958,
+      "max_variance": 1.06740591309447,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1",
+      "positions": 96,
+      "max_abs_mean": 0.0475297587402327,
+      "min_variance": 0.92822733808025,
+      "max_variance": 1.07434564992229,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0549940545572985,
+      "min_variance": 0.896435471876932,
+      "max_variance": 1.06220225976097,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0501033324955651,
+      "min_variance": 0.926093349890507,
+      "max_variance": 1.07203761652306,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0494805647979145,
+      "min_variance": 0.922109381266428,
+      "max_variance": 1.06531681428371,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0593475058534526,
+      "min_variance": 0.943630967312862,
+      "max_variance": 1.10171074279973,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0434093621912102,
+      "min_variance": 0.944759314339519,
+      "max_variance": 1.1017215089418,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0559314699332833,
+      "min_variance": 0.934793507744062,
+      "max_variance": 1.09138283166929,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0485017030599082,
+      "min_variance": 0.917250071119978,
+      "max_variance": 1.07077533465623,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0643664494575294,
+      "min_variance": 0.946949250555846,
+      "max_variance": 1.07632931770516,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2",
+      "positions": 144,
+      "max_abs_mean": 0.0568687914857814,
+      "min_variance": 0.928278032220511,
+      "max_variance": 1.07447259292231,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0419354406859602,
+      "min_variance": 0.928856572155452,
+      "max_variance": 1.13733153926787,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0521623917517089,
+      "min_variance": 0.919702052157726,
+      "max_variance": 1.08321453298788,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0542504534948331,
+      "min_variance": 0.931102429989087,
+      "max_variance": 1.09378260609236,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0585365238408791,
+      "min_variance": 0.92841680968584,
+      "max_variance": 1.0907969526373,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0646489060977853,
+      "min_variance": 0.945456767174357,
+      "max_variance": 1.07851847165507,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0546151469128483,
+      "min_variance": 0.927598509755328,
+      "max_variance": 1.08707194583047,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0523226350032989,
+      "min_variance": 0.944397152865875,
+      "max_variance": 1.07935153105944,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 1 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0521883490453491,
+      "min_variance": 0.930329123493193,
+      "max_variance": 1.08928269098179,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.0518393081514317,
+      "min_variance": 0.917714733669503,
+      "max_variance": 1.09876768460386,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0483840402848519,
+      "min_variance": 0.920102642803232,
+      "max_variance": 1.08250782771208,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0487864969857956,
+      "min_variance": 0.914172304845064,
+      "max_variance": 1.10065154679585,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0705449942355796,
+      "min_variance": 0.92903476662635,
+      "max_variance": 1.09883662812642,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0629099379381878,
+      "min_variance": 0.916289037540766,
+      "max_variance": 1.09415802354044,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0612141013533214,
+      "min_variance": 0.900991312029363,
+      "max_variance": 1.09276241623877,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0569810564186214,
+      "min_variance": 0.916902824409953,
+      "max_variance": 1.06685195370629,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0695762539726637,
+      "min_variance": 0.899699296108151,
+      "max_variance": 1.0899202662439,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0634105628521484,
+      "min_variance": 0.914356636230484,
+      "max_variance": 1.07762446661857,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2",
+      "positions": 144,
+      "max_abs_mean": 0.065776331533403,
+      "min_variance": 0.924508354549934,
+      "max_variance": 1.07099971972105,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.063857761241396,
+      "min_variance": 0.910936091408375,
+      "max_variance": 1.08139088408665,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.068460646457704,
+      "min_variance": 0.929258560574767,
+      "max_variance": 1.08896412056655,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0716484153195502,
+      "min_variance": 0.929936418832357,
+      "max_variance": 1.08853766436485,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.072093197345493,
+      "min_variance": 0.924063462844435,
+      "max_variance": 1.08799872458571,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0642872279326045,
+      "min_variance": 0.934486085874107,
+      "max_variance": 1.06770836431307,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0672061851824248,
+      "min_variance": 0.911214122841466,
+      "max_variance": 1.0799865080577,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0703531137658804,
+      "min_variance": 0.92531374552431,
+      "max_variance": 1.07631065478061,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 2 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0634591383364891,
+      "min_variance": 0.890961353268645,
+      "max_variance": 1.07459984918823,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0537179470699113,
+      "min_variance": 0.927728277929751,
+      "max_variance": 1.08555337972104,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0808537209635557,
+      "min_variance": 0.932541959186231,
+      "max_variance": 1.09316632619718,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0601714284447469,
+      "min_variance": 0.940274558725138,
+      "max_variance": 1.10018163102564,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0603106899325494,
+      "min_variance": 0.917777314545783,
+      "max_variance": 1.10731324078527,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0529030186534846,
+      "min_variance": 0.918599561956272,
+      "max_variance": 1.05536171656922,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0533290386706266,
+      "min_variance": 0.906023625771204,
+      "max_variance": 1.0912123093532,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0494052080095939,
+      "min_variance": 0.922277442415763,
+      "max_variance": 1.07676885210127,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0471990453987509,
+      "min_variance": 0.92452414194574,
+      "max_variance": 1.07473797385032,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0522547249093007,
+      "min_variance": 0.937466352959841,
+      "max_variance": 1.09928419867384,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2",
+      "positions": 144,
+      "max_abs_mean": 0.0537519067590398,
+      "min_variance": 0.917656378557873,
+      "max_variance": 1.088034304676,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0596765247958691,
+      "min_variance": 0.898880543425326,
+      "max_variance": 1.10515492927815,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.054711619358618,
+      "min_variance": 0.919508166578806,
+      "max_variance": 1.12024392971736,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0587497331991872,
+      "min_variance": 0.916447217768744,
+      "max_variance": 1.06585080811896,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0586042107172052,
+      "min_variance": 0.921994658087246,
+      "max_variance": 1.09852443232973,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0666767086692327,
+      "min_variance": 0.919100671883677,
+      "max_variance": 1.10022882895561,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0594415117788417,
+      "min_variance": 0.890999868642978,
+      "max_variance": 1.14498308160299,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0516164995361166,
+      "min_variance": 0.918899194732656,
+      "max_variance": 1.08660626711966,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 3 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0530521820084875,
+      "min_variance": 0.881998516919595,
+      "max_variance": 1.08567346690388,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0538973835129908,
+      "min_variance": 0.938837077025117,
+      "max_variance": 1.07473075052963,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0482554416849562,
+      "min_variance": 0.915754003202993,
+      "max_variance": 1.07915342130228,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0566313216476682,
+      "min_variance": 0.930242235479225,
+      "max_variance": 1.06362996015353,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.057678752138703,
+      "min_variance": 0.930676979480704,
+      "max_variance": 1.07859175368659,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0565072955798906,
+      "min_variance": 0.929215626353965,
+      "max_variance": 1.06435100557327,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0575883322071334,
+      "min_variance": 0.945193773961455,
+      "max_variance": 1.0866689447461,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0564368600836301,
+      "min_variance": 0.932429463068222,
+      "max_variance": 1.06991066425028,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0610080993145792,
+      "min_variance": 0.934452640918314,
+      "max_variance": 1.08993564299411,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0547697027680439,
+      "min_variance": 0.922294140144787,
+      "max_variance": 1.07470095133936,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2",
+      "positions": 144,
+      "max_abs_mean": 0.0830315214855742,
+      "min_variance": 0.932378323519832,
+      "max_variance": 1.07053325962654,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.057334658642136,
+      "min_variance": 0.909842774588516,
+      "max_variance": 1.0651136915991,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0767273280265341,
+      "min_variance": 0.9193363040264,
+      "max_variance": 1.08341902129107,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0509601682430258,
+      "min_variance": 0.94067024495737,
+      "max_variance": 1.07242836126864,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0729114884424377,
+      "min_variance": 0.929275959111089,
+      "max_variance": 1.06830115897546,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.075000536801203,
+      "min_variance": 0.917419976170778,
+      "max_variance": 1.08211857055803,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0639379876539226,
+      "min_variance": 0.923377609408048,
+      "max_variance": 1.0777104714267,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0694340206248928,
+      "min_variance": 0.925534928757448,
+      "max_variance": 1.07379265014555,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short stationary 4 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.061192773075671,
+      "min_variance": 0.91355194020277,
+      "max_variance": 1.08733325265565,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 2 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0571239530495333,
+      "min_variance": 0.916833066045702,
+      "max_variance": 1.07262741333866,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.0510926946410154,
+      "min_variance": 0.95089729533888,
+      "max_variance": 1.07889622600487,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0600051170558773,
+      "min_variance": 0.929836797829822,
+      "max_variance": 1.07731202530987,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0479254862674446,
+      "min_variance": 0.926091071301925,
+      "max_variance": 1.08051585034146,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.053201174098527,
+      "min_variance": 0.930075789730595,
+      "max_variance": 1.06565250219104,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0640017182331594,
+      "min_variance": 0.929419677491567,
+      "max_variance": 1.06275961087668,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0536807094733045,
+      "min_variance": 0.946793339088289,
+      "max_variance": 1.06213525148695,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0572715560417058,
+      "min_variance": 0.942032898659907,
+      "max_variance": 1.04936361126893,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0478475221786119,
+      "min_variance": 0.937859204337841,
+      "max_variance": 1.09027101285399,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0532173885503118,
+      "min_variance": 0.927631014922447,
+      "max_variance": 1.06876348437239,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0530833480128022,
+      "min_variance": 0.935888580922452,
+      "max_variance": 1.07852532034249,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0472066264854614,
+      "min_variance": 0.945051637828574,
+      "max_variance": 1.06138324202607,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0491222181649879,
+      "min_variance": 0.917993987689132,
+      "max_variance": 1.07477860688712,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 1 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0522174030274619,
+      "min_variance": 0.927072466695682,
+      "max_variance": 1.05840847801111,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0518837483929978,
+      "min_variance": 0.924342844974376,
+      "max_variance": 1.07946648458649,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0473790887629152,
+      "min_variance": 0.924228825139462,
+      "max_variance": 1.09393330102126,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 4 -1",
+      "positions": 144,
+      "max_abs_mean": 0.053662922679982,
+      "min_variance": 0.920055218010957,
+      "max_variance": 1.10566257214003,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 4 1",
+      "positions": 144,
+      "max_abs_mean": 0.0634084344120301,
+      "min_variance": 0.923893545150155,
+      "max_variance": 1.09665206406701,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0449026879826364,
+      "min_variance": 0.939108385513318,
+      "max_variance": 1.06313726396335,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0702438236292554,
+      "min_variance": 0.937693370381816,
+      "max_variance": 1.08455797265187,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.042949663109245,
+      "min_variance": 0.91988928238421,
+      "max_variance": 1.10593799243029,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.0582509667967511,
+      "min_variance": 0.928459660536764,
+      "max_variance": 1.08094810122428,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0549883839055045,
+      "min_variance": 0.935282580305868,
+      "max_variance": 1.07234091745374,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0606132509306345,
+      "min_variance": 0.910098716362152,
+      "max_variance": 1.06255575032148,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0544684254776037,
+      "min_variance": 0.938771164480001,
+      "max_variance": 1.08047238565125,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 2 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0709914511194304,
+      "min_variance": 0.920707123933746,
+      "max_variance": 1.06750257578111,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0705249352327003,
+      "min_variance": 0.89870453975929,
+      "max_variance": 1.06231119722166,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0569810362463234,
+      "min_variance": 0.922270644027495,
+      "max_variance": 1.07175624634915,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0570615329522665,
+      "min_variance": 0.912023916091872,
+      "max_variance": 1.09407574750409,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0560657492077858,
+      "min_variance": 0.927556884643085,
+      "max_variance": 1.11322715553153,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0564204539277103,
+      "min_variance": 0.93672790244885,
+      "max_variance": 1.0921989991114,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0517821169414253,
+      "min_variance": 0.924983959253275,
+      "max_variance": 1.08860770370681,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0622806099927742,
+      "min_variance": 0.91091001316184,
+      "max_variance": 1.11734077568457,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0651453693039406,
+      "min_variance": 0.925192368438267,
+      "max_variance": 1.08261229327698,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0614469184664699,
+      "min_variance": 0.923994155708583,
+      "max_variance": 1.10751253987887,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 3 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0521264485516924,
+      "min_variance": 0.919902923632021,
+      "max_variance": 1.0703929437362,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0532597096284457,
+      "min_variance": 0.939676713025376,
+      "max_variance": 1.08060277534463,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0575577283231737,
+      "min_variance": 0.930095069990995,
+      "max_variance": 1.07025277487255,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0717833553142485,
+      "min_variance": 0.917312712716622,
+      "max_variance": 1.08081751079955,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.0591113039106172,
+      "min_variance": 0.920618202434905,
+      "max_variance": 1.06942256314911,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.06711400891246,
+      "min_variance": 0.929359590895024,
+      "max_variance": 1.07327721678721,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0549910724941524,
+      "min_variance": 0.934157516508661,
+      "max_variance": 1.08661339651211,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0494769182722529,
+      "min_variance": 0.899404674974642,
+      "max_variance": 1.09719716403669,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 4 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0733104304745237,
+      "min_variance": 0.936542449405642,
+      "max_variance": 1.07918233769491,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 5 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0452664691052779,
+      "min_variance": 0.91823903254431,
+      "max_variance": 1.09444714831928,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 5 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0630946553090976,
+      "min_variance": 0.916391463671077,
+      "max_variance": 1.09946226963858,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 5 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0479528762809363,
+      "min_variance": 0.911201957364189,
+      "max_variance": 1.09795923225002,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 5 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0607364577159096,
+      "min_variance": 0.920998222871083,
+      "max_variance": 1.10127593151581,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 5 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0563442745589574,
+      "min_variance": 0.919786424824728,
+      "max_variance": 1.06290367936941,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 5 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0459571086227455,
+      "min_variance": 0.934329054509095,
+      "max_variance": 1.05765450781946,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 6 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0547488677115499,
+      "min_variance": 0.928350895719266,
+      "max_variance": 1.08833120453892,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 6 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0614700293079266,
+      "min_variance": 0.933611914649522,
+      "max_variance": 1.08066864346014,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 6 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0667699694498108,
+      "min_variance": 0.921244686685419,
+      "max_variance": 1.09709221734453,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 6 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0520612973672572,
+      "min_variance": 0.934120783723238,
+      "max_variance": 1.07853362513025,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 7 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0537763356469572,
+      "min_variance": 0.919790146446651,
+      "max_variance": 1.08623750955533,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-complete-short independence 7 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0475503058553244,
+      "min_variance": 0.923260965586987,
+      "max_variance": 1.0802504507477,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 1",
+      "positions": 98,
+      "max_abs_mean": 0.0688106946886343,
+      "min_variance": 0.943951727967785,
+      "max_variance": 1.08608124882305,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 2",
+      "positions": 146,
+      "max_abs_mean": 0.0653942276681258,
+      "min_variance": 0.902531047539991,
+      "max_variance": 1.07384836846896,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 3",
+      "positions": 98,
+      "max_abs_mean": 0.0636831883809482,
+      "min_variance": 0.920126984350743,
+      "max_variance": 1.07739758406906,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 4",
+      "positions": 146,
+      "max_abs_mean": 0.0651718002197286,
+      "min_variance": 0.897951807988495,
+      "max_variance": 1.08966419785383,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 5",
+      "positions": 98,
+      "max_abs_mean": 0.0481321261203132,
+      "min_variance": 0.917508747945038,
+      "max_variance": 1.06649711672683,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 6",
+      "positions": 146,
+      "max_abs_mean": 0.0668698556413376,
+      "min_variance": 0.911071226012666,
+      "max_variance": 1.09412375944727,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 7",
+      "positions": 98,
+      "max_abs_mean": 0.0499141108763017,
+      "min_variance": 0.922785139451116,
+      "max_variance": 1.10649223487493,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous innovation 8",
+      "positions": 146,
+      "max_abs_mean": 0.0631680312636626,
+      "min_variance": 0.932931878834331,
+      "max_variance": 1.07702521642847,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1",
+      "positions": 96,
+      "max_abs_mean": 0.0610198528850067,
+      "min_variance": 0.931902964106457,
+      "max_variance": 1.05489503588237,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0640226718611752,
+      "min_variance": 0.919517639099246,
+      "max_variance": 1.09752866375996,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0657620561606586,
+      "min_variance": 0.94841748972082,
+      "max_variance": 1.06227082162181,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0564877199974855,
+      "min_variance": 0.929537246049151,
+      "max_variance": 1.07866927561798,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0745400334002074,
+      "min_variance": 0.917638503385075,
+      "max_variance": 1.06880394076793,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0619991558237077,
+      "min_variance": 0.927616582926147,
+      "max_variance": 1.07814410356609,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0629993884437465,
+      "min_variance": 0.926946852711837,
+      "max_variance": 1.07806874429519,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.063443103688589,
+      "min_variance": 0.924892048303455,
+      "max_variance": 1.07293098405758,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.066133064009907,
+      "min_variance": 0.941594107143102,
+      "max_variance": 1.06164453713544,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2",
+      "positions": 144,
+      "max_abs_mean": 0.0807885931336812,
+      "min_variance": 0.915878696608647,
+      "max_variance": 1.11316967320197,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0589019240720367,
+      "min_variance": 0.910351437238172,
+      "max_variance": 1.067552223595,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0776003106432122,
+      "min_variance": 0.90464432952792,
+      "max_variance": 1.08112452015004,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.071908274176676,
+      "min_variance": 0.903577056886645,
+      "max_variance": 1.06238738810626,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0610531881654037,
+      "min_variance": 0.927874456080407,
+      "max_variance": 1.09491169019332,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0714857915438159,
+      "min_variance": 0.931725377954729,
+      "max_variance": 1.06560552269927,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.055581066693824,
+      "min_variance": 0.898671295377548,
+      "max_variance": 1.10600347217754,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0767012868987825,
+      "min_variance": 0.908962774743241,
+      "max_variance": 1.06859113078135,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 1 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0551499989817391,
+      "min_variance": 0.922561902390137,
+      "max_variance": 1.10386188827322,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.0587035374095998,
+      "min_variance": 0.926995282150603,
+      "max_variance": 1.07134808462363,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0628005333830764,
+      "min_variance": 0.915607585756907,
+      "max_variance": 1.08170719035511,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0523064908652243,
+      "min_variance": 0.926276253119525,
+      "max_variance": 1.06404848971336,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0591647568807203,
+      "min_variance": 0.93081861017857,
+      "max_variance": 1.06917556244126,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0631759142608998,
+      "min_variance": 0.940004521207773,
+      "max_variance": 1.06542981111311,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0738749146295765,
+      "min_variance": 0.935194802802951,
+      "max_variance": 1.07123939642699,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0476368924883899,
+      "min_variance": 0.932791353022502,
+      "max_variance": 1.08201807386049,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0572720085842945,
+      "min_variance": 0.914490489170306,
+      "max_variance": 1.07865978507065,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0628274900719608,
+      "min_variance": 0.930032737752183,
+      "max_variance": 1.0716000212644,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2",
+      "positions": 144,
+      "max_abs_mean": 0.0634886909977204,
+      "min_variance": 0.897811658607162,
+      "max_variance": 1.08199720942422,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0561430408207204,
+      "min_variance": 0.914681805071343,
+      "max_variance": 1.07188075589674,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.06061092218534,
+      "min_variance": 0.914752584193969,
+      "max_variance": 1.08062220896329,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0579018180254507,
+      "min_variance": 0.931329197313782,
+      "max_variance": 1.07110668404544,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0825368721136668,
+      "min_variance": 0.910995584286388,
+      "max_variance": 1.08634898174774,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0651717659571293,
+      "min_variance": 0.920208622329181,
+      "max_variance": 1.07491460375319,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0639971751167493,
+      "min_variance": 0.932529137181413,
+      "max_variance": 1.07237049521991,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.074029207618845,
+      "min_variance": 0.922977279150204,
+      "max_variance": 1.05936193192601,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 2 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.067141042453897,
+      "min_variance": 0.888163402337567,
+      "max_variance": 1.10528305338269,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0563626164286549,
+      "min_variance": 0.931559182802392,
+      "max_variance": 1.08548815439706,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0480670943593139,
+      "min_variance": 0.922931296762026,
+      "max_variance": 1.06558916266463,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0505752141325425,
+      "min_variance": 0.942131277831708,
+      "max_variance": 1.07043213593179,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0552316305992539,
+      "min_variance": 0.914373962305131,
+      "max_variance": 1.05647990510721,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.053765001173421,
+      "min_variance": 0.941459364771366,
+      "max_variance": 1.09244613906495,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0500339795777177,
+      "min_variance": 0.935813649832143,
+      "max_variance": 1.06681878833057,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0602690450747864,
+      "min_variance": 0.93034454767457,
+      "max_variance": 1.08667012983882,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0459203949313155,
+      "min_variance": 0.919955335010059,
+      "max_variance": 1.05341254030825,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0535991164232966,
+      "min_variance": 0.92270005812457,
+      "max_variance": 1.06047188977464,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2",
+      "positions": 144,
+      "max_abs_mean": 0.0575138086118272,
+      "min_variance": 0.915617592362595,
+      "max_variance": 1.08571319532107,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0623300378555001,
+      "min_variance": 0.90671206458551,
+      "max_variance": 1.07277524300362,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0562723397204083,
+      "min_variance": 0.921861492117926,
+      "max_variance": 1.09634391790963,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0571663615238309,
+      "min_variance": 0.921859218607803,
+      "max_variance": 1.08238388075942,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0490578652026584,
+      "min_variance": 0.940340332071243,
+      "max_variance": 1.09320587961944,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0583289439156423,
+      "min_variance": 0.896880862050975,
+      "max_variance": 1.0917227464973,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0567353758416506,
+      "min_variance": 0.895421924451302,
+      "max_variance": 1.08372296735157,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0604180730692467,
+      "min_variance": 0.932860630314662,
+      "max_variance": 1.11597828431195,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 3 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0579023790445568,
+      "min_variance": 0.924636295384774,
+      "max_variance": 1.07620481773716,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0526695178031848,
+      "min_variance": 0.930630030710007,
+      "max_variance": 1.10076428024133,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.053727966509428,
+      "min_variance": 0.904616865376693,
+      "max_variance": 1.06607914074369,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0525420669706653,
+      "min_variance": 0.930034419400114,
+      "max_variance": 1.07998024502635,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0470674383961011,
+      "min_variance": 0.925599171086369,
+      "max_variance": 1.07076140926324,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0466224948629943,
+      "min_variance": 0.951743842115148,
+      "max_variance": 1.06988292534927,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0595778489447397,
+      "min_variance": 0.926948851159576,
+      "max_variance": 1.09006240418294,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0523457822243992,
+      "min_variance": 0.945211048854396,
+      "max_variance": 1.08445491393926,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0611770292583827,
+      "min_variance": 0.937827462753187,
+      "max_variance": 1.07280609225267,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0483104932368349,
+      "min_variance": 0.926776488570127,
+      "max_variance": 1.08974097180435,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2",
+      "positions": 144,
+      "max_abs_mean": 0.0633263396606435,
+      "min_variance": 0.918647932011855,
+      "max_variance": 1.07446957438817,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0630683261747723,
+      "min_variance": 0.932199770577253,
+      "max_variance": 1.07357922621615,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0512127247844714,
+      "min_variance": 0.932420159383477,
+      "max_variance": 1.06802549341857,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0598188102229626,
+      "min_variance": 0.929386521915291,
+      "max_variance": 1.0708114207271,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0685479576648259,
+      "min_variance": 0.912687992465034,
+      "max_variance": 1.07528309946847,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0525941566951416,
+      "min_variance": 0.912149843574943,
+      "max_variance": 1.05918871239764,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0617528568226743,
+      "min_variance": 0.918984954204663,
+      "max_variance": 1.07741650788034,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0562648155556783,
+      "min_variance": 0.909497705319071,
+      "max_variance": 1.08585937836081,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous stationary 4 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0683172385438854,
+      "min_variance": 0.936731526676254,
+      "max_variance": 1.10870626004511,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 2 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0917798898962453,
+      "min_variance": 0.926246805655692,
+      "max_variance": 1.07792240658094,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.0597995172953235,
+      "min_variance": 0.913400784462885,
+      "max_variance": 1.06823374826466,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0724567757780916,
+      "min_variance": 0.936981837592415,
+      "max_variance": 1.06432602094551,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.065410857544206,
+      "min_variance": 0.941726630881732,
+      "max_variance": 1.09713439746353,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0558522945929605,
+      "min_variance": 0.895596100068894,
+      "max_variance": 1.05489042355561,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0592843970706282,
+      "min_variance": 0.925939150374705,
+      "max_variance": 1.07772837218201,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0712102191901245,
+      "min_variance": 0.92923186772696,
+      "max_variance": 1.06881129713289,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0551222959455671,
+      "min_variance": 0.93217779457132,
+      "max_variance": 1.06868571606559,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.069759173999312,
+      "min_variance": 0.924429758421802,
+      "max_variance": 1.08163039777846,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0804135413197957,
+      "min_variance": 0.909065923090857,
+      "max_variance": 1.09346113839016,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0645598550335998,
+      "min_variance": 0.937182120560074,
+      "max_variance": 1.10255390861846,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0561864580019187,
+      "min_variance": 0.906393964584853,
+      "max_variance": 1.07000891459021,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0659377673691744,
+      "min_variance": 0.939116578949597,
+      "max_variance": 1.05706455980604,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 1 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0582426871464814,
+      "min_variance": 0.920550309719082,
+      "max_variance": 1.07962659338601,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0574068545861886,
+      "min_variance": 0.927987018525948,
+      "max_variance": 1.06195588683232,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0816377491949164,
+      "min_variance": 0.923803561417694,
+      "max_variance": 1.07427604020808,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 4 -1",
+      "positions": 144,
+      "max_abs_mean": 0.067329304908472,
+      "min_variance": 0.919979749080919,
+      "max_variance": 1.11256233270761,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 4 1",
+      "positions": 144,
+      "max_abs_mean": 0.0673003841360842,
+      "min_variance": 0.914149540547331,
+      "max_variance": 1.08917110352755,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0498515919644256,
+      "min_variance": 0.922712023461268,
+      "max_variance": 1.0849031787638,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0655137164434965,
+      "min_variance": 0.935321196104691,
+      "max_variance": 1.10311349554533,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0644535083416815,
+      "min_variance": 0.913920797311553,
+      "max_variance": 1.06776010508273,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.0675268403256231,
+      "min_variance": 0.910519599624884,
+      "max_variance": 1.0892372709725,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0547331196257954,
+      "min_variance": 0.932459051798756,
+      "max_variance": 1.07953733352221,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0835978912045332,
+      "min_variance": 0.924689011146983,
+      "max_variance": 1.06177398150793,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0605041192717208,
+      "min_variance": 0.914491075220582,
+      "max_variance": 1.0848517879135,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 2 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0717729941245673,
+      "min_variance": 0.920144750782141,
+      "max_variance": 1.09275871516802,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0764966061339283,
+      "min_variance": 0.922206360385146,
+      "max_variance": 1.06326886286297,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0475400799860976,
+      "min_variance": 0.924706668180286,
+      "max_variance": 1.11618638547664,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.059346028173756,
+      "min_variance": 0.914777845393408,
+      "max_variance": 1.05668282872094,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0476691435283816,
+      "min_variance": 0.895047191583336,
+      "max_variance": 1.08553327779174,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0519441755762633,
+      "min_variance": 0.917080967034601,
+      "max_variance": 1.08877850087617,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0612420844365193,
+      "min_variance": 0.92565999248349,
+      "max_variance": 1.06079490604021,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0554540162633548,
+      "min_variance": 0.918454345222017,
+      "max_variance": 1.0853758267507,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0590846680455684,
+      "min_variance": 0.917955393201202,
+      "max_variance": 1.0757129803744,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0674132398500801,
+      "min_variance": 0.949723559266257,
+      "max_variance": 1.07622874878378,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 3 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0631268148461626,
+      "min_variance": 0.936425790385753,
+      "max_variance": 1.08117765442076,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0538223502361777,
+      "min_variance": 0.91980984692838,
+      "max_variance": 1.06613438482524,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0507323087291642,
+      "min_variance": 0.930833184578402,
+      "max_variance": 1.07568131598479,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0659463101650757,
+      "min_variance": 0.911336622692479,
+      "max_variance": 1.07242210945269,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.055527981902615,
+      "min_variance": 0.90506921649631,
+      "max_variance": 1.10738319512325,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0512358181233815,
+      "min_variance": 0.915800937023696,
+      "max_variance": 1.07002634469556,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0531053245436332,
+      "min_variance": 0.920111240224837,
+      "max_variance": 1.07006510016103,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0655904057711924,
+      "min_variance": 0.899559960058117,
+      "max_variance": 1.06772804922437,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 4 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.063796608262222,
+      "min_variance": 0.907145101381376,
+      "max_variance": 1.09721158184914,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 5 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0670414460824378,
+      "min_variance": 0.880023653373326,
+      "max_variance": 1.10105616108039,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 5 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0498178149937905,
+      "min_variance": 0.931861774196572,
+      "max_variance": 1.08376248946367,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 5 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.062762085534129,
+      "min_variance": 0.932915189081768,
+      "max_variance": 1.07266204254544,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 5 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0488848869257525,
+      "min_variance": 0.911295622584288,
+      "max_variance": 1.07843265206899,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 5 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0535512490993127,
+      "min_variance": 0.927967284013416,
+      "max_variance": 1.06769117415712,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 5 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.060384470202555,
+      "min_variance": 0.907689588927565,
+      "max_variance": 1.09747884364754,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 6 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0615416758605767,
+      "min_variance": 0.932887867199821,
+      "max_variance": 1.08218311224076,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 6 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0688415153057954,
+      "min_variance": 0.945359924783569,
+      "max_variance": 1.07443923458793,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 6 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0659359671816324,
+      "min_variance": 0.92420187963706,
+      "max_variance": 1.0921383277899,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 6 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0608182940260527,
+      "min_variance": 0.913586843691754,
+      "max_variance": 1.06648101946819,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 7 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0587857295542217,
+      "min_variance": 0.922380640049069,
+      "max_variance": 1.09951920899948,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-voxel-heterogeneous independence 7 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0634338308811837,
+      "min_variance": 0.935363927747699,
+      "max_variance": 1.09984672065337,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 1",
+      "positions": 98,
+      "max_abs_mean": 0.054820613181874,
+      "min_variance": 0.920054904747479,
+      "max_variance": 1.07367143636175,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 2",
+      "positions": 146,
+      "max_abs_mean": 0.0626561735546681,
+      "min_variance": 0.931587075417875,
+      "max_variance": 1.07542800033188,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 3",
+      "positions": 98,
+      "max_abs_mean": 0.0821660860438697,
+      "min_variance": 0.925289009912985,
+      "max_variance": 1.08730477503114,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 4",
+      "positions": 146,
+      "max_abs_mean": 0.056176917261424,
+      "min_variance": 0.927185074991241,
+      "max_variance": 1.07578603487226,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 5",
+      "positions": 98,
+      "max_abs_mean": 0.0560890520074018,
+      "min_variance": 0.928119475126594,
+      "max_variance": 1.08103146095245,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 6",
+      "positions": 146,
+      "max_abs_mean": 0.0700727999608727,
+      "min_variance": 0.918486674197806,
+      "max_variance": 1.10121414068734,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 7",
+      "positions": 98,
+      "max_abs_mean": 0.0531171533453803,
+      "min_variance": 0.911117061465556,
+      "max_variance": 1.10634977772715,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous innovation 8",
+      "positions": 146,
+      "max_abs_mean": 0.0658591191137217,
+      "min_variance": 0.926713611063111,
+      "max_variance": 1.07740459608058,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1",
+      "positions": 96,
+      "max_abs_mean": 0.0552363923089068,
+      "min_variance": 0.916235319845785,
+      "max_variance": 1.07377156736854,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0553779137985987,
+      "min_variance": 0.938016946530384,
+      "max_variance": 1.09046468878473,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0517209199791559,
+      "min_variance": 0.92822739072654,
+      "max_variance": 1.07544415140187,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0554995412726477,
+      "min_variance": 0.95555874586419,
+      "max_variance": 1.07817159528166,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0529709446073447,
+      "min_variance": 0.915703092778555,
+      "max_variance": 1.10067853084708,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0598904464127687,
+      "min_variance": 0.943082761125753,
+      "max_variance": 1.11206504168299,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0702176587051749,
+      "min_variance": 0.945913881495575,
+      "max_variance": 1.08534921142282,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0469617813195634,
+      "min_variance": 0.906103111822327,
+      "max_variance": 1.09480198980008,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0483083257778285,
+      "min_variance": 0.934708928555188,
+      "max_variance": 1.07498005021412,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2",
+      "positions": 144,
+      "max_abs_mean": 0.0629697733311383,
+      "min_variance": 0.922107339079395,
+      "max_variance": 1.08668310092288,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0661907975353294,
+      "min_variance": 0.930749612480742,
+      "max_variance": 1.06779331994541,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0683541183702264,
+      "min_variance": 0.93080957329444,
+      "max_variance": 1.06541461684056,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0558111185141751,
+      "min_variance": 0.936708423508694,
+      "max_variance": 1.083825106766,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.066530633498553,
+      "min_variance": 0.921609223133559,
+      "max_variance": 1.07652629351008,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0663563210578017,
+      "min_variance": 0.908527470558175,
+      "max_variance": 1.07252094879127,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.062729586636609,
+      "min_variance": 0.935905341311351,
+      "max_variance": 1.06129106798536,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0638890060685037,
+      "min_variance": 0.920400812277743,
+      "max_variance": 1.07592334058283,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 1 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.059868717427891,
+      "min_variance": 0.924651932611399,
+      "max_variance": 1.08074295775175,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.075728845216872,
+      "min_variance": 0.934249773278381,
+      "max_variance": 1.10180678224596,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0691821049865664,
+      "min_variance": 0.924955453524594,
+      "max_variance": 1.06081352750295,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.07945422879973,
+      "min_variance": 0.951325137952924,
+      "max_variance": 1.0868964825212,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0666985657801484,
+      "min_variance": 0.920804542634569,
+      "max_variance": 1.06521973088185,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0685306858726815,
+      "min_variance": 0.948415311886242,
+      "max_variance": 1.06904640864794,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0551575024659044,
+      "min_variance": 0.919343029509059,
+      "max_variance": 1.0876170753622,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0804007885241563,
+      "min_variance": 0.948754582965575,
+      "max_variance": 1.06131534640238,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.063951814501719,
+      "min_variance": 0.928243402628259,
+      "max_variance": 1.09060841921331,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0730647610258913,
+      "min_variance": 0.937928758284861,
+      "max_variance": 1.05114052863803,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2",
+      "positions": 144,
+      "max_abs_mean": 0.0623484702503454,
+      "min_variance": 0.926753448328236,
+      "max_variance": 1.06879376120583,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0550923791806988,
+      "min_variance": 0.93099990034652,
+      "max_variance": 1.07287473451126,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0631785350850218,
+      "min_variance": 0.937933841926988,
+      "max_variance": 1.0618809352353,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0645277230340912,
+      "min_variance": 0.936257657542293,
+      "max_variance": 1.07250348772649,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0549459881573768,
+      "min_variance": 0.908222322947024,
+      "max_variance": 1.08313723401846,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.060209179053994,
+      "min_variance": 0.916390238963643,
+      "max_variance": 1.07772605739771,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0624226315867083,
+      "min_variance": 0.927480979301241,
+      "max_variance": 1.06695184852795,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0699426826228338,
+      "min_variance": 0.917109466600137,
+      "max_variance": 1.08528246738426,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 2 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0609570223096808,
+      "min_variance": 0.913847183126247,
+      "max_variance": 1.08613110677094,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0558391459218708,
+      "min_variance": 0.918345097588814,
+      "max_variance": 1.07074408242969,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0528432454761209,
+      "min_variance": 0.915483591938293,
+      "max_variance": 1.09799635103885,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0637319691832138,
+      "min_variance": 0.925325141166369,
+      "max_variance": 1.06367866886798,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0585162824418005,
+      "min_variance": 0.914557634599261,
+      "max_variance": 1.07767612556471,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0610996515373973,
+      "min_variance": 0.922326021621115,
+      "max_variance": 1.07980506172117,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.057768165113558,
+      "min_variance": 0.934275253370188,
+      "max_variance": 1.0726358963311,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0534292167144811,
+      "min_variance": 0.896496599023785,
+      "max_variance": 1.07922854792494,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.0564178471542117,
+      "min_variance": 0.908208263511232,
+      "max_variance": 1.08942701108252,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0501931467702756,
+      "min_variance": 0.907352007057078,
+      "max_variance": 1.08261299338935,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2",
+      "positions": 144,
+      "max_abs_mean": 0.0653950128769937,
+      "min_variance": 0.913475499256102,
+      "max_variance": 1.08048429481341,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0774735996385432,
+      "min_variance": 0.923415524796645,
+      "max_variance": 1.1137329245509,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.0642559476396899,
+      "min_variance": 0.934980541007622,
+      "max_variance": 1.09391269273201,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0756745074844731,
+      "min_variance": 0.912702561061315,
+      "max_variance": 1.06899187383544,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0597026544783085,
+      "min_variance": 0.907425488361021,
+      "max_variance": 1.08061517892717,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.073865459910438,
+      "min_variance": 0.927266666946925,
+      "max_variance": 1.08888418713314,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.0582739305513571,
+      "min_variance": 0.907703750749083,
+      "max_variance": 1.08519073487321,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0751929102080331,
+      "min_variance": 0.937194381466767,
+      "max_variance": 1.08311153863773,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 3 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0558420301069345,
+      "min_variance": 0.910162826851271,
+      "max_variance": 1.07711854709435,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0502166444715204,
+      "min_variance": 0.949887287102245,
+      "max_variance": 1.10453827950875,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 1 sign -1",
+      "positions": 95,
+      "max_abs_mean": 0.0522029158000388,
+      "min_variance": 0.935278640964835,
+      "max_variance": 1.08169762236094,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 1 sign 1",
+      "positions": 95,
+      "max_abs_mean": 0.0471277875827521,
+      "min_variance": 0.933812048868329,
+      "max_variance": 1.09645938413458,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 2 sign -1",
+      "positions": 94,
+      "max_abs_mean": 0.0557403492698096,
+      "min_variance": 0.922788316065511,
+      "max_variance": 1.07107447276596,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 2 sign 1",
+      "positions": 94,
+      "max_abs_mean": 0.0530593237497902,
+      "min_variance": 0.927606692111483,
+      "max_variance": 1.09019042998583,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 3 sign -1",
+      "positions": 93,
+      "max_abs_mean": 0.0589091711356971,
+      "min_variance": 0.929200017563667,
+      "max_variance": 1.10983685270555,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 3 sign 1",
+      "positions": 93,
+      "max_abs_mean": 0.0517763451992583,
+      "min_variance": 0.885687390335318,
+      "max_variance": 1.0752518960346,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 4 sign -1",
+      "positions": 92,
+      "max_abs_mean": 0.054632917433879,
+      "min_variance": 0.915750953943214,
+      "max_variance": 1.08176066221853,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 1 lag 4 sign 1",
+      "positions": 92,
+      "max_abs_mean": 0.0460303877101074,
+      "min_variance": 0.904473906616493,
+      "max_variance": 1.07502729824278,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2",
+      "positions": 144,
+      "max_abs_mean": 0.0522352237800471,
+      "min_variance": 0.93165138684675,
+      "max_variance": 1.07291864794218,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 1 sign -1",
+      "positions": 143,
+      "max_abs_mean": 0.0564833594435749,
+      "min_variance": 0.904999592976204,
+      "max_variance": 1.07824600150022,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 1 sign 1",
+      "positions": 143,
+      "max_abs_mean": 0.055307392305393,
+      "min_variance": 0.922617016197728,
+      "max_variance": 1.05582463093137,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 2 sign -1",
+      "positions": 142,
+      "max_abs_mean": 0.0496256027858537,
+      "min_variance": 0.907399755913393,
+      "max_variance": 1.07510104334618,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 2 sign 1",
+      "positions": 142,
+      "max_abs_mean": 0.0436981274367889,
+      "min_variance": 0.931732952620809,
+      "max_variance": 1.0745091670572,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 3 sign -1",
+      "positions": 141,
+      "max_abs_mean": 0.0464574209030048,
+      "min_variance": 0.919066795964621,
+      "max_variance": 1.07467760056785,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 3 sign 1",
+      "positions": 141,
+      "max_abs_mean": 0.058533798242941,
+      "min_variance": 0.92678678500301,
+      "max_variance": 1.06656912027986,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 4 sign -1",
+      "positions": 140,
+      "max_abs_mean": 0.0468692151382286,
+      "min_variance": 0.913851899388005,
+      "max_variance": 1.07145427723322,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous stationary 4 2 lag 4 sign 1",
+      "positions": 140,
+      "max_abs_mean": 0.0548953709758106,
+      "min_variance": 0.93333488967585,
+      "max_variance": 1.07349066564831,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 2 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0695069579426581,
+      "min_variance": 0.932045337373324,
+      "max_variance": 1.0721794230231,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 2 1",
+      "positions": 96,
+      "max_abs_mean": 0.0592635399881824,
+      "min_variance": 0.939233071787262,
+      "max_variance": 1.06487540637845,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0566118665256152,
+      "min_variance": 0.938494293047563,
+      "max_variance": 1.07001761677963,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0860092694342472,
+      "min_variance": 0.942880939586223,
+      "max_variance": 1.07338390239378,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0571321460156318,
+      "min_variance": 0.944658340756576,
+      "max_variance": 1.11060624877519,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0606773691908215,
+      "min_variance": 0.918502241693939,
+      "max_variance": 1.08365942177208,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0503691256157233,
+      "min_variance": 0.92360680988778,
+      "max_variance": 1.08913262157441,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0723312236596203,
+      "min_variance": 0.922732036570861,
+      "max_variance": 1.06055778295901,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.060182161613214,
+      "min_variance": 0.946295964931927,
+      "max_variance": 1.0978148923101,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0703458946834567,
+      "min_variance": 0.909576877579633,
+      "max_variance": 1.07511874062489,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0516355750096855,
+      "min_variance": 0.942173205927706,
+      "max_variance": 1.08167464888025,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0665483801495387,
+      "min_variance": 0.915995737251946,
+      "max_variance": 1.08931629041128,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0564042763378287,
+      "min_variance": 0.907166278598336,
+      "max_variance": 1.0792175407147,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 1 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0476556103740984,
+      "min_variance": 0.938972063227501,
+      "max_variance": 1.07127554388467,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 3 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0755624111723613,
+      "min_variance": 0.936893967997426,
+      "max_variance": 1.05287956307512,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 3 1",
+      "positions": 96,
+      "max_abs_mean": 0.0624716563893489,
+      "min_variance": 0.949415192255145,
+      "max_variance": 1.07436749229245,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 4 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0618929630892746,
+      "min_variance": 0.934375354301347,
+      "max_variance": 1.08780664432497,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 4 1",
+      "positions": 144,
+      "max_abs_mean": 0.0777456654074216,
+      "min_variance": 0.914797775282134,
+      "max_variance": 1.06159699118395,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0591848855554743,
+      "min_variance": 0.902598792694223,
+      "max_variance": 1.05785311546057,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0702772081367297,
+      "min_variance": 0.934882971268639,
+      "max_variance": 1.08930260642876,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.060625530686426,
+      "min_variance": 0.919925886815143,
+      "max_variance": 1.07433499734596,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.0595262952144358,
+      "min_variance": 0.926607086192637,
+      "max_variance": 1.08650723682392,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0518996335249194,
+      "min_variance": 0.933299049270973,
+      "max_variance": 1.08453000527752,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0617080698533155,
+      "min_variance": 0.936665259161545,
+      "max_variance": 1.08447965383663,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0755416558456897,
+      "min_variance": 0.923363669426145,
+      "max_variance": 1.06556628363962,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 2 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0528979489013036,
+      "min_variance": 0.917878297457759,
+      "max_variance": 1.08860716164304,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 4 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0633989282420856,
+      "min_variance": 0.948870995327983,
+      "max_variance": 1.06533101891505,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 4 1",
+      "positions": 96,
+      "max_abs_mean": 0.0644332630454818,
+      "min_variance": 0.936191113146494,
+      "max_variance": 1.0736312067558,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0565044349493866,
+      "min_variance": 0.921786670634769,
+      "max_variance": 1.06912798394558,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.076641864592855,
+      "min_variance": 0.93485684608859,
+      "max_variance": 1.07727973690325,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0767411135730853,
+      "min_variance": 0.931479029831642,
+      "max_variance": 1.06553553876714,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0712005993248734,
+      "min_variance": 0.929346576680589,
+      "max_variance": 1.09486684842584,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0615355838938683,
+      "min_variance": 0.93210357553091,
+      "max_variance": 1.08082916670184,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0663825322852916,
+      "min_variance": 0.938267342872319,
+      "max_variance": 1.09659485377341,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0614061844972209,
+      "min_variance": 0.933448457787999,
+      "max_variance": 1.08131219579388,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 3 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.059499810718734,
+      "min_variance": 0.933869418826398,
+      "max_variance": 1.10551701634967,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 5 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0612022123006627,
+      "min_variance": 0.891018509142538,
+      "max_variance": 1.06423377084297,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 5 1",
+      "positions": 96,
+      "max_abs_mean": 0.0584876766252289,
+      "min_variance": 0.93815285578882,
+      "max_variance": 1.07374628619973,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 6 -1",
+      "positions": 144,
+      "max_abs_mean": 0.0623331478429099,
+      "min_variance": 0.936114021692191,
+      "max_variance": 1.06868930587108,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 6 1",
+      "positions": 144,
+      "max_abs_mean": 0.0534745788329196,
+      "min_variance": 0.936220460915733,
+      "max_variance": 1.08353731401162,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0501467460241816,
+      "min_variance": 0.934337777858499,
+      "max_variance": 1.10582895401038,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.055582052184197,
+      "min_variance": 0.921088652463996,
+      "max_variance": 1.09383912723981,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.074395947732699,
+      "min_variance": 0.922735841808398,
+      "max_variance": 1.11632956652707,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 4 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0572129477818706,
+      "min_variance": 0.926808581375833,
+      "max_variance": 1.07064071311443,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 5 6 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0547372235738453,
+      "min_variance": 0.897308675645582,
+      "max_variance": 1.08115488031557,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 5 6 1",
+      "positions": 96,
+      "max_abs_mean": 0.0645610632032598,
+      "min_variance": 0.922821329489769,
+      "max_variance": 1.07727400168633,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 5 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0466375350644255,
+      "min_variance": 0.914125158319794,
+      "max_variance": 1.06997214094359,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 5 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0607635486693422,
+      "min_variance": 0.942293864215557,
+      "max_variance": 1.08272455045637,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 5 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0506194448576319,
+      "min_variance": 0.932163474289643,
+      "max_variance": 1.06614159690727,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 5 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0559432503607821,
+      "min_variance": 0.918037347291285,
+      "max_variance": 1.06749875843985,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 6 7 -1",
+      "positions": 96,
+      "max_abs_mean": 0.0589721972975589,
+      "min_variance": 0.943764428600079,
+      "max_variance": 1.07952592348725,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 6 7 1",
+      "positions": 96,
+      "max_abs_mean": 0.0761268954262013,
+      "min_variance": 0.912150717476004,
+      "max_variance": 1.08414628998547,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 6 8 -1",
+      "positions": 144,
+      "max_abs_mean": 0.059856646549242,
+      "min_variance": 0.938037051155169,
+      "max_variance": 1.07094221901313,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 6 8 1",
+      "positions": 144,
+      "max_abs_mean": 0.0430034483707325,
+      "min_variance": 0.919314055752497,
+      "max_variance": 1.09206864962387,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 7 8 -1",
+      "positions": 96,
+      "max_abs_mean": 0.049913473848734,
+      "min_variance": 0.928676751669724,
+      "max_variance": 1.09663842942191,
+      "failed": 0
+    },
+    {
+      "label": "ar2-high-censored-short-run-heterogeneous independence 7 8 1",
+      "positions": 96,
+      "max_abs_mean": 0.0502297395825657,
+      "min_variance": 0.925701682834801,
+      "max_variance": 1.08204313446671,
+      "failed": 0
+    }
+  ],
+  "legacy_negative_control": {
+    "mean": 0.982888492484109,
+    "positive": 2048,
+    "bound": 0.126632413893758,
+    "rejected": true
+  },
+  "inputs": [
+    {
+      "cell": "ar2-high-censored-short",
+      "file": "ar2-high-censored-short.f64le",
+      "sha256": "a80fcbe3f7fd3cd0ceaf9e1ea3a0d2b424fd463bfa80c6e6280bced33b06c13b",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    },
+    {
+      "cell": "ar2-high-censored-long",
+      "file": "ar2-high-censored-long.f64le",
+      "sha256": "907452c279ade6246085e7146c85fc0a6a66cc435c501ca23a8676eefc591c36",
+      "shape": [
+        2048,
+        4,
+        480
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 31457280
+    },
+    {
+      "cell": "ar2-high-complete-short",
+      "file": "ar2-high-complete-short.f64le",
+      "sha256": "15ff497159877f69ab8da8751e2399baa2a96c1de36d80e90ccca3da5401a33c",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    },
+    {
+      "cell": "ar2-high-censored-short-voxel-heterogeneous",
+      "file": "ar2-high-censored-short-voxel-heterogeneous.f64le",
+      "sha256": "1352e07e8a9db29ac3c2a1ba1b499beb597f20cc56db76b8a65d9a7496728879",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    },
+    {
+      "cell": "ar2-high-censored-short-run-heterogeneous",
+      "file": "ar2-high-censored-short-run-heterogeneous.f64le",
+      "sha256": "5828b9c1456f962612e667e7f0021eeca3f891be33412527e71ce677b9e854bb",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    }
+  ],
+  "stream_states_sha256": "3cf0b483ac117ef9eb7b6739207ac80fa1ea0db1f926efd8090752814691fceb",
+  "control_fit_results_qualified": false,
+  "scientific_admission": false
+}
