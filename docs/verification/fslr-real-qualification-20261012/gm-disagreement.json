@@ -1,0 +1,66 @@
+{
+  "schema": "scalafim.fslr-bridge-disagreement/1",
+  "candidate": "pointwise",
+  "route": "scalafim-route:sha256:68fc557306abb1b15dc02007d80f2a067d2190a3c1c421f3e339d8877350be6a",
+  "bridge": "point map MNI152NLin6Asym@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 -> MNI152NLin2009cAsym@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56, pointwise inverse (approximate; tolerance 1.0E-8 mm, at most 100 iterations, divergence ratio 4.0), source tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (sha256 2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe), manifest sha256 34bdcea2dab7c0fccde6e6607cd080fbcea087abaf19721925b5b8fb61d85318, stage stage-0-displacement.nii (sha256 4e964918ad63dd1acd8cfbb0eebc2cdb8a33666ef3e58e56335cce67226c7c75) (templateflow4s point map of tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5 (admitted composite))",
+  "bridgeExactness": "approximate: pointwise fixed-point inverse (reframe4s PointwiseInversion; tolerance 1.0E-8 mm, at most 100 iterations, divergence ratio 4.0)",
+  "oracle": "Every fsLR 32k midthickness vertex (MNI152NLin6Asym, RAS mm) solved for its MNI152NLin2009cAsym position by SimpleITK fixed-point iteration y <- y + (x - T(y)) from y = x, T = the TemplateFlow 2009c->6Asym composite evaluated in LPS, until |T(y) - x| <= 1e-10 mm or 200 iterations.",
+  "oracleFiles": {
+    "L": "6ecf0435841cec46acb662b87b079c400e50b4e9700f2f11fa0aa01f8afe4feb",
+    "R": "1c96b3580b43e8da4f6bf689d0dfcb274529023029bd8c813b8b49b447320022"
+  },
+  "spec": {
+    "name": "locked-TemplateFlow-GM-public-consumer",
+    "sha256": "d6dda33c6ebb6dbf8685721adc45114db23a9bd3fad5993d614eec9e1a8994a0"
+  },
+  "hemispheres": {
+    "L": {
+      "corticalVertices": 29696,
+      "bridgeUnavailable": 0,
+      "placementErrorMaxMm": 1.5020796086550972E-8,
+      "placementErrorP99Mm": 1.0727397410067531E-8,
+      "placementErrorOver005": 0,
+      "voxelDisagreements": 0,
+      "volumes": [
+        {
+          "volume": "tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz",
+          "volumeAsset": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (sha256 662b18e83dddc554b19c621d9750af3454b54d4e103df03633eacced3884805a)",
+          "corticalVertices": 29696,
+          "bothMapped": 29696,
+          "coverageDisagreements": 0,
+          "valueDisagreements": 0,
+          "maxAbsDifference": 0,
+          "p99AbsDifferenceAmongDisagreements": 0,
+          "oracleCorticalSd": 0.22662474861377502,
+          "maxAbsDifferenceOverSd": 0,
+          "signFlips": 0,
+          "worst": []
+        }
+      ]
+    },
+    "R": {
+      "corticalVertices": 29716,
+      "bridgeUnavailable": 0,
+      "placementErrorMaxMm": 1.5311129897981346E-8,
+      "placementErrorP99Mm": 1.0628401533941962E-8,
+      "placementErrorOver005": 0,
+      "voxelDisagreements": 0,
+      "volumes": [
+        {
+          "volume": "tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz",
+          "volumeAsset": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (sha256 662b18e83dddc554b19c621d9750af3454b54d4e103df03633eacced3884805a)",
+          "corticalVertices": 29716,
+          "bothMapped": 29716,
+          "coverageDisagreements": 0,
+          "valueDisagreements": 0,
+          "maxAbsDifference": 0,
+          "p99AbsDifferenceAmongDisagreements": 0,
+          "oracleCorticalSd": 0.2329883962868076,
+          "maxAbsDifferenceOverSd": 0,
+          "signFlips": 0,
+          "worst": []
+        }
+      ]
+    }
+  }
+}
