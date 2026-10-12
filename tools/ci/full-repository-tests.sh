@@ -55,10 +55,10 @@ run_batch core-js \
 
 run_batch image-surface-jvm \
   imageJVM/test imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
-  motionJVM/test surfaceJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
+  motionJVM/test surfaceJVM/test surfaceTestFixturesJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
 run_batch image-surface-js \
   imageJS/test imageViewJS/test imageViewCanvasJS/test thresholdJS/test \
-  motionJS/test surfaceJS/test surfaceViewJS/test surfaceViewRasterJS/test \
+  motionJS/test surfaceJS/test surfaceTestFixturesJS/test surfaceViewJS/test surfaceViewRasterJS/test \
   surfaceViewThreeJS/test
 
 run_batch data-jvm \

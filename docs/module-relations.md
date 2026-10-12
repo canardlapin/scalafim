@@ -488,3 +488,5 @@ estimate IO, never on `fit` or `mvpa-fit`. Its reader restores declared axes,
 policies, lineage and coverage without the fitter. Matrices are individually
 hash-pinned external Float64 leaves. Other profiles and resumable optimizer
 checkpoints are explicitly unsupported; there is no codec registry or upload.
+
+The unpublished `surface-test-fixtures` cross-project depends on `surface` Compile. Its JVM Compile configuration owns the fsLR asset/oracle helpers and resources; its Test configuration owns their qualification suites. `atlasJVM` Test depends on `surfaceTestFixturesJVM` Compile. `surface` never depends on the fixture project, so there is no project cycle and no production dependency on test support. JVM IO helpers have no JS implementation.

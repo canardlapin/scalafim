@@ -17,7 +17,7 @@ import scala.jdk.CollectionConverters.*
   * The runner knows nothing about where the volumes came from: their frame,
   * derivation and digests arrive in a declaration spec.
   *
-  * Run: `sbt "surfaceJVM/Test/runMain scalafim.surface.reference.FslrQualification <spec.json> <out>"`
+  * Run: `sbt "surfaceTestFixturesJVM/runMain scalafim.surface.reference.FslrQualification <spec.json> <out>"`
   * or `... FslrQualification --probe-heap <spec.json> <repeats> <artifact.json>`,
   * with the locked TemplateFlow cache under `$TEMPLATEFLOW_HOME` or `~/.cache/templateflow`.
   *

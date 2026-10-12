@@ -1,0 +1,580 @@
+[sbt-warm] seeding base from template 800882970eb11d73 (copy-on-write)
+[info] entering thin client - BEEP WHIRR
+[info] starting sbt server in the background
+[info] use 'sbt shutdown' to shutdown the server
+[info]  
+[info] welcome to sbt 1.11.7 (Eclipse Adoptium Java 21.0.12.1)
+[info] loading settings for project scalafim-fslr-test-fixtures-20261011-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-fslr-test-fixtures-20261011/project
+[info] compiling 1 Scala source to /private/tmp/scalafim-fslr-test-fixtures-20261011/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/70113493d2034afa26c1/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/3affa4797661edd945b9/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/project
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b51ea69c1c3a30e37df3/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0b37fe7ff37e220439ad/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/6c77ef03ad5f6b5be136/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/project
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (369122 settings) ...
+[info] set scmInfo to https://github.com/canardlapin/scalafim
+[info] set scmInfo to https://github.com/canardlapin/scalafim
+[info] set scmInfo to https://github.com/canardlapin/scalafim
+[info] set scmInfo to https://github.com/canardlapin/scalafim
+[info] set scmInfo to https://github.com/canardlapin/scalafim
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-fslr-test-fixtures-20261011/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/0574818025cb7fd27c83/intaglio/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] sbt server started at local:///Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/server/bcaa675fbd6030c0573b/sock
+[info] started sbt server
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/core/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 86 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/3affa4797661edd945b9/gale/core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/scenario-testkit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 33 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/34c0071f90095ef07887/zarr4s/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/indexed/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/data/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/locus-data/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/algorithms/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 14 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 52 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 28 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/transform/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 48 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 53 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.SurfaceKindSuite:
+  + a directly built Custom with the very-inflated spelling is not the canonical kind; parsing canonicalizes it 0.013s
+  + every named kind has its canonical label and round trips through fromString 0.006s
+  + VeryInflated is a distinct display kind whose canonical label is the TemplateFlow spelling 0.001s
+  + GIFTI, TemplateFlow and HCP spellings of the very-inflated surface parse to VeryInflated 0.001s
+  + a legacy Custom very-inflated label is restored as the named kind, not a parallel identity 0.0s
+  + unnamed kinds remain Custom and preserve their spelling; blank kinds are rejected 0.001s
+  + file-name inference recognizes TemplateFlow fsLR 32k surface names 0.007s
+  + file-name inference reads HCP very_inflated as VeryInflated, never Inflated 0.001s
+  + file-name inference keeps FreeSurfer conventions and the Custom fallback 0.002s
+scalafim.surface.scenarios.SurfaceRealChainScenarioSuite:
+  + real volume ribbon -> fsaverage -> fsLR32k and direct route: clean bounded pass 0.431s
+  + full-source contributor faces and independent radial weights match the public plans 0.052s
+  + coordinate and vertex-order mutations fail the real scenario 0.086s
+  + tkRAS surfaces cannot enter a scanner-space ribbon operator without placement 0.008s
+  + raw tkRAS placement matches independent affine algebra and actual MGH-header precision 0.01s
+  + shared fixture hashes and frozen target IDs close on both platforms 0.022s
+scalafim.surface.SurfaceSamplingSuite:
+  + SurfaceGeometryPair exposes a shared cortical domain 0.005s
+  + midpoint path is a named policy that preserves midpoint sampling semantics 0.024s
+  + white and pial paths sample endpoint surfaces 0.0s
+  + surfaceToWorld transforms are applied before SomeSampleSpace coordinate lookup 0.0s
+  + fractional thickness supports average aggregation 0.005s
+  + mode aggregation chooses the most frequent sampled value 0.007s
+  + normal-line sampling uses offsets around the midpoint 0.001s
+  + masking can produce explicit empty samples 0.003s
+  + volume-to-surface morphism wraps reusable sampling plans 0.008s
+  + surface-to-surface morphism applies explicit target-to-source vertex maps 0.008s
+  + out-of-bounds sample points produce empty samples 0.002s
+  + sampling plans validate surface pairs, paths, and masks 0.007s
+  + the sample tally observes every requested point exactly once 0.002s
+  + non-finite volume values are tallied apart from accepted samples 0.007s
+  + per-vertex finite and non-finite counts partition each vertex's in-mask samples 0.004s
+  + Average reduces over finite samples only 0.006s
+  + Nearest takes the first finite sample in declared path order 0.005s
+  + Mode ignores non-finite samples even when they are the most frequent 0.001s
+  + every reducer returns NaN when a vertex has no finite sample 0.01s
+  + sample tallies must account for every requested sample 0.0s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 0 0.006s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 1 0.003s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 2 0.001s
+scalafim.surface.reference.FslrRouteExampleSuite:
+  + ordinary byte-verified APIs retain zero, explain nonfinite missingness and bind the wall 0.298s
+  + a route rejects another declared template on the same voxel grid 0.025s
+  + the locked inflated display cannot enter the anatomical sampling chain 0.01s
+surface resampling parity: 104 rows share neurotransform's face; 2 neurotransform nearest-vertex fallbacks; far-side faces chosen by neurotransform: 56 of 162 rows
+scalafim.surface.SurfaceResamplingParitySuite:
+  + nearest-vertex plans are identical 0.05s
+  + barycentric plans pick the same face as neurotransform unless it picks the far side of the sphere 0.038s
+scalafim.surface.SurfaceLocusDomainSuite:
+  + surface domain identity includes exact ordered topology 0.033s
+  + full and sparse surface fields preserve their distinct support semantics 0.003s
+  + legacy SurfaceRoi adapts to a region, restricted values, and annotation 0.008s
+  + labeled surfaces become quotients with metadata and explicit display order 0.008s
+  + a disconnected label remains one valid extensional quotient fiber 0.001s
+  + runtime-loaded domains preserve the hidden semantic space type 0.001s
+scalafim.surface.reference.DeclaredMedialWallReaderSuite:
+  + mask bytes and declared hemisphere must agree before their receipt enters a route 0.032s
+scalafim.surface.io.FreeSurferSurfaceReaderSuite:
+  + readAscii handles std.8-style FreeSurfer ASCII surfaces 0.015s
+  + read auto-detects ASCII and can infer right hemisphere 0.006s
+  + readBinary loads triangle geometry and accepts explicit metadata 0.004s
+  + readBinary rejects bad magic with a stable message 0.006s
+  + readBinary rejects headers shorter than magic bytes 0.0s
+  + readBinary rejects files without created-by and info lines 0.001s
+  + readBinary rejects short reads with a stable message 0.001s
+  + readAscii rejects malformed rows with a stable message 0.003s
+  + readAscii surfaces TriangleMesh face-index validation 0.002s
+  + read infers VeryInflated from HCP and TemplateFlow very-inflated file names 0.003s
+scalafim.surface.RibbonFillSuite:
+  + ribbon weights match neurotransform cpp_ribbon_weights entry for entry 0.015s
+  + surface-to-volume fill matches neurotransform backproject_surface_to_volume(method = "ribbon") 0.001s
+  + rows sum to one, and a segment that never enters the grid samples to NaN 0.001s
+  + the fill is the exact adjoint of volume-to-surface sampling 0.003s
+  + ribbon mask of concentric spheres is the lattice shell between their radii 0.329s
+  + the ribbon mask requires closed surfaces 0.016s
+  + ribbon sampling of a radial volume recovers the mid-ribbon radius, and the mean fill of ones is one 0.121s
+  + volume adapters keep the operator's grid and reject other grids 0.223s
+  + ribbon inputs must share a frame: statically when frames are typed, at runtime when they are erased 0.01s
+  + white and pial must be vertex-matched, and steps must be positive 0.008s
+  + inner and outer roles are checked: hemispheres must agree and kinds must not be swapped 0.014s
+  + lattice-aligned faces and edges fill exactly, with half-open faces 0.007s
+  + a closed surface that extends past the grid along the ray axis still fills by parity 0.002s
+scalafim.surface.MeshTopologySuite:
+  + MeshTopology derives unique edges and neighbor rows 0.001s
+  + MeshTopology computes Euclidean edge lengths 0.001s
+  + MeshTopology computes face and mesh metrics 0.002s
+  + MeshTopology computes unit vertex normals when possible 0.0s
+  + MeshTopology handles open fragmented meshes 0.001s
+  + MeshTopology carries a surface domain when built from geometry 0.002s
+scalafim.surface.reference.PointwiseInverseBridgeSuite:
+  + a constant displacement then translation inverts to x = y - t - d 0.062s
+  + a smooth field: placements match an independent solve and round-trip through the declared map 0.275s
+  + support exits, iteration limits and divergence are typed and never placed 0.078s
+  + a pointwise-inverse route reproduces the same-frame mapping, with per-vertex receipts and disclosure 0.055s
+scalafim.surface.SurfaceCoreSuite:
+  + Point3D is a surface alias for image SpatialPoint 0.001s
+  + TriangleMesh builds a valid tetrahedron 0.001s
+  + mesh topology identity ignores coordinates but preserves exact face ordering 0.003s
+  + TriangleMesh rejects invalid shapes and indices 0.001s
+  + SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform 0.002s
+  + SurfaceGeometry accepts only provider-validated D3 affines 0.003s
+  + surface domains reject IO-only hemisphere tags 0.002s
+  + surface tag parsers normalize common labels 0.001s
+scalafim.surface.SurfaceSearchlightSuite:
+  + zero-radius metric balls are the identity relation 0.036s
+  + geodesic metric balls are symmetric and monotone in radius 0.004s
+  + metric-ball composition is contained by the summed radius 0.0s
+  + metric balls use a closed radius boundary 0.001s
+  + partial center support leaves every non-center relation row empty 0.0s
+  + equal vertex counts do not excuse a topology mismatch 0.007s
+  + local extraction is ordinary indexed-field restriction 0.002s
+  + invalid radii are rejected before geometry work 0.011s
+scalafim.surface.reference.PointMapSuite:
+  + a constant RAS displacement translates points inside its support 0.007s
+  + ITK half-voxel support preserves constant edge displacement at the original point 0.003s
+  + outside raw forwardInto keeps zero displacement while typed forward refuses support 0.002s
+  + an oblique singleton axis retains edge support without admitting the padded region 0.004s
+  + provider composition preserves declared first-to-last stage order 0.001s
+  + a pointwise inverse undoes a constant displacement then scale, with per-query evidence 0.001s
+  + an unconverged inverse is unsolved with its failure kind and never placed 0.007s
+  + pointwise inverses are refused for stage orders the provider cannot remove analytically 0.01s
+  + several trailing affines are removed in declared order (non-commuting scale then translation) 0.003s
+  + fields, stages and policies validate their inputs 0.007s
+scalafim.surface.SurfaceDataSuite:
+  + SurfaceField stores indexed vertex values 0.01s
+  + SurfaceField validates data length, uniqueness, and bounds 0.004s
+  + SurfaceMatrix stores vertices by feature columns 0.003s
+  + SurfaceRoi extracts a checked subset from a field 0.009s
+  + LabeledSurface stores label data and table metadata 0.003s
+  + SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates 0.006s
+  + HemispherePair provides typed left/right containers 0.001s
+scalafim.surface.GraphDifferentialSuite:
+  + thresholded surface components match induced generic graph components 0.319s
+  + surface geodesics match graph shortest paths for default and custom weights 0.088s
+  + MeshTopology graph interop preserves explicit indexing, edges, and distances 0.025s
+  + unreachable surface geodesics correspond to graph NoPath 0.01s
+scalafim.surface.reference.SurfaceRouteSuite:
+  + template identity is exact and family names are refused as ambiguous 0.002s
+  + admitted affines are owned copies that later caller mutation cannot change 0.001s
+  + volume reference refuses a support mask on another grid 0.002s
+  + fsLR 32k admission binds exact vertex count, cortical hemisphere and mask domain 0.086s
+  + anatomy refuses display shapes and topology that differs from the reference 0.003s
+  + route admission refuses frame, bridge, hemisphere, mesh and method mismatches 0.005s
+  + a 2009c res-2 group-analysis grid is refused for fsLR anatomy declared in another template frame 0.001s
+  + oblique anisotropic shifted grid: midthickness values, coverage and medial wall match construction 0.005s
+  + white/pial midpoint and depth lookups follow construction, excluding lookups outside the grid 0.004s
+  + an asymmetric impulse reaches only the vertex whose lookup selects it; zero is data 0.003s
+  + an explicit affine bridge from the anatomy frame reproduces the same-frame mapping 0.004s
+  + nearest-voxel ties round up and support is half-open [-0.5, dim - 0.5) 0.003s
+  + nonfinite and unsupported voxels are excluded, disclosed per lookup, and never poison averages 0.027s
+  + per-vertex evidence reconstructs every mapped value and links picks to source voxels 0.011s
+  + categorical semantics take the modal integral label and refuse non-integral volumes 0.005s
+  + a volume on any other grid is refused at execution 0.002s
+  + grid identity is the persistent grid key, not the live object that admitted the reference 0.002s
+  + inflated and very-inflated display keep identical values, coverage and vertex ids 0.006s
+  + selection prefers same-frame anatomy and reports every refusal when none is admissible 0.002s
+  + a volume declared in another template on an identical grid is refused at execution 0.001s
+  + a prepared source is reused by map and inspect and belongs to one route 0.01s
+  + signed zero in an affine element does not change grid identity 0.001s
+  + an unsupported voxel is OutsideSupport even when its value is nonfinite 0.002s
+  + a bridge whose composition with surfaceToWorld is ill-conditioned is refused 0.003s
+  + volume references refuse non-spatial axes and bind ephemeral grids by live owner 0.005s
+  + volume references reject foreign resolved worlds and non-RAS-mm coordinates 0.002s
+  + a published mesh density cannot be declared with another vertex count 0.004s
+scalafim.surface.scenarios.SurfaceChainScenarioSuite:
+  + surface chain: scanner volume -> tkRAS ribbon -> registered sphere -> template meshes, commuting routes 0.369s
+  + every convention mutation of the surface chain fails the scenario 1.418s
+  + a tkRAS surface cannot be sampled on a scanner-space grid without moving it first 0.002s
+scalafim.surface.SurfaceModuleSuite:
+  + module metadata is available 0.001s
+scalafim.surface.reference.DeclaredPointMapSuite:
+  + a verified manifest evaluates exactly like the directly built composite 0.071s
+  + a quarantined manifest is refused, with no override 0.002s
+  + the source digest must be the one the caller expects, and stage bytes must match their digest 0.001s
+  + header fields, sform and file names are checked against the manifest 0.014s
+  + frames must match the TemplateFlow transform name, and manifest bytes must match their digest 0.003s
+  + a source without a catalog revision is a named data asset 0.003s
+scalafim.surface.reference.DeclaredSurfaceReaderSuite:
+  + a declared GIFTI loads only when its bytes match the declared digest 0.017s
+  + the declared read path exposes coordinate metadata beside the ordinary geometry 0.016s
+  + matching digests cannot relabel display or foreign structural coordinates as cortical anatomy 0.016s
+==> s scalafim.surface.reference.DeclaredSurfaceReaderSuite.TemplateFlow fsLR 32k left midthickness declares Talairach, CortexLeft, 32492 vertices skipped 0.036s
+scalafim.surface.io.GiftiSurfaceReaderSuite:
+  + read extracts pointset, triangles, hemisphere, kind, and POINTSET transform 0.003s
+  + read uses identity transform when CoordinateSystemTransformMatrix is absent 0.007s
+  + read rejects malformed POINTSET shapes with stable messages 0.006s
+  + read rejects malformed TRIANGLE data with stable messages 0.008s
+  + read rejects missing POINTSET and TRIANGLE arrays 0.003s
+  + read rejects malformed transform matrices 0.002s
+  + geometry preserves the provider cause for a singular surface affine 0.007s
+  + read accepts explicit hemisphere and kind metadata 0.005s
+  + read accepts Base64Binary pointset and triangle arrays 0.012s
+  + read honors ColumnMajorOrder matrix payloads 0.005s
+scalafim.surface.io.GiftiReaderSuite:
+  + parseString builds a typed GIFTI document with metadata and transforms 0.005s
+  + external GIFTI DTD declarations are ignored without network access 0.002s
+  + ASCII data arrays decode to numeric pointsets and triangles 0.001s
+  + typed payload decoders preserve matrix indexing semantics 0.002s
+  + Base64Binary data arrays decode with declared endian 0.002s
+  + GZipBase64Binary data arrays decode after inflation 0.001s
+  + GZipBase64Binary accepts the zlib stream emitted by FreeSurfer GIFTI 0.001s
+  + label GIFTI parses label table and builds LabeledSurface 0.007s
+  + external binary arrays are reported explicitly 0.003s
+  + malformed external offsets are data-array errors 0.001s
+  + malformed label keys are document errors 0.001s
+scalafim.surface.io.GiftiFloat64ReaderSuite:
+  + Float64 public reader preserves precision: ASCII LittleEndian 0 0.002s
+  + Float64 public reader preserves precision: Base64Binary LittleEndian 1 0.0s
+  + Float64 public reader preserves precision: GZipBase64Binary LittleEndian 2 0.001s
+  + Float64 public reader preserves precision: GZipBase64Binary LittleEndian 3 0.0s
+  + Float64 public reader preserves precision: Base64Binary BigEndian 4 0.0s
+  + Float64 public reader preserves precision: GZipBase64Binary BigEndian 5 0.006s
+  + Float64 public reader preserves precision: GZipBase64Binary BigEndian 6 0.001s
+scalafim.surface.SurfaceGeodesicsSuite:
+  + geodesic distance matrix matches tetrahedron edge distances 0.002s
+  + distance matrix supports source and target subsets 0.0s
+  + neighborsWithin includes self and vertices inside radius 0.002s
+  + neighborsWithin uses a closed radius boundary 0.002s
+  + euclidean metric ignores mesh paths 0.001s
+  + spherical metric clamps cosine and returns finite distances 0.001s
+  + unreachable vertices remain Infinity for geodesic metric 0.0s
+  + cache policy stores and reuses distance matrices 0.001s
+  + custom edge weights drive geodesic distances and cache keys 0.0s
+  + geodesic input validation catches bad radius, vertices, and weights 0.001s
+scalafim.surface.PointMapManifestAccessSuite:
+  + portable public byte admission binds semantics as well as the digest 0.019s
+  + matching digests cannot admit contradictory displacement semantics 0.036s
+  + manifests cannot be forged from outside the reference package 0.025s
+scalafim.surface.reference.FrameDeclarationSuite:
+  + portable SHA-256 matches the FIPS 180-2 vectors on this platform 0.0s
+  + asset provenance requires 64 lowercase hex, a tpl-<template>/ path and a revision 0.001s
+  + non-archive assets are named and digest-identified, and can feed derivations 0.003s
+  + frame bases are validated; a derivation cannot consume its own asset 0.001s
+  + digest binding refuses bytes that are not the declared asset 0.002s
+  + a file's own hemisphere and anatomical type must not contradict the requested reading 0.031s
+  + the anatomy frame comes only from declarations, which must agree 0.001s
+  + a publisher-methods basis is located, quoted and typed, and says it is not registration proof 0.002s
+scalafim.surface.io.TemplateSphereFilesSuite:
+  + the committed oracle matches its manifest and pins exactly the admitted spheres 0.017s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres skipped 0.003s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.0s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.001s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s
+scalafim.surface.reference.DisplacementBridgeSuite:
+  + a forward point-map bridge follows the declared map frames 0.003s
+  + a pointwise inverse bridge runs output to input and is disclosed as approximate 0.005s
+  + a pointwise inverse bridge is refused for a map the provider cannot invert pointwise 0.008s
+scalafim.surface.TriangleMeshEqualitySuite:
+  + meshes built from separate arrays with the same content are equal and hash alike 0.003s
+  + coordinates, face order and signed zero distinguish meshes 0.002s
+  + surface geometries compare their meshes structurally 0.0s
+  + a vertex mapping accepts a field on a separately loaded, identical geometry 0.0s
+scalafim.surface.FramedSurfaceSuite:
+  + stored coordinates and the geometry's surface-to-world placement are distinct declarations 0.008s
+  + tkRAS surfaces reach scanner RAS through Norig * inverse(Torig) and back 0.005s
+  + tkRAS -> scanner transport requires a tkRAS source and a same-subject scanner target 0.008s
+  + transport reports non-finite results instead of throwing 0.002s
+  + surfaces in different frames cannot be substituted for one another 0.006s
+  + a surface placed in a runtime world binds to the static template frame with the same key 0.003s
+scalafim.surface.SurfaceParcelsSuite:
+  + boundary edges derive directly from mesh topology and endpoint labels 0.112s
+  + units returns contiguous parcels in label order 0.006s
+  + parcel operations reject equal-sized but topologically different meshes 0.0s
+  + fragmented parcel policies error, keep largest, split, or merge 0.003s
+  + ParcelKey validates split parcel parts 0.001s
+  + centroid and geodesic medoid can select different parcel representatives 0.001s
+  + geodesic medoid rejects merged disconnected parcel 0.001s
+  + distance matrices are symmetric for centroid and minimum methods 0.007s
+  + medoid distance matrix uses geodesic medoid representatives 0.0s
+  + boundaryContacts counts shared mesh edges symmetrically 0.002s
+  + ignoredLabels removes labels from parcel outputs and contacts 0.0s
+scalafim.surface.reference.SyntheticItkOracleSuite:
+  + the committed synthetic manifest verifies: digests, header and frames 0.0s
+  + forward evaluation agrees with SimpleITK to 1e-9 mm on every oracle point 0.02s
+  + each stage alone agrees with SimpleITK to 1e-9 mm 0.011s
+  + typed forward admits interior points and refuses points outside the field 0.021s
+scalafim.surface.TemplatePlanTopologySuite:
+  + fsaverage5 plan freezes endpoint topology and rejects a later face-order mutation 0.773s
+scalafim.surface.gifti.GiftiModelSuite:
+  + typed attributes normalize known GIFTI codes 0.0s
+  + unknown attributes preserve their source text 0.006s
+  + data arrays expose shape and intent contracts 0.002s
+  + label color conversion keeps GIFTI 0-1 color values explicit 0.0s
+  + payload vectors and matrices expose typed shape semantics 0.001s
+  + payload matrices make row-major and column-major order explicit 0.0s
+  + documents provide typed array lookup and reject duplicate labels 0.001s
+  + GIFTI XML parsing rejects entity declarations before expansion 0.0s
+  + GIFTI payload sizing rejects dimension products before overflow 0.001s
+scalafim.surface.gifti.GiftiFloat64Suite:
+  + Float64 width checks reject overflow before allocation 0.006s
+  + Float64 binary decoding rejects short, overlong and misaligned payloads 0.008s
+  + Float64 ASCII rejects malformed data and integer/byte coercion even for integral values 0.042s
+scalafim.surface.SurfaceComponentsSuite:
+  + connectedComponents labels active connected sets by decreasing size 0.001s
+  + connectedComponents returns zero fields when no vertices pass threshold 0.002s
+  + clusterThreshold keeps only clusters meeting minimum size 0.0s
+  + SurfaceThreshold validates range order 0.0s
+scalafim.surface.SurfaceResamplingSuite:
+  + sphere helpers recognise spheres and normalise their radius 0.012s
+  + barycentric weights reconstruct a point on the query's own radial ray (never the antipodal face) 0.015s
+  + nearest-vertex resampling of a mesh onto itself is the identity 0.029s
+  + normalisations: element rows total one, sum conserves mass, and the inverse is the exact adjoint 0.004s
+  + a linear field on the sphere is reproduced to within the triangle-sagitta error 0.013s
+  + input of the wrong length is a typed failure 0.003s
+scalafim.surface.reference.DeclaredVolumeReaderSuite:
+  + a NIfTI source loads only when its bytes match the declared digest 0.049s
+  + a correct digest cannot override contradictory scanner-space header evidence 0.008s
+scalafim.surface.reference.FrameEvidenceSuite:
+  + default thresholds are the plan's frozen margins and require nine placements 0.005s
+  + a receipt clearing every margin passes 0.007s
+  + each margin fails on its own and every failure is reported 0.006s
+  + missing placements and differing vertex populations fail; no bridged score cannot pass 0.011s
+  + scores, thresholds and receipts validate their inputs 0.007s
+scalafim.surface.io.GiftiPlacementReaderSuite:
+  + absent transform is explicitly native 0.013s
+  + single recognized target retains provenance 0.003s
+  + target is selected independently of first position 0.001s
+  + permuted transforms retain target selection 0.002s
+  + unknown preceding explicit target is not applied 0.001s
+  + ambiguous automatic selection is refused 0.001s
+  + same target different transforms is ambiguous 0.002s
+  + explicit transform selection resolves ambiguity 0.001s
+  + unknown non-identity target refused 0.0s
+  + missing non-identity target refused 0.001s
+  + unknown identity stays native and claims no frame 0.001s
+  + identity-only workbench pair stays native 0.002s
+  + identity-only workbench pair can select its declared target 0.0s
+  + single declared identity retains provenance 0.001s
+  + identity before a non-identity transform is not silently applied 0.0s
+  + explicit native retains unknown metadata 0.001s
+  + missing requested target refused 0.0s
+  + negative index refused 0.001s
+  + out of range index refused 0.0s
+  + explicit unknown target still refused 0.0s
+  + non-affine homogeneous matrix refused 0.002s
+  + geometry-only convenience API refuses ambiguous and unknown non-identity placement 0.002s
+  + geometry-only convenience API keeps identity-only declarations native 0.0s
+scalafim.surface.TemplateSurfacesSuite:
+  + stock template meshes carry their TemplateFlow counts and native registration 0.001s
+  + a template sphere is admitted only with the template's counts, on a sphere, and on a registration it has 0.027s
+  + meshes on different registration spheres cannot be planned against each other 0.001s
+  + planning refuses hemispheres that differ 0.01s
+  + a plan interpolates with unit rows, its adjoint is the exact transpose, and Sum conserves mass 0.496s
+  + the pinned TemplateFlow spheres cover every mesh, hemisphere and published registration 0.002s
+[info] Passed: Total 303, Failed 0, Errors 0, Passed 297, Skipped 6
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-b6qzw0ow/completed
+[success] elapsed time: 96 s (0:01:36.0)
+[0J[sbt-warm] surfaceJVM/test: exit 0 in 226.2s
+[info] compiling 4 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/target/scala-3.7.4/test-classes ...
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:10:23 [0m[0m
+[error] [31m10 |[0m  [33mprivate[0m [33mval[0m source = SyntheticItkOracle.sourceSha256
+[error] [31m[31m   |[0m                       ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                       Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:11:28 [0m[0m
+[error] [31m11 |[0m  [33mprivate[0m [33mval[0m manifestSha = SyntheticItkOracle.manifestSha256
+[error] [31m[31m   |[0m                            ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                            Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:33:25 [0m[0m
+[error] [31m33 |[0m    assertEquals(points, SyntheticItkOracle.points, [31m"generated shared fixture matches the committed oracle"[0m)
+[error] [31m[31m   |[0m                         ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                         Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:34:25 [0m[0m
+[error] [31m34 |[0m    assertEquals(mapped, SyntheticItkOracle.mapped)
+[error] [31m[31m   |[0m                         ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                         Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:35:63 [0m[0m
+[error] [31m35 |[0m    assertEquals(arrays(oracle([31m"stages"[0m)([31m"displacementOnly"[0m)), SyntheticItkOracle.displacementOnly)
+[error] [31m[31m   |[0m                                                               ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                                           Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:36:57 [0m[0m
+[error] [31m36 |[0m    assertEquals(arrays(oracle([31m"stages"[0m)([31m"affineOnly"[0m)), SyntheticItkOracle.affineOnly)
+[error] [31m[31m   |[0m                                                         ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                                           Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:37:63 [0m[0m
+[error] [31m37 |[0m    assertEquals(oracle([31m"pointClass"[0m).arr.map(_.str).toVector, SyntheticItkOracle.pointClass)
+[error] [31m[31m   |[0m                                                               ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                                           Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:39:6 [0m[0m
+[error] [31m39 |[0m      SyntheticItkOracle.stageFile)
+[error] [31m[31m   |[0m      ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m      Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] [31m[31m-- [E006] Not Found Error: /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala:40:106 [0m[0m
+[error] [31m40 |[0m    assertEquals(DeclaredPointMapReader.parse(Files.readString(resource.resolve([31m"manifest.json"[0m))), Right(SyntheticItkOracle.manifest.fields))
+[error] [31m[31m   |[0m                                                                                                          ^^^^^^^^^^^^^^^^^^[0m
+[error] [31m   |[0m                                           Not found: SyntheticItkOracle
+[error] [31m   |[0m
+[error] [31m   |[0m longer explanation available when compiling with `-explain`
+[error] 9 errors found
+[error] (surfaceTestFixturesJVM / Test / compileIncremental) Compilation failed
+[error] elapsed time: 11 s
+[0J[sbt-warm] surfaceTestFixturesJVM/test: exit 1 in 12.1s

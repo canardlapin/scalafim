@@ -1,0 +1,102 @@
+[
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/RealAssets.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/main/scala/scalafim/surface/reference/RealAssets.scala",
+    "sha256": "b0f0c0fd1aa8aecda28d78f6a656c1d08f0103f0884a9d5d97cfb80663338073"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/RealInverseOracle.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/main/scala/scalafim/surface/reference/RealInverseOracle.scala",
+    "sha256": "94ebca9dffa1ea34302b42b5cdb3bdd6fe969681b2c73e567fde6164baf63e49"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/FslrQualification.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/main/scala/scalafim/surface/reference/FslrQualification.scala",
+    "sha256": "f6a49d4f867cd018557fad04bb1cf843538731ee00e3a1a88a1fb483f334bebf"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/ThreadAllocation.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/main/scala/scalafim/surface/reference/ThreadAllocation.scala",
+    "sha256": "a9a1c98a9f7b4607c7fbb124ff787c4886aa41b3d270a980bd5560fcb3210a62"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/RealFrameEvidenceSuite.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/RealFrameEvidenceSuite.scala",
+    "sha256": "5538ef7269b59f2765030ee67ad1597f830f7786e3019ccaa22964c7ab61ca2f"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/RealPointMapSuite.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/RealPointMapSuite.scala",
+    "sha256": "75ec58903f7a33814f7f548b80df69a43f732af19cfb9074fa7241a5c49e1dae"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/RealInverseOracleSuite.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/RealInverseOracleSuite.scala",
+    "sha256": "719c3272d59d545aafd2fa7b9c05c8120af433867cd01b6ff0f4d4f4c13f036c"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/ThreadAllocationSuite.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/ThreadAllocationSuite.scala",
+    "sha256": "cbb18dabb4f0c6d16530069c8d8c6db27f45ee335674b73b925f96c48c3225cd"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala",
+    "new": "modules/surface-test-fixtures/jvm/src/test/scala/scalafim/surface/reference/DeclaredPointMapReaderSuite.scala",
+    "sha256": "344a7a52333fcd2cb3ebd69e1b201e844f72d16e38371a4b0f9e83ba9313b42e"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-real/fslr-inverse-oracle.json.gz",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real/fslr-inverse-oracle.json.gz",
+    "sha256": "d30c98d3463f187de67b9379350c9e8c33a7c6f0ef9d9c38f9f62ddc9b6c9631"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-real/fslr-inverse-oracle-all-L.f64le.gz",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real/fslr-inverse-oracle-all-L.f64le.gz",
+    "sha256": "6ecf0435841cec46acb662b87b079c400e50b4e9700f2f11fa0aa01f8afe4feb"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-real/fslr-inverse-oracle-all-R.f64le.gz",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real/fslr-inverse-oracle-all-R.f64le.gz",
+    "sha256": "1c96b3580b43e8da4f6bf689d0dfcb274529023029bd8c813b8b49b447320022"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-real/fslr-inverse-oracle-all.json",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real/fslr-inverse-oracle-all.json",
+    "sha256": "b90cb1cf98d6506e395fba955e063223c43b4b864c17e748c0de6de05821e5f4"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-real/real_2009c_from_6asym_oracle.json.gz",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real/real_2009c_from_6asym_oracle.json.gz",
+    "sha256": "5d7115180a5dec12f144099d374c9bec902f96dd8e01fd0b9a59f9a662a2040a"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-synthetic/stage-0-displacement.nii",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-synthetic/stage-0-displacement.nii",
+    "sha256": "26e86cd4df7a3a14eb4d70c2b68f04da3d19db852fcd9acd671f5922ee0a64eb"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-synthetic/synthetic_composite_oracle.json",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-synthetic/synthetic_composite_oracle.json",
+    "sha256": "083b6b076589037240d466348491cefa1750c8a3a6c287ce2179730192803177"
+  },
+  {
+    "old": "modules/surface/jvm/src/test/resources/pointmap-synthetic/manifest.json",
+    "new": "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-synthetic/manifest.json",
+    "sha256": "ccea7f005d1bec904538a46cd238179f02cef185ac9039211e0a844d7b51ecbe"
+  },
+  {
+    "old": "modules/surface/shared/src/test/scala/scalafim/surface/reference/SyntheticItkOracle.scala",
+    "new": "modules/surface-test-fixtures/shared/src/main/scala/scalafim/surface/reference/SyntheticItkOracle.scala",
+    "sha256": "38d2c0b56f2445c8c3bc2dc98e95985b76df99529080d74a962ed25f74ff4beb"
+  },
+  {
+    "old": "modules/surface/shared/src/test/scala/scalafim/surface/reference/SyntheticItkOracleSuite.scala",
+    "new": "modules/surface-test-fixtures/shared/src/test/scala/scalafim/surface/reference/SyntheticItkOracleSuite.scala",
+    "sha256": "9479213ec402b194b9df69b4e242faf6fec8e3896a4e0994241c38c18c177c6b"
+  },
+  {
+    "old": "modules/surface/shared/src/test/scala/scalafim/surface/PointMapManifestAccessSuite.scala",
+    "new": "modules/surface-test-fixtures/shared/src/test/scala/scalafim/surface/PointMapManifestAccessSuite.scala",
+    "sha256": "e7ffbe75e02252067a04269c861e914ff02afbc26bbde8c5f30d491f449a2b18"
+  }
+]

@@ -1,5 +1,7 @@
 package scalafim.surface.reference
 
+import scalafim.testkit.RealAssetGate
+
 /** Exact asset identity is checked independently of anatomical registration.
   * The historical GM-placement experiment is not registration proof.
   */

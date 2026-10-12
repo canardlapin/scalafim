@@ -1,5 +1,7 @@
 package scalafim.surface.reference
 
+import scalafim.testkit.RealAssetGate
+
 import scalafim.surface.*
 import scalafim.surface.gifti.*
 import scalafim.surface.io.GiftiSurfaceReader

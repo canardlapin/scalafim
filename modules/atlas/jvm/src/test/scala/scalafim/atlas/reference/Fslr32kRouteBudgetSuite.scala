@@ -1,5 +1,7 @@
 package scalafim.atlas.reference
 
+import scalafim.testkit.RealAssetGate
+
 import scalafim.atlas.{Fslr32kFrom2009c, StandardRoutePolicy, StandardRouteRefusal}
 import scalafim.atlas.io.StandardSurfaceRouteFiles
 import scalafim.image.*

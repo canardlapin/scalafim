@@ -528,3 +528,7 @@ sbt surfaceJS/test
 ```
 
 The JVM tests cover loader IO. The shared tests run on both JVM and Scala.js.
+
+The fsLR JVM consumer courts obtain asset locks and independent oracle data from the unpublished
+[`surface-test-fixtures`](../surface-test-fixtures/README.md) Compile configuration. They do not depend on surface's
+Test configuration. This support is absent from the production atlas classpath.
