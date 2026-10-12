@@ -1,0 +1,13 @@
+[info] compiling 57 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 56 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/jvm/target/scala-3.7.4/test-classes ...
+[warn] [33m[33m-- [E175] Potential Issue Warning: /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/exec/PilotContributionSuite.scala:35:38 [0m[0m
+[warn] [33m35 |[0m      [36mj[0m => j([31m4[0m)([31m0[0m)([31m1[0m)([31m1[0m)([31m0[0m).arr.remove([31m0[0m)
+[warn] [33m[33m   |[0m           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[warn] [33m   |[0mdiscarded non-Unit value of type ujson.Value. Add `: Unit` to discard silently.
+[error] No warnings can be incurred under -Werror (or -Xfatal-warnings)
+[warn] one warning found
+[error] one error found
+[error] (phrfComparisonJVM / Test / compileIncremental) Compilation failed
+[error] elapsed time: 31 s
+[0J[sbt-warm] phrfComparisonJVM/testOnly *PilotContributionSuite *PilotCorpusAssemblerSuite *PilotArmsSuite: exit 1 in 32.0s

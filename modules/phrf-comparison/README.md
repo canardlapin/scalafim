@@ -60,6 +60,23 @@ contains no sources of its own; it only compiles and tests `shared`.
 - `PilotAggregator.aggregate` and `aggregateGuarded`; both platforms test it (`DistIccSuite`,
   `ImputationEndpointsSuite`, `WhitelistAggregatorSuite`, `FollowUpSuite`).
 
+## S10 production scorer contributions
+
+`PilotArmRunner` now hands deterministic, truth-free `PilotContribution` bytes to `ArmContext.contribute` for
+condition, native trial, PHRF-ML and GLMsingle outcomes. Only committed attempts reach the scorer. Dataset failures
+retain a sealed unavailable contribution; malformed or missing owner-side inputs refuse reconstruction.
+
+`PilotScoreTruth.fromBound` snapshots held generator truth separately from fitting. `PilotCorpusAssembler` checks
+all seven cells' exact unit inventory and input identities, computes condition MISE, preserves trial order and
+constructs the PHRF TG accuracy/coverage observations. Callers explicitly select `GaussianCoverageTarget`; its
+identity is sealed in the contribution schema. GLMsingle estimates also bind the actual child-read NPZ hash.
+
+Use `PilotAggregation.aggregateContributions` for a verifiable aggregate. `ScoreFeed` remains a legacy observation
+hook and is not authoritative. The owner supplies the same assembler and held truth to `OwnerVerification`.
+See [the sealed format](../../docs/plans/phrf-pilot-sealed-format.md) for exact byte and scoring rules and the
+[synthetic rehearsal receipt](../../docs/verification/phrf-s10-scoring-20261011/README.md).
+This slice does not launch a pilot or satisfy the full S10 freeze, real-engine rehearsal and independent review.
+
 ## Test fixtures
 
 `jvm/src/test/resources/fixtures/` holds two real generator outputs (HARNESS root, dataset 0),

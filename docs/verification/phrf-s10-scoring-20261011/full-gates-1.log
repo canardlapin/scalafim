@@ -1,0 +1,840 @@
+[info] compiling 3 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite:
+  + complete production contributions assemble every cell and preserve canonical outcomes under reordering 13.48s
+  + missing, duplicate, swapped, corrupt, wrong-input and wrong-truth records refuse 2.892s
+  + an unavailable committing attempt stays in the scored failure denominator 1.333s
+  + production codec and assembler survive retries, crash and resume; the owner rebuild is Valid 42.343s
+  + tampering with a sealed contribution invalidates the production rehearsal 0.072s
+  + synthetic low-ceiling rehearsal discards an interrupted contribution and resumes only with bound authorization 0.787s
+scalafim.phrfcmp.ingest.BindingSuite:
+  + trial dataset binds; views carry the arrays; hashes recorded 0.042s
+  + condition dataset binds without trial-only arrays 0.003s
+  + npz byte flip: whole-file hash mismatch 0.005s
+  + npz byte flip with a re-signed whole-file hash is caught by the CRC 0.003s
+  + per-array hash mismatch is reported by array name 0.003s
+  + manifest tamper: npz_sha256 0.001s
+  + manifest tamper: schema, root_kind, root_hex, code hash 0.006s
+  + unknown root_kind is a typed manifest refusal 0.002s
+  + denylist: flagged root, recomputed root hit, flipped stream flag, weakened or extra manifest denylist 0.007s
+  + a genuinely denylisted derived stream seed (low 32 bits) is refused by name 0.002s
+  + seeds above 2^53 are compared as exact digits; the Double-rounded digits are refused 0.006s
+  + tampered seed digit, wrong dataset, missing purpose, duplicate streams member 0.005s
+  + cell spec: id, kind, V, pool, tr, tr_aligned_onsets 0.005s
+  + array table: dtype, shape, undeclared and missing arrays 0.012s
+  + an npz member outside the schema is refused even when declared and hashed 0.002s
+  + inconsistent dimensions across arrays are refused 0.004s
+  + a compressed-member npz that the manifest hashes is still refused 0.001s
+  + garbage manifest JSON is a typed refusal 0.001s
+scalafim.phrfcmp.exec.PilotArmsSuite:
+  + arm ids parse to the nine pilot arms; unknown ids fail without touching an engine 0.01s
+  + condition arm: sealed blob emitted, feed called, voxel-level refusals do not make the unit refuse 0.372s
+  + condition arm: dataset-level refusal or failure becomes the unit status with a token code 0.01s
+  + native trial arms: LSA runs without settings; a typed refusal maps to the ledger status; the feed gets per-voxel outcomes 0.012s
+  + rLSS always receives EdfTargets: settings without targets refuse before the engine runs; with targets they are passed through 0.011s
+  + PHRF trial refusal maps by status; PHRF-ML never emits a blob for a refusal 0.001s
+  + GLMsingle: guard CPU goes to the scheduler, timing CPU to the timing endpoint; refusal text stays in the sealed note 0.009s
+  + a job's dataset is loaded once for all its arms and released in jobFinished 0.01s
+  + a dataset that cannot be loaded fails every arm with a token 0.0s
+  + end to end through the scheduler: fake arms are sealed, GLMsingle tail only in the sealed timing record, guard CPU counts 0.52s
+  + review 3: a feed exception after GLMsingle ran keeps the measured child CPU, on every attempt 0.564s
+  + re-review 2: an InterruptedException from the feed after GLMsingle ran still meters its CPU, then ends the run as Interrupted 0.114s
+  + review3 H1: a fatal throwable after GLMsingle ran leaves accounting.open, so the resume refuses uncertain accounting 0.102s
+  + review4 H1: a fatal throwable after GLMsingle ran keeps accounting.open even when a caller interrupt wins the exit 0.33s
+  + review5 D2: a cleanup exception never masks a fatal throwable after GLMsingle ran; accounting stays open 0.091s
+  + real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates 0.35s
+  + ThreadCpuClock advances on CPU work and not on sleep 0.354s
+scalafim.phrfcmp.run.LorocvSuite:
+  + folds leave exactly one run out, every run once, with training and test rows partitioning the time axis 0.004s
+  + fewer than two runs refuses 0.0s
+  + selection takes the largest mean fold score; an exact tie goes to the smaller alpha 0.002s
+  + mean fold scores are the per-grid-point mean over folds; refusals are typed 0.002s
+  + run applies the callback to every fold in order and stops at the first refusal 0.001s
+  + fold score: a perfect prediction scores 1, no prediction scores 0, and the held-out nuisance is removed first 0.003s
+  + fold score is pooled over voxels (sums of RSS and TSS, not a mean of per-voxel R2) 0.001s
+  + fold score refuses on mismatched shapes and on no held-out variance 0.002s
+  + amplitude prediction: same-stimulus training mean, condition mean for an unseen stimulus 0.001s
+  + amplitude prediction refuses a condition with no training trial and inconsistent stimulus/condition pairs 0.0s
+scalafim.phrfcmp.prep.RhoBiasHeavySuite:
+  + fresh verdict seeds are disjoint from the selection seeds and from the denylist 0.002s
+==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.003s
+scalafim.phrfcmp.exec.ScratchCustodySuite:
+  + every scratch event is mapped to a custody event, including StaleSwept 0.001s
+  + Wiped logs the residue only: no file count and no byte count of the wiped result 0.0s
+  + control characters are replaced and a throwing sink never propagates 0.0s
+  + chained log: appends verify, restart continues the chain, rewriting or truncating the middle is detected 0.035s
+  + the runner sweeps stale scratch once at start, and a throwing sweep does not stop the run 0.304s
+  + the real start-of-run sweep reports through the hook and does not throw on this host 0.143s
+S11-KERNEL cond/can    rel=1.582e-16 max_abs_beyond_24s=0.0e+00
+S11-KERNEL cond/inf3   rel=1.119e-13 max_abs_beyond_24s=0.0e+00
+S11-KERNEL cond/fir    rel=0.000e+00 max_abs_beyond_24s=0.0e+00
+S11-KERNEL cond_close/can    rel=1.582e-16 max_abs_beyond_24s=0.0e+00
+S11-KERNEL cond_close/inf3   rel=1.119e-13 max_abs_beyond_24s=0.0e+00
+S11-KERNEL cond_close/fir    rel=0.000e+00 max_abs_beyond_24s=0.0e+00
+S11-TRIALDESIGN tx abs=9.437e-16
+S11-TRIALDESIGN ts abs=1.943e-15
+S11-MANIFEST 101 files verified
+scalafim.phrfcmp.run.S11KernelDesignParitySuite:
+  + cond/kernel_can: response basis matches the fmrihrf kernel (0-24 s at 1e-8 for SPM, zero beyond; FIR everywhere) 0.003s
+  + cond/kernel_inf3: response basis matches the fmrihrf kernel (0-24 s at 1e-8 for SPM, zero beyond; FIR everywhere) 0.001s
+  + cond/kernel_fir: response basis matches the fmrihrf kernel (0-24 s at 1e-8 for SPM, zero beyond; FIR everywhere) 0.002s
+  + cond_close/kernel_can: response basis matches the fmrihrf kernel (0-24 s at 1e-8 for SPM, zero beyond; FIR everywhere) 0.0s
+  + cond_close/kernel_inf3: response basis matches the fmrihrf kernel (0-24 s at 1e-8 for SPM, zero beyond; FIR everywhere) 0.001s
+  + cond_close/kernel_fir: response basis matches the fmrihrf kernel (0-24 s at 1e-8 for SPM, zero beyond; FIR everywhere) 0.0s
+  + trial/tx: canonical single-trial design matches fmrireg trialwise(spmg1) at abs 1e-12 0.007s
+  + trial/ts: canonical single-trial design matches fmrireg trialwise(spmg1) at abs 1e-12 0.005s
+  + MANIFEST.sha256 matches every committed fixture file 0.015s
+scalafim.phrfcmp.run.DfMappingSuite:
+  + the information ratio is 1 at no penalty, strictly decreasing, and tends to 0 0.001s
+  + equal information has the closed form ratio = q / (q + p), so p = q (1 / edf - 1) 0.002s
+  + on an orthogonal design the information ratio is the ridge trace sum d_i^2 / (d_i^2 + alpha), divided by N 0.001s
+  + solvePenalty inverts the ratio across the whole range, including the bracket edges 0.0s
+  + solvePenalty is deterministic and refuses out-of-range targets and unusable information 0.002s
+  + map solves edf_R(r_k) = target_k on the rLSS amplitude edf; targets inside the reachable range never flag 0.002s
+  + a target above the unpenalised edf saturates at ridge 0, and below the limit at a large cap 0.001s
+  + the 5 % end-overlap flag fires when an end target is out of reach by more than 5 %, and only then 0.0s
+  + map refuses a wrong number of targets or diagnostics 0.002s
+  + the scale diagnostic is carried through and never changes the ridges 0.0s
+  + centring factor is 1 - 1/n_c per trial; a one-trial condition is refused 0.0s
+  + derive recovers kappa^2 exactly for proportional regressors and records the spread otherwise 0.001s
+  + unit change: rLSS in regressor units x^R = kappa x^P with p = kappa^2 c lambda equals the PHRF-unit single-deviation penalty 0.015s
+  + the sampling frame used for the PHRF-side design starts at the generator's first sample time, not TR/2 0.006s
+  + phrfNorm2 equals the squared norms of the shape regressors read from the raw expanded design 0.482s
+  + the centring factor equals e_i' (lambda (I - M)) e_i / lambda of TrialBanded's penalty structure 0.004s
+  + derive on the real TrialBanded regressors recovers the scale of an rLSS regressor built as kappa times them 0.003s
+  + EdfCurve.rlss is the amplitude edf curve N .. G of a prepared design, and refuses a trial with q = 0 0.0s
+scalafim.phrfcmp.exec.SealSuite:
+  + RFC 7748 section 6.1: X25519 public keys and shared secret 0.001s
+  + RFC 5869 appendix A.1 and A.3: HKDF-SHA256 0.001s
+  + low-order points are errors, not exceptions: 0, 1, the two order-8 points, and p-1, p, p+1 0.004s
+  + the ephemeral private key is zeroed when sealing fails and after a store write, whatever the outcome 0.018s
+  + bucket sizes: 4 KiB floor, powers of two to 1 GiB, GiB multiples above 0.0s
+  + logical names: traversal, NUL, backslash, empty components, length and lone surrogates are refused 0.001s
+  + golden vectors: key material and every blob reproduce byte for byte with the injected key and nonce 0.003s
+  + golden vectors: the Python-sealed blobs decrypt on the JVM with the recipient private key 0.004s
+  + tampering with header or ciphertext, or a different recipient, fails authentication 0.002s
+  + each blob uses a fresh ephemeral key and nonce 0.001s
+  + recipient key parsing: hex, PEM, fingerprint check, bad inputs 0.001s
+S5-BANDED-VS-RLSS orthogonal: max relative |TrialBanded - rLSS(mapped penalty)| = 1.736e-15
+S5-BANDED-VS-RLSS overlapping (6 s spacing): max relative |TrialBanded - rLSS(mapped penalty)| = 2.682e-01
+S5-BANDED-VS-RLSS overlapping (12 s spacing): max relative |TrialBanded - rLSS(mapped penalty)| = 5.042e-04
+S5-EDF max relative |tr(W^-1 G) - sum of readout self-influences| = 1.055e-14; edf by alpha 3.709, 4.381, 5.623, 7.773, 11.109, 15.556, 20.530, 25.251, 29.147 (N=36, G=3)
+S5-EDF PHRF vs rLSS closed form (orthogonal): max relative 2.528e-16
+scalafim.phrfcmp.run.PhrfTrialBandedSuite:
+  + balanced orthogonal equal-norm design: TrialBanded equals rLSS at the mapped penalty (1 - 1/n_c) lambda 1.205s
+  + overlapping trials: the discrepancy is reported and bounded, and shrinks as the trials separate 0.038s
+  + PHRF edf: equals the explicit self-influence trace of TrialBanded's readout to 1e-10 0.762s
+  + PHRF edf limits: N with no penalty, G as lambda grows 0.003s
+  + PHRF edf equals the rLSS closed form at the S4 scale-mapped penalty on a balanced orthogonal design 0.004s
+S4-LSA-NORMAL-EQUATIONS relative error 5.959e-15
+S4-LSS-EXPLICIT-LOOP relative error 4.012e-15
+S4-RLSS-AS-LSS relative error 3.126e-15
+S4-ENDPOINTS no-deviation selected indices Vector(0, 1, 0, 0); strong-deviation selected indices Vector(8, 8, 8, 8)
+scalafim.phrfcmp.run.TrialNativeRunnerSuite:
+  + LSA equals the normal-equations solve on [trials, fixed] at 1e-10 0.022s
+  + LSS equals the explicit per-trial regression on [x_i, sum of the other trials, fixed] at 1e-10 0.086s
+  + the LSS-equivalence flag (pooled rLSS at ridge 0) reproduces LSS at 1e-10 0.016s
+  + condition-centred rLSS at ridge 0 is not LSS, and shrinks toward the condition level as the ridge grows 0.023s
+  + native fits are deterministic: reruns have identical canonical bytes, and the digest depends on the arm and the ridge 0.026s
+  + typed failures and refusals: rank deficiency is Failed, a non-trial arm is Refused, inputs are validated 0.009s
+  + tuned rLSS: one fold per run, each leaving exactly that run out, nine scores per fold, a selected ridge from the final map 0.077s
+  + held-out data never enter fitting, q or the df map: poisoning the held-out run changes only that fold's score 0.049s
+  + tuning is deterministic: two runs give bit-identical selections, ridges and final amplitudes 0.039s
+  + endpoint behaviour follows the truth: no deviations select strong shrinkage, strong persistent deviations select weak shrinkage 0.143s
+  + run(Rlss) returns the tuning record; LSA and LSS return none 0.026s
+  + trial regressors read from the prepared dataset are the canonical columns on the generator's sample times, whitened 0.235s
+  + native trial arms run end to end on a prepared dataset and are deterministic 0.224s
+  + a condition cell is not a trial cell 0.152s
+  + scorer adapter: one outcome per voxel in input trial order, accepted by TrialDataset; refusals map to Refused/Failed 0.004s
+  + fold and final maps match PHRF's joint edf on the rLSS amplitude edf; the ridges are not the penalties 0.026s
+  + without PHRF edf targets the rLSS arm refuses with a typed reason 0.001s
+  + the penalty-scale diagnostic is recomputed on each training fold's n_c and never changes the mapping 0.032s
+  + the fold score is unchanged by a baseline-heavy response: the held-out nuisance projection is kept at runner level 0.032s
+  + the shared held-out signal is regressors times amplitudes, with a typed refusal on mismatched trials 0.001s
+  + tamper: inputs that differ from the prepared dataset (0.1 s onset shift) are refused with a typed reason 0.211s
+scalafim.phrfcmp.score.DistIccSuite:
+  + F quantiles match R qf 0.001s
+  + chi-square quantiles and the sigma UCL factor match R qchisq 0.001s
+  + balanced ICC and 80 % upper limit match anova(lm()) ICC 0.0s
+  + unbalanced ICC uses k0 and matches the anova(lm()) ICC reference 0.0s
+  + ICC is location invariant and truncated at 0 0.001s
+  + degenerate ICC inputs yield None, non-finite is refused 0.001s
+S5-REAL whole PHRF trial arm (37 fits, 3 voxels): 15.5 s wall
+S5-REAL rho=0.3423 sigma2All=0.9308 selected alpha=0.5 (index 5; lower end false, upper end false)
+S5-REAL mean fold scores 0.1642, 0.1673, 0.1724, 0.1794, 0.1863, 0.1868, 0.1716, 0.1529, 0.1350
+S5-REAL fold sigma2 0.9261, 0.9299, 0.9277, 0.9344
+S5-REAL final statuses Vector((Refused(decode_Boundary),Some(Boundary)), (Estimated,Some(Accepted)), (Estimated,Some(Accepted)))
+S5-REAL within-condition r (mean over conditions) per estimated voxel: 0.547, 0.407
+S5-REAL penalty scale: canonical tau=5.4499 sd=2.1855; kappa2 1.03593 centring 0.97917 factor 1.01434; spreads shape 0.000 centring 0.000
+S5-REAL PHRF TRUE edf by alpha 2^-6..2^2 (N=144, G=3): 5.944, 8.648, 13.464, 21.326, 32.675, 46.848, 62.266, 77.343, 91.112
+S5-REAL S4 q-based surrogate x N (mean q/(q+p), p = scale.penalty):  3.254, 6.365, 12.189, 22.473, 38.870, 61.203, 85.882, 107.583, 123.151
+S5-REAL decoded-shape edf voxel 0: None
+S5-REAL decoded-shape edf voxel 1: Some(5.78, 8.38, 13.08, 20.98, 32.80, 48.14, 65.29, 82.23, 97.49)
+S5-REAL decoded-shape edf voxel 2: Some(5.67, 8.19, 12.79, 20.65, 32.68, 48.66, 66.83, 84.81, 100.79)
+S5-REAL rLSS (derived scale) selected grid index 5, ridge 3.3251; df map flagged false
+S5-REAL PHRF-can probe (37 fixed-shape fits): 3.2 s wall; selected alpha 0.5; tau=5.450
+S5-REAL PHRF-can mean fold scores 0.1122, 0.1142, 0.1174, 0.1218, 0.1262, 0.1279, 0.1243, 0.1122, 0.0880
+S5-REAL PHRF-can per-alpha preparation profile (s): 0.051, 0.051, 0.049, 0.045, 0.045, 0.095, 0.046, 0.047, 0.046
+S5-REAL PHRF per-alpha preparation profile (s):     0.355, 0.316, 0.290, 0.287, 0.294, 0.286, 0.286, 0.292, 0.284
+S5-REAL PHRF trial-ML core-ms/voxel (fold fits, median): 14.2
+scalafim.phrfcmp.run.PhrfTrialRealSuite:
+  + real fixture: the 37-fit arm runs, statuses are typed, E-trial is in input trial order 15.484s
+  + real fixture: a rerun is hash-equal 17.073s
+  + real fixture: the penalty scale and the rLSS settings the pilot path uses 0.911s
+  + real fixture: PHRF-can timing probe with the shared shell, grid and score 3.197s
+scalafim.phrfcmp.score.ERespSuite:
+  + the protocol grid is 0.1 s over [0, 32]: 321 lags equal to the decimal values 0.001s
+  + grids refuse empty, unordered and negative lags; no exception 0.002s
+  + canonical and informed bases equal the library SPMG kernels evaluated directly on 0-24 s 0.004s
+  + CAN and INF3 E-resp is exactly zero after the 24 s design span (owner decision 2026-10-02); 24 s itself is kept 0.002s
+  + FIR piecewise constant equals the library FIR basis; zero at and beyond the last edge 0.005s
+  + FIR E-resp is constant within each 1 s bin and jumps at the edges (no interpolation) 0.0s
+  + Gaussian PHRF reconstruction equals amplitude times the library Gaussian kernel evaluated directly 0.003s
+  + typed refusals: coefficient count, dimension, normalisation, non-finite 0.003s
+scalafim.phrfcmp.run.AlphaGridSuite:
+  + the pilot grid is the nine powers of two 2^-6 .. 2^2, strictly increasing 0.0s
+  + lambda is exactly 1 / alpha (powers of two are exact), and the typed alpha carries the same value 0.0s
+  + grids must be non-empty, positive, finite and strictly increasing 0.002s
+scalafim.phrfcmp.exec.StampBuilderSuite:
+  + stamp binds git state, hashes, pin, java, plan, timeout and thread pinning 0.388s
+  + each bound input changes the stamp (the first difference names it) 0.966s
+  + dirty tree refuses when required and is flagged otherwise 0.377s
+  + any scalafim.*.build property refuses a redirected build 0.099s
+  + from_generator.py must carry the frozen hash prefix 0.236s
+  + a missing frozen file refuses 0.177s
+  + stamp records the GLMsingle interpreter, its environment, the host architecture and the lockfile hash 0.409s
+scalafim.phrfcmp.exec.PilotRunnerSuite:
+  + full run: every unit sealed (payload, status-only ledger, timing), journal complete, no plaintext results on disk 1.627s
+  + plaintext journal and cost file reveal only completed jobs, total CPU and the invocation count; no status, code, count or hash 1.606s
+  + closeStore writes CLOSE and SEALED; the owner reader accepts the complete store 0.613s
+  + resume (D1): soft stop, then the final invocation runs the incomplete jobs and recomputes the earlier ones once; CPU is cumulative 2.38s
+  + D1: intermediate resumes recompute nothing; only the invocation that reaches a decision recomputes the earlier jobs 0.678s
+  + soft stop with D >= minimum accepts a uniform reverse-index drop; plaintext selection holds D, df, UCL only 0.487s
+  + partial pilot below the minimum D is refused 0.476s
+  + stamp mismatch refuses resume naming the field before any work; ceilings and threads are not stamped 0.387s
+  + L2/F7: the stamp binds the owner key fingerprint and the store path (hashed in plaintext, full in meta/stamp); another key or store refuses 0.256s
+  + output with sealed data but no stamp is refused 0.241s
+  + atomicity: crash at DataSealed leaves only orphans; resume cleans them; owner content matches a clean run 1.822s
+  + atomicity: crash at LedgerSealed leaves only orphans; resume cleans them; owner content matches a clean run 2.36s
+  + atomicity: crash at MarkerWritten leaves only orphans; resume cleans them; owner content matches a clean run 2.07s
+  + atomicity: crash at MarkerSealed leaves only orphans; resume cleans them; owner content matches a clean run 2.062s
+  + crash inside the sealed store between tmp write and rename: tmp debris is ciphertext, resume completes, close removes it 1.988s
+  + a journal marker that disagrees with its sha refuses (corruption is not an orphan) 0.281s
+  + CPU guard hard stop at a tiny ceiling (threads=1): refuses, nothing dispatched after the trip, resumable with an owner-authorized ceiling 1.194s
+  + CPU guard hard stop at a tiny ceiling (threads=4): refuses, nothing dispatched after the trip, resumable with an owner-authorized ceiling 1.022s
+  + projection after the probe wave refuses when it exceeds the ceiling 0.391s
+  + dispatch is round-robin across cells in index order (single thread) 0.782s
+  + retries: failed twice then done; always-failing capped at 2 retries; refusal not retried; one ledger and one timing record per unit 0.554s
+  + M6: the sealed blob count does not depend on refusals, failures or retries 2.244s
+  + an arm exception is a failure, not a crash 0.27s
+  + unit records carry attempt-unique names; a resumed job adds new names, never a duplicate; payload hashes reveal (non)determinism 0.411s
+  + F2: a nondeterministic Done payload regenerated after a crash never poisons the store; the owner sees the mismatch for that unit only 0.478s
+  + resuming under a different root is visible to the owner as a differing duplicate; the root never reaches disk 0.405s
+  + a refused seal write surfaces as SealFailed and the unit is not marked complete 0.05s
+  + whole-runner determinism (F11): identical decrypted content and identical sealed-tree digests at 1 and 4 threads 21.969s
+  + ArmContext: unsafe or duplicate blob names are refused; one scorer contribution per attempt; RawBlob and PilotRoot never print their contents 0.001s
+  + R1 (H1): a transient failure, a crash before the marker and a rerun with a different attempt count leave a store the owner reads 0.411s
+  + R2 (D2): a resume under an exceeded soft ceiling finishes the hole first; every cell keeps the prefix 0..D-1 1.184s
+  + D2: past the soft stop a resume finishes only the jobs below the highest completed index, then drops to the shortest prefix 1.789s
+  + R3 (M3): a missing or unreadable cost.json next to existing progress refuses to resume instead of resetting the CPU guard 0.268s
+  + R4 (M4): after one worker crashes, run() returns only when every worker has stopped; nothing is written afterwards 4.634s
+  + M4: a commit in flight when another worker crashes is abandoned at its next seal; nothing of it is sealed after the crash 10.161s
+  + L4: an arm that returns Failed because shouldAbort fired is not committed; the unit stays incomplete and resumes cleanly 0.381s
+  + L3: the hard ceiling is checked around every unit attempt; the attempt that crosses it is discarded and no later unit starts 0.177s
+  + closeStore refuses while a run is in progress, and run refuses while a close is in progress 0.263s
+  + F1: run() is single-shot; after a caught crash a second run() on the same instance is refused and the store stays readable 0.39s
+  + F1: the run id is drawn inside run(), once per instance 0.257s
+  + F5: an interrupt of the run() thread joins every worker, restores the interrupt flag and returns Interrupted 0.814s
+  + probe H1: successful bytes that change per invocation, crashed after LedgerSealed, resume into a store the owner reads; both scheduled commits survive 0.393s
+  + probe M2a: a job in flight at the highest completed index when the run crashed is finished on a resume past the soft stop 0.845s
+  + probe M2b: every job in flight when the run crashed is finished on a resume past the soft stop, even above the highest completed index 0.814s
+  + probe M4: repeated interrupts of the run() thread never return it while a latch-blocked worker is alive 0.738s
+  + review 2: a commit exception after the attempt's CPU was metered checkpoints that CPU durably before the crash propagates 0.122s
+  + re-review 1a: a failed cost checkpoint leaves accounting.open; the resume refuses until the owner charges that run 0.506s
+  + re-review 1b: a process death mid-run (accounting.open on disk) makes the resume refuse uncertain accounting 0.343s
+  + re-review 5b: a cost.json whose invocation count would overflow is refused, never incremented 0.023s
+  + re-review 3: CpuGuard and the owner authorizations are not Serializable, and reflective construction re-checks every invariant 0.006s
+  + a caller interrupt cannot close accounting after a worker loses its child CPU handoff 0.11s
+  + a job cleanup exception cannot close accounting after a fatal arm failure 0.108s
+  + review3 H2: an owner ceiling raise is bound to one output: accepted for output A, refused for output B 0.874s
+  + review3 M1: an accounting recovery already recorded for the uncertain run is not charged twice 0.439s
+  + review3 L2: a recovery whose charge makes the total non-finite is refused; the marker and the cost stay 0.298s
+  + review3 L1: the runner never writes an invocation count its parser rejects 0.021s
+  + review3 hardening: cost.json authorization records are validated; L3: the retry cap is bounded 0.024s
+  + review4 H2: an output recreated at the same path has a new identity, so the old output's raise is refused 0.73s
+  + review4 H2: an adopted output without a well-formed output-id is refused 0.255s
+  + review4 M: a replayed recovery completes its sealed accounting record 0.459s
+  + review4 L2: journal names and recovery agree for every dataset index a plan accepts 0.022s
+  + review5: substituting another output's id refuses before accounting or work 0.531s
+  + review5: output ids use ASCII hex and survive initialization before the stamp 0.314s
+  + merge regression: inspecting a stamp cannot hide a later output-id substitution 0.278s
+  + merge regression: cleanup rethrowing the same fatal error preserves the error and accounting marker 0.093s
+  + review5 D1: substituting an archived output-id into a fresh output at the same path cannot transfer the raise 0.686s
+  + review5 hardening: an output-id left by a death before the stamp is kept, never redrawn; only ASCII hex is accepted 0.264s
+S11-COND cond/exact_first/can                     design_abs=3.93e-15 beta_rel=1.710e-15 eresp_rel=1.706e-15
+S11-COND cond/identity_first/can                  design_abs=3.93e-15 beta_rel=1.597e-15 eresp_rel=1.625e-15
+S11-COND cond/exact_first/inf3                    design_abs=3.85e-14 beta_rel=1.774e-13 eresp_rel=4.562e-14
+S11-COND cond/identity_first/inf3                 design_abs=3.85e-14 beta_rel=1.785e-13 eresp_rel=4.411e-14
+S11-COND cond/exact_first/fir                     design_abs=1.14e-13 beta_rel=5.866e-15 eresp_rel=5.866e-15
+S11-COND cond/identity_first/fir                  design_abs=1.14e-13 beta_rel=6.888e-15 eresp_rel=6.888e-15
+S11-COND cond_close/exact_first/can               design_abs=5.58e-15 beta_rel=2.655e-15 eresp_rel=2.714e-15
+S11-COND cond_close/identity_first/can            design_abs=5.58e-15 beta_rel=7.278e-15 eresp_rel=7.243e-15
+S11-COND cond_close/exact_first/inf3              design_abs=5.23e-14 beta_rel=5.902e-14 eresp_rel=2.729e-14
+S11-COND cond_close/identity_first/inf3           design_abs=5.23e-14 beta_rel=5.581e-14 eresp_rel=2.787e-14
+S11-COND cond_close/exact_first/fir               design_abs=2.27e-13 beta_rel=6.133e-15 eresp_rel=6.133e-15
+S11-COND cond_close/identity_first/fir            design_abs=2.27e-13 beta_rel=5.806e-15 eresp_rel=5.806e-15
+scalafim.phrfcmp.run.S11ConditionParitySuite:
+  + cond/exact_first/can: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.024s
+  + cond/identity_first/can: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.012s
+  + cond/exact_first/inf3: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.015s
+  + cond/identity_first/inf3: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.014s
+  + cond/exact_first/fir: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.031s
+  + cond/identity_first/fir: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.024s
+  + cond_close/exact_first/can: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.007s
+  + cond_close/identity_first/can: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.008s
+  + cond_close/exact_first/inf3: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.01s
+  + cond_close/identity_first/inf3: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.013s
+  + cond_close/exact_first/fir: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.019s
+  + cond_close/identity_first/fir: design 1e-12, betas and E-resp at 1e-8 against fmrireg 0.019s
+scalafim.phrfcmp.exec.SchedulePolicySuite:
+  + dispatch is round-robin: index 0 of every cell, then index 1, in cell order 0.0s
+  + probe wave is the first two datasets of every cell 0.001s
+  + names that would escape the output tree are refused 0.001s
+  + drop rule: D is the smallest per-cell count; higher indices dropped uniformly, highest first 0.001s
+  + drop rule keeps the longest completed prefix: a hole is never kept, everything above it is dropped (D2) 0.0s
+  + a resume must finish every incomplete job below the highest completed index, in any cell (D2) 0.001s
+  + M2: a resume also finishes every dispatched incomplete job, at or above the highest completed index 0.0s
+  + D < 15 refuses a partial pilot; D = 15 is accepted with df 14 0.001s
+  + chi-square quantile and UCL factor are recomputed from df 0.0s
+  + retries are capped at 2, refusals are never retried, done commits at once 0.001s
+  + CPU guard: soft stop at 45 and hard stop at 60 core-hours, cumulative seconds 0.0s
+  + ledger records are status only, carry invocation and run id, round-trip, and reject extra keys 0.001s
+  + sealed names (F2): only the root check and the stamp are deterministic; every unit and aggregate name carries the run id 0.001s
+  + stamp json is canonical and detects the first difference 0.001s
+  + review 4: the hard ceiling is at most 60 core-hours unless the owner's typed authorization raises it 0.001s
+  + re-review 6: OwnerCeilingRaise and OwnerAccountingRecovery hold their invariants; no generated constructor bypasses them 0.003s
+scalafim.phrfcmp.exec.PilotAggregationSuite:
+  + the aggregator runs in-process; its sealed diagnostics and record are appended to the sealed store and nowhere else 0.85s
+  + the aggregate takes the runner's run id: scorer inputs of another invocation are refused 0.052s
+  + a closed store refuses the append with a typed seal error 0.273s
+  + once per run id: a second aggregation with the same run id is refused before anything is sealed, even with another corpus 0.723s
+  + corpus digests: the outcome digest depends on the corpus content and not on the run; timing is digested separately 0.329s
+  + R5 (M1): aggregating a partial pilot and later the full one in the same store leaves a store the owner reads 0.508s
+  + F4: end to end, the aggregate record localises a nondeterministic unit; a deterministic pilot has no deviation 2.966s
+scalafim.phrfcmp.exec.SealedStoreSuite:
+  + append seals every blob; file name is the hash of the whole file; reader recovers names and data 0.038s
+  + nothing result-bearing reaches disk in plaintext, including temp files 0.036s
+  + read-back: a corrupted ciphertext is refused and nothing is published 0.001s
+  + read-back: a blob that decrypts to different plaintext is refused 0.002s
+  + read-back from disk: a file that differs after the durable write is removed and refused 0.013s
+  + crash between tmp write and rename leaves only ciphertext tmp debris; readers and digest ignore it; close deletes it 0.053s
+  + resume re-seals: identical duplicates are accepted, differing duplicates are refused by the reader 0.093s
+  + close: CLOSE counts every data-blob file, SEALED receipt matches the digest, a second close and later appends refuse 0.057s
+  + a wrong fingerprint refuses before any byte is written 0.0s
+  + size buckets: ciphertext length reveals only the bucket 0.055s
+  + sealed-tree digest is sensitive to one byte and excludes SEALED and tmp files 0.011s
+  + concurrent appends from many threads all verify and unseal 0.891s
+S11-WHITEN exact_first cond/Y                       relerr=0.000e+00
+S11-WHITEN identity_first cond/Y                    relerr=0.000e+00
+S11-WHITEN exact_first cond_close/Y                 relerr=0.000e+00
+S11-WHITEN identity_first cond_close/Y              relerr=0.000e+00
+S11-WHITEN exact_first trial/tx/Y                   relerr=0.000e+00
+S11-WHITEN identity_first trial/tx/Y                relerr=0.000e+00
+S11-WHITEN exact_first trial/tx/X_trial             relerr=0.000e+00
+S11-WHITEN identity_first trial/tx/X_trial          relerr=0.000e+00
+S11-WHITEN exact_first trial/tx/F                   relerr=0.000e+00
+S11-WHITEN identity_first trial/tx/F                relerr=0.000e+00
+S11-WHITEN exact_first trial/ts/Y                   relerr=0.000e+00
+S11-WHITEN identity_first trial/ts/Y                relerr=0.000e+00
+S11-WHITEN exact_first trial/ts/X_trial             relerr=0.000e+00
+S11-WHITEN identity_first trial/ts/X_trial          relerr=0.000e+00
+S11-WHITEN exact_first trial/ts/F                   relerr=0.000e+00
+S11-WHITEN identity_first trial/ts/F                relerr=0.000e+00
+scalafim.phrfcmp.prep.S11WhiteningParitySuite:
+  + exact_first (primary) whitening of cond/Y matches R Y_white at 1e-10 0.007s
+  + identity_first (secondary) whitening of cond/Y matches R Y_white at 1e-10 0.004s
+  + exact_first (primary) whitening of cond_close/Y matches R Y_white at 1e-10 0.003s
+  + identity_first (secondary) whitening of cond_close/Y matches R Y_white at 1e-10 0.002s
+  + exact_first (primary) whitening of trial/tx/Y matches R Y_white at 1e-10 0.002s
+  + identity_first (secondary) whitening of trial/tx/Y matches R Y_white at 1e-10 0.002s
+  + exact_first (primary) whitening of trial/tx/X_trial matches R X_trial_white at 1e-10 0.003s
+  + identity_first (secondary) whitening of trial/tx/X_trial matches R X_trial_white at 1e-10 0.006s
+  + exact_first (primary) whitening of trial/tx/F matches R F_white at 1e-10 0.004s
+  + identity_first (secondary) whitening of trial/tx/F matches R F_white at 1e-10 0.002s
+  + exact_first (primary) whitening of trial/ts/Y matches R Y_white at 1e-10 0.003s
+  + identity_first (secondary) whitening of trial/ts/Y matches R Y_white at 1e-10 0.003s
+  + exact_first (primary) whitening of trial/ts/X_trial matches R X_trial_white at 1e-10 0.005s
+  + identity_first (secondary) whitening of trial/ts/X_trial matches R X_trial_white at 1e-10 0.005s
+  + exact_first (primary) whitening of trial/ts/F matches R F_white at 1e-10 0.005s
+  + identity_first (secondary) whitening of trial/ts/F matches R F_white at 1e-10 0.003s
+scalafim.phrfcmp.ingest.SeedsSuite:
+  + derivation matches phrf_gen/seeds.py (HARNESS root, T-TX-fast, dataset 0) 0.001s
+  + denylist hit includes the low 32 bits 0.0s
+  + raw scan keeps digits above 2^53 and refuses duplicates and malformed blocks 0.0s
+scalafim.phrfcmp.score.FollowUpSuite:
+  + trial worst-in-family imputation uses the voxel-level minimum: independent sigma and delta-z sign 0.191s
+  + pooled rates count Failed as well as Refused 0.219s
+  + a GLMs-D arm cannot change any T-TX pair's sigma; it does change the T-G pair 0.29s
+  + conditionPair and trialPair ignore extra arms in ds.arms 0.003s
+  + trial location invariance end to end: a planted delta z leaves the whitelist unchanged (to 1e-9) 0.276s
+  + planted trial difference and its mean appear in no text channel, error message or sealed byte 0.377s
+  + error messages for the count-carrying constructors are the constructor token only (no digits) 0.231s
+  + constant true amplitudes make only that cell's trial sigmas 'degenerate'; the pilot output survives 0.675s
+  + df = 14 is accepted, df = 13 is refused (D = 20 with 5 or 6 undefined endpoints) 0.47s
+scalafim.phrfcmp.score.WhitelistAggregatorSuite:
+  + schema closure: the JSON key paths are exactly the pre-registered set (ICC fields may be 'degenerate') 0.455s
+  + schema closure: the whitelist ADT holds only numbers, vectors and closed case classes or enums 0.191s
+  + the sigma table refuses anything but the 23 gating pairs 0.0s
+  + sigma of centred lambda_d equals the independent computation; df = D - 1 0.226s
+  + UCL factor from the realized df (about 1.18 at 19) 0.223s
+  + refusal below D = 15, and a pair with fewer than 14 df is refused, not extrapolated 0.267s
+  + corpus shape errors are typed 0.053s
+  + coverage ICC: emitted only when the pooled proportion lies in [0.05, 0.95], else 'degenerate' 1.332s
+  + coverage ICC: the degenerate field is byte-identical on both sides of the band 0.647s
+  + coverage band edges: exactly 0.05 and 0.95 are emitted, just outside is degenerate 0.856s
+  + location invariance: Centred ignores a constant added to every value (exact on dyadic data) 0.001s
+  + location invariance: a constant offset in a comparator's log-MISE leaves the whitelist byte-identical 0.387s
+  + location invariance: the planted difference does not change the whitelist 0.42s
+  + planted-mean scan: whitelist text, messages, toStrings, run-complete line and sealed bytes carry no planted value 0.573s
+  + redaction: error messages carry constructor names and integers only; exception class tokens drop messages 0.0s
+  + run-complete line is byte-identical across corpora with different planted differences 0.409s
+  + guarded aggregation never throws 0.161s
+  + pooled refusal rate is per method over all its cells, with the denominator 0.197s
+  + timing summaries are medians and ranges; the cache report carries the flatness ratio 0.218s
+  + complete-case and imputed sigma differ when refusals are present (complete-case is sealed only) 0.41s
+  + whitelist writer is deterministic: golden prefix and stable hash 0.418s
+  + number rendering is locale-free and platform-identical 0.001s
+REAL-FIXTURE Trial rho=0.3423 sigma2=0.9308 rank=261
+REAL-FIXTURE Condition rho=0.2640 sigma2=0.8714 rank=102
+scalafim.phrfcmp.prep.RealGeneratorPrepSuite:
+  + real Trial data: dropping the generator intercepts gives a full-rank shared baseline with the same span 0.097s
+  + real Trial data: common preparation runs end to end and is deterministic 3.512s
+  + real Condition data: dropping the generator intercepts gives a full-rank shared baseline with the same span 0.025s
+  + real Condition data: common preparation runs end to end and is deterministic 0.541s
+  + real trial data: the 264-column trial design has exactly one exact dependency per condition (rank 261) 0.257s
+  + real Trial data: the prepared AR path equals the unprepared path exactly (phi, gamma, every recorded value) 8.733s
+  + real Condition data: the prepared AR path equals the unprepared path exactly (phi, gamma, every recorded value) 0.972s
+S3-PHRF noise-free: max |E-resp - direct| / peak = 1.106e-05, tau err 1.162e-05, sd err 1.443e-05
+S3-OFFGRID first=4.0 gap=11.2 TR=1.0 lowering=0.1: max |E-resp - direct| / peak = 3.169e-06
+S3-OFFGRID first=4.1 gap=11.3 TR=1.0 lowering=0.1: max |E-resp - direct| / peak = 2.512e-06
+S3-OFFGRID first=4.1 gap=11.1 TR=1.0 lowering=0.1: max |E-resp - direct| / peak = 3.550e-06
+S3-OFFGRID first=4.0 gap=11.2 TR=0.5 lowering=0.1: max |E-resp - direct| / peak = 1.182e-06
+S3-OFFGRID first=4.1 gap=11.3 TR=0.5 lowering=0.1: max |E-resp - direct| / peak = 1.167e-06
+S3-LAG0 onsets on scans, edge truths: max |E-resp - direct| / peak = 1.085e-05
+S3-LAG0 truth with the lag-0 sample at half weight: 6.077e-04, dropped: 1.214e-03
+S3-LAG0 original truths first=4.1 gap=11.3: 7.137e-06
+S3-OFFGRID 4.1/11.3 TR=1: lowering 0.2 -> 3.221e-03, lowering 0.1 -> 2.512e-06
+scalafim.phrfcmp.run.PhrfConditionSuite:
+  + all arms share one whitened-array hash; phi is bit-equal between plan and PHRF FitConfig 1.298s
+  + native arms estimate every voxel on the 0.1 s grid with finite coefficients 0.467s
+  + FIR with 8 events per run cannot identify 3 x 32 bins: a typed rank-deficiency failure, while CAN and INF3 estimate 0.019s
+  + the runner refuses inputs that are not the ones the preparation was built from 0.005s
+  + PHRF E-resp equals direct evaluation of the true response on noise-free data 0.072s
+  + reconstruction is exactly amplitude times the library kernel at the decoded coordinates 0.062s
+  + a response far outside the latency chart decodes onto its edge: typed Boundary refusal, neighbour unaffected 0.142s
+  + a condition with no events is a typed rank-deficiency failure in every native arm and a typed outcome in PHRF 0.109s
+  + two conditions with identical events are collinear: typed failure, no exception 0.094s
+  + a trial-cell preparation is a typed kind mismatch 0.207s
+  + every input array is bound to the preparation: a one-bit change in nuisance, onsets, conditions or sample times is refused 0.014s
+  + a sub-bin change (0.1 s within the same 1 s FIR bin) of an onset or a scan time is refused by the exact input fingerprint 0.008s
+  + PHRF's internal shared whitening of the response is bit-equal to the common whitened arrays 0.003s
+  + PHRF E-resp on noise-free data, onsets first=4.0 gap=11.2, TR=1.0: within 1e-4 of the peak at the default 0.1 s lowering 0.138s
+  + PHRF E-resp on noise-free data, onsets first=4.1 gap=11.3, TR=1.0: within 1e-4 of the peak at the default 0.1 s lowering 0.15s
+  + PHRF E-resp on noise-free data, onsets first=4.1 gap=11.1, TR=1.0: within 1e-4 of the peak at the default 0.1 s lowering 0.152s
+  + PHRF E-resp on noise-free data, onsets first=4.0 gap=11.2, TR=0.5: within 1e-4 of the peak at the default 0.1 s lowering 0.517s
+  + PHRF E-resp on noise-free data, onsets first=4.1 gap=11.3, TR=0.5: within 1e-4 of the peak at the default 0.1 s lowering 0.526s
+  + T-TX-like: every onset exactly on a scan (TR 1), truths at the chart edges where the lag-0 density is largest: within 1e-4 0.153s
+  + the lag-0 convention has power: counting the lag-0 sample at half weight or not at all in the truth is detected 0.314s
+  + original truths (kernel 2.7e-3 of the peak at lag 0), odd-0.1 onsets that are exact decimals: within 1e-4 0.162s
+  + at a 0.2 s lowering grid an odd-0.1 onset costs a systematic error 100x larger (why the default is 0.1 s) 0.577s
+  + a voxel with no signal is refused with a non-Boundary decode status, and a refusal is never an estimate 0.14s
+  + the observed admission and the held-out points reach the PHRF policy 1.141s
+  + a dataset with a different voxel count than the preparation is a typed inconsistency 0.001s
+scalafim.phrfcmp.ingest.RealGeneratorSuite:
+  + real trial fixture binds; pool, deviations and events are present 0.005s
+  + real condition fixture binds without pool or trial arrays 0.003s
+  + real file bound against a pilot expectation is refused 0.0s
+  + real file: wrong cell spec flags (tr_aligned_onsets) are refused 0.001s
+  + real file: byte flips anywhere are refused (hash, then CRC if re-signed) 0.02s
+  + real file: re-zipped with DEFLATE (manifest re-signed) is refused 0.009s
+  + real file: tampered stream seed digits (above 2^53) and flipped hit flag are refused 0.001s
+  + real file: per-array hash tamper is refused by name 0.003s
+  + missing files are a typed refusal 0.001s
+==> s scalafim.phrfcmp.ingest.RealGeneratorSuite.fixtures are byte-identical to a fresh generator run (skipped without python3+numpy) skipped 0.076s
+scalafim.phrfcmp.typing.FitInputsSuite:
+  + FitInputs has no truth field (compile-time field labels) 0.002s
+  + selecting any truth field on FitInputs does not compile 0.004s
+  + FitInputs cannot be forged outside the ingest package 0.0s
+S5-WHITEN max |training-plan whitening - shared whitening| = 0.000e+00
+S5-SIGMA2 max relative |fold sigma2 - direct| = 0.000e+00
+S5-EDF-DIAG canonical-shape edf 10.949, 20.327, 29.013; decoded-shape edf voxel 0: Some(10.209, 20.169, 29.652)
+S5-RANKDEF Left((phrf_dataset_prepare_Preparation,PHRF refused the dataset at prepare: Preparation))
+scalafim.phrfcmp.run.PhrfTrialSuite:
+  + every problem's frame puts scan k at the generator's sample time; the library default frame would not 0.24s
+  + a training problem reads only its own runs: rows, events, baseline columns, whitening segments, phi bit for bit 0.008s
+  + the training plan whitens its rows exactly as the shared plan whitens them (per-run whitening) 0.004s
+  + the held-out design is the held-out run alone, on its own one-block frame and one-segment plan 0.003s
+  + per-fold sigma2 equals a direct computation on the training runs, and is not the all-run value 1.516s
+  + alpha 0 (and any non-positive alpha) is refused before an ML plan exists; the executor itself would refuse it too 1.201s
+  + a poisoned held-out run leaves the training fit unchanged and changes only the score 1.025s
+  + a rerun is hash-equal (outcome, tuning and final fit); timings are not part of the hash 2.778s
+  + work receipts: route, terminal ML evidence on every voxel, counted decoder work, public outputs accounted 0.002s
+  + timings are recorded per stage and are not part of any hash 0.001s
+  + typed refusals: inputs not prepared, wrong cell kind, status mapping, scorer adapter 0.159s
+  + tamper: a one-ulp change to y, an onset, the nuisance or a sample time is refused by every entry point (exact input fingerprint) 0.028s
+  + edf targets per fold: equal an independent forProblem at the derived canonical shape, differ from the all-run edf, ignore the held-out run, depend on the shape 0.857s
+  + sealed diagnostic: edf at each voxel's decoded shape, per alpha; recorded in the outcome, hashed, never a decision input 1.16s
+  + a non-finite voxel in one fold fit fails that voxel only: excluded from that fold's pool at every alpha, the arm proceeds; a fold with no usable voxel refuses 1.161s
+  + a rank-deficient baseline is a dataset-level typed PHRF refusal: every voxel Refused, no exception 0.3s
+  + scorer adapter: Estimated voxels carry E-trial in input trial order, one value per trial 0.001s
+S11-TRIAL tx/primary LSA vs fmrilss::lsa                       relerr=2.331e-15 (tol 1e-08)
+S11-TRIAL tx/primary LSS vs fmrilss::lss                       relerr=2.909e-15 (tol 1e-08)
+S11-TRIAL tx/primary rLSS pooled r=0 vs R dense                relerr=1.616e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS pooled r=0 vs fmrilss::lss           relerr=2.182e-15 (tol 1e-08)
+S11-TRIAL tx/primary rLSS amplitudes k=0                       relerr=2.786e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS deviations k=0                       relerr=3.119e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS amplitudes k=1                       relerr=1.977e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS deviations k=1                       relerr=2.295e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS amplitudes k=2                       relerr=2.067e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS deviations k=2                       relerr=2.554e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS amplitudes k=3                       relerr=2.466e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS deviations k=3                       relerr=3.612e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS amplitudes k=4                       relerr=2.388e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS deviations k=4                       relerr=1.999e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS amplitudes k=5                       relerr=2.394e-15 (tol 1e-10)
+S11-TRIAL tx/primary rLSS deviations k=5                       relerr=2.127e-15 (tol 1e-10)
+S11-TRIAL tx/primary q_i vs R residual projection              relerr=5.043e-16 (tol 1e-10)
+S11-TRIAL tx/primary ratio(r_k) vs R                           relerr=2.220e-16 (tol 1e-10)
+S11-TRIAL tx/primary ratio(p_k) vs R                           relerr=2.243e-16 (tol 1e-10)
+S11-TRIAL tx/primary ratio inverse vs R uniroot                relerr=2.328e-16 (tol 1e-09)
+S11-TRIAL tx/identity_first LSA vs fmrilss::lsa                relerr=1.165e-15 (tol 1e-08)
+S11-TRIAL tx/identity_first LSS vs fmrilss::lss                relerr=2.262e-15 (tol 1e-08)
+S11-TRIAL tx/identity_first rLSS pooled r=0 vs R dense         relerr=1.293e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS pooled r=0 vs fmrilss::lss    relerr=1.212e-15 (tol 1e-08)
+S11-TRIAL tx/identity_first rLSS amplitudes k=0                relerr=4.260e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS deviations k=0                relerr=2.432e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS amplitudes k=1                relerr=4.365e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS deviations k=1                relerr=2.189e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS amplitudes k=2                relerr=4.134e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS deviations k=2                relerr=1.858e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS amplitudes k=3                relerr=5.099e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS deviations k=3                relerr=3.403e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS amplitudes k=4                relerr=5.820e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS deviations k=4                relerr=1.786e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS amplitudes k=5                relerr=6.067e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first rLSS deviations k=5                relerr=1.801e-15 (tol 1e-10)
+S11-TRIAL tx/identity_first q_i vs R residual projection       relerr=7.564e-16 (tol 1e-10)
+S11-TRIAL tx/identity_first ratio(r_k) vs R                    relerr=2.220e-16 (tol 1e-10)
+S11-TRIAL tx/identity_first ratio(p_k) vs R                    relerr=2.243e-16 (tol 1e-10)
+S11-TRIAL tx/identity_first ratio inverse vs R uniroot         relerr=1.309e-16 (tol 1e-09)
+S11-TRIAL ts/primary LSA vs fmrilss::lsa                       relerr=2.954e-15 (tol 1e-08)
+S11-TRIAL ts/primary LSS vs fmrilss::lss                       relerr=2.045e-15 (tol 1e-08)
+S11-TRIAL ts/primary rLSS pooled r=0 vs R dense                relerr=1.586e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS pooled r=0 vs fmrilss::lss           relerr=1.169e-15 (tol 1e-08)
+S11-TRIAL ts/primary rLSS amplitudes k=0                       relerr=2.214e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS deviations k=0                       relerr=2.822e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS amplitudes k=1                       relerr=1.904e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS deviations k=1                       relerr=2.890e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS amplitudes k=2                       relerr=1.798e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS deviations k=2                       relerr=2.111e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS amplitudes k=3                       relerr=2.475e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS deviations k=3                       relerr=5.352e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS amplitudes k=4                       relerr=1.312e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS deviations k=4                       relerr=1.197e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS amplitudes k=5                       relerr=1.148e-15 (tol 1e-10)
+S11-TRIAL ts/primary rLSS deviations k=5                       relerr=1.451e-15 (tol 1e-10)
+S11-TRIAL ts/primary q_i vs R residual projection              relerr=5.041e-16 (tol 1e-10)
+S11-TRIAL ts/primary ratio(r_k) vs R                           relerr=1.110e-16 (tol 1e-10)
+S11-TRIAL ts/primary ratio(p_k) vs R                           relerr=3.364e-16 (tol 1e-10)
+S11-TRIAL ts/primary ratio inverse vs R uniroot                relerr=3.527e-16 (tol 1e-09)
+S11-TRIAL ts/identity_first LSA vs fmrilss::lsa                relerr=1.892e-15 (tol 1e-08)
+S11-TRIAL ts/identity_first LSS vs fmrilss::lss                relerr=1.669e-15 (tol 1e-08)
+S11-TRIAL ts/identity_first rLSS pooled r=0 vs R dense         relerr=1.836e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS pooled r=0 vs fmrilss::lss    relerr=1.001e-15 (tol 1e-08)
+S11-TRIAL ts/identity_first rLSS amplitudes k=0                relerr=2.254e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS deviations k=0                relerr=2.532e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS amplitudes k=1                relerr=2.147e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS deviations k=1                relerr=3.071e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS amplitudes k=2                relerr=1.819e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS deviations k=2                relerr=2.593e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS amplitudes k=3                relerr=3.340e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS deviations k=3                relerr=5.944e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS amplitudes k=4                relerr=1.575e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS deviations k=4                relerr=1.886e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS amplitudes k=5                relerr=1.688e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first rLSS deviations k=5                relerr=1.990e-15 (tol 1e-10)
+S11-TRIAL ts/identity_first q_i vs R residual projection       relerr=5.041e-16 (tol 1e-10)
+S11-TRIAL ts/identity_first ratio(r_k) vs R                    relerr=1.110e-16 (tol 1e-10)
+S11-TRIAL ts/identity_first ratio(p_k) vs R                    relerr=1.121e-16 (tol 1e-10)
+S11-TRIAL ts/identity_first ratio inverse vs R uniroot         relerr=3.526e-16 (tol 1e-09)
+scalafim.phrfcmp.run.S11TrialParitySuite:
+  + tx/primary: LSA matches fmrilss::lsa at 1e-8 0.014s
+  + tx/primary: LSS matches fmrilss::lss at 1e-8 0.003s
+  + tx/primary: the LSS-equivalence flag matches the R single-group dense solve at 1e-10 and fmrilss::lss at 1e-8 0.002s
+  + tx/primary: condition-centred rLSS matches the R dense penalised solve at 1e-10 (amplitudes and deviations, six ridges) 0.013s
+  + tx/primary: q_i, the information-ratio grid and its inverse match the R closed forms 0.007s
+  + tx/primary: the tuned runner completes on the fixture (stimulus unseen: condition-mean prediction) 0.014s
+  + tx/identity_first: LSA matches fmrilss::lsa at 1e-8 0.006s
+  + tx/identity_first: LSS matches fmrilss::lss at 1e-8 0.003s
+  + tx/identity_first: the LSS-equivalence flag matches the R single-group dense solve at 1e-10 and fmrilss::lss at 1e-8 0.003s
+  + tx/identity_first: condition-centred rLSS matches the R dense penalised solve at 1e-10 (amplitudes and deviations, six ridges) 0.002s
+  + tx/identity_first: q_i, the information-ratio grid and its inverse match the R closed forms 0.001s
+  + tx/identity_first: the tuned runner completes on the fixture (stimulus unseen: condition-mean prediction) 0.006s
+  + ts/primary: LSA matches fmrilss::lsa at 1e-8 0.005s
+  + ts/primary: LSS matches fmrilss::lss at 1e-8 0.001s
+  + ts/primary: the LSS-equivalence flag matches the R single-group dense solve at 1e-10 and fmrilss::lss at 1e-8 0.001s
+  + ts/primary: condition-centred rLSS matches the R dense penalised solve at 1e-10 (amplitudes and deviations, six ridges) 0.002s
+  + ts/primary: q_i, the information-ratio grid and its inverse match the R closed forms 0.002s
+  + ts/primary: the tuned runner completes on the fixture (stimulus unseen: condition-mean prediction) 0.022s
+  + ts/identity_first: LSA matches fmrilss::lsa at 1e-8 0.004s
+  + ts/identity_first: LSS matches fmrilss::lss at 1e-8 0.002s
+  + ts/identity_first: the LSS-equivalence flag matches the R single-group dense solve at 1e-10 and fmrilss::lss at 1e-8 0.001s
+  + ts/identity_first: condition-centred rLSS matches the R dense penalised solve at 1e-10 (amplitudes and deviations, six ridges) 0.002s
+  + ts/identity_first: q_i, the information-ratio grid and its inverse match the R closed forms 0.001s
+  + ts/identity_first: the tuned runner completes on the fixture (stimulus unseen: condition-mean prediction) 0.009s
+[S6 survivors] group=31691; terminal states=[]
+[S6 mount] mode=rwx------; mount=[/dev/disk4 on /private/var/folders/f8/k46hqpm95mn7ns9f7wxw88640000gp/T/phrfcmp-ram-92761-6689962899516994757 (hfs, local, nodev, nosuid, nobrowse, mounted by bbuchsbaum)]; mdutil -s: /System/Volumes/Data/private/var/folders/f8/k46hqpm95mn7ns9f7wxw88640000gp/T/phrfcmp-ram-92761-6689962899516994757: 	Error: unknown indexing state.
+[S6 watchdog] child group gone 0.107 s after the parent was SIGKILLed (poll 0.10 s)
+scalafim.phrfcmp.run.GlmSingleBridgeSuite:
+  + order: chronological betas are placed at their generator event index (input order) 0.011s
+  + order: identity permutation leaves the chronological order unchanged; non-finite voxel fails alone 0.0s
+  + order: trial_event_index must be a permutation of 0 until N 0.001s
+  + pins and thread environment are the design's 0.002s
+==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.002s
+  + scan control: the leak scanner finds a planted value in a plain file 0.003s
+==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.0s
+  + end to end with a non-identity trial permutation: bridge returns input (event) order 3.237s
+  + timeout: refusal, whole process group killed, scratch wiped and detached 1.982s
+  + forced failure: non-zero exit, Python refusal exit 2 and missing output each clean the scratch 2.028s
+  + the child sees a cleared, scratch-confined environment with pinned threads 0.676s
+  + no RAM scratch on the host: typed refusal and the child is never started 0.005s
+  + input, script and provenance mismatches are refused before any scratch exists 0.005s
+  + a scratch that cannot be verified gone overrides the run result; a throwing hook does not stop cleanup 1.262s
+  + F1: an Error (OutOfMemoryError) in the output path still detaches the scratch 0.67s
+  + F2a: an interrupt arriving during release does not stop teardown, and the flag is restored 0.672s
+  + F2b: an interrupt while the child runs kills it, releases, refuses Interrupted and keeps the flag 0.467s
+  + F2c: a hung tool is killed at its timeout and reported, not waited on forever 1.023s
+  + F2: group verification reports with interrupts cleared, then restores the pre-existing flag 0.063s
+  + F2c: a hanging umount is reported as residue after the remaining steps ran; then the leftovers are removed 6.327s
+  + F2c: a failing unmount still runs detach, remove and verify, and reports ScratchResidue 2.208s
+  + F3: a refused attempt still reports exit, wall and CPU (a timed-out CPU burner is not free) 3.358s
+==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.0s
+  + F5: the startup sweep releases a deliberately leaked scratch of a dead owner, and nothing else 1.054s
+  + F5: the JVM shutdown path kills the child's process group and releases a live scratch 0.681s
+  + F6/F7: group survivors after the kill retries refuse with residue and the unmount is not forced 28.357s
+  + F6: the native RAM backend and root mode 0700 are verified before the child starts 1.059s
+  + F6: an unparseable sidecar's parser message (which can quote result bytes) is not carried 0.598s
+  + a registry failure during setup (JVM shutting down) releases every acquired native resource 0.247s
+  + M5: when the runner-side parent is SIGKILLed, the watchdog kills the child's own process group within the bound 0.339s
+  + M5: a launcher whose guarded parent is already gone never runs the command 0.036s
+  + M5: under the watchdog, exit status propagates and background stragglers are killed when the command exits 0.264s
+  + CPU loss: an exception after the child ran keeps its exit, wall and CPU in the attempt 0.968s
+  + L1: tool children started by RamScratch.cmd never see the root-pipe variables 0.023s
+  + sweep on Linux is skipped unless /dev/shm is a tmpfs mount (not testable on this host) 0.0s
+scalafim.phrfcmp.exec.PilotContributionSuite:
+  + canonical contributions preserve all voxels and exact finite doubles on both platforms 0.031s
+  + malformed, noncanonical, nonfinite, truncated and wrong-dimension bytes fail with redacted tokens 0.04s
+  + bound generator truth uses condition coefficients, trial ordering and immutable copies 0.002s
+  + coverage target is explicit; the signed peak error averages conditionwise errors 0.0s
+  + failed and refused voxels are retained, not replaced with estimates 0.0s
+scalafim.phrfcmp.exec.OwnerVerificationSuite:
+  + a deterministic resumed pilot aggregated from its contributions verifies Valid; the record names the schema 2.124s
+  + the in-process corpus is assembled from the committed contributions only: its outcome digest is the owner's rebuild 1.772s
+  + a contribution that differs between invocations invalidates the whitelist and names exactly that unit 2.468s
+  + an owner-side mapping that disagrees with the sealed digest invalidates even when every unit matches 2.121s
+  + a legacy aggregate (no contribution schema) is Unverifiable, never Valid; so is an unknown schema or a failed rebuild 4.178s
+  + a legacy store whose units do not match is still Invalidated: the primary check needs no contributions 1.938s
+  + retries are transactional: a retried attempt's contribution is neither sealed nor consumed; a committed failure is the first attempt 1.661s
+  + several aggregates carrying the manifest's whitelist refuse as ambiguous; a whitelist no aggregate carries refuses 3.235s
+  + a payload that does not match its ledger hash, or a unit list that is not the kept set, refuses 3.775s
+  + review 1: missing scorer contributions are Unverifiable even when the assembler supplies defaults 2.076s
+  + review 5a: an aggregate D outside the plan's dataset bounds refuses 1.742s
+  + review 5b: a ledger status or entry inventory that disagrees with its payload refuses 1.466s
+  + review 6: a malformed payload length decodes to a typed refusal, never an exception 1.444s
+  + an attempt abandoned at the hard ceiling seals no contribution and none reaches the scorer; the resumed attempt's is verified 1.632s
+  + the first completed attempt is the earliest scheduled commit even when it failed and a later one succeeded 2.17s
+  + re-review 4: impossible ledger histories refuse (attempt cap, invocation ordinals, units outside the plan) 1.569s
+  + re-review 5a: aggregate D is bounded before narrowing, and a huge D refuses without allocating its unit list 1.727s
+  + review3 M2: a terminal Failed commit before the retries were exhausted is an impossible history 1.467s
+  + review4 L1: a ledger ordinal beyond the runner's largest invocation is an impossible history 1.532s
+  + review6: a clean raised store, one sealed stamp, verifies Valid through verifyRecords 3.195s
+  + review6: a consistent hand edit of output-id and stamp.json lets the runner proceed (documented limit) but the owner refuses the store 5.4s
+  + review6: a sealed raise naming another output identity, or a run absent from the history, refuses 2.292s
+S5-PEAK max |peak - 1| over the chart = 7.498e-10
+S5-ETRIAL noise-free max |E-trial - direct| = 2.132e-05 (largest true E-trial 1.330)
+S5-ETRIAL public (normalised x scale x peak) vs raw x dense peak: max abs diff 5.222e-13
+S5-LOWERING 0.1 s grid, odd-0.1 s onsets: max relative E-trial error 6.397e-06
+S5-LOWERING 0.2 s grid, odd-0.1 s onsets: max relative E-trial error 2.931e-03 (0.1 s grid: 6.397e-06, ratio 458)
+S5-EXACTSHAPE max |dense penalised solve - PHRF amplitudes| = 7.594e-14 (largest amplitude 1.858)
+S5-SHAPE noise-free tau error 1.284e-06, sd error 4.608e-05
+S5-LIMIT0 PHRF-can alpha=2^-24 vs native condition-means fit: max abs diff 5.090e-06 (scale 1.590), within-condition spread 9.381e-08
+S5-LIMITINF PHRF-can alpha=2^24 vs native LSA at the canonical shape: max abs diff 1.922e-05 (scale 2.216)
+S5-HELDOUT noise-free held-out R2 from true shape and amplitudes = 1.00000000 (rss 3.925e-09 of tss 2.024e+01)
+S5-LOROCV noise-free fold scores (alpha 1/64, 4): 0.9802/0.9994 0.9806/0.9994 0.9782/0.9993 0.9806/0.9994
+S5-CANONICAL tau=5.44994 sd=2.18548 (logSd 0.78183), squared error 0.89293
+S5-PENALTY phrf norm2 sum 89.7573 vs direct 89.7573 (rel 4.93e-07); rlss norm2 sum 92.5968; kappa2 1.03164 centring 0.91667; spreads shape 0.000 centring 0.000; factor 0.94567
+S5-REFUSAL statuses Vector((Refused(decode_Boundary),Some(Boundary),Vector(5.40000461569506, -0.2231435513142097)), (Estimated,Some(Accepted),Vector(5.4999983627714775, 0.46999151438171693)))
+QR-ORDER fraction=0.0 denseE=7.99457271850242E-9 denseD=28.11455972935495 denseJ=2.8115359186626804E-4 nativeJ=2.81153591866268E-4 readoutE=7.994572718415414E-9
+QR-ORDER fraction=0.5 denseE=7.990074167541588E-9 denseD=28.114560170032817 denseJ=2.8115359177449575E-4 nativeJ=2.811535917744957E-4 readoutE=7.990074167420285E-9
+QR-ORDER fraction=1.0 denseE=7.985636797930112E-9 denseD=28.114560610710686 denseJ=2.811535917439048E-4 nativeJ=2.811535917439046E-4 readoutE=7.985636797838596E-9
+scalafim.phrfcmp.run.PhrfTrialTheorySuite:
+  + peak height of the raw Gaussian kernel is 1 at any shape (refined past the 0.01 s grid); sign is kept by the conversion 0.012s
+  + E-trial equals direct evaluation of the true trial peak height (noise-free, zero deviation) 0.652s
+  + E-trial equals the raw (legacy) coefficient times the dense-grid peak of the raw kernel at the decoded shape 0.245s
+  + the default lowering grid is the generator's 0.1 s onset grid; odd-0.1 s onsets meet the existing bound 0.285s
+  + an onset off the 0.1 s lowering grid (4.15 s) is refused, not interpolated 0.25s
+  + contrast: lowering on 0.2 s fails the same bound with odd-0.1 s onsets, and an off-grid problem is refused 0.379s
+  + ExactShape amplitudes equal a dense penalised least-squares solve at the decoded shape 0.373s
+  + on noise-free zero-deviation data the decoded shape and the condition amplitudes are recovered 0.17s
+  + PHRF-can at alpha -> 0 equals the native condition-means GLS fit at the canonical shape 0.101s
+  + PHRF-can at alpha -> infinity equals native LSA at the canonical shape 0.035s
+  + the held-out prediction from the true shape and true amplitudes reproduces the held-out data (units of the raw coefficients) 0.004s
+  + noise-free LOROCV: larger alpha (weaker shrinkage) predicts persistent deviations better than the strongest shrinkage 0.661s
+  + the canonical shape is the squared-error minimum of the SPM canonical response within the chart (local-minimum check) 0.001s
+  + the penalty scale: PHRF squared norms against directly convolved, whitened regressors; centring 1 - 1/n_c; used by the rLSS pilot path 0.469s
+  + a voxel whose decode is not Accepted is a typed per-voxel refusal; its neighbour is estimated 0.35s
+  + native ML preserves independent QR ordering at the formerly refused exact-data voxel 0.099s
+scalafim.phrfcmp.exec.RootIntakeSuite:
+  + order: read once, close the root fd, write the ack over the exact line bytes (with newline), close the ack fd 0.003s
+  + unsigned 64-bit roots are accepted; the root is redacted in toString 0.0s
+  + a bad line is refused and nothing is acknowledged 0.002s
+  + missing or unusable descriptor variables are refused; stdio descriptors are never touched 0.001s
+  + a failing ack write is an error and the ack descriptor is still closed 0.0s
+  + children never see the pipe variables 0.036s
+  + the source never writes the root: no file or log call receives it 0.001s
+scalafim.phrfcmp.run.ConditionAdapterSuite:
+  + statuses map to the scorer outcomes; NotRun is a failure 0.001s
+  + the estimate is not evaluated for refused voxels 0.0s
+  + MISE: zero for identical responses, trapezoid integral otherwise, averaged over conditions 0.003s
+  + MISE of a time-varying difference with a known exact integral (trapezoid is exact; a left Riemann sum is not) 0.001s
+  + an arm result adapts per voxel and builds an S8 ConditionDataset 0.002s
+scalafim.phrfcmp.score.ImputationEndpointsSuite:
+  + worst-in-family: errors take the largest observed value at the voxel 0.001s
+  + worst-in-family: scores take the lowest observed value 0.0s
+  + only the arms passed in influence imputation (secondary arms cannot move a score) 0.0s
+  + T-G pool adds GLMs-D; other families do not 0.0s
+  + zero-MISE floor is applied, counted, and equals 1e-9 sigma2 H 0.001s
+  + conditionPair counts floor uses, imputed and excluded voxels (sealed quantities) 0.0s
+  + Fisher z: perfect correlation is clamped, constant estimate gives z = 0, constant truth is refused 0.001s
+  + Fisher z equals atanh of a hand-computed Pearson r 0.0s
+scalafim.phrfcmp.exec.InteropSuite:
+==> s scalafim.phrfcmp.exec.InteropSuite.blobs sealed by the JVM unseal with the Python reader (random keys, buckets, duplicates, tmp debris, CLOSE) skipped 0.112s
+==> s scalafim.phrfcmp.exec.InteropSuite.Python-sealed stores (SealedStore.append and close, random key) unseal on the JVM skipped 0.0s
+==> s scalafim.phrfcmp.exec.InteropSuite.a store the JVM writes verifies against the Python tree digest (digest listing is byte-compatible) skipped 0.0s
+==> s scalafim.phrfcmp.exec.InteropSuite.root pipe: a real JVM runner started by the Python session.launch reads root64, acknowledges it, and leaves no children skipped 0.0s
+==> s scalafim.phrfcmp.exec.InteropSuite.root pipe: the maximum unsigned root64 round-trips through the real session skipped 0.0s
+scalafim.phrfcmp.ingest.NpzSuite:
+  + sha256 and crc32 known vectors 0.009s
+  + golden: real generator bytes parse to the exact values 0.003s
+  + golden: platform-identical decode fingerprint 0.0s
+  + member raw bytes are the exact npy bytes (what the manifest hashes) 0.0s
+  + frozen adapter output parses identically on JVM and JS 0.003s
+  + tiny STORED npz built in-test parses (f8, i4, scalar shape, 1-D, 3-D) 0.0s
+  + refuses compressed member (DEFLATE) and other methods 0.0s
+  + refuses encrypted, data-descriptor, bad CRC, zip64 marker, comment 0.004s
+  + refuses unknown and duplicate members 0.002s
+  + central directory integrity: swapped offsets, gaps, leading bytes, traversal names 0.0s
+  + npy header strictness: padding, shape grammar 0.002s
+  + refuses non-conforming npy payloads 0.002s
+  + every strict prefix of a valid npz is refused 0.001s
+  + a flipped data byte is caught by the CRC 0.0s
+scalafim.phrfcmp.prep.CommonPreparationSuite:
+  + generator intercepts are dropped, one per run; intercepts plus remainder span the generator nuisance 0.018s
+  + the rank trap: generator nuisance plus Constant intercepts is rank deficient, the dropped form is full rank 0.017s
+  + a nuisance without exactly one intercept per run is refused 0.007s
+  + pre-fit designs: condition FIR, trial LSA plus FIR 0.01s
+  + pre-fit refuses a cell kind that contradicts the inputs 0.012s
+  + pre-fit rho is finite, in range, deterministic; the AR design is selected by cell kind 0.61s
+  + AR fit provenance records policy, budget, per-run conditioning, phi and gamma; every run is Applied 0.356s
+  + a pooled phi at the stationarity clamp is a refusal; a rank mismatch between the QR and the AR module is a refusal 0.002s
+  + an ill-conditioned run is a hard refusal, never a silent fall back to raw 0.017s
+  + the prepared path is bit-identical to the unprepared path on synthetic data 3.281s
+  + plan phi equals the FitConfig phi bit for bit; segments and initial condition agree 0.365s
+  + a one-ulp phi difference, a different initial condition or a non-global config is refused 0.16s
+  + whitened Y is the exact-first AR(1) filter applied per run 0.159s
+  + whitened arrays are hash-identical across native arms and built from one source 1.149s
+  + PHRF input and native arms agree on the whitened response (the plan applied to raw Y reproduces it) 0.212s
+  + an arm design is whitened with the same plan 0.169s
+  + heterogeneity is a record: per-run rho for every run, never gating, canonical form deterministic 0.448s
+  + input fingerprint: identical across rebuilds; a 0.1 s onset shift and a one-ulp sample-time change are detected 0.769s
+  + sigma2 is finite and near the noise variance; fold values use training runs only 0.243s
+scalafim.phrfcmp.exec.ChildProcessSuite:
+  + timeout kills a sleeping child from the JVM 0.525s
+  + timeout kills the whole process tree, not just the direct child 1.021s
+  + a child that finishes in time reports its exit code, output, and pinned thread environment 0.031s
+  + L1: a child never sees the root pipe variables, even when the caller's environment names them 0.033s
+  + L1/F8: every process spawn site under exec/ and in run/GlmSingleBridge scrubs or clears the environment (source scan) 0.012s
+  + thread pinning description is stamped content 0.0s
+[info] Passed: Total 543, Failed 0, Errors 0, Passed 533, Skipped 10
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/command-receipts/run-6xnkjkng/completed
+[success] elapsed time: 373 s (0:06:13.0)
+[0J[sbt-warm] phrfComparisonJVM/test: exit 0 in 373.9s
+[info] compiling 86 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/3affa4797661edd945b9/gale/core/js/target/scala-3.7.4/classes ...
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes ...
+[info] compiling 56 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/0574818025cb7fd27c83/intaglio/modules/core/js/target/scala-3.3.8/classes ...
+[info] compiling 46 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes ...
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/995ff8e011f5a5221e44/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/ar/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/locus-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-lie/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/response/js/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 14 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/995ff8e011f5a5221e44/image4s/modules/image4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-resample/js/target/scala-3.7.4/classes ...
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/995ff8e011f5a5221e44/image4s/modules/image4s-ops-core/js/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/995ff8e011f5a5221e44/image4s/modules/image4s-locus/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/995ff8e011f5a5221e44/image4s/modules/image4s-filter/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/08750252020786b7/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-field/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 50 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/image/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 63 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/model/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 81 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 42 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 33 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/js/target/scala-3.7.4/test-classes ...
+[error] -- [E173] Reference Error: /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/exec/PilotContributionSuite.scala:77:25 
+[error] 77 |    val stimulus = b.fit.copy(evStim = b.fit.evStim.updated(0, 99))
+[error]    |                   ^^^^^^^^^^
+[error]    |method copy cannot be accessed as a member of (b.fit : scalafim.phrfcmp.ingest.FitInputs) from class PilotContributionSuite.
+[error]    |  private[ingest] method copy can only be accessed from package scalafim.phrfcmp.ingest in package scalafim.phrfcmp.
+[error] -- [E173] Reference Error: /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/exec/PilotContributionSuite.scala:80:23 
+[error] 80 |    val pooled = b.fit.copy(yPool = Some(pool))
+[error]    |                 ^^^^^^^^^^
+[error]    |method copy cannot be accessed as a member of (b.fit : scalafim.phrfcmp.ingest.FitInputs) from class PilotContributionSuite.
+[error]    |  private[ingest] method copy can only be accessed from package scalafim.phrfcmp.ingest in package scalafim.phrfcmp.
+[error] two errors found
+[error] (phrfComparisonJS / Test / compileIncremental) Compilation failed
+[error] elapsed time: 80 s (0:01:20.0)
+[0J[sbt-warm] phrfComparisonJS/test: exit 1 in 81.1s

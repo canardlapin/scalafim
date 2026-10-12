@@ -211,7 +211,7 @@ Every invocation re-seals every authorization record that `cost.json` holds, as 
 *What the owner checks at unseal.*
 
 - **Primary check, which needs only this spec.** For every listed unit, the owner compares `payload_sha256` with that of the first completed attempt, as defined above. This requires nothing beyond the sealed records and this section.
-- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. It is possible only for an aggregate that carries `contribution_schema` (see *Scorer contributions* below): the corpus is then a pure function, named by that schema, of the scorer contributions sealed in the payloads. The production mapping for the pilot arms (generator truth to `ConditionDataset`, `TrialDataset`, `CoverageObs`) is still an S10 deliverable; until it exists, no real pilot aggregate is verifiable.
+- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. It is possible only for an aggregate that carries `contribution_schema` (see *Scorer contributions* below): the corpus is then a pure function, named by that schema, of the scorer contributions sealed in the payloads. The production mapping is `PilotCorpusAssembler`, using `PilotContribution` and held `PilotScoreTruth.fromBound` snapshots. Its synthetic recovery rehearsal does not authorize a real pilot, choose its scoring policy, or satisfy the remaining S10 launch gates.
 
 *Policy:*
 
@@ -225,6 +225,44 @@ Every invocation re-seals every authorization record that `cost.json` holds, as 
 - Only the committing attempt's contribution exists: a retried or abandoned attempt's contribution is discarded with the attempt and never reaches the scorer.
 - `PilotAggregation.aggregateContributions` assembles the in-process corpus from the contributions of the commits the scorer consumed (the `units` list), by a deterministic `CorpusAssembler`, and adds `contribution_schema` (the assembler's name) to `aggregate/<runId>/record`. The assembler receives the contributions sorted by (cell, dataset, arm) path; a unit whose committing attempt contributed nothing is passed as absent.
 - An aggregate sealed with `aggregateAndSeal` from a corpus built out of sight has no `contribution_schema`.
+
+**Production encoding and mapping (S10 contribution slice, 2026-10-11).**
+
+`PilotContribution` encodes a canonical UTF-8 JSON array
+`["phrf-pilot-contribution-v1", [cell, dataset, arm], input_fingerprint_or_null, kind, values, source_file_sha256_or_null]`.
+Every numeric estimate is a 16-character lowercase IEEE-754 double-bit string. Decode rejects noncanonical bytes,
+unknown schemas/kinds, nonfinite values, invalid lengths and inconsistent dimensions. Payloads are bounded to 64 MiB.
+The unit identity is checked again against its sealed slot. No generator truth, invocation, attempt number, timing
+or diagnostic message is encoded.
+
+- `condition`: one outcome per scored voxel (`["e", [lags, condition_curves, gaussian_or_null]]`, `["r"]` or `["f"]`).
+  Gaussian readouts carry `[tau, log_sigma, conditional_shape_sds, exact_signed_response_peaks]`. Only Accepted
+  PHRF readouts can supply those values. Condition MISE uses the existing trapezoidal `ConditionAdapter.mise`
+  against `cond_coef * truth_kernel` on the 0.1 s grid over `[0,32]`. The generator-v1 noise variance is 1.
+- `trial`: `["e", trial_amplitudes]`, `["r"]` or `["f"]` per voxel, in original input event order. Truth is
+  `trial_beta` with `ev_cond`; estimates are already in single-trial peak units. An estimated GLMsingle contribution
+  must also carry the actual `GlmSingleOutcome.inputNpzSha256`, matching the held bound dataset.
+- `unavailable`: null values and identities, used for a committed dataset/adapter failure. The assembler produces
+  Failed for every held-truth voxel, retaining its denominator. Absent contribution bytes are never this case and
+  always refuse assembly.
+
+`ScoringInputFingerprint` binds all fitter-visible arrays, including trial stimulus labels and the GLMsingle noise
+pool, without reading truth. `PilotScoreTruth` copies the scoring arrays from an S1-bound dataset; it is held only
+on the scoring side. The assembler requires the exact seven-cell/method inventory for every kept index, no
+missing/duplicate/foreign unit, matching cell/dataset/input identity and consistent voxel/trial layout.
+
+For C-TG-.5, signed relative E-peak error is the arithmetic mean across the three conditions of
+`(estimated_signed_peak - true_signed_peak) / abs(true_signed_peak)`. The Gaussian generator normalizes on its
+0.01 s peak grid, so the scorer accounts for that normalization when reconstructing the continuous true peak.
+Tau error is fitted tau minus true tau. Coverage is an **explicit constructor choice**, recorded in the assembler
+schema: `GaussianCoverageTarget.Tau` uses `abs(tau_error) <= conditional_sd_tau`; `BothShapeCoordinates` additionally
+requires the analogous log-sigma interval. Neither choice implies an unconditional coverage claim. A missing or
+invalid Accepted Gaussian readout refuses assembly; refused/failed voxels remain missing in coverage.
+
+The mapping schemas are `phrf-pilot-score-v1-tau-mean-signed-peak` and
+`phrf-pilot-score-v1-tau-and-log-sigma-mean-signed-peak`. The synthetic rehearsal exercises tau coverage.
+No actual pilot policy or root is selected by this implementation; the frozen real study must explicitly name
+its scoring choice and pass its remaining launch/review gates.
 
 **Owner verification** (`OwnerVerification.verify`, over the decrypted store; reference implementation of this section):
 
