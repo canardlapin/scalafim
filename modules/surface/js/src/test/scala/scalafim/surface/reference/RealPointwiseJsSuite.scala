@@ -57,12 +57,12 @@ class RealPointwiseJsSuite extends munit.FunSuite:
     "R" -> "9d2cef05096c433b134870456abebe7ff201cdda60ce5741d7b794018eeccda7")
   private val release = TemplateRelease.unsafe("templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56")
 
-  /** The oracle fixture lives with the JVM test resources (it is consumed by JVM real-asset suites); read it from
+  /** The oracle fixture lives in the unpublished JVM fixture module (it is consumed by JVM real-asset suites); read it from
     * the repository so both platforms are judged against the same bytes, digest-checked against its manifest.
     */
   private def oracle(h: String): Array[Double] =
     var dir = js.Dynamic.global.process.cwd().asInstanceOf[String]
-    val relative = "modules/surface/jvm/src/test/resources/pointmap-real"
+    val relative = "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real"
     while !ReferenceNodeFs.existsSync(s"$dir/$relative") && dir.contains("/") do dir = dir.substring(0, dir.lastIndexOf('/'))
     val manifest = ujson.read(read(s"$dir/$relative/fslr-inverse-oracle-all.json"))
     val entry = manifest("hemispheres")(h)

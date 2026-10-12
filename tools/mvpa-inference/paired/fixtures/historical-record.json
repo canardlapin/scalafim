@@ -1,0 +1,81 @@
+{
+  "scenario_id": "rank-v2-resource-n80-p4-q6-intercept",
+  "phase": "fixture",
+  "dataset_index": 0,
+  "root_seed64": "5250993378739142209",
+  "rank_method": "historical-euclidean-coefficient-permutation/ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+  "elapsed_seconds": 0.524875708,
+  "source_commit": "8dc005d3dfc65d60fc437743dd360142e8f47b5f",
+  "source_lock_sha256": "30d71c2c58694315d35f036e0bcca6e4bd2e2e95f9613655abb53ca398f51c79",
+  "case_input_sha256": "516be5a8024fd9b7920666c8be25eb35fc228a6d150687f31fe013dd2eee8b42",
+  "status": "evaluated",
+  "completed_draws": 199,
+  "residual_rows": 79,
+  "planned_owned_cells": 154160,
+  "completed_compact_fits": 796,
+  "observed_roots": [
+    0.5600751092991544,
+    0.3932911959614188,
+    0.28618175605557794,
+    0.19440842523438243
+  ],
+  "provenance_version": 1,
+  "seed_receipts_verified": true,
+  "receipt_seed64": [
+    "-4457492531023095207",
+    "-4457492531023095207",
+    "-4457492531023095207",
+    "-4457492531023095207"
+  ],
+  "receipt_algorithm": "canonical-rank-distinct-nonidentity/v1",
+  "observed_statistics": [
+    0.6684312539220121,
+    0.2920139514172037,
+    0.12397633391051019,
+    0.0385273748020725
+  ],
+  "record_schema": 2,
+  "p_value_scope": "closed-sequential",
+  "raw_p_values": [
+    0.005,
+    0.18,
+    0.335,
+    0.445
+  ],
+  "closed_p_values": [
+    0.005,
+    0.18,
+    0.335,
+    0.445
+  ],
+  "raw_reject": [
+    true,
+    false,
+    false,
+    false
+  ],
+  "closed_reject": [
+    true,
+    false,
+    false,
+    false
+  ],
+  "raw_exceedances": [
+    0,
+    35,
+    66,
+    88
+  ],
+  "p_values": [
+    0.005,
+    0.18,
+    0.335,
+    0.445
+  ],
+  "reject": [
+    true,
+    false,
+    false,
+    false
+  ]
+}

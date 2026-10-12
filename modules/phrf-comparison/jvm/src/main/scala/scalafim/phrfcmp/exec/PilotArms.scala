@@ -27,6 +27,7 @@ object ThreadCpuClock:
   * GLMsingle) the generator `.npz` with its bound hash. It never holds truth.
   */
 final class LoadedDataset(val inputs: FitInputs, val prep: CommonPrep, val glm: Option[GlmSingleInputs]):
+  private[phrfcmp] lazy val scoringFingerprint: String = ScoringInputFingerprint.of(inputs)
   override def toString: String = "LoadedDataset(<redacted>)"
 
 /** Loads and prepares one dataset. The error is a short token (a refusal constructor name), never a value. */
@@ -40,7 +41,7 @@ trait PilotDatasetSource:
   * It is not transactional (a call made by an attempt that is later discarded still lands) and nothing binds it to
   * the sealed payloads, so an aggregate built through it is unverifiable to the owner. The verifiable S10 path is
   * [[ArmContext.contribute]] plus [[PilotAggregation.aggregateContributions]]; the production contribution encoding
-  * and `CorpusAssembler` for the pilot arms are still to be written (S10).
+  * and `PilotCorpusAssembler` provide the production S10 path.
   */
 trait ScoreFeed:
   def condition(job: Job, result: ConditionArmResult): Unit
@@ -170,14 +171,31 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
     case TrialArmStatus.Refused(c) => ArmResult.Refused(token(c))
     case TrialArmStatus.Estimated => ArmResult.Done()
 
+  private def contributed(ctx: ArmContext, encoded: Either[String, Array[Byte]], result: ArmResult): ArmResult =
+    encoded match
+      case Right(bytes) => ctx.contribute(bytes); result
+      case Left(code) =>
+        ctx.contribute(PilotContribution.unavailable(ctx.unit))
+        ArmResult.Failed(token(code), result.childCpu)
+
+  private def unavailable(ctx: ArmContext, result: ArmResult): ArmResult =
+    ctx.contribute(PilotContribution.unavailable(ctx.unit))
+    result
+
   def run(ctx: ArmContext): ArmResult =
+    try runAttempt(ctx)
+    catch
+      case e: InterruptedException => throw e
+      case NonFatal(e) => unavailable(ctx, ArmResult.Failed(token("arm_" + e.getClass.getSimpleName)))
+
+  private def runAttempt(ctx: ArmContext): ArmResult =
     val job = Job(ctx.unit.cell, ctx.unit.dataset)
     PilotArmKind.parse(ctx.unit.arm) match
-      case None => ArmResult.Failed("unknown_arm")
+      case None => unavailable(ctx, ArmResult.Failed("unknown_arm"))
       case Some(kind) =>
         val cached = dataset(job)
         cached.loaded match
-          case Left(code) => ArmResult.Failed(token("dataset_" + code))
+          case Left(code) => unavailable(ctx, ArmResult.Failed(token("dataset_" + code)))
           case Right(d) => dispatch(kind, job, ctx, cached, d)
 
   private def dispatch(kind: PilotArmKind, job: Job, ctx: ArmContext, cached: Cached, d: LoadedDataset): ArmResult = kind match
@@ -195,11 +213,11 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
     ctx.emit("result", RawEncoding.condition(r))
     feed.condition(job, r)
     val datasetLevel = r.voxels.nonEmpty && r.statuses.distinct.length == 1 && PilotArmRunner.isDatasetLevel(r.statuses.head)
-    if !datasetLevel then ArmResult.Done()
-    else
-      r.statuses.head match
+    val status = if !datasetLevel then ArmResult.Done()
+      else r.statuses.head match
         case s @ ConditionArmStatus.Refused(_) => ArmResult.Refused(token(s.code))
         case s => ArmResult.Failed(token(s.code))
+    contributed(ctx, PilotContribution.condition(ctx.unit, d.scoringFingerprint, r), status)
 
   private def native(arm: NativeArm, method: Method, job: Job, ctx: ArmContext, cached: Cached, d: LoadedDataset): ArmResult =
     val voxels = d.inputs.y.rows
@@ -211,18 +229,21 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
           case Right(s) if s.targets.isEmpty => Left(NativeTrialRefusal.NoTargets) // the pilot path must always supply EdfTargets
           case Right(s) => Right(Some(s))
     val result = rlss.flatMap(engines.trialNative(arm, d, _))
-    feed.trial(job, method, TrialNativeScoring.outcomes(result, voxels))
-    result match
+    val outcomes = TrialNativeScoring.outcomes(result, voxels)
+    feed.trial(job, method, outcomes)
+    val status = result match
       case Right(o) =>
         ctx.emit("fit", o.fit.canonicalBytes)
         o.tuning.foreach(t => ctx.emit("tuning", RawEncoding.tuning(t)))
         ArmResult.Done()
       case Left(r) => fromStatus(r.status)
+    contributed(ctx, PilotContribution.trial(ctx.unit, d.scoringFingerprint, outcomes), status)
 
   private def phrf(job: Job, ctx: ArmContext, d: LoadedDataset): ArmResult =
     val result = engines.phrfTrial(d)
-    feed.trial(job, Method.Phrf, PhrfTrialScoring.outcomes(result, d.inputs.y.rows))
-    result match
+    val outcomes = PhrfTrialScoring.outcomes(result, d.inputs.y.rows)
+    feed.trial(job, Method.Phrf, outcomes)
+    val status = result match
       case Right(o) =>
         ctx.emit("outcome", o.canonicalBytes)
         o.timings.trialMlSecondsPerVoxel.foreach(feed.timing(job, TimingQuantity.TrialMlPerVoxel, _))
@@ -231,10 +252,11 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
         o.timings.trialMlSecondsPerVoxel.headOption.foreach(s => ctx.recordTiming("trial_ml_core_s_per_voxel_first", s))
         ArmResult.Done()
       case Left(r) => fromStatus(r.status)
+    contributed(ctx, PilotContribution.trial(ctx.unit, d.scoringFingerprint, outcomes), status)
 
   private def glm(job: Job, ctx: ArmContext, d: LoadedDataset): ArmResult =
     d.glm match
-      case None => ArmResult.Failed("glmsingle_no_input")
+      case None => unavailable(ctx, ArmResult.Failed("glmsingle_no_input"))
       case Some(inputs) =>
         val run = engines.glm(inputs)
         val guard = run.attempt.guardCpuSeconds // what the machine spent, for the section 5.2 guard
@@ -245,8 +267,8 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
         catch
           case _: InterruptedException =>
             Thread.currentThread().interrupt()
-            ArmResult.Failed("glmsingle_interrupted", guard)
-          case NonFatal(e) => ArmResult.Failed(token("glmsingle_adapter_" + e.getClass.getSimpleName), guard)
+            unavailable(ctx, ArmResult.Failed("glmsingle_interrupted", guard))
+          case NonFatal(e) => unavailable(ctx, ArmResult.Failed(token("glmsingle_adapter_" + e.getClass.getSimpleName), guard))
 
   private def glmResult(job: Job, ctx: ArmContext, d: LoadedDataset, run: GlmSingleRun, guard: Double): ArmResult =
     run.result match
@@ -256,10 +278,11 @@ final class PilotArmRunner(source: PilotDatasetSource, engines: PilotEngines, fe
         ctx.recordTiming("glmsingle_guard_cpu_s", o.guardCpuSeconds)
         feed.trial(job, Method.GlmsD, o.voxels)
         feed.timing(job, TimingQuantity.GlmsingleDataset, o.timingCpuSeconds)
-        ArmResult.Done(guard)
+        contributed(ctx, PilotContribution.trial(ctx.unit, d.scoringFingerprint, o.voxels, Some(o.inputNpzSha256)), ArmResult.Done(guard))
       case Left(refusal) =>
         ctx.note(refusal.message) // result-adjacent (tail, CPU): sealed timing record only
         run.attempt.sidecarCpuSeconds.foreach(s => ctx.recordTiming("glmsingle_timing_cpu_s", s))
         ctx.recordTiming("glmsingle_guard_cpu_s", guard)
         feed.trial(job, Method.GlmsD, refusal.asVoxels(d.inputs.y.rows))
-        ArmResult.Failed(token("glmsingle_" + refusal.productPrefix), guard)
+        contributed(ctx, PilotContribution.trial(ctx.unit, d.scoringFingerprint, refusal.asVoxels(d.inputs.y.rows)),
+          ArmResult.Failed(token("glmsingle_" + refusal.productPrefix), guard))

@@ -18,6 +18,7 @@ class RankConfirmationSuite extends FunSuite:
       CalibrationPlatform.readText(path).linesIterator.filter(_.nonEmpty).toVector)
     assume(paths.nonEmpty,
       "explicit campaign case input absent; no pilot or confirmation is run by default")
+    val source = RankRecordProvenance.SourceSnapshot.environment().fold(fail(_), identity)
     paths.foreach: path =>
       val input = CalibrationProtocolSupport.readCase(CalibrationPlatform.readText(path))
         .fold(error => fail(error), identity)
@@ -32,10 +33,11 @@ class RankConfirmationSuite extends FunSuite:
       def prefix = "{\"phase\":" + CalibrationProtocolSupport.jsonString(input.phase) +
         ",\"scenario_id\":" + CalibrationProtocolSupport.jsonString(input.scenario) +
         ",\"dataset_index\":" + input.ordinal + ",\"root_seed64\":\"" + input.rootSeed +
-        "\",\"resampling_seed64\":\"" + resamplingSeed + "\",\"child_seed_algorithm\":\"seed-path/v1\",\"elapsed_seconds\":" + elapsed
+        "\",\"resampling_seed64\":\"" + resamplingSeed + "\",\"child_seed_algorithm\":\"seed-path/v1\",\"elapsed_seconds\":" + elapsed + source.jsonFields(input)
       val record = CalibrationProtocolSupport.retainEvaluation(prefix):
         CalibrationBindings.rank(input.x, input.y, input.nuisance, input.rootSeed, input.draws,
           input.scenario, input.ordinal, method).map: value =>
+          val verified = RankRecordProvenance.verify(input, value).fold(fail(_), identity)
           val arithmetic = value.candidateArithmetic
           assert(arithmetic.receipts.forall(_.consumed.value == input.draws))
           val metrics = CalibrationProtocolSupport.rankMetrics(arithmetic.receipts.map(_.pValue.value),
@@ -44,9 +46,10 @@ class RankConfirmationSuite extends FunSuite:
           val nulls = input.populationCorrelations.indices.map(k => input.populationCorrelations.drop(k).forall(_ == 0.0))
           val members = metrics.raw.indices.map(k => "\"rank-" + (k + 1) + "\"")
           val line = prefix + ",\"rank_method\":" + CalibrationProtocolSupport.jsonString(arithmetic.method.identity) + ",\"status\":\"evaluated\",\"family_complete\":true,\"completed_draws\":" + input.draws +
-            ",\"member_ids\":[" + members.mkString(",") + "]" + metrics.jsonFields +
+            ",\"member_ids\":[" + members.mkString(",") + "]" + metrics.jsonFields(verified) +
             ",\"declared_population_null\":[" + nulls.mkString(",") +
             "],\"actual_conditional_null\":[" + nulls.mkString(",") + "],\"completed_compact_fits\":" +
             arithmetic.completedCompactFits + ",\"planned_owned_cells\":" + value.plannedOwnedCells + "}\n"
           line
+      source.verify(RankRecordProvenance.readSource).fold(fail(_), identity)
       CalibrationPlatform.appendText(output, record)

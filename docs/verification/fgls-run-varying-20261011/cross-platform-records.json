@@ -1,0 +1,27 @@
+{
+  "records": 20480,
+  "scaled_tolerance": 1e-09,
+  "max_scaled_difference": {
+    "replicate": 0.0,
+    "phiError[0]": 7.6096040599362e-16,
+    "phiError[1]": 7.200808148416181e-16,
+    "phiSquaredError": 2.247680824753978e-16,
+    "whiteness": 4.751798406664238e-16,
+    "nullEstimate": 1.254251922520444e-14,
+    "nullVariance": 3.696477044414427e-12,
+    "tPValue": 1.333513768586975e-12,
+    "tDf": 2.1022095850319065e-13,
+    "fPValue": 1.8504579767074613e-12,
+    "fDf": 2.3411272420310696e-13,
+    "signalEstimate": 2.027563617345844e-14,
+    "signalVariance": 3.697207553138544e-12,
+    "coverPValue": 1.5320558835601764e-12
+  },
+  "mismatches": 0,
+  "first_mismatches": [],
+  "passed": true,
+  "records_sha256": {
+    "jvm": "2ad28645a4eb04f3d5d92e51466cd924f6d85838f88b77ee06c21b0ecc5c881c",
+    "js": "f5f730f4a2b5ee0826c3e019b55ce490b64795d0712d82ff788c635dc76eda87"
+  }
+}

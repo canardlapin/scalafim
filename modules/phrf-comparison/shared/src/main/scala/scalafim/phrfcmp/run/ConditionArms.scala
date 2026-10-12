@@ -82,7 +82,9 @@ final case class PhrfVoxelDetail(
     coordinates: Vector[Double],
     conditionMeans: Vector[Double],
     decode: DecodeStatus,
-    penalizedEnergy: Double
+    penalizedEnergy: Double,
+    conditionalSd: Vector[Double] = Vector.empty,
+    responsePeaks: Vector[Double] = Vector.empty
 )
 
 /**

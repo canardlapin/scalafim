@@ -29,6 +29,7 @@ cross-compiled sbt build.
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
 - `surface`: surface-mesh data structures, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
+- `surface-test-fixtures`: unpublished JVM fsLR asset locks, independent oracles, qualification helpers and their tests; atlas tests consume its Compile configuration.
 - `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
 - `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
 - `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
@@ -199,6 +200,8 @@ On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that
 are not yet on Maven Central. This helper checks out the exact pinned Multivar
 revision and runs both provider bootstraps into the local artifact cache.
+The helper requires Multivar's Gale revision to match ScalaFIM's source pin;
+mixing revisions can compile but fail at JavaScript linking or JVM invocation.
 Repeat after changing the Gale, Resample4s, or Multivar pins. Ordinary builds
 then use the committed source pins; no sibling checkout or provider override
 is needed.
@@ -239,6 +242,8 @@ sbt motionJVM/test
 sbt motionJS/test
 sbt surfaceJVM/test
 sbt surfaceJS/test
+sbt surfaceTestFixturesJVM/test
+sbt surfaceTestFixturesJS/test
 sbt surfaceViewJVM/test
 sbt surfaceViewJS/test
 sbt surfaceViewRasterJVM/test

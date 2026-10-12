@@ -212,7 +212,7 @@ object ConditionRunner:
               byId.get(v) match
                 case None => ConditionVoxel(v, ConditionArmStatus.Failed(FailureKind.Setup("run", "VoxelNotDelivered")), None, None)
                 case Some(r) =>
-                  val detail = PhrfVoxelDetail(r.coordinates, r.conditionMeans, r.status, r.penalizedEnergy)
+                  val detail = PhrfVoxelDetail(r.coordinates, r.conditionMeans, r.status, r.penalizedEnergy, r.conditionalSd)
                   if r.status != DecodeStatus.Accepted then
                     ConditionVoxel(v, ConditionArmStatus.Refused(RefusalKind.Decode(r.status)), None, Some(detail))
                   else
@@ -220,7 +220,12 @@ object ConditionRunner:
                       case ProfileAmplitudeReadout.ConditionMeans(_, n) => Right(n)
                       case _ => Left(FailureKind.Setup("readout", "NotConditionMeans"))
                     norm.flatMap(n => EResp.fromParametric(grid, plan.basis.family, ShapePoint.unsafe(r.coordinates), n, r.conditionMeans).left.map(FailureKind.Response(_))) match
-                      case Right(resp) => ConditionVoxel(v, ConditionArmStatus.Estimated, Some(resp), Some(detail))
+                      case Right(resp) =>
+                        // Evaluate the same admitted Gaussian readout at its exact peak, using its declared normalization.
+                        val peakGrid = ResponseGrid.of(Vector(r.coordinates.head)).toOption.get
+                        val peaks = EResp.fromParametric(peakGrid, plan.basis.family, ShapePoint.unsafe(r.coordinates),
+                          norm.toOption.get, r.conditionMeans).toOption.get.curves.map(_(0))
+                        ConditionVoxel(v, ConditionArmStatus.Estimated, Some(resp), Some(detail.copy(responsePeaks = peaks)))
                       case Left(k)     => ConditionVoxel(v, ConditionArmStatus.Failed(k), None, Some(detail))
             }
             ConditionArmResult(ConditionArm.Phrf, hash, outs, None, Some(summary.setup.route),

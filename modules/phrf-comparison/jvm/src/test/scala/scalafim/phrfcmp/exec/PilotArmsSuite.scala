@@ -75,7 +75,7 @@ class PilotArmsSuite extends munit.FunSuite:
       ConditionVoxel(1, ConditionArmStatus.Refused(RefusalKind.Decode(scalafim.fmri.fit.profile.DecodeStatus.Boundary)), None, None)), None, None)
     val c = ctx("can")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c), ArmResult.Done())
-    assertEquals(c.emitted.map(_.name), Vector("result"))
+    assertEquals(c.emitted.filterNot(_.name == ScorerContribution.EntryName).map(_.name), Vector("result"))
     assert(c.emitted.head.bytes.length > 100)
     assertEquals(f.conditions.length, 1)
   }
@@ -101,7 +101,7 @@ class PilotArmsSuite extends munit.FunSuite:
     val c = ctx("lsa")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c), ArmResult.Done())
     assertEquals(e.rlssSeen.toVector, Vector(None))
-    assertEquals(c.emitted.map(_.name), Vector("fit"))
+    assertEquals(c.emitted.filterNot(_.name == ScorerContribution.EntryName).map(_.name), Vector("fit"))
     assertEquals(f.trials.map(_._1), Vector(Method.Lsa))
     e.native = (_, _) => Left(NativeTrialRefusal.Fit(scalafim.fmri.fit.FitError.EmptyDesign))
     assertEquals(new PilotArmRunner(new Source, e, f).run(ctx("lss")), ArmResult.Failed("fit_EmptyDesign"))
@@ -130,14 +130,14 @@ class PilotArmsSuite extends munit.FunSuite:
     e.phrf = Left(PhrfTrialRefusal.Dataset("plan", "X"))
     val c = ctx("phrf-ml")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c), ArmResult.Refused("phrf_dataset_plan_X"))
-    assertEquals(c.emitted, Vector.empty)
+    assertEquals(c.emitted.map(_.name), Vector(ScorerContribution.EntryName))
     assertEquals(f.trials.map(_._1), Vector(Method.Phrf))
     e.phrf = Left(PhrfTrialRefusal.Setup("basis", "Y"))
     assertEquals(new PilotArmRunner(new Source, e, f).run(ctx("phrf-ml")), ArmResult.Failed("phrf_setup_basis_Y"))
   }
 
   private def glmOutcome(guard: Double, timing: Double) =
-    GlmSingleOutcome(Vector(VoxelOutcome.Estimated(TrialEstimate.of(Vector(1.0, 2.0)).toOption.get), VoxelOutcome.Failed), 2, guard, timing, Some(guard), guard, 3.0, "o" * 64, "i" * 64, 10, "commit", "script", "threads=1")
+    GlmSingleOutcome(Vector(VoxelOutcome.Estimated(TrialEstimate.of(Vector(1.0, 2.0)).toOption.get), VoxelOutcome.Failed), 2, guard, timing, Some(guard), guard, 3.0, "o" * 64, "b" * 64, 10, "commit", "script", "threads=1")
 
   test("GLMsingle: guard CPU goes to the scheduler, timing CPU to the timing endpoint; refusal text stays in the sealed note") {
     val e = new Fake; val f = new Feed
@@ -148,14 +148,14 @@ class PilotArmsSuite extends munit.FunSuite:
     assertEquals(f.timings, Vector((TimingQuantity.GlmsingleDataset, 7.25)))
     assertEquals(c.timings.toMap, Map("glmsingle_timing_cpu_s" -> 7.25, "glmsingle_guard_cpu_s" -> 9.5))
     assertEquals(f.trials.map(_._1), Vector(Method.GlmsD))
-    assertEquals(c.emitted.map(_.name), Vector("result"))
+    assertEquals(c.emitted.filterNot(_.name == ScorerContribution.EntryName).map(_.name), Vector("result"))
     // refusal: the tail is a note, the result is Failed with the child's CPU for the guard
     val failed = GlmSingleAttempt(Some(3), false, 2.0, Some(4.0), 3.5, None, None, 0)
     e.glmRun = GlmSingleRun(failed, Left(GlmSingleRefusal.ChildFailed(3, "SECRET-TAIL 0.123456")))
     val c2 = ctx("glmsingle")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c2), ArmResult.Failed("glmsingle_ChildFailed", 4.0))
     assert(c2.notes.exists(_.contains("SECRET-TAIL")))
-    assertEquals(c2.emitted, Vector.empty)
+    assertEquals(c2.emitted.map(_.name), Vector(ScorerContribution.EntryName))
     assert(f.trials.last._2.forall(_ == VoxelOutcome.Failed))
   }
 

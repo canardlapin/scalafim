@@ -124,7 +124,7 @@ class ModelDocumentJsonCodecSuite extends munit.FunSuite:
     assertEquals(pathOf(swap(""""acompcorComponents":5""", """"acompcorComponents":-1""")), "$.confounds.acompcorComponents")
     assertEquals(pathOf(swap(""""threshold":0.5""", """"threshold":-0.5""")), "$.confounds.censor")
     assertEquals(pathOf(swap(""""missingRows":"drop"""", """"missingRows":"keep"""")), "$.derived.missingRows")
-    assertEquals(pathOf(swap(""""version":1""", """"version":2""")), "$.version")
+    assertEquals(pathOf(swap(""""version":1""", """"version":99""")), "$.version")
     assertEquals(pathOf(swap("""scalafim.model-document""", """scalafim.model-other""")), "$.schema")
     assertEquals(pathOf(swap(""""type":"concatenated"""", """"type":"pooled"""")), "$.runCombination.type")
     assertEquals(pathOf(swap(""""formula":"onset""", """"formula":"onset ~~""")), "$.formula")

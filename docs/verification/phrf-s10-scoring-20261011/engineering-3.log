@@ -1,0 +1,61 @@
+[info] compiling 56 Scala sources to /private/tmp/scalafim-phrf-s10-scorer-20261011/modules/phrf-comparison/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.phrfcmp.exec.PilotArmsSuite:
+  + arm ids parse to the nine pilot arms; unknown ids fail without touching an engine 0.044s
+  + condition arm: sealed blob emitted, feed called, voxel-level refusals do not make the unit refuse 0.567s
+  + condition arm: dataset-level refusal or failure becomes the unit status with a token code 0.007s
+  + native trial arms: LSA runs without settings; a typed refusal maps to the ledger status; the feed gets per-voxel outcomes 0.015s
+  + rLSS always receives EdfTargets: settings without targets refuse before the engine runs; with targets they are passed through 0.009s
+  + PHRF trial refusal maps by status; PHRF-ML never emits a blob for a refusal 0.002s
+  + GLMsingle: guard CPU goes to the scheduler, timing CPU to the timing endpoint; refusal text stays in the sealed note 0.007s
+  + a job's dataset is loaded once for all its arms and released in jobFinished 0.026s
+  + a dataset that cannot be loaded fails every arm with a token 0.001s
+  + end to end through the scheduler: fake arms are sealed, GLMsingle tail only in the sealed timing record, guard CPU counts 0.742s
+  + review 3: a feed exception after GLMsingle ran keeps the measured child CPU, on every attempt 0.584s
+  + re-review 2: an InterruptedException from the feed after GLMsingle ran still meters its CPU, then ends the run as Interrupted 0.138s
+  + review3 H1: a fatal throwable after GLMsingle ran leaves accounting.open, so the resume refuses uncertain accounting 0.115s
+  + review4 H1: a fatal throwable after GLMsingle ran keeps accounting.open even when a caller interrupt wins the exit 0.316s
+  + review5 D2: a cleanup exception never masks a fatal throwable after GLMsingle ran; accounting stays open 0.099s
+  + real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates 0.461s
+  + ThreadCpuClock advances on CPU work and not on sleep 0.346s
+scalafim.phrfcmp.exec.PilotContributionSuite:
+  + canonical contributions preserve all voxels and exact finite doubles on both platforms 0.231s
+  + malformed, noncanonical, nonfinite, truncated and wrong-dimension bytes fail with redacted tokens 0.234s
+  + bound generator truth uses condition coefficients, trial ordering and immutable copies 0.019s
+  + coverage target is explicit; the signed peak error averages conditionwise errors 0.004s
+  + failed and refused voxels are retained, not replaced with estimates 0.001s
+scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite:
+  + complete production contributions assemble every cell and preserve canonical outcomes under reordering 14.828s
+  + missing, duplicate, swapped, corrupt, wrong-input and wrong-truth records refuse 9.443s
+  + an unavailable committing attempt stays in the scored failure denominator 4.379s
+==> X scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite.production codec and assembler survive retries, crash and resume; the owner rebuild is Valid  59.27s munit.ComparisonFailException: modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/exec/PilotCorpusAssemblerSuite.scala:77
+76:    assertEquals(OwnerVerification.verify(r.items, plan, r.whitelist, Vector(assembler)),
+77:      OwnerVerdict.Valid(r.report.runId, 15, 15, Vector.empty))
+78:    val record = ujson.read(new String(r.items(SealedNames.aggregateRecord(r.report.runId)), UTF_8))
+values are not the same
+=> Obtained
+Valid(
+  runId = "ccad598b4c2a8078",
+  datasets = 15,
+  units = 450,
+  nondeterministic = Nil
+)
+=> Diff (- expected, + obtained)
+   datasets = 15,
+-  units = 15,
++  units = 450,
+   nondeterministic = Nil
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite.$init$$$anonfun$6(PilotCorpusAssemblerSuite.scala:77)
+  + tampering with a sealed contribution invalidates the production rehearsal 0.138s
+==> X scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite.synthetic low-ceiling rehearsal discards an interrupted contribution and resumes only with bound authorization  0.002s java.lang.IllegalArgumentException: requirement failed: positive plan sizes
+    at scala.Predef$.require(Predef.scala:337)
+    at scalafim.phrfcmp.exec.PilotPlan.<init>(StampBuilder.scala:15)
+    at scalafim.phrfcmp.exec.PilotPlan$.apply(StampBuilder.scala:13)
+    at scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite.$init$$$anonfun$8(PilotCorpusAssemblerSuite.scala:93)
+[error] Failed: Total 28, Failed 2, Errors 0, Passed 26
+[error] Failed tests:
+[error] 	scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite
+[error] (phrfComparisonJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] elapsed time: 105 s (0:01:45.0)
+[0J[sbt-warm] phrfComparisonJVM/testOnly *PilotContributionSuite *PilotCorpusAssemblerSuite *PilotArmsSuite: exit 1 in 105.7s

@@ -95,6 +95,7 @@ object Gls:
       selectedVoxelIndices: Vector[Int]
   ): Either[FitError, GlsPrepared] =
     for
+      _ <- if options.fgls.nonEmpty then Left(FitError.UnsupportedAutocorrelation("voxelwise FGLS requires FitPlan execution or VoxelwiseArFgls")) else Right(())
       _ <- validateVoxelIndices(response, selectedVoxelIndices)
       config <- autocorrelationConfig(options)
       _ <- validatePartitions(partitions)

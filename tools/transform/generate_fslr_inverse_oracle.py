@@ -51,7 +51,7 @@ TOLERANCE_MM = 1e-10
 MAX_ITERATIONS = 200
 COMMITTED = (
     pathlib.Path(__file__).resolve().parents[2]
-    / "modules/surface/jvm/src/test/resources/pointmap-real/fslr-inverse-oracle.json.gz"
+    / "modules/surface-test-fixtures/jvm/src/main/resources/pointmap-real/fslr-inverse-oracle.json.gz"
 )
 
 

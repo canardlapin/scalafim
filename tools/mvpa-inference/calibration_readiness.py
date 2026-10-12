@@ -29,6 +29,7 @@ RANK_SOURCES = [
     "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/RankConfirmation.scala",
     "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala",
     "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankRecordProvenance.scala",
     "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala",
     "tools/mvpa-inference/rank_population.R", RANK_POPULATION, RANK_METRICS,
 ]
