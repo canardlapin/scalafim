@@ -1,0 +1,25 @@
+{
+  "base": "139bbcae5cfec6733af93443c88722a2046839a9",
+  "before_multivar": "42f6e52be18847677fdc906b8f958bc65e5877eb",
+  "after_multivar": "2bc14d14ba42a678fbbe169293153eddaba6175c",
+  "after_source_sha256": {
+    "build.sbt": "4c53b5ee5f0653a18c993ccec0c4a00c7e2107b20980498854f79ee1a519641d",
+    "modules/mvpa/js/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationPlatform.scala": "5fba59f97b7c3c05b0a370e3747845a2062387e97914e413ea340d3a4055ee95",
+    "modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationPlatform.scala": "cb414ddd936841ac954cf36fbf1232214aa8c2c22a5868f3d7cd48738b3b311d",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/RankConfirmation.scala": "74c6dfcce8eed9f8fe857272a44113e7b85483ed2300fdb39fa5f3d8774038fb",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/RankConfirmationSuite.scala": "f5729e3a73f7f269bd0116953b2ce6fba489866bb1dfc73df49612def74ee275",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankV2ResourceProbeSuite.scala": "ec69ee38c54084a4d22315f6ed636fb0de506e34dcd5e6a642d301a4bc2df772",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSuite.scala": "2b4ffbf16d58eb59ed0cfba754df4010a56226033dc2282e19acc03f1d05b8e1",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/CalibrationProtocolSupport.scala": "a7318fe7b8fd0028cdce6db96335f4691fa9ef2aa7f03134529ceae97d604b0e",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankRecordProvenanceSuite.scala": "48a7358a6da6faad458741cce3ac8e7431cb1116f4b2a85d99138002630fd0c0",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankPortabilityTraceSuite.scala": "ef9cb058b07adcc3e4ba10f78cdcfec3c58d87f2960bc6cf8b2311657b834e16",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankIndependentOracleSuite.scala": "0f76b1d6be6889973e9d38cb5f907aae447130b7b0a256c9bbe6667b8186b8ea",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala": "194cda6b06ff77804720fe0b51ded89f0663ab4bbad2a08b65ccc398f00f774e",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankRecordProvenance.scala": "7d3e3943561046c02a3ca27da6bd193860825c9e11a0bcdf0585c2e025e6aeb5",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankOracleFixtures.scala": "f4f28862a6ac54a04e1a69d4956d2ddae2bc7b3a1d894bff57a35bc04f015c15",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankScoreOracleFixtures.scala": "5be9f9ada805902284ffe8e540085f5b89e0c5daf0f0ae37f8fca00e6cbc1d6b",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankPairedPilotSuite.scala": "46cdfcc84e94dfce86e536d3388a778f348c8dc340ff02201ce06f29c3b1885e",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankDiagnosticReplaySuite.scala": "a3d8ac971352114547c080ec92739b64ec78d85d59ce96785149e8c774fdeeab",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/CalibrationBindings.scala": "1ca46210c46fe3fb0de80b2aa8ddf82527de9f7bbd9b9db63fa40449aa579d53"
+  }
+}

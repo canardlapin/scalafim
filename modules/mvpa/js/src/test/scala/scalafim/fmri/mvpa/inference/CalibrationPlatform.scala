@@ -4,6 +4,7 @@ import scala.scalajs.js
 
 /** Test-only Node seam. No browser or production crypto/I/O capability is added. */
 private[inference] object CalibrationPlatform:
+  val platform: String = "JS"
   def sha256Utf8(text: String): String =
     js.Dynamic.global.require("crypto").createHash("sha256")
       .update(text, "utf8").digest("hex").asInstanceOf[String]

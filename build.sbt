@@ -164,7 +164,7 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
-lazy val multivarRevision = "42f6e52be18847677fdc906b8f958bc65e5877eb"
+lazy val multivarRevision = "2bc14d14ba42a678fbbe169293153eddaba6175c"
 lazy val multivarBuild = {
   // Inference must share the same resample4s classes as native MVPA adapters.
   System.setProperty("multivar.resample4s.build.uri", resample4sBuild.toString)
