@@ -1,0 +1,66 @@
+{
+  "schema": "scalafim-fgls-cmrg-qualification/v1",
+  "role": "simulator QA and known-control qualification only; no candidate selection or confirmation",
+  "root_seed": 20261012,
+  "rng": [
+    "L'Ecuyer-CMRG",
+    "Inversion",
+    "Rejection"
+  ],
+  "replicates": 2048,
+  "streams": {
+    "qa": 0,
+    "control": 100000
+  },
+  "assignment": "dataset stream = phase offset + cell group * 2048 + replicate; voxel/run noise = successive nextRNGSubStream jumps within dataset stream. Record six state words plus RNG header. No reuse across phase, cell, replicate, voxel or run.",
+  "initialization": "Exact stationary AR(2) pair from independent normal draws using analytic 2x2 covariance, followed by fresh per-time innovations. Innovation variance 1.",
+  "qa": {
+    "family_alpha": 0.01,
+    "maximum_scalar_checks": 1000000,
+    "rule": "Every standardized across-dataset mean must lie in +/- qnorm(1-alpha/(2*M))/sqrt(N); every across-dataset variance must lie in qchisq(c(alpha/(2*M),1-alpha/(2*M)),N-1)/(N-1). Apply to every innovation position, stationary noise position, normalized plus/minus pairs for lags 1..4 and all voxel/run pairs at matched positions. M=1000000 fixed conservative ceiling; abort if exceeded. No fitted outcomes before QA passes.",
+    "legacy_negative_control": "Park-Miller affine dataset spacing 7919, long-cell null second-run time 140 (845th Gaussian): must fail the same mean bound."
+  },
+  "control_acceptance": {
+    "source": "original corrected-GLS margins, unchanged",
+    "alpha": 0.05,
+    "null_rejection_interval": [
+      0.02,
+      0.08
+    ],
+    "coverage_interval": [
+      0.92,
+      0.98
+    ],
+    "equivalence_interval_confidence": 0.9,
+    "interval_method": "exact Clopper-Pearson",
+    "AR_RMSE_max": 0.1,
+    "AR_mean_bias_interval": [
+      -0.04,
+      0.04
+    ],
+    "AR_mean_bias_rule": "|bias| + qt(0.95, n-1) * sd/sqrt(n) <= 0.04 for each lag",
+    "whiteness_mean_abs_max": 0.1,
+    "whiteness_excess_over_known_max": 0.025,
+    "whiteness_comparator": "known-continuous for candidate engines",
+    "variance_ratio_interval": [
+      0.8,
+      1.2
+    ],
+    "variance_ratio_rule": "90% percentile dataset-bootstrap interval of mean reported null variance / empirical null-estimate variance",
+    "standardized_effect_bias_interval": [
+      -0.1,
+      0.1
+    ],
+    "no_drop": true,
+    "no_refusals": true
+  },
+  "failure_policy": "Retain all refusals and missing slots; no redraw, reseeding or revised bounds after outcomes. QA failure prevents control generation. Control failure does not admit scientific inference.",
+  "bootstrap": {
+    "domain": 23,
+    "resamples": 1999
+  },
+  "bootstrap_seed": 1499711034,
+  "numeric_parity_tolerance": 1e-08,
+  "maximum_wall_seconds_per_phase": 3600,
+  "scientific_admission": false
+}

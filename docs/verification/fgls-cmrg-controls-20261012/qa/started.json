@@ -1,0 +1,10 @@
+{
+  "phase": "qa",
+  "source_locks": {
+    "qualify.R": "e905b3003a80b210218a71b0e1678b99230a81d83ab790ef011251f3a9fa00a7",
+    "protocol.json": "564d8bd3247c23b59a0b9a9fa4524e9a8fdfbc7b3e80855e40c2803de41b6144",
+    "cells.json": "c3e1037d04976a950562b607cf0cb4c67d4741a06646891d8ce6b9155b97d0d3"
+  },
+  "started": "2026-10-12 04:09:30",
+  "role": "simulator QA and known-control qualification only; no candidate selection or confirmation"
+}

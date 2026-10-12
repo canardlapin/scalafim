@@ -1,0 +1,5 @@
+{
+  "duplicate_inventory_rejected": true,
+  "exit": 1,
+  "stderr": "During startup - Warning message:\nSetting LC_CTYPE failed, using \"C\" \nError in read_records(records) : \n  !anyDuplicated(d[c(\"cell\", \"engine\", \"replicate\")]) is not TRUE\nCalls: read_records -> stopifnot\nExecution halted\n"
+}

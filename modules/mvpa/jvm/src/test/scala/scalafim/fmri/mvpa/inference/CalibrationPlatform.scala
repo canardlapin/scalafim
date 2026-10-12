@@ -5,6 +5,7 @@ import java.nio.file.{Files, Paths, StandardOpenOption}
 import java.security.MessageDigest
 
 private[inference] object CalibrationPlatform:
+  val platform: String = "JVM"
   def sha256Utf8(text: String): String =
     MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8))
       .map(value => f"$value%02x").mkString

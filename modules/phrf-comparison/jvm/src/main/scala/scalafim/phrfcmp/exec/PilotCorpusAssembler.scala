@@ -24,12 +24,22 @@ final class PilotCorpusAssembler(truth: PilotTruthSource, coverage: GaussianCove
   val schema: String = s"phrf-pilot-score-v1-${coverage.code}-mean-signed-peak"
 
   def outcomes(datasets: Int, contributions: Vector[UnitContribution]): Either[String, CorpusOutcomes] =
+    if datasets < PilotCorpus.MinDatasets || datasets > 10000 then Left("dataset_count")
+    else assemble(datasets, contributions)
+
+  /** S10's fixed two-dataset rehearsal can inspect mappings, but cannot construct
+    * a PilotCorpus or release a pilot whitelist. Ordinary outcomes keeps its
+    * minimum dataset requirement; this entry point is package-internal.
+    */
+  private[phrfcmp] def rehearsalOutcomes(contributions: Vector[UnitContribution]): Either[String, CorpusOutcomes] =
+    assemble(2, contributions)
+
+  private def assemble(datasets: Int, contributions: Vector[UnitContribution]): Either[String, CorpusOutcomes] =
     // This private exception carries a fixed token only and is contained at this boundary.
     import PilotCorpusAssembler.Refusal
     def need[A](e: Either[String, A]): A = e.fold(t => throw new Refusal(t), identity)
     def check(ok: Boolean, token: String): Unit = if !ok then throw new Refusal(token)
     try
-      check(datasets >= PilotCorpus.MinDatasets && datasets <= 10000, "dataset_count")
       val expected = (for
         c <- ScoreCell.values.toVector
         d <- 0 until datasets

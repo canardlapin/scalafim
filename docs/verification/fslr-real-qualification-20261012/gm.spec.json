@@ -1,0 +1,27 @@
+{
+  "schema": "scalafim.fslr-qualification-input/1",
+  "name": "locked-TemplateFlow-GM-public-consumer",
+  "frame": {
+    "template": "MNI152NLin2009cAsym",
+    "release": "templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56"
+  },
+  "basis": {
+    "literature": {
+      "doi": "10.1016/j.neuroimage.2010.07.033",
+      "statement": "TemplateFlow GM probability segmentation in its declared template frame"
+    }
+  },
+  "volumes": [
+    {
+      "path": "/private/tmp/scalafim-fslr-assets-20261012/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz",
+      "asset": {
+        "templateflow": {
+          "template": "MNI152NLin2009cAsym",
+          "archivePath": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz",
+          "revision": "templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56",
+          "sha256": "662b18e83dddc554b19c621d9750af3454b54d4e103df03633eacced3884805a"
+        }
+      }
+    }
+  ]
+}

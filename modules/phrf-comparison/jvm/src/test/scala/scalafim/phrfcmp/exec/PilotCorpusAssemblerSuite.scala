@@ -49,6 +49,14 @@ class PilotCorpusAssemblerSuite extends munit.FunSuite:
     assert(out.condition(ScoreCell.CTX5).head.arms(scalafim.phrfcmp.score.Method.Can).forall(_.isMissing))
     assertEquals(out.condition(ScoreCell.CTX5).head.voxels, ScoringSynth.voxels)
 
+  test("two-dataset rehearsal maps the exact inventory while pilot aggregation still refuses"):
+    val small = contributions.filter(_.unit.dataset < 2)
+    val result = ok(assembler.rehearsalOutcomes(small))
+    assertEquals(result.coverage.length, 2)
+    assertEquals(assembler.outcomes(2, small), Left("dataset_count"))
+    assert(PilotCorpus.of(result.condition, result.trial, result.coverage, ScoreSynth.timing, 0.0).isLeft)
+    assertEquals(assembler.rehearsalOutcomes(small.tail), Left("contribution_inventory"))
+
   private final case class Rehearsal(report: PilotReport, items: Map[String, Array[Byte]], whitelist: String)
   private lazy val rehearsal: Rehearsal =
     val owner = TestOwner.random() // ephemeral test fixture; never an owner custody key

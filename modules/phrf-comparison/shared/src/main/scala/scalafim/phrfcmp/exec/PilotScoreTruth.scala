@@ -34,7 +34,10 @@ object PilotScoreTruth:
       val fp = ScoringInputFingerprint.of(b.fit)
       if cell.isCondition then
         val lags = Vector.tabulate(321)(_ / 10.0)
-        require(t.truthT.length >= 321 && lags.indices.forall(i => t.truthT(i) == lags(i)))
+        // NumPy arange uses multiplication by 0.1; Scala's canonical grid uses
+        // division by 10. Accept their binary64 rounding difference while
+        // retaining the fixed physical sampling grid.
+        require(t.truthT.length >= 321 && lags.indices.forall(i => math.abs(t.truthT(i) - lags(i)) <= 1e-12))
         require(t.truthKernel.rows == v && t.truthKernel.cols == t.truthT.length)
         val responses = Vector.tabulate(v) { i =>
           val curves = Vector.tabulate(3)(c => lags.indices.map(k => t.condCoef(i, c) * t.truthKernel(i, k)).toVector)

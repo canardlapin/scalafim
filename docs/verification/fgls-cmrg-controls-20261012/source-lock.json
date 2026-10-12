@@ -1,0 +1,20 @@
+{
+  "protocol_commit": "116bcc3b",
+  "base": "139bbcae5cfec6733af93443c88722a2046839a9",
+  "source_sha256": {
+    "tools/scenarios/fgls-cmrg/qualify.R": "e905b3003a80b210218a71b0e1678b99230a81d83ab790ef011251f3a9fa00a7",
+    "tools/scenarios/fgls-cmrg/cells.json": "c3e1037d04976a950562b607cf0cb4c67d4741a06646891d8ce6b9155b97d0d3",
+    "tools/scenarios/fgls-cmrg/analyze.R": "445d268ef7360ec305fb6064a45454fa5453ecdee11b5cd28fd2d5797ddaab04",
+    "tools/scenarios/fgls-cmrg/verify_inputs.py": "01dee019e49eb5532279e6003170de44e56b1f0f97d7a42db91ae4d91a03c9c6",
+    "tools/scenarios/fgls-cmrg/protocol.json": "564d8bd3247c23b59a0b9a9fa4524e9a8fdfbc7b3e80855e40c2803de41b6144",
+    "tools/scenarios/fgls-cmrg/fixtures.py": "ef0ceff8608e0be185eb04ca4fe0c579bdd957e774a889862e3d1f5093a7024d",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsVoxelwiseStudySuite.scala": "de026f566427bc5b1d45e331c65f8ab47f9018f7fda4962bde391c8d5ec6d742",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsDiagnosisSuite.scala": "558204e8ce6d6eae681c787dc2a9340d95dffc78a7987910489d41f14780aee7",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsCmrgSuite.scala": "fcd611ebf349e5c6878cf63565f41b8ab7103f28b70af93446f5994e5421db67",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsCmrgFixtures.scala": "78d98edb89bf7a72bb49070f159a0569ccc319a33d0d8f7214045de3ef3007a1",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsVoxelwiseStudy.scala": "c621235c3431d55862f704b6b2ee252d562b0d2ab0922e395f7d1d8ed0320133",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsKnownOracleFixtures.scala": "87d81ffaaa3e8086a24cede9ec6eb764ecf8b2b47dffe4f2577c607f681ec398",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/FglsExternalInput.scala": "df2d48234b2b14f64b6b7091c2cb8b75e9dc174cce626ae2079bc4080b7f5dcd",
+    "modules/first-level-laws/js/src/test/scala/scalafim/fmri/laws/FglsExternalInput.scala": "2819b3e3632fd4d6f68e3dbae56773821ae9904dfb6ff9e7e35cdefe9857b523"
+  }
+}
