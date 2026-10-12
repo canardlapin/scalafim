@@ -1,0 +1,8 @@
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n80-p4-q6-intercept.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n80-p4-q6-three-column.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n80-p6-q4-intercept.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n80-p6-q4-three-column.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n640-p4-q6-intercept.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n640-p4-q6-three-column.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n640-p6-q4-intercept.tsv
+/private/tmp/scalafim-rank-paired-pilot-20261011/docs/verification/umvpa-rank-paired-20261011/preflight-5/inputs/rank-v2-resource-n640-p6-q4-three-column.tsv
