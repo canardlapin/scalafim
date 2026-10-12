@@ -15,6 +15,17 @@ git clone --quiet --no-checkout --filter=blob:none \
   https://github.com/canardlapin/multivar.git "$provider_tmp/multivar"
 git -C "$provider_tmp/multivar" checkout --quiet --detach "$multivar_revision"
 [ "$(git -C "$provider_tmp/multivar" rev-parse HEAD)" = "$multivar_revision" ]
+
+# Multivar compiles against Gale's artifact while ScalaFIM also loads Gale from
+# source. Different revisions can compile successfully but fail at JS linking
+# (or JVM invocation) when an API gained a defaulted parameter. Reject that
+# mixed graph before publishing dependencies or starting the expensive gates.
+gale_revision=$(sed -n 's/^lazy val galeRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
+multivar_gale_revision=$(sed -n 's/^lazy val galeRevision = "\([0-9a-f]*\)".*/\1/p' "$provider_tmp/multivar/build.sbt")
+if [ "${#gale_revision}" -ne 40 ] || [ "$gale_revision" != "$multivar_gale_revision" ]; then
+  echo "Gale revision mismatch: ScalaFIM=$gale_revision Multivar=$multivar_gale_revision" >&2
+  exit 1
+fi
 GALE_CACHE="$provider_tmp/gale" \
   "$provider_tmp/multivar/tools/publish-gale-local.sh"
 RESAMPLE4S_CACHE="$provider_tmp/resample4s" \

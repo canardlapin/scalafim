@@ -200,6 +200,8 @@ On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that
 are not yet on Maven Central. This helper checks out the exact pinned Multivar
 revision and runs both provider bootstraps into the local artifact cache.
+The helper requires Multivar's Gale revision to match ScalaFIM's source pin;
+mixing revisions can compile but fail at JavaScript linking or JVM invocation.
 Repeat after changing the Gale, Resample4s, or Multivar pins. Ordinary builds
 then use the committed source pins; no sibling checkout or provider override
 is needed.
