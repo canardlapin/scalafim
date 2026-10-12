@@ -1,0 +1,5 @@
+{
+  "tools/scenarios/fgls-cmrg/fixtures.py": "6d9d89725c60e63b745e3d11ac4e83dc57d5092dd8edf66abf0b7e66040b0206",
+  "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsCmrgFixtures.scala": "49242b8cf35d4275410bbb200cd7a1921b487e3e486bc5ebfb1a7fa117f2c3bc",
+  "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FglsCmrgSuite.scala": "1e067197599e366af121de5760cdbfacf70bcacb9ff852458bb726b0e4b1c717"
+}

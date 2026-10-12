@@ -76,3 +76,11 @@ Scala compilation warnings occurred.
 Bounded mote `bd-01M4Q4K1EHBP77XTSEHXR5CY4Q` is complete. Its scientific parent
 `bd-01M4K6KEPYEMP9XHFT2J0WCYEE` remains open for a separately specified next
 candidate/confirmation decision.
+
+The first focused GitHub job rejected formatting of two new test files. The
+required scoped scalafmt pass changed layout only. Both formatting checks
+and the ten ordinary fixtures pass on JVM and Scala.js after formatting; the
+full opt-in packet is skipped in that ordinary-CI run. `format-source-lock.json`
+binds the formatted sources; the original `source-lock.json` still binds the
+full qualification run. The updated extractor reproduces the formatted
+fixture file byte-for-byte.

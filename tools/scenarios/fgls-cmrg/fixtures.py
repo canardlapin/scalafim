@@ -31,8 +31,8 @@ def main():
                          for key, value in voxel.items()} for voxel in oracle]
             csv = ",".join(repr(x) for x in noise[dataset * count:(dataset + 1) * count])
             expected = json.dumps(selected, separators=(",", ":"))
-            examples.append(f"    Example({json.dumps(cell)}, {dataset},\n"
-                            f"      {json.dumps(csv)},\n      {json.dumps(expected)})")
+            examples.append(f"    Example(\n      {json.dumps(cell)},\n      {dataset},\n"
+                            f"      {json.dumps(csv)},\n      {json.dumps(expected)}\n    )")
     args.output.write_text("\n".join(lines) + "\n" + ",\n".join(examples) + "\n  )\n")
 
 

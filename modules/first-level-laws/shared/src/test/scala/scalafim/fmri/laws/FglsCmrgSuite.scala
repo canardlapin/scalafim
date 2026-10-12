@@ -9,15 +9,29 @@ class FglsCmrgSuite extends munit.FunSuite:
   override val munitTimeout: Duration = 30.minutes
 
   private def response(cell: FglsStudyCell, noise: Array[Double], offset: Int): DMat =
-    FglsVoxelwiseStudy.response(cell, Matrix.tabulate(cell.base.rows, 4)((i, j) => noise(offset + j * cell.base.rows + i)))
+    FglsVoxelwiseStudy.response(
+      cell,
+      Matrix.tabulate(cell.base.rows, 4)((i, j) => noise(offset + j * cell.base.rows + i))
+    )
 
   private def oracle(cell: FglsStudyCell, data: DMat, expected: ujson.Value): Unit =
     for voxel <- 0 until 4 do
-      val fitted = VoxelwiseArFgls.fit(cell.base.design,
-        Matrix.tabulate(data.rows, 1)((i, _) => data(i, voxel)), TimeSegments.fromRunLengths(cell.base.runLengths),
-        cell.base.censorRows, VoxelwiseArSpec(2,
-          VoxelArCoefficients.Known(cell.base.runLengths.indices.map(cell.truth.phi(voxel, _)).toVector),
-          CensorContinuity.ContinuousMissing, CovarianceUncertainty.Conditional)).fold(e => fail(e.message), identity).voxels.head
+      val fitted = VoxelwiseArFgls
+        .fit(
+          cell.base.design,
+          Matrix.tabulate(data.rows, 1)((i, _) => data(i, voxel)),
+          TimeSegments.fromRunLengths(cell.base.runLengths),
+          cell.base.censorRows,
+          VoxelwiseArSpec(
+            2,
+            VoxelArCoefficients.Known(cell.base.runLengths.indices.map(cell.truth.phi(voxel, _)).toVector),
+            CensorContinuity.ContinuousMissing,
+            CovarianceUncertainty.Conditional
+          )
+        )
+        .fold(e => fail(e.message), identity)
+        .voxels
+        .head
       val want = expected(voxel)
       fitted.coefficients.zip(want("coefficients").arr).foreach((a, b) => assertEqualsDouble(a, b.num, 1e-8))
       assertEqualsDouble(fitted.residualVariance, want("residual_variance").num, 1e-8)
@@ -30,8 +44,10 @@ class FglsCmrgSuite extends munit.FunSuite:
       val data = response(cell, example.noise.split(',').map(_.toDouble), 0)
       oracle(cell, data, ujson.read(example.expected))
       if cell.base.censorRows.nonEmpty then
-        val changed = Matrix.tabulate(data.rows, data.cols)((i, j) => data(i, j) +
-          (if cell.base.censorRows.contains(i) then 10000.0 + i else 0.0))
+        val changed = Matrix.tabulate(data.rows, data.cols)((i, j) =>
+          data(i, j) +
+            (if cell.base.censorRows.contains(i) then 10000.0 + i else 0.0)
+        )
         oracle(cell, changed, ujson.read(example.expected))
 
   test("opt-in full external CMRG control packet preserves all five cells and every dataset"):
@@ -49,7 +65,8 @@ class FglsCmrgSuite extends munit.FunSuite:
       val expected = ujson.read(FglsExternalInput.text(root + "/" + cell.id + ".oracle.json"))
       for d <- 0 until 2048 do
         val data = response(cell, noise, d * 4 * cell.base.rows)
-        val result = FglsVoxelwiseStudy.measureCandidate(cell, data, FglsEngine.KnownContinuous, d)
+        val result = FglsVoxelwiseStudy
+          .measureCandidate(cell, data, FglsEngine.KnownContinuous, d)
           .fold(fail(_), identity)
         assertEqualsDouble(result.nullEstimate, expected(0)("coefficients")(d)(0).num, 1e-8)
         assertEqualsDouble(result.signalEstimate, expected(1)("coefficients")(d)(0).num, 1e-8)
