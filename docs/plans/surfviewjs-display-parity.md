@@ -416,6 +416,10 @@ criteria and does not admit a full C02/C03/C07/C08/C10/C11/C12 family pass.
   flat-map captures are pixel-identical. Temporal source restoration invalidates
   stale same-ID cache entries. The replay restores and renders saved navigation,
   rather than reconstructing fixture cameras.
+- The actual JVM linked-host replay also passes: fixed vertex pick, fractional
+  playback, synchronized selection, morphing, nondefault camera restore and
+  real 384→512 resize-back. Every ImageView snapshot equals its published raster;
+  restored and resize-back images are byte-identical to the saved endpoint.
 - Flat maps: all seven browser stages are pixel-identical to the reference,
   including polygon/lasso ROI, resize, time and selection. The JVM host passes
   actual interaction checks but retains strict text/color pixel failures.

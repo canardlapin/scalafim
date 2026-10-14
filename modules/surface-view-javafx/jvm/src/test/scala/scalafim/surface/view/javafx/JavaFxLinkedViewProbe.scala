@@ -41,22 +41,29 @@ object JavaFxLinkedViewProbe:
     val output = Path.of(args.headOption.getOrElse("/private/tmp/scalafim-javafx-linked-view"))
     Files.createDirectories(output)
     Platform.startup(() => ())
-    fx(Platform.setImplicitExit(false))
-    val host = fx(JavaFxRasterSurfaceHost.create())
-    val flat = fx(ok(JavaFxSurfaceFlatMapHost.create()))
-    val stage = fx:
-      flat.canvas.setLayoutX(530)
-      val value = new Stage()
-      value.setScene(new Scene(new Group(host.imageView, flat.canvas), 760, 512, Color.TRANSPARENT))
-      value.show()
-      value
-    try run(output, host, flat)
-    finally
+    var ownedHost = Option.empty[JavaFxRasterSurfaceHost]
+    var ownedFlat = Option.empty[JavaFxSurfaceFlatMapHost]
+    var ownedStage = Option.empty[Stage]
+    try
+      fx(Platform.setImplicitExit(false))
+      val host = fx(JavaFxRasterSurfaceHost.create())
+      ownedHost = Some(host)
+      val flat = fx(ok(JavaFxSurfaceFlatMapHost.create()))
+      ownedFlat = Some(flat)
+      val stage = fx(new Stage())
+      ownedStage = Some(stage)
       fx:
-        host.dispose()
-        flat.dispose()
-        stage.close()
-      Platform.exit()
+        flat.canvas.setLayoutX(530)
+        stage.setScene(new Scene(new Group(host.imageView, flat.canvas), 760, 512, Color.TRANSPARENT))
+        stage.show()
+      run(output, host, flat)
+    finally
+      try fx:
+        try ownedStage.foreach(_.close())
+        finally
+          try ownedFlat.foreach(_.dispose())
+          finally ownedHost.foreach(_.dispose())
+      finally Platform.exit()
 
   private def run(output: Path, host: JavaFxRasterSurfaceHost, flat: JavaFxSurfaceFlatMapHost): Unit =
     val dimensions = RasterDimensions.unsafe(512, 512)
@@ -64,9 +71,12 @@ object JavaFxLinkedViewProbe:
     var playback = SurfaceLinkedFixture.playback(0)
     var model = SurfaceLinkedFixture.model(playback)
     var state = SurfaceLinkedFixture.state(model, selected = 0, morph = 0)
-    var navigation = SurfaceLinkedFixture.navigation(model, state)
+    val initialNavigation = SurfaceLinkedFixture.navigation(model, state)
+    var navigation = ok(SurfaceCompositionState.make(initialNavigation.views,
+      Vector(Set(initialNavigation.views(1).id, initialNavigation.views(2).id))))
 
     fx(ok(flat.render(SurfaceLinkedFixture.FlatMap, flatViewport)))
+    fx(ok(flat.sync(model, state)))
     val (_, initialPixels) = render(host, model, state, navigation, dimensions, output.resolve("initial-javafx.png"))
     captureFlat(flat, output.resolve("initial-flat-javafx.png"))
 
@@ -101,7 +111,6 @@ object JavaFxLinkedViewProbe:
       SurfacePlaybackAction.Tick(SurfaceSeconds.unsafe(1)))) == playback, "paused playback advanced")
     state = ok(SurfaceViewer.reduce(model, state,
       SurfaceViewerAction.SetGeometryMorphFraction(SurfaceLinkedFixture.Surface, SurfaceMorphFraction.unsafe(.5))))
-    navigation = SurfaceLinkedFixture.navigation(model, state)
     render(host, model, state, navigation, dimensions, output.resolve("paused-morph-midpoint-javafx.png"))
 
     val picked = pickScientific(host)
@@ -123,12 +132,14 @@ object JavaFxLinkedViewProbe:
     navigation = ok(navigation.navigate(navigation.views.head.id, SurfaceCompositionNavigation.PanBy(.15, .05)))
     require(navigation.views.head.pose.target.coordinates == Vector(.15, .05, 0.0),
       "nondefault linked-view pan was not retained")
-    val (_, endpointPixels) = render(host, model, state, navigation, dimensions, output.resolve("morph-endpoint-javafx.png"))
+    val (endpointPlan, endpointPixels) = render(host, model, state, navigation, dimensions, output.resolve("morph-endpoint-javafx.png"))
 
     val resized = RasterDimensions.unsafe(384, 384)
     ok(Await.result(host.resize(resized), 30.seconds))
     require(host.presentedFrame.exists(_.dimensions == resized), "decorated host resize did not republish a frame")
-    val (_, resizePixels) = render(host, model, state, navigation, dimensions, output.resolve("morph-endpoint-after-resize-javafx.png"))
+    snapshot(host, endpointPlan, resized, output.resolve("resized-javafx.png"))
+    ok(Await.result(host.resize(dimensions), 30.seconds))
+    val resizePixels = snapshot(host, endpointPlan, dimensions, output.resolve("morph-endpoint-after-resize-javafx.png"))
     require(endpointPixels.sameElements(resizePixels), "resize/re-lower changed endpoint pixels")
 
     val playbackJson = SurfacePlaybackDocument.encode(SurfaceLinkedFixture.document(playback))
@@ -167,16 +178,20 @@ object JavaFxLinkedViewProbe:
     val receipt = ok(Await.result(host.submitDecorated(plan, dimensions, (current, size) =>
       SurfaceDecorationCompiler.compile(SurfaceLinkedFixture.marker(state, size.width.toDouble / dimensions.width), current)
         .left.map(_.toString).flatMap(value => SurfaceDecorationGeometry.lower(value, current, size.width, size.height).left.map(_.toString))), 30.seconds))
-    fx:
+    require(host.presentedFrame.exists(_.generation == receipt.generation))
+    plan -> snapshot(host, plan, dimensions, path)
+
+  private def snapshot(host: JavaFxRasterSurfaceHost, plan: SurfaceCompositionPlan,
+      dimensions: RasterDimensions, path: Path): Array[Int] = fx:
       val frame = host.presentedFrame.getOrElse(throw new IllegalStateException("raster host did not publish a frame"))
-      require(frame.plan.receipt == plan.receipt && frame.dimensions == dimensions && receipt.generation == frame.generation,
+      require(frame.plan.receipt == plan.receipt && frame.dimensions == dimensions,
         "JavaFX host published a mismatched render receipt")
       val image = host.imageView.snapshot(null, new WritableImage(dimensions.width, dimensions.height))
       val actual = pixelsOf(image)
       val expected = pixelsOf(frame.decorations.fold(frame.scientific.image)(_.image))
       require(actual.sameElements(expected), "JavaFX ImageView snapshot differs from its published raster")
       write(image, path)
-      plan -> actual
+      actual
 
   private def pickScientific(host: JavaFxRasterSurfaceHost): SurfacePick = fx:
     host.pickDisplay(64.5, 192.5) match
