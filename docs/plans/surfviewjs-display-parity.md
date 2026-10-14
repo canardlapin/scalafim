@@ -372,5 +372,10 @@ retain the earlier aggregate compile and JavaFX failures alongside the successfu
 focused reruns. The new harness is a P1 foundation; 151 frozen checkpoints are
 not 151 passing receipts. Qualification additionally needs trusted reference,
 environment and artifact-role bindings before the matrix can admit a pass.
-P2 views/instances and native backends are under implementation in an isolated
-worktree; P2–P5 are not yet complete. Continue through those stages and P6.
+P2 composition source `e2df2a9e83b9792b06837881aeab8ccd4f263d47` passed focused
+JVM/JS gates, independent source review, 3,161 native JavaFX pick checks, and
+nine native Three.js browser checks. The [composition gallery](../visual-qa/surfviewjs-parity/composition-20261014/README.md)
+retains paired native/raster images, camera-isolation images, raw logs and
+provenance. This establishes view/instance rendering and resource behavior;
+it is not the full SurfViewJS C04 cortex appearance comparison. P3–P5 and the
+complete P6 matrix remain outstanding.

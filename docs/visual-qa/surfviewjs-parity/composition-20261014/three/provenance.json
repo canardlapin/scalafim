@@ -1,0 +1,14 @@
+{
+  "candidateRoot": "/private/tmp/scalafim-surfview-parity",
+  "candidateCommit": "e2df2a9e83b9792b06837881aeab8ccd4f263d47",
+  "scalaModule": "/private/tmp/scalafim-surfview-parity/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js",
+  "scalaModuleSha256": "f244f2c7394869e18207670ef5e668754e3db356593ae14bd6f6cbd6059aab2c",
+  "runnerSha256": "42e7a797e78ef9925e41e5d91e30304d548c7eba7353ac305f7a702b34066bb7",
+  "requestedAngleBackend": "metal",
+  "auditBefore": {
+    "exitCode": 0,
+    "stdout": "No automated top-level browser processes found.\n",
+    "stderr": ""
+  },
+  "startedAt": "2026-10-14T17:34:54.155Z"
+}

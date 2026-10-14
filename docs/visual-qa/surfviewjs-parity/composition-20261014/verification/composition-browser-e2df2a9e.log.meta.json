@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T17:34:53.998818+00:00",
+  "finished_utc": "2026-10-14T17:34:55.673714+00:00",
+  "duration_seconds": 1.67478,
+  "command": [
+    "node",
+    "tools/surface-view/parity/run-composition-proof.mjs",
+    "--scalafim-module",
+    "/private/tmp/scalafim-surfview-parity/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js",
+    "--out",
+    "/private/tmp/scalafim-three-composition-e2df2a9e"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/surfview-parity-logs/composition-browser-e2df2a9e.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 180.0,
+  "log_bytes": 178
+}
