@@ -749,7 +749,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assertEquals(toLegacy.geometryUpdates, 1)
     assertEquals(toLegacy.geometryUploads, 0)
 
-  test("world clipping is rejected explicitly before Three.js interpretation"):
+  test("world clipping without original fragment samples is rejected before Three.js interpretation"):
     val (viewer, initial) = fixture()
     val clipping = SurfaceClipping.worldPlanes(Vector(
       WorldClipPlane.unsafe(1.0, 0.0, 0.0, 0.0)
@@ -759,7 +759,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       compile(viewer, initial).copy(clipping = clipping),
       size
     )
-    assert(result.left.exists(_.message.contains("world clipping planes are unsupported")))
+    assert(result.left.exists(_.message.contains("world clipping requires fragment packets")))
 
   test("picking preserves Three.js face, closest vertex, world point, and surface identity"):
     val runtime = new RecordingRuntime()

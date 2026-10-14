@@ -116,7 +116,8 @@ final case class SurfaceLayerPacket(
   scalarMapping: Option[ScalarMapping] = None,
   scalarField: Option[SurfaceScalarPacket] = None,
   sampleColors: Option[IntBufferView] = None,
-  coverage: SurfaceLayerCoverage = SurfaceLayerCoverage.All
+  coverage: SurfaceLayerCoverage = SurfaceLayerCoverage.All,
+  thresholdEdge: Option[SurfaceThresholdEdgePacket] = None
 )
 
 final case class SurfaceCameraPacket(
@@ -174,5 +175,8 @@ final case class SurfaceRenderPlan(
   profile: SurfaceProfile,
   receipt: SurfaceRenderReceipt,
   viewportFit: SurfaceViewportFit = SurfaceViewportFit.Fill,
-  fragmentSurfaces: Set[SurfaceId] = Set.empty
+  fragmentSurfaces: Set[SurfaceId] = Set.empty,
+  colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+  surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
 )

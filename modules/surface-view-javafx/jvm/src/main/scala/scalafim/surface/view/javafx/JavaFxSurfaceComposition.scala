@@ -339,6 +339,11 @@ object JavaFxSurfaceComposition:
   private[javafx] def resourcePlan(plan: SurfaceCompositionPlan): Either[JavaFxSurfaceError, SurfaceRenderPlan] =
     val first = plan.views.head
     val active = plan.views.flatMap(view => view.instances.map(instance => (view, instance)))
+    if plan.views.exists(view =>
+      view.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes ||
+        view.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase) ||
+        active.exists { case (_, instance) => instance.opacity != DisplayOpacity.Opaque } then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("composition requires the legacy color pipeline, gray opaque base, and opaque surfaces"))
     if plan.views.exists(_.lighting != first.lighting) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("a shared JavaFX atlas requires identical lighting across views"))
     if plan.views.exists(view => view.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] || view.fragmentSurfaces.nonEmpty) then

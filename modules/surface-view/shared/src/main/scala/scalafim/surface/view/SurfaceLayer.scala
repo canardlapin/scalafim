@@ -46,9 +46,14 @@ sealed trait SurfaceLayer:
 
   private[view] def describe(vertex: Int, timepoint: Int): String
 
+  def thresholdEdges: Boolean = false
+  private[view] def thresholdEdgeSamples: Option[Array[Double]] = None
+
   def supportsWindow: Boolean = false
   def supportsThreshold: Boolean = false
   def scalarMapping: Option[ScalarMapping] = None
+  /** Paired effect/confidence policy remains distinct from scalar windows and thresholds. */
+  def bivariateMapping: Option[BivariateEffectConfidenceMapping] = None
   /** Inspectable category palette; arbitrary callbacks remain opaque. */
   def labelMapping: Option[LabelColorizer] = None
 
@@ -62,6 +67,32 @@ sealed trait SurfaceLayer:
     geometry.hemisphere == surface.hemisphere && geometry.mesh.hasSameTopology(surface.mesh)
 
 object SurfaceLayer:
+  private final class BivariateLayer(
+    val id: SurfaceLayerId,
+    val surfaceId: SurfaceId,
+    val geometry: SurfaceGeometry,
+    val frameCount: Int,
+    val opacity: DisplayOpacity,
+    val blendMode: DisplayBlendMode,
+    effect: SurfaceMatrix[Double],
+    confidence: SurfaceMatrix[Double],
+    val mapping: BivariateEffectConfidenceMapping
+  ) extends SurfaceLayer:
+    val kind: SurfaceLayerKind = SurfaceLayerKind.Scalar
+    override val interpolation: SurfaceMapInterpolation = SurfaceMapInterpolation.VertexColor
+    override val bivariateMapping: Option[BivariateEffectConfidenceMapping] = Some(mapping)
+
+    private[view] def writeColors(timepoint: Int, presentation: SurfaceLayerPresentation, target: Array[Int]): Unit =
+      val frame = if frameCount == 1 then 0 else timepoint
+      var row = 0
+      while row < target.length do
+        target(row) = mapping.color(effect(row, frame), confidence(row, frame)).toPackedInt
+        row += 1
+
+    private[view] def describe(vertex: Int, timepoint: Int): String =
+      val frame = if frameCount == 1 then 0 else timepoint
+      s"effect=${effect(vertex, frame)}, confidence=${confidence(vertex, frame)}"
+
   private final class FaceLayer[A](
     val id: SurfaceLayerId,
     val surfaceId: SurfaceId,
@@ -164,7 +195,8 @@ object SurfaceLayer:
     val blendMode: DisplayBlendMode,
     samples: ScalarSamples,
     colorizer: Colorizer[Double],
-    override val interpolation: SurfaceMapInterpolation
+    override val interpolation: SurfaceMapInterpolation,
+    override val thresholdEdges: Boolean = false
   ) extends SurfaceLayer:
     val kind: SurfaceLayerKind = SurfaceLayerKind.Scalar
     override val association: SurfaceSampleAssociation = samples match
@@ -173,6 +205,9 @@ object SurfaceLayer:
     override val scalarMapping: Option[ScalarMapping] = ScalarMapping.inspect(colorizer)
     override def supportsWindow: Boolean = scalarMapping.nonEmpty || colorizer.supportsWindow
     override def supportsThreshold: Boolean = scalarMapping.nonEmpty || colorizer.supportsThreshold
+
+    override private[view] def thresholdEdgeSamples: Option[Array[Double]] =
+      Option.when(thresholdEdges)(Array.tabulate(sampleCount)(index => samples.value(index, 0, sampleCount)))
 
     override private[view] def scalarSamples(timepoint: Int): Option[Array[Double]] =
       if interpolation != SurfaceMapInterpolation.VertexScalar then None
@@ -205,7 +240,8 @@ object SurfaceLayer:
     val blendMode: DisplayBlendMode,
     values: Array[Int],
     colorizer: Colorizer[Int],
-    override val interpolation: SurfaceMapInterpolation
+    override val interpolation: SurfaceMapInterpolation,
+    override val thresholdEdges: Boolean = false
   ) extends SurfaceLayer:
     val kind: SurfaceLayerKind = SurfaceLayerKind.Labels
     override val labelMapping: Option[LabelColorizer] = colorizer match
@@ -233,7 +269,8 @@ object SurfaceLayer:
     val blendMode: DisplayBlendMode,
     values: Array[Boolean],
     colorizer: Colorizer[Boolean],
-    override val interpolation: SurfaceMapInterpolation
+    override val interpolation: SurfaceMapInterpolation,
+    override val thresholdEdges: Boolean = false
   ) extends SurfaceLayer:
     val kind: SurfaceLayerKind = SurfaceLayerKind.Mask
 
@@ -257,7 +294,8 @@ object SurfaceLayer:
     val opacity: DisplayOpacity,
     val blendMode: DisplayBlendMode,
     values: Array[Int],
-    override val interpolation: SurfaceMapInterpolation
+    override val interpolation: SurfaceMapInterpolation,
+    override val thresholdEdges: Boolean = false
   ) extends SurfaceLayer:
     val kind: SurfaceLayerKind = SurfaceLayerKind.PackedRgba
 
@@ -285,6 +323,31 @@ object SurfaceLayer:
     expectedLength(geometry, frameCount).flatMap: expected =>
       if expected == actual then Right(()) else Left(SurfaceViewError.InvalidDataLength(expected, actual))
 
+  /** Paired vertex fields share every source vertex and frame. Their mapping is
+    * intentionally inspectable but cannot be reinterpreted as a scalar layer. */
+  def bivariateEffectConfidence(
+    id: SurfaceLayerId,
+    surfaceId: SurfaceId,
+    effect: SurfaceMatrix[Double],
+    confidence: SurfaceMatrix[Double],
+    mapping: BivariateEffectConfidenceMapping,
+    opacity: DisplayOpacity = DisplayOpacity.Opaque,
+    blendMode: DisplayBlendMode = DisplayBlendMode.Normal
+  ): Either[SurfaceViewError, SurfaceLayer] =
+    if !effect.geometry.hasSameMeshDomain(confidence.geometry) || effect.rows != confidence.rows then
+      Left(SurfaceViewError.IncompatibleLayerDomain(id, surfaceId))
+    else if effect.rows != effect.geometry.vertexCount then
+      Left(SurfaceViewError.InvalidDataLength(effect.geometry.vertexCount, effect.rows))
+    else if effect.columns != confidence.columns then
+      Left(SurfaceViewError.IncompatibleFrameCounts(Vector(effect.columns, confidence.columns)))
+    else
+      var row = 0
+      while row < effect.rows do
+        if effect.rowVertex(row) != VertexId(row) || effect.rowVertex(row) != confidence.rowVertex(row) then
+          return Left(SurfaceViewError.IncompatibleLayerDomain(id, surfaceId))
+        row += 1
+      Right(new BivariateLayer(id, surfaceId, effect.geometry, effect.columns, opacity, blendMode, effect, confidence, mapping))
+
   def scalar(
     id: SurfaceLayerId,
     surfaceId: SurfaceId,
@@ -298,6 +361,18 @@ object SurfaceLayer:
   ): Either[SurfaceViewError, SurfaceLayer] =
     validateLength(geometry, frameCount, values.length).map: _ =>
       new ScalarLayer(id, surfaceId, geometry, frameCount, opacity, blendMode, ScalarSamples.Vertex(values.clone()), colorizer, interpolation.policy)
+
+  /** Opt in a single-frame scalar layer to the reference's topmost-layer
+    * visibility-sign edge policy. Ordinary scalar layers retain their existing
+    * mapped-color interpolation. Requires the linear-light display pipeline
+    * when this layer is the eligible topmost visible layer.
+    */
+  def scalarWithThresholdEdges(id: SurfaceLayerId, surfaceId: SurfaceId,
+      geometry: SurfaceGeometry, values: Array[Double], mapping: ScalarMapping,
+      opacity: DisplayOpacity = DisplayOpacity.Opaque): Either[SurfaceViewError, SurfaceLayer] =
+    validateLength(geometry, 1, values.length).map: _ =>
+      new ScalarLayer(id, surfaceId, geometry, 1, opacity, DisplayBlendMode.Normal,
+        ScalarSamples.Vertex(values.clone()), mapping.colorizer, SurfaceMapInterpolation.VertexColor, true)
 
   /** Interpolate raw vertex samples before mapping. Only inspectable scalar mappings
     * can enter this path; categorical constructors retain their existing policies.
@@ -351,6 +426,19 @@ object SurfaceLayer:
         opacity = opacity,
         blendMode = blendMode
       )
+
+  /** Curvature underlay with explicit reference-compatible brightness, contrast,
+    * smoothness and polarity. Scientific values and topology are preserved.
+    */
+  def curvatureUnderlayWithStyle(id: SurfaceLayerId, surfaceId: SurfaceId,
+      curvature: SurfaceField[Double], displayGeometry: SurfaceGeometry,
+      style: SurfaceCurvatureDisplay = SurfaceCurvatureDisplay.Default,
+      opacity: DisplayOpacity = DisplayOpacity.Opaque): Either[SurfaceViewError, SurfaceLayer] =
+    if !curvature.geometry.hasSameMeshDomain(displayGeometry) then Left(SurfaceViewError.IncompatibleLayerDomain(id, surfaceId))
+    else if curvature.size != displayGeometry.vertexCount then Left(SurfaceViewError.InvalidDataLength(displayGeometry.vertexCount, curvature.size))
+    else
+      val values = Array.tabulate(displayGeometry.vertexCount)(i => curvature.valueAt(VertexId(i)).get)
+      scalar(id, surfaceId, curvature.geometry, values, style.mapping.colorizer, opacity = opacity)
 
   def labels(
     id: SurfaceLayerId,

@@ -63,7 +63,7 @@ final class SurfaceLegendPublication private (
         Right(SurfaceLegendPublicationArtifact(Scene(Vector(chrome.grobs.head, imageGrob) ++ chrome.grobs.tail), receipt))
 
 object SurfaceLegendPublication:
-  private final case class Card(scene: Scene, widthPt: Double, heightPt: Double)
+  private[view] final case class Card(scene: Scene, widthPt: Double, heightPt: Double)
   private[view] def point(x: Double, y: Double): Point = Point(LengthExpr(Length.pointsUnsafe(x)), LengthExpr(Length.pointsUnsafe(y)))
   private[view] def size(width: Double, height: Double): Size = Size.fromExtents(ExtentExpr.pointsUnsafe(width), ExtentExpr.pointsUnsafe(height))
 
@@ -135,27 +135,74 @@ object SurfaceLegendPublication:
         SurfaceLegendPublicationReceipt(publicationReceipt, plan.receipt, frame, legendReceipts), chrome)
 
   private def labels(legend: SurfaceLegend): Vector[String] = legend.content match
+    case SurfaceLegendContent.Bivariate(key) => Vector(key.effectTitle.text, key.confidenceTitle.text) ++ key.effectTicks.map(_.label) ++ key.confidenceTicks.map(_.label)
     case SurfaceLegendContent.Continuous(value) => Vector(value.title.text) ++ value.ticks.map(_.label)
     case SurfaceLegendContent.Split(value) => Vector(value.title.text) ++ value.ticks.map(_.label)
     case SurfaceLegendContent.Categorical(title, entries, fallback) => Vector(title.text) ++ entries.map(_.label) :+ fallback.label
     case SurfaceLegendContent.Manual(title, entries) => Vector(title.text) ++ entries.map(_.label)
 
-  private def draw(legend: SurfaceLegend, scalarStyle: ScalarLegendStyle, swatchStyle: SwatchLegendStyle)
+  private[view] def draw(legend: SurfaceLegend, scalarStyle: ScalarLegendStyle, swatchStyle: SwatchLegendStyle)
       : Either[SurfaceLegendPublicationError, Card] =
-    val drawing = legend.content match
+    legend.content match
+      case SurfaceLegendContent.Bivariate(key) =>
+        val width = scalarStyle.widthPt
+        val lineHeight = scalarStyle.metrics.heightPt(TextStyle(Some("sans-serif"), scalarStyle.fontPt))
+        val margin = scalarStyle.marginPt
+        val yLabelWidth = math.max(scalarStyle.fontPt * 3, key.confidenceTicks.map(t =>
+          scalarStyle.metrics.widthPt(t.label, TextStyle(Some("sans-serif"), scalarStyle.fontPt))).max)
+        val imageLeft = margin + yLabelWidth + scalarStyle.gapPt
+        val imageTop = margin + lineHeight
+        val imageWidth = width - imageLeft - margin
+        if !imageWidth.isFinite || imageWidth <= 0 then
+          Left(SurfaceLegendPublicationError.Drawing(LegendError.InvalidLayout("bivariate confidence labels leave no room for the key")))
+        else
+          val imageHeight = imageWidth * key.height.toDouble / key.width.toDouble
+          val tickTop = imageTop + imageHeight
+          val height = tickTop + scalarStyle.gapPt + lineHeight * 2 + margin
+          def at(x: Double, top: Double): Point = point(x, height - top)
+          val image = Grob.imageUnsafe(key.image, at(imageLeft, imageTop), size(imageWidth, imageHeight),
+            anchor = Anchor(HJust.Left, VJust.Top), interpolation = RasterInterpolation.Nearest,
+            name = Some(GraphicsName.unsafe("bivariate-key-image")))
+          val gp = GraphicParams.unsafe(stroke = Some(Rgba.Black), fontSize = Length.pointsUnsafe(scalarStyle.fontPt), fontFamily = Some("sans-serif"))
+          val grobs = Vector.newBuilder[Grob]
+          grobs += image
+          grobs += Grob.rectUnsafe(at(imageLeft, imageTop), size(imageWidth, imageHeight), anchor = Anchor(HJust.Left, VJust.Top),
+            gp = GraphicParams.unsafe(stroke = Some(Rgba.Black), fill = None), name = Some(GraphicsName.unsafe("bivariate-key-outline")))
+          grobs += Grob.textUnsafe(key.effectTitle.text, at(imageLeft + imageWidth / 2, tickTop + scalarStyle.gapPt + lineHeight),
+            anchor = Anchor(HJust.Center, VJust.Top), gp = gp, name = Some(GraphicsName.unsafe("bivariate-effect-title")))
+          grobs += Grob.textUnsafe(key.confidenceTitle.text, at(margin, imageTop + imageHeight / 2),
+            anchor = Anchor(HJust.Center, VJust.Bottom), rotationDegrees = 90, gp = gp,
+            name = Some(GraphicsName.unsafe("bivariate-confidence-title")))
+          key.effectTicks.zipWithIndex.foreach: (tick, index) =>
+            val fraction = key.mapping.effect.scale.window.normalize(tick.value)
+            val x = imageLeft + imageWidth * fraction
+            grobs += Grob.segments(Vector(at(x, tickTop) -> at(x, tickTop + scalarStyle.gapPt)), gp,
+              name = Some(GraphicsName.unsafe(s"bivariate-effect-tick-$index"))).orThrow
+            grobs += Grob.textUnsafe(tick.label, at(x, tickTop + scalarStyle.gapPt), anchor = Anchor(HJust.Center, VJust.Top), gp = gp,
+              name = Some(GraphicsName.unsafe(s"bivariate-effect-label-$index")))
+          key.confidenceTicks.zipWithIndex.foreach: (tick, index) =>
+            val y = imageTop + imageHeight * (1.0 - tick.value)
+            grobs += Grob.segments(Vector(at(imageLeft, y) -> at(imageLeft - scalarStyle.gapPt, y)), gp,
+              name = Some(GraphicsName.unsafe(s"bivariate-confidence-tick-$index"))).orThrow
+            grobs += Grob.textUnsafe(tick.label, at(imageLeft - scalarStyle.gapPt, y), anchor = Anchor(HJust.Right, VJust.Center), gp = gp,
+              name = Some(GraphicsName.unsafe(s"bivariate-confidence-label-$index")))
+          Right(Card(Scene(grobs.result()), width, height))
       case SurfaceLegendContent.Continuous(calibration) =>
         ScalarLegendDrawing.draw(calibration, scalarStyle, legend.notes.filterNot(calibration.notes.contains))
           .map(value => Card(value.scene, value.widthPt, value.heightPt))
+          .left.map(SurfaceLegendPublicationError.Drawing.apply)
       case SurfaceLegendContent.Split(calibration) =>
         ScalarLegendDrawing.draw(calibration, scalarStyle, legend.notes.filterNot(calibration.notes.contains))
           .map(value => Card(value.scene, value.widthPt, value.heightPt))
+          .left.map(SurfaceLegendPublicationError.Drawing.apply)
       case SurfaceLegendContent.Categorical(title, entries, fallback) =>
         SwatchLegendDrawing.draw(title, entries.map(e => e.label -> e.color) :+ (fallback.label -> fallback.color), legend.notes, swatchStyle)
           .map(value => Card(value.scene, value.widthPt, value.heightPt))
+          .left.map(SurfaceLegendPublicationError.Drawing.apply)
       case SurfaceLegendContent.Manual(title, entries) =>
         SwatchLegendDrawing.draw(title, entries.map(e => e.label -> e.color), legend.notes, swatchStyle)
           .map(value => Card(value.scene, value.widthPt, value.heightPt))
-    drawing.left.map(SurfaceLegendPublicationError.Drawing.apply)
+          .left.map(SurfaceLegendPublicationError.Drawing.apply)
 
   private def traverse[A, B](values: Vector[A])(f: A => Either[SurfaceLegendPublicationError, B])
       : Either[SurfaceLegendPublicationError, Vector[B]] =

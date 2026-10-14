@@ -27,7 +27,12 @@ object SurfaceSceneCodec:
         else if revisionValue == 5 then Right(SurfaceDocumentRevision.V5)
         else if revisionValue == 6 then Right(SurfaceDocumentRevision.V6)
         else if revisionValue == 7 then Right(SurfaceDocumentRevision.V7)
+        else if revisionValue == 8 then Right(SurfaceDocumentRevision.V8)
         else Left(SurfaceSceneError.UnsupportedRevision(revisionValue))
+      _ <-
+        if revision.value < 8 && root.fields.exists((name, _) => name == "colorPipeline" || name == "surfaceOpacities" || name == "surfaceBase") then
+          Left(SurfaceSceneError.InvalidJson("$", "color pipeline fields require revision 8"))
+        else Right(())
       assetsJson <- SceneJsonRead.array(root, "assets", "$.assets")
       assets <- traverseIndexed(assetsJson)(parseAsset(_, _, policy))
       layersJson <- SceneJsonRead.array(root, "layers", "$.layers")
@@ -57,6 +62,18 @@ object SurfaceSceneCodec:
         else if root.fields.exists(_._1 == "legends") then
           Left(SurfaceSceneError.InvalidJson("$.legends", "legends require revision 6"))
         else Right(Vector.empty)
+      colorPipeline <- if revision.value >= 8 && root.fields.exists(_._1 == "colorPipeline") then
+        SceneJsonRead.string(root, "colorPipeline", "$.colorPipeline").flatMap(parseColorPipeline)
+      else Right(SurfaceColorPipeline.LegacyDisplayBytes)
+      surfaceOpacities <- if revision.value >= 8 && root.fields.exists(_._1 == "surfaceOpacities") then
+        SceneJsonRead.array(root, "surfaceOpacities", "$.surfaceOpacities").flatMap(values =>
+          traverseIndexed(values)((value, index) => parseSurfaceOpacity(value, index, policy)).flatMap: entries =>
+            if entries.map(_._1).distinct.length == entries.length then Right(entries.toMap)
+            else Left(SurfaceSceneError.InvalidJson("$.surfaceOpacities", "surface ids must be unique")))
+      else Right(Map.empty[SurfaceId, DisplayOpacity])
+      surfaceBase <- if revision.value >= 8 && root.fields.exists(_._1 == "surfaceBase") then
+        parseColor(SceneJsonRead.value(root, "surfaceBase", "$.surfaceBase"))
+      else Right(SurfaceDisplayDefaults.LegacySurfaceBase)
       document <- SurfaceSceneDocument.make(
         revision,
         assets,
@@ -71,13 +88,17 @@ object SurfaceSceneCodec:
         requirements.toSet,
         provenance,
         legends,
-        framing
+        framing,
+        colorPipeline,
+        surfaceOpacities,
+        surfaceBase
       )
     yield document
 
   private val RootFields = Set(
     "schema", "revision", "assets", "layers", "layout", "camera", "lighting",
-    "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends"
+    "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends",
+    "colorPipeline", "surfaceOpacities", "surfaceBase"
   )
 
   private def documentJson(document: SurfaceSceneDocument): SceneJson =
@@ -99,7 +120,13 @@ object SurfaceSceneCodec:
       "provenance" -> provenanceJson(document.provenance)
     )
     SceneJson.Obj(fields ++ Option.when(document.revision.value >= 6)(
-      "legends" -> SceneJson.Arr(document.legends.map(SurfaceSceneLegendCodec.encode))))
+      "legends" -> SceneJson.Arr(document.legends.map(SurfaceSceneLegendCodec.encode))) ++
+      Option.when(document.revision.value >= 8 && document.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes)("colorPipeline" -> colorPipelineJson(document.colorPipeline)) ++
+      Option.when(document.revision.value >= 8 && document.surfaceOpacities.nonEmpty)("surfaceOpacities" -> SceneJson.Arr(
+        document.surfaceOpacities.toVector.sortBy(_._1.value).map: (surface, opacity) =>
+          SceneJson.obj("surface" -> SceneJson.Str(surface.value), "opacity" -> number(opacity.toDouble)))) ++
+      Option.when(document.revision.value >= 8 && document.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase)(
+        "surfaceBase" -> colorJson(document.surfaceBase)))
 
   private def assetJson(asset: SurfaceSceneAsset): SceneJson =
     SceneJson.obj(
@@ -132,7 +159,9 @@ object SurfaceSceneCodec:
         case SurfaceVertexInterpolation.Color => "color"
         case SurfaceVertexInterpolation.NearestSample => "nearest-sample")) ++ Option.when(revision.value >= 4)(
       "scalarMappingKey" -> layer.scalarMappingKey.fold[SceneJson](SceneJson.Null)(SceneJson.Str.apply)) ++ Option.when(revision.value >= 5)(
-      "scalarInterpolation" -> SceneJson.Bool(layer.scalarInterpolation)))
+      "scalarInterpolation" -> SceneJson.Bool(layer.scalarInterpolation)) ++ Option.when(revision.value >= 8 && layer.bivariateMappingKey.nonEmpty)(
+      "bivariateMappingKey" -> SceneJson.Str(layer.bivariateMappingKey.get)) ++ Option.when(revision.value >= 8 && layer.thresholdEdges)(
+      "thresholdEdges" -> SceneJson.Bool(true)))
 
   private def layoutJson(layout: SurfaceLayout): SceneJson =
     layout match
@@ -221,6 +250,11 @@ object SurfaceSceneCodec:
           "lower" -> number(band.lower),
           "upper" -> number(band.upper)
         )
+        case DisplayThreshold.Below(cutoff) => SceneJson.obj("kind" -> SceneJson.Str("below"), "cutoff" -> number(cutoff))
+        case DisplayThreshold.Above(cutoff) => SceneJson.obj("kind" -> SceneJson.Str("above"), "cutoff" -> number(cutoff))
+        case DisplayThreshold.TwoSided(inner, outer) => SceneJson.obj(
+          "kind" -> SceneJson.Str("two-sided"), "lower" -> number(inner.lower), "upper" -> number(inner.upper),
+          "outer" -> outer.fold[SceneJson](SceneJson.Null)(band => SceneJson.Arr(Vector(number(band.lower), number(band.upper)))))
     )
 
   private def provenanceJson(provenance: SurfaceProvenance): SceneJson =
@@ -266,7 +300,8 @@ object SurfaceSceneCodec:
     for
       obj <- SceneJsonRead.obj(value, path, Set("id", "surface", "uri", "sha256", "encoding", "frameCount", "blendMode") ++ Option.when(revision != SurfaceDocumentRevision.V1)("association") ++
         Option.when(revision.value >= 3)("vertexInterpolation") ++
-        Option.when(revision.value >= 4)("scalarMappingKey") ++ Option.when(revision.value >= 5)("scalarInterpolation"), policy)
+        Option.when(revision.value >= 4)("scalarMappingKey") ++ Option.when(revision.value >= 5)("scalarInterpolation") ++
+        Option.when(revision.value >= 8)("bivariateMappingKey") ++ Option.when(revision.value >= 8)("thresholdEdges"), policy)
       idRaw <- SceneJsonRead.string(obj, "id", s"$path.id")
       id <- SurfaceLayerId.make(idRaw).left.map(SurfaceSceneError.InvalidState.apply)
       surfaceRaw <- SceneJsonRead.string(obj, "surface", s"$path.surface")
@@ -298,7 +333,32 @@ object SurfaceSceneCodec:
           case _ => Left(SurfaceSceneError.InvalidJson(s"$path.scalarMappingKey", "expected a nonempty mapping key or null"))
       scalarInterpolation <- if revision.value < 5 then Right(false)
         else SceneJsonRead.bool(obj, "scalarInterpolation", s"$path.scalarInterpolation")
-    yield SurfaceSceneLayer(id, surface, reference, encoding, frames, blend, association, interpolation, mappingKey, scalarInterpolation)
+      bivariateMappingKey <-
+        if revision.value < 8 then Right(None)
+        else obj.fields.toMap.get("bivariateMappingKey") match
+          case None => Right(None)
+          case Some(SceneJson.Null) => Right(None)
+          case Some(SceneJson.Str(value)) if value.nonEmpty => Right(Some(value))
+          case _ => Left(SurfaceSceneError.InvalidJson(s"$path.bivariateMappingKey", "expected a nonempty mapping key or null"))
+      thresholdEdges <- if revision.value < 8 then Right(false)
+        else obj.fields.toMap.get("thresholdEdges") match
+          case None => Right(false)
+          case Some(SceneJson.Bool(value)) => Right(value)
+          case _ => Left(SurfaceSceneError.InvalidJson(s"$path.thresholdEdges", "expected a boolean"))
+    yield SurfaceSceneLayer(
+      id = id,
+      surface = surface,
+      reference = reference,
+      encoding = encoding,
+      frameCount = frames,
+      blendMode = blend,
+      association = association,
+      vertexInterpolation = interpolation,
+      scalarMappingKey = mappingKey,
+      scalarInterpolation = scalarInterpolation,
+      bivariateMappingKey = bivariateMappingKey,
+      thresholdEdges = thresholdEdges
+    )
 
   private def parseReference(obj: SceneJson.Obj, path: String): Either[SurfaceSceneError, SurfaceExternalReference] =
     for
@@ -472,6 +532,16 @@ object SurfaceSceneCodec:
       threshold <- parseThreshold(thresholdJson, s"$path.threshold", policy)
     yield SurfaceSceneLayerState(id, visible, opacity, window, threshold)
 
+  private def parseSurfaceOpacity(value: SceneJson, index: Int, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, (SurfaceId, DisplayOpacity)] =
+    val path = s"$$.surfaceOpacities[$index]"
+    for
+      obj <- SceneJsonRead.obj(value, path, Set("surface", "opacity"), policy)
+      surfaceRaw <- SceneJsonRead.string(obj, "surface", s"$path.surface")
+      surface <- SurfaceId.make(surfaceRaw).left.map(SurfaceSceneError.InvalidState.apply)
+      opacityRaw <- SceneJsonRead.double(obj, "opacity", s"$path.opacity")
+      opacity <- DisplayOpacity.make(opacityRaw).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+    yield surface -> opacity
+
   private def parseWindow(value: SceneJson, path: String): Either[SurfaceSceneError, Option[DisplayWindow]] =
     value match
       case SceneJson.Null => Right(None)
@@ -491,7 +561,7 @@ object SurfaceSceneCodec:
       case SceneJson.Null => Right(None)
       case other =>
         for
-          obj <- SceneJsonRead.obj(other, path, Set("kind", "lower", "upper"), policy)
+          obj <- SceneJsonRead.obj(other, path, Set("kind", "lower", "upper", "cutoff", "outer"), policy)
           kind <- SceneJsonRead.string(obj, "kind", s"$path.kind")
           threshold <- kind match
             case "disabled" => SceneJsonRead.checkFields(obj, path, Set("kind"), policy).map(_ => DisplayThreshold.Disabled)
@@ -501,6 +571,27 @@ object SurfaceSceneCodec:
                 upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
                 result <- DisplayThreshold.transparentBand(lower, upper)
                   .left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+              yield result
+            case "below" | "above" =>
+              for
+                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "cutoff"), policy)
+                cutoff <- SceneJsonRead.double(obj, "cutoff", s"$path.cutoff")
+                result <- (if kind == "below" then DisplayThreshold.below(cutoff) else DisplayThreshold.above(cutoff))
+                  .left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+              yield result
+            case "two-sided" =>
+              for
+                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "lower", "upper", "outer"), policy)
+                lower <- SceneJsonRead.double(obj, "lower", s"$path.lower")
+                upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
+                inner <- ThresholdBand.make(lower, upper).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+                outerJson <- SceneJsonRead.value(obj, "outer", s"$path.outer")
+                outer <- outerJson match
+                  case SceneJson.Null => Right(None)
+                  case SceneJson.Arr(values) => pair(values, s"$path.outer").flatMap: (lo, hi) =>
+                    ThresholdBand.make(lo, hi).map(Some(_)).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+                  case _ => Left(SurfaceSceneError.InvalidJson(s"$path.outer", "expected null or two endpoints"))
+                result <- DisplayThreshold.twoSided(inner, outer).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
               yield result
             case unknown => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown threshold '$unknown'"))
         yield Some(threshold)
@@ -578,6 +669,29 @@ object SurfaceSceneCodec:
     SurfaceBackendFeature.values.find(feature => SurfaceSceneNames.feature(feature) == value) match
       case Some(feature) => Right(feature)
       case None => Left(SurfaceSceneError.InvalidJson("$.requiredFeatures", s"unknown feature '$value'"))
+
+  private def parseColorPipeline(value: String): Either[SurfaceSceneError, SurfaceColorPipeline] =
+    value match
+      case "legacy-display-bytes" => Right(SurfaceColorPipeline.LegacyDisplayBytes)
+      case "display-srgb-linear-light" => Right(SurfaceColorPipeline.DisplaySrgbLinearLight)
+      case other => Left(SurfaceSceneError.InvalidJson("$.colorPipeline", s"unknown color pipeline '$other'"))
+
+  private def colorJson(color: Rgba32): SceneJson =
+    SceneJson.Arr(Vector(color.red, color.green, color.blue, color.alpha).map(value => SceneJson.Num(value.toString)))
+
+  private def parseColor(value: Either[SurfaceSceneError, SceneJson]): Either[SurfaceSceneError, Rgba32] =
+    value.flatMap:
+      case SceneJson.Arr(channels) if channels.length == 4 =>
+        traverseIndexed(channels)((item, index) => SceneJsonRead.doubleValue(item, s"$$.surfaceBase[$index]")).flatMap: values =>
+          if values.forall(value => value.isFinite && value >= 0 && value <= 255 && value == math.floor(value)) then
+            Right(Rgba32.unsafe(values(0).toInt, values(1).toInt, values(2).toInt, values(3).toInt))
+          else Left(SurfaceSceneError.InvalidJson("$.surfaceBase", "channels must be integers from 0 through 255"))
+      case _ => Left(SurfaceSceneError.InvalidJson("$.surfaceBase", "expected four color channels"))
+
+  private def colorPipelineJson(value: SurfaceColorPipeline): SceneJson =
+    SceneJson.Str(value match
+      case SurfaceColorPipeline.LegacyDisplayBytes => "legacy-display-bytes"
+      case SurfaceColorPipeline.DisplaySrgbLinearLight => "display-srgb-linear-light")
 
   private def hemisphereName(value: CorticalHemisphere): String =
     value match

@@ -125,13 +125,19 @@ object ThreeSurfaceProgram:
           base.receipt, Some(proxy), Some(next))
 
   private def compositionProxy(composition: SurfaceCompositionPlan): Either[ThreeSurfaceError, SurfaceRenderPlan] =
+    if composition.views.map(view => (view.colorPipeline, view.surfaceBase)).distinct.length > 1 then
+      return Left(ThreeSurfaceError.InvalidPlan("native composition requires a common color pipeline and surface base"))
+    if composition.views.exists(_.instances.exists(_.opacity != DisplayOpacity.Opaque)) || composition.views.exists(_.surfaceBase.alpha != 255) then
+      return Left(ThreeSurfaceError.InvalidPlan("surface alpha requires the Canvas raster host"))
     val active = composition.views.flatMap(view => view.instances.map(instance => (view, instance)))
     val descriptions = scala.collection.mutable.LinkedHashMap.empty[SurfaceId, (SurfaceResourceKey, Vector[SurfaceResourceKey], Boolean)]
     var error: Option[ThreeSurfaceError] = None
     active.foreach: (view, instance) =>
       if error.isEmpty then
-        if view.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] then
-          error = Some(ThreeSurfaceError.InvalidPlan("world clipping planes are unsupported by the Three.js backend; use the reference raster backend"))
+        if view.clipping match
+            case SurfaceClipping.WorldPlanes(planes) => planes.length > 8 || view.instances.exists(i => !view.fragmentSurfaces(i.surface))
+            case _ => false
+        then error = Some(ThreeSurfaceError.InvalidPlan("world clipping requires fragment packets and at most eight planes"))
         else
           val description = (instance.mesh, instance.layerOrder, view.fragmentSurfaces(instance.surface))
           descriptions.get(instance.surface) match
@@ -156,17 +162,18 @@ object ThreeSurfaceProgram:
         val receipt = SurfaceRenderReceipt(meshes.map(_.resourceKey), layers.map(_.resourceKey),
           "composition-resource-proxy", 0, 0)
         Right(SurfaceRenderPlan(slots, meshes, layers, first.camera, first.lighting, SurfaceClipping.Disabled,
-          Vector.empty, first.chrome, first.readouts, profile, receipt, first.viewportFit, fragments))
+          Vector.empty, first.chrome, first.readouts, profile, receipt, first.viewportFit, fragments, first.colorPipeline, Map.empty, first.surfaceBase))
   def compile(
     previous: Option[(SurfaceRenderPlan, ThreeCanvasSize)],
     next: SurfaceRenderPlan,
     size: ThreeCanvasSize,
     forceDraw: Boolean = false
   ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
-    validate(next).flatMap: _ =>
-      previous match
-        case None => initial(next, size)
-        case Some((before, beforeSize)) => incremental(before, beforeSize, next, size, forceDraw)
+    SurfaceThresholdEdgeValidation.validate(next).left.map(ThreeSurfaceError.InvalidPlan.apply).flatMap: _ =>
+      validate(next).flatMap: _ =>
+        previous match
+          case None => initial(next, size)
+          case Some((before, beforeSize)) => incremental(before, beforeSize, next, size, forceDraw)
 
   private def geometry(plan: SurfaceRenderPlan): Vector[SurfaceMeshPacket] =
     plan.meshes.map(mesh => if plan.fragmentSurfaces(mesh.surface) then ThreeFragmentShader.geometry(mesh) else mesh)
@@ -175,7 +182,7 @@ object ThreeSurfaceProgram:
     val fragments = Vector.newBuilder[ThreeFragmentPacket]
     var error: Option[ThreeSurfaceError] = None
     plan.meshes.filter(mesh => plan.fragmentSurfaces(mesh.surface)).foreach: mesh =>
-      if error.isEmpty then ThreeFragmentShader.compile(mesh, plan.layers) match
+      if error.isEmpty then ThreeFragmentShader.compile(mesh, plan.layers, plan.colorPipeline, plan.surfaceBase) match
         case Left(value) => error = Some(value)
         case Right(value) => fragments += value
     error match
@@ -208,7 +215,7 @@ object ThreeSurfaceProgram:
   ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
     val topology = before.receipt.meshKeys != next.receipt.meshKeys || before.fragmentSurfaces != next.fragmentSurfaces
     val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey)
-    val layerData = layerSignature(before) != layerSignature(next)
+    val layerData = layerSignature(before) != layerSignature(next) || before.colorPipeline != next.colorPipeline || before.surfaceBase != next.surfaceBase
     val material = before.lighting != next.lighting
     val camera = before.receipt.cameraKey != next.receipt.cameraKey
     val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
@@ -237,10 +244,15 @@ object ThreeSurfaceProgram:
       Left(ThreeSurfaceError.InvalidPlan("scalar layer requires fragment surface semantics"))
     else if plan.slots.length != plan.meshes.length then
       Left(ThreeSurfaceError.InvalidPlan("slot and mesh counts differ"))
-    else if plan.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] then
-      Left(ThreeSurfaceError.InvalidPlan(
-        "world clipping planes are unsupported by the Three.js backend; use the reference raster backend"
-      ))
+    else if plan.surfaceBase.alpha != 255 || plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
+      Left(ThreeSurfaceError.InvalidPlan("surface alpha requires the Canvas raster host"))
+    else if plan.clipping match
+        case SurfaceClipping.WorldPlanes(planes) => planes.length > 8 || plan.meshes.exists(mesh => !plan.fragmentSurfaces(mesh.surface))
+        case _ => false
+    then Left(ThreeSurfaceError.InvalidPlan("world clipping requires fragment packets and at most eight planes"))
+    else if (plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase) &&
+        plan.meshes.exists(mesh => !plan.fragmentSurfaces(mesh.surface)) then
+      Left(ThreeSurfaceError.InvalidPlan("explicit color policies require fragment packets"))
     else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
       Left(ThreeSurfaceError.InvalidPlan("camera matrices must be 4x4"))
     else if plan.meshes.exists(mesh => mesh.positions.length % 3 != 0 || mesh.normals.length != mesh.positions.length) then

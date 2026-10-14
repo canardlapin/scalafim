@@ -48,6 +48,31 @@ class ThreeSurfaceScalarSuite extends munit.FunSuite:
     val error = ThreeSurfaceProgram.compile(None, plan, size).left.toOption.get
     assert(error.message.contains("collapse"))
 
+  test("direct malformed threshold-edge packets fail before program construction"):
+    val plan = SurfaceVisibilityFixture.plan("threshold-edge")
+    val layer = plan.layers.head
+    val malformed = SurfaceThresholdEdgePacket(new FloatBufferView(Array(1f)), layer.thresholdEdge.get.colors)
+    val layers = Vector(layer.copy(thresholdEdge = Some(malformed)))
+    val error = ThreeSurfaceProgram.compile(None, plan.copy(layers = layers), size).left.toOption.get
+    assert(error.message.contains("threshold edge"))
+    assert(ThreeFragmentShader.compile(plan.meshes.head, layers,
+      SurfaceColorPipeline.DisplaySrgbLinearLight).isLeft)
+
+  test("discrete transitions use admitted physical thresholds and refuse rounded neighboring samples"):
+    val colors = Vector.tabulate(4)(i => Rgba32.unsafe(i * 80, 0, 0))
+    val mapping = ScalarMapping(ScalarScale.sequential(DisplayWindow.unsafe(0, 1), ScalarRamp.discrete(colors).toOption.get))
+    val boundary = mapping.scale.segments.head.boundaries(1)
+    def plan(sample: Double): SurfaceRenderPlan =
+      val model = SurfaceScalarFixture.model(mapping, Array.fill(4)(sample))
+      SurfaceCompiler.compile(model, SurfaceFaceFixture.state(model)).toOption.get
+    val at = plan(boundary)
+    val shader = ThreeFragmentShader.compile(at.meshes.head, at.layers).toOption.get
+    assert(shader.fragmentShader.contains("if (x <"))
+    assert(!shader.fragmentShader.contains("if (t <"))
+    for neighbor <- Vector(math.nextAfter(boundary, Double.NegativeInfinity), math.nextAfter(boundary, Double.PositiveInfinity)) do
+      val value = plan(neighbor)
+      assert(ThreeFragmentShader.compile(value.meshes.head, value.layers).left.toOption.get.message.contains("collapse"))
+
   test("uncovered samples cannot dilute scalar precision"):
     val mapping = ScalarMapping(ScalarScale.sequential(DisplayWindow.unsafe(1e8 - 1, 1e8 + 1),
       SurfaceScalarFixture.mapping.scale.segments.head.ramp))

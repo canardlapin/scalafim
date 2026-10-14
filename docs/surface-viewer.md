@@ -11,6 +11,12 @@ remaining display gaps, retained work to recover, and the required side-by-side
 native visual comparisons. Existing backend conformance does not by itself
 establish display-for-display parity with SurfViewJS.
 
+The P4/P5 display APIs add explicit linear-light color interpolation, bivariate
+effect/confidence mappings, clipping, raster-host translucency, linked flat maps,
+fractional playback restoration, and composition-based figure export. Their
+bounded synthetic comparisons are recorded in the parity plan; the complete
+151-checkpoint cortex/interaction matrix remains unqualified.
+
 ## Architecture
 
 ```text
@@ -80,8 +86,9 @@ val plan = SurfaceCompiler.compile(model, state)
 ```
 
 Scalar, label, mask, packed-RGBA, curvature, projected-volume, annotation, and
-connectivity-derived layers ultimately compile to primitive packed color buffers.
-Backends therefore do not grow special scientific-data entry points.
+connectivity-derived layers compile to primitive color buffers and, for declared
+fragment policies, original sample buffers and inspectable mappings. Backends
+consume those plans rather than adding scientific-data entry points.
 
 ## Coordinates and anatomical orientation
 
@@ -150,10 +157,27 @@ transparent-band threshold hides only values strictly inside the finite band;
 boundary values remain visible, matching the image-view/neuroimjs contract.
 Thresholding is independent from the display window.
 
+For SurfViewJS-compatible display, opt into
+`SurfaceColorPipeline.DisplaySrgbLinearLight`. Ordinary vertex stacks compose
+display RGB at vertices, decode to linear light for interpolation and lighting,
+and encode the output once. Existing scenes keep `LegacyDisplayBytes`.
+`SurfaceCurvatureDisplay` exposes brightness, contrast, smoothness and polarity;
+`SurfaceLayer.bivariateEffectConfidence` binds effect and confidence fields to
+one inspectable Intaglio mapping and a matching two-dimensional key.
+`SurfaceThresholdEdges` is an explicit shown/hidden-sign interpolation policy
+for an eligible topmost normal-blend vertex overlay. It is distinct from scalar
+isocontours. Unsupported combinations return typed errors.
+
 Dynamic fields expose a validated time axis or a bounded frame source.
 `SurfacePlayback` resolves nearest/linear samples through an immutable LRU and
 materializes an ordinary scalar layer. Timepoint changes update only layer
 resources: mesh keys remain stable and admission rejects geometry uploads.
+
+Persist `SurfacePlaybackDocument` alongside a scene or composition document to
+retain fractional playhead, rate, status, looping, interpolation and the external
+temporal source binding. Restore its sampled layer first with `prepare`, rebuild
+the viewer model, then restore the composition. Restore validates the supplied
+source reference and discards cached frames for that field ID before sampling.
 
 Each `SurfaceAsset` may own a topology-locked `SurfaceSet` containing named
 white, smooth-white, pial, midthickness, inflated, spherical, or custom
@@ -226,10 +250,11 @@ It may color corresponding inflated geometry only when the cortical hemisphere,
 vertex order, and ordered triangle topology agree. Parcel and ROI boundaries
 reuse the surface module's topology edge table.
 
-The reference raster implements exact world-plane clipping. JavaFX and Three.js
-currently reject world-plane plans and advertise that limitation in
-`SurfaceBackendCapabilities`; callers can choose the reference path or omit the
-unsupported feature. Near/far camera clipping remains available.
+The reference raster implements world-plane clipping. Three.js supports it for
+admitted fragment-sample plans, including decorated compositions; native JavaFX
+Scene3D still refuses it. Backend capabilities and typed refusals describe those
+limits, and the raster hosts provide an explicit alternative. Near/far camera
+clipping remains available.
 
 Publication presets pin dimensions, margins, font sizes, background, title,
 orientation, and legend. 2D chrome is a normal Intaglio `Scene`, so the same
@@ -314,10 +339,42 @@ for testing, snapshots, and fallback—not high-frame-rate interaction.
 
 ## Serialization
 
-`SurfaceSceneDocument` revision 1 records external URI/SHA-256 references,
+### Flat maps and composition figures
+
+`SurfaceFlatMap` retains scientific vertex IDs in equal-scale 2D coordinates.
+`CanvasSurfaceFlatMapHost` and `JavaFxSurfaceFlatMapHost` provide hover, selection,
+polygon/lasso ROI construction, and viewer-state synchronization. Feed selection
+actions into `SurfaceViewer.reduce`, then sync every linked host. Completed ROI
+outlines and drafts use map coordinates and survive resizing; replacing the map
+geometry clears them. The hosts do not own application event listeners. Like the
+current SurfViewJS flat map, the fill is uniform rather than scalar-painted.
+
+`SurfaceFigurePublication.prepare` accepts a viewer model/state, a
+`SurfaceCompositionState`, a `SurfaceFigureSpec`, and legend requests. Legends
+bind to the layers actually displayed in composition instances. It reserves
+title/panel labels and a legend column, preserving each camera's aspect ratio.
+`renderWith` supplies the exact composition, raster dimensions, transparent
+background and pixel scale to the caller's renderer. Its Intaglio scene combines
+that surface image with vector text and legends. One/two scale exports use
+1200×900/2400×1800 pixels at 96/192 PPI on the same 900×675-point page. Pass the
+receipt's PPI to the final renderer and scale pixel-sized decorations with the
+render input's `pixelScale`.
+
+`CanvasRasterSurfaceHost` and `JavaFxRasterSurfaceHost` present the portable
+raster with coherent picking and explicit resize/dispose behavior. They provide
+the clipping/translucency route when a native backend refuses a requested policy.
+This is a raster provider, with separate interaction and resource qualification;
+it does not change JavaFX Scene3D admission or establish cortical frame-rate parity.
+
+### Scene documents
+
+`SurfaceSceneDocument` revision 8 records external URI/SHA-256 references,
 exact asset/layer identity, layout, camera, lighting, clipping, timepoint,
 selection, presentation/order, required neutral capabilities, and sorted
-provenance. Payload arrays remain external. `SurfaceSceneCodec` emits canonical
+provenance, color pipeline, base color and surface opacity. Older documents retain
+their legacy defaults on migration. `SurfaceCompositionDocument` revision 2 adds
+view/instance navigation and instance opacity. Payload arrays remain external.
+`SurfaceSceneCodec` emits canonical
 JSON on JVM and JS, rejects duplicate/unknown fields by default, and never
 serializes JavaFX or Three.js objects.
 

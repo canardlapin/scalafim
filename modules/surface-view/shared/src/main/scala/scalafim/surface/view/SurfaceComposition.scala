@@ -1,7 +1,7 @@
 package scalafim.surface.view
 
 import image4s.geometry.{D3, Frame}
-import intaglio.Scene
+import intaglio.{DisplayBlendMode, DisplayOpacity, Rgba32, Scene}
 
 opaque type SurfaceViewId = String
 object SurfaceViewId:
@@ -46,7 +46,8 @@ final case class SurfaceCompositionInstance(
   layerOrder: Vector[SurfaceResourceKey],
   translationX: Double = 0.0,
   translationY: Double = 0.0,
-  translationZ: Double = 0.0
+  translationZ: Double = 0.0,
+  opacity: DisplayOpacity = DisplayOpacity.Opaque
 )
 
 final case class SurfaceCompositionView(
@@ -59,7 +60,9 @@ final case class SurfaceCompositionView(
   chrome: Scene = Scene.empty,
   readouts: Vector[SurfaceReadout] = Vector.empty,
   viewportFit: SurfaceViewportFit = SurfaceViewportFit.Fill,
-  fragmentSurfaces: Set[SurfaceId] = Set.empty
+  fragmentSurfaces: Set[SurfaceId] = Set.empty,
+  colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
 )
 
 final case class SurfaceCompositionResources(
@@ -124,10 +127,15 @@ object SurfaceCompositionPlan:
             case Some(layer) if layer.resourceKey != key => return Left(SurfaceCompositionError.ConflictingLayer(key))
             case Some(layer) if layer.surface != instance.surface => return Left(SurfaceCompositionError.MeshSurfaceMismatch(key, instance.surface))
             case Some(layer) =>
-              invalidLayer(resources.meshes(instance.mesh), layer, view.fragmentSurfaces(instance.surface)) match
+              invalidLayer(resources.meshes(instance.mesh), layer, view.fragmentSurfaces(instance.surface) || view.colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight) match
                 case Some(reason) => return Left(SurfaceCompositionError.InvalidResource(key, reason))
                 case None => ()
           layerIndex += 1
+        val stack = instance.layerOrder.map(resources.layers)
+        if stack.exists(_.thresholdEdge.nonEmpty) &&
+            (view.colorPipeline != SurfaceColorPipeline.DisplaySrgbLinearLight || stack.dropRight(1).exists(_.thresholdEdge.nonEmpty) ||
+              stack.exists(_.interpolation != SurfaceMapInterpolation.VertexColor) || stack.last.blendMode != DisplayBlendMode.Normal) then
+          return Left(SurfaceCompositionError.InvalidPresentation("threshold edges require one topmost normal layer in a linear vertex-color stack"))
         if SurfaceFragmentEvaluator.required(instance.layerOrder.map(resources.layers(_).interpolation)) && !view.fragmentSurfaces(instance.surface) then
           return Left(SurfaceCompositionError.InvalidPresentation("mixed interpolation requires fragment composition"))
         instanceIndex += 1
@@ -166,10 +174,11 @@ object SurfaceCompositionPlan:
         case Some(mesh) =>
           val instance = SurfaceCompositionInstance(
             SurfaceInstanceId.make(s"legacy-instance-$index").toOption.get, slot.surface, mesh.resourceKey,
-            layersBySurface.getOrElse(slot.surface, Vector.empty), slot.worldOffsetX, slot.worldOffsetY, slot.worldOffsetZ)
+            layersBySurface.getOrElse(slot.surface, Vector.empty), slot.worldOffsetX, slot.worldOffsetY, slot.worldOffsetZ,
+            plan.surfaceOpacities.getOrElse(slot.surface, DisplayOpacity.Opaque))
           views += SurfaceCompositionView(SurfaceViewId.make(s"legacy-$index").toOption.get, slot.viewport,
             plan.camera, Vector(instance), plan.lighting, plan.clipping, plan.chrome, plan.readouts,
-            plan.viewportFit, plan.fragmentSurfaces)
+            plan.viewportFit, plan.fragmentSurfaces, plan.colorPipeline, plan.surfaceBase)
       index += 1
     make(views.result(), SurfaceCompositionResources(meshTable, layerTable))
 
@@ -227,6 +236,8 @@ object SurfaceCompositionPlan:
     val samples = mesh.sampleNormals.getOrElse(mesh.normals).length / 3
     val faces = mesh.nearestPartition.fold(mesh.indices.length / 3)(_.originalFaceCount)
     if layer.colors.length != mesh.positions.length / 3 then Some("render color count differs from mesh vertices")
+    else if SurfaceThresholdEdgeValidation.validatePacket(mesh, layer).isLeft then
+      SurfaceThresholdEdgeValidation.validatePacket(mesh, layer).left.toOption
     else if scalar != layer.scalarField.nonEmpty then Some("scalar interpolation and scalar field disagree")
     else if scalar && !fragments then Some("scalar interpolation requires fragment composition")
     else if fragments && mesh.sourceVertices.nonEmpty && mesh.sampleNormals.isEmpty then Some("fragment provenance requires original sample normals")
@@ -275,19 +286,25 @@ final case class SurfaceCompositionPresentation(
   selection: Option[SurfaceSelection],
   geometryPresentations: Map[SurfaceId, SurfaceGeometryPresentation],
   layerOrder: Vector[SurfaceLayerId],
-  presentations: Map[SurfaceLayerId, SurfaceLayerPresentation]
+  presentations: Map[SurfaceLayerId, SurfaceLayerPresentation],
+  colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+  surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
 )
 object SurfaceCompositionPresentation:
   def fromViewerState(state: SurfaceViewerState): SurfaceCompositionPresentation =
-    SurfaceCompositionPresentation(state.timepoint, state.selection, state.geometryPresentations, state.layerOrder, state.presentations)
+    SurfaceCompositionPresentation(state.timepoint, state.selection, state.geometryPresentations, state.layerOrder, state.presentations,
+      state.colorPipeline, state.surfaceOpacities, state.surfaceBase)
 
 final case class SurfaceCompositionInputInstance[F <: Frame[D3]](
   id: SurfaceInstanceId, surface: SurfaceId, display: SurfaceDisplayFrame[F],
-  translationX: Double = 0.0, translationY: Double = 0.0, translationZ: Double = 0.0
+  translationX: Double = 0.0, translationY: Double = 0.0, translationZ: Double = 0.0,
+  opacity: DisplayOpacity = DisplayOpacity.Opaque
 )
 final case class SurfaceCompositionInputView[F <: Frame[D3]](
   id: SurfaceViewId, viewport: SurfaceViewport, camera: SurfaceCamera, pose: SurfaceCameraPose[F],
-  instances: Vector[SurfaceCompositionInputInstance[F]], lighting: SurfaceLighting, clipping: SurfaceClipping
+  instances: Vector[SurfaceCompositionInputInstance[F]], lighting: SurfaceLighting, clipping: SurfaceClipping,
+  colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes
 )
 
 object SurfaceCompositionCompiler:
@@ -317,7 +334,9 @@ object SurfaceCompositionCompiler:
           layout = SurfaceLayout.Single(item.surface), camera = input.camera, framing = CameraFraming.BoundsFit,
           lighting = input.lighting, clipping = input.clipping, timepoint = presentation.timepoint,
           selection = presentation.selection, geometryPresentations = presentation.geometryPresentations,
-          layerOrder = presentation.layerOrder, presentations = presentation.presentations
+          layerOrder = presentation.layerOrder, presentations = presentation.presentations,
+          colorPipeline = input.colorPipeline, surfaceOpacities = presentation.surfaceOpacities,
+          surfaceBase = presentation.surfaceBase
         )
         SurfaceCompiler.compile(model, state, item.display, input.pose) match
           case Left(error) => return Left(SurfaceCompositionError.Compilation(error))
@@ -340,7 +359,8 @@ object SurfaceCompositionCompiler:
               layerIndex += 1
             val mesh = compiled.meshes.find(_.surface == item.surface).get
             instances += SurfaceCompositionInstance(item.id, item.surface, mesh.resourceKey,
-              compiled.layers.filter(_.surface == item.surface).map(_.resourceKey), item.translationX, item.translationY, item.translationZ)
+              compiled.layers.filter(_.surface == item.surface).map(_.resourceKey), item.translationX, item.translationY, item.translationZ,
+              multiplyOpacity(item.opacity, presentation.surfaceOpacities.getOrElse(item.surface, DisplayOpacity.Opaque)))
             if camera.isEmpty then
               camera = Some(compiled.camera)
               chrome = compiled.chrome
@@ -348,7 +368,7 @@ object SurfaceCompositionCompiler:
             fragments = fragments ++ compiled.fragmentSurfaces
         instanceIndex += 1
       views += SurfaceCompositionView(input.id, input.viewport, camera.get, instances.result(), input.lighting, input.clipping,
-        chrome, readouts, fit, fragments)
+        chrome, readouts, fit, fragments, input.colorPipeline, presentation.surfaceBase)
       viewIndex += 1
     SurfaceCompositionPlan.make(views.result(), SurfaceCompositionResources(meshes.toMap, layers.toMap))
 
@@ -360,6 +380,8 @@ object SurfaceCompositionCompiler:
       Some(SurfaceCompositionError.InvalidPresentation("layer presentations must contain each model layer exactly once"))
     else if presentation.geometryPresentations.keySet != model.surfaces.map(_.id).toSet then
       Some(SurfaceCompositionError.InvalidPresentation("geometry presentations must contain each model surface exactly once"))
+    else if !presentation.surfaceOpacities.keySet.subsetOf(model.surfaces.map(_.id).toSet) then
+      Some(SurfaceCompositionError.InvalidPresentation("surface opacities must reference model surfaces"))
     else
       val initial = SurfaceViewerState.initial(model)
       val action = presentation.selection.map: selected =>
@@ -368,6 +390,9 @@ object SurfaceCompositionCompiler:
           case None => SurfaceViewerAction.Select(selected.surface, selected.vertex)
       action.flatMap(value => SurfaceViewer.reduce(model, initial, value).left.toOption)
         .map(error => SurfaceCompositionError.Compilation(SurfaceCameraError.View(error)))
+
+  private def multiplyOpacity(left: DisplayOpacity, right: DisplayOpacity): DisplayOpacity =
+    DisplayOpacity.unsafe(left.toDouble * right.toDouble)
 
   private[view] def compatibleMeshReuse(left: SurfaceMeshPacket, right: SurfaceMeshPacket): Boolean =
     if left.geometryKey == right.geometryKey then sameMesh(left, right)
@@ -395,6 +420,7 @@ object SurfaceCompositionCompiler:
       left.interpolation == right.interpolation && left.coverage == right.coverage && sameInts(left.colors, right.colors) &&
       left.scalarMapping.map(_.canonicalKey) == right.scalarMapping.map(_.canonicalKey) &&
       sameOptional(left.sampleColors, right.sampleColors)(sameInts) &&
+      sameOptional(left.thresholdEdge, right.thresholdEdge)((a, b) => sameFloats(a.signs, b.signs) && sameInts(a.colors, b.colors)) &&
       sameOptional(left.scalarField, right.scalarField)((a, b) =>
         a.mapping.canonicalKey == b.mapping.canonicalKey && a.samples.length == b.samples.length &&
           (0 until a.samples.length).forall(index =>

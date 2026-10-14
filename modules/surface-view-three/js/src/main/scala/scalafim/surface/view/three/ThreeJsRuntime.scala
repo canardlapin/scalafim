@@ -33,6 +33,7 @@ final class ThreeJsRuntime private (
     var shaderIdentity: Option[(String, String)] = None
   ):
     var depthBounds = ThreeJsRuntime.positionBounds(packet.positions)
+    var fragmentPacket: Option[ThreeFragmentPacket] = None
 
   private final case class CompositionInstance(
     origin: SurfaceDisplayOrigin,
@@ -68,6 +69,7 @@ final class ThreeJsRuntime private (
   private def fittedSlots: Vector[SurfaceViewSlot] = viewportFit.resolve(slots, canvasSize.width.toDouble, canvasSize.height.toDouble)
   private var canvasSize = ThreeCanvasSize.unsafe(1, 1)
   private var disposed = false
+  private var activeClipping: SurfaceClipping = SurfaceClipping.Disabled
   private var composition = Vector.empty[CompositionView]
   private var decorations = Vector.empty[DecorationInstance]
 
@@ -292,13 +294,14 @@ final class ThreeJsRuntime private (
           bundle.pickMesh.updateDynamic("material")(material)
           bundle.shaderIdentity = Some(identity)
         bundle.colorKeys = packet.resourceKeys
+        bundle.fragmentPacket = Some(packet)
       bytes
 
   override def validateFragments(packets: Vector[ThreeFragmentPacket]): Either[ThreeSurfaceError, Unit] =
     val capabilities = renderer.selectDynamic("capabilities")
     val maxAttributes = capabilities.selectDynamic("maxAttributes").asInstanceOf[Int]
     val maxVaryings = capabilities.selectDynamic("maxVaryings").asInstanceOf[Int]
-    if packets.exists(p => p.attributes.length + 2 > maxAttributes || p.attributes.length + 1 > maxVaryings) then
+    if packets.exists(p => p.attributes.length + 2 > maxAttributes || p.attributes.length + 2 > maxVaryings) then
       Left(ThreeSurfaceError.InvalidPlan("fragment layers exceed native attribute or varying capacity"))
     else Right(())
 
@@ -308,6 +311,7 @@ final class ThreeJsRuntime private (
   ): Either[ThreeSurfaceError, Unit] =
     attempt("camera update"):
       setCamera(packet)
+      setClipping(clipping)
       ()
 
   def updateLayout(next: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit] =
@@ -327,6 +331,7 @@ final class ThreeJsRuntime private (
       else drawLegacy()
 
   private def drawLegacy(): Unit =
+      setClipping(activeClipping)
       renderer.updateDynamic("autoClear")(false)
       ThreeJsRuntime.clearFrame(renderer, options)
       val originalProjection = camera.selectDynamic("projectionMatrix").applyDynamic("clone")()
@@ -376,6 +381,7 @@ final class ThreeJsRuntime private (
         decorations.foreach(decoration => decoration.mesh.updateDynamic("visible")(decoration.origin.view == entry.view.id))
         setCamera(entry.view.camera)
         setLighting(entry.view.lighting)
+        setClipping(entry.view.clipping)
         val originalProjection = camera.selectDynamic("projectionMatrix").applyDynamic("clone")()
         val depthInputs = entry.instances.map: instance =>
           position(instance.mesh, instance.pickMesh, instance.translationX, instance.translationY, instance.translationZ)
@@ -424,7 +430,7 @@ final class ThreeJsRuntime private (
       // loses instance translations and is wrong for orthographic ray origins.
       pickComposition(x, y)
       val scientific = entry.instances.iterator.flatMap: instance =>
-        raycaster.applyDynamic("intersectObject")(instance.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]].headOption
+        raycaster.applyDynamic("intersectObject")(instance.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]].find(hit => retainedByClip(hit, entry.view.clipping))
           .flatMap: hit =>
             decodePick(instance.bundle, instance.translationX, instance.translationY, instance.translationZ,
               hit, Some(instance.origin), scientific = true)
@@ -432,7 +438,7 @@ final class ThreeJsRuntime private (
       val hits = decorations.iterator
         .filter(decoration => decoration.origin.view == entry.view.id && decoration.pickable)
         .flatMap: decoration =>
-          raycaster.applyDynamic("intersectObject")(decoration.mesh, false).asInstanceOf[js.Array[js.Dynamic]].headOption
+          raycaster.applyDynamic("intersectObject")(decoration.mesh, false).asInstanceOf[js.Array[js.Dynamic]].find(hit => retainedByClip(hit, entry.view.clipping))
             .map(hit => (hit.selectDynamic("distance").asInstanceOf[Double], decoration))
         .toVector
       val overlay = hits.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).sortBy(_._1).headOption
@@ -483,7 +489,7 @@ final class ThreeJsRuntime private (
           raycaster.updateDynamic("far")(direction.applyDynamic("length")())
           raycaster.applyDynamic("set")(near, direction.applyDynamic("normalize")())
           val hits = raycaster.applyDynamic("intersectObject")(bundle.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]]
-          hits.headOption.flatMap(hit => decodePick(bundle, selected.worldOffsetX, selected.worldOffsetY,
+          hits.find(hit => retainedByClip(hit, activeClipping)).flatMap(hit => decodePick(bundle, selected.worldOffsetX, selected.worldOffsetY,
             selected.worldOffsetZ, hit, None, scientific = false))
 
   private def pickComposition(x: Double, y: Double): Option[ThreePick] =
@@ -522,7 +528,7 @@ final class ThreeJsRuntime private (
         raycaster.updateDynamic("far")(direction.applyDynamic("length")())
         raycaster.applyDynamic("set")(near, direction.applyDynamic("normalize")())
         val candidates = entry.instances.iterator.flatMap: instance =>
-          raycaster.applyDynamic("intersectObject")(instance.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]].headOption
+          raycaster.applyDynamic("intersectObject")(instance.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]].find(hit => retainedByClip(hit, entry.view.clipping))
             .map(hit => (hit.selectDynamic("distance").asInstanceOf[Double], instance, hit))
         candidates.toVector.sortBy(_._1).headOption.flatMap: (_, instance, hit) =>
           decodePick(instance.bundle, instance.translationX, instance.translationY, instance.translationZ,
@@ -714,9 +720,11 @@ final class ThreeJsRuntime private (
           // display bytes, matching the raster and JavaFX texture contract.
           // Automatic sRGB decode before filtering would darken alpha edges.
           construct("ShaderMaterial")(js.Dynamic.literal(
-            uniforms = js.Dynamic.literal(uMap = js.Dynamic.literal(value = map)),
-            vertexShader = "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-            fragmentShader = "uniform sampler2D uMap; varying vec2 vUv; void main() { vec4 c = texture2D(uMap, vUv); if (c.a <= 0.001) discard; gl_FragColor = c; }",
+            uniforms = js.Dynamic.literal(uMap = js.Dynamic.literal(value = map),
+              uClipCount = js.Dynamic.literal(value = 0),
+              uClipPlanes = js.Dynamic.literal(value = js.Array((0 until 8).map(_ => construct("Vector4")(0.0, 0.0, 0.0, 0.0))*))),
+            vertexShader = "varying vec2 vUv; varying vec3 vWorldPosition; void main() { vUv = uv; vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+            fragmentShader = "uniform sampler2D uMap; uniform int uClipCount; uniform vec4 uClipPlanes[8]; varying vec2 vUv; varying vec3 vWorldPosition; void main() { for (int i = 0; i < 8; i++) { if (i < uClipCount && dot(vec4(vWorldPosition, 1.0), uClipPlanes[i]) < 0.0) discard; } vec4 c = texture2D(uMap, vUv); if (c.a <= 0.001) discard; gl_FragColor = c; }",
             transparent = true,
             premultipliedAlpha = true,
             toneMapped = false,
@@ -792,8 +800,40 @@ final class ThreeJsRuntime private (
     bundle.geometry.applyDynamic("dispose")()
     bundle.material.applyDynamic("dispose")()
 
+  private def clippingPlanes(value: SurfaceClipping): Vector[WorldClipPlane] = value match
+    case SurfaceClipping.WorldPlanes(planes) => planes
+    case _ => Vector.empty
+
+  private def setClipping(value: SurfaceClipping): Unit =
+    activeClipping = value
+    val planes = clippingPlanes(value)
+    def update(material: js.Dynamic): Unit =
+      val uniforms = material.selectDynamic("uniforms")
+      if !missing(uniforms) && !missing(uniforms.selectDynamic("uClipCount")) then
+        uniforms.selectDynamic("uClipCount").updateDynamic("value")(planes.length)
+        val values = uniforms.selectDynamic("uClipPlanes").selectDynamic("value").asInstanceOf[js.Array[js.Dynamic]]
+        planes.zipWithIndex.foreach: (p, i) =>
+          val sign = if p.keep == ClipKeepSide.Positive then 1.0 else -1.0
+          values(i).applyDynamic("set")(sign * p.normalX, sign * p.normalY, sign * p.normalZ, sign * p.offset)
+      else
+        material.updateDynamic("clippingPlanes")(js.Array(planes.map: p =>
+          val sign = if p.keep == ClipKeepSide.Positive then 1.0 else -1.0
+          construct("Plane")(construct("Vector3")(sign * p.normalX, sign * p.normalY, sign * p.normalZ), sign * p.offset)
+        *))
+    renderer.updateDynamic("localClippingEnabled")(true)
+    bundles.valuesIterator.foreach(bundle => update(bundle.material))
+    decorations.foreach(decoration => update(decoration.material))
+
+  private def retainedByClip(hit: js.Dynamic, clipping: SurfaceClipping): Boolean =
+    val point = hit.selectDynamic("point")
+    clippingPlanes(clipping).forall(_.orientedDistance(point.selectDynamic("x").asInstanceOf[Double],
+      point.selectDynamic("y").asInstanceOf[Double], point.selectDynamic("z").asInstanceOf[Double]) >= 0)
+
   private def newMaterial(fragment: Option[ThreeFragmentPacket] = None): js.Dynamic =
     val uniforms = js.Dynamic.literal(
+      uClipCount = js.Dynamic.literal(value = 0),
+      uClipPlanes = js.Dynamic.literal(value = js.Array((0 until 8).map(_ => construct("Vector4")(0.0, 0.0, 0.0, 0.0))*)),
+      uSurfaceOpacity = js.Dynamic.literal(value = 1.0),
       uAmbient = js.Dynamic.literal(value = 1.0),
       uDiffuse = js.Dynamic.literal(value = 0.0),
       uLightDirection = js.Dynamic.literal(value = construct("Vector3")(0.0, 0.0, 1.0))

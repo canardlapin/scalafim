@@ -1,5 +1,6 @@
 package scalafim.surface.view.javafx
 
+import intaglio.DisplayOpacity
 import javafx.application.{ConditionalFeature, Platform}
 import javafx.scene.{Camera, Group, SceneAntialiasing, SubScene}
 import javafx.scene.image.WritableImage
@@ -196,6 +197,9 @@ final class JavaFxSurfaceBackend private (
     val started = System.nanoTime()
     requireFxThread().flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
+      else if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
+          plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
+        Left(JavaFxSurfaceError.IncompatiblePlan("explicit color pipeline and surface alpha require JavaFxRasterSurfaceHost"))
       else plan.clipping match
         case SurfaceClipping.WorldPlanes(_) => Left(JavaFxSurfaceError.IncompatiblePlan("world clipping planes are unsupported by JavaFX Scene3D"))
         case _ => prepare(plan).flatMap(prepared => renderPrepared(plan, prepared))
@@ -431,7 +435,10 @@ final class JavaFxSurfaceBackend private (
 
 object JavaFxSurfaceBackend:
   private[javafx] def validateCapabilities(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
-    if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
+    if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
+        plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("explicit color pipeline and surface alpha require JavaFxRasterSurfaceHost"))
+    else if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend"))
     else plan.clipping match
       case SurfaceClipping.WorldPlanes(_) =>

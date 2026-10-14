@@ -5,6 +5,7 @@ import intaglio.*
 /** A saved request plus the identity that restoration must reproduce. */
 final case class SurfaceSceneLegend(request: SurfaceLegendRequest, canonicalKey: String):
   def layerIds: Vector[SurfaceLayerId] = request match
+    case SurfaceLegendRequest.Bivariate(layers, _, _, _, _, _, _) => layers.ids
     case SurfaceLegendRequest.Continuous(layers, _, _, _, _) => layers.ids
     case SurfaceLegendRequest.Split(layers, _, _, _, _) => layers.ids
     case SurfaceLegendRequest.Categorical(layers, _, _, _) => layers.ids
@@ -24,6 +25,19 @@ private[view] object SurfaceSceneLegendCodec:
           "value" -> SceneJson.Num(t.value.toString), "label" -> SceneJson.Str(t.label)))),
         "showHidden" -> SceneJson.Bool(hidden), "showInvalid" -> SceneJson.Bool(invalid)))
     saved.request match
+      case SurfaceLegendRequest.Bivariate(ids, effectTitle, confidenceTitle, effectTicks, confidenceTicks, width, height) =>
+        SceneJson.Obj(Vector(
+          "kind" -> SceneJson.Str("bivariate"),
+          "layers" -> SceneJson.Arr(ids.ids.map(id => SceneJson.Str(id.value))),
+          "effectQuantity" -> SceneJson.Str(effectTitle.quantity),
+          "effectUnits" -> effectTitle.units.fold[SceneJson](SceneJson.Null)(SceneJson.Str.apply),
+          "confidenceQuantity" -> SceneJson.Str(confidenceTitle.quantity),
+          "confidenceUnits" -> confidenceTitle.units.fold[SceneJson](SceneJson.Null)(SceneJson.Str.apply),
+          "effectTicks" -> ticksJson(effectTicks),
+          "confidenceTicks" -> ticksJson(confidenceTicks),
+          "width" -> SceneJson.Num(width.toString),
+          "height" -> SceneJson.Num(height.toString),
+          "canonicalKey" -> SceneJson.Str(saved.canonicalKey)))
       case SurfaceLegendRequest.Continuous(ids, title, ticks, hidden, invalid) => scalar("continuous", ids, title, ticks, hidden, invalid)
       case SurfaceLegendRequest.Split(ids, title, ticks, hidden, invalid) => scalar("split", ids, title, ticks, hidden, invalid)
       case SurfaceLegendRequest.Categorical(ids, title, labels, fallback) =>
@@ -40,29 +54,26 @@ private[view] object SurfaceSceneLegendCodec:
       obj <- SceneJsonRead.obj(value, path, Set.empty, policy, allowAny = true)
       kind <- SceneJsonRead.string(obj, "kind", s"$path.kind")
       fields <- kind match
+        case "bivariate" => Right(Set("layers", "effectQuantity", "effectUnits", "confidenceQuantity", "confidenceUnits", "effectTicks", "confidenceTicks", "width", "height"))
         case "continuous" | "split" => Right(Set("layers", "ticks", "showHidden", "showInvalid"))
         case "categorical" => Right(Set("layers", "labels", "fallbackLabel"))
         case "manual" => Right(Set("entries"))
         case _ => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown legend kind '$kind'"))
-      _ <- SceneJsonRead.checkFields(obj, path, fields ++ Set("kind", "quantity", "units", "canonicalKey"), policy)
-      quantity <- SceneJsonRead.string(obj, "quantity", s"$path.quantity")
-      unitsJson <- SceneJsonRead.value(obj, "units", s"$path.units")
-      units <- unitsJson match
-        case SceneJson.Null => Right(None)
-        case other => SceneJsonRead.stringValue(other, s"$path.units").map(Some.apply)
-      title <- LegendTitle.make(quantity, units).left.map(error => SurfaceSceneError.InvalidJson(path, error.message))
+      common = if kind == "bivariate" then Set("kind", "canonicalKey") else Set("kind", "quantity", "units", "canonicalKey")
+      _ <- SceneJsonRead.checkFields(obj, path, fields ++ common, policy)
       key <- SceneJsonRead.string(obj, "canonicalKey", s"$path.canonicalKey")
       _ <- if key.trim.nonEmpty then Right(()) else Left(SurfaceSceneError.InvalidJson(path, "legend identity must be nonempty"))
-      request <- if kind == "manual" then manual(obj, title, path, policy)
+      request <- if kind == "bivariate" then bivariate(obj, path, policy)
         else
           for
-            idsJson <- SceneJsonRead.array(obj, "layers", s"$path.layers")
-            ids <- traverse(idsJson, s"$path.layers"): (entry, location) =>
-              SceneJsonRead.stringValue(entry, location).flatMap(raw =>
-                SurfaceLayerId.make(raw).left.map(error => SurfaceSceneError.InvalidJson(location, error.message)))
-            layers <- SurfaceLegendLayers.make(ids).left.map(error => SurfaceSceneError.InvalidJson(path, error.message))
-            result <- if kind == "categorical" then categorical(obj, layers, title, path, policy)
-              else scalar(obj, kind, layers, title, path, policy)
+            legendTitle <- title(obj, "quantity", "units", path)
+            result <- if kind == "manual" then manual(obj, legendTitle, path, policy)
+              else
+                for
+                  layers <- layerIds(obj, path)
+                  value <- if kind == "categorical" then categorical(obj, layers, legendTitle, path, policy)
+                    else scalar(obj, kind, layers, legendTitle, path, policy)
+                yield value
           yield result
     yield SurfaceSceneLegend(request, key)
 
@@ -114,6 +125,54 @@ private[view] object SurfaceSceneLegendCodec:
         yield swatch
       _ <- if entries.nonEmpty then Right(()) else Left(SurfaceSceneError.InvalidJson(path, "manual legend needs entries"))
     yield SurfaceLegendRequest.Manual(title, entries)
+
+  private def bivariate(obj: SceneJson.Obj, path: String, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceLegendRequest] =
+    for
+      layers <- layerIds(obj, path)
+      effectTitle <- title(obj, "effectQuantity", "effectUnits", path)
+      confidenceTitle <- title(obj, "confidenceQuantity", "confidenceUnits", path)
+      effectTicks <- ticks(obj, "effectTicks", path, policy)
+      confidenceTicks <- ticks(obj, "confidenceTicks", path, policy)
+      width <- SceneJsonRead.int(obj, "width", s"$path.width")
+      height <- SceneJsonRead.int(obj, "height", s"$path.height")
+    yield SurfaceLegendRequest.Bivariate(layers, effectTitle, confidenceTitle, effectTicks, confidenceTicks, width, height)
+
+  private def layerIds(obj: SceneJson.Obj, path: String): Either[SurfaceSceneError, SurfaceLegendLayers] =
+    for
+      idsJson <- SceneJsonRead.array(obj, "layers", s"$path.layers")
+      ids <- traverse(idsJson, s"$path.layers"): (entry, location) =>
+        SceneJsonRead.stringValue(entry, location).flatMap(raw =>
+          SurfaceLayerId.make(raw).left.map(error => SurfaceSceneError.InvalidJson(location, error.message)))
+      layers <- SurfaceLegendLayers.make(ids).left.map(error => SurfaceSceneError.InvalidJson(path, error.message))
+    yield layers
+
+  private def title(obj: SceneJson.Obj, quantityField: String, unitsField: String, path: String): Either[SurfaceSceneError, LegendTitle] =
+    for
+      quantity <- SceneJsonRead.string(obj, quantityField, s"$path.$quantityField")
+      unitsJson <- SceneJsonRead.value(obj, unitsField, s"$path.$unitsField")
+      units <- unitsJson match
+        case SceneJson.Null => Right(None)
+        case other => SceneJsonRead.stringValue(other, s"$path.$unitsField").map(Some.apply)
+      result <- LegendTitle.make(quantity, units).left.map(error => SurfaceSceneError.InvalidJson(path, error.message))
+    yield result
+
+  private def ticks(obj: SceneJson.Obj, field: String, path: String, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, Vector[AxisTick]] =
+    val tickPath = s"$path.$field"
+    for
+      values <- SceneJsonRead.array(obj, field, tickPath)
+      result <- traverse(values, tickPath): (value, location) =>
+        for
+          tick <- SceneJsonRead.obj(value, location, Set("value", "label"), policy)
+          number <- SceneJsonRead.double(tick, "value", s"$location.value")
+          label <- SceneJsonRead.string(tick, "label", s"$location.label")
+          _ <- if label.trim.nonEmpty then Right(()) else Left(SurfaceSceneError.InvalidJson(location, "tick label must be nonempty"))
+        yield AxisTick.unsafe(number, label)
+      _ <- if result.nonEmpty && result.map(_.value).distinct.length == result.length then Right(())
+        else Left(SurfaceSceneError.InvalidJson(tickPath, "tick values must be nonempty and unique"))
+    yield result
+
+  private def ticksJson(values: Vector[AxisTick]): SceneJson =
+    SceneJson.Arr(values.map(t => SceneJson.obj("value" -> SceneJson.Num(t.value.toString), "label" -> SceneJson.Str(t.label))))
 
   private def traverse[A](values: Vector[SceneJson], path: String)(f: (SceneJson, String) => Either[SurfaceSceneError, A])
       : Either[SurfaceSceneError, Vector[A]] =

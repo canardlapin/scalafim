@@ -6,11 +6,17 @@ import scalafim.surface.view.*
 enum SurfaceRasterError:
   case PixelOutsideBounds(x: Int, y: Int, width: Int, height: Int)
   case InvalidPlan(reason: String)
+  /** The reference compositor deliberately bounds retained translucent
+    * contributions. Callers can lower resolution or split a scene instead of
+    * receiving a silently incomplete image.
+    */
+  case FragmentCapacityExceeded(limit: Int)
 
   def message: String =
     this match
       case PixelOutsideBounds(x, y, width, height) => s"pixel ($x, $y) is outside ${width}x$height"
       case InvalidPlan(reason) => s"invalid surface render plan: $reason"
+      case FragmentCapacityExceeded(limit) => s"surface fragment collection exceeds capacity $limit"
 
 enum TriangleCulling:
   case None, Back, Front
@@ -50,6 +56,24 @@ final case class SurfaceRasterObservedResult(
   observation: SurfaceBackendObservation
 )
 
+/** Package-visible so decoration rasterization can resolve its fragments in the
+  * same depth domain as scientific surfaces without reblending an image. */
+private[raster] final case class SurfaceCollectedFragment(
+  depth: Double,
+  red: Int,
+  green: Int,
+  blue: Int,
+  alpha: Double,
+  slot: Int,
+  face: Int,
+  vertex: Int,
+  baryA: Float,
+  baryB: Float,
+  baryC: Float,
+  tie: String,
+  linear: Boolean
+)
+
 final class SurfaceRasterResult private[raster] (
   val image: RasterImage,
   val receipt: SurfaceRasterReceipt,
@@ -61,7 +85,8 @@ final class SurfaceRasterResult private[raster] (
   baryB: Array[Float],
   baryC: Array[Float],
   private[raster] val depthAt: Array[Double],
-  origins: Vector[SurfaceDisplayOrigin] = Vector.empty
+  origins: Vector[SurfaceDisplayOrigin] = Vector.empty,
+  private[raster] val collected: Option[Array[scala.collection.mutable.ArrayBuffer[SurfaceCollectedFragment]]] = None
 ):
   def pick(x: Int, y: Int): Either[SurfaceRasterError, Option[SurfacePick]] =
     if x < 0 || x >= image.width || y < 0 || y >= image.height then
@@ -83,12 +108,20 @@ final class SurfaceRasterResult private[raster] (
         )))
 
 object SurfaceRasterizer:
+  /** This is a memory budget, rather than a per-pixel truncation rule: every
+    * retained scientific contribution participates in the final resolve. */
+  val DefaultFragmentCapacity: Int = 8_000_000
+
   private final case class SlotContext(
     camera: SurfaceCameraPacket,
     lighting: SurfaceLighting,
     clipping: SurfaceClipping,
     layers: Vector[SurfaceLayerPacket],
-    fragmentComposition: Boolean
+    fragmentComposition: Boolean,
+    opacity: DisplayOpacity = DisplayOpacity.Opaque,
+    colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+    tie: String = "",
+    surfaceBase: Rgba32 = Rgba32.unsafe(184, 184, 184)
   )
 
   val capabilities: SurfaceBackendCapabilities = SurfaceBackendCapabilities(
@@ -100,6 +133,10 @@ object SurfaceRasterizer:
       SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.ScalarInterpolation,
       SurfaceBackendFeature.FragmentComposition,
+      SurfaceBackendFeature.DisplayLinearLight,
+      SurfaceBackendFeature.SurfaceTranslucency,
+      SurfaceBackendFeature.ThresholdEdgeOverlay,
+      SurfaceBackendFeature.SurfaceBaseColor,
       SurfaceBackendFeature.Lighting,
       SurfaceBackendFeature.DepthBuffer,
       SurfaceBackendFeature.BackFaceCulling,
@@ -160,7 +197,12 @@ object SurfaceRasterizer:
     dimensions: RasterDimensions,
     style: SurfaceRasterStyle = SurfaceRasterStyle()
   ): Either[SurfaceRasterError, SurfaceRasterResult] =
-    validatePlan(plan).map(_ => renderUnsafe(plan, dimensions, style))
+    validatePlan(plan).flatMap: _ =>
+      if legacyOpaque(plan, style) then Right(renderUnsafe(plan, dimensions, style))
+      else
+        SurfaceCompositionPlan.fromLegacy(plan)
+          .left.map(error => SurfaceRasterError.InvalidPlan(error.toString))
+          .flatMap(renderChecked(_, dimensions, style, DefaultFragmentCapacity))
 
   def render(
     plan: SurfaceCompositionPlan,
@@ -176,6 +218,19 @@ object SurfaceRasterizer:
     dimensions: RasterDimensions,
     style: SurfaceRasterStyle
   ): Either[SurfaceRasterError, SurfaceRasterResult] =
+    renderChecked(plan, dimensions, style, DefaultFragmentCapacity)
+
+  /** Checked composition path for callers that need to set a concrete memory
+    * ceiling for translucent visibility. */
+  def renderChecked(
+    plan: SurfaceCompositionPlan,
+    dimensions: RasterDimensions,
+    style: SurfaceRasterStyle,
+    fragmentCapacity: Int,
+    forceCollection: Boolean = false
+  ): Either[SurfaceRasterError, SurfaceRasterResult] =
+    if fragmentCapacity < 1 || dimensions.pixelCount > fragmentCapacity then
+      return Left(SurfaceRasterError.FragmentCapacityExceeded(fragmentCapacity))
     val entries = plan.views.flatMap(view => view.instances.map(instance => (view, instance)))
     val slots = entries.map: (view, instance) =>
       val slot = SurfaceViewSlot(instance.surface, view.viewport,
@@ -184,7 +239,8 @@ object SurfaceRasterizer:
     val meshes = entries.map((_, instance) => plan.resources.meshes(instance.mesh))
     val contexts = entries.map: (view, instance) =>
       SlotContext(view.camera, view.lighting, view.clipping,
-        instance.layerOrder.map(plan.resources.layers), view.fragmentSurfaces(instance.surface))
+        instance.layerOrder.map(plan.resources.layers), view.fragmentSurfaces(instance.surface),
+        instance.opacity, view.colorPipeline, s"${view.id.value}/${instance.id.value}", view.surfaceBase)
     val layers = contexts.flatMap(_.layers).distinctBy(_.resourceKey)
     val fragments = plan.views.flatMap(_.fragmentSurfaces).toSet
     val passes = entries.zipWithIndex.flatMap: (entry, slot) =>
@@ -206,14 +262,19 @@ object SurfaceRasterizer:
     val invalid = entries.indices.iterator.map: index =>
       val context = contexts(index)
       validatePlan(flat.copy(slots = Vector(slots(index)), meshes = Vector(meshes(index)),
-        layers = context.layers, camera = context.camera,
+        layers = context.layers, camera = context.camera, colorPipeline = context.colorPipeline,
         fragmentSurfaces = if context.fragmentComposition then Set(meshes(index).surface) else Set.empty))
     .collectFirst { case Left(error) => error }
     invalid match
       case Some(error) => Left(error)
       case None =>
         val origins = entries.map((view, instance) => SurfaceDisplayOrigin(view.id, instance.id))
-        Right(renderUnsafe(flat, dimensions, style, contexts, origins))
+        if !forceCollection && fragmentCapacity == DefaultFragmentCapacity && contexts.forall(context =>
+          context.opacity == DisplayOpacity.Opaque &&
+            context.colorPipeline == SurfaceColorPipeline.LegacyDisplayBytes &&
+            context.surfaceBase == SurfaceDisplayDefaults.LegacySurfaceBase) && style.background.alpha == 255
+        then Right(renderUnsafe(flat, dimensions, style, contexts, origins))
+        else renderCompositionUnsafe(flat, dimensions, style, contexts, origins, fragmentCapacity)
 
   def renderObserved(
     plan: SurfaceRenderPlan,
@@ -239,11 +300,12 @@ object SurfaceRasterizer:
       SurfaceRasterObservedResult(result, observation)
 
   private def validatePlan(plan: SurfaceRenderPlan): Either[SurfaceRasterError, Unit] =
-    if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
-      Left(SurfaceRasterError.InvalidPlan("scalar policy and payload disagree"))
-    else if plan.layers.exists(layer => layer.scalarField.nonEmpty && !plan.fragmentSurfaces(layer.surface)) then
-      Left(SurfaceRasterError.InvalidPlan("scalar interpolation requires fragment composition"))
-    else if plan.layers.exists(layer => plan.fragmentSurfaces(layer.surface) &&
+    SurfaceThresholdEdgeValidation.validate(plan).left.map(SurfaceRasterError.InvalidPlan.apply).flatMap: _ =>
+      if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
+        Left(SurfaceRasterError.InvalidPlan("scalar policy and payload disagree"))
+      else if plan.layers.exists(layer => layer.scalarField.nonEmpty && !plan.fragmentSurfaces(layer.surface)) then
+        Left(SurfaceRasterError.InvalidPlan("scalar interpolation requires fragment composition"))
+      else if plan.layers.exists(layer => (plan.fragmentSurfaces(layer.surface) || plan.colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight) &&
         !plan.meshes.exists(mesh => mesh.surface == layer.surface &&
           layer.sampleColors.exists(_.length == (if layer.association == SurfaceSampleAssociation.Face then
             mesh.nearestPartition.fold(mesh.indices.length / 3)(_.originalFaceCount)
@@ -251,12 +313,148 @@ object SurfaceRasterizer:
           layer.scalarField.forall(field => layer.association == SurfaceSampleAssociation.Vertex &&
             layer.scalarMapping.exists(_.canonicalKey == field.mapping.canonicalKey) &&
             field.samples.length == mesh.sampleNormals.getOrElse(mesh.normals).length / 3))) then
-      Left(SurfaceRasterError.InvalidPlan("fragment sample buffers must match the original vertex or face domain"))
-    else if plan.slots.length != plan.meshes.length then
-      Left(SurfaceRasterError.InvalidPlan("slot and mesh counts differ"))
-    else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
-      Left(SurfaceRasterError.InvalidPlan("camera matrices must be 4x4"))
-    else Right(())
+        Left(SurfaceRasterError.InvalidPlan("fragment sample buffers must match the original vertex or face domain"))
+      else if plan.slots.length != plan.meshes.length then
+        Left(SurfaceRasterError.InvalidPlan("slot and mesh counts differ"))
+      else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
+        Left(SurfaceRasterError.InvalidPlan("camera matrices must be 4x4"))
+      else Right(())
+
+  private def legacyOpaque(plan: SurfaceRenderPlan, style: SurfaceRasterStyle): Boolean =
+    plan.colorPipeline == SurfaceColorPipeline.LegacyDisplayBytes &&
+      plan.surfaceOpacities.valuesIterator.forall(_ == DisplayOpacity.Opaque) &&
+      plan.surfaceBase == SurfaceDisplayDefaults.LegacySurfaceBase &&
+      style.background.alpha == 255
+
+  private def effectiveBase(context: SlotContext, style: SurfaceRasterStyle): Rgba32 =
+    if style.surfaceBase == SurfaceDisplayDefaults.LegacySurfaceBase then context.surfaceBase
+    else style.surfaceBase
+
+  /** Collects every visible surface contribution before resolving it. The
+    * legacy renderer intentionally remains separate: it is a faster exact
+    * implementation for the historical opaque-byte contract. */
+  private def renderCompositionUnsafe(
+    plan: SurfaceRenderPlan,
+    dimensions: RasterDimensions,
+    style: SurfaceRasterStyle,
+    contexts: Vector[SlotContext],
+    origins: Vector[SurfaceDisplayOrigin],
+    fragmentCapacity: Int
+  ): Either[SurfaceRasterError, SurfaceRasterResult] =
+    val setupStarted = System.nanoTime()
+    val pixelCount = dimensions.pixelCount
+    val fragments = Array.fill(pixelCount)(scala.collection.mutable.ArrayBuffer.empty[SurfaceCollectedFragment])
+    val composedColors = plan.meshes.zipWithIndex.map: (mesh, slot) =>
+      val context = contexts(slot)
+      val base = effectiveBase(context, style)
+      val colors = Array.fill(mesh.positions.length / 3)(base.toPackedInt)
+      if !context.fragmentComposition && context.colorPipeline == SurfaceColorPipeline.LegacyDisplayBytes then
+        var layerIndex = 0
+        while layerIndex < context.layers.length do
+          val layer = context.layers(layerIndex)
+          var vertex = 0
+          while vertex < colors.length do
+            colors(vertex) = layer.blendMode.composite(packed(colors(vertex)), packed(layer.colors(vertex)), layer.opacity).toPackedInt
+            vertex += 1
+          layerIndex += 1
+      colors
+    val setupNanos = System.nanoTime() - setupStarted
+    val renderStarted = System.nanoTime()
+    var trianglesInput = 0
+    var trianglesAfterClipping = 0
+    var trianglesClippedAway = 0
+    var trianglesCulled = 0
+    var shadedPixels = 0
+    var depthRejected = 0
+    var scalarFragments = 0
+    var contributionCount = 0
+    var overflow = false
+    val fittedSlots = plan.viewportFit.resolve(plan.slots, dimensions.width.toDouble, dimensions.height.toDouble)
+    var slot = 0
+    while slot < plan.meshes.length && !overflow do
+      val mesh = plan.meshes(slot)
+      val context = contexts(slot)
+      val viewport = fittedSlots(slot).viewport
+      val base = effectiveBase(context, style)
+      val fragment = Option.when(context.fragmentComposition || context.colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight)(
+        new SurfaceFragmentEvaluator(mesh, context.layers, context.lighting, base, colorPipeline = context.colorPipeline))
+      var faceOffset = 0
+      while faceOffset < mesh.indices.length && !overflow do
+        trianglesInput += 1
+        val face = faceOffset / 3
+        val ia = mesh.indices(faceOffset)
+        val ib = mesh.indices(faceOffset + 1)
+        val ic = mesh.indices(faceOffset + 2)
+        val ba = mesh.sourceBarycentric(face, 1.0, 0.0, 0.0)
+        val bb = mesh.sourceBarycentric(face, 0.0, 1.0, 0.0)
+        val bc = mesh.sourceBarycentric(face, 0.0, 0.0, 1.0)
+        val (sourceA, sourceB, sourceC) = mesh.sourceFaceVertices(face)
+        val triangle = Vector(
+          clipVertex(context, plan.slots(slot), mesh, composedColors(slot), ia, ba._1, ba._2, ba._3),
+          clipVertex(context, plan.slots(slot), mesh, composedColors(slot), ib, bb._1, bb._2, bb._3),
+          clipVertex(context, plan.slots(slot), mesh, composedColors(slot), ic, bc._1, bc._2, bc._3)
+        )
+        val clipped = clipTriangle(triangle, context.clipping)
+        if clipped.length < 3 then trianglesClippedAway += 1
+        else
+          var fan = 1
+          while fan + 1 < clipped.length && !overflow do
+            trianglesAfterClipping += 1
+            val a = toScreen(clipped(0), viewport, dimensions)
+            val b = toScreen(clipped(fan), viewport, dimensions)
+            val c = toScreen(clipped(fan + 1), viewport, dimensions)
+            val area = edge(a.x, a.y, b.x, b.y, c.x, c.y)
+            val culled = area == 0.0 ||
+              (style.culling == TriangleCulling.Back && area <= 0.0) ||
+              (style.culling == TriangleCulling.Front && area >= 0.0)
+            if culled then trianglesCulled += 1
+            else
+              val result = collectTriangle(a, b, c, area, slot, mesh.sourceFace(face), sourceA, sourceB, sourceC,
+                mesh.nearestPartition.filter(face < _.renderFaceCount).fold(-1)(_ => mesh.sourceVertex(ia)), fragment,
+                context, dimensions, fragments, contributionCount, fragmentCapacity)
+              shadedPixels += result._1
+              depthRejected += result._2
+              scalarFragments += result._3
+              contributionCount = result._4
+              overflow = result._5
+            fan += 1
+        faceOffset += 3
+      slot += 1
+    if overflow then Left(SurfaceRasterError.FragmentCapacityExceeded(fragmentCapacity))
+    else
+      val pixels = new Array[Int](pixelCount)
+      val depths = Array.fill(pixelCount)(Double.PositiveInfinity)
+      val faceAt = Array.fill(pixelCount)(-1)
+      val slotAt = Array.fill(pixelCount)(-1)
+      val vertexAt = Array.fill(pixelCount)(-1)
+      val baryA = new Array[Float](pixelCount)
+      val baryB = new Array[Float](pixelCount)
+      val baryC = new Array[Float](pixelCount)
+      var pixel = 0
+      while pixel < pixelCount do
+        val values = fragments(pixel)
+        if values.isEmpty then pixels(pixel) = style.background.toPackedInt
+        else
+          val ordered = values.sortBy(value => (-value.depth, value.tie, value.face, value.vertex))
+          pixels(pixel) = compositeStack(style.background, ordered)
+          // The final item is nearest after the explicit far-to-near sort;
+          // this also makes coplanar pick provenance agree with the visible
+          // top contribution.
+          val nearest = ordered.last
+          depths(pixel) = nearest.depth
+          faceAt(pixel) = nearest.face
+          slotAt(pixel) = nearest.slot
+          vertexAt(pixel) = nearest.vertex
+          baryA(pixel) = nearest.baryA
+          baryB(pixel) = nearest.baryB
+          baryC(pixel) = nearest.baryC
+        pixel += 1
+      val renderNanos = System.nanoTime() - renderStarted
+      val receipt = SurfaceRasterReceipt(trianglesInput, trianglesAfterClipping, trianglesClippedAway, trianglesCulled,
+        shadedPixels, depthRejected, plan.layers.iterator.filterNot(layer => plan.fragmentSurfaces(layer.surface)).map(_.colors.length).sum,
+        setupNanos, renderNanos, scalarFragments)
+      Right(new SurfaceRasterResult(RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels), receipt,
+        plan.slots.map(_.surface), faceAt, slotAt, vertexAt, baryA, baryB, baryC, depths, origins, Some(fragments)))
 
   private def renderUnsafe(
     plan: SurfaceRenderPlan,
@@ -277,7 +475,7 @@ object SurfaceRasterizer:
     val baryC = new Array[Float](pixelCount)
     val composedColors = plan.meshes.zipWithIndex.map: (mesh, slot) =>
       val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
-        plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface)))
+        plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface), surfaceBase = plan.surfaceBase))
       val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.toPackedInt)
       var layerIndex = 0
       while layerIndex < context.layers.length do
@@ -306,7 +504,7 @@ object SurfaceRasterizer:
     while slot < plan.meshes.length do
       val mesh = plan.meshes(slot)
       val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
-        plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface)))
+        plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface), surfaceBase = plan.surfaceBase))
       val viewport = fittedSlots(slot).viewport
       val colors = composedColors(slot)
       val fragment = Option.when(context.fragmentComposition)(
@@ -400,7 +598,7 @@ object SurfaceRasterizer:
     val color = packed(colors(vertex))
     val light = lightFactor(context.lighting, mesh, offset)
     ClipVertex(
-      x, y, z,
+      x + slot.worldOffsetX, y + slot.worldOffsetY, z + slot.worldOffsetZ,
       clip._1, clip._2, clip._3, clip._4,
       color.red.toDouble * light,
       color.green.toDouble * light,
@@ -504,6 +702,91 @@ object SurfaceRasterizer:
       vertex.baryA * inverseW, vertex.baryB * inverseW, vertex.baryC * inverseW
     )
 
+  /** Rasterizes to a bounded fragment list. It deliberately performs no
+    * depth rejection: translucent fragments behind a nearer surface still
+    * contribute to the final source-over resolve. */
+  private def collectTriangle(
+    a: ScreenVertex, b: ScreenVertex, c: ScreenVertex, area: Double,
+    slot: Int, face: Int, ia: Int, ib: Int, ic: Int, sampleOwner: Int,
+    fragment: Option[SurfaceFragmentEvaluator], context: SlotContext,
+    dimensions: RasterDimensions,
+    fragments: Array[scala.collection.mutable.ArrayBuffer[SurfaceCollectedFragment]],
+    initialCount: Int, capacity: Int
+  ): (Int, Int, Int, Int, Boolean) =
+    val minX = math.max(0, math.floor(math.min(a.x, math.min(b.x, c.x))).toInt)
+    val maxX = math.min(dimensions.width - 1, math.ceil(math.max(a.x, math.max(b.x, c.x))).toInt)
+    val minY = math.max(0, math.floor(math.min(a.y, math.min(b.y, c.y))).toInt)
+    val maxY = math.min(dimensions.height - 1, math.ceil(math.max(a.y, math.max(b.y, c.y))).toInt)
+    var shaded = 0
+    var scalarEvaluated = 0
+    var count = initialCount
+    var overflow = false
+    var y = minY
+    while y <= maxY && !overflow do
+      var x = minX
+      while x <= maxX && !overflow do
+        val wa = edge(b.x, b.y, c.x, c.y, x + 0.5, y + 0.5) / area
+        val wb = edge(c.x, c.y, a.x, a.y, x + 0.5, y + 0.5) / area
+        val wc = 1.0 - wa - wb
+        if wa >= -1e-12 && wb >= -1e-12 && wc >= -1e-12 then
+          val reciprocal = wa * a.inverseW + wb * b.inverseW + wc * c.inverseW
+          val inv = 1.0 / reciprocal
+          val ba = (wa * a.baryAOverW + wb * b.baryAOverW + wc * c.baryAOverW) * inv
+          val bb = (wa * a.baryBOverW + wb * b.baryBOverW + wc * c.baryBOverW) * inv
+          val bc = (wa * a.baryCOverW + wb * b.baryCOverW + wc * c.baryCOverW) * inv
+          val color = fragment match
+            case Some(evaluator) =>
+              scalarEvaluated += evaluator.scalarLayerCount
+              evaluator.color(face, ia, ib, ic, ba, bb, bc,
+                thresholdWidth(evaluator, a, b, c, area, ia, ib, ic, x, y, dimensions.height))
+            case None => Rgba32.unsafe(
+              clampByte((wa * a.redOverW + wb * b.redOverW + wc * c.redOverW) * inv),
+              clampByte((wa * a.greenOverW + wb * b.greenOverW + wc * c.greenOverW) * inv),
+              clampByte((wa * a.blueOverW + wb * b.blueOverW + wc * c.blueOverW) * inv),
+              clampByte((wa * a.alphaOverW + wb * b.alphaOverW + wc * c.alphaOverW) * inv))
+          val alpha = (color.alpha / 255.0) * DisplayOpacity.value(context.opacity)
+          if alpha > 0 then
+            val chosen = SurfaceNearestPartition.nearestVertex(ia, ib, ic, ba, bb, bc)
+            if sampleOwner < 0 || chosen == sampleOwner then
+              val pixel = y * dimensions.width + x
+              val depth = wa * a.depth + wb * b.depth + wc * c.depth
+              // A shared edge belongs to two triangles of the same surface,
+              // but it is one physical contribution. Keep the first stable
+              // face rather than alpha-compositing that texel twice.
+              val duplicate = fragments(pixel).exists(value => value.slot == slot && math.abs(value.depth - depth) <= 1e-14)
+              if !duplicate then
+                if count == capacity then overflow = true
+                else
+                  fragments(pixel) += SurfaceCollectedFragment(
+                    depth, color.red, color.green, color.blue, alpha, slot, face, chosen,
+                    ba.toFloat, bb.toFloat, bc.toFloat, context.tie,
+                    context.colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight)
+                  count += 1
+                  shaded += 1
+        x += 1
+      y += 1
+    (shaded, 0, scalarEvaluated, count, overflow)
+
+  private[raster] def compositeStack(background: Rgba32, values: scala.collection.Seq[SurfaceCollectedFragment]): Int =
+    // The direct WebGL reference encodes fragments before framebuffer blending.
+    // Interpolation and lighting are linear; source-over between objects is not.
+    def channel(value: Int): Double = value / 255.0
+    var outAlpha = background.alpha / 255.0
+    var outRed = channel(background.red) * outAlpha
+    var outGreen = channel(background.green) * outAlpha
+    var outBlue = channel(background.blue) * outAlpha
+    values.foreach: value =>
+      val alpha = value.alpha
+      val inverse = 1.0 - alpha
+      outRed = channel(value.red) * alpha + outRed * inverse
+      outGreen = channel(value.green) * alpha + outGreen * inverse
+      outBlue = channel(value.blue) * alpha + outBlue * inverse
+      outAlpha = alpha + outAlpha * inverse
+    def output(value: Double): Int =
+      val unpremultiplied = if outAlpha == 0.0 then 0.0 else value / outAlpha
+      clampByte(unpremultiplied * 255.0)
+    Rgba32.unsafe(output(outRed), output(outGreen), output(outBlue), clampByte(outAlpha * 255.0)).toPackedInt
+
   private def rasterTriangle(
     a: ScreenVertex,
     b: ScreenVertex,
@@ -554,7 +837,8 @@ object SurfaceRasterizer:
             val color = fragment match
               case Some(evaluator) =>
                 scalarEvaluated += evaluator.scalarLayerCount
-                evaluator.color(face, ia, ib, ic, ba, bb, bc)
+                evaluator.color(face, ia, ib, ic, ba, bb, bc,
+                  thresholdWidth(evaluator, a, b, c, area, ia, ib, ic, x, y, dimensions.height))
               case None => Rgba32.unsafe(
                 clampByte((wa * a.redOverW + wb * b.redOverW + wc * c.redOverW) * inv),
                 clampByte((wa * a.greenOverW + wb * b.greenOverW + wc * c.greenOverW) * inv),
@@ -580,6 +864,30 @@ object SurfaceRasterizer:
         x += 1
       y += 1
     (shaded, rejected, scalarEvaluated)
+
+  /** Approximate GLSL fwidth with fine derivatives in a 2x2 pixel quad.
+    * GLSL permits an implementation-dependent derivative choice. Original face
+    * weights include perspective division and may extend outside the primitive
+    * in helper lanes, just as GPU derivative evaluation does.
+    */
+  private[raster] def thresholdWidth(evaluator: SurfaceFragmentEvaluator, a: ScreenVertex, b: ScreenVertex, c: ScreenVertex,
+      area: Double, ia: Int, ib: Int, ic: Int, x: Int, y: Int, height: Int): Double =
+    if !evaluator.hasThresholdEdges then 0.0
+    else
+      def sign(px: Double, py: Double): Double =
+        val wa = edge(b.x, b.y, c.x, c.y, px, py) / area
+        val wb = edge(c.x, c.y, a.x, a.y, px, py) / area
+        val wc = 1 - wa - wb
+        val inverse = 1.0 / (wa * a.inverseW + wb * b.inverseW + wc * c.inverseW)
+        evaluator.edgeSign(ia, ib, ic,
+          (wa * a.baryAOverW + wb * b.baryAOverW + wc * c.baryAOverW) * inverse,
+          (wa * a.baryBOverW + wb * b.baryBOverW + wc * c.baryBOverW) * inverse,
+          (wa * a.baryCOverW + wb * b.baryCOverW + wc * c.baryCOverW) * inverse)
+      val left = (x / 2) * 2 + .5
+      // gl_FragCoord is bottom-origin, including on odd-height canvases.
+      val top = height - 2 - ((height - 1 - y) / 2) * 2 + .5
+      math.abs(sign(left + 1, y + .5) - sign(left, y + .5)) +
+        math.abs(sign(x + .5, top + 1) - sign(x + .5, top))
 
   private[raster] inline def edge(ax: Double, ay: Double, bx: Double, by: Double, px: Double, py: Double): Double =
     (px - ax) * (by - ay) - (py - ay) * (bx - ax)

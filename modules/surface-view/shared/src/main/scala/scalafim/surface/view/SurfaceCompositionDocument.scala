@@ -1,6 +1,7 @@
 package scalafim.surface.view
 
 import image4s.geometry.{D3, Frame}
+import intaglio.DisplayOpacity
 import scalafim.surface.SurfaceKind
 
 /** A persistent frame key is checked against caller-supplied display witnesses;
@@ -12,7 +13,12 @@ object SurfaceCompositionFrameKey:
     frame.persistentKey.toRight(SurfaceSceneError.InvalidDocument("composition persistence requires a persistent frame"))
       .map(key => SurfaceCompositionFrameKey(key.id.value, key.spatialRank, key.unit.toString, key.convention.toString))
 
-final case class SurfaceCompositionSavedInstance(id: SurfaceInstanceId, surface: SurfaceId, translation: Vector[Double])
+final case class SurfaceCompositionSavedInstance(
+  id: SurfaceInstanceId,
+  surface: SurfaceId,
+  translation: Vector[Double],
+  opacity: DisplayOpacity = DisplayOpacity.Opaque
+)
 final case class SurfaceCompositionSavedView(id: SurfaceViewId, viewport: SurfaceViewport, camera: SurfaceCamera,
   frame: SurfaceCompositionFrameKey, target: Vector[Double], eye: Vector[Double],
   instances: Vector[SurfaceCompositionSavedInstance], lighting: SurfaceLighting, clipping: SurfaceClipping)
@@ -39,13 +45,14 @@ final class SurfaceCompositionDocument private[view] (
               frame <- SurfaceCompositionFrameKey.from(display.frame)
               _ <- check(frame == saved.frame, s"view ${saved.id.value} has a different persistent frame")
             yield SurfaceCompositionInputInstance(item.id, item.surface, display,
-              item.translation(0), item.translation(1), item.translation(2))
+              item.translation(0), item.translation(1), item.translation(2), item.opacity)
           _ <- check(occurrences.nonEmpty, "a composition view must contain an instance")
           frame = occurrences.head.display.frame
           target <- SurfaceCameraPose.pointIn(frame, saved.target).left.map(cameraError)
           eye <- SurfaceCameraPose.pointIn(frame, saved.eye).left.map(cameraError)
           pose <- SurfaceCameraPose.make(target, eye).left.map(cameraError)
-        yield SurfaceCompositionInputView(saved.id, saved.viewport, saved.camera, pose, occurrences, saved.lighting, saved.clipping)
+        yield SurfaceCompositionInputView(saved.id, saved.viewport, saved.camera, pose, occurrences, saved.lighting, saved.clipping,
+          scene.colorPipeline)
       navigation <- SurfaceCompositionState.make(inputs, cameraLinks).left.map(compositionError)
       presentation = SurfaceCompositionPresentation.fromViewerState(state).copy(geometryPresentations = geometry)
       _ <- SurfaceCompositionCompiler.compile(model, presentation, inputs).left.map(compositionError)
@@ -57,13 +64,15 @@ object SurfaceCompositionDocument:
       : Either[SurfaceSceneError, SurfaceCompositionDocument] =
     for
       _ <- SurfaceCompositionCompiler.compile(model, SurfaceCompositionPresentation.fromViewerState(state), navigation.views).left.map(compositionError)
+      _ <- check(navigation.views.forall(_.colorPipeline == state.colorPipeline),
+        "composition view color pipelines must match the embedded scene")
       _ <- check(!state.geometryPresentations.values.exists(_.isInstanceOf[SurfaceGeometryPresentation.RevealLens]),
         "persist a fixed or global morph geometry; local reveal-lens deformation persistence is not supported")
       scene <- SurfaceSceneDocument.capture(model, state, bindings, provenance)
       views <- traverse(navigation.views): view =>
         SurfaceCompositionFrameKey.from(view.pose.frame).map: frame =>
           SurfaceCompositionSavedView(view.id, view.viewport, view.camera, frame, view.pose.target.coordinates, view.pose.eye.coordinates,
-            view.instances.map(i => SurfaceCompositionSavedInstance(i.id, i.surface, Vector(i.translationX, i.translationY, i.translationZ))),
+            view.instances.map(i => SurfaceCompositionSavedInstance(i.id, i.surface, Vector(i.translationX, i.translationY, i.translationZ), i.opacity)),
             view.lighting, view.clipping)
     yield new SurfaceCompositionDocument(scene, views, navigation.cameraLinks, state.geometryPresentations)
 
@@ -94,7 +103,7 @@ object SurfaceCompositionCodec:
           "unit" -> SceneJson.Str(v.frame.unit), "convention" -> SceneJson.Str(v.frame.convention)),
         "target" -> vec(v.target), "eye" -> vec(v.eye),
         "instances" -> SceneJson.Arr(v.instances.map(i => SceneJson.obj("id" -> SceneJson.Str(i.id.value),
-          "surface" -> SceneJson.Str(i.surface.value), "translation" -> vec(i.translation)))),
+          "surface" -> SceneJson.Str(i.surface.value), "translation" -> vec(i.translation), "opacity" -> num(i.opacity.toDouble)))),
         "lighting" -> SurfaceSceneCodec.lightingJson(v.lighting), "clipping" -> SurfaceSceneCodec.clippingJson(v.clipping))
     val geometry = document.geometry.toVector.sortBy(_._1.value).map: (surface, value) =>
       val (from, to, fraction) = value match
@@ -103,7 +112,7 @@ object SurfaceCompositionCodec:
         case _: SurfaceGeometryPresentation.RevealLens => throw new IllegalStateException("unpersistable lens")
       SceneJson.obj("surface" -> SceneJson.Str(surface.value), "from" -> SceneJson.Str(from.label),
         "to" -> SceneJson.Str(to.label), "fraction" -> num(fraction))
-    SceneJson.obj("schema" -> SceneJson.Str("scalafim.surface-composition"), "revision" -> SceneJson.Num("1"),
+    SceneJson.obj("schema" -> SceneJson.Str("scalafim.surface-composition"), "revision" -> SceneJson.Num("2"),
       "scene" -> SceneJsonParser.parse(SurfaceSceneCodec.encode(document.scene)).toOption.get,
       "views" -> SceneJson.Arr(views), "geometry" -> SceneJson.Arr(geometry),
       "cameraLinks" -> SceneJson.Arr(document.cameraLinks.map(link => SceneJson.Arr(link.toVector.sortBy(_.value).map(id => SceneJson.Str(id.value)))))).render
@@ -115,11 +124,11 @@ object SurfaceCompositionCodec:
       schema <- SceneJsonRead.string(root, "schema", "$.schema")
       _ <- check(schema == "scalafim.surface-composition", "unknown composition schema")
       revision <- SceneJsonRead.int(root, "revision", "$.revision")
-      _ <- if revision == 1 then Right(()) else Left(SurfaceSceneError.UnsupportedRevision(revision))
+      _ <- if revision == 1 || revision == 2 then Right(()) else Left(SurfaceSceneError.UnsupportedRevision(revision))
       sceneJson <- SceneJsonRead.value(root, "scene", "$.scene")
       scene <- SurfaceSceneCodec.decode(sceneJson.render, policy)
       viewJson <- SceneJsonRead.array(root, "views", "$.views")
-      views <- traverse(viewJson)(parseView(_, policy))
+      views <- traverse(viewJson)(parseView(_, policy, revision))
       linksJson <- SceneJsonRead.array(root, "cameraLinks", "$.cameraLinks")
       links <- traverse(linksJson): value =>
         value match
@@ -143,7 +152,7 @@ object SurfaceCompositionCodec:
       values <- traverse(json)(SceneJsonRead.doubleValue(_, s"$$.$key[]"))
     yield values
 
-  private def parseView(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceCompositionSavedView] =
+  private def parseView(value: SceneJson, policy: SurfaceSceneReadPolicy, revision: Int): Either[SurfaceSceneError, SurfaceCompositionSavedView] =
     for
       obj <- SceneJsonRead.obj(value, "$.views[]", Set("id", "viewport", "camera", "frame", "target", "eye", "instances", "lighting", "clipping"), policy)
       idString <- SceneJsonRead.string(obj, "id", "$.views[].id")
@@ -166,7 +175,7 @@ object SurfaceCompositionCodec:
       eye <- vector(obj, "eye", 3)
       _ <- check(target != eye, "camera target and eye must differ")
       instancesJson <- SceneJsonRead.array(obj, "instances", "$.views[].instances")
-      instances <- traverse(instancesJson)(parseInstance(_, policy))
+      instances <- traverse(instancesJson)(parseInstance(_, policy, revision))
       _ <- check(instances.nonEmpty, "empty composition view")
       lightingJson <- SceneJsonRead.value(obj, "lighting", "$.views[].lighting")
       lighting <- SurfaceSceneCodec.parseLighting(lightingJson, policy)
@@ -175,15 +184,18 @@ object SurfaceCompositionCodec:
     yield SurfaceCompositionSavedView(id, SurfaceViewport(box(0), box(1), box(2), box(3)), camera,
       SurfaceCompositionFrameKey(frameId, rank, unit, convention), target, eye, instances, lighting, clipping)
 
-  private def parseInstance(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceCompositionSavedInstance] =
+  private def parseInstance(value: SceneJson, policy: SurfaceSceneReadPolicy, revision: Int): Either[SurfaceSceneError, SurfaceCompositionSavedInstance] =
     for
-      obj <- SceneJsonRead.obj(value, "$.instances[]", Set("id", "surface", "translation"), policy)
+      obj <- SceneJsonRead.obj(value, "$.instances[]", Set("id", "surface", "translation") ++ Option.when(revision >= 2)("opacity"), policy)
       raw <- SceneJsonRead.string(obj, "id", "$.instances[].id")
       id <- SurfaceInstanceId.make(raw).left.map(compositionError)
       surfaceRaw <- SceneJsonRead.string(obj, "surface", "$.instances[].surface")
       surface <- SurfaceId.make(surfaceRaw).left.map(SurfaceSceneError.InvalidState.apply)
       translation <- vector(obj, "translation", 3)
-    yield SurfaceCompositionSavedInstance(id, surface, translation)
+      opacity <- if revision == 1 then Right(DisplayOpacity.Opaque)
+        else SceneJsonRead.double(obj, "opacity", "$.instances[].opacity")
+          .flatMap(value => DisplayOpacity.make(value).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error))))
+    yield SurfaceCompositionSavedInstance(id, surface, translation, opacity)
 
   private def parseGeometry(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, (SurfaceId, SurfaceGeometryPresentation)] =
     for

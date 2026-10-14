@@ -46,6 +46,8 @@ object SurfaceLegendLayers:
   * mapping-derived ticks; explicit ticks are checked against the current window.
   */
 enum SurfaceLegendRequest:
+  case Bivariate(layers: SurfaceLegendLayers, effectTitle: LegendTitle, confidenceTitle: LegendTitle,
+    effectTicks: Vector[AxisTick], confidenceTicks: Vector[AxisTick], width: Int = 65, height: Int = 65)
   case Continuous(layers: SurfaceLegendLayers, title: LegendTitle,
     ticks: Vector[AxisTick] = Vector.empty, showHidden: Boolean = true, showInvalid: Boolean = true)
   case Split(layers: SurfaceLegendLayers, title: LegendTitle,
@@ -57,6 +59,7 @@ enum SurfaceLegendRequest:
 final case class SurfaceCategoryLegendEntry(id: Int, label: String, color: Rgba32)
 
 enum SurfaceLegendContent:
+  case Bivariate(key: BivariateEffectConfidenceKey)
   case Continuous(calibration: ScalarLegend)
   case Split(calibration: ScalarLegend)
   case Categorical(title: LegendTitle, entries: Vector[SurfaceCategoryLegendEntry], fallback: SurfaceLegendItem)
@@ -92,19 +95,51 @@ object SurfaceLegend:
     s"surface-category-mapping-v1|$entries|fallback:${palette.fallback.toPackedInt}"
 
   def bind(request: SurfaceLegendRequest, model: SurfaceViewerModel, state: SurfaceViewerState)
-      : Either[SurfaceLegendError, SurfaceLegend] = request match
+      : Either[SurfaceLegendError, SurfaceLegend] =
+    bindWhere(request, model, state, layer => legacyDisplayed(layer, state))
+
+  /** Bind against the actual compiled composition rather than the legacy
+    * single/bilateral layout field. Figure and multi-view export callers use
+    * this overload so a legend cannot name an absent composition layer.
+    */
+  def bind(request: SurfaceLegendRequest, model: SurfaceViewerModel, state: SurfaceViewerState,
+      composition: SurfaceCompositionPlan): Either[SurfaceLegendError, SurfaceLegend] =
+    val displayed = composition.views.iterator.flatMap(_.instances).flatMap(_.layerOrder)
+      .flatMap(composition.resources.layers.get).map(_.layer).toSet
+    bindWhere(request, model, state, layer => displayed(layer.id))
+
+  private def bindWhere(request: SurfaceLegendRequest, model: SurfaceViewerModel, state: SurfaceViewerState,
+      displayed: SurfaceLayer => Boolean): Either[SurfaceLegendError, SurfaceLegend] = request match
+    case SurfaceLegendRequest.Bivariate(layers, effectTitle, confidenceTitle, effectTicks, confidenceTicks, width, height) =>
+      for
+        selectedLayers <- selected(layers, model, state, displayed)
+        mappings <- selectedLayers.foldLeft[Either[SurfaceLegendError, Vector[(SurfaceLayer, BivariateEffectConfidenceMapping)]]](Right(Vector.empty)):
+          case (result, (layer, _)) =>
+            for previous <- result; mapping <- layer.bivariateMapping.toRight(SurfaceLegendError.OpaqueMapping(layer.id)) yield previous :+ (layer -> mapping)
+        _ <- if mappings.map(_._2.canonicalKey).distinct.length == 1 then Right(()) else Left(SurfaceLegendError.IncompatibleMappings(layers.ids))
+        key <- BivariateEffectConfidenceKey.make(mappings.head._2, effectTitle, confidenceTitle, effectTicks, confidenceTicks, width, height)
+          .left.map(error => SurfaceLegendError.InvalidRequest(error.message))
+      yield finish(request, SurfaceLegendContent.Bivariate(key), mappings.map((layer, mapping) =>
+        SurfaceLegendSource(layer.id, mapping.canonicalKey, layer.interpolation)), key.canonicalKey, Vector("Bivariate effect by confidence mapping"))
     case SurfaceLegendRequest.Continuous(layers, title, ticks, hidden, invalid) =>
-      scalar(request, layers, title, ticks, hidden, invalid, split = false, model, state)
+      scalar(request, layers, title, ticks, hidden, invalid, split = false, model, state, displayed)
     case SurfaceLegendRequest.Split(layers, title, ticks, hidden, invalid) =>
-      scalar(request, layers, title, ticks, hidden, invalid, split = true, model, state)
+      scalar(request, layers, title, ticks, hidden, invalid, split = true, model, state, displayed)
     case SurfaceLegendRequest.Categorical(layers, title, labels, fallbackLabel) =>
-      categorical(request, layers, title, labels, fallbackLabel, model, state)
+      categorical(request, layers, title, labels, fallbackLabel, model, state, displayed)
     case SurfaceLegendRequest.Manual(title, entries) =>
       if entries.isEmpty then Left(SurfaceLegendError.InvalidRequest("manual legend needs at least one entry"))
       else Right(finish(request, SurfaceLegendContent.Manual(title, entries), Vector.empty,
         s"manual|${titleKey(title)}|${entries.map(swatchKey).mkString(";")}", Vector("Manual color key")))
 
-  private def selected(layers: SurfaceLegendLayers, model: SurfaceViewerModel, state: SurfaceViewerState)
+  private def legacyDisplayed(layer: SurfaceLayer, state: SurfaceViewerState): Boolean =
+    val surface = state.layout match
+      case SurfaceLayout.Single(value) => value == layer.surfaceId
+      case SurfaceLayout.Bilateral(left, right, _) => left == layer.surfaceId || right == layer.surfaceId
+    surface && state.layerOrder.contains(layer.id)
+
+  private def selected(layers: SurfaceLegendLayers, model: SurfaceViewerModel, state: SurfaceViewerState,
+      displayed: SurfaceLayer => Boolean)
       : Either[SurfaceLegendError, Vector[(SurfaceLayer, SurfaceLayerPresentation)]] =
     layers.ids.foldLeft[Either[SurfaceLegendError, Vector[(SurfaceLayer, SurfaceLayerPresentation)]]](Right(Vector.empty)):
       (result, id) =>
@@ -114,17 +149,14 @@ object SurfaceLegend:
           presentation <- state.presentations.get(id).toRight(SurfaceLegendError.MissingPresentation(id))
           _ <- if presentation.id != id then Left(SurfaceLegendError.InvalidRequest("presentation id differs from its layer key"))
             else if !presentation.visible then Left(SurfaceLegendError.HiddenLayer(id)) else Right(())
-          displayed = state.layout match
-            case SurfaceLayout.Single(surface) => surface == layer.surfaceId
-            case SurfaceLayout.Bilateral(left, right, _) => left == layer.surfaceId || right == layer.surfaceId
-          _ <- if displayed && state.layerOrder.contains(id) then Right(()) else Left(SurfaceLegendError.UndisplayedLayer(id))
+          _ <- if displayed(layer) && state.layerOrder.contains(id) then Right(()) else Left(SurfaceLegendError.UndisplayedLayer(id))
         yield previous :+ (layer -> presentation)
 
   private def scalar(request: SurfaceLegendRequest, layers: SurfaceLegendLayers, title: LegendTitle,
     ticks: Vector[AxisTick], hidden: Boolean, invalid: Boolean, split: Boolean,
-    model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceLegendError, SurfaceLegend] =
+    model: SurfaceViewerModel, state: SurfaceViewerState, displayed: SurfaceLayer => Boolean): Either[SurfaceLegendError, SurfaceLegend] =
     for
-      selectedLayers <- selected(layers, model, state)
+      selectedLayers <- selected(layers, model, state, displayed)
       mappings <- selectedLayers.foldLeft[Either[SurfaceLegendError, Vector[(SurfaceLayer, ScalarMapping)]]](Right(Vector.empty)):
         case (result, (layer, presentation)) =>
           for
@@ -147,10 +179,11 @@ object SurfaceLegend:
         Vector("Layer opacity and compositing can change displayed colors"))
 
   private def categorical(request: SurfaceLegendRequest, layers: SurfaceLegendLayers, title: LegendTitle,
-    labels: Map[Int, String], fallbackLabel: String, model: SurfaceViewerModel, state: SurfaceViewerState)
+    labels: Map[Int, String], fallbackLabel: String, model: SurfaceViewerModel, state: SurfaceViewerState,
+    displayed: SurfaceLayer => Boolean)
       : Either[SurfaceLegendError, SurfaceLegend] =
     for
-      selectedLayers <- selected(layers, model, state)
+      selectedLayers <- selected(layers, model, state, displayed)
       palettes <- selectedLayers.foldLeft[Either[SurfaceLegendError, Vector[(SurfaceLayer, LabelColorizer)]]](Right(Vector.empty)):
         case (result, (layer, _)) =>
           for

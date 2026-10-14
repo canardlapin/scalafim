@@ -56,7 +56,7 @@ object DesignGraphics:
       .map(DesignGraphicsError.Export(_))
       .flatMap(data => eventScene(data, options).left.map(DesignGraphicsError.Graphics(_)))
 
-  private def regressorDomain(data: EventPlotData): Either[GraphicsError, DiscreteDomain] =
+  private def regressorDomain(data: EventPlotData): Either[GraphicsError, DiscreteDomain[String]] =
     val declared =
       if data.regressors.nonEmpty then data.regressors
       else data.points.map(_.regressor).distinct

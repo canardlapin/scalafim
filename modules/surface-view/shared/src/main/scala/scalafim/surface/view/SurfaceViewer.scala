@@ -141,7 +141,11 @@ final case class SurfaceViewerState private[view] (
   selection: Option[SurfaceSelection],
   geometryPresentations: Map[SurfaceId, SurfaceGeometryPresentation],
   layerOrder: Vector[SurfaceLayerId],
-  presentations: Map[SurfaceLayerId, SurfaceLayerPresentation]
+  presentations: Map[SurfaceLayerId, SurfaceLayerPresentation],
+  colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+  /** Omitted surfaces are opaque. */
+  surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
 )
 
 object SurfaceViewerState:
@@ -162,7 +166,10 @@ object SurfaceViewerState:
         surface.id -> SurfaceGeometryPresentation.Fixed(surface.geometries.defaultKind)
       .toMap,
       layerOrder = model.layers.map(_.id),
-      presentations = presentations.toMap
+      presentations = presentations.toMap,
+      colorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+      surfaceOpacities = Map.empty,
+      surfaceBase = SurfaceDisplayDefaults.LegacySurfaceBase
     )
 
 enum SurfaceViewerAction:
@@ -180,6 +187,9 @@ enum SurfaceViewerAction:
   case ResetCamera
   case SetLighting(lighting: SurfaceLighting)
   case SetClipping(clipping: SurfaceClipping)
+  case SetColorPipeline(pipeline: SurfaceColorPipeline)
+  case SetSurfaceOpacity(surface: SurfaceId, opacity: DisplayOpacity)
+  case SetSurfaceBase(color: Rgba32)
   case SetTimepoint(index: Int)
   case Select(surface: SurfaceId, vertex: VertexId)
   case SelectFace(surface: SurfaceId, face: FaceId, vertex: VertexId)
@@ -231,6 +241,15 @@ object SurfaceViewer:
         Right(state.copy(camera = SurfaceCamera.unsafe(state.camera.viewpoint, state.camera.projection, aspectRatio = state.camera.aspectRatio)))
       case SurfaceViewerAction.SetLighting(lighting) => Right(state.copy(lighting = lighting))
       case SurfaceViewerAction.SetClipping(clipping) => Right(state.copy(clipping = clipping))
+      case SurfaceViewerAction.SetColorPipeline(pipeline) => Right(state.copy(colorPipeline = pipeline))
+      case SurfaceViewerAction.SetSurfaceOpacity(surface, opacity) =>
+        if model.surface(surface).isEmpty then Left(SurfaceViewError.UnknownSurface(surface))
+        else
+          val next =
+            if opacity == DisplayOpacity.Opaque then state.surfaceOpacities - surface
+            else state.surfaceOpacities.updated(surface, opacity)
+          Right(state.copy(surfaceOpacities = next))
+      case SurfaceViewerAction.SetSurfaceBase(color) => Right(state.copy(surfaceBase = color))
       case SurfaceViewerAction.SetTimepoint(index) =>
         if index >= 0 && index < model.frameCount then Right(state.copy(timepoint = index))
         else Left(SurfaceViewError.TimepointOutOfBounds(index, model.frameCount))

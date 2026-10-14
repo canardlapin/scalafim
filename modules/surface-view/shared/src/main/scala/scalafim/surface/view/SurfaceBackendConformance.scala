@@ -48,6 +48,10 @@ enum SurfaceBackendFeature:
   case NearestVertexSampling
   case ScalarInterpolation
   case FragmentComposition
+  case DisplayLinearLight
+  case SurfaceTranslucency
+  case ThresholdEdgeOverlay
+  case SurfaceBaseColor
 
 final case class SurfaceBackendCapabilities(
   id: SurfaceBackendId,

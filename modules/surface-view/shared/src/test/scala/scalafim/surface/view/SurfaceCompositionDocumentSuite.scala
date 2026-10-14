@@ -44,7 +44,7 @@ class SurfaceCompositionDocumentSuite extends munit.FunSuite:
 
   test("malformed camera links, coordinates, and schema revisions fail decoding"):
     val json = SurfaceCompositionCodec.encode(ok(SurfaceCompositionDocument.capture(model, state, navigation, bindings, provenance)))
-    assert(SurfaceCompositionCodec.decode(json.replace("\"revision\":1", "\"revision\":99")).isLeft)
+    assert(SurfaceCompositionCodec.decode(json.replace("\"revision\":2", "\"revision\":99")).isLeft)
     assert(SurfaceCompositionCodec.decode(json.replace("\"cameraLinks\":[[\"view-0\",\"view-1\"]]", "\"cameraLinks\":[[\"view-0\",\"missing\"]]")).isLeft)
     assert(SurfaceCompositionCodec.decode(json.replaceAll("\"translation\":\\[[^\\]]+\\]", "\"translation\":[0,0]")).isLeft)
     assert(SurfaceCompositionCodec.decode(json.dropRight(1) + ",\"unknown\":true}").isLeft)
@@ -56,3 +56,12 @@ class SurfaceCompositionDocumentSuite extends munit.FunSuite:
     for invalid <- Vector("legacy-v1", "future-framing") do
       val mutated = encoded.take(split) + encoded.drop(split).replace("bounds-fit", invalid)
       assert(SurfaceCompositionCodec.decode(mutated).isLeft)
+
+  test("version 1 composition documents default saved instance opacity to opaque"):
+    val document = ok(SurfaceCompositionDocument.capture(model, state, navigation, bindings, provenance))
+    val current = SurfaceCompositionCodec.encode(document)
+    val split = current.indexOf("\"views\"")
+    val legacy = (current.take(split) + current.drop(split).replaceAll(",\"opacity\":[^,}]+", ""))
+      .replace("\"revision\":2", "\"revision\":1")
+    val decoded = ok(SurfaceCompositionCodec.decode(legacy))
+    assert(decoded.views.flatMap(_.instances).forall(_.opacity == intaglio.DisplayOpacity.Opaque))

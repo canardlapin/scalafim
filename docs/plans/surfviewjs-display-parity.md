@@ -53,7 +53,7 @@ portable raster. Browser silhouette IoU is 1 and camera matrices agree within
 not full-family passes. Every formal baseline verdict remains failure.
 Historical receipts and closed Motes describe their recorded revisions only.
 
-| Display element | Current main | Action |
+| Display element | Audited baseline main | Action |
 | --- | --- | --- |
 | Meshes, anatomical cameras, scalar/label/mask/RGBA layers, curvature, blending | Implemented | Preserve and compare actual displays. |
 | Time frames, geometry families/morphing, picks/readouts, scene documents | Implemented | Exercise transitions and restoration, not only initial frames. |
@@ -114,7 +114,8 @@ sampling tally/tie behavior, geometry persistence, and the JavaFX
 `SamplerUnqualified` production guard. Reconcile required Intaglio APIs and its
 pin independently of unrelated historical dependency bumps. Keep dated receipts
 unchanged. Review and land a new exact candidate after its own gates pass.
-The user's merge authorization is retained; no recovery merge has occurred.
+The user's merge authorization is retained. Recovery, composition and annotation
+work have since been locally merged; the checkpoints below record those revisions.
 Independent recovery review found that restored V1 scenes would change camera
 framing under the recovered fit formula. The port now needs an explicit legacy
 framing policy, V7 persistence, and genuine main-V1 matrix/viewport regression
@@ -359,9 +360,9 @@ gallery results; a proposed command is not an installed command.
 | Side-by-side gallery and adversarial comparison checks | Pending. |
 | Display parity qualification | Pending; no passing claim. |
 
-Next action: land the reviewed recovery and comparison foundation, complete
-P2 views/instances and native visual probes, then proceed through P3–P5 and the
-full P6 qualification matrix.
+The recovery/composition/annotation work below supersedes this initial evidence
+table. Next: land the reviewed mapping/linked-figure candidate after its Intaglio
+dependency is published, then perform the complete P6 qualification matrix.
 
 ## Recovery landing checkpoint
 
@@ -377,8 +378,8 @@ JVM/JS gates, independent source review, 3,161 native JavaFX pick checks, and
 nine native Three.js browser checks. The [composition gallery](../visual-qa/surfviewjs-parity/composition-20261014/README.md)
 retains paired native/raster images, camera-isolation images, raw logs and
 provenance. This establishes view/instance rendering and resource behavior;
-it is not the full SurfViewJS C04 cortex appearance comparison. P3–P5 and the
-complete P6 matrix remain outstanding.
+it is not the full SurfViewJS C04 cortex appearance comparison. The complete P6
+matrix remains outstanding; later checkpoints record P3–P5 work.
 
 ## Annotation landing checkpoint
 
@@ -394,3 +395,51 @@ annotation implementation, not the full C05/C06/C09 SurfViewJS cortex matrix.
 P4 mapping/visibility and P5 linked figures are underway; final core parity remains
 unqualified. Upstream Intaglio display primitives are a local candidate, not yet
 a published dependency.
+
+## Mapping and linked-view checkpoint
+
+The isolated P4/P5 candidate now implements the core mapping/visibility and
+linked-figure APIs. Its [gallery and reproduction notes](../visual-qa/surfviewjs-parity/mapping-linked-20261014/README.md)
+retain side-by-side captures, exact input/module hashes, raw logs, independent
+review, and failures. The evidence is deliberately narrower than the stage exit
+criteria and does not admit a full C02/C03/C07/C08/C10/C11/C12 family pass.
+
+- Mapping/visibility: sixteen fixed interior-color regions pass against
+  SurfViewJS. Fifteen of sixteen native full frames pass; the mixed-gradient
+  case has max channel error 3 versus limit 2. Raster full frames retain
+  antialiasing/silhouette failures. Four translucent overlap/reorder/zero-alpha
+  cases pass through the raster route; native Three.js explicitly refuses
+  translucency. Twenty actual JavaFX snapshots equal the raster pixels they
+  publish. Native JavaFX Scene3D admission remains unchanged.
+- Linked browser replay: all eight time/morph/selection/camera/restore checkpoints
+  have silhouette IoU 1 and max channel error 1. Restored surface, marker and
+  flat-map captures are pixel-identical. Temporal source restoration invalidates
+  stale same-ID cache entries. The replay restores and renders saved navigation,
+  rather than reconstructing fixture cameras.
+- Flat maps: all seven browser stages are pixel-identical to the reference,
+  including polygon/lasso ROI, resize, time and selection. The JVM host passes
+  actual interaction checks but retains strict text/color pixel failures.
+  Both reference and candidate have overlapping labels in the lasso specimen.
+- Publication: actual 1200×900 and 2400×1800 transparent figures preserve
+  physical layout, camera aspect, four selection glyphs and scalar/bivariate
+  mapping-derived keys. Legends bind to displayed composition instances, not
+  legacy single/bilateral layout. Panel labels describe the synthetic plane;
+  the expansion is not anatomical inflation.
+
+Current gates pass: shared surface-view 230 tests on each JVM/JS, raster 49 on
+each, Three.js 50, JavaFX 51, examples 12 JVM/11 JS, and connectivity 2 on each.
+Intaglio core passes 712 JVM/703 JS; its design consumers pass 447 on each and
+image-view passes 42 on each. `scalafimCompileAll` passes warning-clean on both
+platforms using the explicit reviewed local Intaglio override. Updating Intaglio
+also required the existing design graphics domain annotation to become
+`DiscreteDomain[String]`.
+
+Intaglio `13747a3a8bf75fd788ff68e1c979d6c84f740605` is independently reviewed
+and locally merged, but remains unpublished. The ScalaFIM candidate pin targets
+that exact revision. Its default clean-clone resolution and local landing must
+wait for upstream publication authorization; no remote push is claimed. P0–P3
+remain locally merged at `53feab621013d0c148a5b5d2567408a153354218`.
+
+Full frozen-matrix qualification, cortical interaction/resource budgets, strict
+raster antialiasing, JVM/browser glyph equivalence, and the remaining native
+mixed-gradient pixel discrepancy are still open P6 evidence/implementation work.

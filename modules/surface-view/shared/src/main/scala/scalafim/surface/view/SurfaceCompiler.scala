@@ -97,6 +97,14 @@ object SurfaceCompiler:
           case Left(error) => return Left(error)
           case Right(_) => ()
       index += 1
+    val visible = state.layerOrder.flatMap(model.layer).filter(layer => state.presentations(layer.id).visible)
+    val groups = visible.groupBy(_.surfaceId).valuesIterator
+    while groups.hasNext do
+      val group = groups.next()
+      val top = group.last
+      if top.thresholdEdges && top.effectiveScalarMapping(state.presentations(top.id)).toOption.flatten.exists(mapping => SurfaceThresholdEdges.interval(mapping).nonEmpty) then
+        if state.colorPipeline != SurfaceColorPipeline.DisplaySrgbLinearLight || group.exists(_.interpolation != SurfaceMapInterpolation.VertexColor) then
+          return Left(SurfaceViewError.LayerCapabilityUnsupported(top.id, "threshold edges require a linear-light vertex-color stack"))
     Right(())
 
   private def compileUnsafe(
@@ -107,9 +115,15 @@ object SurfaceCompiler:
   ): SurfaceRenderPlan =
     val viewportSlots = compileSlots(state.layout)
     val assets = viewportSlots.map(slot => model.surface(slot.surface).get)
-    val fragmentSurfaces = model.layers.groupBy(_.surfaceId).collect:
+    val interpolationFragments = model.layers.groupBy(_.surfaceId).collect:
       case (surface, layers) if SurfaceFragmentEvaluator.required(layers.map(_.interpolation)) => surface
     .toSet
+    val visibleSurfaces = viewportSlots.iterator.map(_.surface).toSet
+    val fragmentSurfaces =
+      if state.colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight || state.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] ||
+          state.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase || state.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque)
+      then interpolationFragments ++ visibleSurfaces
+      else interpolationFragments
     val meshes = assets.map: asset =>
       val mesh = packMesh(asset, frames(asset.id))
       val lowered = if model.layers.exists(layer => layer.surfaceId == asset.id && layer.interpolation == SurfaceMapInterpolation.NearestVertex) then
@@ -122,8 +136,8 @@ object SurfaceCompiler:
     // perspective depth. BoundsFit is the recovered current behaviour.
     val frame = if state.framing == CameraFraming.LegacyV1 then familyFrame(assets) else layoutFrame(state.layout, assets)
     val slots = centerBilateralSlots(state.layout, viewportSlots, assets, frame)
-    val visibleSurfaces = slots.iterator.map(_.surface).toSet
     val orderedLayers = state.layerOrder.flatMap(model.layer)
+    val topLayers = orderedLayers.filter(layer => state.presentations(layer.id).visible).groupBy(_.surfaceId).view.mapValues(_.last.id).toMap
     val layerPackets = Vector.newBuilder[SurfaceLayerPacket]
     val passes = Vector.newBuilder[SurfaceDrawPass]
     var colorValuesWritten = 0
@@ -152,7 +166,11 @@ object SurfaceCompiler:
         val scalarSamples = layer.scalarSamples(state.timepoint)
         val mapping = layer.effectiveScalarMapping(presentation).toOption.get
         val scalarField = scalarSamples.map(values => new SurfaceScalarPacket(new DoubleBufferView(values), mapping.get))
-        val key = layerKey(layer, state.timepoint, presentation, colors, scalarSamples)
+        val edge = if layer.thresholdEdges && topLayers.get(layer.surfaceId).contains(layer.id) then
+          for values <- layer.thresholdEdgeSamples; value <- mapping; packet <- SurfaceThresholdEdges.packet(values, value) yield packet
+        else None
+        val key = layerKey(layer, state.timepoint, presentation, colors, scalarSamples,
+          edge)
         layerPackets += SurfaceLayerPacket(
           layer.id,
           layer.surfaceId,
@@ -164,7 +182,8 @@ object SurfaceCompiler:
           layer.interpolation,
           mapping,
           scalarField,
-          Option.when(fragmentSurfaces(layer.surfaceId))(new IntBufferView(samples))
+          Option.when(fragmentSurfaces(layer.surfaceId))(new IntBufferView(samples)),
+          thresholdEdge = edge
         )
         val slot = slots.indexWhere(_.surface == layer.surfaceId)
         val meshKey = meshes(slot).resourceKey
@@ -193,6 +212,7 @@ object SurfaceCompiler:
         meshes.iterator.flatMap(_.sourceVertices).map(_.length.toLong * 4L).sum +
         meshes.iterator.flatMap(_.nearestPartition).map(_.originalIndices.length.toLong * 4L).sum +
         layers.iterator.flatMap(_.scalarField).map(_.samples.length.toLong * 8L).sum + sampleColorBytes +
+        layers.iterator.flatMap(_.thresholdEdge).map(_.signs.length.toLong * 8L).sum +
         meshes.iterator.flatMap(_.sampleNormals).map(_.length.toLong * 4L).sum +
         meshes.iterator.flatMap(_.samplePositions).map(_.length.toLong * 4L).sum
     val profile = SurfaceProfile(meshes.length, vertices, faces, layers.length, colorValuesWritten, primitiveBytes)
@@ -219,7 +239,10 @@ object SurfaceCompiler:
       receipt,
       if state.framing == CameraFraming.LegacyV1 then SurfaceViewportFit.Fill
       else SurfaceViewportFit.Contain(slots.length.toDouble * state.camera.aspectRatio.value),
-      fragmentSurfaces
+      fragmentSurfaces,
+      state.colorPipeline,
+      state.surfaceOpacities,
+      state.surfaceBase
     )
 
   /** Display-only corner expansion. Original face order and normals survive;
@@ -648,11 +671,20 @@ object SurfaceCompiler:
     timepoint: Int,
     presentation: SurfaceLayerPresentation,
     colors: Array[Int],
-    scalarSamples: Option[Array[Double]]
+    scalarSamples: Option[Array[Double]],
+    edgeSamples: Option[SurfaceThresholdEdgePacket] = None
   ): SurfaceResourceKey =
     var hash = MurmurHash3.stringHash(layer.id.value)
     layer.effectiveScalarMapping(presentation).toOption.get.foreach: mapping =>
       hash = MurmurHash3.mix(hash, MurmurHash3.stringHash(mapping.canonicalKey))
+    if layer.thresholdEdges then hash = MurmurHash3.mix(hash, 0xed6e)
+    edgeSamples.foreach: value =>
+      var vertex = 0
+      while vertex < value.signs.length do
+        hash = MurmurHash3.mix(hash, java.lang.Float.hashCode(value.signs(vertex)))
+        hash = MurmurHash3.mix(hash, value.colors(vertex))
+        vertex += 1
+    layer.bivariateMapping.foreach(mapping => hash = MurmurHash3.mix(hash, MurmurHash3.stringHash(mapping.canonicalKey)))
     if layer.association == SurfaceSampleAssociation.Face then hash = MurmurHash3.mix(hash, 0xface)
     if layer.interpolation == SurfaceMapInterpolation.NearestVertex then hash = MurmurHash3.mix(hash, 0x6ea2)
     scalarSamples.foreach: values =>

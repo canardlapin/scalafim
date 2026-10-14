@@ -56,7 +56,7 @@ class SurfaceDecorationRasterSuite extends munit.FunSuite:
     assertEquals(ok(rendered.scientific.pick(64, 64)).get.surface, id)
     assertEquals(rendered.scientific.image, ok(SurfaceRasterizer.render(plan, size)).image)
 
-  test("foreground surface occludes a depth-tested marker but explicit overlay remains visible"):
+  test("default opaque legacy surface occludes a depth-tested marker but explicit overlay remains visible"):
     val plan = composition(occluder = true)
     val depth = ok(SurfaceDecorationRaster.render(plan, glyph(plan), size))
     val overlay = ok(SurfaceDecorationRaster.render(plan, glyph(plan, SurfaceDecorationDepthPolicy.Overlay), size))
@@ -64,6 +64,26 @@ class SurfaceDecorationRasterSuite extends munit.FunSuite:
     assertEquals(overlay.image.pixelUnsafe(69, 64), red)
     assert(ok(depth.pick(69, 64)).get.isInstanceOf[SurfaceDisplayHit.Scientific[?]])
     assert(ok(overlay.pick(69, 64)).get.isInstanceOf[SurfaceDisplayHit.Decoration[?]])
+
+  test("collected-policy coplanar marker is visible and owns the display pick"):
+    val base = composition()
+    val view = base.views.head
+    val plan = ok(SurfaceCompositionPlan.make(Vector(view.copy(
+      colorPipeline = SurfaceColorPipeline.DisplaySrgbLinearLight)), base.resources.copy(
+        layers = base.resources.layers.map((key, layer) => key -> layer.copy(sampleColors = Some(layer.colors))))))
+    val original = glyph(plan).meshes.head
+    val positions = new FloatBufferView(Array(
+      -.25f, -.25f, 0f,
+       .25f, -.25f, 0f,
+       0f, .25f, 0f
+    ))
+    val normals = new FloatBufferView(Array.fill(9)(0f))
+    val mesh = original.copy(positions = positions, normals = normals,
+      indices = new IntBufferView(Array(0, 1, 2)), color = red)
+    val geometry = glyph(plan).copy(meshes = Vector(mesh))
+    val rendered = ok(SurfaceDecorationRaster.render(plan, geometry, size))
+    assertEquals(rendered.image.pixelUnsafe(64, 64), red)
+    assert(ok(rendered.pick(64, 64)).get.isInstanceOf[SurfaceDisplayHit.Decoration[?]])
 
   test("transparent label texels preserve the surface and labels pass through picking"):
     val plan = composition()

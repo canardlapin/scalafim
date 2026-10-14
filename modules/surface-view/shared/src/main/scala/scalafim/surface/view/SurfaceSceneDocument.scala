@@ -59,7 +59,9 @@ final case class SurfaceSceneLayer(
   association: SurfaceSampleAssociation = SurfaceSampleAssociation.Vertex,
   vertexInterpolation: SurfaceVertexInterpolation = SurfaceVertexInterpolation.Color,
   scalarMappingKey: Option[String] = None,
-  scalarInterpolation: Boolean = false
+  scalarInterpolation: Boolean = false,
+  bivariateMappingKey: Option[String] = None,
+  thresholdEdges: Boolean = false
 )
 
 final case class SurfaceSceneLayerState(
@@ -102,7 +104,7 @@ object SurfaceProvenance:
     else Right(new SurfaceProvenance(normalizedProducer, normalizedVersion, normalizedCreatedAt, normalizedEntries))
 
 enum SurfaceDocumentRevision:
-  case V1, V2, V3, V4, V5, V6, V7
+  case V1, V2, V3, V4, V5, V6, V7, V8
 
   def value: Int =
     this match
@@ -113,6 +115,7 @@ enum SurfaceDocumentRevision:
       case V5 => 5
       case V6 => 6
       case V7 => 7
+      case V8 => 8
 
 enum SurfaceUnknownFieldPolicy:
   case Reject, Ignore
@@ -135,17 +138,25 @@ final case class SurfaceSceneDocument private (
   layerStates: Vector[SurfaceSceneLayerState],
   requiredFeatures: Set[SurfaceBackendFeature],
   provenance: SurfaceProvenance,
-  legends: Vector[SurfaceSceneLegend] = Vector.empty
+  legends: Vector[SurfaceSceneLegend] = Vector.empty,
+  colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+  surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
 ):
   def admit(capabilities: SurfaceBackendCapabilities): Either[SurfaceSceneError, Unit] =
     val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
     val nearest = Option.when(layers.exists(_.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))(SurfaceBackendFeature.NearestVertexSampling)
     val scalar = Option.when(layers.exists(_.scalarInterpolation))(SurfaceBackendFeature.ScalarInterpolation)
+    val linearLight = Option.when(colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight)(SurfaceBackendFeature.DisplayLinearLight)
+    val translucency = Option.when(surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) || surfaceBase.alpha < 255)(SurfaceBackendFeature.SurfaceTranslucency)
+    val thresholdEdges = Option.when(layers.exists(_.thresholdEdges))(SurfaceBackendFeature.ThresholdEdgeOverlay)
+    val surfaceBaseColor = Option.when(surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase)(SurfaceBackendFeature.SurfaceBaseColor)
     val fragment = Option.when(layers.groupBy(_.surface).values.exists(group =>
       group.exists(_.scalarInterpolation) ||
         (group.exists(layer => layer.association == SurfaceSampleAssociation.Vertex && layer.vertexInterpolation == SurfaceVertexInterpolation.Color) &&
           group.exists(layer => layer.association == SurfaceSampleAssociation.Face || layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))))(SurfaceBackendFeature.FragmentComposition)
-    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ fragment).filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
+    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ linearLight ++ translucency ++ thresholdEdges ++ surfaceBaseColor ++ fragment)
+      .filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
     if missing.isEmpty then Right(())
     else Left(SurfaceSceneError.MissingCapabilities(missing))
 
@@ -161,7 +172,7 @@ final case class SurfaceSceneDocument private (
     yield restored
 
 object SurfaceSceneDocument:
-  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V7
+  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V8
 
   def capture(
     model: SurfaceViewerModel,
@@ -189,16 +200,18 @@ object SurfaceSceneDocument:
         bindings.layers.get(layer.id) match
           case None => Left(SurfaceSceneError.MissingLayerBinding(layer.id))
           case Some(reference) => Right(SurfaceSceneLayer(
-            layer.id,
-            layer.surfaceId,
-            reference,
-            layer.kind,
-            layer.frameCount,
-            layer.blendMode,
-            layer.association,
-            if layer.interpolation == SurfaceMapInterpolation.NearestVertex then SurfaceVertexInterpolation.NearestSample else SurfaceVertexInterpolation.Color,
-            layer.scalarMapping.map(_.canonicalKey),
-            layer.interpolation == SurfaceMapInterpolation.VertexScalar
+            id = layer.id,
+            surface = layer.surfaceId,
+            reference = reference,
+            encoding = layer.kind,
+            frameCount = layer.frameCount,
+            blendMode = layer.blendMode,
+            association = layer.association,
+            vertexInterpolation = if layer.interpolation == SurfaceMapInterpolation.NearestVertex then SurfaceVertexInterpolation.NearestSample else SurfaceVertexInterpolation.Color,
+            scalarMappingKey = layer.scalarMapping.map(_.canonicalKey),
+            scalarInterpolation = layer.interpolation == SurfaceMapInterpolation.VertexScalar,
+            bivariateMappingKey = layer.bivariateMapping.map(_.canonicalKey),
+            thresholdEdges = layer.thresholdEdges
           ))
       states <- traverse(state.layerOrder): id =>
         state.presentations.get(id) match
@@ -227,7 +240,10 @@ object SurfaceSceneDocument:
         requiredFeatures,
         provenance,
         legends,
-        state.framing
+        state.framing,
+        state.colorPipeline,
+        state.surfaceOpacities,
+        state.surfaceBase
       )
     yield result
 
@@ -245,7 +261,10 @@ object SurfaceSceneDocument:
     requiredFeatures: Set[SurfaceBackendFeature],
     provenance: SurfaceProvenance,
     legends: Vector[SurfaceSceneLegend] = Vector.empty,
-    framing: CameraFraming = CameraFraming.BoundsFit
+    framing: CameraFraming = CameraFraming.BoundsFit,
+    colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
+    surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
+    surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
     if revision == SurfaceDocumentRevision.V1 && framing != CameraFraming.LegacyV1 then
       Left(SurfaceSceneError.InvalidDocument("revision 1 requires legacy camera framing"))
@@ -253,6 +272,12 @@ object SurfaceSceneDocument:
       Left(SurfaceSceneError.InvalidDocument("revisions 2 through 6 require bounds-fit camera framing"))
     else if revision.value < 7 && camera.aspectRatio != CameraAspectRatio.Default then
       Left(SurfaceSceneError.InvalidDocument("non-square camera aspect requires revision 7"))
+    else if revision.value < 8 && colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes then
+      Left(SurfaceSceneError.InvalidDocument("non-legacy color pipeline requires revision 8"))
+    else if revision.value < 8 && surfaceOpacities.nonEmpty then
+      Left(SurfaceSceneError.InvalidDocument("surface opacities require revision 8"))
+    else if revision.value < 8 && surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase then
+      Left(SurfaceSceneError.InvalidDocument("non-legacy surface base requires revision 8"))
     else if legends.nonEmpty && revision.value < 6 then
       Left(SurfaceSceneError.InvalidDocument("legend requests and identities require revision 6"))
     else if legends.exists(_.canonicalKey.trim.isEmpty) then
@@ -266,6 +291,13 @@ object SurfaceSceneDocument:
     else if layers.exists(layer => layer.scalarMappingKey.nonEmpty &&
         (revision.value < 4 || layer.encoding != SurfaceLayerKind.Scalar || layer.scalarMappingKey.exists(_.isEmpty))) then
       Left(SurfaceSceneError.InvalidDocument("scalar mapping keys require revision 4 and scalar encoding"))
+    else if layers.exists(layer => layer.bivariateMappingKey.nonEmpty &&
+        (revision.value < 8 || layer.encoding != SurfaceLayerKind.Scalar || layer.association != SurfaceSampleAssociation.Vertex ||
+          layer.vertexInterpolation != SurfaceVertexInterpolation.Color || layer.bivariateMappingKey.exists(_.isEmpty) ||
+          layer.scalarMappingKey.nonEmpty || layer.scalarInterpolation)) then
+      Left(SurfaceSceneError.InvalidDocument("bivariate mapping keys require revision 8, vertex scalar data, and no scalar mapping"))
+    else if layers.exists(layer => layer.thresholdEdges && revision.value < 8) then
+      Left(SurfaceSceneError.InvalidDocument("threshold edge policy requires revision 8"))
     else if layers.exists(layer => layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample &&
         (revision.value < 3 || layer.association != SurfaceSampleAssociation.Vertex)) then
       Left(SurfaceSceneError.InvalidDocument("nearest vertex interpolation requires revision 3 and vertex association"))
@@ -283,6 +315,8 @@ object SurfaceSceneDocument:
       Left(SurfaceSceneError.InvalidDocument("layer state ids must exactly match layer ids"))
     else if layers.exists(layer => !assets.exists(_.id == layer.surface)) then
       Left(SurfaceSceneError.InvalidDocument("every layer must reference a declared surface"))
+    else if !surfaceOpacities.keySet.subsetOf(assets.map(_.id).toSet) then
+      Left(SurfaceSceneError.InvalidDocument("surface opacities must reference declared surfaces"))
     else
       val frameCounts = layers.iterator.map(_.frameCount).filter(_ > 1).toVector.distinct
       val frameCount = frameCounts.headOption.getOrElse(1)
@@ -317,7 +351,10 @@ object SurfaceSceneDocument:
       layerStates,
       requiredFeatures,
       provenance,
-      legends
+      legends,
+      colorPipeline,
+      surfaceOpacities,
+      surfaceBase
       ))
 
   private def validateLegends(legends: Vector[SurfaceSceneLegend], model: SurfaceViewerModel,
@@ -404,6 +441,8 @@ object SurfaceSceneDocument:
               actual.surfaceId == expected.surface &&
                 actual.kind == expected.encoding &&
                 (document.revision.value < 4 || actual.scalarMapping.map(_.canonicalKey) == expected.scalarMappingKey) &&
+                (document.revision.value < 8 || actual.bivariateMapping.map(_.canonicalKey) == expected.bivariateMappingKey) &&
+                (document.revision.value < 8 || actual.thresholdEdges == expected.thresholdEdges) &&
                 actual.association == expected.association &&
                 (actual.interpolation == SurfaceMapInterpolation.VertexScalar) == expected.scalarInterpolation &&
                 (actual.interpolation == SurfaceMapInterpolation.NearestVertex) ==
@@ -429,6 +468,10 @@ object SurfaceSceneDocument:
     actions += SurfaceViewerAction.SetOrbit(document.camera.orbit)
     actions += SurfaceViewerAction.SetLighting(document.lighting)
     actions += SurfaceViewerAction.SetClipping(document.clipping)
+    actions += SurfaceViewerAction.SetColorPipeline(document.colorPipeline)
+    document.surfaceOpacities.foreach: (surface, opacity) =>
+      actions += SurfaceViewerAction.SetSurfaceOpacity(surface, opacity)
+    actions += SurfaceViewerAction.SetSurfaceBase(document.surfaceBase)
     actions += SurfaceViewerAction.SetTimepoint(document.timepoint)
     document.selection.foreach: selection =>
       actions += selection.face.fold[SurfaceViewerAction](SurfaceViewerAction.Select(selection.surface, selection.vertex)):
@@ -512,3 +555,7 @@ private[view] object SurfaceSceneNames:
       case SurfaceBackendFeature.NearestVertexSampling => "nearest-vertex-sampling"
       case SurfaceBackendFeature.ScalarInterpolation => "scalar-interpolation"
       case SurfaceBackendFeature.FragmentComposition => "fragment-composition"
+      case SurfaceBackendFeature.DisplayLinearLight => "display-linear-light"
+      case SurfaceBackendFeature.SurfaceTranslucency => "surface-translucency"
+      case SurfaceBackendFeature.ThresholdEdgeOverlay => "threshold-edge-overlay"
+      case SurfaceBackendFeature.SurfaceBaseColor => "surface-base-color"

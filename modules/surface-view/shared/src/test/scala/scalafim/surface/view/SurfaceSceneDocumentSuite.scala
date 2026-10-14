@@ -12,7 +12,7 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
   test("revision 1 documents retain vertex association and their original JSON shape"):
     val (model, state, bindings, provenance) = fixture()
     val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
-    val json = SurfaceSceneCodec.encode(current).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":7", "\"revision\":1").replace(",\"legends\":[]", "")
+    val json = SurfaceSceneCodec.encode(current).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":1").replace(",\"legends\":[]", "")
       .replace(",\"scalarInterpolation\":false", "")
       .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")
       .replace(",\"vertexInterpolation\":\"color\"", "")
@@ -83,10 +83,10 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
 
-    val future = encoded.replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":7", "\"revision\":8")
+    val future = encoded.replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":9")
     assertEquals(
       SurfaceSceneCodec.decode(future).left.toOption,
-      Some(SurfaceSceneError.UnsupportedRevision(8))
+      Some(SurfaceSceneError.UnsupportedRevision(9))
     )
 
   test("external digests and exact mesh identities are checked before state restoration"):

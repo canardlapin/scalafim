@@ -98,14 +98,15 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
       SurfaceBackendFeature.HighResolutionSnapshot
     )
     val fragments = if runtime.supportsFragmentLayers then base ++ Set(SurfaceBackendFeature.ScalarInterpolation,
-      SurfaceBackendFeature.FragmentComposition) else base
+      SurfaceBackendFeature.FragmentComposition, SurfaceBackendFeature.WorldClipping,
+      SurfaceBackendFeature.DisplayLinearLight, SurfaceBackendFeature.ThresholdEdgeOverlay, SurfaceBackendFeature.SurfaceBaseColor) else base
     if runtime.supportsGpuVolumeProjection then fragments + SurfaceBackendFeature.GpuVolumeProjection else fragments
 
   val capabilities: SurfaceBackendCapabilities = SurfaceBackendCapabilities(
     SurfaceBackendId.unsafe("three-webgl"),
     SurfacePlanRevision.Current,
     admittedFeatures,
-    Vector("world clipping planes are not yet supported") ++
+    Vector("native world clipping supports at most eight planes; surface alpha uses CanvasRasterSurfaceHost") ++
       Option.when(!runtime.supportsGpuVolumeProjection)("GPU volume projection is unavailable; use the shared CPU oracle")
   )
 
@@ -130,21 +131,22 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     else if plan.fragmentSurfaces.nonEmpty && !runtime.supportsFragmentLayers then
       Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
     else
-      requireContext().flatMap: _ =>
-        val reuse = currentComposition.fold[Either[SurfaceCompositionError, Unit]](Right(())): previous =>
-          SurfaceCompositionPlan.validateResourceReuse(previous.resources, SurfaceCompositionResources(
-            plan.meshes.map(m => m.resourceKey -> m).toMap, plan.layers.map(l => l.resourceKey -> l).toMap))
-        reuse.left.map(error => ThreeSurfaceError.InvalidPlan(s"immutable composition resource changed: $error"))
-          .flatMap(_ => ThreeSurfaceProgram.compile(current, plan, size, forceDraw)).flatMap: program =>
-          val packets = program.commands.collect:
-            case ThreeSurfaceCommand.UploadFragments(values) => values
-          runtime.validateFragments(packets.flatten).map(_ => program)
-        .flatMap: program =>
-          val clear = if currentComposition.nonEmpty then runtime.clearComposition() else Right(())
-          clear.flatMap: _ =>
-            currentComposition = None
-            decorationsActive = false
-            interpret(Right(program), plan, size)
+      SurfaceThresholdEdgeValidation.validate(plan).left.map(ThreeSurfaceError.InvalidPlan.apply).flatMap: _ =>
+        requireContext().flatMap: _ =>
+          val reuse = currentComposition.fold[Either[SurfaceCompositionError, Unit]](Right(())): previous =>
+            SurfaceCompositionPlan.validateResourceReuse(previous.resources, SurfaceCompositionResources(
+              plan.meshes.map(m => m.resourceKey -> m).toMap, plan.layers.map(l => l.resourceKey -> l).toMap))
+          reuse.left.map(error => ThreeSurfaceError.InvalidPlan(s"immutable composition resource changed: $error"))
+            .flatMap(_ => ThreeSurfaceProgram.compile(current, plan, size, forceDraw)).flatMap: program =>
+            val packets = program.commands.collect:
+              case ThreeSurfaceCommand.UploadFragments(values) => values
+            runtime.validateFragments(packets.flatten).map(_ => program)
+          .flatMap: program =>
+            val clear = if currentComposition.nonEmpty then runtime.clearComposition() else Right(())
+            clear.flatMap: _ =>
+              currentComposition = None
+              decorationsActive = false
+              interpret(Right(program), plan, size)
 
   /** Renders a validated multi-view composition while sharing each surface's
     * uploaded mesh and layer resources across its display occurrences.
