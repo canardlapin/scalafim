@@ -401,3 +401,24 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(program.dirty.layout)
     assert(!program.dirty.geometry && !program.dirty.camera && !program.dirty.layerData)
     assertEquals(program.commands, Vector(JavaFxSurfaceCommand.UpdateLayout(after.slots, after.viewportFit)))
+
+  test("native layout consumes compiled x/y projection independently on rectangular legacy viewports"):
+    val base = plan(geometry(), viewpoint = SurfaceViewpoint.Dorsal)
+    val projection = Array[Float](1.2f, 0, 0, 0, 0, 1.6f, 0, 0, 0, 0, -.002f, 0, 0, 0, 0, 1)
+    val camera = base.camera.copy(projectionMatrix = new FloatBufferView(projection))
+    for (width, height) <- Vector((960.0, 540.0), (540.0, 960.0)) do
+      val slot = base.slots.head.copy(viewport = SurfaceViewport(0.0, 0.0, 0.5, 1.0))
+      val compiled = base.copy(camera = camera, slots = Vector(slot), viewportFit = SurfaceViewportFit.Fill)
+      val cameraTransform = new _root_.javafx.scene.transform.Affine()
+      val layout = new _root_.javafx.scene.transform.Affine()
+      JavaFxSurfaceProbe.configureCamera(new PerspectiveCamera(true), cameraTransform, compiled)
+      JavaFxSurfaceProbe.configureLayout(compiled, Map(slot.surface -> layout), width, height)
+      val mesh = compiled.meshes.head
+      for vertex <- 0 until mesh.positions.length / 3 do
+        val point = new _root_.javafx.geometry.Point3D(mesh.positions(vertex * 3), mesh.positions(vertex * 3 + 1), mesh.positions(vertex * 3 + 2))
+        val actual = cameraTransform.transform(layout.transform(point))
+        val view = compiled.camera.viewMatrix
+        val x = view(0) * point.getX + view(1) * point.getY + view(2) * point.getZ + view(3)
+        val y = view(4) * point.getX + view(5) * point.getY + view(6) * point.getZ + view(7)
+        assertEqualsDouble(actual.getX, width * (slot.viewport.x + (x * projection(0) + 1) * slot.viewport.width / 2), 1e-5)
+        assertEqualsDouble(actual.getY, height * (slot.viewport.y + (1 - y * projection(5)) * slot.viewport.height / 2), 1e-5)

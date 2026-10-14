@@ -670,26 +670,24 @@ object JavaFxSurfaceProbe:
       val aspect = width / height
       val p0 = projection(0).toDouble
       val p5 = projection(5).toDouble
-      // Fit the reference projection within the slot with one physical pixel
-      // scale. Independent x/y slot scaling stretches anatomical geometry.
-      val scale = math.min(width * viewport.width * p0, height * viewport.height * p5) / (height * p5)
+      // The compiler owns aspect and fitting. Consume its projection exactly,
+      // including legacy Fill scenes whose axes intentionally scale separately.
       (
         Array(
-          scale, 0.0, shiftX * aspect / p5,
-          0.0, scale, shiftY / p5,
+          viewport.width * aspect * p0 / p5, 0.0, shiftX * aspect / p5,
+          0.0, viewport.height, shiftY / p5,
           0.0, 0.0, 1.0
         ),
         Array(0.0, 0.0, 0.0)
       )
     else
-      val scale = math.min(width * viewport.width * projection(0), height * viewport.height * projection(5)) * 0.5
       val halfDepth = math.max(width, height) * 0.5
       val depthScale = -halfDepth * projection(10)
       val depthShift = halfDepth * projection(11)
       (
         Array(
-          scale, 0.0, 0.0,
-          0.0, scale, 0.0,
+          width * viewport.width * projection(0) * 0.5, 0.0, 0.0,
+          0.0, height * viewport.height * projection(5) * 0.5, 0.0,
           0.0, 0.0, depthScale
         ),
         Array(
