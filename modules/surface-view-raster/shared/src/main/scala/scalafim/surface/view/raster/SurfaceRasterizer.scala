@@ -60,7 +60,7 @@ final class SurfaceRasterResult private[raster] (
   baryA: Array[Float],
   baryB: Array[Float],
   baryC: Array[Float],
-  depthAt: Array[Double],
+  private[raster] val depthAt: Array[Double],
   origins: Vector[SurfaceDisplayOrigin] = Vector.empty
 ):
   def pick(x: Int, y: Int): Either[SurfaceRasterError, Option[SurfacePick]] =
@@ -116,7 +116,7 @@ object SurfaceRasterizer:
     )
   )
 
-  private final case class ClipVertex(
+  private[raster] final case class ClipVertex(
     worldX: Double,
     worldY: Double,
     worldZ: Double,
@@ -141,7 +141,7 @@ object SurfaceRasterizer:
         mix(baryA, that.baryA), mix(baryB, that.baryB), mix(baryC, that.baryC)
       )
 
-  private final case class ScreenVertex(
+  private[raster] final case class ScreenVertex(
     x: Double,
     y: Double,
     depth: Double,
@@ -409,7 +409,7 @@ object SurfaceRasterizer:
       baryA, baryB, baryC
     )
 
-  private def multiply(matrix: FloatBufferView, x: Double, y: Double, z: Double, w: Double): (Double, Double, Double, Double) =
+  private[raster] def multiply(matrix: FloatBufferView, x: Double, y: Double, z: Double, w: Double): (Double, Double, Double, Double) =
     (
       matrix(0) * x + matrix(1) * y + matrix(2) * z + matrix(3) * w,
       matrix(4) * x + matrix(5) * y + matrix(6) * z + matrix(7) * w,
@@ -424,7 +424,7 @@ object SurfaceRasterizer:
         val dot = math.max(0.0, mesh.normals(offset) * dx + mesh.normals(offset + 1) * dy + mesh.normals(offset + 2) * dz)
         math.min(1.0, ambient.value + diffuse.value * dot)
 
-  private def clipTriangle(
+  private[raster] def clipTriangle(
     vertices: Vector[ClipVertex],
     clipping: SurfaceClipping
   ): Vector[ClipVertex] =
@@ -491,7 +491,7 @@ object SurfaceRasterizer:
       case 4 => vertex.z + vertex.w
       case _ => vertex.w - vertex.z
 
-  private def toScreen(vertex: ClipVertex, viewport: SurfaceViewport, dimensions: RasterDimensions): ScreenVertex =
+  private[raster] def toScreen(vertex: ClipVertex, viewport: SurfaceViewport, dimensions: RasterDimensions): ScreenVertex =
     val inverseW = 1.0 / vertex.w
     val ndcX = vertex.x * inverseW
     val ndcY = vertex.y * inverseW
@@ -581,7 +581,7 @@ object SurfaceRasterizer:
       y += 1
     (shaded, rejected, scalarEvaluated)
 
-  private inline def edge(ax: Double, ay: Double, bx: Double, by: Double, px: Double, py: Double): Double =
+  private[raster] inline def edge(ax: Double, ay: Double, bx: Double, by: Double, px: Double, py: Double): Double =
     (px - ax) * (by - ay) - (py - ay) * (bx - ax)
 
   private def packed(value: Int): Rgba32 =
@@ -590,7 +590,7 @@ object SurfaceRasterizer:
   private def clampByte(value: Double): Int =
     math.round(value).toInt.max(0).min(255)
 
-  private def compositeOverOpaque(under: Int, red: Int, green: Int, blue: Int, alpha: Int): Int =
+  private[raster] def compositeOverOpaque(under: Int, red: Int, green: Int, blue: Int, alpha: Int): Int =
     if alpha == 255 then (red << 24) | (green << 16) | (blue << 8) | 255
     else
       val inverse = 255 - alpha

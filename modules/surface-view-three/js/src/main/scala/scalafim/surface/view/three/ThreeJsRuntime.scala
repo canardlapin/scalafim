@@ -2,7 +2,7 @@ package scalafim.surface.view.three
 
 import scala.collection.mutable
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.{Float32Array, Uint32Array}
+import scala.scalajs.js.typedarray.{Float32Array, Uint32Array, Uint8Array}
 
 import intaglio.*
 import scalafim.surface.view.*
@@ -49,6 +49,19 @@ final class ThreeJsRuntime private (
     instances: Vector[CompositionInstance]
   )
 
+  private final case class DecorationInstance(
+    id: SurfaceDecorationElementId,
+    origin: SurfaceDisplayOrigin,
+    target: SurfaceDecorationTarget,
+    depthPolicy: SurfaceDecorationDepthPolicy,
+    geometry: js.Dynamic,
+    material: js.Dynamic,
+    texture: Option[js.Dynamic],
+    mesh: js.Dynamic,
+    pickable: Boolean,
+    depthBounds: ThreeJsRuntime.PositionBounds
+  )
+
   private val bundles = mutable.LinkedHashMap.empty[SurfaceId, Bundle]
   private var slots = Vector.empty[SurfaceViewSlot]
   private var viewportFit: SurfaceViewportFit = SurfaceViewportFit.Fill
@@ -56,6 +69,7 @@ final class ThreeJsRuntime private (
   private var canvasSize = ThreeCanvasSize.unsafe(1, 1)
   private var disposed = false
   private var composition = Vector.empty[CompositionView]
+  private var decorations = Vector.empty[DecorationInstance]
 
   def contextState: ThreeContextState =
     if disposed then ThreeContextState.Lost
@@ -217,8 +231,37 @@ final class ThreeJsRuntime private (
 
   override def clearComposition(): Either[ThreeSurfaceError, Unit] =
     attempt("composition removal"):
+      clearDecorationsUnsafe()
       clearCompositionUnsafe()
       bundles.valuesIterator.foreach(_.mesh.updateDynamic("visible")(true))
+      ()
+
+  override def updateDecorations(next: SurfaceDecorationGeometry): Either[ThreeSurfaceError, Unit] =
+    attempt("decoration update"):
+      if next.labels.nonEmpty then
+        throw new IllegalArgumentException("unresolved decoration labels require texture assets")
+      val origins = composition.iterator.flatMap(view => view.instances.iterator.map(_.origin)).toSet
+      if next.meshes.exists(mesh => !origins(mesh.origin)) then
+        throw new IllegalArgumentException("decoration belongs to an unknown composition display")
+      val staged = mutable.ArrayBuffer.empty[DecorationInstance]
+      val additions = mutable.ArrayBuffer.empty[js.Dynamic]
+      try
+        next.meshes.foreach(packet => staged += makeDecoration(packet))
+        staged.foreach: decoration =>
+          additions += decoration.mesh
+          scene.applyDynamic("add")(decoration.mesh)
+        clearDecorationsUnsafe()
+        decorations = staged.toVector
+      catch
+        case scala.util.control.NonFatal(error) =>
+          additions.foreach(mesh => scene.applyDynamic("remove")(mesh))
+          staged.foreach(disposeDecoration)
+          throw error
+      ()
+
+  override def clearDecorations(): Either[ThreeSurfaceError, Unit] =
+    attempt("decoration removal"):
+      clearDecorationsUnsafe()
       ()
 
   override def uploadFragments(packets: Vector[ThreeFragmentPacket]): Either[ThreeSurfaceError, Long] =
@@ -319,6 +362,7 @@ final class ThreeJsRuntime private (
       finally camera.selectDynamic("projectionMatrix").applyDynamic("copy")(originalProjection)
       renderer.applyDynamic("setScissorTest")(false)
       bundles.valuesIterator.foreach(_.mesh.updateDynamic("visible")(true))
+      decorations.foreach(_.mesh.updateDynamic("visible")(false))
       ()
 
   private def drawComposition(): Unit =
@@ -329,6 +373,7 @@ final class ThreeJsRuntime private (
       composition.zip(fitted).foreach: (entry, viewportBox) =>
         composition.foreach(other => other.instances.foreach(_.mesh.updateDynamic("visible")(false)))
         entry.instances.foreach(_.mesh.updateDynamic("visible")(true))
+        decorations.foreach(decoration => decoration.mesh.updateDynamic("visible")(decoration.origin.view == entry.view.id))
         setCamera(entry.view.camera)
         setLighting(entry.view.lighting)
         val originalProjection = camera.selectDynamic("projectionMatrix").applyDynamic("clone")()
@@ -337,8 +382,12 @@ final class ThreeJsRuntime private (
           val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
             .applyDynamic("multiply")(instance.mesh.selectDynamic("matrixWorld"))
           (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], instance.bundle.depthBounds)
+        val decorationDepthInputs = decorations.iterator.filter(_.origin.view == entry.view.id).map: decoration =>
+          val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
+            .applyDynamic("multiply")(decoration.mesh.selectDynamic("matrixWorld"))
+          (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], decoration.depthBounds)
         val depthProjection = ThreeJsRuntime.depthProjection(
-          originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs)
+          originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs ++ decorationDepthInputs)
         val viewport = ThreeJsRuntime.nativeViewport(viewportBox, canvasSize)
         val projection = ThreeJsRuntime.viewportProjection(depthProjection, viewport)
         camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
@@ -348,12 +397,64 @@ final class ThreeJsRuntime private (
         renderer.applyDynamic("render")(scene, camera)
         camera.selectDynamic("projectionMatrix").applyDynamic("copy")(originalProjection)
       renderer.applyDynamic("setScissorTest")(false)
+      decorations.foreach(_.mesh.updateDynamic("visible")(false))
       ()
 
   def pick(x: Double, y: Double): Either[ThreeSurfaceError, Option[ThreePick]] =
     attempt("pick"):
       if composition.nonEmpty then pickComposition(x, y)
       else pickLegacy(x, y)
+
+  override def pickDisplay(x: Double, y: Double): Either[ThreeSurfaceError, Option[SurfaceDisplayHit[ThreePick]]] =
+    attempt("display pick"):
+      if composition.isEmpty then pickLegacy(x, y).map(SurfaceDisplayHit.Scientific(_))
+      else pickCompositionDisplay(x, y)
+
+  private def pickCompositionDisplay(x: Double, y: Double): Option[SurfaceDisplayHit[ThreePick]] =
+    val fitted = composition.head.view.viewportFit.resolve(
+      composition.map(item => SurfaceViewSlot(item.view.instances.head.surface, item.view.viewport)),
+      canvasSize.width.toDouble, canvasSize.height.toDouble).map(_.viewport)
+    val selected = composition.zip(fitted).find: (entry, viewport) =>
+      x >= viewport.x * canvasSize.width && x < (viewport.x + viewport.width) * canvasSize.width &&
+        y >= viewport.y * canvasSize.height && y < (viewport.y + viewport.height) * canvasSize.height
+    selected.flatMap: (entry, viewport) =>
+      // This establishes exactly the same camera, adjusted depth projection and
+      // ray as the legacy scientific picker before comparing *native* hit
+      // distances. Do not derive a distance from a decoded world point: that
+      // loses instance translations and is wrong for orthographic ray origins.
+      pickComposition(x, y)
+      val scientific = entry.instances.iterator.flatMap: instance =>
+        raycaster.applyDynamic("intersectObject")(instance.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]].headOption
+          .flatMap: hit =>
+            decodePick(instance.bundle, instance.translationX, instance.translationY, instance.translationZ,
+              hit, Some(instance.origin), scientific = true)
+              .map(value => (hit.selectDynamic("distance").asInstanceOf[Double], SurfaceDisplayHit.Scientific(value)))
+      val hits = decorations.iterator
+        .filter(decoration => decoration.origin.view == entry.view.id && decoration.pickable)
+        .flatMap: decoration =>
+          raycaster.applyDynamic("intersectObject")(decoration.mesh, false).asInstanceOf[js.Array[js.Dynamic]].headOption
+            .map(hit => (hit.selectDynamic("distance").asInstanceOf[Double], decoration))
+        .toVector
+      val overlay = hits.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).sortBy(_._1).headOption
+      overlay.map: (depth, decoration) =>
+        SurfaceDisplayHit.Decoration(SurfaceDecorationHit(decoration.id, decoration.origin, decoration.target, depth))
+      .orElse:
+        val depthTested = hits.iterator
+          .filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
+          .map: (depth, decoration) =>
+            (depth, SurfaceDisplayHit.Decoration(SurfaceDecorationHit(decoration.id, decoration.origin, decoration.target, depth)))
+        val candidates = scientific.toVector ++ depthTested
+        candidates.sortWith: (left, right) =>
+          val tolerance = 1e-7 * math.max(1.0, math.max(math.abs(left._1), math.abs(right._1)))
+          if math.abs(left._1 - right._1) <= tolerance then
+            // Decoration meshes render after scientific meshes with LEQUAL,
+            // making a coplanar depth-tested annotation visibly win.
+            (left._2, right._2) match
+              case (SurfaceDisplayHit.Decoration(_), SurfaceDisplayHit.Scientific(_)) => true
+              case (SurfaceDisplayHit.Scientific(_), SurfaceDisplayHit.Decoration(_)) => false
+              case _ => false
+          else left._1 < right._1
+        .headOption.map(_._2)
 
   private def pickLegacy(x: Double, y: Double): Option[ThreePick] =
       val slot = fittedSlots.find: candidate =>
@@ -400,8 +501,13 @@ final class ThreeJsRuntime private (
           val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
             .applyDynamic("multiply")(instance.mesh.selectDynamic("matrixWorld"))
           (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], instance.bundle.depthBounds)
+        val decorationDepthInputs = decorations.iterator.filter(_.origin.view == entry.view.id).map: decoration =>
+          val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
+            .applyDynamic("multiply")(decoration.mesh.selectDynamic("matrixWorld"))
+          (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], decoration.depthBounds)
         val projection = ThreeJsRuntime.depthProjection(
-          camera.selectDynamic("projectionMatrix").selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs)
+          camera.selectDynamic("projectionMatrix").selectDynamic("elements").asInstanceOf[js.Array[Double]],
+          depthInputs ++ decorationDepthInputs)
         camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
         camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
         camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
@@ -433,6 +539,7 @@ final class ThreeJsRuntime private (
 
   def dispose(): Either[ThreeSurfaceError, Unit] =
     attempt("backend disposal"):
+      clearDecorationsUnsafe()
       clearCompositionUnsafe()
       bundles.valuesIterator.foreach(disposeBundle)
       bundles.clear()
@@ -568,6 +675,116 @@ final class ThreeJsRuntime private (
       view.instances.foreach: instance =>
         scene.applyDynamic("remove")(instance.mesh)
     composition = Vector.empty
+
+  private def clearDecorationsUnsafe(): Unit =
+    decorations.foreach: decoration =>
+      scene.applyDynamic("remove")(decoration.mesh)
+      disposeDecoration(decoration)
+    decorations = Vector.empty
+
+  private def disposeDecoration(decoration: DecorationInstance): Unit =
+    try decoration.geometry.applyDynamic("dispose")()
+    catch case _: Throwable => ()
+    try decoration.material.applyDynamic("dispose")()
+    catch case _: Throwable => ()
+    decoration.texture.foreach: texture =>
+      try texture.applyDynamic("dispose")()
+      catch case _: Throwable => ()
+
+  private def makeDecoration(packet: SurfaceDecorationMesh): DecorationInstance =
+    if packet.texture.isEmpty && packet.color.alpha != 255 then
+      throw new IllegalArgumentException("semi-transparent solid decorations are not yet qualified")
+    var geometry: js.Dynamic = null
+    var material: js.Dynamic = null
+    var texture = Option.empty[js.Dynamic]
+    try
+      geometry = construct("BufferGeometry")()
+      geometry.applyDynamic("setAttribute")("position", construct("BufferAttribute")(floats(packet.positions), 3))
+      geometry.applyDynamic("setAttribute")("normal", construct("BufferAttribute")(floats(packet.normals), 3))
+      geometry.applyDynamic("setIndex")(construct("BufferAttribute")(ints(packet.indices), 1))
+      geometry.applyDynamic("computeBoundingSphere")()
+      val color = (packet.color.red << 16) | (packet.color.green << 8) | packet.color.blue
+      val overlay = packet.depthPolicy == SurfaceDecorationDepthPolicy.Overlay
+      texture = packet.texture.map(textureFor)
+      packet.texture.foreach: source =>
+        geometry.applyDynamic("setAttribute")("uv", construct("BufferAttribute")(floats(source.coordinates), 2))
+      material = texture match
+        case Some(map) =>
+          // Shared label assets are sampled and composited in premultiplied
+          // display bytes, matching the raster and JavaFX texture contract.
+          // Automatic sRGB decode before filtering would darken alpha edges.
+          construct("ShaderMaterial")(js.Dynamic.literal(
+            uniforms = js.Dynamic.literal(uMap = js.Dynamic.literal(value = map)),
+            vertexShader = "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+            fragmentShader = "uniform sampler2D uMap; varying vec2 vUv; void main() { vec4 c = texture2D(uMap, vUv); if (c.a <= 0.001) discard; gl_FragColor = c; }",
+            transparent = true,
+            premultipliedAlpha = true,
+            toneMapped = false,
+            side = three.selectDynamic("DoubleSide"),
+            depthTest = !overlay,
+            depthWrite = false
+          ))
+        case None =>
+          construct("MeshBasicMaterial")(js.Dynamic.literal(
+            color = color,
+            // Overlay joins the final transparent queue so text cannot paint
+            // over it; renderOrder keeps it after ordinary labels.
+            transparent = overlay,
+            toneMapped = false,
+            side = three.selectDynamic("DoubleSide"),
+            depthTest = !overlay,
+            depthWrite = !overlay
+          ))
+      val mesh = construct("Mesh")(geometry, material)
+      mesh.updateDynamic("matrixAutoUpdate")(false)
+      mesh.updateDynamic("frustumCulled")(true)
+      mesh.updateDynamic("renderOrder")(if overlay then 1 else 0)
+      mesh.applyDynamic("updateMatrix")()
+      mesh.applyDynamic("updateMatrixWorld")(true)
+      DecorationInstance(packet.id, packet.origin, packet.target, packet.depthPolicy, geometry, material, texture, mesh,
+        packet.pickable, ThreeJsRuntime.positionBounds(packet.positions))
+    catch
+      case error: Throwable =>
+        if !missing(material) then
+          try material.applyDynamic("dispose")()
+          catch case _: Throwable => ()
+        texture.foreach: value =>
+          try value.applyDynamic("dispose")()
+          catch case _: Throwable => ()
+        if !missing(geometry) then
+          try geometry.applyDynamic("dispose")()
+          catch case _: Throwable => ()
+        throw error
+
+  /** DataTexture consumes rows in GL order; emitting the top visual row first
+    * makes the shared top-left UV convention map directly with flipY disabled. */
+  private def textureFor(source: SurfaceDecorationTexture): js.Dynamic =
+    val image = source.image
+    val data = new Uint8Array(image.width * image.height * 4)
+    var y = 0
+    while y < image.height do
+      var x = 0
+      while x < image.width do
+        val rgba = image.pixelUnsafe(x, y)
+        val offset = (y * image.width + x) * 4
+        data(offset) = math.round(rgba.red * rgba.alpha / 255.0).toShort
+        data(offset + 1) = math.round(rgba.green * rgba.alpha / 255.0).toShort
+        data(offset + 2) = math.round(rgba.blue * rgba.alpha / 255.0).toShort
+        data(offset + 3) = rgba.alpha.toShort
+        x += 1
+      y += 1
+    val texture = construct("DataTexture")(data, image.width, image.height,
+      three.selectDynamic("RGBAFormat"), three.selectDynamic("UnsignedByteType"))
+    // Packed premultiplied display bytes deliberately use NoColorSpace:
+    // the decoration shader emits these bytes directly with ONE source blend.
+    texture.updateDynamic("flipY")(false)
+    texture.updateDynamic("magFilter")(three.selectDynamic("LinearFilter"))
+    texture.updateDynamic("minFilter")(three.selectDynamic("LinearMipmapLinearFilter"))
+    texture.updateDynamic("generateMipmaps")(true)
+    texture.updateDynamic("wrapS")(three.selectDynamic("RepeatWrapping"))
+    texture.updateDynamic("wrapT")(three.selectDynamic("RepeatWrapping"))
+    texture.updateDynamic("needsUpdate")(true)
+    texture
 
   private def disposeBundle(bundle: Bundle): Unit =
     scene.applyDynamic("remove")(bundle.mesh)

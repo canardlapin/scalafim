@@ -363,6 +363,9 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     var uploadedColors = Vector.empty[ThreeSurfaceColors]
     var fitted: SurfaceViewportFit = SurfaceViewportFit.Fill
     var nextPick: Option[ThreePick] = None
+    var nextDisplayPick: Option[SurfaceDisplayHit[ThreePick]] = None
+    var decorationFailure = false
+    var drawFailure = false
 
     def contextState: ThreeContextState = state
 
@@ -400,17 +403,32 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       calls += "composition-clear"
       Right(())
 
+    override def updateDecorations(geometry: SurfaceDecorationGeometry): Either[ThreeSurfaceError, Unit] =
+      calls += s"decorations:${geometry.meshes.length}"
+      if decorationFailure then Left(ThreeSurfaceError.RuntimeFailure("decoration update", "injected")) else Right(())
+
+    override def clearDecorations(): Either[ThreeSurfaceError, Unit] =
+      calls += "decorations-clear"
+      Right(())
+
     def resize(size: ThreeCanvasSize): Either[ThreeSurfaceError, Unit] =
       calls += s"resize:${size.width}x${size.height}"
       Right(())
 
     def draw(): Either[ThreeSurfaceError, Unit] =
       calls += "draw"
-      Right(())
+      if drawFailure then
+        drawFailure = false
+        Left(ThreeSurfaceError.RuntimeFailure("draw", "injected"))
+      else Right(())
 
     def pick(x: Double, y: Double): Either[ThreeSurfaceError, Option[ThreePick]] =
       calls += "pick"
       Right(nextPick)
+
+    override def pickDisplay(x: Double, y: Double): Either[ThreeSurfaceError, Option[SurfaceDisplayHit[ThreePick]]] =
+      calls += "display-pick"
+      Right(nextDisplayPick)
 
     def disposeResources(keys: Vector[SurfaceResourceKey]): Either[ThreeSurfaceError, Int] =
       calls += s"dispose:${keys.length}"
@@ -467,6 +485,96 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     runtime.calls.clear()
     backend.render(legacy, size).toOption.get
     assertEquals(runtime.calls.headOption, Some("composition-clear"))
+
+  test("decorations validate before native mutation and never reupload scientific resources"):
+    val (viewer, state) = fixture()
+    val plan = fourViewComposition(compile(viewer, state))
+    val anchor = SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(surfaceId, VertexId(0)))
+    val marker = SurfaceMarkerDecoration(
+      SurfaceDecorationId.make("native-marker").toOption.get,
+      anchor,
+      SurfaceMarkerShape.Disk,
+      SurfaceDecorationSize.world(0.1).toOption.get,
+      Rgba32.unsafe(255, 0, 0)
+    )
+    val packets = SurfaceDecorationCompiler.compile(Vector(marker), plan).toOption.get
+    val geometry = SurfaceDecorationGeometry.lower(packets, plan, size.width, size.height).toOption.get
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    val receipt = backend.renderDecorated(plan, geometry, size).toOption.get
+    assertEquals(receipt.geometryUploads, 1)
+    assertEquals(receipt.colorUploads, 1)
+    assert(runtime.calls.contains(s"decorations:${geometry.meshes.length}"))
+    runtime.calls.clear()
+    backend.renderDecorated(plan, geometry, size).toOption.get
+    assertEquals(runtime.calls.count(_.startsWith("geometry:")), 0)
+    val moved = SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.OrbitBy(15, 10)).toOption.get
+    val movedPlan = SurfaceCompositionPlan.make(
+      plan.views.updated(0, plan.views.head.copy(camera = compile(viewer, moved).camera)), plan.resources).toOption.get
+    val movedPackets = SurfaceDecorationCompiler.compile(Vector(marker), movedPlan).toOption.get
+    val movedGeometry = SurfaceDecorationGeometry.lower(movedPackets, movedPlan, size.width, size.height).toOption.get
+    runtime.calls.clear()
+    val cameraOnly = backend.renderDecorated(movedPlan, movedGeometry, size).toOption.get
+    assertEquals(cameraOnly.geometryUploads, 0)
+    assertEquals(cameraOnly.geometryUpdates, 0)
+    assertEquals(cameraOnly.colorUploads, 0)
+    runtime.calls.clear()
+    backend.render(plan, size).toOption.get
+    assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+
+  test("stale decoration geometry refuses before fake runtime mutation"):
+    val (viewer, state) = fixture()
+    val plan = fourViewComposition(compile(viewer, state))
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    val stale = SurfaceDecorationGeometry(Vector.empty, Vector.empty, size.width - 1, size.height, "stale")
+    assert(backend.renderDecorated(plan, stale, size).isLeft)
+    assertEquals(runtime.calls.toVector, Vector.empty)
+
+  test("failed decoration replacement clears the old native decoration state"):
+    val (viewer, state) = fixture()
+    val plan = fourViewComposition(compile(viewer, state))
+    val anchor = SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(surfaceId, VertexId(0)))
+    val marker = SurfaceMarkerDecoration(SurfaceDecorationId.make("replace-marker").toOption.get, anchor,
+      SurfaceMarkerShape.Disk, SurfaceDecorationSize.world(0.1).toOption.get, Rgba32.unsafe(255, 0, 0))
+    val geometry = SurfaceDecorationGeometry.lower(
+      SurfaceDecorationCompiler.compile(Vector(marker), plan).toOption.get, plan, size.width, size.height).toOption.get
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.renderDecorated(plan, geometry, size).toOption.get
+    runtime.calls.clear()
+    runtime.decorationFailure = true
+    assert(backend.renderDecorated(plan, geometry, size, forceDraw = true).isLeft)
+    assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+
+  test("draw failure after a successful decoration install is cleared by a later plain render"):
+    val (viewer, state) = fixture()
+    val plan = fourViewComposition(compile(viewer, state))
+    val anchor = SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(surfaceId, VertexId(0)))
+    val marker = SurfaceMarkerDecoration(SurfaceDecorationId.make("draw-failure-marker").toOption.get, anchor,
+      SurfaceMarkerShape.Disk, SurfaceDecorationSize.world(0.1).toOption.get, Rgba32.unsafe(255, 0, 0))
+    val geometry = SurfaceDecorationGeometry.lower(
+      SurfaceDecorationCompiler.compile(Vector(marker), plan).toOption.get, plan, size.width, size.height).toOption.get
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.renderDecorated(plan, geometry, size).toOption.get
+    runtime.calls.clear()
+    runtime.drawFailure = true
+    assert(backend.renderDecorated(plan, geometry, size).isLeft)
+    runtime.calls.clear()
+    backend.render(plan, size).toOption.get
+    assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+
+  test("display picking preserves tagged decoration hits without manufacturing a surface id"):
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    val origin = SurfaceDisplayOrigin(SurfaceViewId.make("display-pick").toOption.get,
+      SurfaceInstanceId.make("display-pick-instance").toOption.get)
+    val id = SurfaceDecorationElementId(SurfaceDecorationId.make("picked-decoration").toOption.get, "marker")
+    val target = SurfaceDecorationTarget.Anchor(SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(surfaceId, VertexId(0))))
+    runtime.nextDisplayPick = Some(SurfaceDisplayHit.Decoration(SurfaceDecorationHit(id, origin, target, 3.0)))
+    assertEquals(backend.pickDisplay(10, 20).toOption.flatten, runtime.nextDisplayPick)
+    assertEquals(runtime.calls.toVector, Vector("display-pick"))
 
   private def fourViewComposition(plan: SurfaceRenderPlan): SurfaceCompositionPlan =
     val source = SurfaceCompositionPlan.fromLegacy(plan).toOption.get

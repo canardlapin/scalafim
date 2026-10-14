@@ -5,10 +5,10 @@ import javafx.geometry.Rectangle2D
 import javafx.scene.{DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
 import javafx.scene.image.WritableImage
 import javafx.scene.input.PickResult
-import javafx.scene.paint.Color
-import javafx.scene.shape.{CullFace, MeshView}
+import javafx.scene.paint.{Color, PhongMaterial}
+import javafx.scene.shape.{CullFace, MeshView, TriangleMesh}
 import javafx.scene.transform.Affine
-import intaglio.Scene
+import intaglio.*
 import scalafim.surface.{FaceId, VertexId}
 import scalafim.surface.view.*
 
@@ -22,7 +22,8 @@ final case class JavaFxCompositionPick(origin: SurfaceDisplayOrigin, scientific:
   */
 final class JavaFxSurfaceComposition private (private val backend: JavaFxSurfaceBackend):
   private final case class Occurrence(origin: SurfaceDisplayOrigin, chunk: JavaFxSurfaceChunk, node: MeshView)
-  private final case class ViewScene(id: SurfaceViewId, scene: SubScene, cameraTransform: Affine,
+  private final case class DecorationOccurrence(packet: SurfaceDecorationMesh, node: MeshView)
+  private final case class ViewScene(id: SurfaceViewId, scene: SubScene, instances: Group, cameraTransform: Affine,
     layoutTransform: Affine, projectionSpace: Affine, perspective: PerspectiveCamera, parallel: ParallelCamera)
   val root: Group = new Group()
   private var current: Option[SurfaceCompositionPlan] = None
@@ -30,6 +31,8 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
   private var views = Vector.empty[ViewScene]
   private var occurrences = Vector.empty[Occurrence]
   private var pool = Vector.empty[JavaFxSurfaceChunk]
+  private var decorations = Vector.empty[DecorationOccurrence]
+  private var decorationGeometry: Option[SurfaceDecorationGeometry] = None
   private var disposed = false
 
   def plan: Option[SurfaceCompositionPlan] = current
@@ -43,6 +46,7 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
         .flatMap(_ => JavaFxSurfaceComposition.resourcePlan(next)).flatMap: proxy =>
           backend.render(proxy).flatMap: receipt =>
             nativeStep("composition render"):
+              clearDecorations()
               val chunks = backend.chunks
               val changedInstances = current.forall(_.views.map(v => (v.id, v.instances)) != next.views.map(v => (v.id, v.instances)))
               if chunks != pool || changedInstances || size.forall(_.antialiasing != dimensions.antialiasing) then
@@ -53,10 +57,106 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
               layout(next, dimensions)
               JavaFxCompositionReceipt(receipt, next.views.length, next.views.map(_.instances.length).sum, occurrences.length)
 
+  def renderDecorated(next: SurfaceCompositionPlan, geometry: SurfaceDecorationGeometry,
+      dimensions: JavaFxSnapshotConfig): Either[JavaFxSurfaceError, JavaFxCompositionReceipt] =
+    requireActive().flatMap: _ =>
+      SurfaceDecorationValidation.validate(geometry, next, dimensions.width, dimensions.height)
+        .left.map(JavaFxSurfaceError.IncompatiblePlan(_)).flatMap: _ =>
+          stageDecorations(geometry).flatMap: staged =>
+            render(next, dimensions).flatMap: receipt =>
+              nativeStep("decoration mount"):
+                decorations = staged
+                decorationGeometry = Some(geometry)
+                staged.sortBy(d => if d.packet.depthPolicy == SurfaceDecorationDepthPolicy.Overlay then 1 else 0).foreach: decoration =>
+                  views.find(_.id == decoration.packet.origin.view).get.instances.getChildren.add(decoration.node)
+                receipt
+
+  def pickDisplay(result: PickResult): Either[JavaFxInteractionError, SurfaceDisplayHit[JavaFxCompositionPick]] =
+    if disposed then Left(JavaFxInteractionError.Disposed)
+    else if !Platform.isFxApplicationThread then
+      Left(JavaFxInteractionError.Backend(JavaFxSurfaceError.IncompatiblePlan("composition picking requires the Application Thread")))
+    else if result == null || result.getIntersectedNode == null then Left(JavaFxInteractionError.PickMiss)
+    else
+      val scientific = pick(result).toOption
+      val nativeDecoration = decorations.find(d => d.packet.pickable && (d.node eq result.getIntersectedNode))
+      val origin = scientific.map(_.origin).orElse(nativeDecoration.map(_.packet.origin))
+      val nativePoint = result.getIntersectedPoint
+      val projected = for
+        plan <- current
+        dimensions <- size
+        occurrence <- origin
+        view <- plan.views.find(_.id == occurrence.view)
+        instance <- view.instances.find(_.id == occurrence.instance)
+        point = if scientific.nonEmpty then SurfaceDecorationWorldPoint(nativePoint.getX + instance.translationX,
+          nativePoint.getY + instance.translationY, nativePoint.getZ + instance.translationZ)
+        else SurfaceDecorationWorldPoint(nativePoint.getX, nativePoint.getY, nativePoint.getZ)
+        pixel <- SurfaceDecorationPicking.project(plan, occurrence.view, point, dimensions.width, dimensions.height)
+      yield pixel
+      val hit = for
+        geometry <- decorationGeometry
+        plan <- current
+        point <- projected
+        hit <- SurfaceDecorationPicking.pick(geometry, plan, point.x, point.y, scientific.map(_ => point.depth))
+      yield hit
+      hit.map(value => Right(SurfaceDisplayHit.Decoration(value)))
+        .getOrElse(scientific.map(value => Right(SurfaceDisplayHit.Scientific(value)))
+          .getOrElse(Left(JavaFxInteractionError.UnknownPickNode)))
+
+  private def stageDecorations(geometry: SurfaceDecorationGeometry): Either[JavaFxSurfaceError, Vector[DecorationOccurrence]] =
+    try Right(geometry.meshes.map: packet =>
+      val mesh = new TriangleMesh()
+      mesh.getPoints.setAll(Array.tabulate(packet.positions.length)(packet.positions(_))*)
+      val uv = packet.texture.map(t => Array.tabulate(t.coordinates.length)(t.coordinates(_))).getOrElse(Array(0.5f, 0.5f))
+      mesh.getTexCoords.setAll(uv*)
+      val faces = Array.tabulate(packet.indices.length * 2): index =>
+        if index % 2 == 0 then packet.indices(index / 2)
+        else if packet.texture.nonEmpty then packet.indices(index / 2) else 0
+      mesh.getFaces.setAll(faces*)
+      val image = packet.texture match
+        case Some(texture) =>
+          val result = new WritableImage(texture.image.width, texture.image.height)
+          var y = 0
+          while y < texture.image.height do
+            var x = 0
+            while x < texture.image.width do
+              val c = texture.image.pixelUnsafe(x, y)
+              result.getPixelWriter.setArgb(x, y, (c.alpha << 24) | (c.red << 16) | (c.green << 8) | c.blue)
+              x += 1
+            y += 1
+          result
+        case None =>
+          val result = new WritableImage(1, 1)
+          val c = packet.color
+          result.getPixelWriter.setArgb(0, 0, (c.alpha << 24) | (c.red << 16) | (c.green << 8) | c.blue)
+          result
+      val material = new PhongMaterial(Color.BLACK)
+      material.setDiffuseMap(image)
+      material.setSelfIlluminationMap(image)
+      material.setSpecularColor(Color.TRANSPARENT)
+      val node = new MeshView(mesh)
+      node.setMaterial(material)
+      node.setCullFace(CullFace.NONE)
+      node.setMouseTransparent(!packet.pickable)
+      node.setDepthTest(if packet.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest then DepthTest.ENABLE else DepthTest.DISABLE)
+      DecorationOccurrence(packet, node)
+    )
+    catch case scala.util.control.NonFatal(error) =>
+      Left(JavaFxSurfaceError.IncompatiblePlan(s"decoration staging failed: ${error.getMessage}"))
+
+  private def clearDecorations(): Unit =
+    decorations.foreach: decoration =>
+      views.find(_.id == decoration.packet.origin.view).foreach(_.instances.getChildren.remove(decoration.node))
+      decoration.node.setMesh(null)
+      decoration.node.setMaterial(null)
+    decorations = Vector.empty
+    decorationGeometry = None
+
   def resize(dimensions: JavaFxSnapshotConfig): Either[JavaFxSurfaceError, Unit] =
     requireActive().flatMap: _ =>
       current.toRight(JavaFxSurfaceError.IncompatiblePlan("render a composition before resizing")).flatMap: plan =>
-        if size.exists(_.antialiasing != dimensions.antialiasing) then
+        if decorations.nonEmpty then
+          Left(JavaFxSurfaceError.IncompatiblePlan("decorations must be lowered again at the new size; use renderDecorated"))
+        else if size.exists(_.antialiasing != dimensions.antialiasing) then
           Left(JavaFxSurfaceError.IncompatiblePlan("resize cannot change native antialiasing; render with the new configuration"))
         else nativeStep("composition resize"):
           layout(plan, dimensions)
@@ -120,6 +220,7 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
     else Right(())
 
   private def releaseViews(): Unit =
+    clearDecorations()
     views.foreach: view =>
       view.scene.setCamera(null)
       view.scene.setRoot(new Group())
@@ -154,7 +255,7 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
       content.setDepthTest(DepthTest.ENABLE)
       content.getTransforms.addAll(projectionSpace, cameraTransform)
       val scene = new SubScene(content, 1, 1, true, dimensions.antialiasing)
-      ViewScene(view.id, scene, cameraTransform, layoutTransform, projectionSpace,
+      ViewScene(view.id, scene, instances, cameraTransform, layoutTransform, projectionSpace,
         new PerspectiveCamera(false), new ParallelCamera())
     releaseViews()
     views = nextViews

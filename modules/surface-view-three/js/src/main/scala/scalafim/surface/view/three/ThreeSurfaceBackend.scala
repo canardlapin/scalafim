@@ -2,6 +2,7 @@ package scalafim.surface.view.three
 
 import intaglio.Rgba32
 import scalafim.surface.view.*
+import intaglio.alpha
 
 /** Browser-interpreter options. The clear colour is an already-validated
   * `Rgba32`; it does not leak Three.js values into the shared surface model.
@@ -52,9 +53,17 @@ trait ThreeSurfaceRuntime:
     Left(ThreeSurfaceError.InvalidPlan("runtime does not support multi-view composition"))
   /** Removes native composition clones before returning to legacy rendering. */
   def clearComposition(): Either[ThreeSurfaceError, Unit] = Right(())
+  /** Installs display-owned, unlit decoration geometry. Implementations must
+    * reject unresolved labels rather than silently dropping scientific text. */
+  def updateDecorations(geometry: SurfaceDecorationGeometry): Either[ThreeSurfaceError, Unit] =
+    if geometry.meshes.isEmpty && geometry.labels.isEmpty then Right(())
+    else Left(ThreeSurfaceError.InvalidPlan("runtime does not support surface decorations"))
+  def clearDecorations(): Either[ThreeSurfaceError, Unit] = Right(())
   def resize(size: ThreeCanvasSize): Either[ThreeSurfaceError, Unit]
   def draw(): Either[ThreeSurfaceError, Unit]
   def pick(x: Double, y: Double): Either[ThreeSurfaceError, Option[ThreePick]]
+  def pickDisplay(x: Double, y: Double): Either[ThreeSurfaceError, Option[SurfaceDisplayHit[ThreePick]]] =
+    pick(x, y).map(_.map(SurfaceDisplayHit.Scientific(_)))
   def disposeResources(keys: Vector[SurfaceResourceKey]): Either[ThreeSurfaceError, Int]
   def dispose(): Either[ThreeSurfaceError, Unit]
 
@@ -102,6 +111,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
 
   private var current: Option[(SurfaceRenderPlan, ThreeCanvasSize)] = None
   private var currentComposition: Option[SurfaceCompositionPlan] = None
+  private var decorationsActive = false
   private var disposed = false
   private var resources = Set.empty[SurfaceResourceKey]
   private var totalDrawCalls = 0L
@@ -133,6 +143,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
           val clear = if currentComposition.nonEmpty then runtime.clearComposition() else Right(())
           clear.flatMap: _ =>
             currentComposition = None
+            decorationsActive = false
             interpret(Right(program), plan, size)
 
   /** Renders a validated multi-view composition while sharing each surface's
@@ -156,7 +167,36 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
           val packets = program.commands.collect:
             case ThreeSurfaceCommand.UploadFragments(values) => values
           runtime.validateFragments(packets.flatten).map(_ => program)
-        .flatMap(program => interpret(Right(program), program.resourcePlan.get, size))
+        .flatMap: program =>
+          val clear = if decorationsActive then runtime.clearDecorations() else Right(())
+          clear.flatMap: _ =>
+            decorationsActive = false
+            interpret(Right(program), program.resourcePlan.get, size)
+
+  /** Renders a composition and its already-lowered decoration meshes. Geometry
+    * is tied to this exact logical canvas size, so a resize requires lowering
+    * again before native objects are touched. */
+  def renderDecorated(
+    plan: SurfaceCompositionPlan,
+    geometry: SurfaceDecorationGeometry,
+    size: ThreeCanvasSize,
+    forceDraw: Boolean = false
+  ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
+    SurfaceDecorationValidation.validate(geometry, plan, size.width, size.height)
+      .left.map(ThreeSurfaceError.InvalidPlan(_)).flatMap: _ =>
+        if geometry.meshes.exists(mesh => mesh.texture.isEmpty && mesh.color.alpha != 255) then
+          Left(ThreeSurfaceError.InvalidPlan("semi-transparent solid decorations are not yet qualified"))
+        else
+          // Compilation validates all composition and resource invariants before
+          // either the scientific or decoration native state can be changed.
+          render(plan, size, forceDraw).flatMap: receipt =>
+            runtime.updateDecorations(geometry).flatMap: _ =>
+              // The native install is already live before draw submission. Keep
+              // this flag even if draw fails so a later plain render removes it.
+              decorationsActive = true
+              runtime.draw().map: _ =>
+                totalDrawCalls += 1
+                receipt.copy(commandsApplied = receipt.commandsApplied + 2, drawCalls = receipt.drawCalls + 1)
 
   private def interpret(
     compiled: Either[ThreeSurfaceError, ThreeSurfaceProgram],
@@ -285,6 +325,11 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     else if !x.isFinite || !y.isFinite then Left(ThreeSurfaceError.InvalidPlan("pick coordinates must be finite"))
     else requireContext().flatMap(_ => runtime.pick(x, y))
 
+  def pickDisplay(x: Double, y: Double): Either[ThreeSurfaceError, Option[SurfaceDisplayHit[ThreePick]]] =
+    if disposed then Left(ThreeSurfaceError.BackendDisposed)
+    else if !x.isFinite || !y.isFinite then Left(ThreeSurfaceError.InvalidPlan("pick coordinates must be finite"))
+    else requireContext().flatMap(_ => runtime.pickDisplay(x, y))
+
   def stats: ThreeRuntimeStats =
     ThreeRuntimeStats(
       totalDrawCalls,
@@ -302,6 +347,8 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     else
       runtime.dispose().map: _ =>
         current = None
+        currentComposition = None
+        decorationsActive = false
         resources = Set.empty
         disposed = true
 

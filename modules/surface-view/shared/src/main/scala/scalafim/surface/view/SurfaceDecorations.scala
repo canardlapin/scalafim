@@ -11,12 +11,17 @@ object SurfaceDecorationId:
 
 enum SurfaceDecorationError:
   case BlankId
+  case NetworkMapping(reason: String)
+  case StalePackets
   case DuplicateId(id: SurfaceDecorationId)
   case UnknownSurface(surface: SurfaceId)
+  case UnknownDisplay(origin: SurfaceDisplayOrigin)
   case VertexOutOfRange(surface: SurfaceId, vertex: VertexId)
   case FaceOutOfRange(surface: SurfaceId, face: FaceId)
   case InvalidBarycentric
   case InvalidSize(value: Double)
+  case InvalidProjection
+  case AnisotropicPixelSphere
   case EmptyText
   case LabelCount(surface: SurfaceId, expected: Int, actual: Int)
 
@@ -24,7 +29,9 @@ final case class SurfaceVertexAnchor private (surface: SurfaceId, vertex: Vertex
 object SurfaceVertexAnchor:
   def make(surface: SurfaceId, vertex: VertexId): SurfaceVertexAnchor = SurfaceVertexAnchor(surface, vertex)
 
-final case class SurfaceFaceAnchor private (surface: SurfaceId, face: FaceId, a: Double, b: Double, c: Double)
+final case class SurfaceFaceAnchor private (surface: SurfaceId, face: FaceId, a: Double, b: Double, c: Double):
+  require(a.isFinite && b.isFinite && c.isFinite && a >= 0.0 && b >= 0.0 && c >= 0.0 &&
+    math.abs(a + b + c - 1.0) <= 1e-9, "face anchor weights must be finite non-negative barycentric coordinates")
 object SurfaceFaceAnchor:
   def make(surface: SurfaceId, face: FaceId, a: Double, b: Double, c: Double): Either[SurfaceDecorationError, SurfaceFaceAnchor] =
     if !a.isFinite || !b.isFinite || !c.isFinite || a < 0.0 || b < 0.0 || c < 0.0 || math.abs(a + b + c - 1.0) > 1e-9 then
@@ -46,7 +53,11 @@ enum SurfaceMarkerShape:
 enum SurfaceDecorationUnit:
   case Pixels, World
 
-final case class SurfaceDecorationSize private (value: Double, unit: SurfaceDecorationUnit)
+enum SurfaceDecorationDepthPolicy:
+  case DepthTest, Overlay
+
+final case class SurfaceDecorationSize private (value: Double, unit: SurfaceDecorationUnit):
+  require(value.isFinite && value > 0.0, "decoration size must be finite and positive")
 object SurfaceDecorationSize:
   def pixels(value: Double): Either[SurfaceDecorationError, SurfaceDecorationSize] = make(value, SurfaceDecorationUnit.Pixels)
   def world(value: Double): Either[SurfaceDecorationError, SurfaceDecorationSize] = make(value, SurfaceDecorationUnit.World)
@@ -55,7 +66,11 @@ object SurfaceDecorationSize:
     else Right(SurfaceDecorationSize(value, unit))
 
 final case class SurfaceContourHalo(color: Rgba32, width: SurfaceDecorationSize)
-final case class SurfaceContourStyle(width: SurfaceDecorationSize, color: Rgba32, halo: Option[SurfaceContourHalo] = None)
+/** Widths are full visible stroke widths. A halo is an equally wide band split
+  * around the core, so it must share the core's unit. */
+final case class SurfaceContourStyle(width: SurfaceDecorationSize, color: Rgba32, halo: Option[SurfaceContourHalo] = None,
+    depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest):
+  require(halo.forall(_.width.unit == width.unit), "contour and halo widths must use the same unit")
 
 /** Label values are scientific vertex labels. `Ignore` has no inferred medial-wall
   * meaning: callers must name every ignored label explicitly.
@@ -74,7 +89,8 @@ final case class SurfaceMarkerDecoration(
   anchor: SurfaceDecorationAnchor,
   shape: SurfaceMarkerShape,
   size: SurfaceDecorationSize,
-  color: Rgba32
+  color: Rgba32,
+  depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest
 ) extends SurfaceDecoration:
   def surface: SurfaceId = SurfaceDecorationAnchor.surface(anchor)
 
@@ -83,15 +99,17 @@ final case class SurfaceLabelDecoration(
   anchor: SurfaceDecorationAnchor,
   text: String,
   size: SurfaceDecorationSize,
-  color: Rgba32
+  color: Rgba32,
+  depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest
 ) extends SurfaceDecoration:
   def surface: SurfaceId = SurfaceDecorationAnchor.surface(anchor)
 
 object SurfaceLabelDecoration:
   def make(id: SurfaceDecorationId, anchor: SurfaceDecorationAnchor, text: String,
-      size: SurfaceDecorationSize, color: Rgba32): Either[SurfaceDecorationError, SurfaceLabelDecoration] =
+      size: SurfaceDecorationSize, color: Rgba32,
+      depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest): Either[SurfaceDecorationError, SurfaceLabelDecoration] =
     if text.trim.isEmpty then Left(SurfaceDecorationError.EmptyText)
-    else Right(SurfaceLabelDecoration(id, anchor, text, size, color))
+    else Right(SurfaceLabelDecoration(id, anchor, text, size, color, depthPolicy))
 
 final case class SurfaceContourDecoration(
   id: SurfaceDecorationId,
@@ -101,8 +119,11 @@ final case class SurfaceContourDecoration(
   style: SurfaceContourStyle
 ) extends SurfaceDecoration
 
-final case class SurfaceDecorationWorldPoint(x: Double, y: Double, z: Double)
-final case class SurfaceDecorationElementId(decoration: SurfaceDecorationId, suffix: String)
+final case class SurfaceDecorationWorldPoint(x: Double, y: Double, z: Double):
+  require(x.isFinite && y.isFinite && z.isFinite, "decoration point coordinates must be finite")
+
+final case class SurfaceDecorationElementId(decoration: SurfaceDecorationId, suffix: String):
+  require(suffix.trim.nonEmpty, "decoration element suffix must not be blank")
 
 final case class SurfaceMarkerPacket(
   id: SurfaceDecorationElementId,
@@ -111,7 +132,8 @@ final case class SurfaceMarkerPacket(
   point: SurfaceDecorationWorldPoint,
   shape: SurfaceMarkerShape,
   size: SurfaceDecorationSize,
-  color: Rgba32
+  color: Rgba32,
+  depthPolicy: SurfaceDecorationDepthPolicy
 )
 
 final case class SurfaceLabelPacket(
@@ -121,13 +143,16 @@ final case class SurfaceLabelPacket(
   point: SurfaceDecorationWorldPoint,
   text: String,
   size: SurfaceDecorationSize,
-  color: Rgba32
-)
+  color: Rgba32,
+  depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest
+):
+  require(text.trim.nonEmpty, "label packet text must not be blank")
 
 final case class SurfaceContourPacket(
   id: SurfaceDecorationElementId,
   origin: SurfaceDisplayOrigin,
   surface: SurfaceId,
+  sourceEdge: (VertexId, VertexId),
   start: SurfaceDecorationWorldPoint,
   end: SurfaceDecorationWorldPoint,
   style: SurfaceContourStyle
@@ -136,7 +161,8 @@ final case class SurfaceContourPacket(
 final case class SurfaceDecorationPackets(
   markers: Vector[SurfaceMarkerPacket],
   labels: Vector[SurfaceLabelPacket],
-  contours: Vector[SurfaceContourPacket]
+  contours: Vector[SurfaceContourPacket],
+  binding: String = ""
 )
 
 /** Lowers scientific anchors onto every display occurrence in the current
@@ -159,7 +185,7 @@ object SurfaceDecorationCompiler:
             case Right(_) => ()
           index += 1
         error.fold[Either[SurfaceDecorationError, SurfaceDecorationPackets]](
-          Right(SurfaceDecorationPackets(markers.result(), labels.result(), contours.result())))(Left(_))
+          Right(SurfaceDecorationPackets(markers.result(), labels.result(), contours.result(), SurfaceDecorationBinding.key(plan, 1, 1))))(Left(_))
 
   private def process(decoration: SurfaceDecoration, plan: SurfaceCompositionPlan,
       markers: scala.collection.mutable.Builder[SurfaceMarkerPacket, Vector[SurfaceMarkerPacket]],
@@ -182,12 +208,12 @@ object SurfaceDecorationCompiler:
                 resolve(marker.anchor, mesh) match
                   case Left(value) => error = Some(value)
                   case Right(point) => markers += SurfaceMarkerPacket(SurfaceDecorationElementId(marker.id, "marker"),
-                    SurfaceDisplayOrigin(view.id, instance.id), marker.anchor, translated(point, instance), marker.shape, marker.size, marker.color)
+                    SurfaceDisplayOrigin(view.id, instance.id), marker.anchor, translated(point, instance), marker.shape, marker.size, marker.color, marker.depthPolicy)
               case label: SurfaceLabelDecoration =>
                 resolve(label.anchor, mesh) match
                   case Left(value) => error = Some(value)
                   case Right(point) => labels += SurfaceLabelPacket(SurfaceDecorationElementId(label.id, "label"),
-                    SurfaceDisplayOrigin(view.id, instance.id), label.anchor, translated(point, instance), label.text, label.size, label.color)
+                    SurfaceDisplayOrigin(view.id, instance.id), label.anchor, translated(point, instance), label.text, label.size, label.color, label.depthPolicy)
               case contour: SurfaceContourDecoration =>
                 contourEdges(contour, mesh) match
                   case Left(value) => error = Some(value)
@@ -198,7 +224,7 @@ object SurfaceDecorationCompiler:
                       (vertexPoint(mesh, contour.surface, a), vertexPoint(mesh, contour.surface, b)) match
                         case (Right(start), Right(end)) => contours += SurfaceContourPacket(
                           SurfaceDecorationElementId(contour.id, s"edge-${a.index}-${b.index}"),
-                          SurfaceDisplayOrigin(view.id, instance.id), contour.surface,
+                          SurfaceDisplayOrigin(view.id, instance.id), contour.surface, a -> b,
                           translated(start, instance), translated(end, instance), contour.style)
                         case (Left(value), _) => error = Some(value)
                         case (_, Left(value)) => error = Some(value)
@@ -206,7 +232,7 @@ object SurfaceDecorationCompiler:
             index += 1
           error.fold[Either[SurfaceDecorationError, Unit]](Right(()))(Left(_))
 
-  private def resolve(anchor: SurfaceDecorationAnchor, mesh: SurfaceMeshPacket): Either[SurfaceDecorationError, SurfaceDecorationWorldPoint] = anchor match
+  private[view] def resolve(anchor: SurfaceDecorationAnchor, mesh: SurfaceMeshPacket): Either[SurfaceDecorationError, SurfaceDecorationWorldPoint] = anchor match
     case SurfaceDecorationAnchor.Vertex(value) => vertexPoint(mesh, value.surface, value.vertex)
     case SurfaceDecorationAnchor.Face(value) =>
       val faces = mesh.indices.length / 3
