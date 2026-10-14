@@ -106,6 +106,21 @@ class CameraFramingMigrationSuite extends munit.FunSuite:
     assert(ok(SurfaceCompiler.compile(model, restored)).receipt.cameraKey != ok(SurfaceCompiler.compile(model, framingOnly)).receipt.cameraKey)
     assertEquals(ok(SurfaceViewer.reduce(model, restored, SurfaceViewerAction.FitCamera)).framing, CameraFraming.BoundsFit)
 
+  test("V1 saved near/far remains historically inactive until explicit framing migration"):
+    val (model, _, _, _) = fixture()
+    val clippedV1 = singleV1.replace("\"clipping\":{\"kind\":\"disabled\"}",
+      "\"clipping\":{\"kind\":\"near-far\",\"near\":1.0,\"far\":2.0}")
+    val restored = ok(ok(SurfaceSceneCodec.decode(clippedV1)).restore(model, bindings(model)))
+    assertEquals(restored.clipping, SurfaceClipping.NearFar(1.0, 2.0))
+    val legacy = ok(SurfaceCompiler.compile(model, restored))
+    assertLegacy(legacy, single)
+    assert(landmark(legacy)(2) < 1.0)
+    val migrated = ok(SurfaceViewer.reduce(model, restored, SurfaceViewerAction.SetCameraFraming(CameraFraming.BoundsFit)))
+    val corrected = ok(SurfaceCompiler.compile(model, migrated))
+    assertEqualsDouble(corrected.camera.projectionMatrix(10).toDouble, -3.0, 1e-7)
+    assertEqualsDouble(corrected.camera.projectionMatrix(11).toDouble, -4.0, 1e-7)
+    assert(landmark(corrected)(2) > 1.0)
+
   test("revision policy decodes V1 as legacy, V2 through V6 as bounds-fit, and records V7 framing"):
     val (model, initial, _, _) = fixture()
     val referenceBindings = bindings(model)

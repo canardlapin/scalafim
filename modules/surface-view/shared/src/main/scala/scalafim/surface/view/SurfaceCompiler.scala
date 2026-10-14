@@ -176,7 +176,13 @@ object SurfaceCompiler:
     val layers = layerPackets.result()
     val drawPasses = passes.result()
     val framingCamera = if state.framing == CameraFraming.LegacyV1 then state.camera.copy(aspectRatio = CameraAspectRatio.Default) else state.camera
-    val camera = posePacket(framingCamera, pose.getOrElse(viewpointPose(framingCamera, frame, state.framing == CameraFraming.LegacyV1)), state.clipping,
+    // V1 persisted NearFar but did not apply it to the projection. Restoring a
+    // legacy scene must not unexpectedly hide its geometry. An explicit fit
+    // or framing-policy change opts into the corrected clipping behaviour.
+    val cameraClipping = (state.framing, state.clipping) match
+      case (CameraFraming.LegacyV1, _: SurfaceClipping.NearFar) => SurfaceClipping.Disabled
+      case _ => state.clipping
+    val camera = posePacket(framingCamera, pose.getOrElse(viewpointPose(framingCamera, frame, state.framing == CameraFraming.LegacyV1)), cameraClipping,
       Option.when(pose.isEmpty && state.framing == CameraFraming.BoundsFit)(frame))
     val readouts = compileReadout(model, state, frames)
     val chrome = compileChrome(readouts)
