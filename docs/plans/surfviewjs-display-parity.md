@@ -1,6 +1,6 @@
 # Core SurfViewJS display parity
 
-Status: planned, 2026-10-14. Mote: `bd-01M4XAQ87FRRSD48EV0CPK05FP`.
+Status: implementation in progress; core parity unqualified, 2026-10-14. Mote: `bd-01M4XAQ87FRRSD48EV0CPK05FP`.
 The user requested core display parity, recovery of useful retained work where
 possible, and visual QA with side-by-side comparisons as proof. This document
 defines that work; it does not claim that recovery or parity has passed.
@@ -44,9 +44,14 @@ may contain raster surfaces with vector text, outlines, and legends.
 - Retained ScalaFIM work: `c14b36ac624c3d38e767af7bdbd62addd2c1cd47`, present on
   retained branches including `codex/scalajs-gifti-ingestion`, absent from main.
 
-This assessment inspected source and tests. No fresh build or native rendering
-was performed. Historical receipts and closed Motes describe their recorded
-revisions only.
+The initial assessment inspected source and tests. Fresh baseline captures now
+exist in [the observed-default gallery](../visual-qa/surfviewjs-parity/baseline-20261014/index.html):
+C01--C03 use the same asymmetric mesh, 512px viewport, scalar endpoints and
+explicit camera in SurfViewJS, unchanged ScalaFIM Three.js, actual JavaFX, and
+portable raster. Browser silhouette IoU is 1 and camera matrices agree within
+1e-7; color and lighting differences are substantial. These are smoke captures,
+not full-family passes. Every formal baseline verdict remains failure.
+Historical receipts and closed Motes describe their recorded revisions only.
 
 | Display element | Current main | Action |
 | --- | --- | --- |
@@ -76,7 +81,14 @@ the currently pinned Intaglio `ThresholdBand` hides only its interior.
 SurfViewJS uses a discrete color lookup where ScalaFIM's current ramp
 interpolates. Its sharp threshold path is limited to eligible topmost plain
 `DataLayer` overlays, not every layer. Compatibility must be explicit without
-silently changing existing ScalaFIM scenes. A suspected reference bug needs an
+silently changing existing ScalaFIM scenes. The captured reference also converts
+sRGB vertex colors into linear light before interpolation, then encodes the
+framebuffer as sRGB. ScalaFIM's legacy path interpolates display RGB. Preserve
+that legacy behavior and add an explicit color interpolation contract for the
+compatible path. Curvature defaults differ in polarity and range: reference
+positive curvature is dark, with brightness/contrast/smoothness controls; the
+legacy ScalaFIM helper defaults to negative-dark and a [-1,1] ramp. Match explicit
+underlay parameters and retain both defaults as named behavior. A suspected reference bug needs an
 independent oracle and recorded disposition, not automatic imitation.
 
 ## Recovery before new implementation
@@ -103,6 +115,11 @@ sampling tally/tie behavior, geometry persistence, and the JavaFX
 pin independently of unrelated historical dependency bumps. Keep dated receipts
 unchanged. Review and land a new exact candidate after its own gates pass.
 The user's merge authorization is retained; no recovery merge has occurred.
+Independent recovery review found that restored V1 scenes would change camera
+framing under the recovered fit formula. The port now needs an explicit legacy
+framing policy, V7 persistence, and genuine main-V1 matrix/viewport regression
+fixtures before landing. V2--V6 historical documents lacked an aspect field;
+non-square historical aspect cannot be reconstructed from absent data.
 
 ## Implementation sequence
 
@@ -115,7 +132,7 @@ verdict in Mote. Historical issues provide evidence, not current acceptance.
 | P1 — comparison harness | Add test-only manifest, public-API adapters and runner under `tools/surface-view/parity/` and `examples/surface-view/`. Expand the baseline into the full gallery. | Every required case produces artifacts or an explicit failure; deliberate corruptions are rejected. |
 | P2 — views and scenes | Add view identity, per-view cameras, repeated surface instances and several surfaces in one scene to shared state/plan/codec and backends. | C01/C04 pass: four-view figures, bilateral placement, linked/independent navigation, correct instance picks; scientific world coordinates unchanged. |
 | P3 — outlines and annotations | Add typed contours, marker/label primitives, parcel/ROI lowering, crosshairs, network node glyphs and basic edge styles. | C05/C06/C09 pass at multiple zooms and through morphs; borders lie between parcels; glyphs have stable IDs and declared size units. |
-| P4 — mapping and visibility | Finish compatible threshold/palette policies, continuous/categorical/bivariate legends, native clipping and surface alpha; extend admission and persistence. | C02/C03/C07/C10 pass: endpoint equality, invalid values, overlap/occlusion, clipping picks and changing legends. |
+| P4 — mapping and visibility | Finish compatible threshold/palette/color-interpolation and curvature policies, continuous/categorical/bivariate legends, native clipping and surface alpha; extend admission and persistence. | C02/C03/C07/C10 pass: endpoint equality, invalid values, overlap/occlusion, clipping picks and changing legends. |
 | P5 — linked views and figures | Add flat-map host/linking, polygon/lasso ROI, publication panels/chrome and complete dynamic controls/export/restore. | C08/C11/C12 pass, including two export sizes and interaction sequences; figures share viewer mappings/selections. |
 | P6 — admission and landing | Run the fixed gallery on the exact final candidate and declared browser/JVM environments; inspect all plates and adverse cases. | Every required case/product route passes semantics, visuals, interaction and resource gates; actual backend verdicts remain explicit; independent review accepted; local landing recorded separately from push/hosted CI. |
 

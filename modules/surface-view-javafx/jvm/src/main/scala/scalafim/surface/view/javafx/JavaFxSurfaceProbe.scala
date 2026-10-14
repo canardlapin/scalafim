@@ -2,10 +2,11 @@ package scalafim.surface.view.javafx
 
 import java.nio.{ByteBuffer, ByteOrder, IntBuffer}
 import javafx.geometry.Rectangle2D
-import javafx.scene.{Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SubScene}
+import javafx.beans.InvalidationListener
+import javafx.scene.{Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
 import javafx.scene.image.{PixelBuffer, PixelFormat, WritableImage}
 import javafx.scene.paint.{Color, PhongMaterial}
-import javafx.scene.shape.{CullFace, MeshView, TriangleMesh, VertexFormat}
+import javafx.scene.shape.{CullFace, MeshView, Rectangle, TriangleMesh, VertexFormat}
 import javafx.scene.transform.Affine
 
 import intaglio.*
@@ -199,17 +200,23 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   private val layoutTransforms: Map[SurfaceId, Affine],
   private var plan: SurfaceRenderPlan
 ):
-  private val subScenes = scala.collection.mutable.ArrayBuffer.empty[SubScene]
+  private val subScenes = scala.collection.mutable.ArrayBuffer.empty[(SubScene, InvalidationListener)]
+  private final case class ViewportScene(surface: SurfaceId, scene: SubScene, clip: Rectangle,
+      perspective: PerspectiveCamera, parallel: ParallelCamera, projectionSpace: Affine)
+  private var viewportScenes = Vector.empty[ViewportScene]
+  private var viewportAntialiasing: Option[SceneAntialiasing] = None
   private var viewportWidth = 1.0
   private var viewportHeight = 1.0
 
   def camera: Camera =
-    if JavaFxSurfaceProbe.isOrthographic(plan.camera) then parallelCamera
-    else perspectiveCamera
+    viewportCameras.headOption.getOrElse:
+      if JavaFxSurfaceProbe.isOrthographic(plan.camera) then parallelCamera
+      else perspectiveCamera
 
   def newSubScene(width: Double, height: Double): SubScene =
+    require(subScenes.isEmpty, "reuse the existing mounted SubScene")
     setViewportSize(width.toInt, height.toInt)
-    val scene = new SubScene(root, width, height, true, SceneAntialiasing.BALANCED)
+    val scene = new SubScene(root, width, height, false, SceneAntialiasing.BALANCED)
     attachCamera(scene)
     scene.setFill(Color.WHITE)
     scene
@@ -230,21 +237,110 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         JavaFxSurfaceProbe.configureMaterial(chunk.material, chunk.atlas.image, mode, config.lightingPolicy)
       activeMaterialMode = mode
 
-  def setLayout(slots: Vector[SurfaceViewSlot]): Unit =
-    plan = plan.copy(slots = slots)
+  def setLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill): Unit =
+    plan = plan.copy(slots = slots, viewportFit = fit)
     val visible = slots.iterator.map(_.surface).toSet
     surfaceGroups.foreach:
       case (surface, group) => group.setVisible(visible(surface))
     JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
+    configureParallelClipping()
+    configureViewportScenes()
 
   private[javafx] def setViewportSize(width: Int, height: Int): Unit =
     viewportWidth = width.toDouble
     viewportHeight = height.toDouble
     JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
+    configureParallelClipping()
+    configureViewportScenes()
+
+  private def configureParallelClipping(): Unit =
+    // Both explicit and default compiled depth ranges map to this native volume.
+    // Keeping raw millimetres in native Z would clip a cortical mesh differently
+    // when the viewport is resized. Match the pick ray's virtual eye as well.
+    val eye = viewportHeight * 0.5 / math.tan(math.Pi / 12)
+    val halfDepth = math.max(viewportWidth, viewportHeight) * 0.5
+    parallelCamera.setNearClip((eye - halfDepth) / eye)
+    parallelCamera.setFarClip((eye + halfDepth) / eye)
+
+  /** Actual 3D cameras; mounted outer SubScenes only compose the isolated slots. */
+  private[javafx] def viewportCameras: Vector[Camera] =
+    plan.slots.flatMap(slot => viewportScenes.find(_.surface == slot.surface).map(_.scene.getCamera))
+
+  private def ensureViewportScenes(antialiasing: SceneAntialiasing): Unit =
+    if !viewportAntialiasing.contains(antialiasing) then
+      releaseViewportScenes()
+      root.getTransforms.remove(cameraTransform)
+      root.getChildren.clear()
+      viewportScenes = surfaceGroups.toVector.map: (surface, group) =>
+        val innerRoot = new Group(group)
+        // Share the mutable camera transform, retaining the world's position/normal buffers.
+        val projectionSpace = new Affine()
+        innerRoot.getTransforms.addAll(projectionSpace, cameraTransform)
+        val scene = new SubScene(innerRoot, viewportWidth, viewportHeight, true, antialiasing)
+        // Null renders transparently and does not turn empty pixels into background picks.
+        scene.setFill(null)
+        val clip = new Rectangle()
+        // Clip the completed depth pass, never the Group containing 3D children.
+        scene.setClip(clip)
+        ViewportScene(surface, scene, clip, new PerspectiveCamera(false), new ParallelCamera(), projectionSpace)
+      viewportAntialiasing = Some(antialiasing)
+      configureViewportScenes()
+
+  private def configureViewportScenes(): Unit =
+    if viewportScenes.nonEmpty then
+      val fitted = plan.viewportFit.resolve(plan.slots, viewportWidth, viewportHeight)
+      val ordered = fitted.flatMap: slot =>
+        viewportScenes.find(_.surface == slot.surface).map: viewport =>
+          val scene = viewport.scene
+          scene.setWidth(viewportWidth)
+          scene.setHeight(viewportHeight)
+          val v = slot.viewport
+          viewport.clip.setX(v.x * viewportWidth)
+          viewport.clip.setY(v.y * viewportHeight)
+          viewport.clip.setWidth(v.width * viewportWidth)
+          viewport.clip.setHeight(v.height * viewportHeight)
+          viewport.perspective.setFieldOfView(perspectiveCamera.getFieldOfView)
+          viewport.perspective.setVerticalFieldOfView(perspectiveCamera.isVerticalFieldOfView)
+          viewport.perspective.setNearClip(perspectiveCamera.getNearClip)
+          viewport.perspective.setFarClip(perspectiveCamera.getFarClip)
+          viewport.parallel.setNearClip(parallelCamera.getNearClip)
+          viewport.parallel.setFarClip(parallelCamera.getFarClip)
+          if JavaFxSurfaceProbe.isOrthographic(plan.camera) then
+            viewport.projectionSpace.setToIdentity()
+            scene.setCamera(viewport.parallel)
+          else
+            // The default-eye camera projects its z=0 plane identically. That also
+            // makes nested localToScreen flattening well-defined in OpenJFX 21,
+            // whose SceneUtils reuses the inner camera for each enclosing scene.
+            // Conjugate the fixed-eye coordinates into this space without changing
+            // the compiled projection, depth range, or uploaded mesh coordinates.
+            val eye = viewportHeight * 0.5 / math.tan(math.toRadians(perspectiveCamera.getFieldOfView) * 0.5)
+            viewport.projectionSpace.setToTransform(
+              eye, 0, 0, viewportWidth * 0.5,
+              0, eye, 0, viewportHeight * 0.5,
+              0, 0, eye, -eye)
+            scene.setCamera(viewport.perspective)
+          scene
+      root.getChildren.setAll(ordered*)
+
+  private def releaseViewportScenes(): Unit =
+    viewportScenes.foreach: viewport =>
+      viewport.scene.setCamera(null)
+      viewport.scene.setClip(null)
+      viewport.scene.getRoot.asInstanceOf[Group].getChildren.clear()
+    viewportScenes = Vector.empty
+    viewportAntialiasing = None
 
   private[javafx] def attachCamera(scene: SubScene): Unit =
-    scene.setCamera(camera)
-    if !subScenes.contains(scene) then subScenes += scene
+    ensureViewportScenes(scene.getAntiAliasing)
+    scene.setCamera(new ParallelCamera())
+    if !subScenes.exists(_._1 == scene) then
+      val resize: InvalidationListener = _ =>
+        setViewportSize(math.max(1, scene.getWidth.toInt), math.max(1, scene.getHeight.toInt))
+      scene.widthProperty().addListener(resize)
+      scene.heightProperty().addListener(resize)
+      subScenes += ((scene, resize))
+      resize.invalidated(scene.widthProperty())
 
   private[javafx] def requiresAtlasRebuild(
     next: SurfaceRenderPlan,
@@ -255,6 +351,17 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         chunk.atlas.adaptiveLayout.exists: layout =>
           val packet = next.meshes.find(_.surface == chunk.surface).get
           !JavaFxAdaptiveAtlas.matches(layout, packet.indices, colors(chunk.surface), chunk.faceStart, chunk.faceCount)
+
+  /** Release property listeners before disposal or transfer to a rebuilt scene graph. */
+  private[javafx] def detachScenes(): Vector[SubScene] =
+    val scenes = subScenes.map(_._1).toVector
+    subScenes.foreach: (scene, resize) =>
+      scene.widthProperty().removeListener(resize)
+      scene.heightProperty().removeListener(resize)
+      scene.setCamera(null)
+    subScenes.clear()
+    releaseViewportScenes()
+    scenes
 
   def updateColors(
     next: SurfaceRenderPlan,
@@ -360,7 +467,8 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       plan = next
       JavaFxSurfaceProbe.configureCamera(perspectiveCamera, cameraTransform, next)
       JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
-      subScenes.foreach(_.setCamera(camera))
+      configureParallelClipping()
+      configureViewportScenes()
       Right(JavaFxSurfaceUpdateReceipt(
         geometryRebuilt = false,
         atlasesUpdated = 0,
@@ -424,6 +532,8 @@ object JavaFxSurfaceProbe:
     materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,
     config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default
   ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+    if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires a dedicated lookup-texture lowering"))
     val meshStarted = System.nanoTime()
     val colorsBySurface = validatePlan(plan, materialMode, config) match
       case Left(error) => return Left(error)
@@ -492,7 +602,7 @@ object JavaFxSurfaceProbe:
       root, built, surfaceGroups, receipt, materialMode, config,
       perspectiveCamera, parallelCamera, cameraTransform, layoutTransforms, plan
     )
-    result.setLayout(plan.slots)
+    result.setLayout(plan.slots, plan.viewportFit)
     Right(result)
 
   private[javafx] def configureCamera(
@@ -515,8 +625,13 @@ object JavaFxSurfaceProbe:
       val fov = 2.0 * math.atan(1.0 / projection(5)) * 180.0 / math.Pi
       camera.setFieldOfView(fov)
       camera.setVerticalFieldOfView(true)
-    camera.setNearClip(0.01)
-    camera.setFarClip(1000.0)
+    if projection(15) == 0.0f then
+      // Recover OpenGL near/far from its depth row, instead of imposing a
+      // second clipping policy on an already compiled scientific scene.
+      val depthScale = projection(10).toDouble
+      val depthOffset = projection(11).toDouble
+      camera.setNearClip(depthOffset / (depthScale - 1.0))
+      camera.setFarClip(depthOffset / (depthScale + 1.0))
 
   private[javafx] def configureLayout(
     plan: SurfaceRenderPlan,
@@ -524,7 +639,10 @@ object JavaFxSurfaceProbe:
     viewportWidth: Double,
     viewportHeight: Double
   ): Unit =
-    plan.slots.foreach: slot =>
+    val fitted =
+      if viewportWidth > 0.0 && viewportHeight > 0.0 then plan.viewportFit.resolve(plan.slots, viewportWidth, viewportHeight)
+      else Vector.empty
+    fitted.foreach: slot =>
       transforms.get(slot.surface).foreach: transform =>
         val layout = viewLayout(plan, slot.viewport, viewportWidth, viewportHeight)
         val world = conjugateViewLayout(plan.camera, layout._1, layout._2)
@@ -552,25 +670,32 @@ object JavaFxSurfaceProbe:
       val aspect = width / height
       val p0 = projection(0).toDouble
       val p5 = projection(5).toDouble
+      // Fit the reference projection within the slot with one physical pixel
+      // scale. Independent x/y slot scaling stretches anatomical geometry.
+      val scale = math.min(width * viewport.width * p0, height * viewport.height * p5) / (height * p5)
       (
         Array(
-          viewport.width * aspect * p0 / p5, 0.0, shiftX * aspect / p5,
-          0.0, viewport.height, shiftY / p5,
+          scale, 0.0, shiftX * aspect / p5,
+          0.0, scale, shiftY / p5,
           0.0, 0.0, 1.0
         ),
         Array(0.0, 0.0, 0.0)
       )
     else
+      val scale = math.min(width * viewport.width * projection(0), height * viewport.height * projection(5)) * 0.5
+      val halfDepth = math.max(width, height) * 0.5
+      val depthScale = -halfDepth * projection(10)
+      val depthShift = halfDepth * projection(11)
       (
         Array(
-          width * viewport.width * projection(0) * 0.5, 0.0, 0.0,
-          0.0, height * viewport.height * projection(5) * 0.5, 0.0,
-          0.0, 0.0, 1.0
+          scale, 0.0, 0.0,
+          0.0, scale, 0.0,
+          0.0, 0.0, depthScale
         ),
         Array(
           width * (viewport.x + viewport.width * 0.5),
           height * (viewport.y + viewport.height * 0.5),
-          0.0
+          depthShift
         )
       )
 
@@ -677,6 +802,10 @@ object JavaFxSurfaceProbe:
     atlas.write(indices, colors)
     atlas
 
+  /** Constant corner colors use zero UV derivatives, avoiding atlas mip leakage.
+    * Color/lighting updates can change this property without changing positions,
+    * topology, or provenance; those UV uploads are accounted separately.
+    */
   private[javafx] def textureCoordinates(packet: SurfaceMeshPacket, faceStart: Int, faceCount: Int,
       atlas: JavaFxFaceAtlas, colors: Array[Int]): Array[Float] =
     if atlas.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
@@ -700,6 +829,18 @@ object JavaFxSurfaceProbe:
       texCoords(textureOffset + 3) = bottom
       texCoords(textureOffset + 4) = left
       texCoords(textureOffset + 5) = top
+      val sourceOffset = (faceStart + localFace) * 3
+      val a = colors(packet.indices(sourceOffset))
+      val b = colors(packet.indices(sourceOffset + 1))
+      val c = colors(packet.indices(sourceOffset + 2))
+      if a == b && b == c then
+        val centerX = (left + right) * 0.5f
+        val centerY = (top + bottom) * 0.5f
+        var corner = 0
+        while corner < 3 do
+          texCoords(textureOffset + corner * 2) = centerX
+          texCoords(textureOffset + corner * 2 + 1) = centerY
+          corner += 1
       localFace += 1
     texCoords
 

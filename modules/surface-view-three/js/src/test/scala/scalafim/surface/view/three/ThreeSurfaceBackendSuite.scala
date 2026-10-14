@@ -14,6 +14,108 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
   private val layerId = SurfaceLayerId.unsafe("activation")
   private val size = ThreeCanvasSize.unsafe(640, 480, 2.0)
 
+  test("native depth fixture covers its full pixel and strictly separates near and far depth"):
+    val points = ThreeDepthAdmission.Positions.grouped(3).toVector
+    val near = points.take(3).map(p => ((p(0).toFloat.toDouble + 1) * 4, (1 - p(1).toFloat.toDouble) * 4))
+    def area(a: (Double, Double), b: (Double, Double), p: (Double, Double)): Double =
+      (b._1 - a._1) * (p._2 - a._2) - (b._2 - a._2) * (p._1 - a._1)
+    val total = area(near(0), near(1), near(2))
+    for x <- Vector(3.0, 4.0); y <- Vector(3.0, 4.0); edge <- 0 until 3 do
+      assert(area(near(edge), near((edge + 1) % 3), (x, y)) / total > 0.01)
+    assert(points.take(3).map(_(2)).max + 0.01 < points.drop(3).map(_(2)).min)
+    assert(ThreeDepthAdmission.admit(4, 255, 0, 0).isRight)
+    assert(ThreeDepthAdmission.admit(4, 192, 64, 0).isLeft)
+    assert(ThreeDepthAdmission.admit(0, 255, 255, 255).isLeft)
+    assert(ThreeDepthAdmission.admit(4, 0, 255, 0).isLeft)
+
+  test("fractional viewport projection matches logical pixel positions at native device ratios"):
+    val viewport = SurfaceViewport(0.0731, 0.13728036703084256, 0.8317, 0.7254392659383149)
+    for ratio <- Vector(1.0, 1.5, 2.0); dimensions <- Vector((768, 768), (800, 600)); perspective <- Vector(false, true) do
+      val (width, height) = dimensions
+      val size = ThreeCanvasSize.unsafe(width, height, ratio)
+      val native = ThreeJsRuntime.nativeViewport(viewport, size)
+      // Column-major matrices with an explicit nonconstant homogeneous w in
+      // the perspective case. Expected screen positions use the unrounded slot.
+      val original = js.Array[Double](0.7, 0, 0, 0, 0, 1.1, 0, 0,
+        0, 0, -0.2, if perspective then -1 else 0, 0, 0, -0.1, if perspective then 0 else 1)
+      val corrected = ThreeJsRuntime.viewportProjection(original, native)
+      def multiply(matrix: js.Array[Double], point: Vector[Double]): Vector[Double] =
+        Vector.tabulate(4)(row => (0 until 4).map(column => matrix(column * 4 + row) * point(column)).sum)
+      for point <- Vector(Vector(-0.3, 0.2, -2.0, 1.0), Vector(0.4, -0.5, -3.0, 1.0)) do
+        val clip = multiply(original, point)
+        val adjusted = multiply(corrected, point)
+        val expectedX = (viewport.x + (clip(0) / clip(3) + 1) * viewport.width / 2) * width * ratio
+        val expectedY = (1 - viewport.y - viewport.height + (clip(1) / clip(3) + 1) * viewport.height / 2) * height * ratio
+        assertEqualsDouble(native.x + (adjusted(0) / adjusted(3) + 1) * native.width / 2, expectedX, 1e-10)
+        assertEqualsDouble(native.y + (adjusted(1) / adjusted(3) + 1) * native.height / 2, expectedY, 1e-10)
+        assertEqualsDouble(adjusted(2), clip(2), 0.0)
+        assertEqualsDouble(adjusted(3), clip(3), 0.0)
+
+
+  private def depthCamera(perspective: Boolean): js.Array[Double] =
+    val near = 0.01
+    val far = 1000.0
+    js.Array[Double](1, 0, 0, 0, 0, 1, 0, 0,
+      0, 0, if perspective then -(far + near) / (far - near) else -2 / (far - near),
+      if perspective then -1 else 0,
+      0, 0, if perspective then -2 * far * near / (far - near) else -(far + near) / (far - near),
+      if perspective then 0 else 1)
+
+  private val identityMatrix = js.Array[Double](1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+
+  private def projectedDepth(matrix: js.Array[Double], z: Double): Double =
+    (matrix(10) * z + matrix(14)) / (matrix(11) * z + matrix(15))
+
+  test("occupied depth conditioning preserves screen coordinates and separates close perspective surfaces"):
+    val bounds = ThreeJsRuntime.PositionBounds(-2, -3, -200, 2, 3, -100)
+    for perspective <- Vector(false, true) do
+      val original = depthCamera(perspective)
+      val adjusted = ThreeJsRuntime.depthProjection(original, identityMatrix, bounds)
+      for column <- 0 until 4; row <- Vector(0, 1, 3) do
+        assertEqualsDouble(adjusted(column * 4 + row), original(column * 4 + row), 0)
+      val depths = Vector(-100.0, -125.0, -150.0, -175.0, -200.0).map(projectedDepth(adjusted, _))
+      assert(depths.forall(d => d > -1 && d < 1))
+      assert(depths.sliding(2).forall(pair => pair(0) < pair(1)))
+      assert(depths.last - depths.head > 1.0)
+      if perspective then
+        val oldSeparation = projectedDepth(original, -150.001) - projectedDepth(original, -150.0)
+        val newSeparation = projectedDepth(adjusted, -150.001) - projectedDepth(adjusted, -150.0)
+        // A 24-bit depth buffer maps NDC [-1,1] onto 2^24 discrete depths.
+        assert(oldSeparation / 2 * (1 << 24) < 0.01)
+        assert(newSeparation / 2 * (1 << 24) > 10)
+
+  test("occupied depth conditioning retains reached clip planes and rejects uncertain eye crossings"):
+    for perspective <- Vector(false, true) do
+      val original = depthCamera(perspective)
+      for (minZ, maxZ, boundary, outside) <- Vector(
+          (-0.02, -0.005, -0.01, -0.009), (-1100.0, -900.0, -1000.0, -1001.0)) do
+        val adjusted = ThreeJsRuntime.depthProjection(original, identityMatrix,
+          ThreeJsRuntime.PositionBounds(-1, -1, minZ, 1, 1, maxZ))
+        assertEqualsDouble(projectedDepth(adjusted, boundary), if boundary == -0.01 then -1.0 else 1.0, 1e-8)
+        assert(math.abs(projectedDepth(adjusted, outside)) > 1.0)
+      val clipped = ThreeJsRuntime.depthProjection(original, identityMatrix,
+        ThreeJsRuntime.PositionBounds(-1, -1, -2000, 1, 1, -1500))
+      for z <- Vector(-2000.0, -1750.0, -1500.0) do
+        assert(projectedDepth(clipped, z) > 1.0)
+    val perspective = depthCamera(true)
+    for bounds <- Vector(
+        ThreeJsRuntime.PositionBounds(-1, -1, -1, 1, 1, 1),
+        ThreeJsRuntime.PositionBounds(-1, -1, 1, 1, 1, 2),
+        ThreeJsRuntime.PositionBounds(-1, -1, Double.NaN, 1, 1, -1)) do
+      assertEquals(ThreeJsRuntime.depthProjection(perspective, identityMatrix, bounds).toVector, perspective.toVector)
+
+  test("depth conditioning uses a common interval for translated and overlapping draw slots"):
+    val original = depthCamera(true)
+    val shifted = identityMatrix.slice(0, 16)
+    shifted(14) = -100
+    val box = ThreeJsRuntime.PositionBounds(-1, -1, -101, 1, 1, -100)
+    val objects = Vector((identityMatrix, box), (shifted, box))
+    val adjusted = ThreeJsRuntime.depthProjection(original, objects)
+    assertEquals(adjusted.toVector, ThreeJsRuntime.depthProjection(original, objects.reverse).toVector)
+    val depths = Vector(-100.0, -101.0, -200.0, -201.0).map(projectedDepth(adjusted, _))
+    assert(depths.forall(d => d > -1 && d < 1))
+    assert(depths.sliding(2).forall(pair => pair(0) < pair(1)))
+
   test("Three adapter consumes CPU-projected fields and network tubes as ordinary resources"):
     val plan = SurfaceFeatureFixture.plan
     val runtime = new RecordingRuntime()
@@ -87,14 +189,12 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       setPixelRatio = ((_: Double) => ()): js.Function1[Double, Unit],
       setSize = ((_: Int, _: Int, _: Boolean) => ()): js.Function3[Int, Int, Boolean, Unit]
     )
-    val three = js.Dynamic.literal(
-      WebGLRenderer = FakeThree.constructing(renderer),
-      Scene = FakeThree.constructing(js.Dynamic.literal()),
-      PerspectiveCamera = FakeThree.constructing(js.Dynamic.literal()),
-      Raycaster = FakeThree.constructing(js.Dynamic.literal())
-    )
+    val three = FakeThree.runtime(renderer, webgl)
     val options = ThreeJsRuntimeOptions(Rgba32.unsafe(18, 24, 32, 128))
     val runtime = ThreeJsRuntime.create(three, js.Dynamic.literal(), options).toOption.get
+    // Construction performs two native-depth draws before the viewer owns its frame.
+    assertEquals(observed.map(_._1).toVector, Vector(0xffffff, 0xffffff))
+    observed.clear()
 
     assertEquals(runtime.resize(ThreeCanvasSize.unsafe(320, 240)), Right(()))
     assertEquals(runtime.draw(), Right(()))
@@ -120,12 +220,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       getContext = (() => webgl): js.Function0[js.Any],
       dispose = (() => rendererDisposals += 1): js.Function0[Unit]
     )
-    val three = js.Dynamic.literal(
-      WebGLRenderer = FakeThree.constructing(renderer),
-      Scene = FakeThree.constructing(js.Dynamic.literal()),
-      PerspectiveCamera = FakeThree.constructing(js.Dynamic.literal()),
-      Raycaster = FakeThree.constructing(js.Dynamic.literal())
-    )
+    val three = FakeThree.runtime(renderer, webgl)
     val runtime = ThreeJsRuntime.create(three, canvas).toOption.get
     assertEquals(runtime.contextState, ThreeContextState.Available)
     assertEquals(runtime.dispose(), Right(()))
@@ -134,10 +229,129 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assertEquals(rendererDisposals, 1)
     assertEquals(runtime.contextState, ThreeContextState.Lost)
 
+  test("rejected depth admission releases its probe resources, renderer, and context exactly once"):
+    var targetDisposals = 0
+    var geometryDisposals = 0
+    var materialDisposals = 0
+    var rendererDisposals = 0
+    var contextLosses = 0
+    val webgl = lifecycleWebgl(() => contextLosses += 1)
+    val canvas = lifecycleCanvas(webgl)
+    val renderer = js.Dynamic.literal(
+      getContext = (() => webgl): js.Function0[js.Any],
+      dispose = (() => rendererDisposals += 1): js.Function0[Unit]
+    )
+    val three = FakeThree.runtime(renderer, webgl, Map(
+      "WebGLRenderTarget" -> disposable(() => targetDisposals += 1),
+      "BufferGeometry" -> geometry(() => geometryDisposals += 1),
+      "ShaderMaterial" -> disposable(() => materialDisposals += 1)
+    ))
+    renderer.updateDynamic("readRenderTargetPixels")(((target: js.Any, x: Int, y: Int, width: Int, height: Int,
+        pixel: scala.scalajs.js.typedarray.Uint8Array) =>
+      pixel(0) = 0; pixel(1) = 255; pixel(2) = 0; pixel(3) = 255
+    ): js.Function6[js.Any, Int, Int, Int, Int, scala.scalajs.js.typedarray.Uint8Array, Unit])
+
+    assert(ThreeJsRuntime.create(three, canvas).left.exists(_.isInstanceOf[ThreeSurfaceError.NativeDepthMismatch]))
+    assertEquals(targetDisposals, 1)
+    assertEquals(geometryDisposals, 1)
+    assertEquals(materialDisposals, 1)
+    assertEquals(rendererDisposals, 1)
+    assertEquals(contextLosses, 1)
+
+  test("depth probe constructor failure releases already-built resources, renderer, and context exactly once"):
+    var targetDisposals = 0
+    var geometryDisposals = 0
+    var materialDisposals = 0
+    var rendererDisposals = 0
+    var contextLosses = 0
+    val webgl = lifecycleWebgl(() => contextLosses += 1)
+    val canvas = lifecycleCanvas(webgl)
+    val renderer = js.Dynamic.literal(
+      getContext = (() => webgl): js.Function0[js.Any],
+      dispose = (() => rendererDisposals += 1): js.Function0[Unit]
+    )
+    val three = FakeThree.runtime(renderer, webgl, Map(
+      "WebGLRenderTarget" -> disposable(() => targetDisposals += 1),
+      "BufferGeometry" -> geometry(() => geometryDisposals += 1)
+    ), Map("ShaderMaterial" -> FakeThree.throwing("probe material failure")))
+
+    assert(ThreeJsRuntime.create(three, canvas).left.exists(_.isInstanceOf[ThreeSurfaceError.RuntimeFailure]))
+    assertEquals(targetDisposals, 1)
+    assertEquals(geometryDisposals, 1)
+    assertEquals(materialDisposals, 0)
+    assertEquals(rendererDisposals, 1)
+    assertEquals(contextLosses, 1)
+
+  private def lifecycleWebgl(onLoseContext: () => Unit): js.Dynamic =
+    val extension = js.Dynamic.literal(loseContext = (() => onLoseContext()): js.Function0[Unit])
+    js.Dynamic.literal(
+      isContextLost = (() => false): js.Function0[Boolean],
+      getExtension = ((name: String) => if name == "WEBGL_lose_context" then extension else null): js.Function1[String, js.Any]
+    )
+
+  private def lifecycleCanvas(webgl: js.Dynamic): js.Dynamic =
+    js.Dynamic.literal(getContext = ((kind: String) => if kind == "webgl2" then js.undefined else webgl): js.Function1[String, js.Any])
+
+  private def disposable(onDispose: () => Unit): js.Dynamic =
+    js.Dynamic.literal(dispose = (() => onDispose()): js.Function0[Unit])
+
+  private def geometry(onDispose: () => Unit): js.Dynamic =
+    val value = disposable(onDispose)
+    value.updateDynamic("setAttribute")(((_: String, _: js.Any) => ()): js.Function2[String, js.Any, Unit])
+    value.updateDynamic("setIndex")(((_: js.Any) => ()): js.Function1[js.Any, Unit])
+    value
+
   private object FakeThree:
+    /** Lifecycle-only mock. Native depth correctness is checked separately by
+      * ThreeDepthAdmission's analytic fixture and actual browser captures.
+      */
+    def runtime(renderer: js.Dynamic, webgl: js.Dynamic,
+        constructors: Map[String, js.Dynamic] = Map.empty,
+        directConstructors: Map[String, js.Dynamic] = Map.empty): js.Dynamic =
+      webgl.updateDynamic("SAMPLES")(0)
+      webgl.updateDynamic("getParameter")(((_: js.Any) => 0): js.Function1[js.Any, Int])
+      renderer.updateDynamic("getRenderTarget")((() => null): js.Function0[js.Any])
+      renderer.updateDynamic("setRenderTarget")(((_: js.Any) => ()): js.Function1[js.Any, Unit])
+      renderer.updateDynamic("render")(((_: js.Any, _: js.Any) => ()): js.Function2[js.Any, js.Any, Unit])
+      renderer.updateDynamic("readRenderTargetPixels")(((target: js.Any, x: Int, y: Int, width: Int, height: Int,
+          pixel: scala.scalajs.js.typedarray.Uint8Array) =>
+        pixel(0) = 255; pixel(1) = 0; pixel(2) = 0; pixel(3) = 255
+      ): js.Function6[js.Any, Int, Int, Int, Int, scala.scalajs.js.typedarray.Uint8Array, Unit])
+      if js.isUndefined(renderer.selectDynamic("setClearColor")) then
+        renderer.updateDynamic("setClearColor")(((_: Int, _: Double) => ()): js.Function2[Int, Double, Unit])
+      if js.isUndefined(renderer.selectDynamic("clear")) then
+        renderer.updateDynamic("clear")(((_: Boolean, _: Boolean, _: Boolean) => ()): js.Function3[Boolean, Boolean, Boolean, Unit])
+      val disposable = js.Dynamic.literal(dispose = (() => ()): js.Function0[Unit])
+      val geometry = js.Dynamic.literal(
+        setAttribute = ((_: String, _: js.Any) => ()): js.Function2[String, js.Any, Unit],
+        setIndex = ((_: js.Any) => ()): js.Function1[js.Any, Unit],
+        dispose = (() => ()): js.Function0[Unit])
+      val projection = js.Dynamic.literal(elements = js.Array[Double](1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1))
+      projection.updateDynamic("clone")((() => projection): js.Function0[js.Any])
+      projection.updateDynamic("copy")(((_: js.Any) => projection): js.Function1[js.Any, js.Any])
+      def constructor(name: String, fallback: js.Dynamic): js.Dynamic =
+        directConstructors.getOrElse(name, constructing(constructors.getOrElse(name, fallback)))
+      js.Dynamic.literal(
+        WebGLRenderer = constructor("WebGLRenderer", renderer),
+        WebGLRenderTarget = constructor("WebGLRenderTarget", disposable),
+        BufferGeometry = constructor("BufferGeometry", geometry),
+        BufferAttribute = constructing(js.Dynamic.literal()),
+        ShaderMaterial = constructor("ShaderMaterial", disposable),
+        Mesh = constructing(js.Dynamic.literal()),
+        Camera = constructing(js.Dynamic.literal()),
+        Scene = constructing(js.Dynamic.literal(add = ((_: js.Any) => ()): js.Function1[js.Any, Unit])),
+        PerspectiveCamera = constructing(js.Dynamic.literal(projectionMatrix = projection)),
+        Raycaster = constructing(js.Dynamic.literal()))
     /** A `new`-able JavaScript constructor whose instances are `instance`. */
     def constructing(instance: js.Dynamic): js.Dynamic =
       val factory: js.Function0[js.Any] = () => instance
+      js.Dynamic.newInstance(js.Dynamic.global.Function)(
+        "factory",
+        "return function() { return factory(); };"
+      ).applyDynamic("call")(null, factory)
+
+    def throwing(message: String): js.Dynamic =
+      val factory: js.Function0[js.Any] = () => throw new RuntimeException(message)
       js.Dynamic.newInstance(js.Dynamic.global.Function)(
         "factory",
         "return function() { return factory(); };"
@@ -147,6 +361,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       extends ThreeSurfaceRuntime:
     val calls = ArrayBuffer.empty[String]
     var uploadedColors = Vector.empty[ThreeSurfaceColors]
+    var fitted: SurfaceViewportFit = SurfaceViewportFit.Fill
     var nextPick: Option[ThreePick] = None
 
     def contextState: ThreeContextState = state
@@ -172,7 +387,8 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       calls += "camera"
       Right(())
 
-    def updateLayout(slots: Vector[SurfaceViewSlot]): Either[ThreeSurfaceError, Unit] =
+    def updateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit] =
+      fitted = fit
       calls += s"layout:${slots.length}"
       Right(())
 
@@ -471,3 +687,20 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
 
   private def compile(viewer: SurfaceViewerModel, state: SurfaceViewerState): SurfaceRenderPlan =
     SurfaceCompiler.compile(viewer, state).toOption.get
+
+  test("fitting policy changes reach the runtime without geometry, colors or camera uploads"):
+    val (viewer, state) = fixture()
+    val first = compile(viewer, state)
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.render(first, size).toOption.get
+    assertEquals(runtime.fitted, first.viewportFit)
+    runtime.calls.clear()
+    val second = first.copy(viewportFit = SurfaceViewportFit.Fill)
+    val receipt = backend.render(second, size).toOption.get
+    assert(receipt.dirty.layout)
+    assertEquals(receipt.geometryUploads, 0)
+    assertEquals(receipt.colorUploads, 0)
+    assertEquals(runtime.calls.toVector, Vector("layout:1", "draw"))
+    assertEquals(runtime.fitted, SurfaceViewportFit.Fill)
+    backend.dispose().toOption.get

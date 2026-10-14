@@ -187,7 +187,7 @@ lazy val multivarInferenceJS  = ProjectRef(multivarBuild, "inferenceJS")
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "596b398af380079e4b251535230d0bc03cd88c51"
+lazy val intaglioRevision = "55658abfbbfed0c9a36ab612b38bd8f0677bc158"
 lazy val intaglioBuild =
   uri(
     sys.props.getOrElse(
@@ -790,6 +790,8 @@ lazy val surfaceViewJavafx =
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-javafx",
+      // Native JavaFX libraries cannot be reloaded across warm sbt test classloaders.
+      Test / fork := true,
       Test / run / fork := true,
       libraryDependencies ++= Seq(
         "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,

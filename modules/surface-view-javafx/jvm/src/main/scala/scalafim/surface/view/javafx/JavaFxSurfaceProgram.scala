@@ -1,11 +1,13 @@
 package scalafim.surface.view.javafx
 
 import javafx.application.{ConditionalFeature, Platform}
-import javafx.scene.{Group, SceneAntialiasing, SnapshotParameters, SubScene}
+import javafx.scene.{Camera, Group, SceneAntialiasing, SubScene}
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
+import javafx.scene.SnapshotParameters
 
 import scalafim.surface.view.*
+import intaglio.DisplayBlendMode
 
 final case class JavaFxDirtySet(
   geometry: Boolean,
@@ -25,7 +27,7 @@ enum JavaFxSurfaceCommand:
   case UpdateAtlases(plan: SurfaceRenderPlan)
   case UpdateMaterial(mode: JavaFxMaterialMode)
   case UpdateCamera(plan: SurfaceRenderPlan)
-  case UpdateLayout(slots: Vector[SurfaceViewSlot])
+  case UpdateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill)
   case DisposeResources(keys: Vector[SurfaceResourceKey])
 
 final case class JavaFxSurfaceProgram(
@@ -47,7 +49,7 @@ object JavaFxSurfaceProgram:
             JavaFxSurfaceCommand.RebuildGeometry(next),
             JavaFxSurfaceCommand.UpdateMaterial(materialMode(next)),
             JavaFxSurfaceCommand.UpdateCamera(next),
-            JavaFxSurfaceCommand.UpdateLayout(next.slots)
+            JavaFxSurfaceCommand.UpdateLayout(next.slots, next.viewportFit)
           ),
           JavaFxDirtySet(
             geometry = true,
@@ -67,7 +69,7 @@ object JavaFxSurfaceProgram:
         val layerData = layerSignature(before) != layerSignature(next) ||
           (config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert && (material || geometry))
         val camera = before.receipt.cameraKey != next.receipt.cameraKey
-        val layout = before.slots != next.slots
+        val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
         val clipping = before.clipping != next.clipping
         val nextKeys = (next.receipt.meshKeys ++ next.receipt.layerKeys).toSet
         val removed = (before.receipt.meshKeys ++ before.receipt.layerKeys).filterNot(nextKeys)
@@ -75,10 +77,11 @@ object JavaFxSurfaceProgram:
         if removed.nonEmpty then commands += JavaFxSurfaceCommand.DisposeResources(removed)
         if topology then commands += JavaFxSurfaceCommand.RebuildGeometry(next)
         else if geometry then commands += JavaFxSurfaceCommand.UpdateGeometry(next)
-        if layerData && !topology then commands += JavaFxSurfaceCommand.UpdateAtlases(next)
+        if layerData && !topology then
+          commands += JavaFxSurfaceCommand.UpdateAtlases(next)
         if material then commands += JavaFxSurfaceCommand.UpdateMaterial(materialMode(next))
         if camera || clipping then commands += JavaFxSurfaceCommand.UpdateCamera(next)
-        if layout then commands += JavaFxSurfaceCommand.UpdateLayout(next.slots)
+        if layout then commands += JavaFxSurfaceCommand.UpdateLayout(next.slots, next.viewportFit)
         JavaFxSurfaceProgram(
           commands.result(),
           JavaFxDirtySet(geometry, layerData, material, camera, layout, clipping, removed),
@@ -97,13 +100,16 @@ final case class JavaFxCapabilityReport(
   scene3d: Boolean,
   depthBuffer: Boolean,
   antialiasing: Boolean,
-  fallback: Option[String]
+  fallback: Option[String],
+  approximateFragments: Boolean = false
 ):
 
   def admissionCapabilities: SurfaceBackendCapabilities =
     val available =
       if scene3d then Set(
         SurfaceBackendFeature.HardwareAcceleration,
+        SurfaceBackendFeature.FacewiseData,
+        SurfaceBackendFeature.NearestVertexSampling,
         SurfaceBackendFeature.DepthBuffer,
         SurfaceBackendFeature.BackFaceCulling,
         SurfaceBackendFeature.Lighting,
@@ -113,10 +119,11 @@ final case class JavaFxCapabilityReport(
       )
       else Set.empty[SurfaceBackendFeature]
     SurfaceBackendCapabilities(
-      SurfaceBackendId.unsafe("javafx-scene3d"),
+      SurfaceBackendId.unsafe(if approximateFragments then "javafx-scene3d-bounded-diagnostic-v1" else "javafx-scene3d"),
       SurfacePlanRevision.Current,
       available,
-      fallback.toVector ++ Vector("world clipping planes are not yet supported")
+      fallback.toVector ++ Vector("world clipping planes are not yet supported") ++
+        (if approximateFragments then Vector("scalar/layer fragments use opt-in bounded constant-color geometry and are not an admitted native JavaFX scalar or fragment path") else Vector.empty)
     )
 
 object JavaFxCapabilityReport:
@@ -161,6 +168,7 @@ final case class JavaFxInterpretReceipt(
   geometryUpdates: Int,
   geometryBytesUpdated: Long,
   elapsedNanos: Long,
+  approximation: Option[JavaFxApproximationReceipt] = None,
   textureCoordinateBytesUpdated: Long = 0L
 )
 
@@ -175,14 +183,43 @@ final case class JavaFxObservedReceipt(
 final class JavaFxSurfaceBackend private (
   val root: Group,
   val capabilities: JavaFxCapabilityReport,
-  config: JavaFxAtlasConfig
+  config: JavaFxAtlasConfig,
+  approximationConfig: Option[JavaFxApproximationConfig] = None
 ):
+  private var currentPrepared: Option[JavaFxPreparedSurface] = None
   private var currentPlan: Option[SurfaceRenderPlan] = None
   private var current: Option[JavaFxSurfaceProbeResult] = None
   private var mountedScene: Option[SubScene] = None
   private var disposed = false
 
   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    val started = System.nanoTime()
+    requireFxThread().flatMap: _ =>
+      if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
+      else plan.clipping match
+        case SurfaceClipping.WorldPlanes(_) => Left(JavaFxSurfaceError.IncompatiblePlan("world clipping planes are unsupported by JavaFX Scene3D"))
+        case _ => prepare(plan).flatMap(prepared => renderPrepared(plan, prepared))
+          .map(_.copy(elapsedNanos = System.nanoTime() - started))
+
+  private def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedSurface] =
+    approximationConfig match
+      case None => JavaFxSurfaceBackend.validateCapabilities(plan).map(_ => JavaFxPreparedSurface(plan, None))
+      case Some(settings) =>
+        def signature(value: SurfaceRenderPlan): (Vector[SurfaceResourceKey], Vector[SurfaceResourceKey], Vector[(SurfaceResourceKey, Double, DisplayBlendMode, SurfaceLayerCoverage)], SurfaceLighting, Set[SurfaceId]) =
+          (value.receipt.meshKeys, value.meshes.map(_.geometryKey),
+            value.layers.map(l => (l.resourceKey, l.opacity.toDouble, l.blendMode, l.coverage)), value.lighting, value.fragmentSurfaces)
+        (currentPlan, currentPrepared) match
+          case (Some(before), Some(cached)) if signature(before) == signature(plan) &&
+              before.meshes.zip(plan.meshes).forall((a, b) => java.util.Arrays.equals(
+                a.sampleNormals.getOrElse(a.normals).unsafeArray, b.sampleNormals.getOrElse(b.normals).unsafeArray)) =>
+            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, clipping = plan.clipping,
+              chrome = plan.chrome, readouts = plan.readouts, viewportFit = plan.viewportFit,
+              receipt = cached.plan.receipt.copy(cameraKey = plan.receipt.cameraKey, timepoint = plan.receipt.timepoint)),
+              approximation = cached.approximation.map(_.copy(preparationNanos = 0L, reused = true))))
+          case _ => JavaFxSurfaceApproximation.prepare(plan, settings, config)
+
+  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    val plan = prepared.plan
     JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
@@ -217,12 +254,13 @@ final class JavaFxSurfaceBackend private (
               JavaFxSurfaceProbe.compile(next, JavaFxSurfaceProgram.materialMode(next), config) match
                 case Left(error) => failure = Some(error)
                 case Right(probe) =>
-                  mountedScene.foreach: scene =>
-                    probe.setViewportSize(scene.getWidth.toInt, scene.getHeight.toInt)
-                    probe.attachCamera(scene)
+                  val mounted = current.toVector.flatMap(_.detachScenes())
                   current.foreach(_.root.getChildren.clear())
                   current = Some(probe)
                   root.getChildren.setAll(probe.root)
+                  mounted.foreach: scene =>
+                    probe.setViewportSize(scene.getWidth.toInt, scene.getHeight.toInt)
+                    probe.attachCamera(scene)
             case JavaFxSurfaceCommand.UpdateGeometry(next) =>
               current.get.updateGeometry(next, JavaFxSurfaceProgram.materialMode(next)) match
                 case Left(error) => failure = Some(error)
@@ -244,12 +282,13 @@ final class JavaFxSurfaceBackend private (
               current.get.applyCamera(next) match
                 case Left(error) => failure = Some(error)
                 case Right(_) => ()
-            case JavaFxSurfaceCommand.UpdateLayout(slots) => current.foreach(_.setLayout(slots))
+            case JavaFxSurfaceCommand.UpdateLayout(slots, fit) => current.foreach(_.setLayout(slots, fit))
           index += 1
         failure match
           case Some(error) => Left(error)
           case None =>
-            currentPlan = Some(plan)
+            currentPlan = Some(source)
+            currentPrepared = Some(prepared)
             Right(JavaFxInterpretReceipt(
               program.dirty,
               program.commands.length,
@@ -258,6 +297,7 @@ final class JavaFxSurfaceBackend private (
               geometryUpdates,
               geometryBytesUpdated,
               System.nanoTime() - started,
+              prepared.approximation,
               textureCoordinateBytesUpdated
             ))
 
@@ -265,7 +305,7 @@ final class JavaFxSurfaceBackend private (
     plan: SurfaceRenderPlan,
     path: SurfaceAdmissionPath
   ): Either[JavaFxSurfaceError, JavaFxObservedReceipt] =
-    val previous = currentPlan
+    val previous = currentPrepared.map(_.plan)
     render(plan).map: receipt =>
       val events = Vector.newBuilder[SurfaceResourceEvent]
       if receipt.dirty.geometry && receipt.geometryUpdates == 0 then
@@ -286,11 +326,15 @@ final class JavaFxSurfaceBackend private (
             chunk.atlas.height,
             chunk.atlas.width.toLong * chunk.atlas.height.toLong * 4L
           )
-      if !receipt.dirty.geometry && !receipt.dirty.layerData then
+      if receipt.textureCoordinateBytesUpdated > 0 then
+        val count = (receipt.textureCoordinateBytesUpdated / 8).toInt
+        events += SurfaceResourceEvent.LayerUploaded(SurfaceResourceKey("javafx-texture-coordinates"),
+          count, count, 1, receipt.textureCoordinateBytesUpdated)
+      if !receipt.dirty.geometry && !receipt.dirty.layerData && receipt.textureCoordinateBytesUpdated == 0 then
         previous.foreach: prior =>
           (prior.receipt.meshKeys ++ prior.receipt.layerKeys).foreach(key => events += SurfaceResourceEvent.CacheHit(key))
       current.foreach: result =>
-        events += SurfaceResourceEvent.DrawSubmitted(plan.receipt.drawPassCount, result.receipt.facesUploaded)
+        events += SurfaceResourceEvent.DrawSubmitted(result.chunks.length, result.receipt.facesUploaded)
       val observation = SurfaceBackendObservation(
         capabilities.admissionCapabilities,
         SurfacePlanRevision.Current,
@@ -308,7 +352,7 @@ final class JavaFxSurfaceBackend private (
           Left(JavaFxSurfaceError.IncompatiblePlan("the backend root already belongs to a SubScene"))
         case Some(probe) =>
           probe.setViewportSize(config.width, config.height)
-          val scene = new SubScene(root, config.width, config.height, true, config.antialiasing)
+          val scene = new SubScene(root, config.width, config.height, false, config.antialiasing)
           probe.attachCamera(scene)
           scene.setFill(if config.transparent then Color.TRANSPARENT else Color.WHITE)
           mountedScene = Some(scene)
@@ -349,17 +393,28 @@ final class JavaFxSurfaceBackend private (
             current.get.setViewportSize(scene.getWidth.toInt, scene.getHeight.toInt)
 
   def resourceKeys: Set[SurfaceResourceKey] =
-    currentPlan.toSet.flatMap(plan => plan.receipt.meshKeys ++ plan.receipt.layerKeys)
+    currentPrepared.toSet.flatMap(prepared => prepared.plan.receipt.meshKeys ++ prepared.plan.receipt.layerKeys)
+
+  private[javafx] def viewportCameras: Vector[Camera] =
+    current.toVector.flatMap(_.viewportCameras)
 
   /** The successfully painted plan remains authoritative after a refused update. */
   def pickingPlan: Option[SurfaceRenderPlan] = currentPlan
+
+  /** Render-packet topology used to decode JavaFX native face indices. This can
+    * differ from `pickingPlan` only for the diagnostic bounded approximation,
+    * whose derived faces retain source provenance in their packets.
+    */
+  private[javafx] def renderedPickingPlan: Option[SurfaceRenderPlan] = currentPrepared.map(_.plan)
 
   private[javafx] def chunks: Vector[JavaFxSurfaceChunk] =
     current.toVector.flatMap(_.chunks)
 
   def dispose(): Either[JavaFxSurfaceError, Unit] =
     requireFxThread().map: _ =>
-      current.foreach(_.root.getChildren.clear())
+      current.foreach: probe =>
+        val _ = probe.detachScenes()
+        probe.root.getChildren.clear()
       root.getChildren.clear()
       mountedScene.foreach: scene =>
         scene.setRoot(new Group())
@@ -367,6 +422,7 @@ final class JavaFxSurfaceBackend private (
       mountedScene = None
       current = None
       currentPlan = None
+      currentPrepared = None
       disposed = true
 
   private def requireFxThread(): Either[JavaFxSurfaceError, Unit] =
@@ -375,7 +431,9 @@ final class JavaFxSurfaceBackend private (
 
 object JavaFxSurfaceBackend:
   private[javafx] def validateCapabilities(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
-    plan.clipping match
+    if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend"))
+    else plan.clipping match
       case SurfaceClipping.WorldPlanes(_) =>
         Left(JavaFxSurfaceError.IncompatiblePlan(
           "world clipping planes are unsupported by JavaFX Scene3D; use the reference raster backend"
@@ -393,3 +451,15 @@ object JavaFxSurfaceBackend:
       Left(JavaFxSurfaceError.IncompatiblePlan("JavaFX backend creation must run on the Application Thread"))
     else
       Right(new JavaFxSurfaceBackend(new Group(), JavaFxCapabilityReport.current, config))
+
+
+  /** Diagnostic opt-in scalar and mixed-layer rendering with a checked geometry error bound.
+    * Data, mapping, and lighting changes may rebuild derived topology; camera
+    * changes reuse it. Resource and approximation costs are returned in receipts.
+    * It does not grant production native-renderer admission.
+    */
+  def createApproximate(settings: JavaFxApproximationConfig, config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default)
+      : Either[JavaFxSurfaceError, JavaFxSurfaceBackend] =
+    if !Platform.isFxApplicationThread then
+      Left(JavaFxSurfaceError.IncompatiblePlan("JavaFX backend creation must run on the Application Thread"))
+    else Right(new JavaFxSurfaceBackend(new Group(), JavaFxCapabilityReport.current.copy(approximateFragments = true), config, Some(settings)))

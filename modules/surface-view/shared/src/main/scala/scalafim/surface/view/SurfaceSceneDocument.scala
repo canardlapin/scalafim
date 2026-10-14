@@ -55,7 +55,11 @@ final case class SurfaceSceneLayer(
   reference: SurfaceExternalReference,
   encoding: SurfaceLayerKind,
   frameCount: Int,
-  blendMode: DisplayBlendMode
+  blendMode: DisplayBlendMode,
+  association: SurfaceSampleAssociation = SurfaceSampleAssociation.Vertex,
+  vertexInterpolation: SurfaceVertexInterpolation = SurfaceVertexInterpolation.Color,
+  scalarMappingKey: Option[String] = None,
+  scalarInterpolation: Boolean = false
 )
 
 final case class SurfaceSceneLayerState(
@@ -98,11 +102,17 @@ object SurfaceProvenance:
     else Right(new SurfaceProvenance(normalizedProducer, normalizedVersion, normalizedCreatedAt, normalizedEntries))
 
 enum SurfaceDocumentRevision:
-  case V1
+  case V1, V2, V3, V4, V5, V6, V7
 
   def value: Int =
     this match
       case V1 => 1
+      case V2 => 2
+      case V3 => 3
+      case V4 => 4
+      case V5 => 5
+      case V6 => 6
+      case V7 => 7
 
 enum SurfaceUnknownFieldPolicy:
   case Reject, Ignore
@@ -117,16 +127,25 @@ final case class SurfaceSceneDocument private (
   layers: Vector[SurfaceSceneLayer],
   layout: SurfaceLayout,
   camera: SurfaceCamera,
+  framing: CameraFraming,
   lighting: SurfaceLighting,
   clipping: SurfaceClipping,
   timepoint: Int,
   selection: Option[SurfaceSelection],
   layerStates: Vector[SurfaceSceneLayerState],
   requiredFeatures: Set[SurfaceBackendFeature],
-  provenance: SurfaceProvenance
+  provenance: SurfaceProvenance,
+  legends: Vector[SurfaceSceneLegend] = Vector.empty
 ):
   def admit(capabilities: SurfaceBackendCapabilities): Either[SurfaceSceneError, Unit] =
-    val missing = requiredFeatures.filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
+    val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
+    val nearest = Option.when(layers.exists(_.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))(SurfaceBackendFeature.NearestVertexSampling)
+    val scalar = Option.when(layers.exists(_.scalarInterpolation))(SurfaceBackendFeature.ScalarInterpolation)
+    val fragment = Option.when(layers.groupBy(_.surface).values.exists(group =>
+      group.exists(_.scalarInterpolation) ||
+        (group.exists(layer => layer.association == SurfaceSampleAssociation.Vertex && layer.vertexInterpolation == SurfaceVertexInterpolation.Color) &&
+          group.exists(layer => layer.association == SurfaceSampleAssociation.Face || layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))))(SurfaceBackendFeature.FragmentComposition)
+    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ fragment).filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
     if missing.isEmpty then Right(())
     else Left(SurfaceSceneError.MissingCapabilities(missing))
 
@@ -138,17 +157,19 @@ final case class SurfaceSceneDocument private (
       _ <- SurfaceSceneDocument.validateBindings(this, resolved)
       _ <- SurfaceSceneDocument.validateModel(this, model)
       restored <- SurfaceSceneDocument.restoreState(this, model)
+      _ <- SurfaceSceneDocument.validateLegends(legends, model, restored)
     yield restored
 
 object SurfaceSceneDocument:
-  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V1
+  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V7
 
   def capture(
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
     bindings: SurfaceSceneBindings,
     provenance: SurfaceProvenance,
-    requiredFeatures: Set[SurfaceBackendFeature] = Set.empty
+    requiredFeatures: Set[SurfaceBackendFeature] = Set.empty,
+    legendRequests: Vector[SurfaceLegendRequest] = Vector.empty
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
     for
       _ <- validateBindingKeys(model, bindings)
@@ -173,7 +194,11 @@ object SurfaceSceneDocument:
             reference,
             layer.kind,
             layer.frameCount,
-            layer.blendMode
+            layer.blendMode,
+            layer.association,
+            if layer.interpolation == SurfaceMapInterpolation.NearestVertex then SurfaceVertexInterpolation.NearestSample else SurfaceVertexInterpolation.Color,
+            layer.scalarMapping.map(_.canonicalKey),
+            layer.interpolation == SurfaceMapInterpolation.VertexScalar
           ))
       states <- traverse(state.layerOrder): id =>
         state.presentations.get(id) match
@@ -185,6 +210,9 @@ object SurfaceSceneDocument:
             value.window,
             value.threshold
           ))
+      legends <- traverse(legendRequests): request =>
+        SurfaceLegend.bind(request, model, state).left.map(error => SurfaceSceneError.InvalidDocument(error.message))
+          .map(legend => SurfaceSceneLegend(legend.request, legend.canonicalKey))
       result <- make(
         CurrentRevision,
         assets,
@@ -197,7 +225,9 @@ object SurfaceSceneDocument:
         state.selection,
         states,
         requiredFeatures,
-        provenance
+        provenance,
+        legends,
+        state.framing
       )
     yield result
 
@@ -213,9 +243,36 @@ object SurfaceSceneDocument:
     selection: Option[SurfaceSelection],
     layerStates: Vector[SurfaceSceneLayerState],
     requiredFeatures: Set[SurfaceBackendFeature],
-    provenance: SurfaceProvenance
+    provenance: SurfaceProvenance,
+    legends: Vector[SurfaceSceneLegend] = Vector.empty,
+    framing: CameraFraming = CameraFraming.BoundsFit
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
-    if assets.isEmpty then Left(SurfaceSceneError.InvalidDocument("at least one surface asset is required"))
+    if revision == SurfaceDocumentRevision.V1 && framing != CameraFraming.LegacyV1 then
+      Left(SurfaceSceneError.InvalidDocument("revision 1 requires legacy camera framing"))
+    else if revision.value >= 2 && revision.value <= 6 && framing != CameraFraming.BoundsFit then
+      Left(SurfaceSceneError.InvalidDocument("revisions 2 through 6 require bounds-fit camera framing"))
+    else if revision.value < 7 && camera.aspectRatio != CameraAspectRatio.Default then
+      Left(SurfaceSceneError.InvalidDocument("non-square camera aspect requires revision 7"))
+    else if legends.nonEmpty && revision.value < 6 then
+      Left(SurfaceSceneError.InvalidDocument("legend requests and identities require revision 6"))
+    else if legends.exists(_.canonicalKey.trim.isEmpty) then
+      Left(SurfaceSceneError.InvalidDocument("legend identities must be nonempty"))
+    else if legends.exists(legend => legend.layerIds.exists(id => !layers.exists(_.id == id))) then
+      Left(SurfaceSceneError.InvalidDocument("legend layers must reference declared layers"))
+    else if layers.exists(layer => layer.scalarInterpolation &&
+        (revision.value < 5 || layer.encoding != SurfaceLayerKind.Scalar || layer.association != SurfaceSampleAssociation.Vertex ||
+          layer.vertexInterpolation != SurfaceVertexInterpolation.Color || layer.scalarMappingKey.isEmpty)) then
+      Left(SurfaceSceneError.InvalidDocument("scalar interpolation requires revision 5, vertex scalar data, and an inspectable mapping"))
+    else if layers.exists(layer => layer.scalarMappingKey.nonEmpty &&
+        (revision.value < 4 || layer.encoding != SurfaceLayerKind.Scalar || layer.scalarMappingKey.exists(_.isEmpty))) then
+      Left(SurfaceSceneError.InvalidDocument("scalar mapping keys require revision 4 and scalar encoding"))
+    else if layers.exists(layer => layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample &&
+        (revision.value < 3 || layer.association != SurfaceSampleAssociation.Vertex)) then
+      Left(SurfaceSceneError.InvalidDocument("nearest vertex interpolation requires revision 3 and vertex association"))
+    else if revision == SurfaceDocumentRevision.V1 &&
+        (layers.exists(_.association != SurfaceSampleAssociation.Vertex) || selection.exists(_.face.nonEmpty)) then
+      Left(SurfaceSceneError.InvalidDocument("face association and selection require revision 2"))
+    else if assets.isEmpty then Left(SurfaceSceneError.InvalidDocument("at least one surface asset is required"))
     else if assets.map(_.id).distinct.length != assets.length then
       Left(SurfaceSceneError.InvalidDocument("surface ids must be unique"))
     else if layers.map(_.id).distinct.length != layers.length then
@@ -235,7 +292,8 @@ object SurfaceSceneDocument:
           assets.find(_.id == left).forall(_.hemisphere != CorticalHemisphere.Left) ||
             assets.find(_.id == right).forall(_.hemisphere != CorticalHemisphere.Right)
       val invalidSelection = selection.exists: selected =>
-        assets.find(_.id == selected.surface).forall(asset => selected.vertex.index >= asset.vertexCount)
+        assets.find(_.id == selected.surface).forall(asset =>
+          selected.vertex.index >= asset.vertexCount || selected.face.exists(_.index >= asset.faceCount))
       val invalidPresentation = layerStates.exists: state =>
         layers.find(_.id == state.id).exists: layer =>
           layer.encoding != SurfaceLayerKind.Scalar && (state.window.nonEmpty || state.threshold.nonEmpty)
@@ -251,14 +309,25 @@ object SurfaceSceneDocument:
       layers,
       layout,
       camera,
+      framing,
       lighting,
       clipping,
       timepoint,
       selection,
       layerStates,
       requiredFeatures,
-      provenance
+      provenance,
+      legends
       ))
+
+  private def validateLegends(legends: Vector[SurfaceSceneLegend], model: SurfaceViewerModel,
+    state: SurfaceViewerState): Either[SurfaceSceneError, Unit] =
+    traverse(legends): saved =>
+      SurfaceLegend.bind(saved.request, model, state).left.map(error => SurfaceSceneError.InvalidDocument(error.message))
+        .flatMap: current =>
+          if current.canonicalKey == saved.canonicalKey then Right(())
+          else Left(SurfaceSceneError.InvalidDocument(SurfaceLegendError.StaleLegend.message))
+    .map(_ => ())
 
   private def validateBindingKeys(
     model: SurfaceViewerModel,
@@ -334,6 +403,11 @@ object SurfaceSceneDocument:
             val exact =
               actual.surfaceId == expected.surface &&
                 actual.kind == expected.encoding &&
+                (document.revision.value < 4 || actual.scalarMapping.map(_.canonicalKey) == expected.scalarMappingKey) &&
+                actual.association == expected.association &&
+                (actual.interpolation == SurfaceMapInterpolation.VertexScalar) == expected.scalarInterpolation &&
+                (actual.interpolation == SurfaceMapInterpolation.NearestVertex) ==
+                  (expected.vertexInterpolation == SurfaceVertexInterpolation.NearestSample) &&
                 actual.frameCount == expected.frameCount &&
                 actual.blendMode == expected.blendMode
             if !exact then return Left(SurfaceSceneError.ModelMismatch(s"layer '${expected.id.value}' identity differs"))
@@ -348,13 +422,17 @@ object SurfaceSceneDocument:
     actions += SurfaceViewerAction.SetLayout(document.layout)
     actions += SurfaceViewerAction.SetViewpoint(document.camera.viewpoint)
     actions += SurfaceViewerAction.SetProjection(document.camera.projection)
+    actions += SurfaceViewerAction.SetCameraFraming(document.framing)
     actions += SurfaceViewerAction.SetZoom(document.camera.zoom)
+    actions += SurfaceViewerAction.SetAspectRatio(document.camera.aspectRatio)
     actions += SurfaceViewerAction.SetPan(document.camera.panX, document.camera.panY)
     actions += SurfaceViewerAction.SetOrbit(document.camera.orbit)
     actions += SurfaceViewerAction.SetLighting(document.lighting)
     actions += SurfaceViewerAction.SetClipping(document.clipping)
     actions += SurfaceViewerAction.SetTimepoint(document.timepoint)
-    document.selection.foreach(selection => actions += SurfaceViewerAction.Select(selection.surface, selection.vertex))
+    document.selection.foreach: selection =>
+      actions += selection.face.fold[SurfaceViewerAction](SurfaceViewerAction.Select(selection.surface, selection.vertex)):
+        face => SurfaceViewerAction.SelectFace(selection.surface, face, selection.vertex)
     document.layerStates.zipWithIndex.foreach: (layer, index) =>
       actions += SurfaceViewerAction.SetLayerVisible(layer.id, layer.visible)
       actions += SurfaceViewerAction.SetLayerOpacity(layer.id, layer.opacity)
@@ -430,3 +508,7 @@ private[view] object SurfaceSceneNames:
       case SurfaceBackendFeature.NativePicking => "native-picking"
       case SurfaceBackendFeature.HighResolutionSnapshot => "high-resolution-snapshot"
       case SurfaceBackendFeature.GpuVolumeProjection => "gpu-volume-projection"
+      case SurfaceBackendFeature.FacewiseData => "facewise-data"
+      case SurfaceBackendFeature.NearestVertexSampling => "nearest-vertex-sampling"
+      case SurfaceBackendFeature.ScalarInterpolation => "scalar-interpolation"
+      case SurfaceBackendFeature.FragmentComposition => "fragment-composition"

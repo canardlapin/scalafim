@@ -1,0 +1,6 @@
+{
+  "case": "C08",
+  "status": "fail",
+  "artifacts": [],
+  "reason": "full required family adapter is not implemented"
+}

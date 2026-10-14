@@ -321,7 +321,10 @@ object ThreeBrowserProbe:
         ))
       case SurfaceAdmissionPath.Pick =>
         val started = now()
-        val picked = backend.pick(size.width / 2.0, size.height / 2.0)
+        // The pinned latitude/longitude fixture has degenerate poles and an
+        // incomplete final row at 163842 vertices. Probe an interior triangle,
+        // away from the pole and longitude seam, rather than the central axis.
+        val picked = backend.pick(size.width * 0.55, size.height * 0.53)
           .fold(error => throw new IllegalStateException(error.message), identity)
         val elapsed = ((now() - started) * 1e6).toLong
         val event = picked.map(value => SurfaceResourceEvent.Picked(value.surface, value.face, value.vertex)).toVector

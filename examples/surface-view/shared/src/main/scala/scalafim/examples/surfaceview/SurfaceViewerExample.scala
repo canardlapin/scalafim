@@ -150,6 +150,9 @@ object SurfaceViewerExample:
     )
 
   private val actions = Vector(
+    // This v1 receipt predates bounds-fit framing; keep its published camera
+    // and pixel contract explicit as new viewers adopt the fitted policy.
+    SurfaceViewerAction.SetCameraFraming(CameraFraming.LegacyV1),
     SurfaceViewerAction.SetLayout(SurfaceLayout.Bilateral(
       LeftSurface,
       RightSurface,

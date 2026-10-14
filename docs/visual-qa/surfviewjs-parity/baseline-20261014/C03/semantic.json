@@ -1,0 +1,151 @@
+{
+  "caseId": "C03",
+  "materialProfile": "observed-default-lit",
+  "scalafim": {
+    "schema": "scalafim.surface-parity-adapter.v1",
+    "caseId": "C03",
+    "fixture": {
+      "schema": "scalafim.surface-parity-fixture.v1",
+      "case": "C03",
+      "vertices": 4,
+      "faces": 4,
+      "camera": {
+        "projection": "perspective",
+        "viewpoint": "dorsal"
+      },
+      "material": "observed-default-lit",
+      "viewport": [
+        512,
+        512
+      ]
+    },
+    "observed": {
+      "backend": "three-webgl",
+      "matrixOrder": "row-major",
+      "viewMatrix": [
+        1,
+        0,
+        0,
+        -0.6000000238418579,
+        0,
+        1,
+        0,
+        -0.375,
+        0,
+        0,
+        1,
+        -4.650000095367432,
+        0,
+        0,
+        0,
+        1
+      ],
+      "projectionMatrix": [
+        3.1715948581695557,
+        0,
+        0,
+        0,
+        0,
+        3.1715948581695557,
+        0,
+        0,
+        0,
+        0,
+        -1.0000200271606445,
+        -0.02000020071864128,
+        0,
+        0,
+        -1,
+        0
+      ],
+      "vertices": 4,
+      "faces": 4,
+      "layers": [
+        "curvature",
+        "scalar",
+        "scalar-additive"
+      ],
+      "drawCalls": 1,
+      "geometryUploads": 1,
+      "colorUploads": 1
+    },
+    "cameraSeam": "public SurfaceViewer/SurfaceCompiler plan only; explicit camera-up is not available on baseline"
+  },
+  "surfviewjs": {
+    "vertices": 4,
+    "faces": 4,
+    "matrixOrder": "column-major",
+    "viewMatrix": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      -0.6,
+      -0.375,
+      -4.65,
+      1
+    ],
+    "projectionMatrix": [
+      3.1715948023632126,
+      0,
+      0,
+      0,
+      0,
+      3.1715948023632126,
+      0,
+      0,
+      0,
+      0,
+      -1.000020000200002,
+      -1,
+      0,
+      0,
+      -0.02000020000200002,
+      0
+    ],
+    "modelMatrix": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "viewport": [
+      512,
+      512
+    ],
+    "colorSpace": "srgb",
+    "toneMapping": 0,
+    "material": "MeshPhongMaterial",
+    "antialias": true,
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "platform": "MacIntel",
+    "devicePixelRatio": 1
+  },
+  "cameraAgreement": {
+    "maximumViewDifference": 9.536743128535363e-8,
+    "maximumProjectionDifference": 5.580634310220489e-8
+  }
+}
