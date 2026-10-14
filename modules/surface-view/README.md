@@ -43,3 +43,32 @@ size (result and query state); preparation allocated 623,120 and 7,214,640 bytes
 These are one local warmed measurement, not stable latency gates or anatomical
 fixture results. Retained bytes exclude JVM headers; no process-RSS claim is
 made. Prefer the one-shot path when setup cannot amortize across repeated picks.
+
+## Several views and display instances
+
+`SurfaceCompositionCompiler.compile` accepts a shared presentation and a vector
+of typed `SurfaceCompositionInputView`s. Each view has its own camera pose,
+viewport, lighting, and instances. Each instance carries a `SurfaceDisplayFrame`
+witness and an optional display translation. Four views can reuse one uploaded
+mesh; several surfaces in one view share its depth buffer. Scientific geometry
+and selections stay in their original coordinate frame.
+
+`SurfaceCompositionState` applies orbit, pan, zoom, and resize operations.
+Camera links apply deltas in each camera's own basis, preserving distinct medial
+and lateral poses. A resize changes only the selected panel's aspect ratio.
+`SurfaceCompositionPlan.fromLegacy` lowers an existing render plan, preserving
+its viewport fit, offsets, lighting, clipping, and fragment policy.
+
+`SurfaceCompositionDocument.capture` and `SurfaceCompositionCodec` save the
+composition around the existing asset-checked scene document. Restore requires
+external asset bindings and caller-supplied display witnesses with matching
+persistent frame keys. It preserves fixed/global-morph geometry, camera links,
+time, selection, and layer presentation. Local reveal-lens deformation is
+explicitly refused by this document format. Existing V1–V7 scenes keep their
+original codec and framing behavior.
+
+Composition resource keys identify immutable payloads. Native composition
+updates reject a changed payload under an existing key before issuing commands.
+The plan constructor also checks viewport ownership, rigid camera/projection
+forms, resource domains, and required fragment composition. Renderers report a
+`SurfaceDisplayOrigin(view, instance)` alongside the original scientific pick.

@@ -12,3 +12,10 @@ or shadows. The directional vector `d` points from the surface toward the
 light, so a face is fully lit when its normal equals `d`. Vertex normals are
 derived from world-space triangle winding after the surface-to-world affine,
 so they flip under a reflecting (negative-determinant) affine.
+
+The `SurfaceCompositionPlan` overload renders several disjoint views with
+independent cameras and a shared depth buffer for all instances in each view.
+It reuses the same clipping, fragment evaluation, lighting, and perspective
+barycentric calculations as legacy plans. Picks retain scientific sample IDs
+and add `SurfaceDisplayOrigin(view, instance)`; display translations never alter
+scientific coordinates.

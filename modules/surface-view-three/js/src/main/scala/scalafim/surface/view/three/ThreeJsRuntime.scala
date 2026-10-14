@@ -34,12 +34,28 @@ final class ThreeJsRuntime private (
   ):
     var depthBounds = ThreeJsRuntime.positionBounds(packet.positions)
 
+  private final case class CompositionInstance(
+    origin: SurfaceDisplayOrigin,
+    bundle: Bundle,
+    mesh: js.Dynamic,
+    pickMesh: js.Dynamic,
+    translationX: Double,
+    translationY: Double,
+    translationZ: Double
+  )
+
+  private final case class CompositionView(
+    view: SurfaceCompositionView,
+    instances: Vector[CompositionInstance]
+  )
+
   private val bundles = mutable.LinkedHashMap.empty[SurfaceId, Bundle]
   private var slots = Vector.empty[SurfaceViewSlot]
   private var viewportFit: SurfaceViewportFit = SurfaceViewportFit.Fill
   private def fittedSlots: Vector[SurfaceViewSlot] = viewportFit.resolve(slots, canvasSize.width.toDouble, canvasSize.height.toDouble)
   private var canvasSize = ThreeCanvasSize.unsafe(1, 1)
   private var disposed = false
+  private var composition = Vector.empty[CompositionView]
 
   def contextState: ThreeContextState =
     if disposed then ThreeContextState.Lost
@@ -161,15 +177,48 @@ final class ThreeJsRuntime private (
 
   def updateLighting(lighting: SurfaceLighting): Either[ThreeSurfaceError, Unit] =
     attempt("lighting update"):
-      val (ambient, diffuse, x, y, z) =
-        lighting match
-          case SurfaceLighting.Unlit => (1.0, 0.0, 0.0, 0.0, 1.0)
-          case SurfaceLighting.Directional(a, d, dx, dy, dz) => (a.value, d.value, dx, dy, dz)
-      bundles.valuesIterator.foreach: bundle =>
-        val uniforms = bundle.material.selectDynamic("uniforms")
-        uniforms.selectDynamic("uAmbient").updateDynamic("value")(ambient)
-        uniforms.selectDynamic("uDiffuse").updateDynamic("value")(diffuse)
-        uniforms.selectDynamic("uLightDirection").selectDynamic("value").applyDynamic("set")(x, y, z)
+      setLighting(lighting)
+      ()
+
+  override def updateComposition(plan: SurfaceCompositionPlan): Either[ThreeSurfaceError, Unit] =
+    attempt("composition update"):
+      val staged = plan.views.map: view =>
+        val entries = view.instances.map: instance =>
+          val bundle = bundles.getOrElse(instance.surface,
+            throw new IllegalArgumentException(s"surface '${instance.surface.value}' has no uploaded geometry"))
+          if bundle.meshKey != instance.mesh then
+            throw new IllegalArgumentException(s"surface '${instance.surface.value}' has an incompatible mesh resource")
+          val mesh = construct("Mesh")(bundle.geometry, bundle.material)
+          mesh.updateDynamic("matrixAutoUpdate")(false)
+          mesh.updateDynamic("frustumCulled")(true)
+          val pickGeometry = bundle.pickMesh.selectDynamic("geometry")
+          val pickMesh = if pickGeometry == bundle.geometry then mesh else
+            val proxy = construct("Mesh")(pickGeometry, bundle.material)
+            proxy.updateDynamic("matrixAutoUpdate")(false)
+            proxy
+          CompositionInstance(SurfaceDisplayOrigin(view.id, instance.id), bundle, mesh, pickMesh,
+            instance.translationX, instance.translationY, instance.translationZ)
+        CompositionView(view, entries)
+      val additions = scala.collection.mutable.ArrayBuffer.empty[js.Dynamic]
+      try
+        staged.foreach: view =>
+          view.instances.foreach: instance =>
+            // Record before add: a custom host can throw after attaching.
+            additions += instance.mesh
+            scene.applyDynamic("add")(instance.mesh)
+        clearCompositionUnsafe()
+        composition = staged
+        bundles.valuesIterator.foreach(_.mesh.updateDynamic("visible")(false))
+      catch
+        case scala.util.control.NonFatal(error) =>
+          additions.foreach(mesh => scene.applyDynamic("remove")(mesh))
+          throw error
+      ()
+
+  override def clearComposition(): Either[ThreeSurfaceError, Unit] =
+    attempt("composition removal"):
+      clearCompositionUnsafe()
+      bundles.valuesIterator.foreach(_.mesh.updateDynamic("visible")(true))
       ()
 
   override def uploadFragments(packets: Vector[ThreeFragmentPacket]): Either[ThreeSurfaceError, Long] =
@@ -215,13 +264,7 @@ final class ThreeJsRuntime private (
     clipping: SurfaceClipping
   ): Either[ThreeSurfaceError, Unit] =
     attempt("camera update"):
-      camera.selectDynamic("matrixWorldInverse").applyDynamic("fromArray")(columnMajor(packet.viewMatrix))
-      camera.selectDynamic("matrixWorld").applyDynamic("copy")(camera.selectDynamic("matrixWorldInverse"))
-      camera.selectDynamic("matrixWorld").applyDynamic("invert")()
-      camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(columnMajor(packet.projectionMatrix))
-      camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
-      camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
-      camera.updateDynamic("matrixWorldNeedsUpdate")(false)
+      setCamera(packet)
       ()
 
   def updateLayout(next: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit] =
@@ -237,6 +280,10 @@ final class ThreeJsRuntime private (
 
   def draw(): Either[ThreeSurfaceError, Unit] =
     attempt("draw"):
+      if composition.nonEmpty then drawComposition()
+      else drawLegacy()
+
+  private def drawLegacy(): Unit =
       renderer.updateDynamic("autoClear")(false)
       ThreeJsRuntime.clearFrame(renderer, options)
       val originalProjection = camera.selectDynamic("projectionMatrix").applyDynamic("clone")()
@@ -274,8 +321,41 @@ final class ThreeJsRuntime private (
       bundles.valuesIterator.foreach(_.mesh.updateDynamic("visible")(true))
       ()
 
+  private def drawComposition(): Unit =
+      renderer.updateDynamic("autoClear")(false)
+      ThreeJsRuntime.clearFrame(renderer, options)
+      val logical = composition.map(item => SurfaceViewSlot(item.view.instances.head.surface, item.view.viewport))
+      val fitted = composition.head.view.viewportFit.resolve(logical, canvasSize.width.toDouble, canvasSize.height.toDouble).map(_.viewport)
+      composition.zip(fitted).foreach: (entry, viewportBox) =>
+        composition.foreach(other => other.instances.foreach(_.mesh.updateDynamic("visible")(false)))
+        entry.instances.foreach(_.mesh.updateDynamic("visible")(true))
+        setCamera(entry.view.camera)
+        setLighting(entry.view.lighting)
+        val originalProjection = camera.selectDynamic("projectionMatrix").applyDynamic("clone")()
+        val depthInputs = entry.instances.map: instance =>
+          position(instance.mesh, instance.pickMesh, instance.translationX, instance.translationY, instance.translationZ)
+          val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
+            .applyDynamic("multiply")(instance.mesh.selectDynamic("matrixWorld"))
+          (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], instance.bundle.depthBounds)
+        val depthProjection = ThreeJsRuntime.depthProjection(
+          originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs)
+        val viewport = ThreeJsRuntime.nativeViewport(viewportBox, canvasSize)
+        val projection = ThreeJsRuntime.viewportProjection(depthProjection, viewport)
+        camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
+        val ratio = canvasSize.pixelRatio
+        renderer.applyDynamic("setViewport")(viewport.x / ratio, viewport.y / ratio, viewport.width / ratio, viewport.height / ratio)
+        renderer.applyDynamic("setScissor")(viewport.x / ratio, viewport.y / ratio, viewport.width / ratio, viewport.height / ratio)
+        renderer.applyDynamic("render")(scene, camera)
+        camera.selectDynamic("projectionMatrix").applyDynamic("copy")(originalProjection)
+      renderer.applyDynamic("setScissorTest")(false)
+      ()
+
   def pick(x: Double, y: Double): Either[ThreeSurfaceError, Option[ThreePick]] =
     attempt("pick"):
+      if composition.nonEmpty then pickComposition(x, y)
+      else pickLegacy(x, y)
+
+  private def pickLegacy(x: Double, y: Double): Option[ThreePick] =
       val slot = fittedSlots.find: candidate =>
         val viewport = candidate.viewport
         val left = viewport.x * canvasSize.width
@@ -302,7 +382,45 @@ final class ThreeJsRuntime private (
           raycaster.updateDynamic("far")(direction.applyDynamic("length")())
           raycaster.applyDynamic("set")(near, direction.applyDynamic("normalize")())
           val hits = raycaster.applyDynamic("intersectObject")(bundle.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]]
-          hits.headOption.flatMap(hit => decodePick(bundle, selected, hit))
+          hits.headOption.flatMap(hit => decodePick(bundle, selected.worldOffsetX, selected.worldOffsetY,
+            selected.worldOffsetZ, hit, None, scientific = false))
+
+  private def pickComposition(x: Double, y: Double): Option[ThreePick] =
+      val fitted = composition.head.view.viewportFit.resolve(composition.map(item => SurfaceViewSlot(item.view.instances.head.surface, item.view.viewport)),
+        canvasSize.width.toDouble, canvasSize.height.toDouble).map(_.viewport)
+      val selected = composition.zip(fitted).find: (entry, viewport) =>
+        x >= viewport.x * canvasSize.width && x < (viewport.x + viewport.width) * canvasSize.width &&
+          y >= viewport.y * canvasSize.height && y < (viewport.y + viewport.height) * canvasSize.height
+      selected.flatMap: (entry, viewport) =>
+        setCamera(entry.view.camera)
+        val localX = (x / canvasSize.width - viewport.x) / viewport.width
+        val localY = (y / canvasSize.height - viewport.y) / viewport.height
+        val depthInputs = entry.instances.map: instance =>
+          position(instance.mesh, instance.pickMesh, instance.translationX, instance.translationY, instance.translationZ)
+          val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
+            .applyDynamic("multiply")(instance.mesh.selectDynamic("matrixWorld"))
+          (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], instance.bundle.depthBounds)
+        val projection = ThreeJsRuntime.depthProjection(
+          camera.selectDynamic("projectionMatrix").selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs)
+        camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
+        camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
+        camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
+        val inverseProjection = camera.selectDynamic("projectionMatrixInverse")
+        val world = camera.selectDynamic("matrixWorld")
+        val near = construct("Vector3")(localX * 2.0 - 1.0, 1.0 - localY * 2.0, -1.0)
+          .applyDynamic("applyMatrix4")(inverseProjection).applyDynamic("applyMatrix4")(world)
+        val far = construct("Vector3")(localX * 2.0 - 1.0, 1.0 - localY * 2.0, 1.0)
+          .applyDynamic("applyMatrix4")(inverseProjection).applyDynamic("applyMatrix4")(world)
+        val direction = far.applyDynamic("sub")(near)
+        raycaster.updateDynamic("near")(0.0)
+        raycaster.updateDynamic("far")(direction.applyDynamic("length")())
+        raycaster.applyDynamic("set")(near, direction.applyDynamic("normalize")())
+        val candidates = entry.instances.iterator.flatMap: instance =>
+          raycaster.applyDynamic("intersectObject")(instance.pickMesh, false).asInstanceOf[js.Array[js.Dynamic]].headOption
+            .map(hit => (hit.selectDynamic("distance").asInstanceOf[Double], instance, hit))
+        candidates.toVector.sortBy(_._1).headOption.flatMap: (_, instance, hit) =>
+          decodePick(instance.bundle, instance.translationX, instance.translationY, instance.translationZ,
+            hit, Some(instance.origin), scientific = true)
 
   def disposeResources(keys: Vector[SurfaceResourceKey]): Either[ThreeSurfaceError, Int] =
     attempt("resource disposal"):
@@ -315,6 +433,7 @@ final class ThreeJsRuntime private (
 
   def dispose(): Either[ThreeSurfaceError, Unit] =
     attempt("backend disposal"):
+      clearCompositionUnsafe()
       bundles.valuesIterator.foreach(disposeBundle)
       bundles.clear()
       slots = Vector.empty
@@ -339,7 +458,8 @@ final class ThreeJsRuntime private (
           extension.applyDynamic("loseContext")()
     catch case _: Throwable => ()
 
-  private def decodePick(bundle: Bundle, slot: SurfaceViewSlot, hit: js.Dynamic): Option[ThreePick] =
+  private def decodePick(bundle: Bundle, offsetX: Double, offsetY: Double, offsetZ: Double,
+      hit: js.Dynamic, origin: Option[SurfaceDisplayOrigin], scientific: Boolean): Option[ThreePick] =
     val faceIndexValue = hit.selectDynamic("faceIndex")
     if missing(faceIndexValue) then None
     else
@@ -347,9 +467,9 @@ final class ThreeJsRuntime private (
       val indices = bundle.pickMesh.selectDynamic("geometry").applyDynamic("getIndex")().selectDynamic("array").asInstanceOf[Uint32Array]
       val positions = bundle.pickMesh.selectDynamic("geometry").applyDynamic("getAttribute")("position")
       val point = hit.selectDynamic("point")
-      val localX = point.selectDynamic("x").asInstanceOf[Double] - slot.worldOffsetX
-      val localY = point.selectDynamic("y").asInstanceOf[Double] - slot.worldOffsetY
-      val localZ = point.selectDynamic("z").asInstanceOf[Double] - slot.worldOffsetZ
+      val localX = point.selectDynamic("x").asInstanceOf[Double] - offsetX
+      val localY = point.selectDynamic("y").asInstanceOf[Double] - offsetY
+      val localZ = point.selectDynamic("z").asInstanceOf[Double] - offsetZ
       val base = face * 3
       val candidates = Vector(
         indices(base).toInt,
@@ -367,17 +487,25 @@ final class ThreeJsRuntime private (
       val wb = weights.selectDynamic("y").asInstanceOf[Double]
       val wc = weights.selectDynamic("z").asInstanceOf[Double]
       val original = (wa, wb, wc)
-      val vertex = SurfaceNearestPartition.nearestVertex(
-        bundle.packet.sourceVertex(candidates(0)), bundle.packet.sourceVertex(candidates(1)),
-        bundle.packet.sourceVertex(candidates(2)), wa, wb, wc)
+      // Nearest rendering raycasts original triangles, so its proxy face and
+      // weights are already scientific. Only ordinary render-face proxies need
+      // partition provenance decoding (for example a constant subtriangle map).
+      val decodePartition = scientific && bundle.packet.nearestPartition.isEmpty
+      val vertex = if decodePartition then bundle.packet.pickedVertex(face, wa, wb, wc) else
+        SurfaceNearestPartition.nearestVertex(
+          bundle.packet.sourceVertex(candidates(0)), bundle.packet.sourceVertex(candidates(1)),
+          bundle.packet.sourceVertex(candidates(2)), wa, wb, wc)
+      val scientificFace = if decodePartition then bundle.packet.sourceFace(face) else face
+      val scientificWeights = if decodePartition then bundle.packet.sourceBarycentric(face, wa, wb, wc) else original
       Some(ThreePick(
         bundle.surface,
-        face,
+        scientificFace,
         vertex,
         localX,
         localY,
         localZ,
-        Some(original)
+        Some(scientificWeights),
+        origin
       ))
 
   /** Raycast original triangles to avoid introducing pick gaps at display-only seams.
@@ -407,14 +535,39 @@ final class ThreeJsRuntime private (
         proxy
 
   private def position(bundle: Bundle, slot: SurfaceViewSlot): Unit =
-    bundle.mesh.selectDynamic("position").applyDynamic("set")(
-      slot.worldOffsetX,
-      slot.worldOffsetY,
-      slot.worldOffsetZ
-    )
-    bundle.mesh.applyDynamic("updateMatrix")()
-    bundle.mesh.applyDynamic("updateMatrixWorld")(true)
-    bundle.pickMesh.selectDynamic("matrixWorld").applyDynamic("copy")(bundle.mesh.selectDynamic("matrixWorld"))
+    position(bundle.mesh, bundle.pickMesh, slot.worldOffsetX, slot.worldOffsetY, slot.worldOffsetZ)
+
+  private def position(mesh: js.Dynamic, pickMesh: js.Dynamic, x: Double, y: Double, z: Double): Unit =
+    mesh.selectDynamic("position").applyDynamic("set")(x, y, z)
+    mesh.applyDynamic("updateMatrix")()
+    mesh.applyDynamic("updateMatrixWorld")(true)
+    if pickMesh != mesh then pickMesh.selectDynamic("matrixWorld").applyDynamic("copy")(mesh.selectDynamic("matrixWorld"))
+
+  private def setCamera(packet: SurfaceCameraPacket): Unit =
+    camera.selectDynamic("matrixWorldInverse").applyDynamic("fromArray")(columnMajor(packet.viewMatrix))
+    camera.selectDynamic("matrixWorld").applyDynamic("copy")(camera.selectDynamic("matrixWorldInverse"))
+    camera.selectDynamic("matrixWorld").applyDynamic("invert")()
+    camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(columnMajor(packet.projectionMatrix))
+    camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
+    camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
+    camera.updateDynamic("matrixWorldNeedsUpdate")(false)
+
+  private def setLighting(lighting: SurfaceLighting): Unit =
+    val (ambient, diffuse, x, y, z) =
+      lighting match
+        case SurfaceLighting.Unlit => (1.0, 0.0, 0.0, 0.0, 1.0)
+        case SurfaceLighting.Directional(a, d, dx, dy, dz) => (a.value, d.value, dx, dy, dz)
+    bundles.valuesIterator.foreach: bundle =>
+      val uniforms = bundle.material.selectDynamic("uniforms")
+      uniforms.selectDynamic("uAmbient").updateDynamic("value")(ambient)
+      uniforms.selectDynamic("uDiffuse").updateDynamic("value")(diffuse)
+      uniforms.selectDynamic("uLightDirection").selectDynamic("value").applyDynamic("set")(x, y, z)
+
+  private def clearCompositionUnsafe(): Unit =
+    composition.foreach: view =>
+      view.instances.foreach: instance =>
+        scene.applyDynamic("remove")(instance.mesh)
+    composition = Vector.empty
 
   private def disposeBundle(bundle: Bundle): Unit =
     scene.applyDynamic("remove")(bundle.mesh)

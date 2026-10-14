@@ -28,7 +28,8 @@ final case class SurfacePick(
   barycentricA: Double,
   barycentricB: Double,
   barycentricC: Double,
-  depth: Double
+  depth: Double,
+  origin: Option[SurfaceDisplayOrigin] = None
 )
 
 final case class SurfaceRasterReceipt(
@@ -59,7 +60,8 @@ final class SurfaceRasterResult private[raster] (
   baryA: Array[Float],
   baryB: Array[Float],
   baryC: Array[Float],
-  depthAt: Array[Double]
+  depthAt: Array[Double],
+  origins: Vector[SurfaceDisplayOrigin] = Vector.empty
 ):
   def pick(x: Int, y: Int): Either[SurfaceRasterError, Option[SurfacePick]] =
     if x < 0 || x >= image.width || y < 0 || y >= image.height then
@@ -76,10 +78,19 @@ final class SurfaceRasterResult private[raster] (
           baryA(index).toDouble,
           baryB(index).toDouble,
           baryC(index).toDouble,
-          depthAt(index)
+          depthAt(index),
+          origins.lift(slot)
         )))
 
 object SurfaceRasterizer:
+  private final case class SlotContext(
+    camera: SurfaceCameraPacket,
+    lighting: SurfaceLighting,
+    clipping: SurfaceClipping,
+    layers: Vector[SurfaceLayerPacket],
+    fragmentComposition: Boolean
+  )
+
   val capabilities: SurfaceBackendCapabilities = SurfaceBackendCapabilities(
     SurfaceBackendId.unsafe("reference-raster"),
     SurfacePlanRevision.Current,
@@ -151,6 +162,59 @@ object SurfaceRasterizer:
   ): Either[SurfaceRasterError, SurfaceRasterResult] =
     validatePlan(plan).map(_ => renderUnsafe(plan, dimensions, style))
 
+  def render(
+    plan: SurfaceCompositionPlan,
+    dimensions: RasterDimensions
+  ): Either[SurfaceRasterError, SurfaceRasterResult] =
+    render(plan, dimensions, SurfaceRasterStyle())
+
+  /** Each view is one depth domain. Instances in that view compete in the same
+    * depth buffer, while validated disjoint viewports isolate other cameras.
+    */
+  def render(
+    plan: SurfaceCompositionPlan,
+    dimensions: RasterDimensions,
+    style: SurfaceRasterStyle
+  ): Either[SurfaceRasterError, SurfaceRasterResult] =
+    val entries = plan.views.flatMap(view => view.instances.map(instance => (view, instance)))
+    val slots = entries.map: (view, instance) =>
+      val slot = SurfaceViewSlot(instance.surface, view.viewport,
+        instance.translationX, instance.translationY, instance.translationZ)
+      view.viewportFit.resolve(Vector(slot), dimensions.width.toDouble, dimensions.height.toDouble).head
+    val meshes = entries.map((_, instance) => plan.resources.meshes(instance.mesh))
+    val contexts = entries.map: (view, instance) =>
+      SlotContext(view.camera, view.lighting, view.clipping,
+        instance.layerOrder.map(plan.resources.layers), view.fragmentSurfaces(instance.surface))
+    val layers = contexts.flatMap(_.layers).distinctBy(_.resourceKey)
+    val fragments = plan.views.flatMap(_.fragmentSurfaces).toSet
+    val passes = entries.zipWithIndex.flatMap: (entry, slot) =>
+      val instance = entry._2
+      instance.layerOrder.map: key =>
+        SurfaceDrawPass(slot, instance.mesh, key, plan.resources.layers(key).blendMode)
+    val first = plan.views.head
+    val flat = SurfaceRenderPlan(slots, meshes, layers, first.camera, first.lighting, first.clipping,
+      passes, Scene.empty, plan.views.flatMap(_.readouts).distinct,
+      SurfaceProfile(plan.resources.meshes.size,
+        plan.resources.meshes.valuesIterator.map(_.positions.length / 3).sum,
+        plan.resources.meshes.valuesIterator.map(_.indices.length / 3).sum,
+        layers.length, layers.map(_.colors.length).sum, 0L),
+      SurfaceRenderReceipt(plan.receipt.meshKeys, plan.receipt.layerKeys,
+        plan.receipt.cameraKeys.mkString("composition:"), passes.length, 0),
+      SurfaceViewportFit.Fill, fragments)
+    // Validate each instance's selected layer order and fragment policy; the
+    // union alone could hide a missing per-view fragment declaration.
+    val invalid = entries.indices.iterator.map: index =>
+      val context = contexts(index)
+      validatePlan(flat.copy(slots = Vector(slots(index)), meshes = Vector(meshes(index)),
+        layers = context.layers, camera = context.camera,
+        fragmentSurfaces = if context.fragmentComposition then Set(meshes(index).surface) else Set.empty))
+    .collectFirst { case Left(error) => error }
+    invalid match
+      case Some(error) => Left(error)
+      case None =>
+        val origins = entries.map((view, instance) => SurfaceDisplayOrigin(view.id, instance.id))
+        Right(renderUnsafe(flat, dimensions, style, contexts, origins))
+
   def renderObserved(
     plan: SurfaceRenderPlan,
     dimensions: RasterDimensions,
@@ -197,7 +261,9 @@ object SurfaceRasterizer:
   private def renderUnsafe(
     plan: SurfaceRenderPlan,
     dimensions: RasterDimensions,
-    style: SurfaceRasterStyle
+    style: SurfaceRasterStyle,
+    contexts: Vector[SlotContext] = Vector.empty,
+    origins: Vector[SurfaceDisplayOrigin] = Vector.empty
   ): SurfaceRasterResult =
     val setupStarted = System.nanoTime()
     val pixelCount = dimensions.pixelCount
@@ -209,12 +275,14 @@ object SurfaceRasterizer:
     val baryA = new Array[Float](pixelCount)
     val baryB = new Array[Float](pixelCount)
     val baryC = new Array[Float](pixelCount)
-    val composedColors = plan.meshes.map: mesh =>
+    val composedColors = plan.meshes.zipWithIndex.map: (mesh, slot) =>
+      val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
+        plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface)))
       val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.toPackedInt)
       var layerIndex = 0
-      while layerIndex < plan.layers.length do
-        val layer = plan.layers(layerIndex)
-        if layer.surface == mesh.surface && !plan.fragmentSurfaces(mesh.surface) then
+      while layerIndex < context.layers.length do
+        val layer = context.layers(layerIndex)
+        if !context.fragmentComposition then
           var vertex = 0
           while vertex < colors.length do
             val under = packed(colors(vertex))
@@ -237,10 +305,12 @@ object SurfaceRasterizer:
     var slot = 0
     while slot < plan.meshes.length do
       val mesh = plan.meshes(slot)
+      val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
+        plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface)))
       val viewport = fittedSlots(slot).viewport
       val colors = composedColors(slot)
-      val fragment = Option.when(plan.fragmentSurfaces(mesh.surface))(
-        new SurfaceFragmentEvaluator(mesh, plan.layers.filter(_.surface == mesh.surface), plan.lighting, style.surfaceBase))
+      val fragment = Option.when(context.fragmentComposition)(
+        new SurfaceFragmentEvaluator(mesh, context.layers, context.lighting, style.surfaceBase))
       var faceOffset = 0
       while faceOffset < mesh.indices.length do
         trianglesInput += 1
@@ -253,11 +323,11 @@ object SurfaceRasterizer:
         val bc = mesh.sourceBarycentric(face, 0.0, 0.0, 1.0)
         val (sourceA, sourceB, sourceC) = mesh.sourceFaceVertices(face)
         val triangle = Vector(
-          clipVertex(plan, plan.slots(slot), mesh, colors, ia, ba._1, ba._2, ba._3),
-          clipVertex(plan, plan.slots(slot), mesh, colors, ib, bb._1, bb._2, bb._3),
-          clipVertex(plan, plan.slots(slot), mesh, colors, ic, bc._1, bc._2, bc._3)
+          clipVertex(context, plan.slots(slot), mesh, colors, ia, ba._1, ba._2, ba._3),
+          clipVertex(context, plan.slots(slot), mesh, colors, ib, bb._1, bb._2, bb._3),
+          clipVertex(context, plan.slots(slot), mesh, colors, ic, bc._1, bc._2, bc._3)
         )
-        val clipped = clipTriangle(triangle, plan.clipping)
+        val clipped = clipTriangle(triangle, context.clipping)
         if clipped.length < 3 then trianglesClippedAway += 1
         else
           var fan = 1
@@ -302,11 +372,11 @@ object SurfaceRasterizer:
     )
     new SurfaceRasterResult(
       image, receipt, plan.slots.map(_.surface), faceAt, slotAt, vertexAt,
-      baryA, baryB, baryC, depths
+      baryA, baryB, baryC, depths, origins
     )
 
   private def clipVertex(
-    plan: SurfaceRenderPlan,
+    context: SlotContext,
     slot: SurfaceViewSlot,
     mesh: SurfaceMeshPacket,
     colors: Array[Int],
@@ -320,15 +390,15 @@ object SurfaceRasterizer:
     val y = mesh.positions(offset + 1).toDouble
     val z = mesh.positions(offset + 2).toDouble
     val view = multiply(
-      plan.camera.viewMatrix,
+      context.camera.viewMatrix,
       x + slot.worldOffsetX,
       y + slot.worldOffsetY,
       z + slot.worldOffsetZ,
       1.0
     )
-    val clip = multiply(plan.camera.projectionMatrix, view._1, view._2, view._3, view._4)
+    val clip = multiply(context.camera.projectionMatrix, view._1, view._2, view._3, view._4)
     val color = packed(colors(vertex))
-    val light = lightFactor(plan.lighting, mesh, offset)
+    val light = lightFactor(context.lighting, mesh, offset)
     ClipVertex(
       x, y, z,
       clip._1, clip._2, clip._3, clip._4,

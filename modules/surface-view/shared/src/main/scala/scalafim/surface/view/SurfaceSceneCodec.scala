@@ -147,7 +147,7 @@ object SurfaceSceneCodec:
         "order" -> SceneJson.Str(orderName(order))
       )
 
-  private def cameraJson(camera: SurfaceCamera, framing: CameraFraming, revision: SurfaceDocumentRevision): SceneJson =
+  private[view] def cameraJson(camera: SurfaceCamera, framing: CameraFraming, revision: SurfaceDocumentRevision): SceneJson =
     val projection = camera.projection match
       case CameraProjection.Perspective(fieldOfView) => SceneJson.obj(
         "kind" -> SceneJson.Str("perspective"),
@@ -169,7 +169,7 @@ object SurfaceSceneCodec:
         case CameraFraming.LegacyV1 => "legacy-v1"
         case CameraFraming.BoundsFit => "bounds-fit")).toVector)
 
-  private def lightingJson(lighting: SurfaceLighting): SceneJson =
+  private[view] def lightingJson(lighting: SurfaceLighting): SceneJson =
     lighting match
       case SurfaceLighting.Unlit => SceneJson.obj("kind" -> SceneJson.Str("unlit"))
       case SurfaceLighting.Directional(ambient, diffuse, x, y, z) => SceneJson.obj(
@@ -179,7 +179,7 @@ object SurfaceSceneCodec:
         "direction" -> SceneJson.Arr(Vector(number(x), number(y), number(z)))
       )
 
-  private def clippingJson(clipping: SurfaceClipping): SceneJson =
+  private[view] def clippingJson(clipping: SurfaceClipping): SceneJson =
     clipping match
       case SurfaceClipping.Disabled => SceneJson.obj("kind" -> SceneJson.Str("disabled"))
       case SurfaceClipping.NearFar(near, far) => SceneJson.obj(
@@ -333,7 +333,7 @@ object SurfaceSceneCodec:
         case other => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown layout '$other'"))
     yield result
 
-  private def parseCamera(value: SceneJson, policy: SurfaceSceneReadPolicy, revision: SurfaceDocumentRevision): Either[SurfaceSceneError, SurfaceCamera] =
+  private[view] def parseCamera(value: SceneJson, policy: SurfaceSceneReadPolicy, revision: SurfaceDocumentRevision): Either[SurfaceSceneError, SurfaceCamera] =
     val path = "$.camera"
     for
       obj <- SceneJsonRead.obj(value, path, Set("viewpoint", "projection", "zoom", "pan", "orbit") ++
@@ -381,7 +381,7 @@ object SurfaceSceneCodec:
         case other => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown projection '$other'"))
     yield projection
 
-  private def parseLighting(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceLighting] =
+  private[view] def parseLighting(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceLighting] =
     val path = "$.lighting"
     for
       obj <- SceneJsonRead.obj(value, path, Set("kind", "ambient", "diffuse", "direction"), policy)
@@ -400,7 +400,7 @@ object SurfaceSceneCodec:
         case other => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown lighting '$other'"))
     yield lighting
 
-  private def parseClipping(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceClipping] =
+  private[view] def parseClipping(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceClipping] =
     val path = "$.clipping"
     for
       obj <- SceneJsonRead.obj(value, path, Set("kind", "near", "far", "planes"), policy)
@@ -726,7 +726,7 @@ private[view] object SceneJsonRead:
         raw.toDoubleOption.filter(_.isFinite).toRight(SurfaceSceneError.InvalidJson(path, "expected finite number"))
       case _ => Left(SurfaceSceneError.InvalidJson(path, "expected number"))
 
-private object SceneJsonParser:
+private[view] object SceneJsonParser:
   def parse(input: String): Either[SurfaceSceneError, SceneJson] =
     val parser = new Parser(input)
     parser.value("$").flatMap: result =>

@@ -63,6 +63,7 @@ enum ThreeSurfaceCommand:
   case UpdateLighting(lighting: SurfaceLighting)
   case UpdateCamera(camera: SurfaceCameraPacket, clipping: SurfaceClipping)
   case UpdateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill)
+  case UpdateComposition(plan: SurfaceCompositionPlan)
   case Resize(size: ThreeCanvasSize)
   case Draw
 
@@ -83,10 +84,79 @@ final case class ThreeSurfaceColors(
 final case class ThreeSurfaceProgram(
   commands: Vector[ThreeSurfaceCommand],
   dirty: ThreeDirtySet,
-  receipt: SurfaceRenderReceipt
+  receipt: SurfaceRenderReceipt,
+  resourcePlan: Option[SurfaceRenderPlan] = None,
+  composition: Option[SurfaceCompositionPlan] = None
 )
 
 object ThreeSurfaceProgram:
+  /** Compiles composition resources through the established single-plan
+    * uploader, then replaces legacy camera/layout commands with one native
+    * composition update. This keeps resource dirtiness identical to legacy
+    * rendering while allowing the runtime to own display occurrences.
+    */
+  def compileComposition(
+    previous: Option[(SurfaceRenderPlan, ThreeCanvasSize)],
+    previousComposition: Option[SurfaceCompositionPlan],
+    next: SurfaceCompositionPlan,
+    size: ThreeCanvasSize,
+    forceDraw: Boolean = false
+  ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
+    val reuse = previous.fold[Either[SurfaceCompositionError, Unit]](Right(())): (plan, _) =>
+      SurfaceCompositionPlan.validateResourceReuse(SurfaceCompositionResources(
+        plan.meshes.map(m => m.resourceKey -> m).toMap, plan.layers.map(l => l.resourceKey -> l).toMap), next.resources)
+    reuse.left.map(error => ThreeSurfaceError.InvalidPlan(s"immutable composition resource changed: $error"))
+      .flatMap(_ => compositionProxy(next)).flatMap: proxy =>
+      compile(previous, proxy, size, forceDraw).map: base =>
+        val viewChanged = previousComposition.forall(_.views != next.views)
+        val changed = viewChanged || !base.dirty.isClean
+        val retained = base.commands.filter:
+          case ThreeSurfaceCommand.UpdateLighting(_) | ThreeSurfaceCommand.UpdateCamera(_, _) |
+              ThreeSurfaceCommand.UpdateLayout(_, _) => false
+          case _ => true
+        val commands =
+          if changed then
+            val beforeDraw = retained.takeWhile(_ != ThreeSurfaceCommand.Draw)
+            val afterDraw = retained.drop(beforeDraw.length)
+            val tail = if afterDraw.nonEmpty then afterDraw else Vector(ThreeSurfaceCommand.Draw)
+            beforeDraw ++ Vector(ThreeSurfaceCommand.UpdateComposition(next)) ++ tail
+          else retained
+        ThreeSurfaceProgram(commands, base.dirty.copy(camera = base.dirty.camera || viewChanged),
+          base.receipt, Some(proxy), Some(next))
+
+  private def compositionProxy(composition: SurfaceCompositionPlan): Either[ThreeSurfaceError, SurfaceRenderPlan] =
+    val active = composition.views.flatMap(view => view.instances.map(instance => (view, instance)))
+    val descriptions = scala.collection.mutable.LinkedHashMap.empty[SurfaceId, (SurfaceResourceKey, Vector[SurfaceResourceKey], Boolean)]
+    var error: Option[ThreeSurfaceError] = None
+    active.foreach: (view, instance) =>
+      if error.isEmpty then
+        if view.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] then
+          error = Some(ThreeSurfaceError.InvalidPlan("world clipping planes are unsupported by the Three.js backend; use the reference raster backend"))
+        else
+          val description = (instance.mesh, instance.layerOrder, view.fragmentSurfaces(instance.surface))
+          descriptions.get(instance.surface) match
+            case Some(existing) if existing != description =>
+              error = Some(ThreeSurfaceError.InvalidPlan(
+                s"surface '${instance.surface.value}' has incompatible mesh, layers, or fragment policy across composition instances"))
+            case None => descriptions(instance.surface) = description
+            case _ => ()
+    error match
+      case Some(value) => Left(value)
+      case None =>
+        val meshes = descriptions.iterator.map { case (_, (mesh, _, _)) =>
+          composition.resources.meshes(mesh) }.toVector
+        val layers = descriptions.iterator.flatMap { case (_, (_, keys, _)) => keys.map(composition.resources.layers) }.toVector
+        val first = composition.views.head
+        val slots = meshes.map(mesh => SurfaceViewSlot(mesh.surface, SurfaceViewport(0.0, 0.0, 1.0, 1.0)))
+        val fragments = descriptions.iterator.collect:
+          case (surface, (_, _, true)) => surface
+        .toSet
+        val profile = SurfaceProfile(meshes.length, meshes.map(_.positions.length / 3).sum,
+          meshes.map(_.indices.length / 3).sum, layers.length, layers.map(_.colors.length).sum, 0L)
+        val receipt = SurfaceRenderReceipt(meshes.map(_.resourceKey), layers.map(_.resourceKey),
+          "composition-resource-proxy", 0, 0)
+        Right(SurfaceRenderPlan(slots, meshes, layers, first.camera, first.lighting, SurfaceClipping.Disabled,
+          Vector.empty, first.chrome, first.readouts, profile, receipt, first.viewportFit, fragments))
   def compile(
     previous: Option[(SurfaceRenderPlan, ThreeCanvasSize)],
     next: SurfaceRenderPlan,

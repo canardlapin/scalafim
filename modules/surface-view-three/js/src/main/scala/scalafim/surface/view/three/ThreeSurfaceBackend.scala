@@ -19,7 +19,8 @@ final case class ThreePick(
   worldX: Double,
   worldY: Double,
   worldZ: Double,
-  barycentric: Option[(Double, Double, Double)] = None
+  barycentric: Option[(Double, Double, Double)] = None,
+  origin: Option[SurfaceDisplayOrigin] = None
 )
 
 final case class ThreeRuntimeStats(
@@ -46,6 +47,11 @@ trait ThreeSurfaceRuntime:
   def updateLighting(lighting: SurfaceLighting): Either[ThreeSurfaceError, Unit]
   def updateCamera(camera: SurfaceCameraPacket, clipping: SurfaceClipping): Either[ThreeSurfaceError, Unit]
   def updateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit]
+  /** Installs native display occurrences after shared resources have been uploaded. */
+  def updateComposition(plan: SurfaceCompositionPlan): Either[ThreeSurfaceError, Unit] =
+    Left(ThreeSurfaceError.InvalidPlan("runtime does not support multi-view composition"))
+  /** Removes native composition clones before returning to legacy rendering. */
+  def clearComposition(): Either[ThreeSurfaceError, Unit] = Right(())
   def resize(size: ThreeCanvasSize): Either[ThreeSurfaceError, Unit]
   def draw(): Either[ThreeSurfaceError, Unit]
   def pick(x: Double, y: Double): Either[ThreeSurfaceError, Option[ThreePick]]
@@ -95,6 +101,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
   )
 
   private var current: Option[(SurfaceRenderPlan, ThreeCanvasSize)] = None
+  private var currentComposition: Option[SurfaceCompositionPlan] = None
   private var disposed = false
   private var resources = Set.empty[SurfaceResourceKey]
   private var totalDrawCalls = 0L
@@ -114,11 +121,49 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
       Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
     else
       requireContext().flatMap: _ =>
-        ThreeSurfaceProgram.compile(current, plan, size, forceDraw).flatMap: program =>
+        val reuse = currentComposition.fold[Either[SurfaceCompositionError, Unit]](Right(())): previous =>
+          SurfaceCompositionPlan.validateResourceReuse(previous.resources, SurfaceCompositionResources(
+            plan.meshes.map(m => m.resourceKey -> m).toMap, plan.layers.map(l => l.resourceKey -> l).toMap))
+        reuse.left.map(error => ThreeSurfaceError.InvalidPlan(s"immutable composition resource changed: $error"))
+          .flatMap(_ => ThreeSurfaceProgram.compile(current, plan, size, forceDraw)).flatMap: program =>
           val packets = program.commands.collect:
             case ThreeSurfaceCommand.UploadFragments(values) => values
           runtime.validateFragments(packets.flatten).map(_ => program)
         .flatMap: program =>
+          val clear = if currentComposition.nonEmpty then runtime.clearComposition() else Right(())
+          clear.flatMap: _ =>
+            currentComposition = None
+            interpret(Right(program), plan, size)
+
+  /** Renders a validated multi-view composition while sharing each surface's
+    * uploaded mesh and layer resources across its display occurrences.
+    */
+  def render(
+    composition: SurfaceCompositionPlan,
+    size: ThreeCanvasSize
+  ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
+    render(composition, size, forceDraw = false)
+
+  def render(
+    composition: SurfaceCompositionPlan,
+    size: ThreeCanvasSize,
+    forceDraw: Boolean
+  ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
+    if disposed then Left(ThreeSurfaceError.BackendDisposed)
+    else
+      requireContext().flatMap: _ =>
+        ThreeSurfaceProgram.compileComposition(current, currentComposition, composition, size, forceDraw).flatMap: program =>
+          val packets = program.commands.collect:
+            case ThreeSurfaceCommand.UploadFragments(values) => values
+          runtime.validateFragments(packets.flatten).map(_ => program)
+        .flatMap(program => interpret(Right(program), program.resourcePlan.get, size))
+
+  private def interpret(
+    compiled: Either[ThreeSurfaceError, ThreeSurfaceProgram],
+    plan: SurfaceRenderPlan,
+    size: ThreeCanvasSize
+  ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
+    compiled.flatMap: program =>
           val started = System.nanoTime()
           var applied = 0
           var draws = 0
@@ -161,6 +206,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
                 case ThreeSurfaceCommand.UpdateLighting(lighting) => runtime.updateLighting(lighting)
                 case ThreeSurfaceCommand.UpdateCamera(camera, clipping) => runtime.updateCamera(camera, clipping)
                 case ThreeSurfaceCommand.UpdateLayout(slots, fit) => runtime.updateLayout(slots, fit)
+                case ThreeSurfaceCommand.UpdateComposition(composition) => runtime.updateComposition(composition)
                 case ThreeSurfaceCommand.Resize(canvasSize) => runtime.resize(canvasSize)
                 case ThreeSurfaceCommand.Draw =>
                   runtime.draw().map: _ =>
@@ -175,6 +221,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
             case None =>
               totalUploadedBytes += uploadedBytes
               current = Some((plan, size))
+              program.composition.foreach(value => currentComposition = Some(value))
               Right(ThreeInterpretReceipt(
                 program.dirty,
                 applied,

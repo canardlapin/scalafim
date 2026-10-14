@@ -392,6 +392,14 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       calls += s"layout:${slots.length}"
       Right(())
 
+    override def updateComposition(plan: SurfaceCompositionPlan): Either[ThreeSurfaceError, Unit] =
+      calls += s"composition:${plan.receipt.instanceCount}"
+      Right(())
+
+    override def clearComposition(): Either[ThreeSurfaceError, Unit] =
+      calls += "composition-clear"
+      Right(())
+
     def resize(size: ThreeCanvasSize): Either[ThreeSurfaceError, Unit] =
       calls += s"resize:${size.width}x${size.height}"
       Right(())
@@ -411,6 +419,66 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     def dispose(): Either[ThreeSurfaceError, Unit] =
       calls += "close"
       Right(())
+
+  test("four composition views reuse one uploaded surface resource and camera-only edits stay upload-clean"):
+    val (viewer, state) = fixture()
+    val legacy = compile(viewer, state)
+    val composition = fourViewComposition(legacy)
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+
+    val initial = backend.render(composition, size, forceDraw = false).toOption.get
+    assertEquals(initial.geometryUploads, 1)
+    assertEquals(initial.colorUploads, 1)
+    assertEquals(runtime.calls.toVector, Vector(
+      "geometry:1", "colors:1", "resize:640x480", "composition:4", "draw"
+    ))
+
+    runtime.calls.clear()
+    val moved = SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.OrbitBy(15, 10)).toOption.get
+    val editedView = composition.views(0).copy(camera = compile(viewer, moved).camera)
+    val edited = SurfaceCompositionPlan.make(editedView +: composition.views.tail, composition.resources).toOption.get
+    val cameraOnly = backend.render(edited, size, forceDraw = false).toOption.get
+    assert(!cameraOnly.dirty.geometry)
+    assertEquals(cameraOnly.geometryUploads, 0)
+    assertEquals(cameraOnly.colorUploads, 0)
+    assertEquals(runtime.calls.toVector, Vector("composition:4", "draw"))
+
+  test("composition rejects conflicting occurrences before runtime mutation"):
+    val (viewer, state) = fixture()
+    val source = SurfaceCompositionPlan.fromLegacy(compile(viewer, state)).toOption.get
+    val view = source.views.head
+    val conflicting = view.instances.head.copy(
+      id = SurfaceInstanceId.make("conflicting-instance").toOption.get,
+      layerOrder = Vector.empty
+    )
+    val plan = SurfaceCompositionPlan.make(Vector(view.copy(instances = view.instances :+ conflicting)), source.resources).toOption.get
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    assert(backend.render(plan, size, forceDraw = false).left.exists(_.message.contains("incompatible mesh")))
+    assertEquals(runtime.calls.toVector, Vector.empty)
+
+  test("composition-to-legacy transition removes native occurrences before legacy commands"):
+    val (viewer, state) = fixture()
+    val legacy = compile(viewer, state)
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.render(fourViewComposition(legacy), size, forceDraw = false).toOption.get
+    runtime.calls.clear()
+    backend.render(legacy, size).toOption.get
+    assertEquals(runtime.calls.headOption, Some("composition-clear"))
+
+  private def fourViewComposition(plan: SurfaceRenderPlan): SurfaceCompositionPlan =
+    val source = SurfaceCompositionPlan.fromLegacy(plan).toOption.get
+    val base = source.views.head
+    val boxes = Vector(
+      SurfaceViewport(0.0, 0.0, 0.5, 0.5), SurfaceViewport(0.5, 0.0, 0.5, 0.5),
+      SurfaceViewport(0.0, 0.5, 0.5, 0.5), SurfaceViewport(0.5, 0.5, 0.5, 0.5)
+    )
+    val views = boxes.zipWithIndex.map: (box, index) =>
+      val instance = base.instances.head.copy(id = SurfaceInstanceId.make(s"instance-$index").toOption.get)
+      base.copy(id = SurfaceViewId.make(s"view-$index").toOption.get, viewport = box, instances = Vector(instance))
+    SurfaceCompositionPlan.make(views, source.resources).toOption.get
 
   test("typed compiler separates geometry, color, camera, resize, and on-demand draw dirtiness"):
     val (viewer, initial) = fixture()
@@ -704,3 +772,17 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assertEquals(runtime.calls.toVector, Vector("layout:1", "draw"))
     assertEquals(runtime.fitted, SurfaceViewportFit.Fill)
     backend.dispose().toOption.get
+
+  test("composition rejects conflicting resource bytes without native commands"):
+    val (viewer, state) = fixture()
+    val before = fourViewComposition(compile(viewer, state))
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.render(before, size).toOption.get
+    runtime.calls.clear()
+    val layer = before.resources.layers.values.head
+    val changed = layer.copy(colors = new IntBufferView(Array.fill(layer.colors.length)(0xff00ffff)))
+    val after = SurfaceCompositionPlan.make(before.views, before.resources.copy(layers =
+      before.resources.layers.updated(layer.resourceKey, changed))).toOption.get
+    assert(backend.render(after, size).isLeft)
+    assertEquals(runtime.calls.toVector, Vector.empty)

@@ -16,3 +16,18 @@ for the required per-map filtering behavior and qualification boundary.
 
 See [`docs/surface-viewer.md`](../../docs/surface-viewer.md) for lifecycle,
 atlas-size limits, packaging, and fallback behavior.
+
+`JavaFxSurfaceComposition` hosts one depth-enabled native `SubScene` per
+composition view. Add its `root` to the caller-owned scene, call `render` with a
+`JavaFxSnapshotConfig`, and call `resize` when the host changes. Every operation
+runs on the JavaFX Application Thread; the caller owns the Stage lifecycle.
+Occurrences share the production backend's meshes and atlases. `pick` accepts
+an actual JavaFX `PickResult` and returns both its display origin and original
+scientific face/vertex/barycentrics. `dispose` detaches the host and releases its
+owned resources.
+
+This path uses explicit world-space vertex lighting. Shared atlases currently
+require the same lighting, mesh, and ordered layer stack for repeated instances
+of a surface. Fragment layers and world clipping return typed refusals. These
+bounds remain visible in admission; native multi-view success does not qualify
+those other display features.
