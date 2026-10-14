@@ -48,3 +48,11 @@ class SurfaceCompositionDocumentSuite extends munit.FunSuite:
     assert(SurfaceCompositionCodec.decode(json.replace("\"cameraLinks\":[[\"view-0\",\"view-1\"]]", "\"cameraLinks\":[[\"view-0\",\"missing\"]]")).isLeft)
     assert(SurfaceCompositionCodec.decode(json.replaceAll("\"translation\":\\[[^\\]]+\\]", "\"translation\":[0,0]")).isLeft)
     assert(SurfaceCompositionCodec.decode(json.dropRight(1) + ",\"unknown\":true}").isLeft)
+
+  test("composition view framing cannot silently change during decode"):
+    val encoded = SurfaceCompositionCodec.encode(ok(SurfaceCompositionDocument.capture(model, state, navigation, bindings, provenance)))
+    val split = encoded.indexOf("\"views\":")
+    assert(split > 0)
+    for invalid <- Vector("legacy-v1", "future-framing") do
+      val mutated = encoded.take(split) + encoded.drop(split).replace("bounds-fit", invalid)
+      assert(SurfaceCompositionCodec.decode(mutated).isLeft)

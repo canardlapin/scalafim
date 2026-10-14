@@ -67,8 +67,10 @@ time, selection, and layer presentation. Local reveal-lens deformation is
 explicitly refused by this document format. Existing V1–V7 scenes keep their
 original codec and framing behavior.
 
-Composition resource keys identify immutable payloads. Native composition
-updates reject a changed payload under an existing key before issuing commands.
+Mesh resource keys identify topology; geometry revisions identify positions and
+normals. Native updates retain topology while accepting a new geometry revision,
+and reject changed bytes under an unchanged revision before issuing commands.
+Layer keys identify their immutable payloads.
 The plan constructor also checks viewport ownership, rigid camera/projection
 forms, resource domains, and required fragment composition. Renderers report a
 `SurfaceDisplayOrigin(view, instance)` alongside the original scientific pick.

@@ -147,3 +147,35 @@ class SurfaceCompositionSuite extends munit.FunSuite:
       SurfaceFaceWeights(0, 1, 0), SurfaceFaceWeights(0, 0, 1))
     val invalid = mesh.copy(constantPartition = Some(Vector.fill(mesh.indices.length / 3)(triangle)))
     assert(SurfaceCompositionPlan.make(before.views, before.resources.copy(meshes = before.resources.meshes.updated(mesh.resourceKey, invalid))).isLeft)
+
+  test("compiled geometry revision changes retain topology keys and pass native reuse checks"):
+    val original = SurfaceFaceFixture.geometry
+    val moved = SurfaceGeometry(TriangleMesh.fromRows(
+      original.mesh.vertices.map(p => Seq(p.x * 1.2, p.y * 1.2, p.z)),
+      original.mesh.faces.map(f => (f.a.index, f.b.index, f.c.index))), original.hemisphere, SurfaceKind.Pial)
+    val asset = ok(SurfaceAsset.make(SurfaceFaceFixture.Surface,
+      SurfaceSet.of(original.kind, original, SurfaceKind.Pial -> moved)))
+    val model = ok(SurfaceViewerModel.make(Vector(asset), Vector.empty))
+    val initial = SurfaceFaceFixture.state(model)
+    val morphing = ok(SurfaceViewer.reduce(model, initial, SurfaceViewerAction.BeginGeometryMorph(SurfaceFaceFixture.Surface, SurfaceKind.Pial)))
+    val halfway = ok(SurfaceViewer.reduce(model, morphing,
+      SurfaceViewerAction.SetGeometryMorphFraction(SurfaceFaceFixture.Surface, SurfaceMorphFraction.unsafe(.5))))
+    val a = ok(SurfaceCompositionPlan.fromLegacy(ok(SurfaceCompiler.compile(model, initial))))
+    val b = ok(SurfaceCompositionPlan.fromLegacy(ok(SurfaceCompiler.compile(model, halfway))))
+    assertEquals(a.receipt.meshKeys, b.receipt.meshKeys)
+    assertEquals(SurfaceCompositionPlan.validateReuse(a, b), Right(()))
+
+  test("face-sample provenance and infinite-far perspective projections are refused"):
+    val base = ok(SurfaceCompositionPlan.fromLegacy(SurfaceFaceFixture.plan))
+    val mesh = base.resources.meshes.values.head
+    val triangle = SurfaceMappingTriangle(Int.MaxValue, (0, 1, 2), SurfaceFaceWeights(1, 0, 0),
+      SurfaceFaceWeights(0, 1, 0), SurfaceFaceWeights(0, 0, 1))
+    val invalid = mesh.copy(constantPartition = Some(Vector.fill(mesh.indices.length / 3)(triangle)))
+    assert(SurfaceCompositionPlan.make(base.views,
+      base.resources.copy(meshes = base.resources.meshes.updated(mesh.resourceKey, invalid))).isLeft)
+    val model = SurfaceFaceFixture.model
+    val state = SurfaceFaceFixture.state(model)
+    val packet = ok(SurfaceCompiler.compile(model, state.copy(camera = state.camera.copy(
+      projection = CameraProjection.Perspective(FieldOfViewDegrees.Default))))).camera
+    val projection = new FloatBufferView(Array.tabulate(16)(i => if i == 10 then -1f else packet.projectionMatrix(i)))
+    assert(SurfaceCompositionPlan.make(Vector(base.views.head.copy(camera = packet.copy(projectionMatrix = projection))), base.resources).isLeft)

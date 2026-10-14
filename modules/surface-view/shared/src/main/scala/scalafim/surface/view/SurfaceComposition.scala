@@ -174,7 +174,8 @@ object SurfaceCompositionPlan:
     make(views.result(), SurfaceCompositionResources(meshTable, layerTable))
 
   /** Resource keys name immutable payloads. Native caches must reject a caller
-    * reusing a key for different bytes before any rendering mutation.
+    * reusing a revision for different bytes before any rendering mutation.
+    * Mesh resource keys name topology; geometryKey names mutable positions/normals.
     */
   private[view] def validateReuse(before: SurfaceCompositionPlan, after: SurfaceCompositionPlan): Either[SurfaceCompositionError, Unit] =
     validateResourceReuse(before.resources, after.resources)
@@ -184,7 +185,7 @@ object SurfaceCompositionPlan:
     while meshes.hasNext do
       val (key, value) = meshes.next()
       after.meshes.get(key) match
-        case Some(next) if !SurfaceCompositionCompiler.sameMesh(value, next) => return Left(SurfaceCompositionError.ConflictingMesh(key))
+        case Some(next) if !SurfaceCompositionCompiler.compatibleMeshReuse(value, next) => return Left(SurfaceCompositionError.ConflictingMesh(key))
         case _ => ()
     val layers = before.layers.iterator
     while layers.hasNext do
@@ -229,7 +230,13 @@ object SurfaceCompositionPlan:
     else if scalar != layer.scalarField.nonEmpty then Some("scalar interpolation and scalar field disagree")
     else if scalar && !fragments then Some("scalar interpolation requires fragment composition")
     else if fragments && mesh.sourceVertices.nonEmpty && mesh.sampleNormals.isEmpty then Some("fragment provenance requires original sample normals")
-    else if fragments && !layer.sampleColors.exists(_.length == (if layer.association == SurfaceSampleAssociation.Face then faces else samples)) then
+    else if layer.association == SurfaceSampleAssociation.Face && mesh.constantPartition.exists(triangles =>
+        !layer.sampleColors.exists(colors => triangles.forall(_.sourceFace < colors.length))) then
+      Some("constant partition source face lies outside face samples")
+    else if fragments && !layer.sampleColors.exists(colors =>
+        if layer.association == SurfaceSampleAssociation.Face then
+          mesh.constantPartition.fold(colors.length == faces)(triangles => triangles.forall(_.sourceFace < colors.length))
+        else colors.length == samples) then
       Some("fragment colors differ from the original sample domain")
     else if layer.scalarField.exists(field => layer.association != SurfaceSampleAssociation.Vertex ||
         field.samples.length != samples || !layer.scalarMapping.exists(_.canonicalKey == field.mapping.canonicalKey)) then
@@ -254,7 +261,7 @@ object SurfaceCompositionPlan:
         v(2).toDouble * (v(4).toDouble * v(9) - v(5).toDouble * v(8))
       val direction = close(camera.directionX, v(8)) && close(camera.directionY, v(9)) && close(camera.directionZ, v(10))
       val centered = Vector(1, 2, 3, 4, 6, 7, 8, 9, 12, 13).forall(p(_) == 0) && p(0) > 0 && p(5) > 0
-      val projection = (p(14) == -1 && p(15) == 0 && p(10) <= -1 && p(11) < 0) ||
+      val projection = (p(14) == -1 && p(15) == 0 && p(10) < -1 && p(11) < 0) ||
         (p(14) == 0 && p(15) == 1 && p(10) < 0)
       rigid && close(determinant, 1) && direction && centered && projection
   private def cameraKey(camera: SurfaceCameraPacket): String =
@@ -361,6 +368,17 @@ object SurfaceCompositionCompiler:
           case None => SurfaceViewerAction.Select(selected.surface, selected.vertex)
       action.flatMap(value => SurfaceViewer.reduce(model, initial, value).left.toOption)
         .map(error => SurfaceCompositionError.Compilation(SurfaceCameraError.View(error)))
+
+  private[view] def compatibleMeshReuse(left: SurfaceMeshPacket, right: SurfaceMeshPacket): Boolean =
+    if left.geometryKey == right.geometryKey then sameMesh(left, right)
+    else
+      left.surface == right.surface && left.resourceKey == right.resourceKey &&
+        left.positions.length == right.positions.length && left.normals.length == right.normals.length &&
+        sameInts(left.indices, right.indices) && sameOptional(left.sourceVertices, right.sourceVertices)(sameInts) &&
+        left.samplePositions.map(_.length) == right.samplePositions.map(_.length) &&
+        left.sampleNormals.map(_.length) == right.sampleNormals.map(_.length) &&
+        sameOptional(left.nearestPartition, right.nearestPartition)((a, b) => sameInts(a.originalIndices, b.originalIndices)) &&
+        left.constantPartition == right.constantPartition
 
   private[view] def sameMesh(left: SurfaceMeshPacket, right: SurfaceMeshPacket): Boolean =
     left.surface == right.surface && left.resourceKey == right.resourceKey && left.geometryKey == right.geometryKey &&

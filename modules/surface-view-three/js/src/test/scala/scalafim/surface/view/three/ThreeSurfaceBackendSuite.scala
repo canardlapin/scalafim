@@ -623,6 +623,23 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assertEquals(receipt.uploadedBytes, white.vertexCount.toLong * 3L * 2L * 4L)
     assertEquals(backend.stats.geometryUploads, 1L)
     assertEquals(backend.stats.geometryUpdates, 1L)
+    // Composition must preserve the same topology-resource / geometry-revision
+    // contract, including both transitions to and from legacy rendering.
+    val originalPlan = compile(viewer, initial)
+    val morphedPlan = compile(viewer, halfway)
+    val originalComposition = SurfaceCompositionPlan.fromLegacy(originalPlan).toOption.get
+    val morphedComposition = SurfaceCompositionPlan.fromLegacy(morphedPlan).toOption.get
+    assertEquals(originalPlan.meshes.head.resourceKey, morphedPlan.meshes.head.resourceKey)
+    assert(originalPlan.meshes.head.geometryKey != morphedPlan.meshes.head.geometryKey)
+    val toComposition = backend.render(originalComposition, size).toOption.get
+    assertEquals(toComposition.geometryUpdates, 1)
+    assertEquals(toComposition.geometryUploads, 0)
+    val withinComposition = backend.render(morphedComposition, size).toOption.get
+    assertEquals(withinComposition.geometryUpdates, 1)
+    assertEquals(withinComposition.geometryUploads, 0)
+    val toLegacy = backend.render(originalPlan, size).toOption.get
+    assertEquals(toLegacy.geometryUpdates, 1)
+    assertEquals(toLegacy.geometryUploads, 0)
 
   test("world clipping is rejected explicitly before Three.js interpretation"):
     val (viewer, initial) = fixture()
