@@ -1,0 +1,6605 @@
+{
+  "status": "fail",
+  "checks": {
+    "twoScientificMeshUploads": true,
+    "staleGeometryRejected": true,
+    "cameraOnlyUploads": true,
+    "diskVisibleInBothViews": true,
+    "diskNativePicks": true,
+    "diskOcclusion": true,
+    "sphereVisibleInBothViews": true,
+    "sphereNativePicks": true,
+    "crosshairVisibleInBothViews": true,
+    "crosshairNativePicks": true,
+    "crosshairOverlay": true,
+    "labelVisibleInBothViews": true,
+    "labelNativePicks": true,
+    "displayGray": true,
+    "overlayAfterText": true,
+    "overlayNativePicks": true,
+    "textureTransparentBackground": true,
+    "textureHalfAlpha": true,
+    "textureInterpolatedAlpha": false,
+    "texturePartialOcclusion": true,
+    "cameraChangedOneView": true,
+    "plainRenderClearsGlyphs": true
+  },
+  "cases": [
+    {
+      "name": "disk",
+      "panel": [
+        {
+          "red": 478,
+          "blue": 39484
+        },
+        {
+          "red": 478,
+          "blue": 39484
+        }
+      ],
+      "hits": [
+        {
+          "x": 119,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "disk",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "sphere",
+      "panel": [
+        {
+          "red": 908,
+          "blue": 39038
+        },
+        {
+          "red": 908,
+          "blue": 39038
+        }
+      ],
+      "hits": [
+        {
+          "x": 116,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 146,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 146,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 146,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 146,
+          "hit": {
+            "kind": "decoration",
+            "id": "sphere",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "crosshair",
+      "panel": [
+        {
+          "red": 396,
+          "blue": 39488
+        },
+        {
+          "red": 396,
+          "blue": 39488
+        }
+      ],
+      "hits": [
+        {
+          "x": 125,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "crosshair",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "label",
+      "panel": [
+        {
+          "red": 119,
+          "blue": 39739
+        },
+        {
+          "red": 119,
+          "blue": 39739
+        }
+      ],
+      "hits": [
+        {
+          "x": 113,
+          "y": 125,
+          "hit": {
+            "kind": "scientific",
+            "id": "anchor",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 125,
+          "hit": {
+            "kind": "scientific",
+            "id": "anchor",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "gray",
+      "panel": [
+        {
+          "red": 0,
+          "blue": 38984
+        },
+        {
+          "red": 0,
+          "blue": 38984
+        }
+      ],
+      "hits": []
+    },
+    {
+      "name": "overlay-text",
+      "panel": [
+        {
+          "red": 1,
+          "blue": 38450
+        },
+        {
+          "red": 1,
+          "blue": 38450
+        }
+      ],
+      "hits": [
+        {
+          "x": 125,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 104,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 107,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 110,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 113,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 116,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 143,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 393,
+          "y": 119,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 143,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 393,
+          "y": 122,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 104,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 143,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 354,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 393,
+          "y": 125,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 143,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 393,
+          "y": 128,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 143,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 393,
+          "y": 131,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 107,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 357,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 134,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 110,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 140,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 360,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 390,
+          "y": 137,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 113,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 116,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 134,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 137,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 363,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 366,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 384,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 387,
+          "y": 140,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 119,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 122,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 125,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 128,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 131,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-0",
+            "instance": "anchor-0"
+          },
+          "pass": true
+        },
+        {
+          "x": 369,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 372,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 375,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 378,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        },
+        {
+          "x": 381,
+          "y": 143,
+          "hit": {
+            "kind": "decoration",
+            "id": "overlay",
+            "view": "view-1",
+            "instance": "anchor-1"
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "alpha-oracle",
+      "panel": [
+        {
+          "red": 0,
+          "blue": 38880
+        },
+        {
+          "red": 0,
+          "blue": 38880
+        }
+      ],
+      "hits": []
+    }
+  ],
+  "webgl": {
+    "version": "null",
+    "vendor": "null",
+    "renderer": "null"
+  }
+}

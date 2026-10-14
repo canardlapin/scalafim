@@ -1,0 +1,28 @@
+{
+  "candidate": "68dc4732fa30a26130d64a210da5c272800738af",
+  "sourceSha256": {
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceComposition.scala": "e2d2e2cfb6aca6ea1413d72f305cbc183e2bd52c6b75b84c5e850ebca12454c2",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceLabelRasterizer.scala": "b0c31e0938622fba4e685ed924f31f6f6e387fc81140e66b4ce6d047b4b68b20",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceDecorationProbe.scala": "6e17829a30a938a6913d724570e34e6f7a0a656c6bd576d9235125ccccfb9625",
+    "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceDecorationRaster.scala": "2da5b186ac973e0c7bb703febedb02b5e096bd1e92e9bd76b9b110765a093211",
+    "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala": "6d63d1c0625d0495ec9b70d174091ee3171111a8b528586bd62a11d91ac63f12",
+    "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceTextureSampler.scala": "6154bd6eac92050ac76b87bdaa6c5e3ef445c1b00ddb42462f0227570c2e46fe",
+    "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceDecorationRasterSuite.scala": "56976172a7ff0968bacf0680e8acc47985fe2d643c87bdb635c7d1a0c4d45f9c",
+    "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceTextureSamplerSuite.scala": "de1d95e050c8225042bc95384963f0f5b061e884d386f0294c72b54236ce4a77",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/CanvasSurfaceLabelRasterizer.scala": "8f54a6c6ceb31c881d0deb8e332f6b1942217e82a66ab74d202e6ebeef69c012",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeDecorationBrowserProbe.scala": "09d66c8c23304520b0c7a214b9d1d5812bdd17bd741516a5470b27b9b41f8803",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeJsRuntime.scala": "39531c9691f104caf34a4e91c86b458f4654cb2be28b4eaceed2479bb6174fd8",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala": "d36d093af69fb3d2c842b77025fb79d8f1b02dfdbd520b10b181aac7a9139ac2",
+    "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceBackendSuite.scala": "bc01ab6aebbac970a41b3bcad9a1266d627c95eae1fa2476ff1037b6175e1f13",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorationAssets.scala": "06f7dd1624ec8eb6dc0e65e21fb32dd46cac33107b79b078a5ece096f4c37978",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorationGeometry.scala": "0a16a0d95d324c4e88761d566ead613bf0a30ca545fa68f5e76ce5be04b3dc6e",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorationPicking.scala": "c40600d46dab322e716c580afcaa13fe02b31b9d33f67b609838dfe6f595ae39",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorations.scala": "ae3de8f97ffd8bf3c39e0b76dcdf54d9a193c20cf038a347133d873e1e344944",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDisplayHit.scala": "1b736b1272b41766cbaca3ae1ea2cf1464e6fc8fc4b42bbbb7bb246a452a97c4",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNetworkDecorations.scala": "3c97365ba2e8d3587a7c082ee3eb5166fccee7b7b7d58be2dd03b7252ac9938d",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceDecorationGeometrySuite.scala": "27a8f3aac61f87192908e829c9560296417bff3082e0aa8440621f1e2ce4f30b",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceNetworkDecorationsSuite.scala": "8435b95a9721e959fa573ba10db49b1358be9ed857faaf3a90c2894224924d10",
+    "tools/surface-view/parity/run-decoration-proof.mjs": "35d9c45d83814ed99b8fb04c2acac6b965fd59e355eb4ee77770b02ab1ddcaf3"
+  },
+  "note": "Native source captured immediately before the source commit; captured source bytes are identical. Browser provenance records this candidate SHA."
+}

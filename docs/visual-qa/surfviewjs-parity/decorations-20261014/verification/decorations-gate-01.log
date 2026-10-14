@@ -1,0 +1,697 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-composition/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-composition/modules/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.view.SurfaceCameraFitSuite:
+  + initial perspective camera contains anatomical bounds across field of view and layout 0.102s
+scalafim.surface.view.SurfaceVolumeCursorSuite:
+  + guide: an MNI peak maps to subject voxels and a framed tkRAS surface through a pullback link 0.023s
+  + a tkRAS surface links to an MNI volume through the pullback; the forward direction is a typed error 0.002s
+  + with a forward map the cursor round-trips vertex -> volume -> vertex 0.001s
+  + one world links directly under an explicit alignment 0.011s
+  + the cursor refuses another world's link, another surface's selection, and points beyond the radius 0.001s
+scalafim.surface.view.SurfaceViewerSuite:
+  + opaque ids and camera scalars reject invalid states 0.006s
+  + canonical anatomical viewpoints encode RAS directions explicitly for both hemispheres 0.001s
+  + layers own input buffers and validate frame-major lengths 0.03s
+  + model rejects duplicate ids, unknown surfaces, topology mismatch, and dynamic frame disagreement 0.004s
+  + reducer is total over timepoint, layer capability, ordering, and selection actions 0.008s
+  + bilateral layout validates hemispheres and preserves explicit order 0.002s
+  + compiler applies surfaceToWorld before packing positions and readouts 0.026s
+  + compiler centers the camera on transformed world bounds 0.002s
+  + anatomical camera distance scales beyond millimetre-space geometry 0.0s
+  + threshold boundaries, layer order, receipts, and profile are deterministic 0.007s
+  + camera-only actions preserve every mesh and layer resource key 0.002s
+  + geometry families morph without changing topology, layers, selection, or camera framing 0.004s
+  + geodesic reveal weights have analytic smootherstep values and reject invalid domains 0.018s
+  + direct reveal lens remains an explicit diagnostic correspondence mode 0.011s
+  + natural reveal is translation-invariant, pin-fixed, harmonic, and inversion-free 0.007s
+  + lens quality detects an intermediate collapse even when endpoint winding agrees 0.002s
+  + geometry family actions reject absent variants and invalid transition updates 0.001s
+  + orbit and reset preserve canonical anatomical bases without resource uploads 0.002s
+scalafim.surface.view.SurfaceViewportFitSuite:
+  + wide bilateral canvas contains two adjacent physical squares at its center 0.002s
+  + narrow bilateral canvas preserves equal scale and centers the row vertically 0.0s
+  + single and bilateral fitting preserve order, square pixel scale and containment across aspect ratios 0.001s
+  + literal viewport coordinates remain available and invalid fitting inputs are refused 0.001s
+scalafim.surface.view.SurfaceDecorationsSuite:
+  + transition contours assign independent stable edge ids and ROI exterior omits internal parcel borders 0.024s
+  + one scientific marker lowers for each repeated display instance with distinct origins 0.004s
+  + malformed face weights and unresolved scientific vertices return typed errors 0.003s
+  + a current geometry update moves anchors without changing their stable id 0.0s
+  + source-domain sample buffers retain isolated label slots and nearest partitions use exact source corners 0.004s
+scalafim.surface.view.SurfaceFragmentRegionSuite:
+  + cell evaluation matches the reference inside and uses the correct side at a hidden seam 0.022s
+  + invalid cell interiors stay invalid at finite corners instead of bleeding a rescued value 0.0s
+  + texture padding extrapolates the affine field instead of flattening it at a triangle edge 0.0s
+  + a saturated region remains constant in its texture padding 0.001s
+scalafim.surface.view.SurfaceCompositionDocumentSuite:
+  + four-view document roundtrip preserves camera links, instances, presentation, and compiled identity 0.144s
+  + restoration checks external digests and the caller's frame declaration 0.019s
+  + malformed camera links, coordinates, and schema revisions fail decoding 0.025s
+  + composition view framing cannot silently change during decode 0.008s
+scalafim.surface.view.SurfaceCameraPoseSuite:
+  + the viewpoint camera's pose is typed in the display frame and compiles to the same view 0.004s
+  + a volume point linked to the surface focuses the camera on its vertex 0.006s
+  + typed poses need the single-surface layout of their display surface 0.01s
+  + display frames are checked against what the viewer shows 0.003s
+  + a pose needs distinct eye and target points 0.002s
+scalafim.surface.view.SurfaceSceneDocumentSuite:
+  + revision 1 documents retain vertex association and their original JSON shape 0.036s
+  + canonical document roundtrip reproduces state, camera, and semantic render resources 0.012s
+  + camera aspect survives document encoding and restoration 0.002s
+  + unknown fields and future revisions obey explicit read policy 0.002s
+  + external digests and exact mesh identities are checked before state restoration 0.007s
+  + backend-neutral requirements admit capabilities without naming an implementation 0.008s
+  + codec rejects duplicate fields, malformed JSON, invalid digests, and invalid document state 0.005s
+scalafim.surface.view.SurfaceCompositionSuite:
+  + typed composition reuses resources for one mesh in four views 0.005s
+  + legacy lowering preserves each slot's camera, offsets, fit, and fragment metadata 0.002s
+  + composition plan rejects missing resources, invalid transforms, and empty input 0.004s
+  + composition rejects a stale display witness 0.001s
+  + malformed packet buffers are rejected at the composition boundary 0.002s
+  + composition compiler rejects out-of-domain scientific selection 0.0s
+  + composition refuses singular, nonrigid, and malformed camera packets 0.001s
+  + immutable resource keys reject conflicting reuse before native interpretation 0.003s
+  + partition source indices are bounded before evaluators can index them 0.001s
+  + compiled geometry revision changes retain topology keys and pass native reuse checks 0.001s
+  + face-sample provenance and infinite-far perspective projections are refused 0.001s
+scalafim.surface.view.SurfaceLegendPublicationSuite:
+  + all presets reserve disjoint measured surface and legend regions within the page 0.095s
+  + render callback receives the prepared scene and exact dimensions; pixels remain in the returned image 0.036s
+  + window changes update publication identities and camera changes preserve legend calibration 0.006s
+  + excessive legend stacks and invalid shared requests are rejected before rendering 0.017s
+  + empty legends release the entire column; legacy swatches become an explicit manual card 0.004s
+scalafim.surface.view.SurfaceBenchmarkFixtureSuite:
+  + pinned fixtures have exact vertex and layer counts 0.067s
+  + admission-path fixtures encode only their expected dirty resource 0.009s
+scalafim.surface.view.SurfaceSceneVeryInflatedSuite:
+  + a very-inflated scene saves the canonical kind and round trips to the same state 0.009s
+  + legacy and GIFTI spellings of the saved kind decode to VeryInflated and re-encode canonically 0.003s
+  + the display kind is part of the saved surface identity: inflated and very-inflated do not substitute 0.001s
+scalafim.surface.view.SurfaceDecorationGeometrySuite:
+  + world marker radius, stable origin, and scientific mesh buffers remain separate 0.007s
+  + contour segments retain typed source edges and halos are disjoint meshes 0.004s
+  + pixel marker axes follow rectangular Fill and square Contain viewports 0.003s
+  + perspective pixel radius changes with depth while world radius does not 0.001s
+  + pixel axes rotate with camera roll 0.001s
+  + pixel contour is full projected width and halo bands are outside its core 0.002s
+  + degenerate contour remains finite and anisotropic pixel spheres refuse lowering 0.002s
+  + copied size and face anchors retain their construction invariants 0.003s
+  + packets compiled before placement changes cannot be rebound to the new plan 0.001s
+scalafim.surface.view.SurfaceDynamicsSuite:
+  + time axes are strictly increasing and resolve nearest and linear samples 0.003s
+  + SurfaceMatrix temporal fields read columns lazily 0.008s
+  + lazy sources validate frame shape and bounded LRU caches evict deterministically 0.003s
+  + playback reducer clamps, loops, reverses, and produces bounded prefetch requests 0.006s
+  + prefetched temporal materialization distinguishes source reads from layer uploads 0.003s
+  + morphing preserves exact endpoints and rejects topology or transform mismatch 0.002s
+  + linked surface and image selections roundtrip through world coordinates without flips 0.003s
+  + typed annotations and bounded selection histories retain reproducible sequence ids 0.004s
+scalafim.surface.view.SurfaceScalarMappingSuite:
+  + vertex and face scalar layers expose the effective descriptor and tabulated colors 0.002s
+  + checked window overrides reject centers or tails outside the new domain 0.002s
+  + mapping identity changes even when sampled vertex colors happen to remain equal 0.001s
+  + camera and opacity leave the effective unlit mapping unchanged 0.0s
+  + opaque colorizers get no invented metadata or unsupported adjustment capabilities 0.002s
+  + current scene revision rejects changed mapping metadata; revision 3 still decodes 0.003s
+scalafim.surface.view.SurfaceSceneLegendSuite:
+  + current revision roundtrips all legend alternatives, metadata, effective identities and interpolation 0.012s
+  + restoration rejects stale legend identity after saved threshold changes or category palette changes 0.006s
+  + fresh capture follows window changes and camera changes preserve saved legend identity 0.002s
+  + legend codec rejects duplicate categories and applies unknown-field policy within requests 0.004s
+  + revision 5 documents without legends remain readable and preserve their JSON shape 0.001s
+scalafim.surface.view.CameraFramingMigrationSuite:
+  + baseline V1 documents decode, restore, and reproduce independently recorded single and bilateral matrices 0.003s
+  + legacy framing survives orbit and reset, and framing participates in the camera receipt 0.004s
+  + V1 saved near/far remains historically inactive until explicit framing migration 0.003s
+  + revision policy decodes V1 as legacy, V2 through V6 as bounds-fit, and records V7 framing 0.002s
+scalafim.surface.view.SurfaceBilateralCameraSuite:
+  + bilateral camera distance follows centered extents, independently of inter-mesh translation 0.002s
+scalafim.surface.view.SurfaceBenchmarkReceiptSuite:
+  + pinned matrix spans both mesh scales, every layer count, and every path 0.001s
+  + timing summaries use deterministic nearest-rank percentiles 0.002s
+  + benchmark JSON is deterministic, versioned, escaped, and includes structural counters 0.008s
+scalafim.surface.view.SurfaceFragmentApproximationSuite:
+  + scalar thresholds and ramp knots have a bounded constant-color approximation 0.461s
+  + color intervals enclose every blend mode with varying source alpha 0.926s
+  + normal-cone bounds enclose normalized world lighting, including a terminator 0.041s
+  + resource limits reject instead of returning an approximation outside its promised error 0.005s
+  + adaptive leaves meet along matching edges without hanging vertices 0.3s
+  + incident scientific faces share the same adaptive edge vertices 0.33s
+  + geometric aliases conform duplicated edges without merging discontinuous colors 0.024s
+scalafim.surface.view.SurfaceNearestSuite:
+  + six subtriangles per face cover equal areas and stay within their sample region 0.017s
+  + sample ties use the smallest original id, independent of winding 0.0s
+  + time, visibility, and opacity updates preserve partition topology 0.003s
+  + scene revision 3 persists nearest sampling, rejects incompatible restoration and capability 0.005s
+  + mixed color interpolation and nearest samples retain original samples for fragment evaluation 0.001s
+  + morphs retain sample ownership, original picks, and layer keys 0.002s
+  + attached network geometry retains cortical partition provenance and accounts for its buffers 0.029s
+scalafim.surface.view.SurfaceClipRangeSuite:
+  + explicit depth limits map eye-space endpoints to clipping planes in both projections 0.003s
+  + direct and checked clip ranges reject invalid endpoints 0.0s
+scalafim.surface.view.SurfaceFitCameraSuite:
+  + explicit fits contain canonical corners tightly across anatomical views, orbits and projection types 0.025s
+  + fit aspect follows projected anatomy and persists through pan, reset and orbit 0.001s
+  + fitting is invariant to common world translation and bilateral source separation 0.0s
+  + camera aspect and unknown fit surfaces are rejected at public boundaries 0.002s
+  + explicit fit contains expanded translated morphs without automatic camera movement 0.007s
+scalafim.surface.view.SurfaceScalarInterpolationSuite:
+  + interpolation precedes saturation and nonlinear mapping 0.001s
+  + nonfinite contributors invalidate interiors but not exact opposite edges 0.0s
+  + extreme finite samples retain constants and cancellation without overflow 0.0s
+  + permutations and affine unit changes preserve interpolation 0.0s
+  + raw sample ownership, identity, memory, and camera updates are explicit 0.003s
+  + lighting and additional layers compile with stable fragment semantics 0.001s
+  + scene revision 5 preserves scalar policy and infers the backend requirement 0.003s
+scalafim.surface.view.SurfaceProjectionNetworkSuite:
+  + CPU ribbon projection is the typed oracle and records exact work 0.02s
+  + projection quality and fill policy preserve rejected samples explicitly 0.004s
+  + receipts count non-finite samples as rejected, not accepted 0.001s
+  + materialized projection is an ordinary layer on topology-compatible display geometry 0.001s
+  + network filters preserve node identity, negative weights, regions, and stable top-N order 0.002s
+  + network tubes attach as ordinary mesh and color resources for every backend 0.002s
+  + fragment layers retain original samples and exclude attached network faces 0.02s
+  + large signed network compilation reports bounded primitive work and memory 0.072s
+scalafim.surface.view.SurfaceLegendSuite:
+  + continuous calibration uses effective overrides and analytic full-window positions 0.011s
+  + split bar retains asymmetric widths and its own tail calibrations 0.003s
+  + shared legends compare effective mappings, including unsampled invalid and hidden colors 0.005s
+  + different base windows may share only after their effective mappings agree 0.005s
+  + window and threshold changes invalidate snapshots while camera and opacity preserve identity 0.004s
+  + custom ticks are checked again after the effective window changes 0.002s
+  + automatic binding rejects opaque, hidden, missing, and duplicate layer requests 0.008s
+  + categorical vertex and face legends use palette keys, exact colors, and explicit fallback 0.001s
+  + categorical legends reject partial names, opaque callbacks, interpolated categories, and differing fallback colors 0.014s
+  + manual legends are explicit and quantity, units, labels, and colors participate in identity 0.002s
+scalafim.surface.view.SurfaceCompositionNavigationSuite:
+  + independent navigation changes only the selected view and never mesh coordinates 0.003s
+  + linked orbit applies deltas while retaining distinct targets and distances 0.001s
+  + zoom links magnification but a panel resize remains independent 0.001s
+  + invalid links and navigation are typed refusals without partial updates 0.001s
+  + perspective zoom changes the compiled view and halves eye distance 0.001s
+scalafim.surface.view.SurfaceAnatomicalDisplaySuite:
+  + curvature is an ordinary scalar field transferable only across exact topology 0.004s
+  + world clip planes normalize normals and retain an explicit side 0.002s
+  + publication decoration records camera and layer identity and composes through Scene 0.002s
+  + sulcal sign convention and contrast affect colors without changing scalar values 0.002s
+scalafim.surface.view.SurfaceWorldIndexSuite:
+  + prepared picks agree with independent world landmarks under full affine transforms 0.049s
+  + ties choose original lowest id and radius boundaries are inclusive 0.0s
+  + snapshot lifetime is explicit across coordinate mutation and equal-topology replacements 0.001s
+  + repeated coincident points retain deterministic ties 0.001s
+  + malformed transforms are refused at the affine boundary and mutated nonfinite coordinates cannot be indexed 0.005s
+scalafim.surface.view.SurfaceNetworkDecorationsSuite:
+  + cross-surface edges use mapped translated render vertices and keep scientific buffers unchanged 0.012s
+  + morph positions are refreshed while stable decoration ids survive 0.003s
+  + signed edge colors, absolute-weight radius, and node glyphs are explicit 0.005s
+  + duplicate ordered endpoints are refused until the network has stable edge ids 0.003s
+  + line style lowers to a four-vertex camera-facing ribbon 0.001s
+  + missing or ambiguous instance choices are refused rather than inferred 0.001s
+  + validation refuses a cross-surface target vertex outside the mapped scientific domain 0.004s
+scalafim.surface.view.SurfaceBackendConformanceSuite:
+  + semantic matrix covers every conformance family 0.008s
+  + cold-load observations expose stable structural counters 0.003s
+  + camera-only and data-only admission paths reject geometry churn 0.001s
+  + invalid resource and revision receipts fail admission explicitly 0.002s
+scalafim.surface.view.SurfaceFaceLayerSuite:
+  + face colors lower to separate render corners with original identity 0.002s
+  + face selection reads the chosen face without inventing a vertex-to-face conversion 0.005s
+  + time and visibility do not change corner topology 0.003s
+  + mixed vertex and face layers preserve source colors and morph correspondence 0.004s
+  + face scalar windows and thresholds act on face observations 0.002s
+  + network attachment preserves the cortical source-id map 0.002s
+  + current revision roundtrips association and face selection; revision 1 remains vertex-only 0.002s
+scalafim.surface.view.SurfaceMappingPartitionSuite:
+  + cuts cover each original face once and retain the analytic hidden-band area 0.002s
+  + two independent coordinate fields partition every mapping boundary 0.001s
+  + nearest subdivisions retain original provenance after scalar cuts 0.001s
+  + finite extreme domains do not overflow and invalid interiors remain whole 0.001s
+  + budgets reject before unbounded geometry growth 0.006s
+[info] Passed: Total 193, Failed 0, Errors 0, Passed 193
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] surfaceViewJVM/test: exit 0 in 9.4s
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-composition/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surface-composition/modules/surface-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-composition/modules/surface-view/js/target/scala-3.7.4/scalafim-surface-view-test-fastopt
+scalafim.surface.view.SurfaceDecorationsSuite:
+  + transition contours assign independent stable edge ids and ROI exterior omits internal parcel borders 0.014s
+  + one scientific marker lowers for each repeated display instance with distinct origins 0.002s
+  + malformed face weights and unresolved scientific vertices return typed errors 0.001s
+  + a current geometry update moves anchors without changing their stable id 0.001s
+  + source-domain sample buffers retain isolated label slots and nearest partitions use exact source corners 0.005s
+scalafim.surface.view.SurfaceScalarMappingSuite:
+  + vertex and face scalar layers expose the effective descriptor and tabulated colors 0.010s
+  + checked window overrides reject centers or tails outside the new domain 0.002s
+  + mapping identity changes even when sampled vertex colors happen to remain equal 0.002s
+  + camera and opacity leave the effective unlit mapping unchanged 0.001s
+  + opaque colorizers get no invented metadata or unsupported adjustment capabilities 0.001s
+  + current scene revision rejects changed mapping metadata; revision 3 still decodes 0.011s
+scalafim.surface.view.SurfaceBenchmarkFixtureSuite:
+  + pinned fixtures have exact vertex and layer counts 0.128s
+  + admission-path fixtures encode only their expected dirty resource 0.011s
+scalafim.surface.view.SurfaceSceneDocumentSuite:
+  + revision 1 documents retain vertex association and their original JSON shape 0.006s
+  + canonical document roundtrip reproduces state, camera, and semantic render resources 0.005s
+  + camera aspect survives document encoding and restoration 0.002s
+  + unknown fields and future revisions obey explicit read policy 0.004s
+  + external digests and exact mesh identities are checked before state restoration 0.001s
+  + backend-neutral requirements admit capabilities without naming an implementation 0.003s
+  + codec rejects duplicate fields, malformed JSON, invalid digests, and invalid document state 0.002s
+scalafim.surface.view.SurfaceNetworkDecorationsSuite:
+  + cross-surface edges use mapped translated render vertices and keep scientific buffers unchanged 0.005s
+  + morph positions are refreshed while stable decoration ids survive 0.002s
+  + signed edge colors, absolute-weight radius, and node glyphs are explicit 0.002s
+  + duplicate ordered endpoints are refused until the network has stable edge ids 0.001s
+  + line style lowers to a four-vertex camera-facing ribbon 0.001s
+  + missing or ambiguous instance choices are refused rather than inferred 0.002s
+  + validation refuses a cross-surface target vertex outside the mapped scientific domain 0.003s
+scalafim.surface.view.SurfaceBackendConformanceSuite:
+  + semantic matrix covers every conformance family 0.001s
+  + cold-load observations expose stable structural counters 0.001s
+  + camera-only and data-only admission paths reject geometry churn 0.000s
+  + invalid resource and revision receipts fail admission explicitly 0.000s
+scalafim.surface.view.SurfaceCompositionNavigationSuite:
+  + independent navigation changes only the selected view and never mesh coordinates 0.002s
+  + linked orbit applies deltas while retaining distinct targets and distances 0.001s
+  + zoom links magnification but a panel resize remains independent 0.000s
+  + invalid links and navigation are typed refusals without partial updates 0.000s
+  + perspective zoom changes the compiled view and halves eye distance 0.001s
+scalafim.surface.view.SurfaceWorldIndexSuite:
+  + prepared picks agree with independent world landmarks under full affine transforms 0.098s
+  + ties choose original lowest id and radius boundaries are inclusive 0.000s
+  + snapshot lifetime is explicit across coordinate mutation and equal-topology replacements 0.000s
+  + repeated coincident points retain deterministic ties 0.001s
+  + malformed transforms are refused at the affine boundary and mutated nonfinite coordinates cannot be indexed 0.000s
+scalafim.surface.view.SurfaceLegendSuite:
+  + continuous calibration uses effective overrides and analytic full-window positions 0.006s
+  + split bar retains asymmetric widths and its own tail calibrations 0.001s
+  + shared legends compare effective mappings, including unsampled invalid and hidden colors 0.001s
+  + different base windows may share only after their effective mappings agree 0.000s
+  + window and threshold changes invalidate snapshots while camera and opacity preserve identity 0.001s
+  + custom ticks are checked again after the effective window changes 0.000s
+  + automatic binding rejects opaque, hidden, missing, and duplicate layer requests 0.000s
+  + categorical vertex and face legends use palette keys, exact colors, and explicit fallback 0.001s
+  + categorical legends reject partial names, opaque callbacks, interpolated categories, and differing fallback colors 0.000s
+  + manual legends are explicit and quantity, units, labels, and colors participate in identity 0.000s
+scalafim.surface.view.SurfaceFragmentRegionSuite:
+  + cell evaluation matches the reference inside and uses the correct side at a hidden seam 0.009s
+  + invalid cell interiors stay invalid at finite corners instead of bleeding a rescued value 0.001s
+  + texture padding extrapolates the affine field instead of flattening it at a triangle edge 0.001s
+  + a saturated region remains constant in its texture padding 0.001s
+scalafim.surface.view.SurfaceCompositionDocumentSuite:
+  + four-view document roundtrip preserves camera links, instances, presentation, and compiled identity 0.023s
+  + restoration checks external digests and the caller's frame declaration 0.004s
+  + malformed camera links, coordinates, and schema revisions fail decoding 0.007s
+  + composition view framing cannot silently change during decode 0.003s
+scalafim.surface.view.SurfaceFitCameraSuite:
+  + explicit fits contain canonical corners tightly across anatomical views, orbits and projection types 0.039s
+  + fit aspect follows projected anatomy and persists through pan, reset and orbit 0.001s
+  + fitting is invariant to common world translation and bilateral source separation 0.001s
+  + camera aspect and unknown fit surfaces are rejected at public boundaries 0.000s
+  + explicit fit contains expanded translated morphs without automatic camera movement 0.003s
+scalafim.surface.view.SurfaceScalarInterpolationSuite:
+  + interpolation precedes saturation and nonlinear mapping 0.000s
+  + nonfinite contributors invalidate interiors but not exact opposite edges 0.000s
+  + extreme finite samples retain constants and cancellation without overflow 0.000s
+  + permutations and affine unit changes preserve interpolation 0.000s
+  + raw sample ownership, identity, memory, and camera updates are explicit 0.003s
+  + lighting and additional layers compile with stable fragment semantics 0.001s
+  + scene revision 5 preserves scalar policy and infers the backend requirement 0.003s
+scalafim.surface.view.SurfaceBenchmarkReceiptSuite:
+  + pinned matrix spans both mesh scales, every layer count, and every path 0.001s
+  + timing summaries use deterministic nearest-rank percentiles 0.000s
+  + benchmark JSON is deterministic, versioned, escaped, and includes structural counters 0.001s
+scalafim.surface.view.SurfaceBilateralCameraSuite:
+  + bilateral camera distance follows centered extents, independently of inter-mesh translation 0.002s
+scalafim.surface.view.SurfaceNearestSuite:
+  + six subtriangles per face cover equal areas and stay within their sample region 0.005s
+  + sample ties use the smallest original id, independent of winding 0.000s
+  + time, visibility, and opacity updates preserve partition topology 0.002s
+  + scene revision 3 persists nearest sampling, rejects incompatible restoration and capability 0.005s
+  + mixed color interpolation and nearest samples retain original samples for fragment evaluation 0.001s
+  + morphs retain sample ownership, original picks, and layer keys 0.001s
+  + attached network geometry retains cortical partition provenance and accounts for its buffers 0.002s
+scalafim.surface.view.SurfaceMappingPartitionSuite:
+  + cuts cover each original face once and retain the analytic hidden-band area 0.002s
+  + two independent coordinate fields partition every mapping boundary 0.002s
+  + nearest subdivisions retain original provenance after scalar cuts 0.002s
+  + finite extreme domains do not overflow and invalid interiors remain whole 0.001s
+  + budgets reject before unbounded geometry growth 0.001s
+scalafim.surface.view.SurfaceCameraPoseSuite:
+  + the viewpoint camera's pose is typed in the display frame and compiles to the same view 0.001s
+  + a volume point linked to the surface focuses the camera on its vertex 0.001s
+  + typed poses need the single-surface layout of their display surface 0.000s
+  + display frames are checked against what the viewer shows 0.000s
+  + a pose needs distinct eye and target points 0.000s
+scalafim.surface.view.SurfaceLegendPublicationSuite:
+  + all presets reserve disjoint measured surface and legend regions within the page 0.011s
+  + render callback receives the prepared scene and exact dimensions; pixels remain in the returned image 0.010s
+  + window changes update publication identities and camera changes preserve legend calibration 0.004s
+  + excessive legend stacks and invalid shared requests are rejected before rendering 0.015s
+  + empty legends release the entire column; legacy swatches become an explicit manual card 0.002s
+scalafim.surface.view.SurfaceClipRangeSuite:
+  + explicit depth limits map eye-space endpoints to clipping planes in both projections 0.001s
+  + direct and checked clip ranges reject invalid endpoints 0.000s
+scalafim.surface.view.SurfaceDynamicsSuite:
+  + time axes are strictly increasing and resolve nearest and linear samples 0.000s
+  + SurfaceMatrix temporal fields read columns lazily 0.001s
+  + lazy sources validate frame shape and bounded LRU caches evict deterministically 0.000s
+  + playback reducer clamps, loops, reverses, and produces bounded prefetch requests 0.000s
+  + prefetched temporal materialization distinguishes source reads from layer uploads 0.000s
+  + morphing preserves exact endpoints and rejects topology or transform mismatch 0.002s
+  + linked surface and image selections roundtrip through world coordinates without flips 0.001s
+  + typed annotations and bounded selection histories retain reproducible sequence ids 0.001s
+scalafim.surface.view.SurfaceFragmentApproximationSuite:
+  + scalar thresholds and ramp knots have a bounded constant-color approximation 1.681s
+  + color intervals enclose every blend mode with varying source alpha 5.239s
+  + normal-cone bounds enclose normalized world lighting, including a terminator 0.142s
+  + resource limits reject instead of returning an approximation outside its promised error 0.001s
+  + adaptive leaves meet along matching edges without hanging vertices 1.641s
+  + incident scientific faces share the same adaptive edge vertices 1.271s
+  + geometric aliases conform duplicated edges without merging discontinuous colors 0.082s
+scalafim.surface.view.SurfaceCompositionSuite:
+  + typed composition reuses resources for one mesh in four views 0.001s
+  + legacy lowering preserves each slot's camera, offsets, fit, and fragment metadata 0.001s
+  + composition plan rejects missing resources, invalid transforms, and empty input 0.001s
+  + composition rejects a stale display witness 0.000s
+  + malformed packet buffers are rejected at the composition boundary 0.000s
+  + composition compiler rejects out-of-domain scientific selection 0.000s
+  + composition refuses singular, nonrigid, and malformed camera packets 0.001s
+  + immutable resource keys reject conflicting reuse before native interpretation 0.001s
+  + partition source indices are bounded before evaluators can index them 0.000s
+  + compiled geometry revision changes retain topology keys and pass native reuse checks 0.001s
+  + face-sample provenance and infinite-far perspective projections are refused 0.001s
+scalafim.surface.view.SurfaceViewportFitSuite:
+  + wide bilateral canvas contains two adjacent physical squares at its center 0.001s
+  + narrow bilateral canvas preserves equal scale and centers the row vertically 0.003s
+  + single and bilateral fitting preserve order, square pixel scale and containment across aspect ratios 0.001s
+  + literal viewport coordinates remain available and invalid fitting inputs are refused 0.001s
+scalafim.surface.view.CameraFramingMigrationSuite:
+  + baseline V1 documents decode, restore, and reproduce independently recorded single and bilateral matrices 0.003s
+  + legacy framing survives orbit and reset, and framing participates in the camera receipt 0.003s
+  + V1 saved near/far remains historically inactive until explicit framing migration 0.001s
+  + revision policy decodes V1 as legacy, V2 through V6 as bounds-fit, and records V7 framing 0.003s
+scalafim.surface.view.SurfaceFaceLayerSuite:
+  + face colors lower to separate render corners with original identity 0.001s
+  + face selection reads the chosen face without inventing a vertex-to-face conversion 0.002s
+  + time and visibility do not change corner topology 0.001s
+  + mixed vertex and face layers preserve source colors and morph correspondence 0.001s
+  + face scalar windows and thresholds act on face observations 0.001s
+  + network attachment preserves the cortical source-id map 0.001s
+  + current revision roundtrips association and face selection; revision 1 remains vertex-only 0.002s
+scalafim.surface.view.SurfaceProjectionNetworkSuite:
+  + CPU ribbon projection is the typed oracle and records exact work 0.002s
+  + projection quality and fill policy preserve rejected samples explicitly 0.002s
+  + receipts count non-finite samples as rejected, not accepted 0.001s
+  + materialized projection is an ordinary layer on topology-compatible display geometry 0.001s
+  + network filters preserve node identity, negative weights, regions, and stable top-N order 0.000s
+  + network tubes attach as ordinary mesh and color resources for every backend 0.001s
+  + fragment layers retain original samples and exclude attached network faces 0.106s
+  + large signed network compilation reports bounded primitive work and memory 0.079s
+scalafim.surface.view.SurfaceAnatomicalDisplaySuite:
+  + curvature is an ordinary scalar field transferable only across exact topology 0.001s
+  + world clip planes normalize normals and retain an explicit side 0.000s
+  + publication decoration records camera and layer identity and composes through Scene 0.001s
+  + sulcal sign convention and contrast affect colors without changing scalar values 0.001s
+scalafim.surface.view.SurfaceSceneLegendSuite:
+  + current revision roundtrips all legend alternatives, metadata, effective identities and interpolation 0.005s
+  + restoration rejects stale legend identity after saved threshold changes or category palette changes 0.003s
+  + fresh capture follows window changes and camera changes preserve saved legend identity 0.001s
+  + legend codec rejects duplicate categories and applies unknown-field policy within requests 0.003s
+  + revision 5 documents without legends remain readable and preserve their JSON shape 0.001s
+scalafim.surface.view.SurfaceCameraFitSuite:
+  + initial perspective camera contains anatomical bounds across field of view and layout 0.006s
+scalafim.surface.view.SurfaceViewerSuite:
+  + opaque ids and camera scalars reject invalid states 0.000s
+  + canonical anatomical viewpoints encode RAS directions explicitly for both hemispheres 0.000s
+  + layers own input buffers and validate frame-major lengths 0.001s
+  + model rejects duplicate ids, unknown surfaces, topology mismatch, and dynamic frame disagreement 0.000s
+  + reducer is total over timepoint, layer capability, ordering, and selection actions 0.000s
+  + bilateral layout validates hemispheres and preserves explicit order 0.000s
+  + compiler applies surfaceToWorld before packing positions and readouts 0.001s
+  + compiler centers the camera on transformed world bounds 0.000s
+  + anatomical camera distance scales beyond millimetre-space geometry 0.000s
+  + threshold boundaries, layer order, receipts, and profile are deterministic 0.001s
+  + camera-only actions preserve every mesh and layer resource key 0.000s
+  + geometry families morph without changing topology, layers, selection, or camera framing 0.001s
+  + geodesic reveal weights have analytic smootherstep values and reject invalid domains 0.002s
+  + direct reveal lens remains an explicit diagnostic correspondence mode 0.002s
+  + natural reveal is translation-invariant, pin-fixed, harmonic, and inversion-free 0.007s
+  + lens quality detects an intermediate collapse even when endpoint winding agrees 0.010s
+  + geometry family actions reject absent variants and invalid transition updates 0.000s
+  + orbit and reset preserve canonical anatomical bases without resource uploads 0.001s
+scalafim.surface.view.SurfaceSceneVeryInflatedSuite:
+  + a very-inflated scene saves the canonical kind and round trips to the same state 0.002s
+  + legacy and GIFTI spellings of the saved kind decode to VeryInflated and re-encode canonically 0.002s
+  + the display kind is part of the saved surface identity: inflated and very-inflated do not substitute 0.000s
+scalafim.surface.view.SurfaceVolumeCursorSuite:
+  + guide: an MNI peak maps to subject voxels and a framed tkRAS surface through a pullback link 0.001s
+  + a tkRAS surface links to an MNI volume through the pullback; the forward direction is a typed error 0.001s
+  + with a forward map the cursor round-trips vertex -> volume -> vertex 0.001s
+  + one world links directly under an explicit alignment 0.004s
+  + the cursor refuses another world's link, another surface's selection, and points beyond the radius 0.000s
+scalafim.surface.view.SurfaceDecorationGeometrySuite:
+  + world marker radius, stable origin, and scientific mesh buffers remain separate 0.005s
+  + contour segments retain typed source edges and halos are disjoint meshes 0.003s
+  + pixel marker axes follow rectangular Fill and square Contain viewports 0.002s
+  + perspective pixel radius changes with depth while world radius does not 0.001s
+  + pixel axes rotate with camera roll 0.000s
+  + pixel contour is full projected width and halo bands are outside its core 0.001s
+  + degenerate contour remains finite and anisotropic pixel spheres refuse lowering 0.001s
+  + copied size and face anchors retain their construction invariants 0.000s
+  + packets compiled before placement changes cannot be rebound to the new plan 0.000s
+[info] Passed: Total 193, Failed 0, Errors 0, Passed 193
+[[32msuccess[0m] elapsed: 18 s
+[0J[sbt-warm] surfaceViewJS/test: exit 0 in 18.1s
+scalafim.surface.view.raster.SurfaceDecorationRasterSuite:
+  + pixel disk draws at its declared size and returns decoration identity without changing scientific buffers 0.2s
+  + foreground surface occludes a depth-tested marker but explicit overlay remains visible 0.027s
+  + transparent label texels preserve the surface and labels pass through picking 0.016s
+  + stale camera/size geometry and invalid buffers fail before rendering 0.002s
+  + shared annotation ray picking agrees with raster visibility and coplanar tie ownership 0.033s
+scalafim.surface.view.raster.SurfaceNearestRasterSuite:
+  + nearest regions match original triangle barycentrics under orthographic and perspective views 0.075s
+  + face and nearest layers blend as constant samples within each region 0.018s
+  + the exact centroid tie uses the smallest scientific id even with permuted face order 0.001s
+scalafim.surface.view.raster.SurfaceFragmentCompositionSuite:
+  + all blend modes compose independently mapped layers at the fragment 0.045s
+  + thresholded scalar overlay reveals the independently interpolated curvature underlay 0.031s
+  + nearest regions do not flatten a coexisting color-interpolated layer 0.028s
+  + lighting uses the normalized interpolated normal after composition 0.001s
+  + face samples compose with scalar fields without face-to-vertex conversion 0.004s
+  + network pixels keep their own color and identity over a scalar and nearest surface 0.037s
+scalafim.surface.view.raster.SurfaceCompositionRasterSuite:
+  + two crossing surfaces share depth and identify the original instance independent of submission order 0.003s
+  + four views reuse one mesh and preserve distinct view and instance picks 0.001s
+  + changing one camera leaves the other panel's pixels unchanged 0.002s
+  + legacy lowering preserves contained viewport pixels and scientific picks on a wide canvas 0.003s
+scalafim.surface.view.raster.SurfaceTextureSamplerSuite:
+  + POT mips and fractional LOD have independently specified color averages 0.0s
+  + mip reduction preserves premultiplied color through transparent checker texels 0.001s
+  + odd dimensions use explicit area averaging without losing the final row 0.0s
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.087s
+  + reference backend publishes stable capabilities and explicit caveats 0.0s
+  + unlit asymmetric landmark image and picks are deterministic 0.014s
+  + advertised lighting produces ambient and directional Lambert pixels 0.001s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.004s
+  + world translation preserves framing, pixels, and picks 0.001s
+  + depth buffering keeps the nearer face independent of draw order 0.001s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.001s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.001s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.001s
+  + overlays composite in model order with exact packed source-over semantics 0.001s
+  + bilateral slots keep left and right surface picks distinct 0.003s
+  + raster receipts expose phase timings and exact work counters 0.001s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.003s
+scalafim.surface.view.raster.SurfaceScalarRasterSuite:
+  + pixels match the analytic coordinate field under clipping and perspective 0.033s
+  + nonlinear mapping differs from legacy vertex color interpolation 0.003s
+  + invalid samples do not renormalize interiors over the remaining vertices 0.013s
+  + split scales and opacity are evaluated at fragments before composition 0.005s
+scalafim.surface.view.raster.SurfaceFaceRasterSuite:
+  + adjacent faces retain constant color and original picks across their shared edge 0.017s
+  + a face overlay blends with the surface base without leaking into its neighbor 0.001s
+[info] Passed: Total 41, Failed 0, Errors 0, Passed 41
+[[32msuccess[0m] elapsed: 4 s
+[0J[sbt-warm] surfaceViewRasterJVM/test: exit 0 in 4.6s
+[info] Fast optimizing /private/tmp/scalafim-surface-composition/modules/surface-view-raster/js/target/scala-3.7.4/scalafim-surface-view-raster-test-fastopt
+scalafim.surface.view.raster.SurfaceScalarRasterSuite:
+  + pixels match the analytic coordinate field under clipping and perspective 0.082s
+  + nonlinear mapping differs from legacy vertex color interpolation 0.012s
+  + invalid samples do not renormalize interiors over the remaining vertices 0.010s
+  + split scales and opacity are evaluated at fragments before composition 0.015s
+scalafim.surface.view.raster.SurfaceTextureSamplerSuite:
+  + POT mips and fractional LOD have independently specified color averages 0.003s
+  + mip reduction preserves premultiplied color through transparent checker texels 0.001s
+  + odd dimensions use explicit area averaging without losing the final row 0.000s
+scalafim.surface.view.raster.SurfaceCompositionRasterSuite:
+  + two crossing surfaces share depth and identify the original instance independent of submission order 0.008s
+  + four views reuse one mesh and preserve distinct view and instance picks 0.002s
+  + changing one camera leaves the other panel's pixels unchanged 0.003s
+  + legacy lowering preserves contained viewport pixels and scientific picks on a wide canvas 0.003s
+scalafim.surface.view.raster.SurfaceFaceRasterSuite:
+  + adjacent faces retain constant color and original picks across their shared edge 0.054s
+  + a face overlay blends with the surface base without leaking into its neighbor 0.009s
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.010s
+  + reference backend publishes stable capabilities and explicit caveats 0.000s
+  + unlit asymmetric landmark image and picks are deterministic 0.003s
+  + advertised lighting produces ambient and directional Lambert pixels 0.001s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.005s
+  + world translation preserves framing, pixels, and picks 0.001s
+  + depth buffering keeps the nearer face independent of draw order 0.001s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.001s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.001s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.001s
+  + overlays composite in model order with exact packed source-over semantics 0.001s
+  + bilateral slots keep left and right surface picks distinct 0.001s
+  + raster receipts expose phase timings and exact work counters 0.001s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.011s
+scalafim.surface.view.raster.SurfaceFragmentCompositionSuite:
+  + all blend modes compose independently mapped layers at the fragment 0.026s
+  + thresholded scalar overlay reveals the independently interpolated curvature underlay 0.019s
+  + nearest regions do not flatten a coexisting color-interpolated layer 0.019s
+  + lighting uses the normalized interpolated normal after composition 0.001s
+  + face samples compose with scalar fields without face-to-vertex conversion 0.006s
+  + network pixels keep their own color and identity over a scalar and nearest surface 0.025s
+scalafim.surface.view.raster.SurfaceNearestRasterSuite:
+  + nearest regions match original triangle barycentrics under orthographic and perspective views 0.108s
+  + face and nearest layers blend as constant samples within each region 0.017s
+  + the exact centroid tie uses the smallest scientific id even with permuted face order 0.002s
+scalafim.surface.view.raster.SurfaceDecorationRasterSuite:
+  + pixel disk draws at its declared size and returns decoration identity without changing scientific buffers 0.024s
+  + foreground surface occludes a depth-tested marker but explicit overlay remains visible 0.021s
+  + transparent label texels preserve the surface and labels pass through picking 0.013s
+  + stale camera/size geometry and invalid buffers fail before rendering 0.002s
+  + shared annotation ray picking agrees with raster visibility and coplanar tie ownership 0.025s
+[info] Passed: Total 41, Failed 0, Errors 0, Passed 41
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] surfaceViewRasterJS/test: exit 0 in 4.9s
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-graphics/21.0.5/javafx-graphics-21.0.5-mac-aarch64.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+scalafim.surface.view.javafx.JavaFxAdaptiveAtlasSuite:
+  + adaptive attribute counts refuse overflow before allocation 0.015s
+  + combined morph, colour and lighting update agrees with cold final construction 0.303s
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.168s
+  + cyclic anchors avoid needless subdivision without duplicating source vertices 0.006s
+  + saturated RGB uses midpoint fallback and morphs shared source plus synthetic vertices 0.007s
+  + anchor-only colour changes reuse geometry; split changes refuse before mutation 0.005s
+  + resource admission charges actual adaptive faces, including fallback 0.003s
+  + mixed one/four-child layouts preserve winding and source identities across chunk boundaries 0.006s
+scalafim.surface.view.javafx.JavaFxAffineAtlasSuite:
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.11s
+  + independent sampler retains the known legacy diagonal failure as a discriminating control 0.002s
+  + subdivision respects atlas chunks, original face identity, winding and actual resource counts 0.007s
+  + colour and geometry updates retain topology and recompute midpoint data 0.005s
+  + encoding and expanded resource budget are admitted before native allocation 0.004s
+  + opaque gate examines final channels and constant updates keep the same midpoint mesh 0.002s
+scalafim.surface.view.javafx.JavaFxSurfaceScalarSuite:
+  + production JavaFX admission and atlas construction reject scalar fragments before allocation 0.031s
+scalafim.surface.view.javafx.JavaFxSurfaceCompositionSuite:
+  + toolkit-free preflight rejects unsupported fragment and clipping policies before native mutation 0.024s
+  + resource preflight retains declared resource identities for repeated instances 0.007s
+  + shared atlas refuses per-view lighting disagreement 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceApproximationSuite:
+  + preparation preserves original-face coordinates and reports generated allocation 0.34s
+  + mixed nearest/scalar preparation uses original positions after subdivision 0.328s
+  + small budgets fail before native allocation and plain plans retain the legacy path 0.005s
+  + constant display normals remain perpendicular to vertical faces for native tangent frames 0.141s
+  + normal changes have distinct derived identities even when positions are unchanged 0.265s
+  + native indexing and texture arithmetic reject oversized configurations before allocation 0.001s
+  + derived render faces retain original identity at arbitrary native packet indices 0.101s
+  + lit nearest cells approximate legacy corner shading and retain original provenance 0.023s
+  + varying legacy colors obey byte budgets and constant unlit categories retain their mesh 0.002s
+scalafim.surface.view.javafx.JavaFxSurfaceProbeSuite:
+  + JavaFX consumes CPU-projected fields and network tubes as ordinary resources 0.255s
+  + JavaFX capability mapping is explicit about admission and clipping 0.012s
+  + runtime receipt parses the observed Prism pipeline rather than trusting the request 0.009s
+  + stock Metal admission fails closed on fallback, version drift, and module mutation 0.02s
+  + atlas configuration rejects unsafe sizes 0.001s
+  + production backend refuses affine encodings before JavaFX access 0.002s
+  + default atlas configuration preserves legacy native-Phong semantics 0.001s
+  + explicit world-vertex Lambert uses anatomical normals and remains self-illuminated when lit 0.002s
+  + world-vertex Lambert alone makes pure lighting and morph changes update atlases 0.013s
+  + publication preset configures an exact high-resolution snapshot 0.004s
+  + POINT_NORMAL_TEXCOORD mesh and direct per-face atlas use supported JavaFX APIs 0.003s
+  + lit and unlit material modes bind only the selected JavaFX material map 0.002s
+  + style and data updates touch atlases without rebuilding geometry 0.001s
+  + camera motion updates no mesh and no atlas 0.003s
+  + constant face colors eliminate texture derivatives; varying updates restore interpolation without rebuilding geometry 0.003s
+  + topology-preserving geometry changes mutate points and normals without rebuilding atlases 0.003s
+  + orthographic plans select a parallel camera without rebuilding resources 0.003s
+  + large face sets chunk at the configured safe texture capacity 0.002s
+  + face tuples retain point, normal, and face-local atlas indices 0.001s
+  + toolkit-free programs classify camera, layer, material, and geometry dirt exactly 0.013s
+  + production interpreter rejects non-Application-Thread access 0.001s
+  + world clipping is rejected explicitly before JavaFX interpretation 0.001s
+  + viewport fitting changes invalidate layout without uploading geometry or changing the camera 0.002s
+  + native layout consumes compiled x/y projection independently on rectangular legacy viewports 0.002s
+[info] Passed: Total 51, Failed 0, Errors 0, Passed 51
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 0 in 6.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-composition/modules/surface-view-three/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-composition/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-test-fastopt
+scalafim.surface.view.three.ThreeSurfaceBackendSuite:
+  + native depth fixture covers its full pixel and strictly separates near and far depth 0.003s
+  + fractional viewport projection matches logical pixel positions at native device ratios 0.002s
+  + occupied depth conditioning preserves screen coordinates and separates close perspective surfaces 0.001s
+  + occupied depth conditioning retains reached clip planes and rejects uncertain eye crossings 0.001s
+  + depth conditioning uses a common interval for translated and overlapping draw slots 0.001s
+  + Three adapter consumes CPU-projected fields and network tubes as ordinary resources 0.017s
+  + GPU projection capability is explicit and unsupported policies fail before WebGL interpretation 0.001s
+  + publication preset configures an exact browser canvas size 0.000s
+  + full-frame clearing disables the stale bilateral scissor before clearing 0.000s
+  + typed runtime clear colour survives resize and draw cycles 0.001s
+  + disposal forces WebGL context loss exactly once and reports the context as lost 0.000s
+  + rejected depth admission releases its probe resources, renderer, and context exactly once 0.001s
+  + depth probe constructor failure releases already-built resources, renderer, and context exactly once 0.000s
+  + four composition views reuse one uploaded surface resource and camera-only edits stay upload-clean 0.006s
+  + composition rejects conflicting occurrences before runtime mutation 0.001s
+  + composition-to-legacy transition removes native occurrences before legacy commands 0.001s
+  + decorations validate before native mutation and never reupload scientific resources 0.006s
+  + stale decoration geometry refuses before fake runtime mutation 0.001s
+  + failed decoration replacement clears the old native decoration state 0.002s
+  + draw failure after a successful decoration install is cleared by a later plain render 0.002s
+  + display picking preserves tagged decoration hits without manufacturing a surface id 0.000s
+  + typed compiler separates geometry, color, camera, resize, and on-demand draw dirtiness 0.003s
+  + context absence, loss, disposal, and invalid picks are explicit failures 0.001s
+  + topology-preserving morphs update only retained position and normal buffers 0.002s
+  + world clipping is rejected explicitly before Three.js interpretation 0.001s
+  + picking preserves Three.js face, closest vertex, world point, and surface identity 0.001s
+  + SurfViewJS scalar threshold fixture has the same semantic compositing 0.001s
+  + SurfViewJS label fixture preserves exact categorical colors 0.001s
+  + SurfViewJS multilayer fixture preserves order, opacity, and blend mode 0.001s
+  + fitting policy changes reach the runtime without geometry, colors or camera uploads 0.001s
+  + composition rejects conflicting resource bytes without native commands 0.001s
+scalafim.surface.view.three.ThreeSurfaceScalarSuite:
+  + scalar shaders interpolate the full sample envelope with original face provenance 0.012s
+  + camera changes reuse attributes and style changes upload no geometry 0.002s
+  + nonfinite scalar samples carry a separate contributing-weight flag 0.001s
+  + mapping boundaries that collapse in GPU floats fail before native allocation 0.001s
+  + uncovered samples cannot dilute scalar precision 0.001s
+scalafim.surface.view.three.ThreeVolumeProjectorSuite:
+  + 3D texture transport preserves asymmetric axes and non-cubic dimensions 0.001s
+  + nearest decisions survive float32 half-voxel ties and the upper boundary 0.001s
+  + valid zero and non-finite texels keep the shared sample-accounting policy 0.001s
+  + GPU nearest transport rejects far-outside coordinates before narrowing indices 0.001s
+scalafim.surface.view.three.ThreeSurfaceFaceSuite:
+  + face colors remain constant per triangle in native upload buffers 0.001s
+[info] Passed: Total 41, Failed 0, Errors 0, Passed 41
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewThreeJS/test: exit 0 in 5.8s
+[info] Fast optimizing /private/tmp/scalafim-surface-composition/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt
+[[32msuccess[0m] elapsed: 3 s
+[0J[sbt-warm] surfaceViewThreeJS/fastLinkJS: exit 0 in 3.7s

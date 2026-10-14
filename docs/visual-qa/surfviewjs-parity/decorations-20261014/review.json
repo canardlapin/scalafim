@@ -1,0 +1,8 @@
+{
+  "candidate": "68dc4732fa30a26130d64a210da5c272800738af",
+  "reviewer": "independent lean_expert",
+  "scope": "source correction against85dc8276",
+  "verdict": "accepted",
+  "finding": "Far-first camera-facing label order and opaque-first staging fix reproduced native alpha occlusion. Tilted texture planes rejected.",
+  "limits": "Reviewer ran no builds or browser; native and browser evidence produced and visually inspected by parent."
+}

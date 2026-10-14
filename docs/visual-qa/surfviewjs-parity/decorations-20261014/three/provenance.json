@@ -1,0 +1,10 @@
+{
+  "candidateRoot": "/private/tmp/scalafim-surface-composition",
+  "candidateCommit": "68dc4732fa30a26130d64a210da5c272800738af",
+  "scalaModule": "/private/tmp/scalafim-surface-composition/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js",
+  "scalaModuleSha256": "2e55e345dfc034512090801490540128a57ff19bda30adb7667cbfa5e690d61e",
+  "runnerSha256": "35d9c45d83814ed99b8fb04c2acac6b965fd59e355eb4ee77770b02ab1ddcaf3",
+  "requestedAngleBackend": "metal",
+  "startedAt": "2026-10-14T18:24:44.974Z",
+  "browserVersion": "151.0.7922.34"
+}

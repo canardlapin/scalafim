@@ -379,3 +379,18 @@ retains paired native/raster images, camera-isolation images, raw logs and
 provenance. This establishes view/instance rendering and resource behavior;
 it is not the full SurfViewJS C04 cortex appearance comparison. P3–P5 and the
 complete P6 matrix remain outstanding.
+
+## Annotation landing checkpoint
+
+P3 source `68dc4732fa30a26130d64a210da5c272800738af` passed shared surface-view
+193 tests on each JVM/JS, raster 41 on each, JavaFX 51, and Three.js 41. Native
+probes pass 3,824 JavaFX picking checks and 29 browser checks, including network
+line/tube glyphs, alpha edges and both transparent-label submission orders.
+Independent source review accepted the correction after the label-overlap defect
+was reproduced and fixed. The [annotation gallery](../visual-qa/surfviewjs-parity/decorations-20261014/index.html)
+contains same-scale native/raster comparisons and retains the adverse browser
+filtering and JavaFX label-overlap captures. This qualifies the bounded synthetic
+annotation implementation, not the full C05/C06/C09 SurfViewJS cortex matrix.
+P4 mapping/visibility and P5 linked figures are underway; final core parity remains
+unqualified. Upstream Intaglio display primitives are a local candidate, not yet
+a published dependency.
