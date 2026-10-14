@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T16:46:23.288189+00:00",
+  "finished_utc": "2026-10-14T16:47:00.969822+00:00",
+  "duration_seconds": 37.680926,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fmriWorkflowJVM/compile",
+    "fmriWorkflowJS/compile",
+    "archiveZarrJVM/compile",
+    "archiveZarrJS/compile",
+    "datasetZarrJVM/compile",
+    "datasetZarrJS/compile"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/surfview-parity-logs/recovery-fmri-workflow-02.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": null,
+  "log_bytes": 1481
+}

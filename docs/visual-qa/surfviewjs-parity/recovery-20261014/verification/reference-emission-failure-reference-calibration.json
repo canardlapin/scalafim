@@ -1,0 +1,1148 @@
+{
+  "status": "fail",
+  "candidateQualification": false,
+  "result": {
+    "schema": "scalafim.reference-calibration.v1",
+    "camera": {
+      "projection": "perspective",
+      "eye": [
+        0,
+        0,
+        4
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "fovDegrees": 35,
+      "near": 0.01,
+      "far": 1000,
+      "aspect": 1
+    },
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0,
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "specular": 0,
+      "base": 204,
+      "lightFrame": "world"
+    },
+    "interior": {
+      "x": 96,
+      "y": 96,
+      "width": 64,
+      "height": 64
+    },
+    "specimens": [
+      {
+        "id": "red",
+        "expectedInteriorRgba": [
+          255,
+          0,
+          0,
+          255
+        ],
+        "repeats": [
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          },
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          }
+        ],
+        "maximumRepeatChannelError": 0,
+        "maximumMappingChannelError": 2,
+        "center": [
+          255,
+          2,
+          2,
+          255
+        ]
+      },
+      {
+        "id": "green",
+        "expectedInteriorRgba": [
+          0,
+          255,
+          0,
+          255
+        ],
+        "repeats": [
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          },
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          }
+        ],
+        "maximumRepeatChannelError": 0,
+        "maximumMappingChannelError": 2,
+        "center": [
+          2,
+          255,
+          2,
+          255
+        ]
+      },
+      {
+        "id": "blue",
+        "expectedInteriorRgba": [
+          0,
+          0,
+          255,
+          255
+        ],
+        "repeats": [
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          },
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          }
+        ],
+        "maximumRepeatChannelError": 0,
+        "maximumMappingChannelError": 2,
+        "center": [
+          2,
+          2,
+          255,
+          255
+        ]
+      },
+      {
+        "id": "gray",
+        "expectedInteriorRgba": [
+          204,
+          204,
+          204,
+          255
+        ],
+        "repeats": [
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          },
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          }
+        ],
+        "maximumRepeatChannelError": 0,
+        "maximumMappingChannelError": 0,
+        "center": [
+          204,
+          204,
+          204,
+          255
+        ]
+      },
+      {
+        "id": "curvature-negative",
+        "expectedInteriorRgba": [
+          191,
+          191,
+          191,
+          255
+        ],
+        "repeats": [
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          },
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          }
+        ],
+        "maximumRepeatChannelError": 0,
+        "maximumMappingChannelError": 0,
+        "center": [
+          191,
+          191,
+          191,
+          255
+        ]
+      },
+      {
+        "id": "curvature-positive",
+        "expectedInteriorRgba": [
+          64,
+          64,
+          64,
+          255
+        ],
+        "repeats": [
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          },
+          {
+            "receipt": {
+              "camera": {
+                "position": [
+                  0,
+                  0,
+                  4
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0,
+                  "XYZ"
+                ],
+                "target": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "viewMatrix": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                -4,
+                1
+              ],
+              "projectionMatrix": [
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                3.1715948023632126,
+                0,
+                0,
+                0,
+                0,
+                -1.000020000200002,
+                -1,
+                0,
+                0,
+                -0.02000020000200002,
+                0
+              ],
+              "matrixOrder": "column-major",
+              "width": 256,
+              "height": 256,
+              "profile": {
+                "name": "controlled-unlit",
+                "ambientIntensity": 3.141592653589793,
+                "directionalIntensity": 0,
+                "direction": [
+                  0,
+                  0,
+                  1
+                ],
+                "specular": 0,
+                "base": 204,
+                "lightFrame": "world"
+              },
+              "annotationIds": [],
+              "surfaceIds": [
+                "calibration"
+              ],
+              "outputColorSpace": "srgb",
+              "toneMapping": 0,
+              "antialias": true,
+              "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+            }
+          }
+        ],
+        "maximumRepeatChannelError": 0,
+        "maximumMappingChannelError": 0,
+        "center": [
+          64,
+          64,
+          64,
+          255
+        ]
+      }
+    ]
+  }
+}

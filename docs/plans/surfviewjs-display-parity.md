@@ -140,6 +140,36 @@ P0 builds the minimal reference capture harness before changing rendering. P1
 expands that harness rather than starting another system. After P1, visual
 inspection is part of every stage, not deferred to P6.
 
+The P4 source review fixes several compatibility decisions before implementation:
+
+- Preserve existing scenes with an explicit legacy byte-color pipeline. Add an
+  opt-in display-sRGB/linear-light pipeline, with a document migration that keeps
+  old scenes on the legacy policy. Alpha never receives a color transfer.
+- For ordinary vertex stacks, compose display colors at vertices, decode RGB,
+  interpolate and light in linear space, then encode once. Decoding the final
+  fragment byte color would produce a different result. Reference threshold
+  edges use a separate linear-space overlay stage.
+- Curvature is independently parameterized by brightness, contrast, smoothness
+  and polarity. The reference formula is
+  `brightness - clamp(curvature / smoothness, -.5, .5) * contrast`, clamped to
+  the display range. Keep the existing curvature factory's output unchanged.
+- Reference additive blending is plus-lighter; current Intaglio additive uses
+  an additive channel blend inside source-over. Add a distinct operator rather
+  than changing existing `Additive` semantics.
+- Controlled material profiles explicitly disable specular and emissive terms.
+  The reference's default emissive color `0x0a0a0a` at intensity `.2` otherwise
+  adds two byte levels to nominally zero RGB channels. Observed-default captures
+  retain that behavior.
+- Any initially unsupported pipeline/backend combination returns a typed
+  refusal. Existing JavaFX sampling admission remains in force. A production
+  fallback requires its own visual, interaction and resource evidence.
+
+Independent material probes now cover constant RGB/gray, three curvature
+values, half-light gray, half-opacity white over black, and a black/white
+gradient. On the declared Metal reference environment, all ten specimens have
+zero repeat-capture difference and zero interior error against their analytic
+oracles. This is bounded reference calibration, not candidate display parity.
+
 Generic mappings, legends and 2D composition belong in Intaglio. Surface
 association, scientific IDs, anatomical layout, mapping policy and state belong
 in `surface-view`. Native objects remain in their backends. Add small typed plan
@@ -148,10 +178,13 @@ vertex colors.
 
 ## Fixed display gallery
 
-Use an asymmetric analytic mesh and a checksum-pinned, redistributable bilateral
-cortex with curvature, labels and topology-matched geometry variants. Use seeded
-synthetic scalar/time/network data so scientific values are independently known.
-Record licenses and availability. Missing required assets fail rather than skip.
+Use an asymmetric analytic mesh and the checksum-pinned bilateral fsaverage5
+pial corpus already present in SurfViewJS. It remains external: data-specific
+redistribution terms have not been established. Curvature, labels, scalar/time
+fields and network weights are deterministic synthetic inputs. The morph target
+is a 1.2 expansion around a declared hemisphere anchor with unchanged topology;
+it tests display interpolation and identity, not anatomical inflation. Record
+provenance and availability. Missing required assets fail rather than skip.
 
 | Case | Required visible result and operation |
 | --- | --- |
@@ -162,7 +195,7 @@ Record licenses and availability. Missing required assets fail rather than skip.
 | C05 — parcels/ROI | Categorical fill, continuous parcel values, exterior ROI border, parcel borders/halo, ignored/medial-wall labels, selected parcel highlight/pick. |
 | C06 — annotations | Multiple markers, selected/hover marker, crosshair/label, foreground/occluded cases; persistence through camera/geometry changes. |
 | C07 — clipping/alpha | Axis/oblique planes, flipped keep-side, hidden-part pick rejection, overlapping translucent surfaces/internal geometry, zero-alpha regions and empty/all-hidden layer stacks. |
-| C08 — dynamics | Time frames/interpolated playback; pial/inflated endpoints and midpoint; pause/resume; persistent maps, picks and annotation IDs. |
+| C08 — dynamics | Time frames/interpolated playback; pial/synthetic-expansion endpoints and midpoint; pause/resume; persistent maps, picks and annotation IDs. The historical checkpoint name `inflated` identifies this explicitly synthetic display target. |
 | C09 — networks | Signed weighted edges, node glyphs, weight-dependent width/color, threshold/top-N changes, bilateral/composed placement. |
 | C10 — keys | Continuous/diverging/categorical and effect/confidence 2D mapping/key; threshold/window/palette changes update map and legend together. |
 | C11 — flat maps | Equal-scale 2D geometry, hover/pick, polygon/lasso ROI, linked 3D marker/time. Current SurfViewJS paints uniform triangle fills; scalar-painted flat maps are an extension needing a separate oracle. State synchronization and painted output are distinct checks. |
@@ -178,6 +211,27 @@ initial state, action/checkpoint, expected element masks and metric policy. P1
 freezes the complete matrix before P2–P5. Require one uniquely identified receipt
 per row; missing or duplicate rows fail. The final verdict is the conjunction of
 all required rows and independent visual review, not a sample of gallery images.
+
+The numeric input contract is in `tools/surface-view/parity/frozen-inputs.json`:
+151 checkpoints across 28 rows, generated from reviewed fixture and checkpoint
+sources with input hashes. This freezes inputs, not a passing result. Missing
+route adapters, masks, calibration, and interaction evidence remain failures.
+Run `freeze-inputs.mjs` only after reviewing any contract change; do not regenerate
+inputs to accommodate a candidate's output.
+
+SurfViewJS `OutlineLayer` draws mesh edges whose endpoint labels differ. Core
+pixel comparison uses that explicit compatibility policy, with edge identities
+independently computed from fixture topology and labels. A contour connecting
+edge midpoints is a different geometry policy and must not be mislabeled as the
+same reference output. ROI exterior cases collapse the selected parcels into
+one binary region before generating boundaries, so internal selected-parcel
+boundaries are excluded.
+
+The reference's sharp threshold edge is also a distinct display policy: it
+interpolates shown/hidden signs, placing the boundary halfway along an edge
+between a shown and a masked vertex. It does not locate the scalar isocontour.
+Keep this compatibility policy separate from ScalaFIM's scientifically sampled
+`VertexScalar` interpolation. Neither may silently replace the other.
 
 ## Visual proof protocol
 
@@ -305,7 +359,18 @@ gallery results; a proposed command is not an installed command.
 | Side-by-side gallery and adversarial comparison checks | Pending. |
 | Display parity qualification | Pending; no passing claim. |
 
-Next action: begin P0 in an isolated current-main worktree, capture the three
-baseline cases, identify the minimum coherent recovery/dependency delta, and
-preserve current behavior with affected suites. Land the reviewed recovery
-candidate, then proceed through the named gallery cases.
+Next action: land the reviewed recovery and comparison foundation, complete
+P2 views/instances and native visual probes, then proceed through P3–P5 and the
+full P6 qualification matrix.
+
+## Recovery landing checkpoint
+
+Recovery source `423991bd70439ae1700db29c5d7790432f44255a` passed its affected
+platform tests and final native visual/resource gates and received independent
+source review. The [recovery gallery and evidence](../visual-qa/surfviewjs-parity/recovery-20261014/README.md)
+retain the earlier aggregate compile and JavaFX failures alongside the successful
+focused reruns. The new harness is a P1 foundation; 151 frozen checkpoints are
+not 151 passing receipts. Qualification additionally needs trusted reference,
+environment and artifact-role bindings before the matrix can admit a pass.
+P2 views/instances and native backends are under implementation in an isolated
+worktree; P2–P5 are not yet complete. Continue through those stages and P6.

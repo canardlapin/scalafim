@@ -1,0 +1,37 @@
+{
+  "schema": "scalafim.surface-view-parity-provenance.v1",
+  "purpose": "reference-only material calibration; no candidate qualification",
+  "candidateRoot": "/private/tmp/scalafim-surfview-parity",
+  "candidateCommit": "5260dbc8573a341c1e84aa21b9146c2d4136305f",
+  "candidateTrackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "referenceCommit": "fb60f3705d51d2d74e69ddf71df7000ee9eb5b06",
+  "referenceRelevantDiff": "",
+  "referencePackageLockSha256": "ad41913584c18e7e76d6f612b0c92c04a8feeb834cbb2ed1fd374b83d96b609a",
+  "threeVersion": "0.185.1",
+  "playwrightVersion": "1.62.1",
+  "scalaModule": null,
+  "scalaModuleSha256": null,
+  "runnerSha256": "7cfe4c462382e02e7bf8aba1fb397154c7e45218c0d3c1a08bc14c9013fa94d1",
+  "manifestSha256": "4d8769b06786b55c75b66507e8a72c4ee8dfc915e1e4de69aea7e8482d6c914a",
+  "requestedAngleBackend": "metal",
+  "auditBefore": {
+    "exitCode": 0,
+    "inventory": "No automated top-level browser processes found.\n"
+  },
+  "startedAt": "2026-10-14T16:31:39.420Z",
+  "referenceBundleSha256": "38871512972ecce18a6ed8b09da5aa46af7d2cf8a616ca9fc436f59a0e18a448",
+  "ownedBrowserProcesses": [
+    {
+      "pid": 34380,
+      "ppid": 33841,
+      "command": "/Users/bbuchsbaum/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --use-angle=metal --enable-gpu --user-data-dir=/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/playwright_chromiumdev_profile-GBwgW6 --remote-debugging-pipe --no-startup-window"
+    }
+  ],
+  "referenceCalibration": "fail",
+  "auditAfter": {
+    "exitCode": 0,
+    "inventory": "No automated top-level browser processes found.\n"
+  },
+  "remainingOwnedBrowserProcesses": [],
+  "finishedAt": "2026-10-14T16:31:49.218Z"
+}

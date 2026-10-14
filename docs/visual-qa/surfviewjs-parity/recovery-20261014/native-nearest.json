@@ -1,0 +1,23 @@
+{
+  "name": "Nearest",
+  "status": "pass",
+  "result": {
+    "status": "pass",
+    "checked": 179,
+    "maximumChannelError": 0,
+    "firstFace": 0,
+    "firstVertex": 1,
+    "secondFace": 1,
+    "secondVertex": 3,
+    "geometryUploadsOnTimepoint": 0,
+    "geometryUpdatesOnTimepoint": 0,
+    "colorUploadsOnTimepoint": 1,
+    "cameraOnlyResourceUploads": 0,
+    "perspectivePicks": 174,
+    "lighting": {
+      "checked": 152,
+      "maximumChannelError": 1,
+      "passed": true
+    }
+  }
+}

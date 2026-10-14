@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T16:59:13.801792+00:00",
+  "finished_utc": "2026-10-14T16:59:24.026307+00:00",
+  "duration_seconds": 10.224291,
+  "command": [
+    "node",
+    "tools/surface-view/parity/run-parity.mjs",
+    "--angle",
+    "metal",
+    "--native-probes",
+    "--reference-calibration",
+    "--scalafim-module",
+    "/private/tmp/scalafim-surfview-parity/examples/surface-view/js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js",
+    "--out",
+    "/private/tmp/surfview-parity-candidate-metal-04"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/surfview-parity-logs/candidate-metal-04.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": null,
+  "log_bytes": 1712
+}
