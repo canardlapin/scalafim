@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T21:08:12.682357+00:00",
+  "finished_utc": "2026-10-14T21:08:20.985108+00:00",
+  "duration_seconds": 8.302693,
+  "command": [
+    "env",
+    "JAVA_TOOL_OPTIONS=-Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display",
+    "SBT_WARM_HEAP=6g",
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxLinkedViewProbe /private/tmp/scalafim-javafx-linked-42"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-visibility",
+  "log": "/private/tmp/surfview-parity-logs/javafx-linked-42.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 300.0,
+  "log_bytes": 1778
+}

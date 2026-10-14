@@ -1,0 +1,9 @@
+{
+  "candidateCommit": "53feab621013d0c148a5b5d2567408a153354218",
+  "referenceCommit": "fb60f3705d51d2d74e69ddf71df7000ee9eb5b06",
+  "moduleSha256": "78e61d3954506bceaaaa7a4f95a077c5d390559aee18b424757859cae134015c",
+  "referenceBundleSha256": "38871512972ecce18a6ed8b09da5aa46af7d2cf8a616ca9fc436f59a0e18a448",
+  "runnerSha256": "f0b01374c9c9ea4a344a56f5e36e1ceac1e08af78f5d0a1d32ab3b470273a4d0",
+  "startedAt": "2026-10-14T21:01:27.805Z",
+  "referenceResizePolicy": "public updateROI reprojects stored map-space outline after resize"
+}

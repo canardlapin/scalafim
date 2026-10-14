@@ -1,0 +1,61 @@
+{
+  "scope": "Three.js decorated captures versus actual JavaFX raster-host captures at the same state; not an independent shared-compiler oracle. Strict raster antialiasing differences remain failures.",
+  "rows": [
+    {
+      "name": "initial",
+      "foregroundIoU": 0.9872832595424313,
+      "maximumChannelError": 126,
+      "meanMaximumChannelError": 0.8129539489746094,
+      "strictPass": false
+    },
+    {
+      "name": "flat-to-four-views",
+      "foregroundIoU": 0.9873282750459992,
+      "maximumChannelError": 127,
+      "meanMaximumChannelError": 0.8134078979492188,
+      "strictPass": false
+    },
+    {
+      "name": "interpolated-time",
+      "foregroundIoU": 0.9873282750459992,
+      "maximumChannelError": 104,
+      "meanMaximumChannelError": 0.7729415893554688,
+      "strictPass": false
+    },
+    {
+      "name": "paused-morph-midpoint",
+      "foregroundIoU": 0.9943319925143582,
+      "maximumChannelError": 104,
+      "meanMaximumChannelError": 0.6438522338867188,
+      "strictPass": false
+    },
+    {
+      "name": "three-to-flat",
+      "foregroundIoU": 0.9943748016929373,
+      "maximumChannelError": 104,
+      "meanMaximumChannelError": 0.6429290771484375,
+      "strictPass": false
+    },
+    {
+      "name": "morph-endpoint",
+      "foregroundIoU": 0.9949201708503689,
+      "maximumChannelError": 143,
+      "meanMaximumChannelError": 0.6502723693847656,
+      "strictPass": false
+    },
+    {
+      "name": "restored",
+      "foregroundIoU": 0.9949201708503689,
+      "maximumChannelError": 143,
+      "meanMaximumChannelError": 0.6502723693847656,
+      "strictPass": false
+    },
+    {
+      "name": "resumed",
+      "foregroundIoU": 0.9949201708503689,
+      "maximumChannelError": 167,
+      "meanMaximumChannelError": 0.6687545776367188,
+      "strictPass": false
+    }
+  ]
+}

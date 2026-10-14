@@ -1,0 +1,147 @@
+{
+  "status": "pass",
+  "checks": [
+    {
+      "file": "linked-surface-1x.png",
+      "dimensions": [
+        1200,
+        900
+      ],
+      "transparentCorner": true,
+      "markers": [
+        {
+          "pixels": 77,
+          "bounds": [
+            852,
+            107,
+            861,
+            116
+          ]
+        },
+        {
+          "pixels": 77,
+          "bounds": [
+            411,
+            101,
+            419,
+            110
+          ]
+        },
+        {
+          "pixels": 77,
+          "bounds": [
+            416,
+            509,
+            425,
+            518
+          ]
+        },
+        {
+          "pixels": 73,
+          "bounds": [
+            852,
+            533,
+            861,
+            542
+          ]
+        }
+      ],
+      "ppiReceipt": 96
+    },
+    {
+      "file": "linked-surface-2x.png",
+      "dimensions": [
+        2400,
+        1800
+      ],
+      "transparentCorner": true,
+      "markers": [
+        {
+          "pixels": 306,
+          "bounds": [
+            1703,
+            1067,
+            1722,
+            1086
+          ]
+        },
+        {
+          "pixels": 307,
+          "bounds": [
+            821,
+            202,
+            840,
+            221
+          ]
+        },
+        {
+          "pixels": 307,
+          "bounds": [
+            832,
+            1019,
+            851,
+            1038
+          ]
+        },
+        {
+          "pixels": 306,
+          "bounds": [
+            1704,
+            213,
+            1723,
+            232
+          ]
+        }
+      ],
+      "ppiReceipt": 192
+    },
+    {
+      "file": "linked-bivariate-1x.png",
+      "dimensions": [
+        1200,
+        900
+      ],
+      "transparentCorner": true,
+      "markers": [
+        {
+          "pixels": 77,
+          "bounds": [
+            852,
+            107,
+            861,
+            116
+          ]
+        },
+        {
+          "pixels": 77,
+          "bounds": [
+            411,
+            101,
+            419,
+            110
+          ]
+        },
+        {
+          "pixels": 77,
+          "bounds": [
+            416,
+            509,
+            425,
+            518
+          ]
+        },
+        {
+          "pixels": 73,
+          "bounds": [
+            852,
+            533,
+            861,
+            542
+          ]
+        }
+      ],
+      "ppiReceipt": 96
+    }
+  ],
+  "mask": "Exact declared marker RGB in fixed left75percent panel area; legend excluded by specification."
+}

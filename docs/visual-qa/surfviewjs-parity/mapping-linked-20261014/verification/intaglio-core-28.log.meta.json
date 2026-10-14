@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T20:41:58.938583+00:00",
+  "finished_utc": "2026-10-14T20:42:16.389786+00:00",
+  "duration_seconds": 17.450985,
+  "command": [
+    "sbt",
+    "coreJVM/test",
+    "coreJS/test"
+  ],
+  "cwd": "/private/tmp/intaglio-surface-display",
+  "log": "/private/tmp/surfview-parity-logs/intaglio-core-28.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 116893
+}

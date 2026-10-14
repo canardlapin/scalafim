@@ -1,0 +1,13 @@
+{
+  "purpose": "16 bounded analytic P4 specimens; not frozen cortex matrix qualification",
+  "candidateCommit": "53feab621013d0c148a5b5d2567408a153354218",
+  "referenceCommit": "fb60f3705d51d2d74e69ddf71df7000ee9eb5b06",
+  "candidateTrackedDiffSha256": "39b986ed1dd3c329fef351b2fb039354840e3f468e9fbe8cf9a231c13b4e208c",
+  "moduleSha256": "78e61d3954506bceaaaa7a4f95a077c5d390559aee18b424757859cae134015c",
+  "runnerSha256": "19e3361ab2ed5841e9fd2cf8fb8c876f5218cba55f41eca75a1948872a24bdbf",
+  "fixtureSha256": "b37bb73442b351efdfb24163ef26569e79a98d85222245b99310db54b7bc7e43",
+  "referenceAdapterSha256": "2a212a7bf981d073a301cc7ccf5fb9913bc66dbddc38c9b507f82854d555366f",
+  "startedAt": "2026-10-14T21:00:23.008Z",
+  "referenceBundleSha256": "38871512972ecce18a6ed8b09da5aa46af7d2cf8a616ca9fc436f59a0e18a448",
+  "browserVersion": "151.0.7922.34"
+}

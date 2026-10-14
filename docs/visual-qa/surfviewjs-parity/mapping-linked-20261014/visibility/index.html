@@ -1,0 +1,807 @@
+<!doctype html><meta charset="utf-8"><title>Surface visibility comparison</title><style>body{font:16px system-ui;max-width:850px;margin:2em auto}img{width:768px;max-width:100%;border:1px solid #aaa}pre{white-space:pre-wrap}</style><h1>Surface mapping and visibility</h1><p>Each row: SurfViewJS / ScalaFIM Three.js / ScalaFIM Canvas reference raster. Synthetic planes, controlled lighting. Full-frame edge differences remain recorded. This is not complete cortex parity.</p><h2>gray</h2><img src="gray-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 64,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 64,
+        "meanMaximumChannelError": 0.791015625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>gray-half-light</h2><img src="gray-half-light-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 82,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 82,
+        "meanMaximumChannelError": 1.01348876953125
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>black-white-gradient</h2><img src="black-white-gradient-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41408,
+        "candidateForeground": 41408,
+        "foregroundIntersection": 41408,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9854134466769706,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 127,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41408,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9854134466769706,
+        "maximumChannelError": 127,
+        "meanMaximumChannelError": 0.63677978515625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>mixed-gradient</h2><img src="mixed-gradient-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 1,
+    "interiorMean": 0.006103515625,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 3,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41408,
+        "candidateForeground": 41408,
+        "foregroundIntersection": 41408,
+        "foregroundIoU": 1,
+        "maximumChannelError": 3,
+        "meanMaximumChannelError": 0.0111083984375
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9854134466769706,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 127,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41408,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9854134466769706,
+        "maximumChannelError": 127,
+        "meanMaximumChannelError": 0.63677978515625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>encoded-layer-opacity</h2><img src="encoded-layer-opacity-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 64,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 64,
+        "meanMaximumChannelError": 0.791015625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>plus-lighter</h2><img src="plus-lighter-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 127,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 127,
+        "meanMaximumChannelError": 1.5697021484375
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>curvature-negative</h2><img src="curvature-negative-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 32,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 32,
+        "meanMaximumChannelError": 0.3955078125
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>curvature-zero</h2><img src="curvature-zero-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 64,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 64,
+        "meanMaximumChannelError": 0.791015625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>curvature-positive</h2><img src="curvature-positive-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 96,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 96,
+        "meanMaximumChannelError": 1.1865234375
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>world-clip</h2><img src="world-clip-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 20808,
+        "candidateForeground": 20808,
+        "foregroundIntersection": 20808,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 64,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 20808,
+        "candidateForeground": 20402,
+        "foregroundIntersection": 20402,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 64,
+        "meanMaximumChannelError": 0.3955078125
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>world-light</h2><img src="world-light-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 42822,
+        "candidateForeground": 42822,
+        "foregroundIntersection": 42822,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9922002708887955,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 66,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 42822,
+        "candidateForeground": 42488,
+        "foregroundIntersection": 42488,
+        "foregroundIoU": 0.9922002708887955,
+        "maximumChannelError": 66,
+        "meanMaximumChannelError": 0.299102783203125
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>world-light-orbit</h2><img src="world-light-orbit-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 37128,
+        "candidateForeground": 37128,
+        "foregroundIntersection": 37128,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9901960784313726,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 66,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 37128,
+        "candidateForeground": 36764,
+        "foregroundIntersection": 36764,
+        "foregroundIoU": 0.9901960784313726,
+        "maximumChannelError": 66,
+        "meanMaximumChannelError": 0.569000244140625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>threshold-edge</h2><img src="threshold-edge-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 127,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 127,
+        "meanMaximumChannelError": 1.005279541015625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>threshold-edge-opacity</h2><img src="threshold-edge-opacity-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 60,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 60,
+        "meanMaximumChannelError": 0.59283447265625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>threshold-equality</h2><img src="threshold-equality-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 41616,
+        "foregroundIntersection": 41616,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 0,
+    "interiorMean": 0,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9804882737408689,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 127,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41616,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9804882737408689,
+        "maximumChannelError": 127,
+        "meanMaximumChannelError": 0.6557769775390625
+      },
+      "elements": []
+    }
+  }
+}</pre><h2>bivariate-confidence</h2><img src="bivariate-confidence-side-by-side.png"><pre>{
+  "native": {
+    "interiorMax": 1,
+    "interiorMean": 0.12841796875,
+    "full": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41608,
+        "candidateForeground": 41608,
+        "foregroundIntersection": 41608,
+        "foregroundIoU": 1,
+        "maximumChannelError": 1,
+        "meanMaximumChannelError": 0.1199951171875
+      },
+      "elements": []
+    }
+  },
+  "raster": {
+    "interiorMax": 1,
+    "interiorMean": 0.12841796875,
+    "full": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9806767929244377,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 120,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 256,
+        "height": 256,
+        "referenceForeground": 41608,
+        "candidateForeground": 40804,
+        "foregroundIntersection": 40804,
+        "foregroundIoU": 0.9806767929244377,
+        "maximumChannelError": 120,
+        "meanMaximumChannelError": 0.6575775146484375
+      },
+      "elements": []
+    }
+  }
+}</pre>

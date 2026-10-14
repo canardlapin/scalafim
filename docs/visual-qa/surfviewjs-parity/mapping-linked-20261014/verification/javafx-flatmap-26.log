@@ -1,0 +1,96 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-graphics/21.0.5/javafx-graphics-21.0.5-mac-aarch64.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+scalafim.surface.view.javafx.JavaFxAdaptiveAtlasSuite:
+  + adaptive attribute counts refuse overflow before allocation 0.011s
+  + combined morph, colour and lighting update agrees with cold final construction 0.264s
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.118s
+  + cyclic anchors avoid needless subdivision without duplicating source vertices 0.004s
+  + saturated RGB uses midpoint fallback and morphs shared source plus synthetic vertices 0.003s
+  + anchor-only colour changes reuse geometry; split changes refuse before mutation 0.003s
+  + resource admission charges actual adaptive faces, including fallback 0.002s
+  + mixed one/four-child layouts preserve winding and source identities across chunk boundaries 0.003s
+scalafim.surface.view.javafx.JavaFxAffineAtlasSuite:
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.063s
+  + independent sampler retains the known legacy diagonal failure as a discriminating control 0.0s
+  + subdivision respects atlas chunks, original face identity, winding and actual resource counts 0.003s
+  + colour and geometry updates retain topology and recompute midpoint data 0.001s
+  + encoding and expanded resource budget are admitted before native allocation 0.002s
+  + opaque gate examines final channels and constant updates keep the same midpoint mesh 0.0s
+scalafim.surface.view.javafx.JavaFxSurfaceScalarSuite:
+  + production JavaFX admission and atlas construction reject scalar fragments before allocation 0.022s
+scalafim.surface.view.javafx.JavaFxSurfaceCompositionSuite:
+  + toolkit-free preflight rejects unsupported fragment and clipping policies before native mutation 0.019s
+  + resource preflight retains declared resource identities for repeated instances 0.005s
+  + shared atlas refuses per-view lighting disagreement 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceApproximationSuite:
+  + preparation preserves original-face coordinates and reports generated allocation 0.265s
+  + mixed nearest/scalar preparation uses original positions after subdivision 0.217s
+  + small budgets fail before native allocation and plain plans retain the legacy path 0.003s
+  + constant display normals remain perpendicular to vertical faces for native tangent frames 0.089s
+  + normal changes have distinct derived identities even when positions are unchanged 0.152s
+  + native indexing and texture arithmetic reject oversized configurations before allocation 0.0s
+  + derived render faces retain original identity at arbitrary native packet indices 0.062s
+  + lit nearest cells approximate legacy corner shading and retain original provenance 0.013s
+  + varying legacy colors obey byte budgets and constant unlit categories retain their mesh 0.002s
+scalafim.surface.view.javafx.JavaFxSurfaceProbeSuite:
+  + JavaFX consumes CPU-projected fields and network tubes as ordinary resources 0.095s
+  + JavaFX capability mapping is explicit about admission and clipping 0.005s
+  + runtime receipt parses the observed Prism pipeline rather than trusting the request 0.003s
+  + stock Metal admission fails closed on fallback, version drift, and module mutation 0.007s
+  + atlas configuration rejects unsafe sizes 0.001s
+  + production backend refuses affine encodings before JavaFX access 0.0s
+  + default atlas configuration preserves legacy native-Phong semantics 0.0s
+  + explicit world-vertex Lambert uses anatomical normals and remains self-illuminated when lit 0.001s
+  + world-vertex Lambert alone makes pure lighting and morph changes update atlases 0.004s
+  + publication preset configures an exact high-resolution snapshot 0.002s
+  + POINT_NORMAL_TEXCOORD mesh and direct per-face atlas use supported JavaFX APIs 0.001s
+  + lit and unlit material modes bind only the selected JavaFX material map 0.001s
+  + style and data updates touch atlases without rebuilding geometry 0.001s
+  + camera motion updates no mesh and no atlas 0.001s
+  + constant face colors eliminate texture derivatives; varying updates restore interpolation without rebuilding geometry 0.001s
+  + topology-preserving geometry changes mutate points and normals without rebuilding atlases 0.001s
+  + orthographic plans select a parallel camera without rebuilding resources 0.001s
+  + large face sets chunk at the configured safe texture capacity 0.001s
+  + face tuples retain point, normal, and face-local atlas indices 0.001s
+  + toolkit-free programs classify camera, layer, material, and geometry dirt exactly 0.004s
+  + production interpreter rejects non-Application-Thread access 0.0s
+  + world clipping is rejected explicitly before JavaFX interpretation 0.0s
+  + viewport fitting changes invalidate layout without uploading geometry or changing the camera 0.0s
+  + native layout consumes compiled x/y projection independently on rectangular legacy viewports 0.001s
+[info] Passed: Total 51, Failed 0, Errors 0, Passed 51
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 0 in 7.4s
+[info] running (fork) scalafim.surface.view.javafx.JavaFxFlatMapProbe /private/tmp/scalafim-flatmap-javafx-26
+[error] Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+[error] Oct 14, 2026 4:39:26 P.M. com.sun.javafx.application.PlatformImpl startup
+[error] WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @2cb4c3ab'
+[error] WARNING: A restricted method in java.lang.System has been called
+[error] WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/fc4494fe/d2189dfd/javafx-graphics-21.0.5-mac-aarch64.jar)
+[error] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[error] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::allocateMemory has been called by com.sun.marlin.OffHeapArray (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/fc4494fe/d2189dfd/javafx-graphics-21.0.5-mac-aarch64.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class com.sun.marlin.OffHeapArray
+[error] WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+[info] flatmap_stage=plain width=100 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/plain.png
+[info] flatmap_stage=hover width=100 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/hover.png
+[info] flatmap_stage=selected width=100 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/selected.png
+[info] flatmap_stage=polygon-roi width=100 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/polygon-roi.png
+[info] flatmap_stage=resized width=200 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/resized.png
+[info] flatmap_stage=synced-time-selection width=200 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/synced-time-selection.png
+[info] flatmap_stage=lasso-roi width=200 height=100 png=/private/tmp/scalafim-flatmap-javafx-26/lasso-roi.png
+[info] flatmap_events hover=Hover(facewise-left,Some(0)) click=Select(Select(facewise-left,0)) polygon=0,1,2,3 lasso=0,3 timepoint=1 selection=Some(2) style=JavaFxSurfaceFlatMapStyle(transparent,rgba(160, 164, 170, 0.35),rgba(255, 255, 255, 0.22),#58c4ff,#ffd166,#ffd166,4.0)
+[[32msuccess[0m] elapsed: 4 s
+[0J[sbt-warm] surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxFlatMapProbe /private/tmp/scalafim-flatmap-javafx-26: exit 0 in 4.0s

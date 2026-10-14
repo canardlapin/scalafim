@@ -1,0 +1,156 @@
+[
+  {
+    "stage": "plain",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 8,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 100,
+      "height": 100,
+      "referenceForeground": 3446,
+      "candidateForeground": 3446,
+      "foregroundIntersection": 3446,
+      "foregroundIoU": 1,
+      "maximumChannelError": 8,
+      "meanMaximumChannelError": 0.1079
+    },
+    "elements": []
+  },
+  {
+    "stage": "hover",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 16,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 100,
+      "height": 100,
+      "referenceForeground": 3481,
+      "candidateForeground": 3481,
+      "foregroundIntersection": 3481,
+      "foregroundIoU": 1,
+      "maximumChannelError": 16,
+      "meanMaximumChannelError": 0.1265
+    },
+    "elements": []
+  },
+  {
+    "stage": "selected",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 8,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 100,
+      "height": 100,
+      "referenceForeground": 3500,
+      "candidateForeground": 3500,
+      "foregroundIntersection": 3500,
+      "foregroundIoU": 1,
+      "maximumChannelError": 8,
+      "meanMaximumChannelError": 0.112
+    },
+    "elements": []
+  },
+  {
+    "stage": "polygon-roi",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 113,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 100,
+      "height": 100,
+      "referenceForeground": 3983,
+      "candidateForeground": 3983,
+      "foregroundIntersection": 3983,
+      "foregroundIoU": 1,
+      "maximumChannelError": 113,
+      "meanMaximumChannelError": 2.1021
+    },
+    "elements": []
+  },
+  {
+    "stage": "resized",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 113,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 200,
+      "height": 100,
+      "referenceForeground": 15300,
+      "candidateForeground": 15300,
+      "foregroundIntersection": 15300,
+      "foregroundIoU": 1,
+      "maximumChannelError": 113,
+      "meanMaximumChannelError": 2.1531
+    },
+    "elements": []
+  },
+  {
+    "stage": "synced-time-selection",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 113,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 200,
+      "height": 100,
+      "referenceForeground": 15300,
+      "candidateForeground": 15300,
+      "foregroundIntersection": 15300,
+      "foregroundIoU": 1,
+      "maximumChannelError": 113,
+      "meanMaximumChannelError": 2.15665
+    },
+    "elements": []
+  },
+  {
+    "stage": "lasso-roi",
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 255,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 200,
+      "height": 100,
+      "referenceForeground": 15332,
+      "candidateForeground": 15333,
+      "foregroundIntersection": 15332,
+      "foregroundIoU": 0.9999347811908954,
+      "maximumChannelError": 255,
+      "meanMaximumChannelError": 2.63885
+    },
+    "elements": []
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T20:36:46.470267+00:00",
+  "finished_utc": "2026-10-14T20:37:10.772203+00:00",
+  "duration_seconds": 24.301718,
+  "command": [
+    "env",
+    "JAVA_TOOL_OPTIONS=-Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display",
+    "SBT_WARM_HEAP=6g",
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJVM/test",
+    "surfaceViewJS/test",
+    "surfaceViewRasterJVM/test",
+    "surfaceViewRasterJS/test",
+    "surfaceViewThreeJS/test",
+    "surfaceViewThreeJS/fastLinkJS",
+    "surfaceViewJavafxJVM/test",
+    "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxFlatMapProbe /private/tmp/scalafim-flatmap-javafx-23"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-visibility",
+  "log": "/private/tmp/surfview-parity-logs/mapping-linked-23.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 44734
+}

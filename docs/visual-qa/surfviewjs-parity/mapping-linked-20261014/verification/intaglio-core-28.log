@@ -1,0 +1,1635 @@
+[info] welcome to sbt 1.12.9 (Homebrew Java 25.0.1)
+[info] loading settings for project intaglio-surface-display-build from plugins.sbt...
+[info] loading project definition from /private/tmp/intaglio-surface-display/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (20572 settings) ...
+[info] set current project to intaglio (in build file:/private/tmp/intaglio-surface-display/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/test-classes ...
+[info] done compiling
+intaglio.RasterSuite:
+  + raster dimensions reject non-positive and overflowing shapes 0.017s
+  + rgba32 is a checked packed pixel with exact byte channels 0.002s
+  + unsafe packed-array construction is an explicit zero-copy ownership transfer 0.004s
+  + raster images own their packed storage and compare by pixel value 0.006s
+  + raster constructors validate pixel counts and coordinates 0.003s
+  + RGBA colors quantize alpha to the nearest raster byte 0.0s
+intaglio.AesEnvSuite:
+  + AesSpec is the canonical mapping and reports bound aesthetics in declaration order 0.016s
+  + typed updates preserve the precise public record accessors without conversion 0.002s
+  + typed lookup returns values at the aesthetic's own type 0.0s
+  + AesEnv remains a source-compatible alias without allocating a second representation 0.002s
+  + bind registers a scaled binding once and rejects a duplicate 0.015s
+  + bind allows replacing an unscaled binding with a scaled one 0.002s
+  + inherit prefers scaled local, then scaled parent, then local, then parent 0.002s
+  + AesSpec inheritance preserves typed field access 0.001s
+  + ScaleRegistry registers each scaled binding exactly once, in declaration order 0.007s
+  + ScaleRegistry inspects an untrained spec without pretending it is a trained scale 0.003s
+  + registry lookup by aesthetic finds the registered scale 0.001s
+intaglio.ExtentDifferenceSuite:
+  + the full extent minus a fixed margin resolves across resizes 0.017s
+  + a negative resolution is a typed error naming the expression and value, not a clamp 0.005s
+  + a viewport sized by a difference insets its child frame, and refuses when too small 0.04s
+  + a location offset by a negative difference is refused at resolution 0.005s
+  + rounding noise in an exactly cancelling difference resolves to zero 0.0s
+  + expressions without a difference keep the construction-time proof 0.002s
+intaglio.TextExtentSuite:
+  + unrotated, justification places the layout box the way backends anchor text 0.017s
+  + 90 degrees in a y-up scene reads upward, the box above and left of a bottom-left anchor 0.001s
+  + -90 degrees reads downward, the box below and right of a bottom-left anchor 0.0s
+  + 180 degrees mirrors the box through the anchor 0.001s
+  + 45 degrees: the extent is (w + h) / sqrt 2 on both axes, placed by the rotated anchor 0.0s
+  + a y-down frame turns the other way, and angles are periodic 0.004s
+  + at every angle the extent is w|cos| + h|sin| by w|sin| + h|cos| and contains the anchor 0.015s
+  + multiples of 90 degrees are exact 0.001s
+  + invalid input is a typed error 0.002s
+  + measure takes the provider's width and height, and reports a throwing provider 0.005s
+  + the angle convention is the one scene lowering hands to backends 0.025s
+intaglio.StrokeCasingSuite:
+  + invalid directly constructed widths and opacity fail through checked casing 0.017s
+  + physical and relative casing widths resolve once at target DPI 0.035s
+  + a cased single cross lowers to one batch so both bars share one underlay 0.017s
+  + a cased circle point and circle grob lower to discs carrying the resolved casing 0.003s
+intaglio.PaintLengthUnitSuite:
+  + named rhythms lower unchanged at 96 ppi and scale with density elsewhere 0.009s
+  + a layout-unit dash keeps one physical length at every density 0.005s
+  + points and millimetres resolve through the same density as stroke widths 0.001s
+  + device pixels are an explicit opt-in that never scales 0.006s
+  + pattern spacing, line width and stipple radius scale together, angles do not 0.005s
+  + a casing's own rhythm resolves with the stroke's 0.002s
+  + a unit-bearing pattern keeps the constructor's validation 0.002s
+  + a rhythm that would overflow device range is a typed error, not a non-finite dash 0.003s
+intaglio.LabelerSuite:
+  + integral values label as plain integers 0.001s
+  + ordinary magnitudes label in fixed notation with trailing zeros stripped 0.001s
+  + extreme magnitudes label in explicit scientific notation 0.001s
+  + rounding keeps six significant digits 0.0s
+intaglio.SwatchLegendDrawingSuite:
+  + swatch rows wrap labels, preserve exact colors, and remain disjoint at manuscript and poster sizes 0.019s
+  + measured lines fit their width, including long tokens and unicode code points 0.0s
+  + invalid metadata and insufficient text width fail before drawing 0.002s
+  + additional scalar notes reserve height without changing calibration identity 0.045s
+intaglio.ScaleSuite:
+  + scale specs are row-free inferred declarations distinct from fixed scales 0.052s
+  + continuous ranges train as an associative union over finite values 0.011s
+  + continuous scale maps through transform, rescale, and out-of-bounds policy 0.005s
+  + continuous palette sampling is deterministic at equal-width bin centers 0.001s
+  + squish keeps out-of-bounds values by clamping to palette endpoints 0.0s
+  + transforms advertise round-trip laws over their domains 0.003s
+  + transform domains model open and closed endpoints explicitly 0.002s
+  + discrete domains preserve declared ordering and append new levels 0.001s
+  + discrete domain order and immutable identity index agree with one lookup per value 0.014s
+  + finite discrete palettes reject over-capacity domains by default 0.006s
+  + discrete scale cycles finite palettes only under the explicit overflow policy 0.003s
+  + band scales expose checked categorical intervals as domain values 0.006s
+  + band construction rejects invalid padding, centers, and widths 0.003s
+  + break generators are deterministic functions of intervals 0.002s
+  + checked break generation rejects sub-ULP non-progress on every iterative path 0.002s
+  + every break policy has a deterministic output cap and typed overflow 0.005s
+  + custom break policies receive finite, ordered, and bounded output validation 0.002s
+  + default pretty breaks use readable 1/2/5 steps for ordinary ranges 0.0s
+  + pretty breaks include zero and platform-stable labels for signed ranges 0.002s
+  + pretty breaks remain readable for tiny and large ranges 0.004s
+  + pretty breaks are scale-equivariant across powers of ten 0.001s
+  + pretty breaks collapse degenerate ranges and validate target counts 0.0s
+  + log10 breaks keep decade ticks when three or more decades are visible 0.001s
+  + a narrow log10 window gains ticks within its decades, from the first rung that suffices 0.002s
+  + a sliver of a decade falls back to pretty breaks on the raw range 0.004s
+  + log10 breaks are increasing and inside every range, across scales and widths 0.048s
+intaglio.interaction.InteractionIdentitySuite:
+  + entity identity survives reorder and filter without consulting source equality 0.017s
+  + duplicate entity keys fail with source positions; link keys intentionally repeat 0.003s
+  + same labels do not join independently constructed key spaces 0.003s
+  + transport checks key schema, revision and canonical payload 0.009s
+  + text keys preserve literal Unicode and markup characters without interpreting them 0.001s
+  + independently specified permutations and subsets preserve key lookup 0.143s
+  + codec and accessor exceptions stay in the typed error channel 0.003s
+  + codec configuration rejects invalid names and versions 0.003s
+  + visual target identity is plan-local and constant-size batches check their bounds 0.002s
+  + incomplete provenance never yields an exact selection, even for zero or one member 0.001s
+  + exact membership preserves declared keys and rejects stale source revisions 0.002s
+  + membership rejects invalid totals, duplicates, and foreign key-space witnesses 0.001s
+  + entity, grouping, and key-value types remain distinct at compile time 0.002s
+intaglio.interaction.InteractionBindingSuite:
+  + independent row accessors keep their own types while explicitly sharing entity identity 0.079s
+  + independent namespaces with identical key values do not join 0.003s
+  + repeated independent facet layers have distinct visual targets and shared observation keys 0.01s
+  + bindings are matched by package reference, not equal layer contents or vector position 0.001s
+  + binding order does not change layer routing 0.004s
+  + group projections retain different key types and deduplicate repeated links 0.014s
+  + link accessor failures use the interaction error channel 0.001s
+  + custom geom declares multi-part target identity without replacing its ordinary rendering 0.005s
+  + malformed extension target layouts fail instead of returning partial routing 0.01s
+  + an independent binding cannot accept an accessor for the root row type 0.0s
+intaglio.ProvenancePolicySuite:
+  + provenance policies publish their retained-memory costs 0.002s
+  + statistic provenance retains exactly the requested payload 0.035s
+  + dropped-row diagnostics retain counts, samples, indices, or full sources by policy 0.007s
+  + non-full provenance releases rich rows from top-level and facet layer views 0.017s
+intaglio.interaction.InteractionCompositionSuite:
+  + row composition preserves independent visual identities and shared entity keys through device lowering 0.129s
+  + column, grid, and inset transforms retain typed routing and explicit clipping 0.01s
+  + same plan identifiers cannot silently overwrite routing, including inset insertion 0.004s
+  + composition rejects missing or different compilation contexts 0.005s
+  + invalid grid dimensions retain the ordinary typed layout failure 0.003s
+intaglio.PlotCompilerSuite:
+  + independent row types share plot-wide scales and retain typed provenance 0.139s
+  + compiles point layers through resolved scaled and direct aesthetics 0.007s
+  + resolved plots expose scale declarations separately from trained scale descriptors 0.01s
+  + one plot scale trains over the union of every layer before row mapping 0.008s
+  + different scale declarations for one aesthetic are a typed plot error 0.007s
+  + compiles line layers in row order and drops non-finite positions 0.003s
+  + checked and violated-total mappings become row diagnostics with provenance 0.005s
+  + throwing scaled mappings fail scale training through GraphicsError 0.003s
+  + stat extractor exceptions remain inside the compiler Either 0.007s
+  + facet mapping rejections remain inside the compiler Either 0.001s
+  + scaled label mappings can drop text rows without failing the whole plot 0.002s
+  + log transform domain failures are typed row-drop diagnostics 0.002s
+  + discrete unknown levels are typed scale out-of-domain row drops 0.001s
+  + empty layer data resolves to an empty scene without an empty-geometry error 0.007s
+  + compiler options wrap layer grobs in a panel viewport and append guides 0.003s
+  + explicit guide options resolve theme layout defaults 0.003s
+  + incomplete geom mappings fail at the typed layer boundary 0.001s
+  + compiled panel viewports retain transformed scales in their physical axes 0.013s
+intaglio.ScalarFieldSuite:
+  + regular axes make sampling semantics explicit 0.004s
+  + scalar fields are immutable x-fastest row-major values 0.005s
+  + tabulation and value mapping preserve geometry 0.001s
+  + construction rejects invalid geometry, shape, values, and access 0.002s
+intaglio.BatchMarksSuite:
+  + batch marks validate their columns and slice with their points 0.024s
+  + the identity wrapper lowers transparently around the batch it names 0.004s
+  + lowering refuses names that do not match the marks beneath them 0.0s
+  + names run across split batches in draw order; a nearer annotation names its own 0.007s
+  + marksOf reports titles and ignores unidentified batches 0.001s
+  + pre-identity GrobMeta constructors, factories and copies remain 0.001s
+intaglio.DeviceSuite:
+  + device context rejects invalid sizes and resolutions 0.001s
+  + npc locations resolve against the frame with y flipped upward 0.0s
+  + absolute units convert at 96 pixels per inch 0.0s
+  + add, subtract, and multiply combine linearly for locations 0.001s
+  + mixed-unit multiplication resolves numerically 0.0s
+  + native locations and extents resolve differently 0.001s
+  + location offsets resolve native terms as extents 0.0s
+  + axis-neutral extents take the smaller of width and height resolutions 0.001s
+  + degenerate native scales resolve extents to zero and locations to midpoints 0.0s
+  + line units resolve from contextual line height while npc font sizes remain invalid 0.003s
+  + device lowering distinguishes literal-pixel and physical-point stroke widths 0.001s
+  + DeviceScene receives the render context's line height for extents and fonts 0.001s
+  + child frames resolve with lower-left origins in y-up parents 0.001s
+  + y-down viewports place scene y downward 0.0s
+  + scenes lower to numeric device primitives with clip and orientation 0.002s
+  + point shapes lower to centered device marks 0.001s
+  + diamond points lower to an equal-area closed polyline on the axes 0.001s
+  + viewport rotation pivots on the resolved origin corner 0.002s
+  + scene angles are counterclockwise in y-up frames, clockwise in y-down frames 0.001s
+  + degenerate expressions are rejected instead of formatted 0.001s
+  + device lowering rejects oversized style and text attributes 0.001s
+  + images lower with rectangle-consistent anchors and top-left pixel order 0.003s
+  + named viewport frames round trip transformed native coordinates 0.002s
+  + named viewport frames refuse unavailable and rotated coordinate mappings 0.003s
+  + one named frame maps conformance primitive anchors and image bounds to lowered output 0.003s
+intaglio.CommonStatsSuite:
+  + quantile summary matches independent R type-7 quartile fixtures 0.008s
+  + quantile summaries preserve order and translation laws 0.004s
+  + ECDF collapses ties and computes groups independently 0.011s
+  + ECDF obeys per-group mass and order laws 0.009s
+  + common statistics reject non-finite mapped values through typed errors 0.002s
+intaglio.StyleAestheticsSuite:
+  + point channels survive rich rows and lean batch lowering 0.015s
+  + line type and point-unit line width remain constant within each lowered line group 0.008s
+  + discrete scaled line types participate in inferred structural grouping 0.004s
+  + varying line width fails the group-constant contract before lowering 0.004s
+  + text angle and both justification channels lower to text anchors 0.005s
+  + geom contracts reject style channels that the geom cannot preserve 0.002s
+  + non-finite text angles become typed row-drop diagnostics 0.003s
+intaglio.RenderContextSuite:
+  + checked contexts bind device size, metrics, and resolved font families 0.003s
+  + HiDPI construction preserves logical size and records actual target density 0.001s
+  + font registry and target text metrics enter before layout and device lowering 0.004s
+  + recompiling an equal physical target preserves typography and spacing 0.007s
+intaglio.GrammarSuite:
+  + row mappings expose total, checked, and throwing contracts 0.001s
+  + typed layers carry required position aesthetics by construction 0.002s
+  + plot validates required aesthetics after layer mapping inheritance 0.003s
+  + every built-in geom publishes its complete aesthetic contract 0.002s
+  + geom aesthetic contracts reject inconsistent declarations 0.0s
+  + unsupported geom mappings fail at the typed layer boundary 0.001s
+  + plot layers inherit plot data and mappings without mutating either 0.0s
+  + plot labels compose without rebuilding the plot specification 0.0s
+  + plot rejects duplicate scale bindings for the same aesthetic 0.0s
+  + plot scale bindings are not shadowed by direct layer mappings 0.001s
+  + plot mapping replacement revalidates already-added inherited layers 0.001s
+  + scale bindings carry the row extractor used to map an aesthetic 0.001s
+  + aesthetic specs unify direct, constant, and scaled values 0.002s
+intaglio.ScientificStatSuite:
+  + histogram matches ggplot2 explicit-break count contract and trains full bin extents 0.017s
+  + grouped summary matches R mean plus standard-error output and lowers intervals 0.006s
+  + fixed-bandwidth Gaussian density agrees with R density 0.007s
+  + scientific stat constructors and compiler boundaries reject incoherent input 0.01s
+  + histogram closure and summary interval policies are explicit 0.021s
+  + regular and explicit histogram partitions bind constant-time and binary lookup strategies 0.007s
+  + optimized histogram lookup preserves boundary ownership and observation conservation 0.002s
+intaglio.ColorVisionSuite:
+  + the published simulated primaries and secondaries reproduce exactly 0.004s
+  + every grey is a fixed point under every observer 0.002s
+  + each half-plane preserves the neutral axis and each separation plane contains it 0.003s
+  + normal vision is the identity and alpha survives simulation 0.002s
+  + tritanopia moves blue and yellow, which is what the folk matrix fails to do 0.002s
+  + the two dichromacies collapse different pairs, which is why both are modelled 0.001s
+  + separation is symmetric, zero on identity, and finds the closest pair 0.001s
+  + lightness reports CIE L* on the familiar scale 0.0s
+intaglio.TemporalScaleSuite:
+  + native calendar and UTC values match independent Unix epoch and leap-day fixtures 0.01s
+  + calendar dates train, break, label, and round-trip exactly 0.028s
+  + UTC instants use deterministic aligned breaks and exact millisecond round-trips 0.01s
+  + invalid temporal values and break policies fail instead of rounding 0.025s
+  + typed date declarations train through the plotting DSL and derive ISO axes 0.038s
+  + fixed temporal limits remain a scale-domain contract 0.001s
+  + temporal breaks remain defined at the maximum supported calendar boundary 0.001s
+intaglio.ScalarLegendSuite:
+  + asymmetric split bar positions and colors have an independent piecewise oracle 0.009s
+  + effective thresholds and hidden versus invalid keys retain exact semantics 0.004s
+  + custom ticks and metadata reject ambiguous or unsupported calibration 0.002s
+  + narrow high-offset windows get distinct default tick labels 0.009s
+  + drawn strips retain exact sampled colors and never interpolate across a split gap 0.01s
+  + title wrapping and crowded ticks stay inside measured bounds without overlap 0.009s
+  + one-sided and banded visibility name their cutoffs in notes, ticks and cell edges 0.007s
+intaglio.PatternTileSuite:
+  + all four monochrome recipes produce distinct non-solid tiles 0.013s
+  + tile pixels preserve source-over ink and background alpha 0.0s
+  + positive hatch angles turn clockwise from a vertical rule in y-down space 0.002s
+  + raster resource limits fail through the typed pattern boundary 0.001s
+intaglio.ScalarMappingSuite:
+  + asymmetric continuous and split scales have independent tabulated tail values 0.003s
+  + piecewise ramp knots and interpolation are explicit display bytes 0.001s
+  + discrete ramps select lookup-table colors at indexed stops 0.002s
+  + discrete ramps compare 22 and 49 color indexed stops exactly 0.001s
+  + linear and discrete sampling share stops but have distinct mapping identities 0.002s
+  + discrete physical transitions agree with normalized lookup at adjacent representable scalars 0.003s
+  + discrete transition search handles cancellation and unreachable bins 0.001s
+  + every interval endpoint convention distinguishes edges and immediate neighbors 0.007s
+  + split-gap boundaries are visible and their inward neighbors are hidden 0.001s
+  + invalid, hidden, and saturated states survive deliberately identical colors 0.0s
+  + visibility tests the original observation before clamping 0.001s
+  + legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding 0.003s
+  + checked overrides retain absolute center, update identity and reject impossible windows 0.001s
+  + malformed ramps, centers, intervals and split widths fail at construction 0.008s
+  + finite extreme limits normalize without overflow and agree with the legacy adapter 0.0s
+  + canonical key is platform stable and distinguishes all effective display policies 0.0s
+  + affine changes of scalar units preserve colors and visibility 0.0s
+  + every display threshold becomes a visibility showing exactly what it does not hide 0.002s
+  + legacy colorizers and checked overrides accept every threshold mode 0.004s
+  + visibility identity names every kind and cutoff exactly and feeds the boundary list 0.003s
+intaglio.ContourSuite:
+  + a planar field produces one analytic contour path 0.009s
+  + a radial field produces a closed, nearly circular path 0.005s
+  + ambiguous saddles obey the explicit tie policy 0.001s
+  + all non-ambiguous marching-square cases match an independent edge table 0.004s
+  + ambiguous case fixtures pin both asymptotic-decider tie outcomes 0.001s
+  + ambiguous topology is invariant under positive affine value transforms 0.049s
+  + the asymptotic decider is stable for extreme finite corner magnitudes 0.0s
+  + contour geometry is translation invariant 0.002s
+  + levels, grids, and plotting capabilities are checked 0.014s
+intaglio.LegendKeyInkOracleSuite:
+  + every key glyph's stroked outline fits its key box at the fitted radius 0.363s
+  + one radius serves the whole legend, so a circle and a diamond keep equal areas 0.001s
+intaglio.Bin2DSuite:
+  + rectangular binning is right-closed and conserves observations 0.003s
+  + binning is permutation invariant 0.003s
+  + proportions form a probability mass over the grid 0.001s
+  + automatic domains remain valid for constant coordinates 0.001s
+  + configuration and computation expose typed boundary failures 0.004s
+intaglio.LayoutSuite:
+  + panel layout exposes a viewport and maps data coordinates into panel space 0.001s
+  + panel coordinate transforms reject non-finite inputs 0.001s
+  + axis guides lower through existing axis grobs with unclipped guide viewport 0.002s
+  + axis guides lower titles at solver-matched offsets 0.0s
+  + legend guides lower to stable marker and label grobs 0.002s
+  + empty legends fail before backend rendering 0.0s
+  + colorbar guides lower sampled colors, transform ticks, labels, and title 0.003s
+  + empty colorbars fail before backend rendering 0.001s
+  + default axis offsets follow point policy across device sizes 0.003s
+  + default legend spacing clears point-sized keys and the title 0.006s
+intaglio.NumericalStandardsSuite:
+  + summary moments retain a small term across catastrophic cancellation 0.003s
+  + automatic density bandwidth is stable under a large translation 0.001s
+  + histogram density conserves mass under the documented right-closed partition 0.0s
+  + wide-grid one-dimensional density meets the documented normalization tolerance 0.012s
+  + KDE strategy is explicit and unavailable FFT plans fail through typed errors 0.027s
+intaglio.DisplaySuite:
+  + display windows and thresholds reject invalid bounds 0.003s
+  + transparent bands hide only finite values in their strict interior 0.002s
+  + display opacity is a checked opaque scalar 0.001s
+  + normal blending is source-over and honors display opacity 0.001s
+  + separable blend modes have exact opaque channel semantics 0.001s
+  + plus-lighter adds premultiplied display bytes independently of legacy additive 0.001s
+  + plus-lighter appends to the established blend-mode ordinals 0.0s
+  + graphics-owned colorizers preserve image-view threshold behavior 0.001s
+  + below and above partition the finite line and overlap exactly at the cutoff 0.003s
+  + two-sided thresholds hide inside the inner band and outside the outer band 0.0s
+  + two-sided magnitude thresholds are symmetric 0.012s
+  + threshold constructors reject non-finite cutoffs and unnested bands 0.012s
+  + non-finite values are never thresholded and render as invalid under every mode 0.002s
+  + scalar colorizers render one-sided and bounded thresholds transparently 0.002s
+intaglio.InteractionCoverageSuite:
+  + the coverage matrix and its checks name the same components 0.016s
+  + geomPoint compiles to PerRow targets 0.139s
+  + geomText compiles to PerRow targets 0.013s
+  + geomSegment compiles to PerRow targets 0.002s
+  + geomTile compiles to PerRow targets 0.005s
+  + geomErrorBar compiles to PerRow targets 0.004s
+  + geomLine compiles to PerGroup(2) targets 0.005s
+  + geomArea compiles to PerGroup(2) targets 0.005s
+  + geomRibbon compiles to PerGroup(2) targets 0.003s
+  + geomPolygon compiles to PerGroup(3) targets 0.002s
+  + geomHistogram compiles to PerStatisticRow targets 0.014s
+  + geomSummary compiles to PerStatisticRow targets 0.002s
+  + geomDensity compiles to WholeLayer targets 0.143s
+  + geomEcdf compiles to PerGroup(1) targets 0.003s
+  + geomContour compiles to PerGroup(2) targets 0.002s
+  + geomFilledContour compiles to PerGroup(3) targets 0.019s
+  + geomQuantileSummary compiles to PerStatisticRow targets 0.003s
+  + geomHeatmap compiles to PerCell targets 0.004s
+  + geomRasterByClass compiles to PerCell targets 0.038s
+  + geomRaster compiles to PerCell targets 0.006s
+  + hline / vline compiles to PerAnnotation targets 0.002s
+intaglio.CompilerPhasesSuite:
+  + mapping phase produces per-layer plans with one canonical effective mapping 0.004s
+  + mapping phase rejects invalid stat-geom combinations and incomplete geom mappings 0.002s
+  + scale phase trains one declaration from distinct layer extractors 0.004s
+  + row phase records the evaluated group value on each row 0.003s
+  + discrete style categories infer structural pre-palette group keys 0.004s
+  + multiple discrete style mappings form a composite raw category key 0.016s
+  + an explicit group mapping overrides discrete style inference 0.003s
+  + discrete scale descriptors without raw categories fail grouping closed 0.003s
+  + row style resolution preserves the complete base GraphicParams value 0.004s
+  + row style resolution changes only explicitly mapped GraphicParams channels 0.003s
+  + invalid mapped alpha remains a typed compiler drop 0.003s
+  + geom lowering emits one line grob per group with that group's params 0.001s
+  + group-constant styles are rejected before grouped lowering 0.005s
+  + single-row groups draw nothing, matching whole-layer semantics 0.004s
+  + ungrouped line layers still lower to a single polyline 0.002s
+  + guide phase still requires a layout before lowering guides 0.002s
+external.stat.OpenStatSuite:
+  + an external stat compiles without compiler registration and retains its output type 0.009s
+  + external stats receive the concrete facet context and current typed batch 0.006s
+  + an external StatError is translated at the compiler boundary 0.001s
+external.recipe.PlotRecipeSuite:
+  + external model types retain the exact row type without inheritance 0.003s
+  + independent external recipes compile on the shared JVM and Scala.js surface 0.008s
+  + recipe conversion and compilation are deterministic 0.012s
+  + checked recipes return typed conversion failures 0.0s
+intaglio.AxisSuite:
+  + bottom axis lowers to baseline, tick segments, and labels 0.002s
+  + left axis places ticks and labels on the negative x side 0.001s
+  + axis validation rejects invalid coordinates and out-of-range ticks 0.001s
+  + tick generation rejects labeler count mismatches 0.001s
+  + tick generation propagates checked floating-point break failures 0.002s
+intaglio.BivariateEffectConfidenceSuite:
+  + SurfViewJS confidence policy uses discrete HSV texture samples with opaque alpha 0.001s
+  + reference texture size controls interior HSV texels 0.001s
+  + confidence alpha remains an explicit non-reference alternative 0.0s
+  + key pixels and both axes agree with direct mapping at corners and center 0.003s
+  + key identity binds the mapping and labeled axes 0.001s
+  + key construction validates grid and tick domains 0.004s
+external.aesthetic.OpenAestheticSuite:
+  + an external package defines and maps a typed aesthetic by key identity 0.003s
+  + external typed keys participate in scaled heterogeneous inspection 0.001s
+  + generic encoded x and y satisfy the point geom prerequisite 0.003s
+  + external aesthetic names are validated at construction 0.0s
+intaglio.PanelFramingSuite:
+  + the compact specimen clips under Data and fits with clearance under MarkInk 0.184s
+  + framing keeps observation order and moves nothing when the marks already fit 0.011s
+  + framing holds at native, compact, HiDPI, and export resolutions 0.041s
+  + a clearance can be chosen, and must be finite and nonnegative 0.006s
+  + a zoomed axis keeps its window while the other axis frames the ink 0.009s
+  + flipped and transformed axes frame in the space they draw in 0.014s
+  + faceted panels frame their ink, and shared scales keep one range 0.175s
+  + a fixed aspect stays exact while the ink is framed 0.006s
+  + a free facet axis frames alone even when its base range equals a neighbour's 0.005s
+  + rich and lean lowering frame to the same ranges 0.003s
+  + the axis solver returns the narrowest fitting span and refuses an impossible fit 0.001s
+intaglio.FacetSuite:
+  + independent layers require and obey explicit facet participation policies 0.131s
+  + facet wrap partitions rows before statistics and assigns stable scene names 0.006s
+  + faceted panels expose separately addressable resolved frames 0.01s
+  + declared facet levels index row membership once per layer, independent of panel count 0.034s
+  + reference annotation facet participation is explicit and row-independent 0.017s
+  + declared empty facets render repeated reference annotations 0.006s
+  + free facet scales train and map repeated annotations panel-locally 0.015s
+  + shared ranges union panels while free position scales train per panel 0.048s
+  + scale specs train once at the global scope and once per free panel scope 0.006s
+  + free dimensions render panel-local axes while shared dimensions suppress inner axes 0.027s
+  + a faceted plot names each dimension exactly once, under every scale policy 0.079s
+  + the single facet axis title sits in the outer strip, centred on the whole block 0.019s
+  + free-axis sizing uses target text metrics for outer strips and panel gaps 0.009s
+  + facet grid forms the row-column product and rejects incompatible layout modes 0.006s
+  + fixed coordinates fail explicitly for facet grids 0.0s
+intaglio.DivergingPaletteEvidenceSuite:
+  + the two arms stay far apart at matched magnitude under every observer modelled 0.005s
+  + the published arm separation figures are the measured ones 0.004s
+  + rust rather than a saturated red is what buys the protanopia margin 0.01s
+  + lightness never reverses outward along either arm 0.002s
+  + consecutive samples of a sixteen-step ramp stay perceptibly distinct 0.01s
+  + srgb channel interpolation is what produces a grey dead zone, not oklab 0.005s
+  + the two interpolation spaces agree closely on this palette's own endpoints 0.037s
+intaglio.ColorDeterminismSuite:
+  + the blue-rust ramp emits the same 8004 bytes on every platform 0.007s
+  + oklab gradients emit the same bytes on every platform 0.003s
+  + the oklab round trip emits the same bytes on every platform 0.073s
+external.geometry.OpenGeometrySuite:
+  + an external geom declares its contract and lowers without compiler registration 0.002s
+  + an external coordinate transforms rows, grobs, ranges, and clipping 0.007s
+  + coordinate helpers reject non-finite translations as values 0.0s
+intaglio.RasterGeomSuite:
+  + non-square raster matches heatmap pixels, extent and legend under identity and log fill 0.018s
+  + missing mask and NaN retain grid slots, use declared colour and do not train to zero 0.015s
+  + alpha and interpolation are explicit and invalid alpha is checked 0.01s
+  + facets share the same fill domain and colours as heatmaps 0.009s
+  + vertex-centered samples cover the same half-step expanded extent as tiles 0.004s
+  + incomplete or irregular grids fail explicitly 0.002s
+  + coordinate flip transposes raster pixels and extent like the tile path 0.006s
+  + fixed fill limits censor to missing and squish identically to tiles 0.012s
+  + large coordinate origins do not hide irregular cell spacing 0.011s
+intaglio.ModuleBoundarySuite:
+  + production packages stay under the intaglio namespace 0.18s
+  + the core and interaction runtime stay platform-neutral 0.274s
+  + core is dependency-free; only the JavaFX interaction host also depends on shared interaction 0.011s
+  + the published laws module depends only on public core 0.114s
+  + the optional interaction module depends only on core on both platforms 0.002s
+  + only the JavaFX backend carries a toolkit dependency 0.002s
+intaglio.ClassedRasterSuite:
+  + each class maps its own extremes to its own palette's endpoints 0.017s
+  + each class with values gets its own colorbar, titled by its class 0.024s
+  + a class with no cells draws nothing and has no colorbar 0.003s
+  + a class whose cells are all masked or outside its transform draws nothing, not an error 0.022s
+  + masked cells and unknown classes take the missing colour 0.014s
+  + class specifications are checked 0.001s
+  + rendering is deterministic 0.017s
+intaglio.RezoomSuite:
+  + re-windowing runs no statistic, mapping or scale training 0.03s
+  + the panel does not move as the window changes 0.016s
+  + a numeric window shows the ranges and ticks a fresh compile at that window shows 0.014s
+  + a window on a log axis is raw data, mapped through the transform, as a fresh compile does 0.033s
+  + a narrow window on a log axis shows ticks within the decade, not one power of ten 0.021s
+  + a deep zoom keeps readable ticks: breaks are chosen for the window, not the domain 0.037s
+  + a date window keeps the date axis kind 0.021s
+  + marks, targets and identity carry over; an empty window restores the compiled view 0.016s
+  + a window of the wrong kind, a faceted plot, flipped coordinates and a context-free plan are refused 0.033s
+intaglio.LegendKeyGeometrySuite:
+  + default legend keys fit their key box and rows, clear their labels, and stay off the panel 0.012s
+  + legend keys stay separate across key sizes, text sizes, and densities 0.142s
+intaglio.GuideDerivationSuite:
+  + frame-based layouts derive panel ranges from resolved rows 0.016s
+  + derived guides produce x/y axes and a legend from the discrete color scale 0.015s
+  + continuous color scales derive transform-aware colorbars 0.004s
+  + scaled positions derive unit panel ranges and transform-aware ticks 0.009s
+  + band scales are ordinary typed position scales on the y aesthetic 0.003s
+  + plot axis labels override derived scale names 0.002s
+  + explicit overrides suppress matching derived guides and are included 0.008s
+  + mixing scaled and unscaled position bindings across layers is a typed error 0.003s
+  + multiple derived legends stack instead of overprinting 0.005s
+  + solver stacks mixed legend and colorbar guides from measured point extents 0.005s
+  + derived guides resolve the final theme layout when no layout is explicit 0.001s
+  + explicit empty guides still compile without a layout 0.002s
+  + range expansion validates parameters and preserves translation laws 0.002s
+  + range expansion handles degenerate data and has an explicit opt-out 0.003s
+  + explicit panel layouts remain authoritative under default expansion 0.001s
+intaglio.StatSuite:
+  + built-in stats execute through the public batch, context, result, and policy contract 0.004s
+  + stat count matches R table and ggplot2 stat_count parity fixture 0.003s
+  + typed stat mappings cannot receive the wrong output variant 0.0s
+  + computed count output trains x scale, derives labels, and lowers bars 0.011s
+  + count bars and panel ranges consume explicit band padding 0.004s
+  + declared count order is preserved before undeclared observed levels 0.002s
+  + grouped count dodge matches ggplot2 total and single width contracts 0.008s
+  + grouped count stack uses the trained band and reverse group order 0.005s
+  + count owns position aesthetics and rejects incompatible specs 0.001s
+  + single and empty count layers retain valid typed boundaries 0.006s
+intaglio.AccessibilitySuite:
+  + semantic IDs accept the portable SVG subset and reject ambiguous strings 0.0s
+  + plot, layer, and compact datum IDs survive rich, lean, and device batches 0.002s
+  + trained plots expose deterministic layer and scale summaries plus authored alt text 0.002s
+  + duplicate palette colors emit an inspectable ambiguity diagnostic 0.003s
+  + colors a dichromat cannot separate emit a diagnostic naming the observer 0.003s
+  + a palette every observer can separate emits nothing 0.005s
+  + duplicate explicit layer IDs fail before a scene can expose invalid DOM identity 0.002s
+intaglio.CompositionRowHeightSuite:
+  + three stacked panels of unequal height share their column boundaries exactly 0.005s
+  + fixed rows take their stated height and the weighted row takes the rest 0.004s
+  + the same band lands on the same device x in every row 0.002s
+  + an explicitly sized row reserves only its own plots' top and bottom strips 0.001s
+  + plots on different x frames are refused when a shared x frame is required 0.012s
+  + a shared x frame also requires the same x transform 0.004s
+  + equal endpoint domains and transform names do not prove an equal interior mapping 0.007s
+  + shared x frame checks position palettes as well as transforms 0.005s
+  + custom position scales need a shared mapping instance 0.006s
+  + a flipped shared x frame checks logical y and permits different vertical mappings 0.009s
+  + shared categorical frames compare stable category identities rather than display labels 0.004s
+  + large finite row weights preserve equal and unequal proportions 0.015s
+  + row height specifications are checked 0.009s
+  + equal weights reproduce the default equal split 0.008s
+intaglio.SceneSuite:
+  + scene append has empty identity and preserves grob order 0.002s
+  + scene concatenation is associative 0.001s
+  + grob constructors reject empty geometries before renderer boundaries 0.001s
+  + public polygons lower as closed renderer-neutral polylines 0.002s
+  + color and length constructors keep invalid scalar values out of the scene tree 0.002s
+  + graphic parameters define backend-neutral stroke geometry defaults 0.001s
+  + line lengths have public checked constructors at every expression layer 0.0s
+  + pattern recipes reject non-finite and non-positive geometry 0.001s
+  + stipple radius must fit its tile 0.002s
+  + pattern fill is explicit and mutually exclusive with solid fill 0.001s
+  + pattern recipe equality is structural across independent construction 0.0s
+  + length expressions preserve symbolic unit composition 0.001s
+  + dash patterns refuse rhythms a backend could not draw 0.001s
+  + every line type resolves through one dash definition 0.001s
+  + font weight is bounded and reaches every derived style 0.002s
+intaglio.ThemeSuite:
+  + theme typography is the layout typography 0.001s
+  + one theme reaches marks, panel, axes, legends, and plot labels 0.008s
+  + explicit layer and guide styles override theme defaults 0.001s
+  + theme palettes are immutable scale inputs 0.001s
+intaglio.PositionSuite:
+  + dodge divides each categorical band into deterministic group slots 0.008s
+  + dodge preserve single reserves stable global group slots 0.002s
+  + dodge distinguishes categorical identities with colliding mapped coordinates 0.016s
+  + stack keeps source order while handling positive and negative groups separately 0.005s
+  + seeded jitter is byte-stable in principle across JVM and Scala.js 0.01s
+  + position constructors and geom compatibility reject invalid states 0.004s
+intaglio.Kde2DSuite:
+  + Cartesian-product data factor into independent one-dimensional densities 0.002s
+  + KDE is permutation and translation invariant 0.006s
+  + a wide vertex grid numerically integrates a Gaussian density to one 0.011s
+  + automatic bandwidths produce finite fields and invalid plans fail early 0.004s
+external.category.TypedCategorySuite:
+  + typed domains retain values, explicit stable identity, and explicit labels 0.001s
+  + typed discrete scales map enum values without String coercion 0.004s
+  + typed band scales preserve category values and label their guides explicitly 0.005s
+  + typed scale specs train categories while retaining their input type 0.003s
+intaglio.TextPlateSuite:
+  + padding and corner radius resolve to device pixels once, at the target density 0.002s
+  + a plate is the measured box plus padding on every side, its radius clamped 0.001s
+  + an oversized plate padding is a typed lowering error 0.0s
+intaglio.ContourBandSuite:
+  + a radial band retains one outer ring and one explicit hole 0.207s
+  + bands partition a planar domain without area loss or overlap 0.021s
+  + planar band mass is conserved across grid sizes and translated domains 0.063s
+  + ring area and winding are stable at large coordinate offsets 0.001s
+  + band topology is deterministic under translation 0.046s
+  + filled bands lower through capability-gated generic polygons 0.15s
+  + break and grid failures remain typed 0.0s
+intaglio.GrobFormSuite:
+  + a corner radius is an extent, so negative and non-finite values are unrepresentable 0.001s
+  + the default rectangle carries the zero radius and lowers to a sharp rectangle 0.0s
+  + a corner radius resolves like a circle radius: the smaller axis resolution wins 0.001s
+  + an oversized radius is clamped to half the shorter side, never refused 0.0s
+  + the corner radius never moves the rectangle 0.0s
+  + linear interpolation is the default and lowers the given points 0.0s
+  + step-after holds each y until the next x; step-before jumps at the current x 0.001s
+  + a one-point step line lowers to that single point 0.001s
+  + transposing an interpolation is an involution and fixes only Linear 0.0s
+  + a transposed step line has the transposed vertices of its own expansion 0.001s
+intaglio.PrettyBoundarySuite:
+  + sparse pretty grids retain two truthful endpoints after ordinary axis filtering 0.001s
+  + sparse fallback respects signed and translated nondegenerate ranges 0.003s
+  + ordinary zero-anchored nice grids and explicitly single ticks remain unchanged 0.0s
+intaglio.GeomSuite:
+  + rectangles and tiles retain exact bounds and train their full extents 0.009s
+  + segments and error bars lower to explicit shared segments 0.007s
+  + ribbons and areas lower one polygon per sufficiently large group 0.004s
+  + polygons infer groups from raw discrete fill categories 0.002s
+  + bounded geoms compose with flipped coordinates in the shared compiler 0.001s
+  + reference lines lower once and contribute only to their own axis range 0.002s
+  + reference annotations render over empty data without retaining or resolving rows 0.006s
+  + reference annotation scale training and overlay policies are distinct 0.005s
+  + invalid reference coordinates fail at the typed layer boundary 0.001s
+  + training a numeric reference against a categorical position scale fails explicitly 0.011s
+  + required extent aesthetics and row bounds remain typed failures 0.003s
+intaglio.PlotLayoutSuite:
+  + panel-only requests allocate margins and nothing else 0.005s
+  + axis requests allocate strips sized from tick labels via text metrics 0.001s
+  + axis titles and plot labels receive solver-owned regions 0.002s
+  + legend requests allocate a right-hand column beside the panel 0.001s
+  + colorbar requests reserve their wider swatch and tick-label offset 0.0s
+  + legend columns clear a right-axis strip instead of overlapping it 0.001s
+  + impossible layouts are typed errors 0.0s
+  + guide stacks derive row, title, and inter-guide spacing from policy 0.0s
+  + guide stacks that exceed the reserved viewport fail with typed overflow 0.0s
+  + panel grids allocate stable row-major data and strip frames 0.004s
+  + solver-driven compilation places the legend in its own named viewport 0.01s
+  + solver-driven compilation places a continuous colorbar in the guide viewport 0.005s
+  + solved scenes lower to identical device scenes across runs 0.007s
+  + default derived ranges keep scaled and unscaled corner discs inside the panel clip 0.022s
+intaglio.CoordSuite:
+  + coordinate ratios are positive finite domain values 0.0s
+  + built-in coordinates obey their public transformation and layout contracts 0.005s
+  + flipped coordinates swap resolved positions and point grobs once 0.003s
+  + flipped histograms become horizontal bars with swapped panel ranges 0.004s
+  + flipped coordinates transpose every ring of compound polygons 0.09s
+  + derived x and y guides follow flipped physical axes 0.005s
+  + fixed coordinates constrain physical panel aspect through the solver 0.004s
+  + fixed coordinates reject unexpanded degenerate ranges 0.002s
+  + coordinate zoom changes only the post-stat viewport and preserves histogram observations 0.012s
+  + raw numeric zoom bounds map through the trained scale without becoming scale limits 0.003s
+  + typed date windows map after temporal scale training and retain every row 0.023s
+  + empty and scale-incompatible coordinate windows fail through typed errors 0.0s
+  + coordinate zoom remains exact and non-filtering across facet panels 0.005s
+intaglio.DiscretePaletteEvidenceSuite:
+  + the published prefix floors hold 0.017s
+  + six series clear the series floor and the seventh does not 0.004s
+  + no admissible reordering of these colors has a better prefix floor 0.739s
+  + the first five keep lightness contrast against a light panel 0.001s
+  + the palette refuses a ninth level rather than reusing a color 0.0s
+  + no two colors in the palette are exactly equal 0.001s
+  + the default theme palette is the measured one, and the palette it replaced was not 0.024s
+intaglio.CompositionSuite:
+  + rows and grids align panels even when source guide margins differ 0.026s
+  + compatible guides are shared and incompatible guides remain collected 0.031s
+  + composed panel frames use their named viewport paths and map to lowered marks 0.005s
+  + insets retain explicit viewport and clipping semantics 0.008s
+  + invalid grids, gaps, inset bounds, and layout-free plots fail through typed errors 0.005s
+intaglio.CompanionPositionScalingSuite:
+  + a segment under an explicit y scale resolves and maps its ends like points 0.008s
+  + a companion that fails for one row drops that row, as before, instead of the plot 0.001s
+  + a segment alone under an explicit y scale renders 0.002s
+  + an explicit x scale reaches segment ends on the x axis too 0.002s
+  + tile bounds follow an explicit transformed y scale and the axis uses its labeler 0.022s
+  + a categorical-row raster labels its rows without guide overrides 0.011s
+  + a raw companion beside a temporal position scale is refused, naming geom and aesthetic 0.005s
+  + an explicitly scaled companion keeps its own scale 0.006s
+  + tile bounds are trained: a scale's domain covers the outer tile edges 0.011s
+intaglio.ViewportAspectSuite:
+  + a 16:9 frame in a 4:3 extent is letterboxed at the requested alignment 0.002s
+  + a tall extent places the frame along the horizontal slack 0.0s
+  + resizing keeps the aspect ratio exactly 0.002s
+  + fill covers the extent and clips to the extent, not the larger content frame 0.0s
+  + fit clips to the fitted frame, so the letterbox bars stay empty 0.001s
+  + the resolved frame and its inverse mapping match the drawn image 0.0s
+  + a rotated aspect viewport pivots on its origin, not on the fitted content corner 0.001s
+  + an aspect from equal native units uses the scale ranges 0.0s
+  + a non-positive or non-finite ratio is a typed error 0.0s
+  + a viewport without an aspect resolves as before 0.001s
+intaglio.CompositionStripSuite:
+  + a row keeps every cell's tick labels and axis titles inside the cell 0.033s
+  + a three-column grid keeps its axis text inside cells a third of the canvas wide 0.007s
+  + aligned panels still share one left edge per column and one width per row 0.002s
+  + a collected legend's column is not reserved again inside every cell 0.017s
+  + a cell too narrow for the strips its plots reserve is a typed overflow 0.009s
+intaglio.PlotCompileCacheSuite:
+  + a cached resolve produces the scene an uncached resolve produces 0.226s
+  + an unchanged plot and context hit both cache levels and return the same value 0.056s
+  + a new context reuses the training and pays only the placement 0.164s
+  + a value-equal but distinct plot reference is deliberately a miss 0.071s
+  + eviction honours the trained capacity and counts what it drops 0.174s
+  + zero capacity retains nothing and never hits 0.07s
+  + errors propagate unchanged and are never cached 0.001s
+  + Disabled is a first-class non-cache with an empty profile 0.089s
+  + the cache is reachable from the public DSL 0.013s
+intaglio.PanelFramingInkOracleSuite:
+  + point ink extents match the Java2D stroked outline for every shape, cap, and join 0.045s
+intaglio.ColorSuite:
+  + public sRGB transfer uses the IEC byte and finite-unit policies 0.001s
+  + oklab components must be finite 0.001s
+  + oklab round trips every sampled srgb color to the same bytes 0.176s
+  + oklab lightness orders the grey axis and is achromatic on it 0.007s
+  + oklab encoding clamps out-of-gamut coordinates instead of failing 0.0s
+  + oklab mix clamps its fraction and reaches both endpoints exactly 0.001s
+  + srgb channel interpolation crosses grey where oklab keeps chroma 0.0s
+  + oklab gradients reach their endpoints and carry alpha linearly 0.001s
+  + diverging palettes refuse colors whose sign could not be read back 0.001s
+  + the diverging domain is signed: negative below zero, neutral at zero 0.0s
+  + the blue-rust ramp is pinned byte for byte 0.001s
+  + the raster form is the scene form packed, at every sampled fraction 0.0s
+  + the unit-interval face puts the neutral exactly at the midpoint 0.001s
+  + infinities saturate and NaN takes the neutral on both faces of the domain 0.0s
+  + reversing swaps the arms and keeps the neutral 0.0s
+  + diverging arms interpolate alpha towards each endpoint 0.0s
+  + a translucent palette agrees between its scene and raster forms 0.001s
+  + diverging colorizers require a positive finite limit 0.001s
+  + a diverging colorizer places zero on the neutral and clamps beyond the limit 0.0s
+  + non-finite data takes the invalid pixel instead of reading as zero 0.001s
+  + diverging thresholds hide a band around zero 0.0s
+  + rewindowing a diverging colorizer keeps zero on the neutral 0.001s
+  + a diverging scale fixes a symmetric domain so the neutral cannot drift 0.001s
+  + plot-wide training cannot widen a diverging scale off its zero 0.001s
+  + a diverging scale refuses a limit that is not a positive magnitude 0.001s
+intaglio.PlotDslSuite:
+  + point and line programs compose mappings, scales, labels, and theme concisely 0.007s
+  + theme, scale, labels, and geom declarations are permutation invariant 0.109s
+  + explicit palettes and layout policies remain authoritative 0.011s
+  + the DSL adds independent typed layers only with an explicit facet policy 0.006s
+  + row-free specs train empty base plots from populated layer data 0.005s
+  + canonical histogram, summary, and density programs expose trained plots 0.038s
+  + the DSL and core grammar compile canonical points to the same scene 0.003s
+  + checked builder operations retain typed errors until build 0.0s
+  + row-free scale declarations defer mapping failures to compiler training 0.001s
+  + publication palettes reject overflow unless cycling is explicit 0.006s
+  + facet builders retain an inspectable typed specification 0.002s
+  + field-native heatmaps bind continuous fill and derive a colorbar 0.007s
+  + geom prerequisites are compile-time constraints 0.001s
+intaglio.AutomaticDisplayWindowSuite:
+  + exact quantiles exclude declared zero background without discarding negative values 0.017s
+  + finite-domain zeros are data and constant windows have explicit expansion 0.001s
+  + single outlier does not dictate a 2-98 percent display window 0.0s
+  + full-sample windows commute with affine rescaling and reverse under sign change 0.002s
+  + reservoir is bounded, deterministic, and admits late input rather than retaining a prefix 0.078s
+  + invalid settings, empty streams and unrepresentable finite widths are explicit failures 0.003s
+  + batch consumes a one-shot 206000-value input once and shares exact p50 p90 p98 0.065s
+  + sampled windows share a deterministic reservoir with independent retained-index oracle 0.131s
+  + batch keeps independent constant expansion, signed extremes, refusals and request order 0.011s
+  + batch preserves zero-domain counts and no-eligible refusal for every request 0.001s
+  + incompatible and empty batches refuse before obtaining an input iterator 0.001s
+intaglio.GrobMetaSuite:
+  + CssClass accepts identifier tokens and normalises whitespace 0.0s
+  + CssClass refuses blank input and non-identifier tokens 0.003s
+  + DataKey accepts lowercase letters, digits, and hyphens and names its attribute 0.0s
+  + DataKey refuses empty, uppercase, leading-digit, underscore, whitespace, and 'name' 0.0s
+  + GrobMeta builders append data in order and detect the first duplicate key 0.001s
+  + an annotated grob has no name or viewport and exactly one child 0.002s
+  + device lowering wraps the child's primitives in an annotated element 0.0s
+  + an annotated child with a viewport still lowers to its clipped group 0.003s
+  + nested annotations and annotated groups lower recursively 0.001s
+  + the renderer conformance contract includes an annotated case every backend must draw 0.452s
+intaglio.TrainPlaceSuite:
+  + placing a trained plot equals a full recompile at every context 0.754s
+  + placing twice at one context is deterministic 0.035s
+  + placement does no mapping, statistics, scale training, or row resolution 0.022s
+  + training does the data work exactly once regardless of later placements 0.03s
+  + a faceted plot trained with an explicit layout still reports the solver requirement 0.001s
+intaglio.FacetSharedScalesSuite:
+  + a dense shared grid matches the exhaustive oracle panel by panel 0.519s
+  + a sparse shared grid with declared empty cells matches the oracle panel by panel 0.179s
+  + a shared facet wrap matches the oracle panel by panel 0.049s
+  + declared-but-empty grid cells still render a panel and a strip 0.024s
+  + the shared fast path trains scales in one global pass 0.028s
+  + the general path is still selected when a dimension is free 0.039s
+intaglio.FuzzRegressionSuite:
+  + malformed scene values stay inside checked construction and lowering boundaries 0.016s
+  + mapping failures never escape plot compilation 0.567s
+  + transform callbacks and special values return typed failures 0.059s
+  + break generation is bounded and custom failures remain typed 0.148s
+  + layout requests and metric callback failures stay inside the solver boundary 0.018s
+intaglio.BatchIrSuite:
+  + large lean point plots retain one columnar grob and one device primitive 1.108s
+  + point batches preserve constant and value style columns 0.002s
+  + point batch constructors reject incoherent value-column lengths 0.001s
+intaglio.interaction.InteractionCompilerSuite:
+  + ordinary point compilation preserves compact batches and releases source inspection 1.224s
+  + point entity keys survive reordering, filtering, and dropped non-finite rows 0.005s
+  + custom-stat membership uses explicit keys when every source row compares equal 0.006s
+  + a custom statistic cannot replace a source key after the source index is validated 0.002s
+  + geometry revisions invalidate visual addresses while preserving source keys and membership 0.001s
+  + two summary primitives share one logical target and explicit aggregate membership 0.003s
+  + count-only aggregates cannot report exact member selection 0.001s
+  + grouped line target membership unions observations in encounter order 0.001s
+  + facet copies keep distinct visual scopes and original observation identities 0.003s
+  + coordinate transformations preserve routing and drawing 0.002s
+  + rich inspection remains an explicit option without changing entity identities 0.002s
+  + duplicate source keys fail before a misleading interaction plan is returned 0.0s
+  + independent row types fail explicitly pending their typed binding capability 0.0s
+  + extension geometry requires a declared target-lowering contract 0.001s
+  + histogram bins under exact retention hold exactly their contributing observations 0.004s
+  + a density grid point is not composed of the batch: its membership is unavailable 0.07s
+  + a custom statistic's free-text contract keeps only the count, even under exact retention 0.002s
+  + faceted bins keep the members of their own panel only 0.004s
+intaglio.SceneConformanceSuite:
+  + conformance cases cover all behavior groups 0.551s
+  + group selection filters cases by behavior family 0.209s
+  + the canonical contract pins marker shapes and every target-bound style channel 0.002s
+  + the device lowering passes the full conformance contract 0.183s
+  + the explicit scaled-plot fixture frames every point disc inside its clip 0.003s
+  + the jitter comparison uses explicit filled circular marks 0.003s
+  + the checker reports missing markers and failures as violations 0.069s
+[info] Passed: Total 712, Failed 0, Errors 0, Passed 712
+[success] Total time: 5 s, completed Oct 14, 2026, 4:42:07 p.m.
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/test-classes ...
+[info] done compiling
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+[info] Fast optimizing /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/intaglio-core-test-fastopt
+intaglio.TemporalScaleSuite:
+intaglio.ColorSuite:
+  + native calendar and UTC values match independent Unix epoch and leap-day fixtures 0.002s
+  + public sRGB transfer uses the IEC byte and finite-unit policies 0.001s
+  + oklab components must be finite 0.000s
+  + calendar dates train, break, label, and round-trip exactly 0.002s
+  + UTC instants use deterministic aligned breaks and exact millisecond round-trips 0.001s
+  + invalid temporal values and break policies fail instead of rounding 0.000s
+  + typed date declarations train through the plotting DSL and derive ISO axes 0.013s
+  + fixed temporal limits remain a scale-domain contract 0.000s
+  + temporal breaks remain defined at the maximum supported calendar boundary 0.000s
+  + oklab round trips every sampled srgb color to the same bytes 0.062s
+  + oklab lightness orders the grey axis and is achromatic on it 0.000s
+  + oklab encoding clamps out-of-gamut coordinates instead of failing 0.000s
+  + oklab mix clamps its fraction and reaches both endpoints exactly 0.000s
+  + srgb channel interpolation crosses grey where oklab keeps chroma 0.000s
+  + oklab gradients reach their endpoints and carry alpha linearly 0.000s
+  + diverging palettes refuse colors whose sign could not be read back 0.000s
+  + the diverging domain is signed: negative below zero, neutral at zero 0.000s
+  + the blue-rust ramp is pinned byte for byte 0.001s
+  + the raster form is the scene form packed, at every sampled fraction 0.000s
+  + the unit-interval face puts the neutral exactly at the midpoint 0.000s
+  + infinities saturate and NaN takes the neutral on both faces of the domain 0.000s
+  + reversing swaps the arms and keeps the neutral 0.000s
+  + diverging arms interpolate alpha towards each endpoint 0.000s
+  + a translucent palette agrees between its scene and raster forms 0.000s
+  + diverging colorizers require a positive finite limit 0.000s
+  + a diverging colorizer places zero on the neutral and clamps beyond the limit 0.000s
+  + non-finite data takes the invalid pixel instead of reading as zero 0.000s
+  + diverging thresholds hide a band around zero 0.000s
+  + rewindowing a diverging colorizer keeps zero on the neutral 0.000s
+  + a diverging scale fixes a symmetric domain so the neutral cannot drift 0.001s
+  + plot-wide training cannot widen a diverging scale off its zero 0.000s
+  + a diverging scale refuses a limit that is not a positive magnitude 0.000s
+intaglio.ContourBandSuite:
+  + a radial band retains one outer ring and one explicit hole 0.058s
+  + bands partition a planar domain without area loss or overlap 0.010s
+  + planar band mass is conserved across grid sizes and translated domains 0.049s
+  + ring area and winding are stable at large coordinate offsets 0.001s
+  + band topology is deterministic under translation 0.005s
+  + filled bands lower through capability-gated generic polygons 0.077s
+  + break and grid failures remain typed 0.002s
+external.recipe.PlotRecipeSuite:
+  + external model types retain the exact row type without inheritance 0.004s
+  + independent external recipes compile on the shared JVM and Scala.js surface 0.012s
+  + recipe conversion and compilation are deterministic 0.007s
+  + checked recipes return typed conversion failures 0.000s
+intaglio.Bin2DSuite:
+  + rectangular binning is right-closed and conserves observations 0.000s
+  + binning is permutation invariant 0.000s
+  + proportions form a probability mass over the grid 0.000s
+  + automatic domains remain valid for constant coordinates 0.000s
+  + configuration and computation expose typed boundary failures 0.000s
+intaglio.GrobFormSuite:
+  + a corner radius is an extent, so negative and non-finite values are unrepresentable 0.000s
+  + the default rectangle carries the zero radius and lowers to a sharp rectangle 0.002s
+  + a corner radius resolves like a circle radius: the smaller axis resolution wins 0.000s
+  + an oversized radius is clamped to half the shorter side, never refused 0.000s
+  + the corner radius never moves the rectangle 0.000s
+  + linear interpolation is the default and lowers the given points 0.000s
+  + step-after holds each y until the next x; step-before jumps at the current x 0.000s
+  + a one-point step line lowers to that single point 0.000s
+  + transposing an interpolation is an involution and fixes only Linear 0.000s
+  + a transposed step line has the transposed vertices of its own expansion 0.000s
+external.aesthetic.OpenAestheticSuite:
+  + an external package defines and maps a typed aesthetic by key identity 0.000s
+  + external typed keys participate in scaled heterogeneous inspection 0.000s
+  + generic encoded x and y satisfy the point geom prerequisite 0.001s
+  + external aesthetic names are validated at construction 0.000s
+intaglio.interaction.InteractionCompositionSuite:
+  + row composition preserves independent visual identities and shared entity keys through device lowering 0.019s
+  + column, grid, and inset transforms retain typed routing and explicit clipping 0.003s
+  + same plan identifiers cannot silently overwrite routing, including inset insertion 0.001s
+  + composition rejects missing or different compilation contexts 0.001s
+  + invalid grid dimensions retain the ordinary typed layout failure 0.000s
+intaglio.interaction.InteractionCompilerSuite:
+intaglio.DisplaySuite:
+  + display windows and thresholds reject invalid bounds 0.000s
+  + transparent bands hide only finite values in their strict interior 0.000s
+  + display opacity is a checked opaque scalar 0.001s
+  + normal blending is source-over and honors display opacity 0.001s
+  + separable blend modes have exact opaque channel semantics 0.000s
+  + plus-lighter adds premultiplied display bytes independently of legacy additive 0.000s
+  + plus-lighter appends to the established blend-mode ordinals 0.000s
+  + graphics-owned colorizers preserve image-view threshold behavior 0.001s
+  + below and above partition the finite line and overlap exactly at the cutoff 0.001s
+  + two-sided thresholds hide inside the inner band and outside the outer band 0.000s
+  + two-sided magnitude thresholds are symmetric 0.000s
+  + threshold constructors reject non-finite cutoffs and unnested bands 0.000s
+  + non-finite values are never thresholded and render as invalid under every mode 0.000s
+  + scalar colorizers render one-sided and bounded thresholds transparently 0.000s
+intaglio.interaction.InteractionIdentitySuite:
+  + entity identity survives reorder and filter without consulting source equality 0.000s
+  + duplicate entity keys fail with source positions; link keys intentionally repeat 0.000s
+intaglio.StrokeCasingSuite:
+  + same labels do not join independently constructed key spaces 0.000s
+  + transport checks key schema, revision and canonical payload 0.000s
+  + text keys preserve literal Unicode and markup characters without interpreting them 0.000s
+  + invalid directly constructed widths and opacity fail through checked casing 0.001s
+  + physical and relative casing widths resolve once at target DPI 0.003s
+  + a cased single cross lowers to one batch so both bars share one underlay 0.001s
+  + a cased circle point and circle grob lower to discs carrying the resolved casing 0.003s
+intaglio.PlotLayoutSuite:
+  + panel-only requests allocate margins and nothing else 0.002s
+intaglio.PaintLengthUnitSuite:
+  + axis requests allocate strips sized from tick labels via text metrics 0.001s
+  + axis titles and plot labels receive solver-owned regions 0.000s
+  + legend requests allocate a right-hand column beside the panel 0.000s
+  + named rhythms lower unchanged at 96 ppi and scale with density elsewhere 0.002s
+  + colorbar requests reserve their wider swatch and tick-label offset 0.000s
+  + a layout-unit dash keeps one physical length at every density 0.000s
+  + points and millimetres resolve through the same density as stroke widths 0.000s
+  + device pixels are an explicit opt-in that never scales 0.000s
+  + legend columns clear a right-axis strip instead of overlapping it 0.001s
+  + pattern spacing, line width and stipple radius scale together, angles do not 0.000s
+  + a casing's own rhythm resolves with the stroke's 0.000s
+  + a unit-bearing pattern keeps the constructor's validation 0.000s
+  + a rhythm that would overflow device range is a typed error, not a non-finite dash 0.000s
+  + impossible layouts are typed errors 0.001s
+  + guide stacks derive row, title, and inter-guide spacing from policy 0.000s
+  + guide stacks that exceed the reserved viewport fail with typed overflow 0.000s
+intaglio.TextPlateSuite:
+  + padding and corner radius resolve to device pixels once, at the target density 0.001s
+  + a plate is the measured box plus padding on every side, its radius clamped 0.000s
+  + an oversized plate padding is a typed lowering error 0.000s
+  + panel grids allocate stable row-major data and strip frames 0.003s
+  + independently specified permutations and subsets preserve key lookup 0.039s
+  + codec and accessor exceptions stay in the typed error channel 0.000s
+  + codec configuration rejects invalid names and versions 0.000s
+  + visual target identity is plan-local and constant-size batches check their bounds 0.000s
+  + incomplete provenance never yields an exact selection, even for zero or one member 0.000s
+  + exact membership preserves declared keys and rejects stale source revisions 0.000s
+  + membership rejects invalid totals, duplicates, and foreign key-space witnesses 0.000s
+  + entity, grouping, and key-value types remain distinct at compile time 0.000s
+intaglio.AutomaticDisplayWindowSuite:
+  + exact quantiles exclude declared zero background without discarding negative values 0.001s
+  + finite-domain zeros are data and constant windows have explicit expansion 0.000s
+intaglio.DeviceSuite:
+  + single outlier does not dictate a 2-98 percent display window 0.000s
+  + device context rejects invalid sizes and resolutions 0.000s
+  + npc locations resolve against the frame with y flipped upward 0.000s
+  + absolute units convert at 96 pixels per inch 0.000s
+  + full-sample windows commute with affine rescaling and reverse under sign change 0.000s
+  + add, subtract, and multiply combine linearly for locations 0.000s
+  + mixed-unit multiplication resolves numerically 0.000s
+  + native locations and extents resolve differently 0.000s
+  + location offsets resolve native terms as extents 0.000s
+  + axis-neutral extents take the smaller of width and height resolutions 0.000s
+  + degenerate native scales resolve extents to zero and locations to midpoints 0.000s
+  + line units resolve from contextual line height while npc font sizes remain invalid 0.000s
+  + device lowering distinguishes literal-pixel and physical-point stroke widths 0.002s
+  + DeviceScene receives the render context's line height for extents and fonts 0.000s
+  + child frames resolve with lower-left origins in y-up parents 0.000s
+  + y-down viewports place scene y downward 0.000s
+  + scenes lower to numeric device primitives with clip and orientation 0.001s
+  + point shapes lower to centered device marks 0.001s
+  + diamond points lower to an equal-area closed polyline on the axes 0.001s
+  + viewport rotation pivots on the resolved origin corner 0.000s
+  + scene angles are counterclockwise in y-up frames, clockwise in y-down frames 0.000s
+  + degenerate expressions are rejected instead of formatted 0.000s
+  + device lowering rejects oversized style and text attributes 0.000s
+  + images lower with rectangle-consistent anchors and top-left pixel order 0.000s
+  + named viewport frames round trip transformed native coordinates 0.000s
+  + named viewport frames refuse unavailable and rotated coordinate mappings 0.000s
+  + one named frame maps conformance primitive anchors and image bounds to lowered output 0.001s
+intaglio.StatSuite:
+  + reservoir is bounded, deterministic, and admits late input rather than retaining a prefix 0.024s
+  + invalid settings, empty streams and unrepresentable finite widths are explicit failures 0.000s
+  + built-in stats execute through the public batch, context, result, and policy contract 0.005s
+intaglio.SceneConformanceSuite:
+  + stat count matches R table and ggplot2 stat_count parity fixture 0.007s
+  + typed stat mappings cannot receive the wrong output variant 0.000s
+  + computed count output trains x scale, derives labels, and lowers bars 0.013s
+  + count bars and panel ranges consume explicit band padding 0.001s
+intaglio.ClassedRasterSuite:
+  + declared count order is preserved before undeclared observed levels 0.016s
+  + solver-driven compilation places the legend in its own named viewport 0.086s
+  + grouped count dodge matches ggplot2 total and single width contracts 0.004s
+  + grouped count stack uses the trained band and reverse group order 0.001s
+  + count owns position aesthetics and rejects incompatible specs 0.000s
+  + single and empty count layers retain valid typed boundaries 0.001s
+intaglio.DiscretePaletteEvidenceSuite:
+  + the published prefix floors hold 0.002s
+  + six series clear the series floor and the seventh does not 0.001s
+intaglio.FacetSuite:
+  + each class maps its own extremes to its own palette's endpoints 0.038s
+  + each class with values gets its own colorbar, titled by its class 0.008s
+  + a class with no cells draws nothing and has no colorbar 0.002s
+  + solver-driven compilation places a continuous colorbar in the guide viewport 0.051s
+  + solved scenes lower to identical device scenes across runs 0.008s
+  + default derived ranges keep scaled and unscaled corner discs inside the panel clip 0.014s
+intaglio.PrettyBoundarySuite:
+  + sparse pretty grids retain two truthful endpoints after ordinary axis filtering 0.005s
+  + sparse fallback respects signed and translated nondegenerate ranges 0.000s
+  + ordinary zero-anchored nice grids and explicitly single ticks remain unchanged 0.000s
+intaglio.LayoutSuite:
+intaglio.PatternTileSuite:
+  + panel layout exposes a viewport and maps data coordinates into panel space 0.001s
+  + panel coordinate transforms reject non-finite inputs 0.000s
+  + axis guides lower through existing axis grobs with unclipped guide viewport 0.003s
+  + a class whose cells are all masked or outside its transform draws nothing, not an error 0.050s
+  + axis guides lower titles at solver-matched offsets 0.000s
+  + legend guides lower to stable marker and label grobs 0.001s
+  + empty legends fail before backend rendering 0.000s
+  + colorbar guides lower sampled colors, transform ticks, labels, and title 0.001s
+  + masked cells and unknown classes take the missing colour 0.003s
+  + empty colorbars fail before backend rendering 0.000s
+  + class specifications are checked 0.000s
+  + all four monochrome recipes produce distinct non-solid tiles 0.010s
+  + tile pixels preserve source-over ink and background alpha 0.000s
+  + positive hatch angles turn clockwise from a vertical rule in y-down space 0.000s
+  + raster resource limits fail through the typed pattern boundary 0.000s
+  + default axis offsets follow point policy across device sizes 0.005s
+  + independent layers require and obey explicit facet participation policies 0.072s
+  + default legend spacing clears point-sized keys and the title 0.001s
+intaglio.CoordSuite:
+  + facet wrap partitions rows before statistics and assigns stable scene names 0.004s
+  + coordinate ratios are positive finite domain values 0.001s
+  + built-in coordinates obey their public transformation and layout contracts 0.001s
+  + flipped coordinates swap resolved positions and point grobs once 0.001s
+intaglio.ScaleSuite:
+  + flipped histograms become horizontal bars with swapped panel ranges 0.001s
+  + scale specs are row-free inferred declarations distinct from fixed scales 0.001s
+intaglio.FuzzRegressionSuite:
+  + continuous ranges train as an associative union over finite values 0.000s
+  + continuous scale maps through transform, rescale, and out-of-bounds policy 0.000s
+  + continuous palette sampling is deterministic at equal-width bin centers 0.000s
+  + squish keeps out-of-bounds values by clamping to palette endpoints 0.000s
+  + transforms advertise round-trip laws over their domains 0.000s
+  + transform domains model open and closed endpoints explicitly 0.000s
+  + discrete domains preserve declared ordering and append new levels 0.000s
+  + discrete domain order and immutable identity index agree with one lookup per value 0.004s
+  + finite discrete palettes reject over-capacity domains by default 0.000s
+  + discrete scale cycles finite palettes only under the explicit overflow policy 0.000s
+  + band scales expose checked categorical intervals as domain values 0.000s
+  + band construction rejects invalid padding, centers, and widths 0.000s
+  + faceted panels expose separately addressable resolved frames 0.009s
+  + rendering is deterministic 0.020s
+  + break generators are deterministic functions of intervals 0.000s
+  + checked break generation rejects sub-ULP non-progress on every iterative path 0.000s
+  + every break policy has a deterministic output cap and typed overflow 0.001s
+  + custom break policies receive finite, ordered, and bounded output validation 0.000s
+  + default pretty breaks use readable 1/2/5 steps for ordinary ranges 0.000s
+intaglio.StyleAestheticsSuite:
+  + pretty breaks include zero and platform-stable labels for signed ranges 0.003s
+  + pretty breaks remain readable for tiny and large ranges 0.000s
+  + pretty breaks are scale-equivariant across powers of ten 0.000s
+  + pretty breaks collapse degenerate ranges and validate target counts 0.000s
+  + log10 breaks keep decade ticks when three or more decades are visible 0.000s
+  + a narrow log10 window gains ticks within its decades, from the first rung that suffices 0.000s
+  + malformed scene values stay inside checked construction and lowering boundaries 0.016s
+  + a sliver of a decade falls back to pretty breaks on the raw range 0.007s
+intaglio.InteractionCoverageSuite:
+  + the coverage matrix and its checks name the same components 0.001s
+  + geomPoint compiles to PerRow targets 0.009s
+  + log10 breaks are increasing and inside every range, across scales and widths 0.015s
+  + declared facet levels index row membership once per layer, independent of panel count 0.032s
+  + reference annotation facet participation is explicit and row-independent 0.002s
+  + declared empty facets render repeated reference annotations 0.001s
+intaglio.ProvenancePolicySuite:
+  + provenance policies publish their retained-memory costs 0.000s
+  + free facet scales train and map repeated annotations panel-locally 0.006s
+  + statistic provenance retains exactly the requested payload 0.004s
+  + dropped-row diagnostics retain counts, samples, indices, or full sources by policy 0.002s
+  + non-full provenance releases rich rows from top-level and facet layer views 0.009s
+  + flipped coordinates transpose every ring of compound polygons 0.069s
+intaglio.AxisSuite:
+  + bottom axis lowers to baseline, tick segments, and labels 0.000s
+  + left axis places ticks and labels on the negative x side 0.000s
+  + derived x and y guides follow flipped physical axes 0.001s
+  + axis validation rejects invalid coordinates and out-of-range ticks 0.000s
+  + tick generation rejects labeler count mismatches 0.000s
+  + tick generation propagates checked floating-point break failures 0.000s
+  + fixed coordinates constrain physical panel aspect through the solver 0.001s
+  + fixed coordinates reject unexpanded degenerate ranges 0.000s
+  + point channels survive rich rows and lean batch lowering 0.061s
+  + coordinate zoom changes only the post-stat viewport and preserves histogram observations 0.004s
+  + raw numeric zoom bounds map through the trained scale without becoming scale limits 0.001s
+  + line type and point-unit line width remain constant within each lowered line group 0.005s
+  + discrete scaled line types participate in inferred structural grouping 0.005s
+  + varying line width fails the group-constant contract before lowering 0.001s
+  + text angle and both justification channels lower to text anchors 0.001s
+  + geom contracts reject style channels that the geom cannot preserve 0.000s
+  + typed date windows map after temporal scale training and retain every row 0.006s
+  + geomText compiles to PerRow targets 0.052s
+  + empty and scale-incompatible coordinate windows fail through typed errors 0.000s
+  + non-finite text angles become typed row-drop diagnostics 0.000s
+intaglio.BivariateEffectConfidenceSuite:
+  + geomSegment compiles to PerRow targets 0.002s
+  + SurfViewJS confidence policy uses discrete HSV texture samples with opaque alpha 0.000s
+  + reference texture size controls interior HSV texels 0.000s
+  + confidence alpha remains an explicit non-reference alternative 0.000s
+  + key pixels and both axes agree with direct mapping at corners and center 0.000s
+  + key identity binds the mapping and labeled axes 0.000s
+  + key construction validates grid and tick domains 0.000s
+  + geomTile compiles to PerRow targets 0.001s
+  + geomErrorBar compiles to PerRow targets 0.001s
+  + geomLine compiles to PerGroup(2) targets 0.002s
+intaglio.ContourSuite:
+  + coordinate zoom remains exact and non-filtering across facet panels 0.009s
+  + geomArea compiles to PerGroup(2) targets 0.004s
+intaglio.GrammarSuite:
+  + row mappings expose total, checked, and throwing contracts 0.000s
+  + typed layers carry required position aesthetics by construction 0.000s
+  + plot validates required aesthetics after layer mapping inheritance 0.000s
+  + every built-in geom publishes its complete aesthetic contract 0.001s
+  + geom aesthetic contracts reject inconsistent declarations 0.000s
+  + unsupported geom mappings fail at the typed layer boundary 0.000s
+  + plot layers inherit plot data and mappings without mutating either 0.000s
+  + plot labels compose without rebuilding the plot specification 0.000s
+  + plot rejects duplicate scale bindings for the same aesthetic 0.000s
+  + plot scale bindings are not shadowed by direct layer mappings 0.000s
+  + plot mapping replacement revalidates already-added inherited layers 0.000s
+  + scale bindings carry the row extractor used to map an aesthetic 0.000s
+  + aesthetic specs unify direct, constant, and scaled values 0.000s
+intaglio.BatchMarksSuite:
+  + batch marks validate their columns and slice with their points 0.000s
+  + the identity wrapper lowers transparently around the batch it names 0.000s
+  + lowering refuses names that do not match the marks beneath them 0.000s
+  + names run across split batches in draw order; a nearer annotation names its own 0.000s
+  + marksOf reports titles and ignores unidentified batches 0.000s
+  + pre-identity GrobMeta constructors, factories and copies remain 0.000s
+intaglio.CompositionSuite:
+intaglio.DivergingPaletteEvidenceSuite:
+intaglio.CompilerPhasesSuite:
+  + no admissible reordering of these colors has a better prefix floor 0.204s
+  + the first five keep lightness contrast against a light panel 0.000s
+  + the palette refuses a ninth level rather than reusing a color 0.000s
+  + no two colors in the palette are exactly equal 0.000s
+  + the default theme palette is the measured one, and the palette it replaced was not 0.001s
+external.geometry.OpenGeometrySuite:
+  + an external geom declares its contract and lowers without compiler registration 0.001s
+  + the two arms stay far apart at matched magnitude under every observer modelled 0.004s
+  + an external coordinate transforms rows, grobs, ranges, and clipping 0.001s
+  + coordinate helpers reject non-finite translations as values 0.000s
+  + the published arm separation figures are the measured ones 0.001s
+  + a planar field produces one analytic contour path 0.020s
+  + rust rather than a saturated red is what buys the protanopia margin 0.003s
+intaglio.PlotCompilerSuite:
+  + lightness never reverses outward along either arm 0.001s
+intaglio.GrobMetaSuite:
+  + consecutive samples of a sixteen-step ramp stay perceptibly distinct 0.000s
+  + srgb channel interpolation is what produces a grey dead zone, not oklab 0.000s
+  + CssClass accepts identifier tokens and normalises whitespace 0.001s
+  + CssClass refuses blank input and non-identifier tokens 0.000s
+  + DataKey accepts lowercase letters, digits, and hyphens and names its attribute 0.000s
+  + DataKey refuses empty, uppercase, leading-digit, underscore, whitespace, and 'name' 0.000s
+  + GrobMeta builders append data in order and detect the first duplicate key 0.000s
+  + a radial field produces a closed, nearly circular path 0.002s
+  + ambiguous saddles obey the explicit tie policy 0.000s
+  + an annotated grob has no name or viewport and exactly one child 0.000s
+  + device lowering wraps the child's primitives in an annotated element 0.000s
+  + an annotated child with a viewport still lowers to its clipped group 0.000s
+  + nested annotations and annotated groups lower recursively 0.000s
+  + the two interpolation spaces agree closely on this palette's own endpoints 0.003s
+  + all non-ambiguous marching-square cases match an independent edge table 0.001s
+intaglio.FacetSharedScalesSuite:
+  + ambiguous case fixtures pin both asymptotic-decider tie outcomes 0.001s
+  + mapping phase produces per-layer plans with one canonical effective mapping 0.008s
+  + mapping phase rejects invalid stat-geom combinations and incomplete geom mappings 0.001s
+  + geomRibbon compiles to PerGroup(2) targets 0.030s
+  + geomPolygon compiles to PerGroup(3) targets 0.001s
+  + geomHistogram compiles to PerStatisticRow targets 0.002s
+  + geomSummary compiles to PerStatisticRow targets 0.006s
+  + independent row types share plot-wide scales and retain typed provenance 0.023s
+  + scale phase trains one declaration from distinct layer extractors 0.016s
+intaglio.CompositionStripSuite:
+  + row phase records the evaluated group value on each row 0.001s
+  + ambiguous topology is invariant under positive affine value transforms 0.021s
+  + the asymptotic decider is stable for extreme finite corner magnitudes 0.000s
+  + contour geometry is translation invariant 0.001s
+  + discrete style categories infer structural pre-palette group keys 0.005s
+  + multiple discrete style mappings form a composite raw category key 0.003s
+  + an explicit group mapping overrides discrete style inference 0.001s
+  + levels, grids, and plotting capabilities are checked 0.011s
+  + discrete scale descriptors without raw categories fail grouping closed 0.006s
+  + row style resolution preserves the complete base GraphicParams value 0.001s
+  + row style resolution changes only explicitly mapped GraphicParams channels 0.001s
+  + invalid mapped alpha remains a typed compiler drop 0.000s
+  + geom lowering emits one line grob per group with that group's params 0.001s
+  + group-constant styles are rejected before grouped lowering 0.005s
+  + shared ranges union panels while free position scales train per panel 0.119s
+  + scale specs train once at the global scope and once per free panel scope 0.001s
+  + single-row groups draw nothing, matching whole-layer semantics 0.002s
+  + ungrouped line layers still lower to a single polyline 0.001s
+  + guide phase still requires a layout before lowering guides 0.000s
+  + a row keeps every cell's tick labels and axis titles inside the cell 0.038s
+intaglio.SwatchLegendDrawingSuite:
+  + swatch rows wrap labels, preserve exact colors, and remain disjoint at manuscript and poster sizes 0.008s
+  + measured lines fit their width, including long tokens and unicode code points 0.000s
+  + invalid metadata and insufficient text width fail before drawing 0.000s
+  + rows and grids align panels even when source guide margins differ 0.052s
+  + additional scalar notes reserve height without changing calibration identity 0.003s
+  + compiles point layers through resolved scaled and direct aesthetics 0.057s
+intaglio.PanelFramingSuite:
+  + a three-column grid keeps its axis text inside cells a third of the canvas wide 0.030s
+  + aligned panels still share one left edge per column and one width per row 0.001s
+  + a collected legend's column is not reserved again inside every cell 0.003s
+  + a cell too narrow for the strips its plots reserve is a typed overflow 0.002s
+  + free dimensions render panel-local axes while shared dimensions suppress inner axes 0.048s
+  + resolved plots expose scale declarations separately from trained scale descriptors 0.024s
+  + one plot scale trains over the union of every layer before row mapping 0.002s
+  + different scale declarations for one aesthetic are a typed plot error 0.000s
+intaglio.ViewportAspectSuite:
+  + compiles line layers in row order and drops non-finite positions 0.001s
+  + a faceted plot names each dimension exactly once, under every scale policy 0.008s
+intaglio.TrainPlaceSuite:
+  + the single facet axis title sits in the outer strip, centred on the whole block 0.001s
+  + free-axis sizing uses target text metrics for outer strips and panel gaps 0.001s
+  + facet grid forms the row-column product and rejects incompatible layout modes 0.001s
+  + fixed coordinates fail explicitly for facet grids 0.000s
+  + checked and violated-total mappings become row diagnostics with provenance 0.007s
+  + throwing scaled mappings fail scale training through GraphicsError 0.002s
+external.category.TypedCategorySuite:
+  + a 16:9 frame in a 4:3 extent is letterboxed at the requested alignment 0.009s
+  + stat extractor exceptions remain inside the compiler Either 0.003s
+  + compatible guides are shared and incompatible guides remain collected 0.038s
+  + a tall extent places the frame along the horizontal slack 0.000s
+  + typed domains retain values, explicit stable identity, and explicit labels 0.003s
+  + facet mapping rejections remain inside the compiler Either 0.001s
+  + resizing keeps the aspect ratio exactly 0.001s
+  + fill covers the extent and clips to the extent, not the larger content frame 0.000s
+  + scaled label mappings can drop text rows without failing the whole plot 0.001s
+  + fit clips to the fitted frame, so the letterbox bars stay empty 0.000s
+  + log transform domain failures are typed row-drop diagnostics 0.001s
+  + typed discrete scales map enum values without String coercion 0.003s
+  + the resolved frame and its inverse mapping match the drawn image 0.000s
+  + composed panel frames use their named viewport paths and map to lowered marks 0.003s
+  + discrete unknown levels are typed scale out-of-domain row drops 0.001s
+  + empty layer data resolves to an empty scene without an empty-geometry error 0.000s
+  + typed band scales preserve category values and label their guides explicitly 0.001s
+  + typed scale specs train categories while retaining their input type 0.000s
+  + a rotated aspect viewport pivots on its origin, not on the fitted content corner 0.001s
+  + an aspect from equal native units uses the scale ranges 0.000s
+  + a non-positive or non-finite ratio is a typed error 0.000s
+  + compiler options wrap layer grobs in a panel viewport and append guides 0.002s
+  + a viewport without an aspect resolves as before 0.000s
+  + insets retain explicit viewport and clipping semantics 0.003s
+intaglio.PlotCompileCacheSuite:
+intaglio.ScalarFieldSuite:
+  + regular axes make sampling semantics explicit 0.000s
+  + scalar fields are immutable x-fastest row-major values 0.000s
+intaglio.ScientificStatSuite:
+  + tabulation and value mapping preserve geometry 0.000s
+  + construction rejects invalid geometry, shape, values, and access 0.001s
+  + histogram matches ggplot2 explicit-break count contract and trains full bin extents 0.002s
+  + grouped summary matches R mean plus standard-error output and lowers intervals 0.002s
+intaglio.RenderContextSuite:
+  + fixed-bandwidth Gaussian density agrees with R density 0.001s
+  + scientific stat constructors and compiler boundaries reject incoherent input 0.000s
+  + checked contexts bind device size, metrics, and resolved font families 0.000s
+  + HiDPI construction preserves logical size and records actual target density 0.000s
+  + histogram closure and summary interval policies are explicit 0.001s
+  + regular and explicit histogram partitions bind constant-time and binary lookup strategies 0.000s
+  + optimized histogram lookup preserves boundary ownership and observation conservation 0.000s
+intaglio.Kde2DSuite:
+  + geomDensity compiles to WholeLayer targets 0.132s
+  + Cartesian-product data factor into independent one-dimensional densities 0.001s
+  + geomEcdf compiles to PerGroup(1) targets 0.004s
+  + explicit guide options resolve theme layout defaults 0.030s
+  + incomplete geom mappings fail at the typed layer boundary 0.000s
+  + geomContour compiles to PerGroup(2) targets 0.002s
+  + KDE is permutation and translation invariant 0.006s
+  + invalid grids, gaps, inset bounds, and layout-free plots fail through typed errors 0.036s
+  + geomFilledContour compiles to PerGroup(3) targets 0.004s
+  + compiled panel viewports retain transformed scales in their physical axes 0.006s
+  + a wide vertex grid numerically integrates a Gaussian density to one 0.006s
+  + automatic bandwidths produce finite fields and invalid plans fail early 0.000s
+intaglio.ColorVisionSuite:
+  + font registry and target text metrics enter before layout and device lowering 0.031s
+  + the published simulated primaries and secondaries reproduce exactly 0.000s
+  + every grey is a fixed point under every observer 0.002s
+  + each half-plane preserves the neutral axis and each separation plane contains it 0.000s
+  + normal vision is the identity and alpha survives simulation 0.000s
+  + tritanopia moves blue and yellow, which is what the folk matrix fails to do 0.000s
+  + the two dichromacies collapse different pairs, which is why both are modelled 0.000s
+  + separation is symmetric, zero on identity, and finds the closest pair 0.000s
+  + lightness reports CIE L* on the familiar scale 0.000s
+intaglio.GuideDerivationSuite:
+  + frame-based layouts derive panel ranges from resolved rows 0.001s
+intaglio.AccessibilitySuite:
+  + semantic IDs accept the portable SVG subset and reject ambiguous strings 0.000s
+  + derived guides produce x/y axes and a legend from the discrete color scale 0.002s
+  + plot, layer, and compact datum IDs survive rich, lean, and device batches 0.001s
+  + trained plots expose deterministic layer and scale summaries plus authored alt text 0.001s
+  + continuous color scales derive transform-aware colorbars 0.002s
+  + scaled positions derive unit panel ranges and transform-aware ticks 0.001s
+  + band scales are ordinary typed position scales on the y aesthetic 0.001s
+  + plot axis labels override derived scale names 0.001s
+  + explicit overrides suppress matching derived guides and are included 0.001s
+intaglio.LabelerSuite:
+  + integral values label as plain integers 0.000s
+  + ordinary magnitudes label in fixed notation with trailing zeros stripped 0.000s
+  + extreme magnitudes label in explicit scientific notation 0.000s
+  + mixing scaled and unscaled position bindings across layers is a typed error 0.000s
+  + rounding keeps six significant digits 0.000s
+  + duplicate palette colors emit an inspectable ambiguity diagnostic 0.005s
+  + multiple derived legends stack instead of overprinting 0.001s
+  + solver stacks mixed legend and colorbar guides from measured point extents 0.001s
+  + derived guides resolve the final theme layout when no layout is explicit 0.001s
+  + explicit empty guides still compile without a layout 0.000s
+  + colors a dichromat cannot separate emit a diagnostic naming the observer 0.002s
+  + range expansion validates parameters and preserves translation laws 0.000s
+  + a palette every observer can separate emits nothing 0.001s
+  + duplicate explicit layer IDs fail before a scene can expose invalid DOM identity 0.001s
+intaglio.PlotDslSuite:
+external.stat.OpenStatSuite:
+  + a dense shared grid matches the exhaustive oracle panel by panel 0.189s
+  + an external stat compiles without compiler registration and retains its output type 0.001s
+  + point and line programs compose mappings, scales, labels, and theme concisely 0.002s
+  + the compact specimen clips under Data and fits with clearance under MarkInk 0.114s
+  + recompiling an equal physical target preserves typography and spacing 0.030s
+  + geomQuantileSummary compiles to PerStatisticRow targets 0.036s
+  + geomHeatmap compiles to PerCell targets 0.005s
+  + framing keeps observation order and moves nothing when the marks already fit 0.008s
+  + geomRasterByClass compiles to PerCell targets 0.001s
+  + a cached resolve produces the scene an uncached resolve produces 0.076s
+  + geomRaster compiles to PerCell targets 0.001s
+  + hline / vline compiles to PerAnnotation targets 0.001s
+  + external stats receive the concrete facet context and current typed batch 0.013s
+  + an external StatError is translated at the compiler boundary 0.000s
+  + conformance cases cover all behavior groups 0.481s
+intaglio.BatchIrSuite:
+intaglio.GeomSuite:
+intaglio.interaction.InteractionBindingSuite:
+  + independent row accessors keep their own types while explicitly sharing entity identity 0.001s
+  + independent namespaces with identical key values do not join 0.001s
+  + rectangles and tiles retain exact bounds and train their full extents 0.002s
+  + segments and error bars lower to explicit shared segments 0.001s
+  + repeated independent facet layers have distinct visual targets and shared observation keys 0.005s
+  + bindings are matched by package reference, not equal layer contents or vector position 0.000s
+  + binding order does not change layer routing 0.001s
+  + group projections retain different key types and deduplicate repeated links 0.000s
+  + link accessor failures use the interaction error channel 0.000s
+  + framing holds at native, compact, HiDPI, and export resolutions 0.017s
+  + custom geom declares multi-part target identity without replacing its ordinary rendering 0.001s
+  + a clearance can be chosen, and must be finite and nonnegative 0.001s
+  + malformed extension target layouts fail instead of returning partial routing 0.002s
+  + an independent binding cannot accept an accessor for the root row type 0.000s
+  + a zoomed axis keeps its window while the other axis frames the ink 0.001s
+  + flipped and transformed axes frame in the space they draw in 0.003s
+  + ribbons and areas lower one polygon per sufficiently large group 0.012s
+intaglio.PositionSuite:
+  + range expansion handles degenerate data and has an explicit opt-out 0.042s
+  + explicit panel layouts remain authoritative under default expansion 0.001s
+  + dodge divides each categorical band into deterministic group slots 0.002s
+  + dodge preserve single reserves stable global group slots 0.001s
+  + dodge distinguishes categorical identities with colliding mapped coordinates 0.001s
+  + polygons infer groups from raw discrete fill categories 0.006s
+  + bounded geoms compose with flipped coordinates in the shared compiler 0.001s
+  + stack keeps source order while handling positive and negative groups separately 0.002s
+  + reference lines lower once and contribute only to their own axis range 0.001s
+  + reference annotations render over empty data without retaining or resolving rows 0.000s
+  + seeded jitter is byte-stable in principle across JVM and Scala.js 0.001s
+  + position constructors and geom compatibility reject invalid states 0.000s
+  + reference annotation scale training and overlay policies are distinct 0.002s
+  + invalid reference coordinates fail at the typed layer boundary 0.000s
+  + training a numeric reference against a categorical position scale fails explicitly 0.000s
+  + required extent aesthetics and row bounds remain typed failures 0.000s
+intaglio.ScalarMappingSuite:
+  + asymmetric continuous and split scales have independent tabulated tail values 0.001s
+  + piecewise ramp knots and interpolation are explicit display bytes 0.000s
+  + discrete ramps select lookup-table colors at indexed stops 0.000s
+  + discrete ramps compare 22 and 49 color indexed stops exactly 0.001s
+  + linear and discrete sampling share stops but have distinct mapping identities 0.001s
+  + discrete physical transitions agree with normalized lookup at adjacent representable scalars 0.002s
+  + discrete transition search handles cancellation and unreachable bins 0.000s
+intaglio.ThemeSuite:
+  + theme typography is the layout typography 0.000s
+  + one theme reaches marks, panel, axes, legends, and plot labels 0.001s
+  + explicit layer and guide styles override theme defaults 0.000s
+  + theme palettes are immutable scale inputs 0.000s
+  + every interval endpoint convention distinguishes edges and immediate neighbors 0.000s
+  + split-gap boundaries are visible and their inward neighbors are hidden 0.000s
+  + invalid, hidden, and saturated states survive deliberately identical colors 0.000s
+  + visibility tests the original observation before clamping 0.000s
+  + legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding 0.000s
+  + checked overrides retain absolute center, update identity and reject impossible windows 0.000s
+  + malformed ramps, centers, intervals and split widths fail at construction 0.000s
+  + finite extreme limits normalize without overflow and agree with the legacy adapter 0.000s
+  + canonical key is platform stable and distinguishes all effective display policies 0.000s
+  + affine changes of scalar units preserve colors and visibility 0.000s
+  + every display threshold becomes a visibility showing exactly what it does not hide 0.000s
+  + legacy colorizers and checked overrides accept every threshold mode 0.001s
+  + visibility identity names every kind and cutoff exactly and feeds the boundary list 0.001s
+intaglio.RasterSuite:
+  + raster dimensions reject non-positive and overflowing shapes 0.000s
+  + rgba32 is a checked packed pixel with exact byte channels 0.000s
+  + unsafe packed-array construction is an explicit zero-copy ownership transfer 0.000s
+  + raster images own their packed storage and compare by pixel value 0.000s
+  + raster constructors validate pixel counts and coordinates 0.000s
+  + RGBA colors quantize alpha to the nearest raster byte 0.000s
+intaglio.RasterGeomSuite:
+  + faceted panels frame their ink, and shared scales keep one range 0.050s
+  + a fixed aspect stays exact while the ink is framed 0.001s
+  + a free facet axis frames alone even when its base range equals a neighbour's 0.001s
+  + rich and lean lowering frame to the same ranges 0.001s
+  + the axis solver returns the narrowest fitting span and refuses an impossible fit 0.000s
+  + non-square raster matches heatmap pixels, extent and legend under identity and log fill 0.009s
+intaglio.AesEnvSuite:
+  + AesSpec is the canonical mapping and reports bound aesthetics in declaration order 0.000s
+  + typed updates preserve the precise public record accessors without conversion 0.000s
+  + typed lookup returns values at the aesthetic's own type 0.000s
+  + AesEnv remains a source-compatible alias without allocating a second representation 0.000s
+intaglio.LegendKeyGeometrySuite:
+  + bind registers a scaled binding once and rejects a duplicate 0.000s
+  + bind allows replacing an unscaled binding with a scaled one 0.000s
+  + inherit prefers scaled local, then scaled parent, then local, then parent 0.000s
+  + missing mask and NaN retain grid slots, use declared colour and do not train to zero 0.003s
+  + AesSpec inheritance preserves typed field access 0.000s
+  + ScaleRegistry registers each scaled binding exactly once, in declaration order 0.000s
+  + ScaleRegistry inspects an untrained spec without pretending it is a trained scale 0.000s
+  + registry lookup by aesthetic finds the registered scale 0.000s
+  + default legend keys fit their key box and rows, clear their labels, and stay off the panel 0.002s
+  + alpha and interpolation are explicit and invalid alpha is checked 0.002s
+  + an unchanged plot and context hit both cache levels and return the same value 0.083s
+intaglio.TextExtentSuite:
+  + unrotated, justification places the layout box the way backends anchor text 0.001s
+  + 90 degrees in a y-up scene reads upward, the box above and left of a bottom-left anchor 0.000s
+  + -90 degrees reads downward, the box below and right of a bottom-left anchor 0.000s
+  + 180 degrees mirrors the box through the anchor 0.000s
+  + 45 degrees: the extent is (w + h) / sqrt 2 on both axes, placed by the rotated anchor 0.000s
+  + a y-down frame turns the other way, and angles are periodic 0.000s
+  + theme, scale, labels, and geom declarations are permutation invariant 0.098s
+  + a new context reuses the training and pays only the placement 0.017s
+  + explicit palettes and layout policies remain authoritative 0.016s
+  + the DSL adds independent typed layers only with an explicit facet policy 0.002s
+  + row-free specs train empty base plots from populated layer data 0.001s
+  + a value-equal but distinct plot reference is deliberately a miss 0.008s
+  + facets share the same fill domain and colours as heatmaps 0.027s
+  + at every angle the extent is w|cos| + h|sin| by w|sin| + h|cos| and contains the anchor 0.028s
+  + multiples of 90 degrees are exact 0.000s
+  + invalid input is a typed error 0.000s
+  + measure takes the provider's width and height, and reports a throwing provider 0.000s
+  + the angle convention is the one scene lowering hands to backends 0.002s
+  + vertex-centered samples cover the same half-step expanded extent as tiles 0.020s
+intaglio.CompositionRowHeightSuite:
+  + incomplete or irregular grids fail explicitly 0.001s
+  + three stacked panels of unequal height share their column boundaries exactly 0.002s
+  + ordinary point compilation preserves compact batches and releases source inspection 0.713s
+  + fixed rows take their stated height and the weighted row takes the rest 0.001s
+  + coordinate flip transposes raster pixels and extent like the tile path 0.003s
+  + legend keys stay separate across key sizes, text sizes, and densities 0.054s
+  + fixed fill limits censor to missing and squish identically to tiles 0.002s
+  + large coordinate origins do not hide irregular cell spacing 0.001s
+  + point entity keys survive reordering, filtering, and dropped non-finite rows 0.004s
+  + custom-stat membership uses explicit keys when every source row compares equal 0.001s
+  + a custom statistic cannot replace a source key after the source index is validated 0.000s
+intaglio.ExtentDifferenceSuite:
+  + the full extent minus a fixed margin resolves across resizes 0.000s
+  + the same band lands on the same device x in every row 0.007s
+  + a negative resolution is a typed error naming the expression and value, not a clamp 0.000s
+  + a viewport sized by a difference insets its child frame, and refuses when too small 0.000s
+  + a location offset by a negative difference is refused at resolution 0.000s
+  + geometry revisions invalidate visual addresses while preserving source keys and membership 0.001s
+  + rounding noise in an exactly cancelling difference resolves to zero 0.000s
+  + an explicitly sized row reserves only its own plots' top and bottom strips 0.000s
+  + expressions without a difference keep the construction-time proof 0.000s
+  + canonical histogram, summary, and density programs expose trained plots 0.033s
+  + the DSL and core grammar compile canonical points to the same scene 0.001s
+  + checked builder operations retain typed errors until build 0.000s
+  + row-free scale declarations defer mapping failures to compiler training 0.000s
+intaglio.CommonStatsSuite:
+  + publication palettes reject overflow unless cycling is explicit 0.001s
+  + plots on different x frames are refused when a shared x frame is required 0.003s
+  + quantile summary matches independent R type-7 quartile fixtures 0.002s
+  + quantile summaries preserve order and translation laws 0.001s
+  + two summary primitives share one logical target and explicit aggregate membership 0.005s
+  + a shared x frame also requires the same x transform 0.003s
+  + ECDF collapses ties and computes groups independently 0.001s
+  + ECDF obeys per-group mass and order laws 0.002s
+  + common statistics reject non-finite mapped values through typed errors 0.000s
+  + equal endpoint domains and transform names do not prove an equal interior mapping 0.002s
+intaglio.CompanionPositionScalingSuite:
+  + count-only aggregates cannot report exact member selection 0.004s
+  + shared x frame checks position palettes as well as transforms 0.001s
+  + grouped line target membership unions observations in encounter order 0.002s
+  + a segment under an explicit y scale resolves and maps its ends like points 0.002s
+  + custom position scales need a shared mapping instance 0.002s
+  + a companion that fails for one row drops that row, as before, instead of the plot 0.001s
+intaglio.NumericalStandardsSuite:
+  + summary moments retain a small term across catastrophic cancellation 0.000s
+  + automatic density bandwidth is stable under a large translation 0.000s
+  + a segment alone under an explicit y scale renders 0.001s
+  + histogram density conserves mass under the documented right-closed partition 0.000s
+  + an explicit x scale reaches segment ends on the x axis too 0.001s
+  + tile bounds follow an explicit transformed y scale and the axis uses its labeler 0.001s
+  + wide-grid one-dimensional density meets the documented normalization tolerance 0.004s
+  + KDE strategy is explicit and unavailable FFT plans fail through typed errors 0.000s
+  + a categorical-row raster labels its rows without guide overrides 0.003s
+  + a raw companion beside a temporal position scale is refused, naming geom and aesthetic 0.001s
+  + mapping failures never escape plot compilation 0.461s
+  + facet copies keep distinct visual scopes and original observation identities 0.008s
+  + an explicitly scaled companion keeps its own scale 0.000s
+  + tile bounds are trained: a scale's domain covers the outer tile edges 0.001s
+  + transform callbacks and special values return typed failures 0.002s
+intaglio.ScalarLegendSuite:
+  + asymmetric split bar positions and colors have an independent piecewise oracle 0.002s
+intaglio.ColorDeterminismSuite:
+  + effective thresholds and hidden versus invalid keys retain exact semantics 0.000s
+  + custom ticks and metadata reject ambiguous or unsupported calibration 0.000s
+  + narrow high-offset windows get distinct default tick labels 0.001s
+  + the blue-rust ramp emits the same 8004 bytes on every platform 0.003s
+intaglio.SceneSuite:
+  + eviction honours the trained capacity and counts what it drops 0.061s
+  + scene append has empty identity and preserves grob order 0.000s
+  + drawn strips retain exact sampled colors and never interpolate across a split gap 0.002s
+  + scene concatenation is associative 0.000s
+  + grob constructors reject empty geometries before renderer boundaries 0.000s
+  + oklab gradients emit the same bytes on every platform 0.002s
+  + public polygons lower as closed renderer-neutral polylines 0.000s
+  + color and length constructors keep invalid scalar values out of the scene tree 0.000s
+  + graphic parameters define backend-neutral stroke geometry defaults 0.000s
+  + line lengths have public checked constructors at every expression layer 0.000s
+  + pattern recipes reject non-finite and non-positive geometry 0.000s
+  + stipple radius must fit its tile 0.000s
+  + pattern fill is explicit and mutually exclusive with solid fill 0.000s
+  + pattern recipe equality is structural across independent construction 0.000s
+  + length expressions preserve symbolic unit composition 0.000s
+  + title wrapping and crowded ticks stay inside measured bounds without overlap 0.002s
+  + one-sided and banded visibility name their cutoffs in notes, ticks and cell edges 0.017s
+intaglio.RezoomSuite:
+  + dash patterns refuse rhythms a backend could not draw 0.026s
+  + every line type resolves through one dash definition 0.000s
+  + font weight is bounded and reaches every derived style 0.000s
+  + re-windowing runs no statistic, mapping or scale training 0.004s
+  + the oklab round trip emits the same bytes on every platform 0.033s
+  + the panel does not move as the window changes 0.003s
+  + a flipped shared x frame checks logical y and permits different vertical mappings 0.051s
+  + a sparse shared grid with declared empty cells matches the oracle panel by panel 0.215s
+  + shared categorical frames compare stable category identities rather than display labels 0.002s
+  + large finite row weights preserve equal and unequal proportions 0.002s
+  + row height specifications are checked 0.000s
+  + facet builders retain an inspectable typed specification 0.065s
+  + field-native heatmaps bind continuous fill and derive a colorbar 0.001s
+  + geom prerequisites are compile-time constraints 0.000s
+  + equal weights reproduce the default equal split 0.002s
+  + zero capacity retains nothing and never hits 0.047s
+  + errors propagate unchanged and are never cached 0.000s
+  + a shared facet wrap matches the oracle panel by panel 0.013s
+  + Disabled is a first-class non-cache with an empty profile 0.008s
+  + the cache is reachable from the public DSL 0.002s
+  + declared-but-empty grid cells still render a panel and a strip 0.008s
+  + coordinate transformations preserve routing and drawing 0.067s
+  + rich inspection remains an explicit option without changing entity identities 0.001s
+  + duplicate source keys fail before a misleading interaction plan is returned 0.000s
+  + independent row types fail explicitly pending their typed binding capability 0.000s
+  + extension geometry requires a declared target-lowering contract 0.000s
+  + histogram bins under exact retention hold exactly their contributing observations 0.002s
+  + the shared fast path trains scales in one global pass 0.006s
+  + placing a trained plot equals a full recompile at every context 0.330s
+  + group selection filters cases by behavior family 0.230s
+  + the canonical contract pins marker shapes and every target-bound style channel 0.000s
+  + the renderer conformance contract includes an annotated case every backend must draw 0.444s
+  + placing twice at one context is deterministic 0.007s
+  + a numeric window shows the ranges and ticks a fresh compile at that window shows 0.043s
+  + the general path is still selected when a dimension is free 0.013s
+  + a window on a log axis is raw data, mapped through the transform, as a fresh compile does 0.003s
+  + a narrow window on a log axis shows ticks within the decade, not one power of ten 0.002s
+  + placement does no mapping, statistics, scale training, or row resolution 0.009s
+  + training does the data work exactly once regardless of later placements 0.011s
+  + a faceted plot trained with an explicit layout still reports the solver requirement 0.000s
+  + a density grid point is not composed of the batch: its membership is unavailable 0.033s
+  + a custom statistic's free-text contract keeps only the count, even under exact retention 0.001s
+  + a deep zoom keeps readable ticks: breaks are chosen for the window, not the domain 0.013s
+  + faceted bins keep the members of their own panel only 0.002s
+  + a date window keeps the date axis kind 0.004s
+  + marks, targets and identity carry over; an empty window restores the compiled view 0.002s
+  + break generation is bounded and custom failures remain typed 0.118s
+  + a window of the wrong kind, a faceted plot, flipped coordinates and a context-free plan are refused 0.012s
+  + batch consumes a one-shot 206000-value input once and shares exact p50 p90 p98 0.773s
+  + layout requests and metric callback failures stay inside the solver boundary 0.007s
+  + the device lowering passes the full conformance contract 0.125s
+  + the explicit scaled-plot fixture frames every point disc inside its clip 0.001s
+  + the jitter comparison uses explicit filled circular marks 0.001s
+  + large lean point plots retain one columnar grob and one device primitive 0.397s
+  + point batches preserve constant and value style columns 0.000s
+  + point batch constructors reject incoherent value-column lengths 0.000s
+  + the checker reports missing markers and failures as violations 0.061s
+  + sampled windows share a deterministic reservoir with independent retained-index oracle 0.158s
+  + batch keeps independent constant expansion, signed extremes, refusals and request order 0.000s
+  + batch preserves zero-domain counts and no-eligible refusal for every request 0.000s
+  + incompatible and empty batches refuse before obtaining an input iterator 0.000s
+[info] Passed: Total 703, Failed 0, Errors 0, Passed 703
+[success] Total time: 9 s, completed Oct 14, 2026, 4:42:16 p.m.

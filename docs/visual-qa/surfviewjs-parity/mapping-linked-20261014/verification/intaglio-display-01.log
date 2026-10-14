@@ -1,0 +1,181 @@
+[info] welcome to sbt 1.12.9 (Homebrew Java 25.0.1)
+[info] loading settings for project intaglio-surface-display-build from plugins.sbt...
+[info] loading project definition from /private/tmp/intaglio-surface-display/project
+[info] compiling 2 Scala sources to /private/tmp/intaglio-surface-display/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (20572 settings) ...
+[info] set current project to intaglio (in build file:/private/tmp/intaglio-surface-display/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] compiling 57 Scala sources to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 86 Scala sources to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/test-classes ...
+[info] done compiling
+intaglio.DisplaySuite:
+  + display windows and thresholds reject invalid bounds 0.019s
+  + transparent bands hide only finite values in their strict interior 0.004s
+  + display opacity is a checked opaque scalar 0.004s
+  + normal blending is source-over and honors display opacity 0.002s
+  + separable blend modes have exact opaque channel semantics 0.001s
+  + plus-lighter adds premultiplied display bytes independently of legacy additive 0.001s
+  + plus-lighter appends to the established blend-mode ordinals 0.002s
+  + graphics-owned colorizers preserve image-view threshold behavior 0.002s
+  + below and above partition the finite line and overlap exactly at the cutoff 0.018s
+  + two-sided thresholds hide inside the inner band and outside the outer band 0.002s
+  + two-sided magnitude thresholds are symmetric 0.001s
+  + threshold constructors reject non-finite cutoffs and unnested bands 0.005s
+  + non-finite values are never thresholded and render as invalid under every mode 0.001s
+  + scalar colorizers render one-sided and bounded thresholds transparently 0.005s
+intaglio.ScalarMappingSuite:
+  + asymmetric continuous and split scales have independent tabulated tail values 0.025s
+  + piecewise ramp knots and interpolation are explicit display bytes 0.009s
+  + discrete ramps select equal-width lookup-table bins 0.014s
+  + discrete sampling has its own boundaries and mapping identity 0.013s
+  + every interval endpoint convention distinguishes edges and immediate neighbors 0.009s
+  + split-gap boundaries are visible and their inward neighbors are hidden 0.001s
+  + invalid, hidden, and saturated states survive deliberately identical colors 0.001s
+  + visibility tests the original observation before clamping 0.0s
+  + legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding 0.006s
+  + checked overrides retain absolute center, update identity and reject impossible windows 0.011s
+  + malformed ramps, centers, intervals and split widths fail at construction 0.01s
+  + finite extreme limits normalize without overflow and agree with the legacy adapter 0.002s
+  + canonical key is platform stable and distinguishes all effective display policies 0.002s
+  + affine changes of scalar units preserve colors and visibility 0.001s
+  + every display threshold becomes a visibility showing exactly what it does not hide 0.008s
+  + legacy colorizers and checked overrides accept every threshold mode 0.005s
+  + visibility identity names every kind and cutoff exactly and feeds the boundary list 0.004s
+intaglio.ColorSuite:
+  + public sRGB transfer uses the IEC byte and finite-unit policies 0.021s
+  + oklab components must be finite 0.006s
+  + oklab round trips every sampled srgb color to the same bytes 0.108s
+  + oklab lightness orders the grey axis and is achromatic on it 0.001s
+  + oklab encoding clamps out-of-gamut coordinates instead of failing 0.001s
+  + oklab mix clamps its fraction and reaches both endpoints exactly 0.001s
+  + srgb channel interpolation crosses grey where oklab keeps chroma 0.004s
+  + oklab gradients reach their endpoints and carry alpha linearly 0.001s
+  + diverging palettes refuse colors whose sign could not be read back 0.007s
+  + the diverging domain is signed: negative below zero, neutral at zero 0.001s
+  + the blue-rust ramp is pinned byte for byte 0.002s
+  + the raster form is the scene form packed, at every sampled fraction 0.001s
+  + the unit-interval face puts the neutral exactly at the midpoint 0.003s
+  + infinities saturate and NaN takes the neutral on both faces of the domain 0.001s
+  + reversing swaps the arms and keeps the neutral 0.001s
+  + diverging arms interpolate alpha towards each endpoint 0.002s
+  + a translucent palette agrees between its scene and raster forms 0.003s
+  + diverging colorizers require a positive finite limit 0.005s
+  + a diverging colorizer places zero on the neutral and clamps beyond the limit 0.001s
+  + non-finite data takes the invalid pixel instead of reading as zero 0.001s
+  + diverging thresholds hide a band around zero 0.001s
+  + rewindowing a diverging colorizer keeps zero on the neutral 0.002s
+  + a diverging scale fixes a symmetric domain so the neutral cannot drift 0.026s
+  + plot-wide training cannot widen a diverging scale off its zero 0.003s
+  + a diverging scale refuses a limit that is not a positive magnitude 0.001s
+[info] Passed: Total 56, Failed 0, Errors 0, Passed 56
+[success] Total time: 31 s, completed Oct 14, 2026, 2:21:08 p.m.
+[info] compiling 57 Scala sources to /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 83 Scala sources to /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/test-classes ...
+[info] done compiling
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+[info] Fast optimizing /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/intaglio-core-test-fastopt
+intaglio.ColorSuite:
+  + public sRGB transfer uses the IEC byte and finite-unit policies 0.002s
+  + oklab components must be finite 0.001s
+  + oklab round trips every sampled srgb color to the same bytes 0.102s
+  + oklab lightness orders the grey axis and is achromatic on it 0.000s
+  + oklab encoding clamps out-of-gamut coordinates instead of failing 0.000s
+  + oklab mix clamps its fraction and reaches both endpoints exactly 0.000s
+  + srgb channel interpolation crosses grey where oklab keeps chroma 0.002s
+  + oklab gradients reach their endpoints and carry alpha linearly 0.000s
+  + diverging palettes refuse colors whose sign could not be read back 0.000s
+  + the diverging domain is signed: negative below zero, neutral at zero 0.000s
+  + the blue-rust ramp is pinned byte for byte 0.001s
+  + the raster form is the scene form packed, at every sampled fraction 0.001s
+  + the unit-interval face puts the neutral exactly at the midpoint 0.000s
+  + infinities saturate and NaN takes the neutral on both faces of the domain 0.000s
+  + reversing swaps the arms and keeps the neutral 0.000s
+  + diverging arms interpolate alpha towards each endpoint 0.000s
+  + a translucent palette agrees between its scene and raster forms 0.000s
+  + diverging colorizers require a positive finite limit 0.000s
+  + a diverging colorizer places zero on the neutral and clamps beyond the limit 0.000s
+  + non-finite data takes the invalid pixel instead of reading as zero 0.000s
+  + diverging thresholds hide a band around zero 0.000s
+  + rewindowing a diverging colorizer keeps zero on the neutral 0.000s
+  + a diverging scale fixes a symmetric domain so the neutral cannot drift 0.001s
+  + plot-wide training cannot widen a diverging scale off its zero 0.000s
+  + a diverging scale refuses a limit that is not a positive magnitude 0.000s
+intaglio.ScalarMappingSuite:
+  + asymmetric continuous and split scales have independent tabulated tail values 0.002s
+intaglio.DisplaySuite:
+  + piecewise ramp knots and interpolation are explicit display bytes 0.000s
+  + discrete ramps select equal-width lookup-table bins 0.001s
+  + discrete sampling has its own boundaries and mapping identity 0.001s
+  + every interval endpoint convention distinguishes edges and immediate neighbors 0.000s
+  + split-gap boundaries are visible and their inward neighbors are hidden 0.000s
+  + invalid, hidden, and saturated states survive deliberately identical colors 0.000s
+  + visibility tests the original observation before clamping 0.000s
+  + display windows and thresholds reject invalid bounds 0.002s
+  + legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding 0.001s
+  + transparent bands hide only finite values in their strict interior 0.001s
+  + display opacity is a checked opaque scalar 0.000s
+  + checked overrides retain absolute center, update identity and reject impossible windows 0.001s
+  + malformed ramps, centers, intervals and split widths fail at construction 0.000s
+  + finite extreme limits normalize without overflow and agree with the legacy adapter 0.000s
+  + canonical key is platform stable and distinguishes all effective display policies 0.000s
+  + affine changes of scalar units preserve colors and visibility 0.000s
+  + normal blending is source-over and honors display opacity 0.001s
+  + separable blend modes have exact opaque channel semantics 0.000s
+  + every display threshold becomes a visibility showing exactly what it does not hide 0.001s
+  + plus-lighter adds premultiplied display bytes independently of legacy additive 0.000s
+  + plus-lighter appends to the established blend-mode ordinals 0.000s
+  + graphics-owned colorizers preserve image-view threshold behavior 0.000s
+  + below and above partition the finite line and overlap exactly at the cutoff 0.001s
+  + two-sided thresholds hide inside the inner band and outside the outer band 0.000s
+  + two-sided magnitude thresholds are symmetric 0.000s
+  + threshold constructors reject non-finite cutoffs and unnested bands 0.001s
+  + legacy colorizers and checked overrides accept every threshold mode 0.006s
+  + non-finite values are never thresholded and render as invalid under every mode 0.001s
+  + scalar colorizers render one-sided and bounded thresholds transparently 0.000s
+  + visibility identity names every kind and cutoff exactly and feeds the boundary list 0.003s
+[info] Passed: Total 56, Failed 0, Errors 0, Passed 56
+[success] Total time: 41 s, completed Oct 14, 2026, 2:21:50 p.m.

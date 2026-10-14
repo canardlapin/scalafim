@@ -1,0 +1,50 @@
+{
+  "reviewer": "independent lean_expert /root/parity_plan_review",
+  "scope": "Bounded source corrections and synthetic specimen visual review; not complete matrix admission",
+  "sourceVerdict": "accept corrected legend binding, playback cache invalidation, restored live navigation; tests/actual execution parent-owned",
+  "sourceHashes": {
+    "SurfaceFigurePublication.scala": "afeebfafb1f4f689759c2ee9cddb9bdaf71f4b8b1c3ca50b8165384f41b5600b",
+    "SurfaceLegend.scala": "02c7fc6bc386dd8c3fb212db405d9a47be195b0554a0504e81675816e3a898c8",
+    "SurfacePlaybackDocument.scala": "65419e7c6033ddeeea9a1b5d19dce4eff962fe7fae04c7dca1985d7bd28df13f",
+    "SurfaceDynamics.scala": "a92f1f98149d3ab3e0f689ed1f5717bb39980861988f21e5c27e720aef7020c8",
+    "SurfaceFigurePublicationSuite.scala": "5fec82da083cbae4c15378d97c73435758c4fd8f56a02b88c995459a893a73fa",
+    "SurfacePlaybackDocumentSuite.scala": "2af2a18bdb3d748b76278f316d76cd8fa3571839223350a4f84ac185e3eee494",
+    "ThreeLinkedViewProbe.scala": "3af8a974f4d9c48714c74cb72550e3e637e81b1e03571eb1044eba0ecbfcc1da"
+  },
+  "visualVerdict": "accept bounded synthetic specimens after neutral camera-label correction; recorded strict rendering limitations remain",
+  "inspected": [
+    "all eight linked pairs and marker stages",
+    "16 visibility rows",
+    "two half-alpha comparisons",
+    "three figure previews",
+    "seven JavaFX flat-map pairs"
+  ],
+  "retainedLimits": [
+    "native mixed-gradient full-frame max3 versus2",
+    "raster silhouettes lack antialiasing",
+    "JVM flat-map text/color rounding differences",
+    "three visible markers after pan despite four marker packets",
+    "reference and candidate lasso labels overlap and clip",
+    "no full151-checkpoint/cortical/performance qualification"
+  ],
+  "figureLabelCorrection": {
+    "status": "closed",
+    "inspected": "all three regenerated previews after figure-final-40",
+    "previewSha256": {
+      "linked-surface-1x-white.jpg": "9eeb4d27f12c7440d0998779551d466c18a206b2b0929f15a4dfdb34abd39306",
+      "linked-surface-2x-white.jpg": "697e0f51223951bbad414f1cf95a7c60f7b5709394e79f2d4ef0d554ca57bd19",
+      "linked-bivariate-1x-white.jpg": "a07c2f87faa8cf6d16e990d7f14d47972c6d21401c7dbdf9de24e23edc698374"
+    }
+  },
+  "jvmLinkedReview": {
+    "verdict": "accept corrected probe; gate43 actual run passes",
+    "sourceSha256": "594696b352ac0303ed24da35319b482da482999cbab2f3d5611b1dc78572c30d",
+    "corrections": [
+      "initial flat selection sync",
+      "nonempty saved camera links",
+      "actual resize-back snapshots without resubmit",
+      "restore sampled source before scene",
+      "guaranteed cleanup including setup failures"
+    ]
+  }
+}

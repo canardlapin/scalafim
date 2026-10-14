@@ -1,0 +1,101 @@
+[info] welcome to sbt 1.12.9 (Homebrew Java 25.0.1)
+[info] loading settings for project intaglio-surface-display-build from plugins.sbt...
+[info] loading project definition from /private/tmp/intaglio-surface-display/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (20572 settings) ...
+[info] set current project to intaglio (in build file:/private/tmp/intaglio-surface-display/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] compiling 58 Scala sources to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/test-classes ...
+[info] done compiling
+intaglio.ScalarMappingSuite:
+  + asymmetric continuous and split scales have independent tabulated tail values 0.008s
+  + piecewise ramp knots and interpolation are explicit display bytes 0.002s
+  + discrete ramps select lookup-table colors at indexed stops 0.002s
+  + discrete ramps compare 22 and 49 color indexed stops exactly 0.002s
+  + linear and discrete sampling share stops but have distinct mapping identities 0.005s
+  + discrete physical transitions agree with normalized lookup at adjacent representable scalars 0.002s
+  + every interval endpoint convention distinguishes edges and immediate neighbors 0.002s
+  + split-gap boundaries are visible and their inward neighbors are hidden 0.0s
+  + invalid, hidden, and saturated states survive deliberately identical colors 0.001s
+  + visibility tests the original observation before clamping 0.0s
+  + legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding 0.002s
+  + checked overrides retain absolute center, update identity and reject impossible windows 0.001s
+  + malformed ramps, centers, intervals and split widths fail at construction 0.002s
+  + finite extreme limits normalize without overflow and agree with the legacy adapter 0.001s
+  + canonical key is platform stable and distinguishes all effective display policies 0.0s
+  + affine changes of scalar units preserve colors and visibility 0.001s
+  + every display threshold becomes a visibility showing exactly what it does not hide 0.001s
+  + legacy colorizers and checked overrides accept every threshold mode 0.002s
+  + visibility identity names every kind and cutoff exactly and feeds the boundary list 0.002s
+[info] Passed: Total 19, Failed 0, Errors 0, Passed 19
+[success] Total time: 14 s, completed Oct 14, 2026, 4:41:00 p.m.
+[info] compiling 58 Scala sources to /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/test-classes ...
+[info] done compiling
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+[info] Fast optimizing /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/intaglio-core-test-fastopt
+intaglio.ScalarMappingSuite:
+  + asymmetric continuous and split scales have independent tabulated tail values 0.001s
+  + piecewise ramp knots and interpolation are explicit display bytes 0.000s
+  + discrete ramps select lookup-table colors at indexed stops 0.000s
+  + discrete ramps compare 22 and 49 color indexed stops exactly 0.001s
+  + linear and discrete sampling share stops but have distinct mapping identities 0.001s
+  + discrete physical transitions agree with normalized lookup at adjacent representable scalars 0.001s
+  + every interval endpoint convention distinguishes edges and immediate neighbors 0.000s
+  + split-gap boundaries are visible and their inward neighbors are hidden 0.000s
+  + invalid, hidden, and saturated states survive deliberately identical colors 0.000s
+  + visibility tests the original observation before clamping 0.000s
+  + legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding 0.000s
+  + checked overrides retain absolute center, update identity and reject impossible windows 0.000s
+  + malformed ramps, centers, intervals and split widths fail at construction 0.000s
+  + finite extreme limits normalize without overflow and agree with the legacy adapter 0.000s
+  + canonical key is platform stable and distinguishes all effective display policies 0.000s
+  + affine changes of scalar units preserve colors and visibility 0.000s
+  + every display threshold becomes a visibility showing exactly what it does not hide 0.000s
+  + legacy colorizers and checked overrides accept every threshold mode 0.001s
+  + visibility identity names every kind and cutoff exactly and feeds the boundary list 0.001s
+[info] Passed: Total 19, Failed 0, Errors 0, Passed 19
+[success] Total time: 16 s, completed Oct 14, 2026, 4:41:16 p.m.

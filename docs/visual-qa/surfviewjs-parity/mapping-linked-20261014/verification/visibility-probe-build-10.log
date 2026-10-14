@@ -1,0 +1,59 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-test-fastopt
+scalafim.surface.view.three.ThreeSurfaceBackendSuite:
+  + native depth fixture covers its full pixel and strictly separates near and far depth 0.002s
+  + fractional viewport projection matches logical pixel positions at native device ratios 0.001s
+  + occupied depth conditioning preserves screen coordinates and separates close perspective surfaces 0.001s
+  + occupied depth conditioning retains reached clip planes and rejects uncertain eye crossings 0.001s
+  + depth conditioning uses a common interval for translated and overlapping draw slots 0.000s
+  + Three adapter consumes CPU-projected fields and network tubes as ordinary resources 0.012s
+  + GPU projection capability is explicit and unsupported policies fail before WebGL interpretation 0.001s
+  + publication preset configures an exact browser canvas size 0.000s
+  + full-frame clearing disables the stale bilateral scissor before clearing 0.001s
+  + typed runtime clear colour survives resize and draw cycles 0.001s
+  + disposal forces WebGL context loss exactly once and reports the context as lost 0.000s
+  + rejected depth admission releases its probe resources, renderer, and context exactly once 0.000s
+  + depth probe constructor failure releases already-built resources, renderer, and context exactly once 0.000s
+  + four composition views reuse one uploaded surface resource and camera-only edits stay upload-clean 0.004s
+  + composition rejects conflicting occurrences before runtime mutation 0.001s
+  + composition-to-legacy transition removes native occurrences before legacy commands 0.001s
+  + decorations validate before native mutation and never reupload scientific resources 0.005s
+  + stale decoration geometry refuses before fake runtime mutation 0.001s
+  + failed decoration replacement clears the old native decoration state 0.001s
+  + draw failure after a successful decoration install is cleared by a later plain render 0.002s
+  + display picking preserves tagged decoration hits without manufacturing a surface id 0.000s
+  + typed compiler separates geometry, color, camera, resize, and on-demand draw dirtiness 0.002s
+  + context absence, loss, disposal, and invalid picks are explicit failures 0.001s
+  + topology-preserving morphs update only retained position and normal buffers 0.002s
+  + world clipping without original fragment samples is rejected before Three.js interpretation 0.000s
+  + picking preserves Three.js face, closest vertex, world point, and surface identity 0.001s
+  + SurfViewJS scalar threshold fixture has the same semantic compositing 0.000s
+  + SurfViewJS label fixture preserves exact categorical colors 0.001s
+  + SurfViewJS multilayer fixture preserves order, opacity, and blend mode 0.000s
+  + fitting policy changes reach the runtime without geometry, colors or camera uploads 0.000s
+  + composition rejects conflicting resource bytes without native commands 0.001s
+scalafim.surface.view.three.ThreeFragmentShaderPipelineSuite:
+  + linear-light packet carries source sampling contract and clip/opacity shader uniforms 0.008s
+  + legacy packets keep encoded-byte lighting while linear packets decode and encode once 0.002s
+scalafim.surface.view.three.ThreeSurfaceFaceSuite:
+  + face colors remain constant per triangle in native upload buffers 0.001s
+scalafim.surface.view.three.ThreeSurfaceScalarSuite:
+  + scalar shaders interpolate the full sample envelope with original face provenance 0.002s
+  + camera changes reuse attributes and style changes upload no geometry 0.001s
+  + nonfinite scalar samples carry a separate contributing-weight flag 0.001s
+  + mapping boundaries that collapse in GPU floats fail before native allocation 0.001s
+  + uncovered samples cannot dilute scalar precision 0.001s
+scalafim.surface.view.three.ThreeVolumeProjectorSuite:
+  + 3D texture transport preserves asymmetric axes and non-cubic dimensions 0.001s
+  + nearest decisions survive float32 half-voxel ties and the upper boundary 0.001s
+  + valid zero and non-finite texels keep the shared sample-accounting policy 0.000s
+  + GPU nearest transport rejects far-outside coordinates before narrowing indices 0.000s
+[info] Passed: Total 43, Failed 0, Errors 0, Passed 43
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] surfaceViewThreeJS/test: exit 0 in 5.2s
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt
+[[32msuccess[0m] elapsed: 3 s
+[0J[sbt-warm] surfaceViewThreeJS/fastLinkJS: exit 0 in 3.0s

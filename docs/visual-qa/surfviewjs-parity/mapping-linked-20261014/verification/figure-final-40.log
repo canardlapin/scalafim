@@ -1,0 +1,13 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/examples/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] running (fork) scalafim.surface.view.SurfaceFigurePublicationProbe /private/tmp/scalafim-figure-proof-40
+[error] Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/16f4dc48/adca020a/scala3-library_3-3.7.4.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] wrote /private/tmp/scalafim-figure-proof-40/linked-surface-1x.png 1200x900 96ppi
+[info] wrote /private/tmp/scalafim-figure-proof-40/linked-surface-2x.png 2400x1800 192ppi
+[info] wrote /private/tmp/scalafim-figure-proof-40/linked-bivariate-1x.png 1200x900 96ppi
+[[32msuccess[0m] elapsed: 15 s
+[0J[sbt-warm] surfaceViewExamplesJVM/Test/runMain scalafim.surface.view.SurfaceFigurePublicationProbe /private/tmp/scalafim-figure-proof-40: exit 0 in 15.4s

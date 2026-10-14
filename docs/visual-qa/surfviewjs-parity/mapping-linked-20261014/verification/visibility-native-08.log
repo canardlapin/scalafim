@@ -1,0 +1,11 @@
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 28 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRasterHostProbe.scala:106:41 
+[error] 106 |          def changed(observable: javafx.beans.value.ObservableValue[? <: Image], before: Image, after: Image): Unit =
+[error]     |                                  ^^^^^^^^^^^^
+[error]     |           value beans is not a member of scalafim.surface.view.javafx
+[error] one error found
+[[31merror[0m] elapsed: 5 s
+[error] (surfaceViewJavafxJVM / Test / compileIncremental) Compilation failed
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 1 in 5.4s
