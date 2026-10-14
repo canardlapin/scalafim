@@ -6,6 +6,11 @@ Three.js/WebGL in the browser. The concrete backends consume the same
 `SurfaceRenderPlan`; they do not own layer, threshold, orientation, projection,
 or picking semantics.
 
+The [core SurfViewJS parity plan](plans/surfviewjs-display-parity.md) records
+remaining display gaps, retained work to recover, and the required side-by-side
+native visual comparisons. Existing backend conformance does not by itself
+establish display-for-display parity with SurfViewJS.
+
 ## Architecture
 
 ```text
