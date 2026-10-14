@@ -117,6 +117,10 @@ try {
       });
       checks.texturePartialOcclusion = [125,375].every(cx => JSON.stringify(pixel(img,cx+30,125)) === '[0,0,255,255]');
     }
+    if (['label-near-first','label-far-first','label-over-opaque'].includes(capture.name)) {
+      const expected = capture.name === 'label-over-opaque' ? [128,127,0] : [128,64,63];
+      checks[capture.name] = [125,375].every(cx => pixel(img,cx-10,125).slice(0,3).every((c,i) => Math.abs(c-expected[i]) <= 1));
+    }
     if (capture.name === 'gray') checks.displayGray = [125,375].every(cx => pixel(img,cx,125).slice(0,3).every(c => Math.abs(c-128) <= 1));
     if (capture.name === 'overlay-text') {
       checks.overlayAfterText = [125,375].every(cx => {

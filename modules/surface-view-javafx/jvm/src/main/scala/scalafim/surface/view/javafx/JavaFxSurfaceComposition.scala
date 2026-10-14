@@ -62,12 +62,20 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
     requireActive().flatMap: _ =>
       SurfaceDecorationValidation.validate(geometry, next, dimensions.width, dimensions.height)
         .left.map(JavaFxSurfaceError.IncompatiblePlan(_)).flatMap: _ =>
-          stageDecorations(geometry).flatMap: staged =>
+          validateLabelPlanes(geometry, next).flatMap(_ => stageDecorations(geometry)).flatMap: staged =>
             render(next, dimensions).flatMap: receipt =>
               nativeStep("decoration mount"):
                 decorations = staged
                 decorationGeometry = Some(geometry)
-                staged.sortBy(d => if d.packet.depthPolicy == SurfaceDecorationDepthPolicy.Overlay then 1 else 0).foreach: decoration =>
+                // JavaFX depth-tested nodes also write depth. Opaque geometry
+                // precedes transparent label planes; the latter draw far first.
+                staged.sortBy: decoration =>
+                  val packet = decoration.packet
+                  val group = if packet.depthPolicy == SurfaceDecorationDepthPolicy.Overlay then 2
+                    else if packet.texture.nonEmpty then 1 else 0
+                  val depth = if group == 1 then labelEyeDepth(packet, next) else 0.0
+                  (group, depth)
+                .foreach: decoration =>
                   views.find(_.id == decoration.packet.origin.view).get.instances.getChildren.add(decoration.node)
                 receipt
 
@@ -101,6 +109,31 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
       hit.map(value => Right(SurfaceDisplayHit.Decoration(value)))
         .getOrElse(scientific.map(value => Right(SurfaceDisplayHit.Scientific(value)))
           .getOrElse(Left(JavaFxInteractionError.UnknownPickNode)))
+
+  private def labelEyeDepth(mesh: SurfaceDecorationMesh, plan: SurfaceCompositionPlan): Double =
+    val matrix = plan.views.find(_.id == mesh.origin.view).get.camera.viewMatrix
+    matrix(8) * mesh.positions(0).toDouble + matrix(9) * mesh.positions(1) +
+      matrix(10) * mesh.positions(2) + matrix(11)
+
+  /** Only camera-facing texture planes admit a consistent object depth order.
+    * Arbitrary intersecting textured meshes need the raster visibility route.
+    */
+  private def validateLabelPlanes(geometry: SurfaceDecorationGeometry,
+      plan: SurfaceCompositionPlan): Either[JavaFxSurfaceError, Unit] =
+    val invalid = geometry.meshes.exists: mesh =>
+      if mesh.texture.nonEmpty && mesh.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest then
+        val matrix = plan.views.find(_.id == mesh.origin.view).get.camera.viewMatrix
+        val expected = labelEyeDepth(mesh, plan)
+        val scale = (0 until mesh.positions.length).map(i => math.abs(mesh.positions(i))).max.max(1f)
+        val tolerance = 8 * java.lang.Math.ulp(scale).toDouble
+        (0 until mesh.positions.length / 3).exists: vertex =>
+          val i = vertex * 3
+          val actual = matrix(8) * mesh.positions(i).toDouble + matrix(9) * mesh.positions(i + 1) +
+            matrix(10) * mesh.positions(i + 2) + matrix(11)
+          math.abs(actual - expected) > tolerance
+      else false
+    if invalid then Left(JavaFxSurfaceError.IncompatiblePlan("depth-tested textures require camera-facing label planes"))
+    else Right(())
 
   private def stageDecorations(geometry: SurfaceDecorationGeometry): Either[JavaFxSurfaceError, Vector[DecorationOccurrence]] =
     try Right(geometry.meshes.map: packet =>

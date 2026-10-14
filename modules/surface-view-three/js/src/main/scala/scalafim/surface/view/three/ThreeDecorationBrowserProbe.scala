@@ -112,6 +112,25 @@ object ThreeDecorationBrowserProbe:
         ok(SurfaceDecorationCompiler.compile(Vector(alphaLabel), plan)), plan, size.width, size.height)), plan, alphaProvider))
       ok(backend.renderDecorated(plan, alphaGeometry, size))
       captures.push(js.Dynamic.literal(name = "alpha-oracle", png = canvas.applyDynamic("toDataURL")("image/png"), picks = js.Array()))
+      val halfRed = RasterImage.unsafeFromOwnedPackedArray(RasterDimensions.unsafe(2, 2), Array.fill(4)(Rgba32.unsafe(255, 0, 0, 128).toPackedInt))
+      val provider = new SurfaceLabelRasterizer:
+        def rasterize(text: String, color: Rgba32): Either[String, SurfaceLabelAsset] = Right(SurfaceLabelAsset(halfRed, 1, 1, 1))
+      val overlapGeometry = ok(SurfaceLabelLayout.resolve(ok(SurfaceDecorationGeometry.lower(
+        ok(SurfaceDecorationCompiler.compile(Vector(alphaLabel), plan)), plan, size.width, size.height)), plan, provider))
+      def shifted(mesh: SurfaceDecorationMesh, dz: Float) = mesh.copy(positions = new FloatBufferView(
+        Array.tabulate(mesh.positions.length)(i => mesh.positions(i) + (if i % 3 == 2 then dz else 0f))))
+      val near = overlapGeometry.meshes.map(shifted(_, .2f))
+      val greenImage = RasterImage.unsafeFromOwnedPackedArray(RasterDimensions.unsafe(2, 2), Array.fill(4)(Rgba32.unsafe(0, 255, 0, 128).toPackedInt))
+      val far = near.map(mesh => shifted(mesh, -.1f).copy(
+        id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("far-label")), "text"),
+        texture = mesh.texture.map(_.copy(image = greenImage))))
+      val opaque = near.map(mesh => shifted(mesh, -.1f).copy(
+        id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("opaque-glyph")), "quad"),
+        color = Rgba32.unsafe(0, 255, 0), texture = None, pickable = true))
+      for (name, meshes) <- Vector("label-near-first" -> (near ++ far), "label-far-first" -> (far ++ near),
+          "label-over-opaque" -> (near ++ opaque)) do
+        ok(backend.renderDecorated(plan, overlapGeometry.copy(meshes = meshes), size))
+        captures.push(js.Dynamic.literal(name = name, png = canvas.applyDynamic("toDataURL")("image/png"), picks = js.Array()))
       val decos = cases.head._2
       val firstGeometry = geometry(decos, plan)
       ok(backend.renderDecorated(plan, firstGeometry, size))

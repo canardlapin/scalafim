@@ -209,6 +209,47 @@ object JavaFxSurfaceDecorationProbe:
             samples += 1
           require(samples > 2 && maximum <= 3, s"POT mip oracle LOD $lod differs by $maximum")
           metrics :+= s"{\"case\":\"mip-lod-$lod\",\"maximumChannelError\":$maximum,\"samples\":$samples}"
+        // Two partially transparent label planes must compose regardless of
+        // API submission order. Their positions are explicit display geometry.
+        val alphaPixels = RasterImage.unsafeFromOwnedPackedArray(RasterDimensions.unsafe(2, 2), Array.fill(4)(Rgba32.unsafe(255, 0, 0, 128).toPackedInt))
+        val provider = new SurfaceLabelRasterizer:
+          def rasterize(text: String, color: Rgba32): Either[String, SurfaceLabelAsset] =
+            Right(SurfaceLabelAsset(alphaPixels, 1, 1, 1))
+        val label = ok(SurfaceLabelDecoration.make(ok(SurfaceDecorationId.make("overlap-label")), anchor, "alpha", ok(SurfaceDecorationSize.pixels(20)), red))
+        val baseGeometry = ok(SurfaceLabelLayout.resolve(ok(SurfaceDecorationGeometry.lower(
+          ok(SurfaceDecorationCompiler.compile(Vector(label), plan)), plan, 320, 240)), plan, provider))
+        def translated(mesh: SurfaceDecorationMesh, dz: Float): SurfaceDecorationMesh =
+          val positions = Array.tabulate(mesh.positions.length)(i => mesh.positions(i) + (if i % 3 == 2 then dz else 0f))
+          mesh.copy(positions = new FloatBufferView(positions))
+        val near = translated(baseGeometry.meshes.head, .2f)
+        val greenImage = RasterImage.unsafeFromOwnedPackedArray(RasterDimensions.unsafe(2, 2), Array.fill(4)(Rgba32.unsafe(0, 255, 0, 128).toPackedInt))
+        val far = translated(near, -.1f).copy(id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("far-label")), "text"),
+          texture = near.texture.map(_.copy(image = greenImage)))
+        for (name, meshes) <- Vector("near-first" -> Vector(near, far), "far-first" -> Vector(far, near)) do
+          val geometry = baseGeometry.copy(meshes = meshes)
+          ok(native.renderDecorated(plan, geometry, size))
+          val image = ok(native.snapshot())
+          val c = image.getPixelReader.getArgb(160, 120)
+          val expected = Vector(128, 64, 63)
+          val actual = Vector((c >>> 16) & 255, (c >>> 8) & 255, c & 255)
+          val pass = actual.zip(expected).forall((a, b) => math.abs(a - b) <= 1)
+          metrics :+= s"{\"case\":\"label-overlap-$name\",\"rgb\":[${actual.mkString(",")}],\"passed\":$pass}"
+          write(Array.tabulate(320 * 240)(i => image.getPixelReader.getArgb(i % 320, i / 320)), 320, 240,
+            out.resolve(s"label-overlap-$name-javafx.png"))
+          if !pass then failures :+= s"label overlap $name expected $expected, got $actual"
+        val opaque = translated(near, -.1f).copy(id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("opaque-glyph")), "quad"),
+          texture = None, color = Rgba32.unsafe(0, 255, 0), pickable = true)
+        for meshes <- Vector(Vector(near, opaque), Vector(opaque, near)) do
+          ok(native.renderDecorated(plan, baseGeometry.copy(meshes = meshes), size))
+          val image = ok(native.snapshot())
+          val c = image.getPixelReader.getArgb(160, 120)
+          require(math.abs(((c >>> 16) & 255) - 128) <= 1 && math.abs(((c >>> 8) & 255) - 127) <= 1 &&
+            (c & 255) == 0, "opaque glyph behind translucent label was lost")
+        val tilted = near.copy(positions = new FloatBufferView(Array.tabulate(near.positions.length)(i =>
+          near.positions(i) + (if i == 2 then .1f else 0f))))
+        require(native.renderDecorated(plan, baseGeometry.copy(meshes = Vector(tilted)), size).isLeft,
+          "nonplanar transparent geometry passed native label admission")
+        Files.writeString(out.resolve("decoration-metrics.json"), s"{\"passed\":${failures.isEmpty},\"nativePicks\":$totalPicks,\"cases\":[${metrics.mkString(",")}]}\n")
         require(failures.isEmpty, failures.mkString("; "))
         Files.writeString(out.resolve("decoration-metrics.json"), s"{\"passed\":true,\"nativePicks\":$totalPicks,\"cases\":[${metrics.mkString(",")}]}\n")
         println(s"PASS native decorations: $totalPicks typed/pass-through picks; pixel/world size, depth, contour halo, text, retained scientific resources")
