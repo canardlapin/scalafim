@@ -60,6 +60,7 @@ object ModelJsonCodec:
       formula <- admit(FormulaParser.parseEither(text), value.path)(_.getMessage)
     yield formula
 
+  /** Declarations only; [[encodeDerivedEvents]] also carries the missing-row policy. */
   def encodeDerivedColumns(columns: Vector[DerivedColumn]): Either[ModelJsonError, String] =
     // DerivedColumn instances are printable by construction.
     write("derived-columns", Right(Arr.from(columns.map(column => Str(column.text)))))
@@ -71,17 +72,49 @@ object ModelJsonCodec:
       columns <- traverse(items)(item => item.str.flatMap(text => admit(DerivedColumn.parse(text), item.path)(_.message)))
     yield columns
 
+  /** Declarations together with their missing-row policy, so a saved model
+    * reproduces exactly which event rows a build drops.
+    */
+  def encodeDerivedEvents(plan: DerivedEventPlan): Either[ModelJsonError, String] =
+    write("derived-events", Right(derivedEventsValue(plan)))
+
+  def decodeDerivedEvents(input: String): Either[ModelJsonError, DerivedEventPlan] =
+    payload(input, "derived-events").flatMap(readDerivedEvents)
+
+  /** A derived-event plan as an embeddable JSON value (model document codec). */
+  private[fmri] def derivedEventsValue(plan: DerivedEventPlan): Value =
+    // DerivedColumn instances are printable by construction.
+    Obj("missingRows" -> Str(plan.missingRows.label), "columns" -> Arr.from(plan.columns.map(column => Str(column.text))))
+
+  private[fmri] def readDerivedEvents(value: Cursor): Result[DerivedEventPlan] =
+    for
+      _ <- value.fields(Set("missingRows", "columns"))
+      policyCursor <- value.field("missingRows")
+      policyName <- policyCursor.str
+      policy <- DerivedMissingRows.fromLabel(policyName).toRight(ModelJsonError(policyCursor.path,
+        s"unknown missing-row policy '$policyName' (expected one of ${DerivedMissingRows.values.map(_.label).mkString(", ")})"))
+      list <- value.field("columns")
+      items <- list.arr
+      columns <- traverse(items)(item => item.str.flatMap(text => admit(DerivedColumn.parse(text), item.path)(_.message)))
+      plan <- admit(DerivedEventPlan.from(columns, policy), list.path)(_.message)
+    yield plan
+
   def encodeRunCombination(combination: RunContrastCombination): Either[ModelJsonError, String] =
-    val value: Result[Value] = combination match
-      case RunContrastCombination.FixedEffects => Right(Obj("type" -> Str("fixed-effects")))
-      case RunContrastCombination.Concatenated(columns) =>
-        if columns.isEmpty || columns.distinct.size != columns.size then fail("$.value.taskColumns", "provide distinct, nonempty task columns")
-        else Right(Obj("type" -> Str("concatenated"), "taskColumns" -> Arr.from(columns.map(_.value))))
-    write("run-combination", value)
+    write("run-combination", runCombinationValue(combination, "$.value"))
 
   def decodeRunCombination(input: String): Either[ModelJsonError, RunContrastCombination] =
+    payload(input, "run-combination").flatMap(readRunCombination)
+
+  /** A run combination as an embeddable JSON value (model document codec). */
+  private[fmri] def runCombinationValue(combination: RunContrastCombination, path: String): Result[Value] =
+    combination match
+      case RunContrastCombination.FixedEffects => Right(Obj("type" -> Str("fixed-effects")))
+      case RunContrastCombination.Concatenated(columns) =>
+        if columns.isEmpty || columns.distinct.size != columns.size then fail(s"$path.taskColumns", "provide distinct, nonempty task columns")
+        else Right(Obj("type" -> Str("concatenated"), "taskColumns" -> Arr.from(columns.map(_.value))))
+
+  private[fmri] def readRunCombination(value: Cursor): Result[RunContrastCombination] =
     for
-      value <- payload(input, "run-combination")
       kind <- value.field("type").flatMap(_.str)
       result <- kind match
         case "fixed-effects" => value.fields(Set("type")).map(_ => RunContrastCombination.FixedEffects)

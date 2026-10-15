@@ -1,0 +1,3 @@
+completion	max_root_difference	max_observed_difference	max_null_h1_difference	max_null_h2_difference	tail_projector_difference	base_h1_count	sheared_h1_count	base_h2_count	sheared_h2_count	actions
+coefficient-euclidean	0	6.66133814775094e-16	2.98605584703182e-12	2.8042430418034	0.574253575889202	460	460	642	672	720
+score-orthogonal	0	6.66133814775094e-16	1.49391610193561e-12	1.64313007644523e-14	5.13478148889135e-16	460	460	642	642	720

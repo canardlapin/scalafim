@@ -187,3 +187,21 @@ class ProfileReductionSuite extends munit.FunSuite:
     assertEqualsDouble(ml.minimizationJet.energy, 8.0, 1e-15)
     assertEqualsDouble(ml.minimizationJet.gradient(0), 1.4, 1e-15)
     assertEquals(ml.raw.jet, jet)
+
+  test("first-order reduction accepts truncated inputs and agrees with the full jet and finite differences"):
+    val reduction = new ProfileReduction(d, c)
+    val full = new ProfileJetBuffer(d, c)
+    val first = new ProfileGradientBuffer(d, c)
+    for (x, y) <- Seq((0.3, -0.4), (-0.6, 0.9), (0.1, 0.2)) do
+      val (s, b, g) = Synthetic.jets(x, y, withEnergyDerivatives = true)
+      assert(reduction.reduce(s, b, g, full))
+      assert(reduction.reduceGradient(s.take(1 + d), b.take((1 + d) * c), g.take((1 + d) * c * c), first))
+      assertEqualsDouble(first.energy, full.energy, 0.0)
+      first.gradient.zip(full.gradient).foreach((a, b) => assertEqualsDouble(a, b, 0.0))
+      first.amplitudes.zip(full.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 0.0))
+      val (g1, g2) = fdGradient(Synthetic.energy, x, y, 1e-5)
+      assertEqualsDouble(first.gradient(0), g1, 1e-7)
+      assertEqualsDouble(first.gradient(1), g2, 1e-7)
+    assert(!reduction.reduceGradient(new Array[Double](1 + d), new Array[Double]((1 + d) * c),
+      new Array[Double]((1 + d) * c * c), first))
+    assert(first.energy.isPosInfinity)

@@ -1,0 +1,7 @@
+{
+  "scope": "Derived CSV counts only; exact original bytes retained separately",
+  "original_sha256": "fc14f34188ee20f9d56739b6fa44a5ad0960a2107dbdc615ebde4865ac81945b",
+  "normalized_sha256": "1796655b39dd24367f1685aef07b5e3076f16865753341bbf103184b7df9acdf",
+  "parsed_rows_equal": true,
+  "raw_dataset_records_modified": false
+}

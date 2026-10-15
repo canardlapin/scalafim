@@ -1,0 +1,1344 @@
+[
+  {
+    "cell": "rank.R0.n80.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      10,
+      1,
+      0,
+      0
+    ],
+    "closed_counts": [
+      10,
+      1,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      156,
+      9,
+      1,
+      0
+    ],
+    "closed_counts": [
+      156,
+      9,
+      1,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      150,
+      5,
+      0,
+      0
+    ],
+    "closed_counts": [
+      150,
+      5,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      183,
+      48,
+      4,
+      0
+    ],
+    "closed_counts": [
+      183,
+      48,
+      4,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      179,
+      53,
+      2,
+      0
+    ],
+    "closed_counts": [
+      179,
+      53,
+      2,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      188,
+      67,
+      6,
+      1
+    ],
+    "closed_counts": [
+      188,
+      67,
+      6,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      191,
+      64,
+      5,
+      0
+    ],
+    "closed_counts": [
+      191,
+      64,
+      5,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n80.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      192,
+      82,
+      11,
+      2
+    ],
+    "closed_counts": [
+      192,
+      82,
+      11,
+      2
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R0.n80.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      8,
+      0,
+      0,
+      0
+    ],
+    "closed_counts": [
+      8,
+      0,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      154,
+      5,
+      0,
+      0
+    ],
+    "closed_counts": [
+      154,
+      5,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      159,
+      11,
+      0,
+      0
+    ],
+    "closed_counts": [
+      159,
+      11,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      178,
+      46,
+      5,
+      1
+    ],
+    "closed_counts": [
+      178,
+      46,
+      5,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      178,
+      37,
+      1,
+      0
+    ],
+    "closed_counts": [
+      178,
+      37,
+      1,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      186,
+      54,
+      9,
+      0
+    ],
+    "closed_counts": [
+      186,
+      54,
+      9,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      184,
+      78,
+      5,
+      0
+    ],
+    "closed_counts": [
+      184,
+      78,
+      5,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n80.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      184,
+      74,
+      10,
+      0
+    ],
+    "closed_counts": [
+      184,
+      74,
+      10,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      146,
+      6,
+      0,
+      0
+    ],
+    "closed_counts": [
+      146,
+      6,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      185,
+      49,
+      3,
+      0
+    ],
+    "closed_counts": [
+      185,
+      49,
+      3,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      186,
+      74,
+      6,
+      1
+    ],
+    "closed_counts": [
+      186,
+      74,
+      6,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p6.q4.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      187,
+      69,
+      9,
+      1
+    ],
+    "closed_counts": [
+      187,
+      69,
+      9,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n80.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      195,
+      75,
+      16,
+      2
+    ],
+    "closed_counts": [
+      195,
+      75,
+      16,
+      2
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R0.n80.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      6,
+      0,
+      0,
+      0
+    ],
+    "closed_counts": [
+      6,
+      0,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      162,
+      9,
+      1,
+      0
+    ],
+    "closed_counts": [
+      162,
+      9,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n80.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      145,
+      9,
+      0,
+      0
+    ],
+    "closed_counts": [
+      145,
+      9,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      182,
+      32,
+      4,
+      0
+    ],
+    "closed_counts": [
+      182,
+      32,
+      4,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n80.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      184,
+      47,
+      1,
+      1
+    ],
+    "closed_counts": [
+      184,
+      47,
+      1,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      187,
+      71,
+      10,
+      0
+    ],
+    "closed_counts": [
+      187,
+      71,
+      10,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n80.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      184,
+      60,
+      4,
+      1
+    ],
+    "closed_counts": [
+      184,
+      60,
+      4,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "cell": "rank.R4.n80.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      187,
+      71,
+      9,
+      0
+    ],
+    "closed_counts": [
+      187,
+      71,
+      9,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R0.n160.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      10,
+      0,
+      0,
+      0
+    ],
+    "closed_counts": [
+      10,
+      0,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      198,
+      6,
+      1,
+      0
+    ],
+    "closed_counts": [
+      198,
+      6,
+      1,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      197,
+      5,
+      0,
+      0
+    ],
+    "closed_counts": [
+      197,
+      5,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      123,
+      2,
+      0
+    ],
+    "closed_counts": [
+      200,
+      123,
+      2,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      132,
+      6,
+      0
+    ],
+    "closed_counts": [
+      200,
+      132,
+      6,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      157,
+      33,
+      4
+    ],
+    "closed_counts": [
+      200,
+      157,
+      33,
+      4
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p4.q6.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      158,
+      43,
+      1
+    ],
+    "closed_counts": [
+      200,
+      158,
+      43,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n160.p4.q6.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      160,
+      51,
+      10
+    ],
+    "closed_counts": [
+      200,
+      160,
+      51,
+      10
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R0.n160.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      5,
+      0,
+      0,
+      0
+    ],
+    "closed_counts": [
+      5,
+      0,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      198,
+      13,
+      1,
+      0
+    ],
+    "closed_counts": [
+      198,
+      13,
+      1,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      195,
+      12,
+      0,
+      0
+    ],
+    "closed_counts": [
+      195,
+      12,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      134,
+      4,
+      0
+    ],
+    "closed_counts": [
+      200,
+      134,
+      4,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      116,
+      6,
+      0
+    ],
+    "closed_counts": [
+      200,
+      116,
+      6,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      164,
+      35,
+      2
+    ],
+    "closed_counts": [
+      200,
+      164,
+      35,
+      2
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p4.q6.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      157,
+      41,
+      1
+    ],
+    "closed_counts": [
+      200,
+      157,
+      41,
+      1
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n160.p4.q6.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      164,
+      43,
+      8
+    ],
+    "closed_counts": [
+      200,
+      164,
+      43,
+      8
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R0.n160.p6.q4.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      8,
+      0,
+      0,
+      0
+    ],
+    "closed_counts": [
+      8,
+      0,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      196,
+      6,
+      0,
+      0
+    ],
+    "closed_counts": [
+      196,
+      6,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p6.q4.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      199,
+      14,
+      0,
+      0
+    ],
+    "closed_counts": [
+      199,
+      14,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      120,
+      3,
+      0
+    ],
+    "closed_counts": [
+      200,
+      120,
+      3,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p6.q4.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      129,
+      7,
+      0
+    ],
+    "closed_counts": [
+      200,
+      129,
+      7,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      165,
+      39,
+      0
+    ],
+    "closed_counts": [
+      200,
+      165,
+      39,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p6.q4.intercept.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      169,
+      43,
+      5
+    ],
+    "closed_counts": [
+      200,
+      169,
+      43,
+      5
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n160.p6.q4.intercept.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      177,
+      59,
+      7
+    ],
+    "closed_counts": [
+      200,
+      177,
+      59,
+      7
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R0.n160.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      9,
+      1,
+      0,
+      0
+    ],
+    "closed_counts": [
+      9,
+      1,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      198,
+      7,
+      0,
+      0
+    ],
+    "closed_counts": [
+      198,
+      7,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R1.n160.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      199,
+      10,
+      0,
+      0
+    ],
+    "closed_counts": [
+      199,
+      10,
+      0,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      199,
+      128,
+      3,
+      0
+    ],
+    "closed_counts": [
+      199,
+      128,
+      3,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R2.n160.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      199,
+      137,
+      8,
+      0
+    ],
+    "closed_counts": [
+      199,
+      137,
+      8,
+      0
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      156,
+      48,
+      3
+    ],
+    "closed_counts": [
+      200,
+      156,
+      48,
+      3
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R3.n160.p6.q4.three-column.null",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      162,
+      32,
+      3
+    ],
+    "closed_counts": [
+      200,
+      162,
+      32,
+      3
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "cell": "rank.R4.n160.p6.q4.three-column.alternative",
+    "datasets": 200,
+    "raw_counts": [
+      200,
+      166,
+      56,
+      6
+    ],
+    "closed_counts": [
+      200,
+      166,
+      56,
+      6
+    ],
+    "blocked_by_closure": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+]

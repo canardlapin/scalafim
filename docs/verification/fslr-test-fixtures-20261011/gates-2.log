@@ -1,0 +1,1013 @@
+scalafim.surface.TemplateSurfacesSuite:
+  + stock template meshes carry their TemplateFlow counts and native registration 0.006s
+  + a template sphere is admitted only with the template's counts, on a sphere, and on a registration it has 0.045s
+  + meshes on different registration spheres cannot be planned against each other 0.001s
+  + planning refuses hemispheres that differ 0.005s
+  + a plan interpolates with unit rows, its adjoint is the exact transpose, and Sum conserves mass 0.515s
+  + the pinned TemplateFlow spheres cover every mesh, hemisphere and published registration 0.002s
+scalafim.surface.io.FreeSurferSurfaceReaderSuite:
+  + readAscii handles std.8-style FreeSurfer ASCII surfaces 0.014s
+  + read auto-detects ASCII and can infer right hemisphere 0.001s
+  + readBinary loads triangle geometry and accepts explicit metadata 0.001s
+  + readBinary rejects bad magic with a stable message 0.004s
+  + readBinary rejects headers shorter than magic bytes 0.0s
+  + readBinary rejects files without created-by and info lines 0.0s
+  + readBinary rejects short reads with a stable message 0.001s
+  + readAscii rejects malformed rows with a stable message 0.0s
+  + readAscii surfaces TriangleMesh face-index validation 0.0s
+  + read infers VeryInflated from HCP and TemplateFlow very-inflated file names 0.001s
+scalafim.surface.reference.DeclaredMedialWallReaderSuite:
+  + mask bytes and declared hemisphere must agree before their receipt enters a route 0.215s
+scalafim.surface.scenarios.SurfaceChainScenarioSuite:
+  + surface chain: scanner volume -> tkRAS ribbon -> registered sphere -> template meshes, commuting routes 0.177s
+  + every convention mutation of the surface chain fails the scenario 0.223s
+  + a tkRAS surface cannot be sampled on a scanner-space grid without moving it first 0.0s
+scalafim.surface.TemplatePlanTopologySuite:
+  + fsaverage5 plan freezes endpoint topology and rejects a later face-order mutation 0.27s
+scalafim.surface.GraphDifferentialSuite:
+  + thresholded surface components match induced generic graph components 0.133s
+  + surface geodesics match graph shortest paths for default and custom weights 0.021s
+  + MeshTopology graph interop preserves explicit indexing, edges, and distances 0.001s
+  + unreachable surface geodesics correspond to graph NoPath 0.001s
+scalafim.surface.reference.FrameEvidenceSuite:
+  + default thresholds are the plan's frozen margins and require nine placements 0.002s
+  + a receipt clearing every margin passes 0.003s
+  + each margin fails on its own and every failure is reported 0.002s
+  + missing placements and differing vertex populations fail; no bridged score cannot pass 0.001s
+  + scores, thresholds and receipts validate their inputs 0.001s
+scalafim.surface.SurfaceDataSuite:
+  + SurfaceField stores indexed vertex values 0.0s
+  + SurfaceField validates data length, uniqueness, and bounds 0.001s
+  + SurfaceMatrix stores vertices by feature columns 0.001s
+  + SurfaceRoi extracts a checked subset from a field 0.001s
+  + LabeledSurface stores label data and table metadata 0.001s
+  + SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates 0.002s
+  + HemispherePair provides typed left/right containers 0.0s
+scalafim.surface.MeshTopologySuite:
+  + MeshTopology derives unique edges and neighbor rows 0.0s
+  + MeshTopology computes Euclidean edge lengths 0.0s
+  + MeshTopology computes face and mesh metrics 0.0s
+  + MeshTopology computes unit vertex normals when possible 0.001s
+  + MeshTopology handles open fragmented meshes 0.0s
+  + MeshTopology carries a surface domain when built from geometry 0.001s
+scalafim.surface.reference.PointwiseInverseBridgeSuite:
+  + a constant displacement then translation inverts to x = y - t - d 0.017s
+  + a smooth field: placements match an independent solve and round-trip through the declared map 0.056s
+  + support exits, iteration limits and divergence are typed and never placed 0.011s
+  + a pointwise-inverse route reproduces the same-frame mapping, with per-vertex receipts and disclosure 0.013s
+scalafim.surface.reference.DeclaredVolumeReaderSuite:
+  + a NIfTI source loads only when its bytes match the declared digest 0.01s
+  + a correct digest cannot override contradictory scanner-space header evidence 0.004s
+scalafim.surface.RibbonFillSuite:
+  + ribbon weights match neurotransform cpp_ribbon_weights entry for entry 0.002s
+  + surface-to-volume fill matches neurotransform backproject_surface_to_volume(method = "ribbon") 0.0s
+  + rows sum to one, and a segment that never enters the grid samples to NaN 0.001s
+  + the fill is the exact adjoint of volume-to-surface sampling 0.0s
+  + ribbon mask of concentric spheres is the lattice shell between their radii 0.087s
+  + the ribbon mask requires closed surfaces 0.002s
+  + ribbon sampling of a radial volume recovers the mid-ribbon radius, and the mean fill of ones is one 0.056s
+  + volume adapters keep the operator's grid and reject other grids 0.04s
+  + ribbon inputs must share a frame: statically when frames are typed, at runtime when they are erased 0.002s
+  + white and pial must be vertex-matched, and steps must be positive 0.001s
+  + inner and outer roles are checked: hemispheres must agree and kinds must not be swapped 0.002s
+  + lattice-aligned faces and edges fill exactly, with half-open faces 0.002s
+  + a closed surface that extends past the grid along the ray axis still fills by parity 0.0s
+scalafim.surface.SurfaceGeodesicsSuite:
+  + geodesic distance matrix matches tetrahedron edge distances 0.0s
+  + distance matrix supports source and target subsets 0.001s
+  + neighborsWithin includes self and vertices inside radius 0.001s
+  + neighborsWithin uses a closed radius boundary 0.0s
+  + euclidean metric ignores mesh paths 0.0s
+  + spherical metric clamps cosine and returns finite distances 0.001s
+  + unreachable vertices remain Infinity for geodesic metric 0.0s
+  + cache policy stores and reuses distance matrices 0.001s
+  + custom edge weights drive geodesic distances and cache keys 0.0s
+  + geodesic input validation catches bad radius, vertices, and weights 0.0s
+scalafim.surface.reference.DisplacementBridgeSuite:
+  + a forward point-map bridge follows the declared map frames 0.0s
+  + a pointwise inverse bridge runs output to input and is disclosed as approximate 0.0s
+  + a pointwise inverse bridge is refused for a map the provider cannot invert pointwise 0.002s
+surface resampling parity: 104 rows share neurotransform's face; 2 neurotransform nearest-vertex fallbacks; far-side faces chosen by neurotransform: 56 of 162 rows
+scalafim.surface.SurfaceResamplingParitySuite:
+  + nearest-vertex plans are identical 0.005s
+  + barycentric plans pick the same face as neurotransform unless it picks the far side of the sphere 0.006s
+scalafim.surface.SurfaceLocusDomainSuite:
+  + surface domain identity includes exact ordered topology 0.015s
+  + full and sparse surface fields preserve their distinct support semantics 0.002s
+  + legacy SurfaceRoi adapts to a region, restricted values, and annotation 0.004s
+  + labeled surfaces become quotients with metadata and explicit display order 0.004s
+  + a disconnected label remains one valid extensional quotient fiber 0.001s
+  + runtime-loaded domains preserve the hidden semantic space type 0.0s
+scalafim.surface.reference.DeclaredPointMapSuite:
+  + a verified manifest evaluates exactly like the directly built composite 0.008s
+  + a quarantined manifest is refused, with no override 0.001s
+  + the source digest must be the one the caller expects, and stage bytes must match their digest 0.0s
+  + header fields, sform and file names are checked against the manifest 0.005s
+  + frames must match the TemplateFlow transform name, and manifest bytes must match their digest 0.002s
+  + a source without a catalog revision is a named data asset 0.001s
+scalafim.surface.SurfaceResamplingSuite:
+  + sphere helpers recognise spheres and normalise their radius 0.001s
+  + barycentric weights reconstruct a point on the query's own radial ray (never the antipodal face) 0.004s
+  + nearest-vertex resampling of a mesh onto itself is the identity 0.014s
+  + normalisations: element rows total one, sum conserves mass, and the inverse is the exact adjoint 0.003s
+  + a linear field on the sphere is reproduced to within the triangle-sagitta error 0.003s
+  + input of the wrong length is a typed failure 0.002s
+scalafim.surface.io.GiftiFloat64ReaderSuite:
+  + Float64 public reader preserves precision: ASCII LittleEndian 0 0.002s
+  + Float64 public reader preserves precision: Base64Binary LittleEndian 1 0.001s
+  + Float64 public reader preserves precision: GZipBase64Binary LittleEndian 2 0.001s
+  + Float64 public reader preserves precision: GZipBase64Binary LittleEndian 3 0.0s
+  + Float64 public reader preserves precision: Base64Binary BigEndian 4 0.0s
+  + Float64 public reader preserves precision: GZipBase64Binary BigEndian 5 0.0s
+  + Float64 public reader preserves precision: GZipBase64Binary BigEndian 6 0.0s
+scalafim.surface.reference.FslrRouteExampleSuite:
+  + ordinary byte-verified APIs retain zero, explain nonfinite missingness and bind the wall 0.005s
+  + a route rejects another declared template on the same voxel grid 0.005s
+  + the locked inflated display cannot enter the anatomical sampling chain 0.005s
+scalafim.surface.io.GiftiPlacementReaderSuite:
+  + absent transform is explicitly native 0.002s
+  + single recognized target retains provenance 0.002s
+  + target is selected independently of first position 0.001s
+  + permuted transforms retain target selection 0.0s
+  + unknown preceding explicit target is not applied 0.001s
+  + ambiguous automatic selection is refused 0.001s
+  + same target different transforms is ambiguous 0.0s
+  + explicit transform selection resolves ambiguity 0.001s
+  + unknown non-identity target refused 0.0s
+  + missing non-identity target refused 0.0s
+  + unknown identity stays native and claims no frame 0.001s
+  + identity-only workbench pair stays native 0.0s
+  + identity-only workbench pair can select its declared target 0.001s
+  + single declared identity retains provenance 0.0s
+  + identity before a non-identity transform is not silently applied 0.0s
+  + explicit native retains unknown metadata 0.001s
+  + missing requested target refused 0.0s
+  + negative index refused 0.0s
+  + out of range index refused 0.001s
+  + explicit unknown target still refused 0.0s
+  + non-affine homogeneous matrix refused 0.002s
+  + geometry-only convenience API refuses ambiguous and unknown non-identity placement 0.001s
+  + geometry-only convenience API keeps identity-only declarations native 0.001s
+scalafim.surface.io.GiftiSurfaceReaderSuite:
+  + read extracts pointset, triangles, hemisphere, kind, and POINTSET transform 0.002s
+  + read uses identity transform when CoordinateSystemTransformMatrix is absent 0.001s
+  + read rejects malformed POINTSET shapes with stable messages 0.002s
+  + read rejects malformed TRIANGLE data with stable messages 0.001s
+  + read rejects missing POINTSET and TRIANGLE arrays 0.002s
+  + read rejects malformed transform matrices 0.001s
+  + geometry preserves the provider cause for a singular surface affine 0.001s
+  + read accepts explicit hemisphere and kind metadata 0.001s
+  + read accepts Base64Binary pointset and triangle arrays 0.001s
+  + read honors ColumnMajorOrder matrix payloads 0.001s
+scalafim.surface.io.GiftiReaderSuite:
+  + parseString builds a typed GIFTI document with metadata and transforms 0.001s
+  + external GIFTI DTD declarations are ignored without network access 0.001s
+  + ASCII data arrays decode to numeric pointsets and triangles 0.0s
+  + typed payload decoders preserve matrix indexing semantics 0.001s
+  + Base64Binary data arrays decode with declared endian 0.0s
+  + GZipBase64Binary data arrays decode after inflation 0.001s
+  + GZipBase64Binary accepts the zlib stream emitted by FreeSurfer GIFTI 0.0s
+  + label GIFTI parses label table and builds LabeledSurface 0.004s
+  + external binary arrays are reported explicitly 0.0s
+  + malformed external offsets are data-array errors 0.001s
+  + malformed label keys are document errors 0.0s
+scalafim.surface.reference.FrameDeclarationSuite:
+  + portable SHA-256 matches the FIPS 180-2 vectors on this platform 0.0s
+  + asset provenance requires 64 lowercase hex, a tpl-<template>/ path and a revision 0.001s
+  + non-archive assets are named and digest-identified, and can feed derivations 0.001s
+  + frame bases are validated; a derivation cannot consume its own asset 0.0s
+  + digest binding refuses bytes that are not the declared asset 0.002s
+  + a file's own hemisphere and anatomical type must not contradict the requested reading 0.009s
+  + the anatomy frame comes only from declarations, which must agree 0.001s
+  + a publisher-methods basis is located, quoted and typed, and says it is not registration proof 0.002s
+scalafim.surface.SurfaceSearchlightSuite:
+  + zero-radius metric balls are the identity relation 0.005s
+  + geodesic metric balls are symmetric and monotone in radius 0.0s
+  + metric-ball composition is contained by the summed radius 0.001s
+  + metric balls use a closed radius boundary 0.0s
+  + partial center support leaves every non-center relation row empty 0.001s
+  + equal vertex counts do not excuse a topology mismatch 0.0s
+  + local extraction is ordinary indexed-field restriction 0.001s
+  + invalid radii are rejected before geometry work 0.0s
+scalafim.surface.reference.SurfaceRouteSuite:
+  + template identity is exact and family names are refused as ambiguous 0.001s
+  + admitted affines are owned copies that later caller mutation cannot change 0.001s
+  + volume reference refuses a support mask on another grid 0.0s
+  + fsLR 32k admission binds exact vertex count, cortical hemisphere and mask domain 0.021s
+  + anatomy refuses display shapes and topology that differs from the reference 0.001s
+  + route admission refuses frame, bridge, hemisphere, mesh and method mismatches 0.004s
+  + a 2009c res-2 group-analysis grid is refused for fsLR anatomy declared in another template frame 0.001s
+  + oblique anisotropic shifted grid: midthickness values, coverage and medial wall match construction 0.001s
+  + white/pial midpoint and depth lookups follow construction, excluding lookups outside the grid 0.002s
+  + an asymmetric impulse reaches only the vertex whose lookup selects it; zero is data 0.001s
+  + an explicit affine bridge from the anatomy frame reproduces the same-frame mapping 0.001s
+  + nearest-voxel ties round up and support is half-open [-0.5, dim - 0.5) 0.0s
+  + nonfinite and unsupported voxels are excluded, disclosed per lookup, and never poison averages 0.002s
+  + per-vertex evidence reconstructs every mapped value and links picks to source voxels 0.002s
+  + categorical semantics take the modal integral label and refuse non-integral volumes 0.003s
+  + a volume on any other grid is refused at execution 0.001s
+  + grid identity is the persistent grid key, not the live object that admitted the reference 0.001s
+  + inflated and very-inflated display keep identical values, coverage and vertex ids 0.002s
+  + selection prefers same-frame anatomy and reports every refusal when none is admissible 0.002s
+  + a volume declared in another template on an identical grid is refused at execution 0.0s
+  + a prepared source is reused by map and inspect and belongs to one route 0.002s
+  + signed zero in an affine element does not change grid identity 0.0s
+  + an unsupported voxel is OutsideSupport even when its value is nonfinite 0.001s
+  + a bridge whose composition with surfaceToWorld is ill-conditioned is refused 0.001s
+  + volume references refuse non-spatial axes and bind ephemeral grids by live owner 0.003s
+  + volume references reject foreign resolved worlds and non-RAS-mm coordinates 0.001s
+  + a published mesh density cannot be declared with another vertex count 0.0s
+scalafim.surface.scenarios.SurfaceRealChainScenarioSuite:
+  + real volume ribbon -> fsaverage -> fsLR32k and direct route: clean bounded pass 0.016s
+  + full-source contributor faces and independent radial weights match the public plans 0.005s
+  + coordinate and vertex-order mutations fail the real scenario 0.012s
+  + tkRAS surfaces cannot enter a scanner-space ribbon operator without placement 0.0s
+  + raw tkRAS placement matches independent affine algebra and actual MGH-header precision 0.002s
+  + shared fixture hashes and frozen target IDs close on both platforms 0.005s
+scalafim.surface.SurfaceSamplingSuite:
+  + SurfaceGeometryPair exposes a shared cortical domain 0.0s
+  + midpoint path is a named policy that preserves midpoint sampling semantics 0.001s
+  + white and pial paths sample endpoint surfaces 0.0s
+  + surfaceToWorld transforms are applied before SomeSampleSpace coordinate lookup 0.0s
+  + fractional thickness supports average aggregation 0.0s
+  + mode aggregation chooses the most frequent sampled value 0.0s
+  + normal-line sampling uses offsets around the midpoint 0.001s
+  + masking can produce explicit empty samples 0.0s
+  + volume-to-surface morphism wraps reusable sampling plans 0.002s
+  + surface-to-surface morphism applies explicit target-to-source vertex maps 0.002s
+  + out-of-bounds sample points produce empty samples 0.0s
+  + sampling plans validate surface pairs, paths, and masks 0.001s
+  + the sample tally observes every requested point exactly once 0.001s
+  + non-finite volume values are tallied apart from accepted samples 0.0s
+  + per-vertex finite and non-finite counts partition each vertex's in-mask samples 0.001s
+  + Average reduces over finite samples only 0.0s
+  + Nearest takes the first finite sample in declared path order 0.001s
+  + Mode ignores non-finite samples even when they are the most frequent 0.0s
+  + every reducer returns NaN when a vertex has no finite sample 0.0s
+  + sample tallies must account for every requested sample 0.001s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 0 0.0s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 1 0.001s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 2 0.0s
+scalafim.surface.SurfaceParcelsSuite:
+  + boundary edges derive directly from mesh topology and endpoint labels 0.002s
+  + units returns contiguous parcels in label order 0.001s
+  + parcel operations reject equal-sized but topologically different meshes 0.001s
+  + fragmented parcel policies error, keep largest, split, or merge 0.001s
+  + ParcelKey validates split parcel parts 0.0s
+  + centroid and geodesic medoid can select different parcel representatives 0.001s
+  + geodesic medoid rejects merged disconnected parcel 0.0s
+  + distance matrices are symmetric for centroid and minimum methods 0.001s
+  + medoid distance matrix uses geodesic medoid representatives 0.0s
+  + boundaryContacts counts shared mesh edges symmetrically 0.001s
+  + ignoredLabels removes labels from parcel outputs and contacts 0.0s
+scalafim.surface.SurfaceComponentsSuite:
+  + connectedComponents labels active connected sets by decreasing size 0.0s
+  + connectedComponents returns zero fields when no vertices pass threshold 0.001s
+  + clusterThreshold keeps only clusters meeting minimum size 0.0s
+  + SurfaceThreshold validates range order 0.0s
+scalafim.surface.gifti.GiftiModelSuite:
+  + typed attributes normalize known GIFTI codes 0.001s
+  + unknown attributes preserve their source text 0.001s
+  + data arrays expose shape and intent contracts 0.001s
+  + label color conversion keeps GIFTI 0-1 color values explicit 0.0s
+  + payload vectors and matrices expose typed shape semantics 0.0s
+  + payload matrices make row-major and column-major order explicit 0.0s
+  + documents provide typed array lookup and reject duplicate labels 0.0s
+  + GIFTI XML parsing rejects entity declarations before expansion 0.0s
+  + GIFTI payload sizing rejects dimension products before overflow 0.0s
+scalafim.surface.reference.PointMapSuite:
+  + a constant RAS displacement translates points inside its support 0.001s
+  + ITK half-voxel support preserves constant edge displacement at the original point 0.0s
+  + outside raw forwardInto keeps zero displacement while typed forward refuses support 0.001s
+  + an oblique singleton axis retains edge support without admitting the padded region 0.0s
+  + provider composition preserves declared first-to-last stage order 0.001s
+  + a pointwise inverse undoes a constant displacement then scale, with per-query evidence 0.001s
+  + an unconverged inverse is unsolved with its failure kind and never placed 0.0s
+  + pointwise inverses are refused for stage orders the provider cannot remove analytically 0.001s
+  + several trailing affines are removed in declared order (non-commuting scale then translation) 0.001s
+  + fields, stages and policies validate their inputs 0.001s
+scalafim.surface.SurfaceModuleSuite:
+  + module metadata is available 0.001s
+scalafim.surface.io.TemplateSphereFilesSuite:
+  + the committed oracle matches its manifest and pins exactly the admitted spheres 0.004s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres skipped 0.009s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.001s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.0s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s
+==> s scalafim.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s
+scalafim.surface.SurfaceKindSuite:
+  + a directly built Custom with the very-inflated spelling is not the canonical kind; parsing canonicalizes it 0.001s
+  + every named kind has its canonical label and round trips through fromString 0.0s
+  + VeryInflated is a distinct display kind whose canonical label is the TemplateFlow spelling 0.0s
+  + GIFTI, TemplateFlow and HCP spellings of the very-inflated surface parse to VeryInflated 0.0s
+  + a legacy Custom very-inflated label is restored as the named kind, not a parallel identity 0.0s
+  + unnamed kinds remain Custom and preserve their spelling; blank kinds are rejected 0.0s
+  + file-name inference recognizes TemplateFlow fsLR 32k surface names 0.001s
+  + file-name inference reads HCP very_inflated as VeryInflated, never Inflated 0.0s
+  + file-name inference keeps FreeSurfer conventions and the Custom fallback 0.0s
+scalafim.surface.TriangleMeshEqualitySuite:
+  + meshes built from separate arrays with the same content are equal and hash alike 0.001s
+  + coordinates, face order and signed zero distinguish meshes 0.0s
+  + surface geometries compare their meshes structurally 0.0s
+  + a vertex mapping accepts a field on a separately loaded, identical geometry 0.0s
+scalafim.surface.FramedSurfaceSuite:
+  + stored coordinates and the geometry's surface-to-world placement are distinct declarations 0.002s
+  + tkRAS surfaces reach scanner RAS through Norig * inverse(Torig) and back 0.001s
+  + tkRAS -> scanner transport requires a tkRAS source and a same-subject scanner target 0.003s
+  + transport reports non-finite results instead of throwing 0.001s
+  + surfaces in different frames cannot be substituted for one another 0.001s
+  + a surface placed in a runtime world binds to the static template frame with the same key 0.001s
+scalafim.surface.SurfaceCoreSuite:
+  + Point3D is a surface alias for image SpatialPoint 0.0s
+  + TriangleMesh builds a valid tetrahedron 0.0s
+  + mesh topology identity ignores coordinates but preserves exact face ordering 0.0s
+  + TriangleMesh rejects invalid shapes and indices 0.001s
+  + SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform 0.0s
+  + SurfaceGeometry accepts only provider-validated D3 affines 0.001s
+  + surface domains reject IO-only hemisphere tags 0.0s
+  + surface tag parsers normalize common labels 0.0s
+scalafim.surface.gifti.GiftiFloat64Suite:
+  + Float64 width checks reject overflow before allocation 0.0s
+  + Float64 binary decoding rejects short, overlong and misaligned payloads 0.001s
+  + Float64 ASCII rejects malformed data and integer/byte coercion even for integral values 0.001s
+scalafim.surface.reference.DeclaredSurfaceReaderSuite:
+  + a declared GIFTI loads only when its bytes match the declared digest 0.003s
+  + the declared read path exposes coordinate metadata beside the ordinary geometry 0.003s
+  + matching digests cannot relabel display or foreign structural coordinates as cortical anatomy 0.003s
+==> s scalafim.surface.reference.DeclaredSurfaceReaderSuite.TemplateFlow fsLR 32k left midthickness declares Talairach, CortexLeft, 32492 vertices skipped 0.001s
+[info] Passed: Total 296, Failed 0, Errors 0, Passed 290, Skipped 6
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-fzgb0bl4/completed
+[success] elapsed time: 6 s
+[0J[sbt-warm] surfaceJVM/test: exit 0 in 6.5s
+[info] compiling 1 Scala source to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.reference.ThreadAllocationSuite:
+  + supported runtime measures a retained allocation 0.006s
+  + unavailable counter executes the body once and retains the limitation 0.002s
+  + negative or decreasing counters cannot become zero-allocation evidence 0.0s
+scalafim.surface.reference.RealFrameEvidenceSuite:
+==> s scalafim.surface.reference.RealFrameEvidenceSuite.Conte69 anatomy carries the publisher's affine group-average basis; the inverse bridge is approximate skipped 0.008s
+scalafim.surface.PointMapManifestAccessSuite:
+  + portable public byte admission binds semantics as well as the digest 0.06s
+  + matching digests cannot admit contradictory displacement semantics 0.047s
+  + manifests cannot be forged from outside the reference package 0.001s
+scalafim.surface.reference.DeclaredPointMapReaderSuite:
+  + the canonical synthetic directory reads, verifies and agrees with the SimpleITK oracle to 1e-9 mm 0.036s
+  + quarantine in either manifest form is refused, even with the edited manifest's own digest 0.004s
+  + an edited affine, reordered stages or swapped frames are refused 0.005s
+  + tampered stage bytes, an unexpected source and a malformed manifest are refused 0.003s
+scalafim.surface.reference.RealInverseOracleSuite:
+  + every vertex has a converged in-support solution 0.035s
+  + the committed subsample is reproduced within each vertex's recorded residual bound 0.001s
+==> s scalafim.surface.reference.RealInverseOracleSuite.ITK solutions round-trip through ScalaFIM's exact declared map at every vertex skipped 0.0s
+scalafim.surface.reference.RealPointMapSuite:
+==> s scalafim.surface.reference.RealPointMapSuite.the real point map is the digest-bound 2009c -> 6Asym composite: displacement then affine skipped 0.0s
+==> s scalafim.surface.reference.RealPointMapSuite.forward evaluation agrees with SimpleITK on the templateflow4s oracle to 1e-6 mm skipped 0.0s
+==> s scalafim.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.001s
+scalafim.surface.reference.SyntheticItkOracleSuite:
+  + the committed synthetic manifest verifies: digests, header and frames 0.001s
+  + forward evaluation agrees with SimpleITK to 1e-9 mm on every oracle point 0.007s
+  + each stage alone agrees with SimpleITK to 1e-9 mm 0.005s
+  + typed forward admits interior points and refuses points outside the field 0.008s
+[info] Passed: Total 21, Failed 0, Errors 0, Passed 16, Skipped 5
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-3d827dep/completed
+[success] elapsed time: 4 s
+[0J[sbt-warm] surfaceTestFixturesJVM/test: exit 0 in 4.8s
+[info] compiling 30 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 31 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/atlas/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.atlas.io.AtlasIoSuite:
+  + FileAtlasStore resolves cached downloads and validates minBytes 0.007s
+  + FileAtlasStore validates SHA-256 on downloaded assets 0.002s
+  + FileAtlasStore refreshes stale cached assets and replaces cache on refresh 0.002s
+  + AtlasAsset validates metadata fields 0.0s
+  + AtlasLabelMaps converts finite integer-valued volumes 0.048s
+  + AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback 0.001s
+  + AtlasLabelMaps reads signed INT8 NIfTI labels and rejects negative region ids 0.097s
+  + SchaeferLoader parses CBIG LUT rows into typed regions 0.01s
+  + SchaeferLoader load resolves assets through supplied store without downloads 0.005s
+  + GlasserLoader parses node labels with hemisphere metadata 0.002s
+  + GlasserLoader descriptors cover all volume asset variants and unknown hemispheres 0.001s
+  + AsegLoader load resolves default asset through supplied store without downloads 0.003s
+  + GlasserLoader load resolves assets through supplied store without downloads 0.001s
+  + AtlasProvenanceFiles attaches local paths and digests by artifact role 0.001s
+  + AtlasLabelMaps builds VolumeAtlas from label volume and regions 0.001s
+  + SchaeferLoader loadFromPaths reads a synthetic NIfTI fixture and filters absent LUT rows 0.005s
+  + GlasserLoader loadFromPaths reads a synthetic NIfTI fixture and keeps present labels only 0.002s
+scalafim.atlas.GraphDifferentialSuite:
+  + region contact counts match an independent full-neighborhood oracle 0.005s
+  + region adjacency lowers to canonical graph topology without changing the atlas API 0.104s
+  + optimized contacts have exactly the relational quotient adjacency 0.007s
+scalafim.atlas.io.AsegLoaderSuite:
+  + FreeSurferAseg descriptor exposes canonical atlas reference 0.0s
+  + AsegLoader built-in label rows match neuroatlas ASEG metadata 0.0s
+  + AsegLoader parses FreeSurfer color LUT rows 0.001s
+  + AsegLoader loadFromPaths reads NIfTI labels and filters absent rows 0.003s
+scalafim.atlas.StandardSurfaceRoutesSuite:
+  + the lock binds the point map to the admitted 6Asym -> 2009c composite 0.001s
+  + the anatomy frame is the publisher's methods tier: affine, 69-subject Conte69 average in MNI152NLin6Asym 0.001s
+  + the frozen policy is the reframe4s default that passed P1-P6; an override is explicit and reasoned 0.005s
+  + identity is the SHA-256 of its canonical text and changes with any line 0.002s
+  + refusals say what failed and never imply a download 0.005s
+scalafim.atlas.AtlasRealizationSuite:
+  + volume realization retains one direct partial surjection 0.011s
+  + equal-size reordered and foreign parcel identities fail exact alignment 0.003s
+  + retargeting a reordered parcel owner requires a certified bijection 0.002s
+  + a volume realization rejects an image from a different live grid owner 0.001s
+  + volume and bilateral surface share exact parcel identity 0.013s
+scalafim.atlas.MniTemplateBridgeSuite:
+  + only the inspected TemplateFlow composite is admitted, by the SHA-256 of its bytes 0.004s
+  + the admitted digest must still hold an affine and a field on the 2009c res-01 lattice 0.005s
+  + the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01 0.002s
+  + stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids 0.001s
+  + a dense warp without a forward map is pullback-executable only 0.079s
+  + a supplied inverse makes the warp push points and admits routing through its inverse 0.019s
+  + the standard manifest names the real TemplateFlow file and why the reverse step is planned 0.0s
+scalafim.atlas.io.BrainnetomeLoaderSuite:
+  + Brainnetome246 descriptor exposes canonical atlas reference 0.001s
+  + BrainnetomeLoader parses LUT and Yeo network metadata 0.004s
+  + BrainnetomeLoader parses LUT without network table and tolerates unknown networks 0.002s
+  + BrainnetomeLoader load resolves all assets through supplied store without downloads 0.003s
+  + BrainnetomeLoader loadFromPaths reads NIfTI labels and filters absent rows 0.003s
+scalafim.atlas.io.SurfaceGiftiAtlasLoaderSuite:
+  + loadFromPathsEither builds a bilateral SurfaceAtlas from GIFTI label payloads 0.052s
+  + loadFromPathsEither supports sparse NODE_INDEX label payloads 0.005s
+  + loadFromPathsEither rejects payload labels missing from the GIFTI LabelTable 0.005s
+scalafim.atlas.SpaceTransformGraphSuite:
+  + the standard manifest populates one spatial graph over unsampled template domains 0.001s
+  + the internal affine route matches FreeSurfer mni152.register.dat 0.001s
+  + TemplateFlow warps stay planned and typed non-executable until an asset implements them 0.003s
+  + assets on frames outside the catalog are rejected when the graph is built 0.002s
+  + routes fall back to exact inverses only when no forward route exists 0.001s
+  + available steps without provider maps are planned but not executable 0.0s
+  + grid pullbacks come from fused affine routes, including inverse steps 0.003s
+  + grid pullbacks reject grids outside the route's endpoint worlds 0.001s
+  + an identity route over an uncatalogued space plans, but has no world for grid pullbacks 0.0s
+scalafim.atlas.AtlasParityCorpusSuite:
+  + parity fixture preserves non-contiguous atlas ids and metadata 0.003s
+  + query and parcel reduction match neuroatlas parity fixture 0.006s
+  + parcel-series reduction keeps non-contiguous ids in parcel order 0.013s
+  + parcel-series reduction writes NaN when the mask misses the atlas 0.002s
+  + overlap corpus matches Dice and Jaccard golden values 0.006s
+  + fixture rejects duplicate metadata ids and unknown payload labels 0.002s
+scalafim.atlas.reference.Fslr32kRouteBudgetSuite:
+==> s scalafim.atlas.reference.Fslr32kRouteBudgetSuite.P1-P3, P5, P6 (timing asserted with SCALAFIM_TIMING_BUDGETS=1): the public route matches the oracle at every vertex and maps GM within budget skipped 0.004s
+==> s scalafim.atlas.reference.Fslr32kRouteBudgetSuite.the public route is the qualified wiring: same locked anatomy, publisher basis and bridge as the reference fixtures skipped 0.0s
+==> s scalafim.atlas.reference.Fslr32kRouteBudgetSuite.an override is disclosed, changes the identity, and is held to the placement gate skipped 0.0s
+scalafim.atlas.SurfaceAtlasSuite:
+  + SurfaceAtlas wraps bilateral labeled surfaces with typed region lookup 0.001s
+  + SurfaceAtlas validates geometry hemispheres 0.001s
+  + SurfaceAtlas requires non-zero payload labels and region ids to match 0.0s
+  + SurfaceAtlas rejects unused label-table ids 0.0s
+  + SurfaceAtlas requires lateral hemisphere access and exposes label metadata 0.001s
+  + SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere 0.015s
+scalafim.atlas.AtlasQuotientSuite:
+  + volume atlases expose exact fibers, parcel metadata, and display order 0.001s
+  + metadata changes do not change extensional region identity 0.001s
+  + network regions are fibers of the composed realization 0.002s
+  + partial network annotations do not claim a total surjection 0.0s
+  + surface atlases expose the same bilateral realization operations 0.001s
+  + overlap requires exact grids unless alignment is explicitly requested 0.003s
+  + one-pass standard reducers retain NaN and non-contiguous id semantics 0.0s
+scalafim.atlas.io.StandardSurfaceRouteFilesSuite:
+  + an empty cache is refused with every locked path listed; nothing is downloaded 0.003s
+  + zero-byte TemplateFlow skeleton placeholders count as missing 0.002s
+  + bytes that differ from the lock are refused by digest before decoding 0.004s
+  + a point map from another transform is not the locked route input 0.039s
+  + the public lock is exactly the one the reference fixtures and the inverse oracle were qualified on 0.005s
+==> s scalafim.atlas.io.StandardSurfaceRouteFilesSuite.the consumer example maps locked GM through the public route and discloses its identity skipped 0.001s
+scalafim.atlas.AtlasCoreSuite:
+  + Point3D is an atlas alias for image SpatialPoint 0.0s
+  + registry resolves standard atlas aliases 0.003s
+  + space transform plans include direct, identity, two-hop, and planned routes 0.005s
+  + executable affine routes follow provider andThen order 0.0s
+  + VolumeAtlas validates region ids and supports metadata subset 0.002s
+  + query exact and radius lookups return atlas metadata 0.003s
+  + reduceVolume and reduceVec summarize parcel data 0.003s
+  + reduceVec preserves all parcels and writes NaN for parcels outside mask 0.001s
+  + overlap and adjacency compute region relationships 0.001s
+scalafim.atlas.AtlasProvenanceSuite:
+  + AtlasRef converts to typed provenance with source artifacts, support, labels, and citations 0.001s
+  + standard atlas provenance infers release metadata and readable summaries 0.001s
+  + descriptor-only provenance is explicit and validation reports audit gaps 0.002s
+  + loaded provenance records label filtering decisions 0.0s
+  + license and voxel-size helpers round-trip legacy metadata 0.001s
+  + source artifacts preserve restricted licenses and SHA digests in legacy export 0.0s
+  + strict provenance validation flags missing source accounting 0.001s
+scalafim.atlas.AtlasPublicationSuite:
+  + Schaefer variants define exact ordered parcel identity 0.001s
+  + volume support identity includes the exact grid 0.001s
+  + surface support identity includes ordered topology but not coordinates 0.002s
+  + bilateral publication retains one quotient and explicit empty fibers 0.001s
+  + foreign-producer v1 fixture matches fixed domain and assignment bytes 0.002s
+  + publication admission recomputes fingerprints and identity preimages 0.001s
+  + publication admission rejects malformed support and assignments 0.001s
+  + checked constructors preserve typed invalid-payload failures 0.001s
+scalafim.atlas.AtlasCoverageSuite:
+  + registry normalizes aliases and reports unknown ids with available atlases 0.001s
+  + region index normalizes labels, filters hemispheres, and rejects duplicate ids 0.002s
+  + volume atlas construction rejects unknown and absent payload labels 0.001s
+  + space transforms expose no-route and non-affine execution limits 0.001s
+  + parcel data preserves atlas order and rejects invalid record contracts 0.002s
+  + reducers define NaN handling and volume reductions match grouped oracle sums 0.002s
+  + vector reduction syntax overloads respect custom reducers and masks 0.001s
+  + overlap is symmetric by atlas order and self-overlap is identity 0.002s
+  + adjacency connectivity is monotone from faces to corners 0.001s
+  + query contracts cover exact lookup, invalid radii, and transform failures 0.001s
+  + atlas error messages and provenance helper aliases remain explicit 0.001s
+scalafim.atlas.TemplateSampledCatalogSuite:
+  + all published template surface densities normalize as surface spaces while catalog domains remain unsampled 0.001s
+scalafim.atlas.io.MniTemplateBridgeFilesSuite:
+  + the committed oracle matches its manifest and pins the inspected composites 0.038s
+  + the image evidence backs each composite's measured direction 0.005s
+==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.the composite pulls MNI152NLin2009cAsym points to MNI152NLin6Asym exactly as ITK TransformPoint does skipped 0.009s
+==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.resampling 6Asym data onto a 2009c grid samples it through the composite skipped 0.075s
+==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing skipped 0.001s
+==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.TemplateFlow's reverse composite is refused with its measured direction skipped 0.001s
+  + in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back 0.007s
+==> s scalafim.atlas.io.MniTemplateBridgeFilesSuite.a qualified numerical inverse gives the forward map and an executable reverse route skipped 0.001s
+[info] Passed: Total 130, Failed 0, Errors 0, Passed 121, Skipped 9
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-q2axi_k0/completed
+[success] elapsed time: 10 s
+[0J[sbt-warm] atlasJVM/test: exit 0 in 10.6s
+[info] compiling 1 Scala source to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/scenario-testkit/js/target/scala-3.7.4/classes ...
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes ...
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 86 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/3affa4797661edd945b9/gale/core/js/target/scala-3.7.4/classes ...
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/core/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/34c0071f90095ef07887/zarr4s/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/indexed/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/locus-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-core/js/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/data/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/b4b08747efd9a8151229/graph4s/algorithms/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-lie/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 14 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-ops-core/js/target/scala-3.7.4/classes ...
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-resample/js/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-locus/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/995ff8e011f5a5221e44/image4s/modules/image4s-filter/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-field/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 50 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/image/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/transform/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 43 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 44 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface/js/target/scala-3.7.4/scalafim-surface-test-fastopt
+scalafim.surface.reference.RealPointwiseJsSuite:
+==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped
+scalafim.surface.TriangleMeshEqualitySuite:
+  + meshes built from separate arrays with the same content are equal and hash alike 0.002s
+  + coordinates, face order and signed zero distinguish meshes 0.001s
+  + surface geometries compare their meshes structurally 0.001s
+  + a vertex mapping accepts a field on a separately loaded, identical geometry 0.001s
+scalafim.surface.reference.DisplacementBridgeSuite:
+  + a forward point-map bridge follows the declared map frames 0.002s
+  + a pointwise inverse bridge runs output to input and is disclosed as approximate 0.001s
+  + a pointwise inverse bridge is refused for a map the provider cannot invert pointwise 0.003s
+scalafim.surface.SurfaceParcelsSuite:
+  + boundary edges derive directly from mesh topology and endpoint labels 0.000s
+  + units returns contiguous parcels in label order 0.002s
+  + parcel operations reject equal-sized but topologically different meshes 0.001s
+  + fragmented parcel policies error, keep largest, split, or merge 0.002s
+  + ParcelKey validates split parcel parts 0.000s
+  + centroid and geodesic medoid can select different parcel representatives 0.002s
+  + geodesic medoid rejects merged disconnected parcel 0.000s
+  + distance matrices are symmetric for centroid and minimum methods 0.001s
+  + medoid distance matrix uses geodesic medoid representatives 0.001s
+  + boundaryContacts counts shared mesh edges symmetrically 0.000s
+  + ignoredLabels removes labels from parcel outputs and contacts 0.000s
+scalafim.surface.SurfaceSamplingSuite:
+  + SurfaceGeometryPair exposes a shared cortical domain 0.001s
+  + midpoint path is a named policy that preserves midpoint sampling semantics 0.002s
+  + white and pial paths sample endpoint surfaces 0.000s
+  + surfaceToWorld transforms are applied before SomeSampleSpace coordinate lookup 0.000s
+  + fractional thickness supports average aggregation 0.000s
+  + mode aggregation chooses the most frequent sampled value 0.001s
+  + normal-line sampling uses offsets around the midpoint 0.000s
+  + masking can produce explicit empty samples 0.000s
+  + volume-to-surface morphism wraps reusable sampling plans 0.000s
+  + surface-to-surface morphism applies explicit target-to-source vertex maps 0.000s
+  + out-of-bounds sample points produce empty samples 0.000s
+  + sampling plans validate surface pairs, paths, and masks 0.007s
+  + the sample tally observes every requested point exactly once 0.001s
+  + non-finite volume values are tallied apart from accepted samples 0.001s
+  + per-vertex finite and non-finite counts partition each vertex's in-mask samples 0.000s
+  + Average reduces over finite samples only 0.000s
+  + Nearest takes the first finite sample in declared path order 0.005s
+  + Mode ignores non-finite samples even when they are the most frequent 0.001s
+  + every reducer returns NaN when a vertex has no finite sample 0.003s
+  + sample tallies must account for every requested sample 0.000s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 0 0.002s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 1 0.001s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 2 0.001s
+scalafim.surface.reference.SurfaceRouteSuite:
+  + template identity is exact and family names are refused as ambiguous 0.000s
+  + admitted affines are owned copies that later caller mutation cannot change 0.000s
+  + volume reference refuses a support mask on another grid 0.002s
+  + fsLR 32k admission binds exact vertex count, cortical hemisphere and mask domain 0.318s
+  + anatomy refuses display shapes and topology that differs from the reference 0.001s
+  + route admission refuses frame, bridge, hemisphere, mesh and method mismatches 0.001s
+  + a 2009c res-2 group-analysis grid is refused for fsLR anatomy declared in another template frame 0.000s
+  + oblique anisotropic shifted grid: midthickness values, coverage and medial wall match construction 0.002s
+  + white/pial midpoint and depth lookups follow construction, excluding lookups outside the grid 0.010s
+  + an asymmetric impulse reaches only the vertex whose lookup selects it; zero is data 0.001s
+  + an explicit affine bridge from the anatomy frame reproduces the same-frame mapping 0.015s
+  + nearest-voxel ties round up and support is half-open [-0.5, dim - 0.5) 0.002s
+  + nonfinite and unsupported voxels are excluded, disclosed per lookup, and never poison averages 0.006s
+  + per-vertex evidence reconstructs every mapped value and links picks to source voxels 0.005s
+  + categorical semantics take the modal integral label and refuse non-integral volumes 0.008s
+  + a volume on any other grid is refused at execution 0.001s
+  + grid identity is the persistent grid key, not the live object that admitted the reference 0.012s
+  + inflated and very-inflated display keep identical values, coverage and vertex ids 0.002s
+  + selection prefers same-frame anatomy and reports every refusal when none is admissible 0.003s
+  + a volume declared in another template on an identical grid is refused at execution 0.000s
+  + a prepared source is reused by map and inspect and belongs to one route 0.026s
+  + signed zero in an affine element does not change grid identity 0.003s
+  + an unsupported voxel is OutsideSupport even when its value is nonfinite 0.005s
+  + a bridge whose composition with surfaceToWorld is ill-conditioned is refused 0.002s
+  + volume references refuse non-spatial axes and bind ephemeral grids by live owner 0.001s
+  + volume references reject foreign resolved worlds and non-RAS-mm coordinates 0.000s
+  + a published mesh density cannot be declared with another vertex count 0.000s
+scalafim.surface.gifti.GiftiFloat64Suite:
+  + Float64 width checks reject overflow before allocation 0.011s
+  + Float64 binary decoding rejects short, overlong and misaligned payloads 0.003s
+  + Float64 ASCII rejects malformed data and integer/byte coercion even for integral values 0.002s
+scalafim.surface.SurfaceLocusDomainSuite:
+  + surface domain identity includes exact ordered topology 0.000s
+  + full and sparse surface fields preserve their distinct support semantics 0.000s
+  + legacy SurfaceRoi adapts to a region, restricted values, and annotation 0.000s
+  + labeled surfaces become quotients with metadata and explicit display order 0.001s
+  + a disconnected label remains one valid extensional quotient fiber 0.001s
+  + runtime-loaded domains preserve the hidden semantic space type 0.000s
+scalafim.surface.reference.RouteTimingJsSuite:
+==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped
+scalafim.surface.SurfaceResamplingSuite:
+  + sphere helpers recognise spheres and normalise their radius 0.003s
+  + barycentric weights reconstruct a point on the query's own radial ray (never the antipodal face) 0.051s
+  + nearest-vertex resampling of a mesh onto itself is the identity 0.133s
+  + normalisations: element rows total one, sum conserves mass, and the inverse is the exact adjoint 0.054s
+  + a linear field on the sphere is reproduced to within the triangle-sagitta error 0.011s
+  + input of the wrong length is a typed failure 0.020s
+scalafim.surface.gifti.GiftiModelSuite:
+  + typed attributes normalize known GIFTI codes 0.000s
+  + unknown attributes preserve their source text 0.000s
+  + data arrays expose shape and intent contracts 0.000s
+  + label color conversion keeps GIFTI 0-1 color values explicit 0.000s
+  + payload vectors and matrices expose typed shape semantics 0.000s
+  + payload matrices make row-major and column-major order explicit 0.000s
+  + documents provide typed array lookup and reject duplicate labels 0.000s
+  + GIFTI XML parsing rejects entity declarations before expansion 0.000s
+  + GIFTI payload sizing rejects dimension products before overflow 0.000s
+scalafim.surface.SurfaceModuleSuite:
+  + module metadata is available 0.000s
+scalafim.surface.MeshTopologySuite:
+  + MeshTopology derives unique edges and neighbor rows 0.005s
+  + MeshTopology computes Euclidean edge lengths 0.000s
+  + MeshTopology computes face and mesh metrics 0.000s
+  + MeshTopology computes unit vertex normals when possible 0.000s
+  + MeshTopology handles open fragmented meshes 0.000s
+  + MeshTopology carries a surface domain when built from geometry 0.000s
+scalafim.surface.SurfaceComponentsSuite:
+  + connectedComponents labels active connected sets by decreasing size 0.003s
+  + connectedComponents returns zero fields when no vertices pass threshold 0.000s
+  + clusterThreshold keeps only clusters meeting minimum size 0.000s
+  + SurfaceThreshold validates range order 0.000s
+scalafim.surface.reference.FrameEvidenceSuite:
+  + default thresholds are the plan's frozen margins and require nine placements 0.003s
+  + a receipt clearing every margin passes 0.001s
+  + each margin fails on its own and every failure is reported 0.001s
+  + missing placements and differing vertex populations fail; no bridged score cannot pass 0.000s
+  + scores, thresholds and receipts validate their inputs 0.000s
+scalafim.surface.SurfaceGeodesicsSuite:
+  + geodesic distance matrix matches tetrahedron edge distances 0.000s
+  + distance matrix supports source and target subsets 0.000s
+  + neighborsWithin includes self and vertices inside radius 0.000s
+  + neighborsWithin uses a closed radius boundary 0.000s
+  + euclidean metric ignores mesh paths 0.000s
+  + spherical metric clamps cosine and returns finite distances 0.000s
+  + unreachable vertices remain Infinity for geodesic metric 0.000s
+  + cache policy stores and reuses distance matrices 0.000s
+  + custom edge weights drive geodesic distances and cache keys 0.000s
+  + geodesic input validation catches bad radius, vertices, and weights 0.000s
+scalafim.surface.GraphDifferentialSuite:
+  + thresholded surface components match induced generic graph components 0.003s
+  + surface geodesics match graph shortest paths for default and custom weights 0.004s
+  + MeshTopology graph interop preserves explicit indexing, edges, and distances 0.001s
+  + unreachable surface geodesics correspond to graph NoPath 0.000s
+scalafim.surface.scenarios.SurfaceRealChainScenarioSuite:
+  + real volume ribbon -> fsaverage -> fsLR32k and direct route: clean bounded pass 0.049s
+  + full-source contributor faces and independent radial weights match the public plans 0.007s
+  + coordinate and vertex-order mutations fail the real scenario 0.026s
+  + tkRAS surfaces cannot enter a scanner-space ribbon operator without placement 0.000s
+  + raw tkRAS placement matches independent affine algebra and actual MGH-header precision 0.002s
+  + shared fixture hashes and frozen target IDs close on both platforms 0.005s
+scalafim.surface.SurfaceCoreSuite:
+  + Point3D is a surface alias for image SpatialPoint 0.000s
+  + TriangleMesh builds a valid tetrahedron 0.000s
+  + mesh topology identity ignores coordinates but preserves exact face ordering 0.000s
+  + TriangleMesh rejects invalid shapes and indices 0.000s
+  + SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform 0.000s
+  + SurfaceGeometry accepts only provider-validated D3 affines 0.000s
+  + surface domains reject IO-only hemisphere tags 0.000s
+  + surface tag parsers normalize common labels 0.000s
+scalafim.surface.reference.DeclaredSurfaceReaderJsSuite:
+  + Scala.js loads a declared GIFTI only when its bytes match the declared digest 0.054s
+  + Scala.js declared read path exposes coordinate metadata beside the geometry 0.001s
+  + Scala.js cannot relabel digest-verified display or foreign structure as cortical anatomy 0.029s
+scalafim.surface.reference.FrameDeclarationSuite:
+  + portable SHA-256 matches the FIPS 180-2 vectors on this platform 0.001s
+  + asset provenance requires 64 lowercase hex, a tpl-<template>/ path and a revision 0.000s
+  + non-archive assets are named and digest-identified, and can feed derivations 0.000s
+  + frame bases are validated; a derivation cannot consume its own asset 0.000s
+  + digest binding refuses bytes that are not the declared asset 0.005s
+  + a file's own hemisphere and anatomical type must not contradict the requested reading 0.024s
+  + the anatomy frame comes only from declarations, which must agree 0.001s
+  + a publisher-methods basis is located, quoted and typed, and says it is not registration proof 0.000s
+scalafim.surface.SurfaceDataSuite:
+  + SurfaceField stores indexed vertex values 0.001s
+  + SurfaceField validates data length, uniqueness, and bounds 0.001s
+  + SurfaceMatrix stores vertices by feature columns 0.001s
+  + SurfaceRoi extracts a checked subset from a field 0.001s
+  + LabeledSurface stores label data and table metadata 0.002s
+  + SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates 0.002s
+  + HemispherePair provides typed left/right containers 0.000s
+scalafim.surface.TemplatePlanTopologySuite:
+  + fsaverage5 plan freezes endpoint topology and rejects a later face-order mutation 2.051s
+scalafim.surface.RibbonFillSuite:
+  + ribbon weights match neurotransform cpp_ribbon_weights entry for entry 0.003s
+  + surface-to-volume fill matches neurotransform backproject_surface_to_volume(method = "ribbon") 0.000s
+  + rows sum to one, and a segment that never enters the grid samples to NaN 0.000s
+  + the fill is the exact adjoint of volume-to-surface sampling 0.000s
+  + ribbon mask of concentric spheres is the lattice shell between their radii 0.092s
+  + the ribbon mask requires closed surfaces 0.000s
+  + ribbon sampling of a radial volume recovers the mid-ribbon radius, and the mean fill of ones is one 0.078s
+  + volume adapters keep the operator's grid and reject other grids 0.075s
+  + ribbon inputs must share a frame: statically when frames are typed, at runtime when they are erased 0.000s
+  + white and pial must be vertex-matched, and steps must be positive 0.001s
+  + inner and outer roles are checked: hemispheres must agree and kinds must not be swapped 0.001s
+  + lattice-aligned faces and edges fill exactly, with half-open faces 0.000s
+  + a closed surface that extends past the grid along the ray axis still fills by parity 0.000s
+scalafim.surface.SurfaceKindSuite:
+  + a directly built Custom with the very-inflated spelling is not the canonical kind; parsing canonicalizes it 0.000s
+  + every named kind has its canonical label and round trips through fromString 0.000s
+  + VeryInflated is a distinct display kind whose canonical label is the TemplateFlow spelling 0.000s
+  + GIFTI, TemplateFlow and HCP spellings of the very-inflated surface parse to VeryInflated 0.000s
+  + a legacy Custom very-inflated label is restored as the named kind, not a parallel identity 0.000s
+  + unnamed kinds remain Custom and preserve their spelling; blank kinds are rejected 0.000s
+  + file-name inference recognizes TemplateFlow fsLR 32k surface names 0.001s
+  + file-name inference reads HCP very_inflated as VeryInflated, never Inflated 0.000s
+  + file-name inference keeps FreeSurfer conventions and the Custom fallback 0.000s
+scalafim.surface.reference.PointMapSuite:
+  + a constant RAS displacement translates points inside its support 0.004s
+  + ITK half-voxel support preserves constant edge displacement at the original point 0.001s
+  + outside raw forwardInto keeps zero displacement while typed forward refuses support 0.003s
+  + an oblique singleton axis retains edge support without admitting the padded region 0.001s
+  + provider composition preserves declared first-to-last stage order 0.001s
+  + a pointwise inverse undoes a constant displacement then scale, with per-query evidence 0.002s
+  + an unconverged inverse is unsolved with its failure kind and never placed 0.002s
+  + pointwise inverses are refused for stage orders the provider cannot remove analytically 0.001s
+  + several trailing affines are removed in declared order (non-commuting scale then translation) 0.002s
+  + fields, stages and policies validate their inputs 0.000s
+scalafim.surface.io.GiftiFloat64ReaderJsSuite:
+  + Float64 public reader preserves precision: ASCII LittleEndian 0 0.001s
+  + Float64 public reader preserves precision: Base64Binary LittleEndian 1 0.001s
+  + Float64 public reader preserves precision: GZipBase64Binary LittleEndian 2 0.012s
+  + Float64 public reader preserves precision: GZipBase64Binary LittleEndian 3 0.004s
+  + Float64 public reader preserves precision: Base64Binary BigEndian 4 0.001s
+  + Float64 public reader preserves precision: GZipBase64Binary BigEndian 5 0.002s
+  + Float64 public reader preserves precision: GZipBase64Binary BigEndian 6 0.003s
+scalafim.surface.TemplateSurfacesSuite:
+  + stock template meshes carry their TemplateFlow counts and native registration 0.000s
+  + a template sphere is admitted only with the template's counts, on a sphere, and on a registration it has 0.042s
+  + meshes on different registration spheres cannot be planned against each other 0.000s
+  + planning refuses hemispheres that differ 0.002s
+  + a plan interpolates with unit rows, its adjoint is the exact transpose, and Sum conserves mass 1.147s
+  + the pinned TemplateFlow spheres cover every mesh, hemisphere and published registration 0.000s
+scalafim.surface.FramedSurfaceSuite:
+  + stored coordinates and the geometry's surface-to-world placement are distinct declarations 0.003s
+  + tkRAS surfaces reach scanner RAS through Norig * inverse(Torig) and back 0.008s
+  + tkRAS -> scanner transport requires a tkRAS source and a same-subject scanner target 0.002s
+  + transport reports non-finite results instead of throwing 0.000s
+  + surfaces in different frames cannot be substituted for one another 0.000s
+  + a surface placed in a runtime world binds to the static template frame with the same key 0.000s
+scalafim.surface.io.GiftiReaderJsSuite:
+  + Scala.js reads a generated fsaverage5-scale compressed GIFTI surface 0.135s
+  + Scala.js byte ingestion accepts an outer gzip stream 0.004s
+  + Scala.js bounds compressed payloads by their declared shape 0.005s
+  + Scala.js label ingestion preserves LabelTable and NODE_INDEX semantics 0.004s
+scalafim.surface.io.GiftiPlacementReaderJsSuite:
+  + absent transform is explicitly native 0.001s
+  + single recognized target retains provenance 0.001s
+  + target is selected independently of first position 0.001s
+  + permuted transforms retain target selection 0.001s
+  + unknown preceding explicit target is not applied 0.001s
+  + ambiguous automatic selection is refused 0.000s
+  + same target different transforms is ambiguous 0.000s
+  + explicit transform selection resolves ambiguity 0.001s
+  + unknown non-identity target refused 0.000s
+  + missing non-identity target refused 0.000s
+  + unknown identity stays native and claims no frame 0.000s
+  + identity-only workbench pair stays native 0.000s
+  + identity-only workbench pair can select its declared target 0.000s
+  + single declared identity retains provenance 0.000s
+  + identity before a non-identity transform is not silently applied 0.000s
+  + explicit native retains unknown metadata 0.000s
+  + missing requested target refused 0.000s
+  + negative index refused 0.000s
+  + out of range index refused 0.000s
+  + explicit unknown target still refused 0.000s
+  + non-affine homogeneous matrix refused 0.000s
+  + geometry-only convenience API refuses ambiguous and unknown non-identity placement 0.001s
+  + geometry-only convenience API keeps identity-only declarations native 0.000s
+scalafim.surface.scenarios.SurfaceChainScenarioSuite:
+  + surface chain: scanner volume -> tkRAS ribbon -> registered sphere -> template meshes, commuting routes 0.335s
+  + every convention mutation of the surface chain fails the scenario 0.909s
+  + a tkRAS surface cannot be sampled on a scanner-space grid without moving it first 0.000s
+scalafim.surface.SurfaceSearchlightSuite:
+  + zero-radius metric balls are the identity relation 0.001s
+  + geodesic metric balls are symmetric and monotone in radius 0.000s
+  + metric-ball composition is contained by the summed radius 0.000s
+  + metric balls use a closed radius boundary 0.000s
+  + partial center support leaves every non-center relation row empty 0.000s
+  + equal vertex counts do not excuse a topology mismatch 0.000s
+  + local extraction is ordinary indexed-field restriction 0.000s
+  + invalid radii are rejected before geometry work 0.000s
+scalafim.surface.reference.PointwiseInverseBridgeSuite:
+  + a constant displacement then translation inverts to x = y - t - d 0.001s
+  + a smooth field: placements match an independent solve and round-trip through the declared map 0.104s
+  + support exits, iteration limits and divergence are typed and never placed 0.006s
+  + a pointwise-inverse route reproduces the same-frame mapping, with per-vertex receipts and disclosure 0.002s
+scalafim.surface.reference.DeclaredPointMapSuite:
+  + a verified manifest evaluates exactly like the directly built composite 0.009s
+  + a quarantined manifest is refused, with no override 0.000s
+  + the source digest must be the one the caller expects, and stage bytes must match their digest 0.000s
+  + header fields, sform and file names are checked against the manifest 0.007s
+  + frames must match the TemplateFlow transform name, and manifest bytes must match their digest 0.000s
+  + a source without a catalog revision is a named data asset 0.001s
+[info] Passed: Total 256, Failed 0, Errors 0, Passed 254, Skipped 2
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-hiy5otwl/completed
+[success] elapsed time: 47 s
+[0J[sbt-warm] surfaceJS/test: exit 0 in 47.7s
+[info] compiling 1 Scala source to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/surface-test-fixtures/js/target/scala-3.7.4/scalafim-surface-test-fixtures-test-fastopt
+scalafim.surface.PointMapManifestAccessSuite:
+  + portable public byte admission binds semantics as well as the digest 0.023s
+  + matching digests cannot admit contradictory displacement semantics 0.021s
+  + manifests cannot be forged from outside the reference package 0.000s
+scalafim.surface.reference.SyntheticItkOracleSuite:
+  + the committed synthetic manifest verifies: digests, header and frames 0.001s
+  + forward evaluation agrees with SimpleITK to 1e-9 mm on every oracle point 0.029s
+  + each stage alone agrees with SimpleITK to 1e-9 mm 0.023s
+  + typed forward admits interior points and refuses points outside the field 0.011s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-6kppuhnc/completed
+[success] elapsed time: 10 s
+[0J[sbt-warm] surfaceTestFixturesJS/test: exit 0 in 10.9s
+[info] compiling 25 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 21 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/atlas/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-fslr-test-fixtures-20261011/modules/atlas/js/target/scala-3.7.4/scalafim-atlas-test-fastopt
+scalafim.atlas.AtlasRealizationSuite:
+  + volume realization retains one direct partial surjection 0.013s
+  + equal-size reordered and foreign parcel identities fail exact alignment 0.005s
+  + retargeting a reordered parcel owner requires a certified bijection 0.003s
+  + a volume realization rejects an image from a different live grid owner 0.001s
+  + volume and bilateral surface share exact parcel identity 0.004s
+scalafim.atlas.SurfaceAtlasSuite:
+  + SurfaceAtlas wraps bilateral labeled surfaces with typed region lookup 0.012s
+  + SurfaceAtlas validates geometry hemispheres 0.001s
+  + SurfaceAtlas requires non-zero payload labels and region ids to match 0.001s
+  + SurfaceAtlas rejects unused label-table ids 0.001s
+  + SurfaceAtlas requires lateral hemisphere access and exposes label metadata 0.002s
+  + SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere 0.004s
+scalafim.atlas.GraphDifferentialSuite:
+  + region contact counts match an independent full-neighborhood oracle 0.004s
+  + region adjacency lowers to canonical graph topology without changing the atlas API 0.002s
+  + optimized contacts have exactly the relational quotient adjacency 0.004s
+scalafim.atlas.SpaceTransformGraphSuite:
+  + the standard manifest populates one spatial graph over unsampled template domains 0.005s
+  + the internal affine route matches FreeSurfer mni152.register.dat 0.002s
+  + TemplateFlow warps stay planned and typed non-executable until an asset implements them 0.003s
+  + assets on frames outside the catalog are rejected when the graph is built 0.001s
+  + routes fall back to exact inverses only when no forward route exists 0.003s
+  + available steps without provider maps are planned but not executable 0.001s
+  + grid pullbacks come from fused affine routes, including inverse steps 0.005s
+  + grid pullbacks reject grids outside the route's endpoint worlds 0.001s
+  + an identity route over an uncatalogued space plans, but has no world for grid pullbacks 0.000s
+scalafim.atlas.AtlasProvenanceSuite:
+  + AtlasRef converts to typed provenance with source artifacts, support, labels, and citations 0.001s
+  + standard atlas provenance infers release metadata and readable summaries 0.001s
+  + descriptor-only provenance is explicit and validation reports audit gaps 0.000s
+  + loaded provenance records label filtering decisions 0.000s
+  + license and voxel-size helpers round-trip legacy metadata 0.001s
+  + source artifacts preserve restricted licenses and SHA digests in legacy export 0.000s
+  + strict provenance validation flags missing source accounting 0.000s
+scalafim.atlas.MniTemplateBridgeSuite:
+  + only the inspected TemplateFlow composite is admitted, by the SHA-256 of its bytes 0.001s
+  + the admitted digest must still hold an affine and a field on the 2009c res-01 lattice 0.002s
+  + the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01 0.001s
+  + stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids 0.000s
+  + a dense warp without a forward map is pullback-executable only 0.029s
+  + a supplied inverse makes the warp push points and admits routing through its inverse 0.016s
+  + the standard manifest names the real TemplateFlow file and why the reverse step is planned 0.000s
+scalafim.atlas.AtlasQuotientSuite:
+  + volume atlases expose exact fibers, parcel metadata, and display order 0.002s
+  + metadata changes do not change extensional region identity 0.002s
+  + network regions are fibers of the composed realization 0.001s
+  + partial network annotations do not claim a total surjection 0.001s
+  + surface atlases expose the same bilateral realization operations 0.002s
+  + overlap requires exact grids unless alignment is explicitly requested 0.003s
+  + one-pass standard reducers retain NaN and non-contiguous id semantics 0.003s
+scalafim.atlas.AtlasPublicationSuite:
+  + Schaefer variants define exact ordered parcel identity 0.008s
+  + volume support identity includes the exact grid 0.007s
+  + surface support identity includes ordered topology but not coordinates 0.004s
+  + bilateral publication retains one quotient and explicit empty fibers 0.001s
+  + foreign-producer v1 fixture matches fixed domain and assignment bytes 0.003s
+  + publication admission recomputes fingerprints and identity preimages 0.002s
+  + publication admission rejects malformed support and assignments 0.012s
+  + checked constructors preserve typed invalid-payload failures 0.003s
+scalafim.atlas.AtlasCoverageSuite:
+  + registry normalizes aliases and reports unknown ids with available atlases 0.002s
+  + region index normalizes labels, filters hemispheres, and rejects duplicate ids 0.001s
+  + volume atlas construction rejects unknown and absent payload labels 0.001s
+  + space transforms expose no-route and non-affine execution limits 0.006s
+  + parcel data preserves atlas order and rejects invalid record contracts 0.002s
+  + reducers define NaN handling and volume reductions match grouped oracle sums 0.001s
+  + vector reduction syntax overloads respect custom reducers and masks 0.003s
+  + overlap is symmetric by atlas order and self-overlap is identity 0.003s
+  + adjacency connectivity is monotone from faces to corners 0.001s
+  + query contracts cover exact lookup, invalid radii, and transform failures 0.004s
+  + atlas error messages and provenance helper aliases remain explicit 0.000s
+scalafim.atlas.TemplateSampledCatalogSuite:
+  + all published template surface densities normalize as surface spaces while catalog domains remain unsampled 0.000s
+scalafim.atlas.AtlasParityCorpusSuite:
+  + parity fixture preserves non-contiguous atlas ids and metadata 0.005s
+  + query and parcel reduction match neuroatlas parity fixture 0.002s
+  + parcel-series reduction keeps non-contiguous ids in parcel order 0.003s
+  + parcel-series reduction writes NaN when the mask misses the atlas 0.001s
+  + overlap corpus matches Dice and Jaccard golden values 0.002s
+  + fixture rejects duplicate metadata ids and unknown payload labels 0.001s
+scalafim.atlas.AtlasCoreSuite:
+  + Point3D is an atlas alias for image SpatialPoint 0.000s
+  + registry resolves standard atlas aliases 0.001s
+  + space transform plans include direct, identity, two-hop, and planned routes 0.002s
+  + executable affine routes follow provider andThen order 0.000s
+  + VolumeAtlas validates region ids and supports metadata subset 0.002s
+  + query exact and radius lookups return atlas metadata 0.004s
+  + reduceVolume and reduceVec summarize parcel data 0.008s
+  + reduceVec preserves all parcels and writes NaN for parcels outside mask 0.005s
+  + overlap and adjacency compute region relationships 0.004s
+scalafim.atlas.StandardSurfaceRoutesSuite:
+  + the lock binds the point map to the admitted 6Asym -> 2009c composite 0.000s
+  + the anatomy frame is the publisher's methods tier: affine, 69-subject Conte69 average in MNI152NLin6Asym 0.000s
+  + the frozen policy is the reframe4s default that passed P1-P6; an override is explicit and reasoned 0.000s
+  + identity is the SHA-256 of its canonical text and changes with any line 0.000s
+  + refusals say what failed and never imply a download 0.000s
+[info] Passed: Total 84, Failed 0, Errors 0, Passed 84
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c2af4a3244b2e15d/command-receipts/run-lbdm5kk2/completed
+[success] elapsed time: 15 s
+[0J[sbt-warm] atlasJS/test: exit 0 in 15.2s

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/private/tmp/scalafim-umvpa-rank-v2-20261008/tools/build/sbt-warm",
+    "scalafimCompileAll"
+  ],
+  "provider": "/private/tmp/multivar-umvpa-rank-v2-20261008",
+  "exit_code": 0,
+  "wall_seconds": 476.577861958,
+  "heap": "3g",
+  "processors": 4,
+  "startup_property": "JAVA_TOOL_OPTIONS: -Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rank-v2-20261008"
+}

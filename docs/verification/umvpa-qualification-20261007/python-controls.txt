@@ -1,0 +1,19 @@
+test_assignments_do_not_depend_on_order_or_retry (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_binding_cannot_substitute_raw_power_or_wrong_truth (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_confirmation_cannot_run_from_a_proposal (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_failed_records_and_missing_datasets_stay_in_the_receipt (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_fixed_counts_are_not_optional_campaign_sizes (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_historical_closed_records_cannot_be_used_as_raw_or_confirmation (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_namespace_is_raw_utf8_and_not_a_framed_digest (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_new_records_bind_identity_and_cannot_hide_failed_metrics (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_population_conditional_null_contradictions_are_not_reclassified (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_published_child_derivation_reference (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_rank_record_rejects_incomplete_or_inconsistent_observations (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_raw_stage_and_closed_decisions_remain_distinct (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_resource_planning_does_not_pretend_to_execute_or_freeze (test_calibration_protocol.CalibrationProtocolTests) ... ok
+test_retry_conflicts_and_inferential_failed_outputs_refuse (test_calibration_protocol.CalibrationProtocolTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.009s
+
+OK

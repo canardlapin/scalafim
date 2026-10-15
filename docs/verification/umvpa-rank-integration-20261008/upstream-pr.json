@@ -1,0 +1,30 @@
+{
+  "baseRefName": "main",
+  "headRefOid": "edb05de01401ec0b3aea4dc1190dd3100e70ee51",
+  "isDraft": true,
+  "number": 2,
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T02:22:10Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/canardlapin/multivar/actions/runs/37716593488/job/113114338159",
+      "name": "test",
+      "startedAt": "2026-10-08T02:10:53Z",
+      "status": "COMPLETED",
+      "workflowName": "CI"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-10-08T02:11:00Z",
+      "conclusion": "NEUTRAL",
+      "detailsUrl": "https://cursor.com/docs/bugbot",
+      "name": "Cursor Bugbot",
+      "startedAt": "2026-10-08T02:10:59Z",
+      "status": "COMPLETED",
+      "workflowName": ""
+    }
+  ],
+  "url": "https://github.com/canardlapin/multivar/pull/2"
+}

@@ -1,0 +1,51 @@
+{
+  "base": "0a99c49949b1d1f48e1bb53e97acb65745dd2bc7",
+  "gate": "firstLevelLawsJVM/test",
+  "passed": 83,
+  "failed": 1,
+  "failure": "ConditionMilestoneSuite LWU kernel compiler training-cell admission before compileAdmitted/decoder",
+  "request": {
+    "fineCount": 321,
+    "nodesPerAxis": [
+      14,
+      9,
+      7
+    ],
+    "trainingComponents": 10,
+    "trainingCells": 2831220,
+    "MaxArrayCells": 2000000
+  },
+  "files": {
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala": {
+      "sha256": "fa0f0591be3cfe1d4a9b099986bf5b39b901a64717875bcd12b80165b5c60fdd",
+      "base_identical": true
+    },
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisBudget.scala": {
+      "sha256": "c81580b3d610f5b6eb3df099a765ff675d4698217b40e5e1f684dec04d4f59cd",
+      "base_identical": true
+    },
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": {
+      "sha256": "f4c8d5fb794d66985bf3aec3add4a35c8f1cf1668b9cd27260e8e343eacbaf8a",
+      "base_identical": true
+    },
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/LwuFamily.scala": {
+      "sha256": "ae349f049f23f29978cfba3da0a7560d847958b82a4242f2d3d7eb5a1c105755",
+      "base_identical": true
+    }
+  },
+  "classification": "Separate source-identical compiler admission regression; no direct baseline execution claimed",
+  "scope": "The fixed compiler limits and frozen LWU/C0 fixture remain unchanged; numeric precision slice does not repair compiler architecture.",
+  "platforms": {
+    "JVM": {
+      "passed": 83,
+      "failed": 1,
+      "exit_code": 1
+    },
+    "JS": {
+      "passed": 83,
+      "failed": 1,
+      "exit_code": 1,
+      "node": "v24.21.0"
+    }
+  }
+}

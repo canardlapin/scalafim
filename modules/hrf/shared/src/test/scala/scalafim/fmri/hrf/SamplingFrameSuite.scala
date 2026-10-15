@@ -1,6 +1,6 @@
 package scalafim.fmri.hrf
 
-import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.design.{SamplingFrame, SamplingReference}
 
 class SamplingFrameSuite extends munit.FunSuite:
 
@@ -228,4 +228,13 @@ class SamplingFrameSuite extends munit.FunSuite:
     assertEquals(os(150), 300.0)
     assertEquals(os(299), 598.0)
     assertEquals(os.max, 598.0)
+  }
+
+  test("sampling references name each run's start time: TR / 2 is mid-volume, 0 volume-onset, else explicit") {
+    val defaulted = SamplingFrame(blockLens = Seq(10, 10), tr = Seq(2.0, 1.5))
+    assertEquals(defaulted.samplingReferences, Vector(SamplingReference.MidVolume, SamplingReference.MidVolume))
+    val mixed = SamplingFrame(blockLens = Seq(10, 10, 10), tr = Seq(2.0), startTime = Seq(1.0, 0.0, 0.4))
+    assertEquals(mixed.samplingReferences,
+      Vector(SamplingReference.MidVolume, SamplingReference.VolumeOnset, SamplingReference.ExplicitOffset))
+    assertEquals(mixed.samplingReferences.map(_.label), Vector("mid-volume", "volume-onset", "explicit-offset"))
   }

@@ -1,0 +1,29 @@
+[
+  {
+    "command": [
+      "node",
+      "scripts/verify-prd.mjs"
+    ],
+    "exit": 0,
+    "log": "verify-prd.log",
+    "stdout": "PRD valid: 148 unique IDs, 28 artifact nodes, 95 consumer-to-dependency edges, acyclic DAG.\n"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/verify-build-graph.mjs"
+    ],
+    "exit": 0,
+    "log": "verify-build-graph.log",
+    "stdout": "Build graph matches PRD: 28 nodes and 95 edges.\n"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/verify-symbol-ownership.mjs"
+    ],
+    "exit": 0,
+    "log": "verify-symbol-ownership.log",
+    "stdout": "Symbol ownership is unique across 1462 public qualified names; 66 canonical owners verified.\n"
+  }
+]

@@ -1,0 +1,196 @@
+{
+  "observed_pr": {
+    "headRefOid": "b56a9dd0b8ad479621a3594880f90c9add8c2824",
+    "isDraft": false,
+    "mergeCommit": {
+      "oid": "d03eb99bde389ce9bce21b8e0fc59bec9ac9b4aa"
+    },
+    "mergedAt": "2026-10-06T20:27:27Z",
+    "state": "MERGED",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:26Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382703",
+        "name": "Formatting and fatal-warning policy",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:14Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382583",
+        "name": "Tests (Scala 3.7.4, JVM)",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:22:37Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382164",
+        "name": "Tests (Scala 3.7.4, JS)",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:40Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382857",
+        "name": "Ravel copy adapter (canonical sources, JVM and JS)",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:22:21Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382489",
+        "name": "Scaladoc and executable guides",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:45Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382705",
+        "name": "Scala 3.8.4 consumer probe",
+        "startedAt": "2026-10-06T19:20:08Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:22:06Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382606",
+        "name": "Scala Next source experiment (advisory)",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:23:34Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382604",
+        "name": "Scala.js optimized links",
+        "startedAt": "2026-10-06T19:20:09Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:22:18Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382700",
+        "name": "Breeze parity and published interop",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:20:59Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382793",
+        "name": "Release dependency manifest",
+        "startedAt": "2026-10-06T19:20:08Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:52Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382875",
+        "name": "Benchmarks compile",
+        "startedAt": "2026-10-06T19:20:08Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:21Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382855",
+        "name": "Vector backend (JDK 21)",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:46Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382634",
+        "name": "Vector backend (JDK 22)",
+        "startedAt": "2026-10-06T19:20:07Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:21:48Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456382742",
+        "name": "FFM BLAS/LAPACK backend (JDK 22 / OpenBLAS)",
+        "startedAt": "2026-10-06T19:20:08Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T19:23:51Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/canardlapin/gale/actions/runs/37518175203/job/112456383024",
+        "name": "WebAssembly tests and profile (experimental)",
+        "startedAt": "2026-10-06T19:20:09Z",
+        "status": "COMPLETED",
+        "workflowName": "CI"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T20:27:31Z",
+        "conclusion": "NEUTRAL",
+        "detailsUrl": "https://cursor.com/docs/bugbot",
+        "name": "Cursor Bugbot",
+        "startedAt": "2026-10-06T20:27:29Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T20:31:45Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://cursor.com/agents/bc-3f891c21-a3d6-4c5a-84ed-1a3a724bf4d0",
+        "name": "Cursor Approval Agent: Pull Request Router and Approver",
+        "startedAt": "2026-10-06T20:27:28Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-06T20:31:17Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://cursor.com/agents/bc-b52829a2-c007-4732-adb9-9fe048d37f6b",
+        "name": "Cursor Security Agent: Security Reviewer",
+        "startedAt": "2026-10-06T20:27:27Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      }
+    ],
+    "url": "https://github.com/canardlapin/gale/pull/16"
+  },
+  "merge_performed_by_this_task": false,
+  "root_adoption_revision": "b56a9dd0b8ad479621a3594880f90c9add8c2824"
+}

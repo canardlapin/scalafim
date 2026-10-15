@@ -1,0 +1,36 @@
+--- a/.github/workflows/first-level.yml
++++ b/.github/workflows/first-level.yml
+@@ -94,6 +94,16 @@
+           node-version: "24"
+           package-manager-cache: false
+ 
++      - name: Prepare exact pinned provider artifacts
++        env:
++          COURSIER_CACHE: ${{ runner.temp }}/scalafim-first-level-sbt/coursier
++          SBT_OPTS: >-
++            -Dsbt.boot.directory=${{ runner.temp }}/scalafim-first-level-sbt/boot
++            -Dsbt.global.base=${{ runner.temp }}/scalafim-first-level-sbt/global
++            -Dsbt.ivy.home=${{ runner.temp }}/scalafim-first-level-sbt/ivy
++            -Dsbt.supershell=false
++        run: bash tools/prepare-pinned-dependencies.sh
++
+       - name: Run manifest, fixture, JVM, and Scala.js gates
+         env:
+           SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-sbt
+@@ -118,6 +128,16 @@
+         with:
+           sbt-runner-version: "1.11.7"
+ 
++      - name: Prepare exact pinned provider artifacts
++        env:
++          COURSIER_CACHE: ${{ runner.temp }}/scalafim-first-level-coverage-sbt/coursier
++          SBT_OPTS: >-
++            -Dsbt.boot.directory=${{ runner.temp }}/scalafim-first-level-coverage-sbt/boot
++            -Dsbt.global.base=${{ runner.temp }}/scalafim-first-level-coverage-sbt/global
++            -Dsbt.ivy.home=${{ runner.temp }}/scalafim-first-level-coverage-sbt/ivy
++            -Dsbt.supershell=false
++        run: bash tools/prepare-pinned-dependencies.sh
++
+       - name: Enforce per-module scientific coverage floors
+         env:
+           SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-coverage-sbt

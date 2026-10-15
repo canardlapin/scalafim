@@ -7,9 +7,77 @@ import scalafim.fmri.design.{DesignSchema, ModelSource}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitSummary}
-import gale.linalg.DVec
+import gale.linalg.{DVec, Matrix}
 
 class ResultArtifactsSuite extends munit.FunSuite:
+
+  test("runwise export preserves every aggregate status, default runs and exclusion order"):
+    val statuses = VoxelFitStatus.values.toVector
+    val first = statuses.flatMap(status => Vector.fill(statuses.length)(status))
+    val second = Vector.fill(statuses.length)(statuses).flatten
+    val source = ResultArtifactsExportFixture.runwise(first.length)
+    val result = source.copy(
+      runs = Vector(
+        source.runs.head.copy(voxelStatuses = Some(first)),
+        source.runs.last.copy(voxelStatuses = Some(second)),
+        source.runs.last.copy(runIndex = 2, voxelStatuses = None)
+      ),
+      fitExclusions = Vector(
+        VoxelInferenceExclusion(3, VoxelFitStatus.NonFinite),
+        VoxelInferenceExclusion(1, VoxelFitStatus.NoObservedResponses)
+      )
+    )
+    val precedence = Vector(
+      VoxelFitStatus.NoObservedResponses,
+      VoxelFitStatus.RankDeficientObservedDesign,
+      VoxelFitStatus.InsufficientResidualDegreesOfFreedom,
+      VoxelFitStatus.NonFinite,
+      VoxelFitStatus.ZeroResidualVariance,
+      VoxelFitStatus.AllZero,
+      VoxelFitStatus.Constant,
+      VoxelFitStatus.Estimable
+    )
+    val expected = result.voxelIndices.indices.map: position =>
+      VoxelFitStatusRecord(
+        result.voxelIndices(position),
+        precedence.find(status => status == first(position) || status == second(position)).get
+      )
+    val provenance = AnalysisProvenance.fromResult(result, source = "runwise-export")
+    assertEquals(provenance.voxelStatuses, Some(expected.toVector ++ result.fitExclusions.map(_.statusRecord)))
+    assertEquals(provenance.engine, result.engine)
+    assertEquals(provenance.summary, result.summary)
+    assertEquals(provenance.timepoints.toVector, result.timepoints)
+    assertEquals(provenance.source, "runwise-export")
+
+  test("patterned export preserves reordered child axes, defaults and outer exclusions"):
+    val source = ResultArtifactsExportFixture.runwise(3)
+    val runwise = source.copy(
+      voxelIndices = Vector(90, 20, 60),
+      runs = Vector(
+        source.runs.head.copy(voxelStatuses = Some(Vector(VoxelFitStatus.Constant, VoxelFitStatus.AllZero, VoxelFitStatus.Estimable))),
+        source.runs.last.copy(voxelStatuses = Some(Vector(VoxelFitStatus.NonFinite, VoxelFitStatus.Estimable, VoxelFitStatus.Estimable)))
+      )
+    )
+    val dense = VoxelStatusLookupFixture.dense(3).copy(
+      engine = runwise.engine,
+      voxelIndices = Vector(70, 10, 50),
+      voxelStatuses = Some(Vector(VoxelFitStatus.ZeroResidualVariance, VoxelFitStatus.Estimable, VoxelFitStatus.RankDeficientObservedDesign))
+    )
+    val defaults = ResultArtifactsExportFixture.runwise(2).copy(voxelIndices = Vector(80, 30))
+    val result = ResultArtifactsExportFixture.patterned(Vector(runwise, dense, defaults), Vector(30, 60, 50, 20, 10, 90, 80, 70))
+      .copy(fitExclusions = Vector(VoxelInferenceExclusion(5, VoxelFitStatus.NoObservedResponses)))
+    val provenance = AnalysisProvenance.fromResult(result)
+    assertEquals(provenance.voxelStatuses, Some(Vector(
+      VoxelFitStatusRecord(30, VoxelFitStatus.Estimable),
+      VoxelFitStatusRecord(60, VoxelFitStatus.Estimable),
+      VoxelFitStatusRecord(50, VoxelFitStatus.RankDeficientObservedDesign),
+      VoxelFitStatusRecord(20, VoxelFitStatus.AllZero),
+      VoxelFitStatusRecord(10, VoxelFitStatus.Estimable),
+      VoxelFitStatusRecord(90, VoxelFitStatus.NonFinite),
+      VoxelFitStatusRecord(80, VoxelFitStatus.Estimable),
+      VoxelFitStatusRecord(70, VoxelFitStatus.ZeroResidualVariance),
+      VoxelFitStatusRecord(5, VoxelFitStatus.NoObservedResponses)
+    )))
 
   test("ResultManifest from dense fit preserves parameter metadata and provenance") {
     val result = denseResult().copy(
@@ -341,3 +409,36 @@ class ResultArtifactsSuite extends munit.FunSuite:
         .toOption
         .get
     )
+
+private[fit] object ResultArtifactsExportFixture:
+  def runwise(voxels: Int): RunwiseFmriFitResult =
+    val dense = VoxelStatusLookupFixture.dense(voxels)
+    val diagnostics = Ols.prepare(DesignMatrix.unsafe(Matrix.tabulate(4, 1)((_, _) => 1.0))).toOption.get.diagnostics
+    val runs = Vector.tabulate(2): run =>
+      RunwiseFmriRunResult(
+        runIndex = run,
+        rowIndices = Vector.tabulate(4)(row => run * 4 + row),
+        timepoints = Vector.tabulate(4)(row => run * 4 + row),
+        coefficients = dense.coefficients,
+        standardErrors = dense.standardErrors,
+        normalizedCovariance = dense.normalizedCovariance,
+        residualVariance = dense.residualVariance,
+        residualDegreesOfFreedom = dense.residualDegreesOfFreedom,
+        olsDiagnostics = diagnostics
+      )
+    RunwiseFmriFitResult(
+      runs = runs,
+      columnNames = dense.columnNames,
+      voxelIndices = dense.voxelIndices,
+      timepoints = Vector.tabulate(8)(identity),
+      engine = FitEngine.RunwiseLeastSquares,
+      summary = dense.summary.copy(engine = FitEngine.RunwiseLeastSquares, timepoints = 8)
+    )
+
+  def patterned(children: Vector[FmriFitResult], order: Vector[Int]): PatternedFmriFitResult =
+    val patterns = children.zipWithIndex.map: (child, index) =>
+      ObservationPatternFitResult(
+        ObservationPattern.unsafe(index, child.timepoints.indices.toVector, child.timepoints, child.voxelIndices),
+        child
+      )
+    PatternedFmriFitResult(patterns, order, Vector.tabulate(8)(identity), children.head.summary.copy(voxels = order.length))

@@ -1,0 +1,293 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite:
+  + common Gaussian residual actions retain the independent GLS observed omnibus estimates 0.465s
+  + tiny exhausted MC group maxima agree with independent scalar regression enumeration 0.028s
+  + ordering and identical retries preserve actions, digests, denominator and bitwise maxima 0.038s
+  + omitted, cancelled and refused commits cannot report completed fixed B 0.041s
+  + one nonfinite voxel preserves valid local coefficients and blocks the complete family 0.011s
+  + omnibus null-column fields ignore an alternative in a different voxel 0.014s
+  + complete family, source endpoints, law receipt and pre-exposure binding refuse before reads 0.009s
+  + actual action seed binds the adopted work address and separates different frozen plans 0.003s
+  + aggregate storage, transform indices and fixed candidate caps refuse without brain reads 0.005s
+scalafim.fmri.mvpa.analysis.SubjectCoordinatesSuite:
+  + oblique subject coefficients and full correlated covariance match the exact independent oracle 0.046s
+  + dropping cross-feature or cross-component covariance changes the transported uncertainty 0.007s
+  + signed rotation and component reindexing preserve the explicit coefficient orientation 0.003s
+  + stable subspaces return a named task operator with singular covariance and no forced component labels 0.005s
+  + task operator and its covariance are invariant to an oblique discovery gauge 0.006s
+  + unequal anatomical dimensions preserve every covariance cell without requiring positive definiteness 0.003s
+  + shared unstable axes cannot license component matches but retain task-operator comparison 0.004s
+  + all df classifications and source identities survive arithmetic transport without group admission 0.011s
+  + covariance origin is independent of known df and is immutable transport identity metadata 0.013s
+  + subject differences remain visible under the same admitted coordinates 0.004s
+  + dimension-only, reordered task and wrong destination bindings refuse 0.003s
+  + confirmation-derived or overlapping shared coordinate selection refuses 0.002s
+  + spatial alignment and stability cannot be selected from confirmation or borrowed discovery accounts 0.002s
+  + physical value units must match independently of anatomical coordinate units 0.001s
+  + covariance units are mechanically squared and cannot be replaced by unrelated physical labels 0.001s
+  + subject rows cannot silently relabel a multisubject confirmation fit 0.001s
+  + ill-conditioned, different task subspaces, invalid covariance and budgets fail closed 0.015s
+  + budget and metadata refusals never apply the original confirmation evidence source 0.013s
+scalafim.fmri.mvpa.analysis.VoxelLoadingConfirmationSuite:
+  + target-derived batched loadings match an independent orthogonal nuisance t/F oracle 0.012s
+  + an omitted intercept preserves the independent OLS and GLS oracles with shifted targets 0.01s
+  + an intercept in the nuisance span is retained without a redundant column 0.006s
+  + an existing intercept retains the last residual degree of freedom 0.004s
+  + aliased target dimensions and missing values refuse before any brain reads 0.005s
+  + foreign actual rows, target endpoint, budgets and replay refuse before brain reads 0.004s
+  + structured row whitening is an isometry against independent diagonal-plus-rank-one precision 0.003s
+  + known dependent row shape retains exact units and matches independent R GLS fixture 0.002s
+  + a frozen nonorthogonal target projection changes component loading coordinates and preserves the omnibus hypothesis 0.003s
+  + preflight budget refuses a poison target application and a foreign target endpoint 0.004s
+[info] Passed: Total 37, Failed 0, Errors 0, Passed 37
+[success] elapsed time: 4 s
+[0J[sbt-warm] mvpaJVM/testOnly *VoxelFamilyRandomizationSuite *VoxelLoadingConfirmationSuite *SubjectCoordinatesSuite: exit 0 in 4.9s
+[info] compiling 45 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] compiling 15 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/kernel/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 27 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/jvm/target/scala-3.4.2/classes ...
+[info] compiling 12 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/ar/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/data/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/metrics/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/tune/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/models-linear/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/ridge-gale/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 62 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/model/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 81 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.FamilyThresholdSuite:
+  + sealed complete fields use inclusive plus-one maxima and the same repaired cutoff decisions 0.52s
+  + foreign null, seed or alpha reference cannot reuse a completed family 0.025s
+  + the repaired threshold boundary rejects strictly above tied maximum null at B19 alpha .05 0.002s
+  + fixed alpha below attainable MC probability yields explicit no rejections 0.017s
+[info] Passed: Total 4, Failed 0, Errors 0, Passed 4
+[success] elapsed time: 51 s
+[0J[sbt-warm] mvpaSpatialJVM/testOnly *FamilyThresholdSuite: exit 0 in 51.9s
+[info] compiling 7 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/archive/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.SubjectGroupBridgeSuite:
+  + independent small-group known-variance fixture delegates to adopted group and retains full covariance 0.207s
+  + qualified loading bridge adopts full component Gram and explicit cross-feature covariance as Estimated 0.016s
+  + eager and materialized conversions preserve every covariance cell, df role and source 0.025s
+  + mismatched source declarations and unsupported uncertainty refuse instead of becoming known Gaussian 0.007s
+  + reordered subjects, task/space endpoints and tampered materialized covariance refuse 0.017s
+  + residual covariance must name actual loading values, dimensions and diagonal variances 0.006s
+[info] Passed: Total 6, Failed 0, Errors 0, Passed 6
+[success] elapsed time: 9 s
+[0J[sbt-warm] mvpaGroupJVM/testOnly *SubjectGroupBridgeSuite: exit 0 in 9.6s
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes ...
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/scenario-testkit/js/target/scala-3.7.4/classes ...
+[info] compiling 65 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/974a385afa33a2ff246a/gale/core/js/target/scala-3.7.4/classes ...
+[info] compiling 99 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/04c54b2d3f3921f04b0c/multivar/modules/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/3f5d01c7e6069e74a205/resample4s/core/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/b4b08747efd9a8151229/graph4s/core/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/b4b08747efd9a8151229/graph4s/indexed/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/locus-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/b4b08747efd9a8151229/graph4s/data/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/b4b08747efd9a8151229/graph4s/algorithms/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/pipeline/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 10 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/3f5d01c7e6069e74a205/resample4s/designs/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/3f5d01c7e6069e74a205/resample4s/api/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 28 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/04c54b2d3f3921f04b0c/multivar/modules/inference/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 57 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 63 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/scalafim-fmri-mvpa-test-fastopt
+scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite:
+  + common Gaussian residual actions retain the independent GLS observed omnibus estimates 0.063s
+  + tiny exhausted MC group maxima agree with independent scalar regression enumeration 0.024s
+  + ordering and identical retries preserve actions, digests, denominator and bitwise maxima 0.012s
+  + omitted, cancelled and refused commits cannot report completed fixed B 0.010s
+  + one nonfinite voxel preserves valid local coefficients and blocks the complete family 0.014s
+  + omnibus null-column fields ignore an alternative in a different voxel 0.008s
+  + complete family, source endpoints, law receipt and pre-exposure binding refuse before reads 0.001s
+  + actual action seed binds the adopted work address and separates different frozen plans 0.002s
+  + aggregate storage, transform indices and fixed candidate caps refuse without brain reads 0.002s
+scalafim.fmri.mvpa.analysis.SubjectCoordinatesSuite:
+  + oblique subject coefficients and full correlated covariance match the exact independent oracle 0.040s
+  + dropping cross-feature or cross-component covariance changes the transported uncertainty 0.009s
+  + signed rotation and component reindexing preserve the explicit coefficient orientation 0.003s
+  + stable subspaces return a named task operator with singular covariance and no forced component labels 0.003s
+  + task operator and its covariance are invariant to an oblique discovery gauge 0.005s
+  + unequal anatomical dimensions preserve every covariance cell without requiring positive definiteness 0.006s
+  + shared unstable axes cannot license component matches but retain task-operator comparison 0.002s
+  + all df classifications and source identities survive arithmetic transport without group admission 0.007s
+  + covariance origin is independent of known df and is immutable transport identity metadata 0.004s
+  + subject differences remain visible under the same admitted coordinates 0.002s
+  + dimension-only, reordered task and wrong destination bindings refuse 0.002s
+  + confirmation-derived or overlapping shared coordinate selection refuses 0.002s
+  + spatial alignment and stability cannot be selected from confirmation or borrowed discovery accounts 0.002s
+  + physical value units must match independently of anatomical coordinate units 0.002s
+  + covariance units are mechanically squared and cannot be replaced by unrelated physical labels 0.000s
+  + subject rows cannot silently relabel a multisubject confirmation fit 0.002s
+  + ill-conditioned, different task subspaces, invalid covariance and budgets fail closed 0.015s
+  + budget and metadata refusals never apply the original confirmation evidence source 0.002s
+scalafim.fmri.mvpa.analysis.VoxelLoadingConfirmationSuite:
+  + target-derived batched loadings match an independent orthogonal nuisance t/F oracle 0.003s
+  + an omitted intercept preserves the independent OLS and GLS oracles with shifted targets 0.005s
+  + an intercept in the nuisance span is retained without a redundant column 0.001s
+  + an existing intercept retains the last residual degree of freedom 0.007s
+  + aliased target dimensions and missing values refuse before any brain reads 0.002s
+  + foreign actual rows, target endpoint, budgets and replay refuse before brain reads 0.001s
+  + structured row whitening is an isometry against independent diagonal-plus-rank-one precision 0.001s
+  + known dependent row shape retains exact units and matches independent R GLS fixture 0.001s
+  + a frozen nonorthogonal target projection changes component loading coordinates and preserves the omnibus hypothesis 0.002s
+  + preflight budget refuses a poison target application and a foreign target endpoint 0.001s
+[info] Passed: Total 37, Failed 0, Errors 0, Passed 37
+[success] elapsed time: 71 s (0:01:11.0)
+[0J[sbt-warm] mvpaJS/testOnly *VoxelFamilyRandomizationSuite *VoxelLoadingConfirmationSuite *SubjectCoordinatesSuite: exit 0 in 71.5s
+[info] compiling 27 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/js/target/scala-3.4.2/classes ...
+[info] compiling 45 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes ...
+[info] compiling 30 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/34c0071f90095ef07887/zarr4s/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 15 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/kernel/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/js/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/ar/js/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/995ff8e011f5a5221e44/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/metrics/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/data/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/1541cf1125bbd1a3cbc8/reframe4s/modules/reframe4s-core/js/target/scala-3.7.4/classes ...
+[info] compiling 14 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/995ff8e011f5a5221e44/image4s/modules/image4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/1541cf1125bbd1a3cbc8/reframe4s/modules/reframe4s-lie/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/models-linear/.js/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/tune/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/1541cf1125bbd1a3cbc8/reframe4s/modules/reframe4s-resample/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/995ff8e011f5a5221e44/image4s/modules/image4s-ops-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/995ff8e011f5a5221e44/image4s/modules/image4s-locus/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/70113493d2034afa26c1/alder/ridge-gale/.js/target/scala-3.7.4/classes ...
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/995ff8e011f5a5221e44/image4s/modules/image4s-filter/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5acc69395461c4c9/staging/1541cf1125bbd1a3cbc8/reframe4s/modules/reframe4s-field/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 50 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/image/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 62 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] compiling 12 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/threshold/js/target/scala-3.7.4/classes ...
+[info] compiling 25 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/transform/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 42 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/surface/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/model/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 78 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/js/target/scala-3.7.4/scalafim-fmri-mvpa-spatial-test-fastopt
+scalafim.fmri.mvpa.analysis.FamilyThresholdSuite:
+  + sealed complete fields use inclusive plus-one maxima and the same repaired cutoff decisions 0.128s
+  + foreign null, seed or alpha reference cannot reuse a completed family 0.023s
+  + the repaired threshold boundary rejects strictly above tied maximum null at B19 alpha .05 0.000s
+  + fixed alpha below attainable MC probability yields explicit no rejections 0.018s
+[info] Passed: Total 4, Failed 0, Errors 0, Passed 4
+[success] elapsed time: 103 s (0:01:43.0)
+[0J[sbt-warm] mvpaSpatialJS/testOnly *FamilyThresholdSuite: exit 0 in 103.9s
+[info] compiling 6 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/archive/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/js/target/scala-3.7.4/scalafim-fmri-mvpa-group-test-fastopt
+scalafim.fmri.mvpa.analysis.SubjectGroupBridgeSuite:
+  + independent small-group known-variance fixture delegates to adopted group and retains full covariance 0.063s
+  + qualified loading bridge adopts full component Gram and explicit cross-feature covariance as Estimated 0.008s
+  + eager and materialized conversions preserve every covariance cell, df role and source 0.007s
+  + mismatched source declarations and unsupported uncertainty refuse instead of becoming known Gaussian 0.013s
+  + reordered subjects, task/space endpoints and tampered materialized covariance refuse 0.011s
+  + residual covariance must name actual loading values, dimensions and diagonal variances 0.015s
+[info] Passed: Total 6, Failed 0, Errors 0, Passed 6
+[success] elapsed time: 40 s
+[0J[sbt-warm] mvpaGroupJS/testOnly *SubjectGroupBridgeSuite: exit 0 in 41.0s

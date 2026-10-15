@@ -163,6 +163,12 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 |---|---|
 | `meta/root-check` | `hex(SHA-256(root64 decimal + "\n"))`, the acknowledgement hash, never the root |
 | `meta/stamp` | the sealed stamp: every `stamp.json` field plus `sealed_store_path` (the full absolute path, which the plaintext stamp holds only as `sealed_store_path_sha256`) |
+| `meta/ceiling-raise/<runId>` | per invocation that ran under an `OwnerCeilingRaise`, under that invocation's run id: JSON `invocation run_id output_identity hard_core_hours approver reason` |
+| `meta/accounting-recovery/<uncertainRunId>` | per applied `OwnerAccountingRecovery`, under the uncertain run's id: JSON `invocation uncertain_run_id charged_cpu_seconds approver reason` |
+
+Every invocation re-seals every authorization record that `cost.json` holds, as an identical duplicate. A record written by an invocation that died before sealing it is therefore completed by the next one.
+
+**Limit of raise enforcement (owner decision 2026-10-10: detect at unseal).** The runner cannot read the owner-encrypted sealed stamp, so it checks a raise against the plaintext `stamp.json` and `output-id`. That prevents reuse under honest operation and when `output-id` alone is substituted (`StampMismatch(output_id)`). A custodian who edits both `output-id` and the `output_id` field of `stamp.json` consistently is outside prevention: the runner proceeds. Such an edit is detected when the owner verifies the store: the substituted invocation seals a second, differing `meta/stamp`, and `OwnerVerification.verifyRecords` refuses with `SealedStampConflict(output_id)`. A sealed `meta/ceiling-raise/<runId>` whose `output_identity` differs from the identity of the store's sealed stamp, or whose run id and invocation are absent from the store's ledger history, refuses with `CeilingRaiseNotBound`. Neither case can be Valid. The owner verifies from every decrypted record, duplicates included (`verifyRecords`), because a deduplicated name-to-content map cannot show a differing duplicate.
 | `data/<unit>/<runId>` | unit payload of a scheduled commit, any status (a status placeholder when the arm emitted nothing) |
 | `ledger/<unit>/<runId>` | ledger record: JSON with keys exactly `cell dataset arm invocation run_id phase attempts status code payload payload_sha256 entries`; `phase` is `scheduled` here |
 | `timing/<unit>/<runId>` | timing record: every attempt of this invocation (status `retried`/`done`/`refused`/`failed`, code, wall and child CPU seconds, named timings, result-adjacent notes) |
@@ -205,13 +211,66 @@ This section fixes the logical names the S7 runner writes and how the owner inte
 *What the owner checks at unseal.*
 
 - **Primary check, which needs only this spec.** For every listed unit, the owner compares `payload_sha256` with that of the first completed attempt, as defined above. This requires nothing beyond the sealed records and this section.
-- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. This depends on the S10 `ScoreFeed` mapping, which turns the payload arms and the generator truth into per-voxel outcomes. That mapping is not yet specified (design section 6, slice S10), so this check becomes available once S10 specifies it.
+- **Secondary check.** The owner rebuilds the corpus from the first completed attempts and the generator truth, and recomputes `corpus_outcomes_sha256`. It is possible only for an aggregate that carries `contribution_schema` (see *Scorer contributions* below): the corpus is then a pure function, named by that schema, of the scorer contributions sealed in the payloads. The production mapping is `PilotCorpusAssembler`, using `PilotContribution` and held `PilotScoreTruth.fromBound` snapshots. Its synthetic recovery rehearsal does not authorize a real pilot, choose its scoring policy, or satisfy the remaining S10 launch gates.
 
 *Policy:*
 
 - any mismatch, of a unit or of the outcome digest, **invalidates the whitelist released from that aggregate**;
 - the owner records the exact list of mismatching units in the deviation report;
 - recomputing the whitelist owner-side from the first attempts, after the confirmatory analysis is closed, is allowed only as a documented deviation.
+
+**Scorer contributions (S10 seam).**
+
+- An arm hands its truth-free scorer contribution for the attempt to `ArmContext.contribute`, at most once per attempt. It is sealed inside the unit payload as the reserved entry `scorer-contribution`, so `payload_sha256` covers it.
+- Only the committing attempt's contribution exists: a retried or abandoned attempt's contribution is discarded with the attempt and never reaches the scorer.
+- `PilotAggregation.aggregateContributions` assembles the in-process corpus from the contributions of the commits the scorer consumed (the `units` list), by a deterministic `CorpusAssembler`, and adds `contribution_schema` (the assembler's name) to `aggregate/<runId>/record`. The assembler receives the contributions sorted by (cell, dataset, arm) path; a unit whose committing attempt contributed nothing is passed as absent.
+- An aggregate sealed with `aggregateAndSeal` from a corpus built out of sight has no `contribution_schema`.
+
+**Production encoding and mapping (S10 contribution slice, 2026-10-11).**
+
+`PilotContribution` encodes a canonical UTF-8 JSON array
+`["phrf-pilot-contribution-v1", [cell, dataset, arm], input_fingerprint_or_null, kind, values, source_file_sha256_or_null]`.
+Every numeric estimate is a 16-character lowercase IEEE-754 double-bit string. Decode rejects noncanonical bytes,
+unknown schemas/kinds, nonfinite values, invalid lengths and inconsistent dimensions. Payloads are bounded to 64 MiB.
+The unit identity is checked again against its sealed slot. No generator truth, invocation, attempt number, timing
+or diagnostic message is encoded.
+
+- `condition`: one outcome per scored voxel (`["e", [lags, condition_curves, gaussian_or_null]]`, `["r"]` or `["f"]`).
+  Gaussian readouts carry `[tau, log_sigma, conditional_shape_sds, exact_signed_response_peaks]`. Only Accepted
+  PHRF readouts can supply those values. Condition MISE uses the existing trapezoidal `ConditionAdapter.mise`
+  against `cond_coef * truth_kernel` on the 0.1 s grid over `[0,32]`. The generator-v1 noise variance is 1.
+- `trial`: `["e", trial_amplitudes]`, `["r"]` or `["f"]` per voxel, in original input event order. Truth is
+  `trial_beta` with `ev_cond`; estimates are already in single-trial peak units. An estimated GLMsingle contribution
+  must also carry the actual `GlmSingleOutcome.inputNpzSha256`, matching the held bound dataset.
+- `unavailable`: null values and identities, used for a committed dataset/adapter failure. The assembler produces
+  Failed for every held-truth voxel, retaining its denominator. Absent contribution bytes are never this case and
+  always refuse assembly.
+
+`ScoringInputFingerprint` binds all fitter-visible arrays, including trial stimulus labels and the GLMsingle noise
+pool, without reading truth. `PilotScoreTruth` copies the scoring arrays from an S1-bound dataset; it is held only
+on the scoring side. The assembler requires the exact seven-cell/method inventory for every kept index, no
+missing/duplicate/foreign unit, matching cell/dataset/input identity and consistent voxel/trial layout.
+
+For C-TG-.5, signed relative E-peak error is the arithmetic mean across the three conditions of
+`(estimated_signed_peak - true_signed_peak) / abs(true_signed_peak)`. The Gaussian generator normalizes on its
+0.01 s peak grid, so the scorer accounts for that normalization when reconstructing the continuous true peak.
+Tau error is fitted tau minus true tau. Coverage is an **explicit constructor choice**, recorded in the assembler
+schema: `GaussianCoverageTarget.Tau` uses `abs(tau_error) <= conditional_sd_tau`; `BothShapeCoordinates` additionally
+requires the analogous log-sigma interval. Neither choice implies an unconditional coverage claim. A missing or
+invalid Accepted Gaussian readout refuses assembly; refused/failed voxels remain missing in coverage.
+
+The mapping schemas are `phrf-pilot-score-v1-tau-mean-signed-peak` and
+`phrf-pilot-score-v1-tau-and-log-sigma-mean-signed-peak`. The synthetic rehearsal exercises tau coverage.
+No actual pilot policy or root is selected by this implementation; the frozen real study must explicitly name
+its scoring choice and pass its remaining launch/review gates.
+
+**Owner verification** (`OwnerVerification.verify`, over the decrypted store; reference implementation of this section):
+
+1. The authoritative aggregate is the one whose `whitelist_sha256` manifest v1 records. **No** such record, or **several** (for example the same pilot aggregated twice), refuses. Its `datasets` (D) must be one the runner can produce for the plan: the full plan, or a partial pilot with `minDatasets <= D < datasets`; otherwise refused.
+2. Every ledger record must sit under its own name and name its own payload, that payload must match `payload_sha256`, decode as a unit payload (every count and length checked against the remaining bytes; a malformed payload is a typed refusal, never an exception), and carry the ledger's `status` and `entries`; otherwise the store is refused.
+3. `units` must be exactly the plan's cells and arms over datasets `0 until D`, each naming an existing commit of the aggregating invocation; otherwise refused.
+4. Primary check: as above. Secondary check: rebuild from the `scorer-contribution` entries of the first completed attempts with the assembler for `contribution_schema`.
+5. Verdict: any unit mismatch or a digest mismatch is **Invalidated** (the primary check alone suffices for that, even on a legacy aggregate). Otherwise, an aggregate without `contribution_schema` (legacy, pre-S10), with a schema the owner has no assembler for, with a first completed attempt that sealed no `scorer-contribution` (whatever defaults an assembler would supply), or whose rebuild fails is **Unverifiable**, never Valid. Only an aggregate that passes both checks is **Valid**. Units whose scheduled commits differ in `payload_sha256` are listed for the deviation report in every verdict.
 
 The runner seals at most one aggregate per run id: a second `aggregateAndSeal` with the same run id is refused with `AlreadyAggregated`. Several aggregates may exist, for example a partial pilot and then the full one. The authoritative aggregate is the one whose `whitelist_sha256` is recorded in manifest v1.
 
@@ -247,10 +306,13 @@ An arm map is written as `int k` (the number of methods present), then, for each
 
 **Plaintext outside the store** (runner output directory):
 
-- `stamp.json`: hashes and versions, `recipient_fp` (the owner key fingerprint, already public), and `sealed_store_path_sha256`, never the path itself;
-- `cost.json`: `cpu_seconds_total` and `invocations`;
+- `stamp.json`: hashes and versions, `recipient_fp` (the owner key fingerprint, already public), `sealed_store_path_sha256`, and `output_id` (the output instance's 32 lowercase hex characters), never the path itself;
+- `cost.json`: `cpu_seconds_total` and `invocations` (always below `Int.MaxValue`), plus `ceiling_raises` and `accounting_recoveries` when the owner authorized any (the same records as the sealed `meta/...` blobs; owner decisions, no results);
+- `output-id`: exactly 32 lowercase ASCII hex characters (128 random bits) and a newline. The first invocation on a fresh output writes it before `stamp.json`, and only if absent: an id left by an invocation that died before the stamp is kept, never redrawn. `stamp.json` and the sealed `meta/stamp` record it as `output_id`. Every resume therefore refuses a substituted `output-id` with `StampMismatch(output_id)` before any admission or cost change, and a transplanted stamp and id together show at unseal as a differing duplicate of `meta/stamp`. An `OwnerCeilingRaise` names the output by `SHA-256(stamp.json bytes ++ output-id bytes)`, so a fresh output at the same path gets another identity;
+- `accounting.open`: the run id of the invocation whose CPU accounting is open. The runner writes it, durably, before any metered work. It removes it only after a successful final cost checkpoint, and only when no thread of the invocation ended with a fatal throwable (for example `OutOfMemoryError`). Such a throwable sets a sticky flag before any exception is selected, so the marker stays even when a caller interrupt or another exception ends the run, because a measured child CPU may never have reached the meter. A marker that survives (crash, power loss, failed checkpoint, fatal error) makes the next resume refuse with `AccountingUncertain` until the owner supplies an `OwnerAccountingRecovery` for that run id. The recovery charges a stated CPU amount once: a recovery already recorded for that run id is never charged again, and a charge that would make the total non-finite is refused;
 - `selection.json`: D, df and the UCL factor;
+- `progress/<cell>/dNNNN.dispatched` plus `.sha256` markers, written before a job's first arm runs, so that a resume past the soft stop finishes every job that was in flight (blocker probe M2);
 - `progress/<cell>/dNNNN.done` plus `.sha256` markers;
 - optionally the S6 scratch custody log: a hash-chained JSONL of scratch lifecycle events, holding paths, device names and residue counts but no result.
 
-The markers' contents are constant, but their modification times reveal when each job completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3).
+The markers' contents are constant, but their modification times reveal when each job was dispatched and completed, and the custody log carries timestamps. The output directory therefore lives inside the custodian work directory, under the no-peeking rule (runbook section 3). The owner accepted the `.dispatched` marker on 2026-10-10 on this basis: it adds no leak of a new kind beyond `.done`.

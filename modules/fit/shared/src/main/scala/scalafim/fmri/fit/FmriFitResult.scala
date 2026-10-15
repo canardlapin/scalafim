@@ -1,8 +1,8 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.model.{FitEngine, FitSummary}
+import scalafim.fmri.model.{ArBiasCorrection, FitEngine, FitSummary}
 import scalafim.fmri.design.{CoefficientAxis, RankPreview, RunCoefficientProjection}
-import scalafim.fmri.ar.{InitialConditionPolicy, NoisePooling, WhiteningMethod}
+import scalafim.fmri.ar.{InitialConditionPolicy, NoisePooling, RunCorrection, WhiteningMethod}
 import gale.linalg.{DMat, DVec}
 
 final case class FitDiagnostics(
@@ -17,7 +17,9 @@ final case class ArRunDiagnostic(
     method: String,
     rows: Int,
     coefficients: Vector[Double] = Vector.empty,
-    voxelwiseCoefficients: Vector[Vector[Double]] = Vector.empty
+    voxelwiseCoefficients: Vector[Vector[Double]] = Vector.empty,
+    correction: Option[RunCorrection] = None,
+    voxelwiseCorrections: Vector[RunCorrection] = Vector.empty
 ):
   require(runIndex >= 0, "run index must be non-negative")
   require(rho.isFinite, "AR rho must be finite")
@@ -26,6 +28,9 @@ final case class ArRunDiagnostic(
   require(coefficients.forall(_.isFinite), "AR diagnostic coefficients must be finite")
   require(coefficients.isEmpty || coefficients.head == rho, "AR diagnostic rho must match the first coefficient")
   require(voxelwiseCoefficients.forall(_.forall(_.isFinite)), "voxelwise AR coefficients must be finite")
+
+  require(voxelwiseCorrections.isEmpty || voxelwiseCorrections.length == voxelwiseCoefficients.length,
+    "voxelwise correction outcomes must match voxelwise coefficients")
 
   def phi: Vector[Double] =
     if coefficients.isEmpty then Vector(rho) else coefficients
@@ -78,7 +83,8 @@ final case class ArDiagnostics(
     runs: Vector[ArRunDiagnostic],
     iterations: Int = 1,
     sharedNormalizedCovariance: Boolean = true,
-    whitening: ArWhiteningProvenance
+    whitening: ArWhiteningProvenance,
+    biasCorrection: ArBiasCorrection = ArBiasCorrection.Raw
 ):
   require(order >= 1, "AR diagnostics require positive order")
   require(runs.nonEmpty, "AR diagnostics must contain at least one run")
@@ -106,7 +112,8 @@ object ArDiagnostics:
             first.runs(runIndex).copy(
               rho = summary.head,
               coefficients = summary,
-              voxelwiseCoefficients = perVoxel
+              voxelwiseCoefficients = perVoxel,
+              voxelwiseCorrections = blocks.iterator.flatMap(_.runs(runIndex).voxelwiseCorrections).toVector
             )
           }
         first.copy(runs = mergedRuns, sharedNormalizedCovariance = false)
@@ -121,6 +128,8 @@ object ArDiagnostics:
       val block = blocks(blockIndex)
       if block.order != first.order then
         return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share order"))
+      if block.biasCorrection != first.biasCorrection then
+        return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share correction policy"))
       if block.iterations != first.iterations then
         return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share iteration count"))
       if block.runs.length != first.runs.length then
@@ -132,6 +141,8 @@ object ArDiagnostics:
         val right = block.runs(runIndex)
         if left.runIndex != right.runIndex || left.method != right.method || left.rows != right.rows then
           return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share run diagnostics"))
+        if left.voxelwiseCorrections.isEmpty != right.voxelwiseCorrections.isEmpty then
+          return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share correction provenance"))
         if right.voxelwiseCoefficients.exists(_.length != first.order) then
           return Left(FitError.IncompatibleFitBlocks("voxelwise AR coefficient length must match order"))
         runIndex += 1
@@ -163,6 +174,27 @@ sealed trait FmriFitResult:
   def preparationProvenance: Option[ResponsePreparationProvenance] = None
   def fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
   def voxels: Int = voxelIndices.length
+
+/** Voxelwise covariance inference retains the contrast-specific KR scale and df.
+  * Use `fit.voxels(position).test(contrast, hypothesis)` for a Wald test.
+  */
+final case class VoxelwiseArFmriFitResult(
+    fit: VoxelwiseArFit,
+    columnNames: Vector[String],
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    summary: FitSummary,
+    override val coefficientAxis: Option[CoefficientAxis] = None,
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
+) extends FmriFitResult:
+  val engine: FitEngine = FitEngine.GeneralizedLeastSquares
+  require(fit.voxels.nonEmpty && fit.voxels.length == voxelIndices.length, "FGLS voxel axis must match fits")
+  require(voxelIndices.distinct == voxelIndices, "FGLS voxel axis must be unique")
+  require(timepoints.nonEmpty, "FGLS requires a time axis")
+  require(fit.voxels.forall(_.predictors == columnNames.length), "FGLS predictor axis must match fits")
+  require(coefficientAxis.forall(_.predictors == columnNames.length), "FGLS structural axis must match fits")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "voxelwise FGLS result")
 
 final case class DenseFmriFitResult(
     coefficients: CoefficientBlock,
@@ -647,6 +679,8 @@ private[fit] object FmriFitResults:
   ): Either[FitError, FmriFitResult] =
     VoxelInferenceExclusions.combine(ordered, result.fitExclusions).map { combined =>
       result match
+        case fgls: VoxelwiseArFmriFitResult =>
+          fgls.copy(fitExclusions = combined)
         case dense: DenseFmriFitResult =>
           dense.copy(fitExclusions = combined)
         case lss: LssFmriFitResult =>

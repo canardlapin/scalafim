@@ -1,0 +1,17 @@
+{
+  "status": "historical-observations-not-final-qualified-gates",
+  "logs": [
+    {
+      "path": "logs/umvpa-family-group-compile-first-20261007.log",
+      "sha256": "7a8630dd2bd6559f085c178e20cdf48c64eb40d900b86b1c35ab9aa4babd3b4d",
+      "stage": "preliminary-jvm-main-compilation",
+      "result": "passed; before immutable-seed/eligibility refinements"
+    },
+    {
+      "path": "logs/umvpa-family-group-focused-first-20261007.log",
+      "sha256": "dfd50743a2b20783693d55b5cadbda529824fda1aff0177f9f7dc0898fb09cd5",
+      "stage": "first-focused-jvm",
+      "result": "18/19; tiny oracle working-geometry mismatch"
+    }
+  ]
+}

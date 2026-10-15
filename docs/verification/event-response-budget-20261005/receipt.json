@@ -1,0 +1,229 @@
+{
+  "issue": "bd-01M47BDT7PT73Z82RK6EETWDZ7",
+  "actor": "scalafim-event-response-20261005",
+  "verified_at_utc": "2026-10-06T02:21:16.984484+00:00",
+  "base_commit": "dbda35ea91ccb7c1d2d35c7b11e576006f0e970d",
+  "limits": {
+    "reference_samples": 1000000,
+    "basis_scales": 1000000,
+    "scalar_evaluations": 10000000
+  },
+  "semantics": [
+    "Retains ceil reference grid and per-basis peaks; UnitPeak uses its reference step and ignores unused caller precision.",
+    "Impulse cost uses descriptor evaluation work; finite pulses use actual exact/piecewise/fallback and nested work estimate.",
+    "Finite final reference time, work and basis-scale admission precede arrays or kernel calls.",
+    "PreservePulseScale applies only basis-scale shape cap, performs no normalization work/precision admission.",
+    "Custom kernel internals and Gauss rule construction cost remain outside the declared scalar-evaluation budget."
+  ],
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/EventResponseNormalization.scala": "f6e2a7344ae4045fd0fa8946b7bef060eb8e8a9306e2c96f775c281686e31aa2",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/EventResponseNormalizationSuite.scala": "65205d47f93e9669626a0834d939dd41850dbe651a4e2109499454766456220d",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/event/EventResponseConvolutionSuite.scala": "f86dae42762729bba2d0dde1d05c1e5d98f76ca80415431af7800665889adcef",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "0f9ab4e15537ef4660a44445af1af62ee22136a9d8c9afe2bcf63a2e1a68c27c"
+  },
+  "runs": [
+    {
+      "name": "before",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.EventResponseNormalizationSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.EventResponseNormalizationSuite",
+        "designJVM/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite",
+        "designJS/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 49.53731541708112,
+      "summaries": [
+        [
+          "0",
+          "0",
+          "16"
+        ],
+        [
+          "0",
+          "0",
+          "16"
+        ],
+        [
+          "0",
+          "0",
+          "18"
+        ],
+        [
+          "0",
+          "0",
+          "18"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-work-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.EventResponseBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 3.7406412078998983,
+      "summaries": [
+        [
+          "3",
+          "0",
+          "0"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-work-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.EventResponseBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 3.3773297499865294,
+      "summaries": [
+        [
+          "3",
+          "0",
+          "0"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-endpoint-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.EventResponseBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.2101151668466628,
+      "summaries": [
+        [
+          "1",
+          "0",
+          "0"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-endpoint-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.EventResponseBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.6907114167697728,
+      "summaries": [
+        [
+          "1",
+          "0",
+          "0"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-scale-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.EventResponseBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.1166592920199037,
+      "summaries": [
+        [
+          "1",
+          "0",
+          "0"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-scale-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.EventResponseBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.849022749811411,
+      "summaries": [
+        [
+          "1",
+          "0",
+          "0"
+        ]
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.EventResponseNormalizationSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.EventResponseNormalizationSuite",
+        "designJVM/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite",
+        "designJS/testOnly scalafim.fmri.design.event.EventResponseConvolutionSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 6.631077624857426,
+      "summaries": [
+        [
+          "0",
+          "0",
+          "16"
+        ],
+        [
+          "0",
+          "0",
+          "16"
+        ],
+        [
+          "0",
+          "0",
+          "18"
+        ],
+        [
+          "0",
+          "0",
+          "18"
+        ]
+      ],
+      "compiler_warnings": false
+    }
+  ],
+  "mutation_safety": "Work and endpoint mutants stop at sentinel callbacks; scale mutant allocates only a 1,000,001-element retained vector before a type assertion fails. No huge reference loop is run.",
+  "restoration": {
+    "restored": true,
+    "temporary_selector_removed": true
+  },
+  "archive_sha256": "bc000ea66f3c74b44a3e998e7766523342575133fa47f02ee7142ea5e14b9ba6",
+  "integrated_gates": {
+    "status": "passed",
+    "receipt": "../family-caps-20261005/receipt.json",
+    "tests": {
+      "hrfJVM": 383,
+      "hrfJS": 383,
+      "designJVM": 458,
+      "designJS": 457,
+      "fitJVM": 660,
+      "fitJS": 603,
+      "observed_family_consumersJVM": 6,
+      "observed_family_consumersJS": 6
+    },
+    "total": 2956,
+    "compiler_warnings": false,
+    "sbt_diagnostic": "Existing multiple-main-class discovery diagnostic retained separately in root receipt."
+  }
+}

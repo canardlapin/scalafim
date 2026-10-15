@@ -101,7 +101,13 @@ object EventModelBuilder:
       blockPlan: BlockPlan,
       durationPlan: DurationPlan = DurationPlan(Seq(0.0)),
       options: BuildOptions = BuildOptions(),
-      extensions: DesignExtensionEnv = DesignExtensionEnv()
+      extensions: DesignExtensionEnv = DesignExtensionEnv(),
+      /** Declarations evaluated against `env.eventData` before compilation.
+        * Block and duration plans refer to the caller's rows; rows the
+        * missing-row policy drops are removed from them and recorded in the
+        * design audit as a [[DerivedRowsReceipt]].
+        */
+      derived: DerivedEventPlan = DerivedEventPlan.empty
   )
 
   object EventDesignRequest:
@@ -113,7 +119,8 @@ object EventModelBuilder:
         durationPlan: DurationPlan = DurationPlan(Seq(0.0)),
         tables: Map[String, DataTable] = Map.empty,
         options: BuildOptions = BuildOptions(),
-        extensions: DesignExtensionEnv = DesignExtensionEnv()
+        extensions: DesignExtensionEnv = DesignExtensionEnv(),
+        derived: DerivedEventPlan = DerivedEventPlan.empty
     ): Either[DesignError, EventDesignRequest] =
       FormulaParser.parseEither(formula).left.map(parseError).map { parsed =>
         EventDesignRequest(
@@ -123,7 +130,8 @@ object EventModelBuilder:
           blockPlan = blockPlan,
           durationPlan = durationPlan,
           options = options,
-          extensions = extensions
+          extensions = extensions,
+          derived = derived
         )
       }
 
@@ -312,18 +320,65 @@ object EventModelBuilder:
 
   def buildEither(request: EventDesignRequest): Either[DesignError, EventModel] =
     for
-      blockIds <- request.blockPlan.resolve(request.env.eventData)
-      durations <- request.durationPlan.resolve(request.env.eventData.nrows)
-      model <- buildEither(
-        formula = request.formula,
-        env = request.env,
-        samplingFrame = request.samplingFrame,
-        blockIds = blockIds,
-        durations = durations,
-        options = request.options,
-        extensions = request.extensions
-      )
-    yield model
+      _ <- request.options.validate
+      rows <- prepareRows(request)
+      model <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions,
+        runs = Some(rows.runs))
+      evidenced <- rows.attach(model)
+    yield evidenced
+
+  /** The event rows the compiler sees: the caller's table, or its derived
+    * materialization with the block and duration plans restricted to the
+    * retained rows.
+    *
+    * `runs` is the run set of the caller's rows, so a run whose rows were all
+    * dropped is still reported (with no observed levels) by per-run audits.
+    * Only `env.eventData` is filtered: `env.other` tables are read by
+    * `covariate(data = ...)`, are scan-aligned rather than indexed by event
+    * row, and are passed through unchanged. A `covariate(...)` without
+    * `data` reads the materialized event table.
+    *
+    * `attach` records the receipt and rewrites every caller-row field of the
+    * model ([[scalafim.fmri.design.EventRowProvenance.sourceRow]], degenerate
+    * modulator and orthogonalization `sourceRows`) from compiled rows to the
+    * caller's rows; see [[EventModel.withDerivedRowsEither]].
+    */
+  private final case class PreparedRows(
+      env: TableEnv,
+      blockIds: Vector[Int],
+      durations: Vector[Double],
+      runs: Vector[Int],
+      receipt: Option[DerivedRowsReceipt]
+  ):
+    def attach(model: EventModel): Either[DesignError, EventModel] =
+      receipt.fold[Either[DesignError, EventModel]](Right(model))(model.withDerivedRowsEither)
+
+  private def prepareRows(request: EventDesignRequest): Either[DesignError, PreparedRows] =
+    val data = request.env.eventData
+    for
+      blockIds <- request.blockPlan.resolve(data)
+      durations <- request.durationPlan.resolve(data.nrows)
+      rows <-
+        if request.derived.isEmpty then Right(PreparedRows(request.env, blockIds, durations, blockIds.distinct.sorted, None))
+        else if blockIds.length != data.nrows then
+          Left(DesignError.InvalidSchedule(s"`blockIds` must have length ${data.nrows}, not ${blockIds.length}"))
+        else
+          for
+            materialized <- request.derived.materialize(data).left.map(DesignError.DerivedColumns(_))
+            _ <-
+              if materialized.retainedRows.nonEmpty || data.nrows == 0 then Right(())
+              else Left(DesignError.DerivedColumns(DerivedEventError.NoRetainedRows(request.derived.missingRows, materialized.droppedRows.length)))
+            dropped <- materialized.droppedRows.zip(materialized.droppedColumns).foldLeft[Either[DesignError, Vector[DerivedRowDrop]]](Right(Vector.empty)):
+              case (acc, (row, columns)) =>
+                for previous <- acc; run <- RunIndex.fromZeroBased(blockIds(row)) yield previous :+ DerivedRowDrop(row, run, columns)
+          yield PreparedRows(
+            request.env.copy(eventData = materialized.table),
+            materialized.retainedRows.map(blockIds),
+            materialized.retainedRows.map(durations),
+            blockIds.distinct.sorted,
+            Some(DerivedRowsReceipt(request.derived.missingRows, request.derived.ids, materialized.retainedRows, dropped))
+          )
+    yield rows
 
   /** A bounded cache over one fixed compilation context. Only the formula may
     * change; new data, sampling, policies or extension implementations require
@@ -353,9 +408,10 @@ object EventModelBuilder:
     val cache = new TermCache(previous)
     for
       _ <- request.options.validate
-      blocks <- request.blockPlan.resolve(request.env.eventData)
-      durations <- request.durationPlan.resolve(request.env.eventData.nrows)
-      model <- compile(request.formula, request.env, request.samplingFrame, blocks, durations, request.options, request.extensions, Some(cache))
+      rows <- prepareRows(request)
+      compiled <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions, Some(cache),
+        runs = Some(rows.runs))
+      model <- rows.attach(compiled)
     yield new IncrementalDesign(request, cache.entries.toMap, model, cache.compiledCount, cache.reusedCount)
 
   private def parseError(error: FormulaParser.ParseError): DesignError =
@@ -421,7 +477,9 @@ object EventModelBuilder:
   private final case class ResolvedSchedule(
       defaultOnsets: Vector[Seconds],
       defaultDurs: Vector[Seconds],
-      blockIds0: Vector[Int]
+      blockIds0: Vector[Int],
+      /** Runs reported by per-run audits: those of the caller's rows. */
+      runs: Vector[Int]
   )
 
   private final case class ResolvedPhase(
@@ -584,10 +642,11 @@ object EventModelBuilder:
       durations: Seq[Double],
       options: BuildOptions,
       extensions: DesignExtensionEnv,
-      cache: Option[TermCache] = None
+      cache: Option[TermCache] = None,
+      runs: Option[Vector[Int]] = None
   ): Either[DesignError, EventModel] =
     for
-      schedule <- resolveSchedule(formula, env, blockIds, durations)
+      schedule <- resolveSchedule(formula, env, blockIds, durations, runs)
       hrfTermCount = formula.terms.count {
         case _: HrfCall => true
         case _          => false
@@ -616,7 +675,8 @@ object EventModelBuilder:
       formula: ModelFormula,
       env: TableEnv,
       blockIds: Seq[Int],
-      durations: Seq[Double]
+      durations: Seq[Double],
+      runs: Option[Vector[Int]]
   ): Either[DesignError, ResolvedSchedule] =
     for
       onsetVals <- env.eventData.get[Double](formula.onset)
@@ -627,7 +687,8 @@ object EventModelBuilder:
     yield ResolvedSchedule(
       defaultOnsets = onsetVals.map(Seconds(_)),
       defaultDurs = durVals.map(Seconds(_)),
-      blockIds0 = blockIds.toVector
+      blockIds0 = blockIds.toVector,
+      runs = runs.getOrElse(blockIds.toVector.distinct.sorted)
     )
 
   private def resolveDurationValues(durations: Seq[Double], nEvents: Int): Either[DesignError, Vector[Double]] =
@@ -776,7 +837,7 @@ object EventModelBuilder:
         subset.events,
         options.factorRegistry,
         subset.blockIds,
-        schedule.blockIds0.distinct.sorted
+        schedule.runs
       )
       droppedMissing =
         if dropMissingMask.contains(false) then
@@ -981,7 +1042,7 @@ object EventModelBuilder:
       termDiagnostics = diagnoseTerm(term, samplingFrame)
       _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
       basisName = t.basis.getOrElse("spmg1")
-      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag)
+      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag, basisParams = t.basisParams)
       conv0 <- catchBuild(DesignError.fromThrowable) {
         term.convolve(
           hrf0,
@@ -1036,7 +1097,7 @@ object EventModelBuilder:
       diagnosed <- model0.withDiagnosticsEither(compiled.diagnostics)
       evidenced <- diagnosed.withPolicyEvidenceEither(
         compiled.missingValues,
-        compiled.policyReceipts,
+        compiled.policyReceipts ++ samplingReferenceReceipts(samplingFrame),
         factorLevels = compiled.factorLevels,
         emptyCells = compiled.emptyCells,
         emptyCellAudits = compiled.emptyCellAudits,
@@ -1046,6 +1107,16 @@ object EventModelBuilder:
         basisOrthogonalization = compiled.basisOrthogonalizationReceipts
       )
     yield evidenced.copy(contrastSetsByTerm = attached)
+
+  /** One receipt per run naming the instant its samples refer to (see
+    * [[SamplingReference]]: `TR / 2` is mid-volume, `0` volume-onset, any
+    * other start time an explicit offset) together with the start time and TR. */
+  private def samplingReferenceReceipts(samplingFrame: SamplingFrame): Vector[PolicyReceipt] =
+    samplingFrame.samplingReferences.zipWithIndex.map { (reference, block) =>
+      PolicyReceipt("sampling-reference",
+        s"run=$block;reference=${reference.label};start-time=${PortableNumber.format(samplingFrame.startTime(block).value)};" +
+          s"tr=${PortableNumber.format(samplingFrame.tr(block).value)}")
+    }
 
   private def attachContrastSetsEither(
       model: EventModel,
@@ -2427,6 +2498,7 @@ object EventModelBuilder:
           case factor: CategoricalEvent =>
             CellAssignment(FactorId.unsafe(factor.varName), LevelId.unsafe(factor.levels(factor.codes(row))))
         )
+      val cellFactors = events.collect { case factor: CategoricalEvent => factor.varName }
       val missing = Vector.newBuilder[MissingValueResolution]
       val policies = Vector.newBuilder[PolicyReceipt]
       val output = Vector.newBuilder[Event]
@@ -2465,7 +2537,8 @@ object EventModelBuilder:
                           s"${group.cell.fold("all")(_.canonical)}:n=${group.observedIndices.length}:mean=${group.mean.fold("")(PortableNumber.format)}"
                         }.mkString(",")
                         policies += PolicyReceipt("observed-modulator",
-                          s"modulator=${plan.source.value};run=${runs(runIndex)};center=${plan.centering};effective-center=${receipt.effectiveCentering};" +
+                          s"modulator=${plan.source.value};run=${runs(runIndex)};center=${observedCenterScope(plan.centering)};" +
+                            s"effective-center=${observedCenterScope(receipt.effectiveCentering)};grouping=${observedCenterGrouping(receipt.effectiveCentering, cellFactors)};" +
                             s"scale=${plan.scaling};missing=${plan.missing.canonical};divisor=${PortableNumber.format(receipt.scale)};observed=${receipt.observedIndices.length};" +
                             s"degenerate=${receipt.degenerate};degenerate-scale=${receipt.degenerateScale};groups=$cellsDetail")
                         if receipt.degenerate then
@@ -2473,13 +2546,32 @@ object EventModelBuilder:
                             if receipt.observedIndices.length < 2 then s"fewer than two observed values (${receipt.observedIndices.length})"
                             else "prepared values do not vary within the run"
                           policies += PolicyReceipt("observed-modulator-degenerate",
-                            s"modulator=${plan.source.value};run=${runs(runIndex)};effective-center=${receipt.effectiveCentering};reason=$reason")
+                            s"modulator=${plan.source.value};run=${runs(runIndex)};effective-center=${observedCenterScope(receipt.effectiveCentering)};" +
+                              s"grouping=${observedCenterGrouping(receipt.effectiveCentering, cellFactors)};reason=$reason")
                     runIndex += 1
               column += 1
             output += event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(event.value.rows, event.value.cols, data))
           case other => output += other
         eventIndex += 1
       Right(ObservedEvents(output.result(), missing.result(), policies.result()))
+
+  /** The formula spelling of an observed-modulator centering scope.
+    * [[prepareObserved]] calls [[ObservedModulator.prepare]] once per run, so
+    * its partition-wide `Global` centering is centring within the run. */
+  private def observedCenterScope(centering: ObservedModulator.Centering): String = centering match
+    case ObservedModulator.Centering.None => "none"
+    case ObservedModulator.Centering.Global => "run"
+    case ObservedModulator.Centering.ByCell => "cell"
+
+  /** The rows that actually share one centring mean: none, each run, or each
+    * run crossed with the term's factor cells (the categorical events of the
+    * term; with no factors there is one cell per run). */
+  private def observedCenterGrouping(centering: ObservedModulator.Centering, cellFactors: Vector[String]): String =
+    centering match
+      case ObservedModulator.Centering.None => "none"
+      case ObservedModulator.Centering.Global => "run"
+      case ObservedModulator.Centering.ByCell =>
+        if cellFactors.isEmpty then "run" else s"run-by-cell(${cellFactors.mkString(",")})"
 
   private def missingValueResolutions(
       events: Vector[Event],
@@ -3283,12 +3375,15 @@ object EventModelBuilder:
         s"$fun($as)"
 
   private def resolveHrfEither(call: HrfCall, defaultHrf: Hrf, frame: Option[SamplingFrame] = None): Either[DesignError, Hrf] =
-    if call.span.nonEmpty && !call.basis.exists(b => Set("fir", "bspline", "tent", "fourier").contains(b.trim.toLowerCase)) then
-      return Left(DesignError.FormulaBinding("formula span requires an explicit fir, bspline, tent, or fourier basis"))
+    val basisKind = call.basis.flatMap(name => HrfKind.fromString(name).toOption)
+    if call.span.nonEmpty && !basisKind.exists(FormulaBasis.admitsSpan) then
+      return Left(DesignError.FormulaBinding(
+        s"formula span requires an explicit basis whose support it sets (${FormulaBasis.spanKinds.map(_.canonicalName).mkString(", ")})"))
+    if call.basisParams.nonEmpty && call.basis.isEmpty then
+      return Left(DesignError.FormulaBinding(FormulaBasisError.ParamsWithoutBasis.message))
     if call.hrfFun.nonEmpty && (call.span.nonEmpty || call.kernelNormalization.nonEmpty) then
       return Left(DesignError.FormulaBinding("kernel options cannot be combined with hrf_fun"))
-    val span = call.span.fold(24.s)(_.seconds)
-    if call.temporalDerivative.nonEmpty && !call.basis.exists(name => Set("spmg2", "spmg3").contains(name.trim.toLowerCase)) then
+    if call.temporalDerivative.nonEmpty && !basisKind.exists(kind => kind == HrfKind.Spmg2 || kind == HrfKind.Spmg3) then
       return Left(DesignError.FormulaBinding("temporal_derivative requires an explicit spmg2 or spmg3 basis"))
     // "spm-1s" is SPM12's informed basis (spm_get_bf + spm_orth) on SPM's
     // kernel grid, dt = TR / 16 over 32 s, so it needs one repetition time.
@@ -3308,18 +3403,13 @@ object EventModelBuilder:
       call.basis match
         case None => Right(defaultHrf)
         case Some(basisName0) =>
-          val basisName = basisName0.trim.toLowerCase
-          basisName match
-            case "spmg1"    => Right(Hrfs.SPMG1)
-            case "spmg2"    => informedBasis(2)
-            case "spmg3"    => informedBasis(3)
-            case "gamma"    => Right(Hrfs.Gamma)
-            case "gaussian" => Right(Hrfs.Gaussian)
-            case "fir"      => catchBuild(DesignError.fromThrowable)(Hrfs.fir(nBasis = call.nbasis.getOrElse(12), span = span))
-            case "bspline"  => catchBuild(DesignError.fromThrowable)(Hrfs.bspline(nBasis = call.nbasis.getOrElse(5), span = span))
-            case "tent"     => catchBuild(DesignError.fromThrowable)(Hrfs.tent(nBasis = call.nbasis.getOrElse(5), span = span))
-            case "fourier"  => catchBuild(DesignError.fromThrowable)(Hrfs.fourier(nBasis = call.nbasis.getOrElse(5), span = span))
-            case other      => Left(DesignError.UnknownBasis(other))
+          basisKind match
+            case None                => Left(DesignError.UnknownBasis(basisName0.trim.toLowerCase))
+            case Some(HrfKind.Spmg2) => informedBasis(2)
+            case Some(HrfKind.Spmg3) => informedBasis(3)
+            case Some(kind) =>
+              catchBuild(DesignError.fromThrowable)(FormulaBasis.build(kind, call.basisParams, call.nbasis, call.span))
+                .flatMap(_.left.map(error => DesignError.FormulaBinding(error.message)))
 
     val normalized = baseEither.flatMap { base =>
       call.kernelNormalization match
@@ -3334,8 +3424,8 @@ object EventModelBuilder:
           else Left(DesignError.FormulaBinding("`lag` must be finite"))
     }
 
-  private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double]): Either[DesignError, Hrf] =
-    val call = HrfCall(vars = Vector(ArgValue.Ident(ColumnId.unsafe("x"))), basis = Some(basis), lag = lag, nbasis = nbasis)
+  private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double], basisParams: Vector[BasisParam]): Either[DesignError, Hrf] =
+    val call = HrfCall(vars = Vector(ArgValue.Ident(ColumnId.unsafe("x"))), basis = Some(basis), lag = lag, nbasis = nbasis, basisParams = basisParams)
     resolveHrfEither(call, defaultHrf = Hrfs.SPMG1)
 
   private def trialLevels(n: Int): Vector[String] =

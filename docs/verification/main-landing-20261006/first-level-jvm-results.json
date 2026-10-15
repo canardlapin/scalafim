@@ -1,0 +1,162 @@
+[
+  {
+    "name": "scalafim.fmri.fit.FixedEffectsStatusGeneratedLawsSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.05"
+  },
+  {
+    "name": "scalafim.fmri.laws.ArGeneratedLawsSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "1.451"
+  },
+  {
+    "name": "scalafim.fmri.laws.DesignGeneratedLawsSuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.585"
+  },
+  {
+    "name": "scalafim.fmri.laws.FitGeneratedLawsSuite",
+    "tests": "8",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.258"
+  },
+  {
+    "name": "scalafim.fmri.laws.HrfGeneratedLawsSuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.456"
+  },
+  {
+    "name": "scalafim.fmri.laws.MissingResponseGeneratedLawsSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "4.995"
+  },
+  {
+    "name": "scalafim.fmri.laws.StaticTypeContractsSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.002"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.BandedSpdProviderSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.025"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.CompactConditionRuntimeSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "3.018"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ConditionAdmissionDiagnosticsSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "3.958"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ConditionC0PlatformTraceSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.05"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ConditionC0QualificationSuite",
+    "tests": "8",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "53.421"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ConditionMilestoneSuite",
+    "tests": "3",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "449.93"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ConditionProfileFitSuite",
+    "tests": "7",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.748"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "1.716"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite",
+    "tests": "4",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "0.926"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ObservedFamilyCertificationSuite",
+    "tests": "2",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "2.372"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.ProfileReductionLawsSuite",
+    "tests": "1",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "4.471"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.TrialBandedSuite",
+    "tests": "9",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "3.083"
+  },
+  {
+    "name": "scalafim.fmri.laws.profile.spike.ProfileHrfSpikeSuite",
+    "tests": "6",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "28.475"
+  }
+]

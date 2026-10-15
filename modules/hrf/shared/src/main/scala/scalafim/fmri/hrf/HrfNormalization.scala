@@ -27,6 +27,10 @@ enum HrfNormalizationError:
   case UnknownMode(value: String, available: Vector[String])
   case ConflictingModes
   case InvalidReferenceSpan(hrfName: String, span: Seconds)
+  case InvalidReferenceStep(hrfName: String, step: Seconds)
+  case NonFiniteReferenceTime(hrfName: String, value: Double)
+  case ReferenceSampleLimitExceeded(hrfName: String, samples: Double, maximum: Int)
+  case ReferenceWorkLimitExceeded(hrfName: String, evaluations: Double, maximum: Int)
   case BasisWidthMismatch(hrfName: String, expected: Int, actual: Int)
   case NonFiniteReferenceValue(
       hrfName: String,
@@ -50,6 +54,14 @@ enum HrfNormalizationError:
         "Use either legacy per-basis normalization or a fixed normalization mode, not both"
       case InvalidReferenceSpan(hrfName, span) =>
         s"HRF '$hrfName' has an invalid normalization reference span ${span.value}"
+      case InvalidReferenceStep(hrfName, step) =>
+        s"HRF '$hrfName' has an invalid normalization reference step ${step.value}"
+      case NonFiniteReferenceTime(hrfName, value) =>
+        s"HRF '$hrfName' has a non-finite normalization reference time $value"
+      case ReferenceSampleLimitExceeded(hrfName, samples, maximum) =>
+        s"HRF '$hrfName' normalization needs $samples reference samples, exceeding maximum $maximum"
+      case ReferenceWorkLimitExceeded(hrfName, evaluations, maximum) =>
+        s"HRF '$hrfName' normalization needs $evaluations scalar evaluations, exceeding maximum $maximum"
       case BasisWidthMismatch(hrfName, expected, actual) =>
         s"HRF '$hrfName' returned $actual basis values during normalization, expected $expected"
       case NonFiniteReferenceValue(hrfName, mode, sampleIndex, basisIndex, value) =>
@@ -59,9 +71,6 @@ enum HrfNormalizationError:
 
 private[hrf] object HrfNormalizer:
 
-  private val FixedSamplesPerSecond = 50.0
-  private val SpmReferenceEnd = 32.0
-  private val SpmReferenceSamples = 1600
   private val MinimumNormalFactor = 2.2250738585072014e-308
 
   def withTransform(
@@ -98,17 +107,8 @@ private[hrf] object HrfNormalizer:
       hrf: Hrf,
       mode: HrfNormalization
   ): Either[HrfNormalizationError, Array[Double]] =
-    val span = hrf.span.value
-    if !span.isFinite || span < 0.0 then
-      Left(HrfNormalizationError.InvalidReferenceSpan(hrf.name, hrf.span))
-    else
-      val (sampleCount, end) =
-        mode match
-          case HrfNormalization.Spm =>
-            (SpmReferenceSamples, SpmReferenceEnd)
-          case _ =>
-            (math.max(math.round(span * FixedSamplesPerSecond).toInt + 1, 2), span)
-      val step = end / (sampleCount - 1).toDouble
+    val work = NormalizationReferenceGrid.evaluationWork(hrf.descriptor)
+    NormalizationReferenceGrid.fixed(hrf.name, hrf.span, mode, work).flatMap: (sampleCount, step) =>
       referenceFactors(hrf, mode, sampleCount, step)
 
   private def referenceFactors(

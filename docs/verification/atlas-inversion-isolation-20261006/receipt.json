@@ -1,0 +1,255 @@
+{
+  "verified_at_utc": "2026-10-06T03:37:38.390324+00:00",
+  "base_commit": "a0efebbbb4693076aab08b1b291f542ff9c09a81",
+  "mote": "bd-01M448BY154ZN24KRJKSBW3YAH",
+  "follow_up": "bd-01M47MBK0K3VPJ490HDJTQ6Y3C",
+  "validation": {
+    "validation": "Pass",
+    "server_pid": 60188,
+    "server_peak_sampled_rss_kib": 4072000,
+    "child_pids": [
+      63720,
+      73046
+    ],
+    "child_peak_sampled_rss_kib": [
+      2707968,
+      2789456
+    ],
+    "children_exited": true,
+    "same_server_used_through_following_JVM_JS_gates": true,
+    "parent_alive_after_runner_exit": false,
+    "atlas_passed_tests": 195,
+    "repeat_native_passed_tests": 8,
+    "ordinary_after_passed_tests": 7,
+    "warmup_passed_tests": 653,
+    "warmup_skipped_tests": 12,
+    "total_passed_tests": 863,
+    "instrumentation_notes": [
+      "The original runner included a transient --rt-ext-dir helper among server processes and did not expand JDK argument files, causing its final instrumentation assertion to fail after all six commands passed. Supplemental monitoring recognized the argument-file-launched native children and independently verified flags and exit. Both executed and corrected replay runners are retained.",
+      "The same parent PID was observed through warm-up, both native runs, the subsequent ordinary JVM gate and final JS gate. It was absent after the enclosing runner exited; no liveness beyond the command sequence is claimed.",
+      "First native child sampling began during the native run; reported maxima are sampled RSS observations, not guaranteed full-lifetime peaks."
+    ]
+  },
+  "runs": [
+    {
+      "label": "configure",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show atlasJVM / Test / testGrouping",
+        "show atlasJS / Test / fork"
+      ],
+      "exit_code": 0,
+      "seconds": 36.184,
+      "counts": [],
+      "skipped": [],
+      "warnings": [],
+      "observed_pids": [
+        60188,
+        60254
+      ]
+    },
+    {
+      "label": "warm-parent",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "imageJVM/test",
+        "surfaceJVM/test"
+      ],
+      "exit_code": 0,
+      "seconds": 31.447,
+      "counts": [
+        {
+          "total": 385,
+          "failed": 0,
+          "errors": 0,
+          "passed": 385
+        },
+        {
+          "total": 280,
+          "failed": 0,
+          "errors": 0,
+          "passed": 268
+        }
+      ],
+      "skipped": [
+        "==> s scalafim.surface.reference.RealPointwiseInverseSuite.P1-P3, P5, P6 (timing asserted with SCALAFIM_TIMING_BUDGETS=1): the pointwise route matches the oracle at every vertex and maps GM within budget skipped 0.012s",
+        "==> s scalafim.surface.reference.RealInverseOracleSuite.ITK solutions round-trip through ScalaFIM's exact declared map at every vertex skipped 0.0s",
+        "==> s scalafim.surface.reference.RealFrameEvidenceSuite.Conte69 anatomy carries the publisher's affine group-average basis; the inverse bridge is approximate skipped 0.0s",
+        "==> s scalafim.surface.reference.DeclaredSurfaceReaderSuite.TemplateFlow fsLR 32k left midthickness declares Talairach, CortexLeft, 32492 vertices skipped 0.001s",
+        "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres skipped 0.002s",
+        "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.0s",
+        "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.001s",
+        "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s",
+        "==> s scalafim.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s",
+        "==> s scalafim.surface.reference.RealPointMapSuite.the real point map is the digest-bound 2009c -> 6Asym composite: displacement then affine skipped 0.0s",
+        "==> s scalafim.surface.reference.RealPointMapSuite.forward evaluation agrees with SimpleITK on the templateflow4s oracle to 1e-6 mm skipped 0.0s",
+        "==> s scalafim.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.0s",
+        "[info] Passed: Total 280, Failed 0, Errors 0, Passed 268, Skipped 12"
+      ],
+      "warnings": [],
+      "observed_pids": [
+        60188
+      ]
+    },
+    {
+      "label": "atlas-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "atlasJVM/test"
+      ],
+      "exit_code": 0,
+      "seconds": 115.766,
+      "counts": [
+        {
+          "total": 116,
+          "failed": 0,
+          "errors": 0,
+          "passed": 116
+        }
+      ],
+      "skipped": [],
+      "warnings": [],
+      "observed_pids": [
+        60188
+      ]
+    },
+    {
+      "label": "native-repeat",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "atlasJVM/testOnly scalafim.atlas.io.MniTemplateBridgeFilesSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 111.946,
+      "counts": [
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8
+        }
+      ],
+      "skipped": [],
+      "warnings": [],
+      "observed_pids": [
+        60188
+      ]
+    },
+    {
+      "label": "ordinary-after",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "atlasJVM/testOnly scalafim.atlas.MniTemplateBridgeSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 4.313,
+      "counts": [
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7
+        }
+      ],
+      "skipped": [],
+      "warnings": [],
+      "observed_pids": [
+        60188
+      ]
+    },
+    {
+      "label": "atlas-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "atlasJS/test"
+      ],
+      "exit_code": 0,
+      "seconds": 12.811,
+      "counts": [
+        {
+          "total": 79,
+          "failed": 0,
+          "errors": 0,
+          "passed": 79
+        }
+      ],
+      "skipped": [],
+      "warnings": [],
+      "observed_pids": [
+        60188
+      ]
+    }
+  ],
+  "total_passed_tests": 863,
+  "compiler_warnings": [],
+  "runtime_diagnostics": [
+    "Native HDF loading emitted the existing SLF4J no-provider/no-operation logger notice."
+  ],
+  "source_sha256": {
+    "build.sbt": "a91b1e35bc80a4380315d2f06172dda0f2e2e071bd63244c0ee21135caf5ed17",
+    "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/MniTemplateBridgeFilesSuite.scala": "0dd586b571dd77f9729b575efadbe7ced27fe69af0cf41d2538f93104f75513b",
+    "modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateFlowBridge.scala": "0bc3c5ac197889b17ca287fcc30bb2679f29689410332136cb0b34b9f040ecab"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "8602c0f041486f2977385b9039f5bbadab85cac53cc18ffd7490e249862ee8be",
+  "assets": [
+    {
+      "path": "/private/tmp/scalafim-templateflow-20261006/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5",
+      "bytes": 204735104,
+      "sha256": "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe",
+      "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5"
+    },
+    {
+      "path": "/private/tmp/scalafim-templateflow-20261006/tpl-MNI152NLin6Asym/tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5",
+      "bytes": 204735104,
+      "sha256": "2a19853bc99ebd1d711d230ea4a4dc4db3b9a60f8b50b9181f93b44036dfbd0f",
+      "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin6Asym/tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5"
+    }
+  ],
+  "independent_review": {
+    "provider_revision": "5f7152aada60335935843ddc968162f615337415",
+    "primitive_payloads_mib": {
+      "bridge_coordinates": 195.24,
+      "materialized_pull_coordinates": 195.24,
+      "cached_pull_sampler_copy": 195.24,
+      "inverse_workspace": 165.28,
+      "inverse_ndarray_copy": 165.28,
+      "forward_residual_workspace": 55.09,
+      "statuses_and_final_domain_mask": 13.77
+    },
+    "retained_primitive_payload_lower_envelope_mib": 764.76,
+    "limitations": [
+      "Source-derived primitive payload estimates exclude array headers, objects, decoder temporaries, construction workspaces and reachability effects. They are not measured heap or RSS peaks.",
+      "Production provider allocation is unchanged; the repair isolates the test from resident server state."
+    ],
+    "scientific_contract": {
+      "pull_grid": [
+        193,
+        229,
+        193
+      ],
+      "inverse_grid": [
+        182,
+        218,
+        182
+      ],
+      "pull_tolerance": 1e-08,
+      "push_round_trip_tolerance_mm": 0.05,
+      "qualifications": "Existing coverage, maximum-residual, nearest-rank p99, and interior-divergence gates remain unchanged."
+    },
+    "sbt_reference": "https://www.scala-sbt.org/1.x/docs/Testing.html#Forking+tests",
+    "group_serialization": "Cached sbt 1.11.7 Defaults.allTestGroupsTask feeds execution.parallel into Tests.foldTasks; atlas Test/parallelExecution=false serializes groups."
+  },
+  "scope_limits": [
+    "No production inversion optimization, new scientific qualification, R parity change, or whole-process memory bound is claimed.",
+    "The native oracle is isolated from prior resident sbt test state; all original scientific grids, inputs, tolerances and gates are preserved.",
+    "12 unrelated surface warm-up tests skipped for absent assets. Atlas and repeated native gates had zero skips.",
+    "Settings-reapplication failure and instrumentation repair are retained separately from successful test commands."
+  ]
+}

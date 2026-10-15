@@ -1,0 +1,47 @@
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.ComponentInferenceNumericsSuite:
+  + large outcome offsets preserve the exact affine improvement and independently known Gaussian interval 0.198s
+  + a large negative improvement retains positive variance and never rejects the one-sided positive null 0.002s
+  + identical fitted full and reduced predictions refuse zero known contrast variance through the public pipeline 0.004s
+scalafim.fmri.mvpa.analysis.ComponentInferenceSuite:
+  + independent R oracle: full target covariance and separately refitted component improvements 0.008s
+  + independent R oracle: unequal units use actual per-row weights and keep cross-component covariance 0.007s
+  + association preserves nuisance-adjusted correlations and common reconstructible provider actions 0.089s
+  + known within-unit dependence and off-diagonal target covariance match independent R 0.005s
+  + complete finite association group uses inclusive extrema and an independent dot-product oracle 0.182s
+  + one perfect member refuses the association family instead of silently omitting it 0.006s
+  + complete2r candidate family retains bindings and cannot become corrected or released significance 0.014s
+  + unknown, estimated, marginal and cross-unit covariance cannot quietly license Gaussian prediction 0.016s
+  + frozen identity endpoints and covariance budgets refuse before confirmation operator reads 0.007s
+  + unknown or already exposed holdout cannot freeze reference laws 0.01s
+  + aggregate budget and changed evidence refuse before any source projection 0.003s
+  + dependent association remains unavailable despite a known response covariance 0.005s
+[info] Passed: Total 15, Failed 0, Errors 0, Passed 15
+[success] elapsed time: 6 s
+[0J[sbt-warm] mvpaJVM/testOnly *ComponentInferenceSuite *ComponentInferenceNumericsSuite: exit 0 in 6.4s
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/scalafim-fmri-mvpa-test-fastopt
+scalafim.fmri.mvpa.analysis.ComponentInferenceSuite:
+  + independent R oracle: full target covariance and separately refitted component improvements 0.017s
+  + independent R oracle: unequal units use actual per-row weights and keep cross-component covariance 0.006s
+  + association preserves nuisance-adjusted correlations and common reconstructible provider actions 0.014s
+  + known within-unit dependence and off-diagonal target covariance match independent R 0.003s
+  + complete finite association group uses inclusive extrema and an independent dot-product oracle 0.119s
+  + one perfect member refuses the association family instead of silently omitting it 0.002s
+  + complete2r candidate family retains bindings and cannot become corrected or released significance 0.005s
+  + unknown, estimated, marginal and cross-unit covariance cannot quietly license Gaussian prediction 0.003s
+  + frozen identity endpoints and covariance budgets refuse before confirmation operator reads 0.002s
+  + unknown or already exposed holdout cannot freeze reference laws 0.002s
+  + aggregate budget and changed evidence refuse before any source projection 0.003s
+  + dependent association remains unavailable despite a known response covariance 0.002s
+scalafim.fmri.mvpa.analysis.ComponentInferenceNumericsSuite:
+  + large outcome offsets preserve the exact affine improvement and independently known Gaussian interval 0.018s
+  + a large negative improvement retains positive variance and never rejects the one-sided positive null 0.006s
+  + identical fitted full and reduced predictions refuse zero known contrast variance through the public pipeline 0.004s
+[info] Passed: Total 15, Failed 0, Errors 0, Passed 15
+[success] elapsed time: 5 s
+[0J[sbt-warm] mvpaJS/testOnly *ComponentInferenceSuite *ComponentInferenceNumericsSuite: exit 0 in 5.6s

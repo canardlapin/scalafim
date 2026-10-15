@@ -1,0 +1,139 @@
+{
+  "mote": "bd-01M479NBKJ8S6216HXD787MANK",
+  "verified_at_utc": "2026-10-06T00:52:35.123077+00:00",
+  "base_commit": "fe3edc18e29dccb5fb71f4f87bfead1c7951f338",
+  "maximum_grid_samples": 1000001,
+  "behavior": "Typed finite grid and event-end validation before conversion/allocation; floating bin clipping before integer conversion and block iteration. Preserves inclusive floor bins and direct event amplitudes for either summate value.",
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/NeuralInput.scala": "86d233dbe6cd54c15d74dee4955cdc4559cb88e5308bfe47db33a5ba7b3b0f1e",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/regressor/NeuralInputSuite.scala": "66b00ba7fc58f83cef866b146860663dc1c2a899a331593df24efdf02e21a403",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala": "1538cd22e1f174a7c7d9efcda66f241792f2be161a303f8eb2a7536b3201852d"
+  },
+  "runs": [
+    {
+      "name": "before-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.regressor.NeuralInputSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 31.184292207937688,
+      "summaries": [
+        [
+          "0",
+          "0",
+          "13"
+        ]
+      ]
+    },
+    {
+      "name": "before-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.regressor.NeuralInputSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 12.446110749617219,
+      "summaries": [
+        [
+          "0",
+          "0",
+          "13"
+        ]
+      ]
+    },
+    {
+      "name": "mutation-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.regressor.NeuralInputBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.6991345407441258,
+      "summaries": [
+        [
+          "1",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "name": "mutation-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.regressor.NeuralInputBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.956824874971062,
+      "summaries": [
+        [
+          "1",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "name": "restored-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.regressor.NeuralInputSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 0.9965795828029513,
+      "summaries": [
+        [
+          "0",
+          "0",
+          "13"
+        ]
+      ]
+    },
+    {
+      "name": "restored-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.regressor.NeuralInputSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 1.63831187505275,
+      "summaries": [
+        [
+          "0",
+          "0",
+          "13"
+        ]
+      ]
+    }
+  ],
+  "mutation": {
+    "change": "Replaced only the bounded count helper with the former floor(width/resolution).toInt + 1 count.",
+    "selector": "One existing just-over-budget regression; maximum mutant allocation is two 1,000,002-element arrays (about 16 MB total).",
+    "restored": true,
+    "temporary_selector_removed": true
+  },
+  "archive_sha256": "22f57d2bfcef34dfee6c7a8dea2a67f950ea681e6575d865454046d3d76cf46e",
+  "integrated_gates": {
+    "receipt": "docs/verification/grid-safety-20261005/receipt.json",
+    "passed_tests": {
+      "hrfJVM": 352,
+      "hrfJS": 352,
+      "designJVM": 455,
+      "designJS": 454,
+      "fitJVM": 660,
+      "fitJS": 603,
+      "admissionJVM": 4,
+      "admissionJS": 4
+    },
+    "total_passed_tests": 2884,
+    "warning_clean": true
+  },
+  "work_limit": "Grid allocation is capped and event clipping bounds each event to the admitted bins. Total preview work still scales with the number of events and their covered bins."
+}

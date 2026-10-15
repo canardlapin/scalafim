@@ -1,0 +1,41 @@
+{
+  "kind": "reference-implementation",
+  "tools": {
+    "SimpleITK": "2.5.6",
+    "nibabel": "5.4.2",
+    "numpy": "2.5.3",
+    "fslpy": "3.29.1"
+  },
+  "expected_counts": {
+    "ants_original_cropped_nodes": 1287,
+    "fsl_original_cropped_nodes": 693,
+    "off_node_probes_per_tool": 12
+  },
+  "ants_coordinate_convention": "NIfTI affine/query table are RAS; ANTs vector field and SimpleITK transform are LPS; both query and result are flipped on x,y before table storage.",
+  "fsl_coordinate_convention": "fslpy readFnirt(invwarp, src=target, ref=target, defType=relative) decodes the native relative FSL field. Node values are float32 fixture values accumulated in float64 trilinear arithmetic before fslpy's FSL-to-world matrix; this is needed because fslpy DeformationField.transform intentionally rounds its query to a voxel.",
+  "input_sha256": {
+    "ants/syn_0Warp.nii.gz": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+    "ants/syn_0InverseWarp.nii.gz": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302",
+    "fsl/invwarp_dense_matched_geometry.nii.gz": "a494175828e39979b8f278afb5810e73c7fa4b7205a19bf3956285fb7bdeb087",
+    "fsl/target.nii.gz": "a863aec0c297b5ea4f2e302bc74589fb0270e6a0d1934fb145d999a4b9d4df97"
+  },
+  "ants_native_inverse_composition_characterization": {
+    "kind": "native-inverse-composition-characterization",
+    "provider": "SimpleITK",
+    "version": "2.5.6",
+    "domain": "all native forward-grid nodes, two-voxel margin on every face",
+    "query_count": 1287,
+    "infinity_residual_mm": {
+      "maximum": 0.01792923770000243,
+      "p99": 0.0075835192684690885
+    },
+    "euclidean_residual_mm": {
+      "maximum": 0.023598135365555748,
+      "p99": 0.008974903465750238
+    },
+    "input_sha256": {
+      "syn_0Warp.nii.gz": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+      "syn_0InverseWarp.nii.gz": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302"
+    }
+  }
+}

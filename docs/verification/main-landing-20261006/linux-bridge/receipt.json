@@ -1,0 +1,67 @@
+{
+  "base_head": "76b2fdbbb696a52dfc1df81c54785a345c869bfe",
+  "sources": {
+    "modules/phrf-comparison/jvm/src/main/scala/scalafim/phrfcmp/run/GlmSingleBridge.scala": "a83c872b78d38a94ef92e5ff157a22935812a7240ab613e6ed76b917203af89c",
+    "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/run/GlmSingleBridgeSuite.scala": "a5d19a79039d6d0c5375fea02a6d2620e7c5fd975ae4320f976fa1d055ce2026",
+    "tools/ci/full-repository-tests.sh": "166d1fd6665ae73fe7a561e2d1b3fb25b622f5e7dedab513c045860e1cfc160f"
+  },
+  "local_compilation": {
+    "java": "Temurin21.0.12.1 Darwin arm64",
+    "scala": "3.7.4",
+    "sbt": "1.11.7"
+  },
+  "qualification": {
+    "linux_lifecycle": {
+      "runtime": "Temurin17.0.20.1+1 Linux amd64",
+      "compiler_host": "Scala3.7.4 on macOS JDK21; compiled classes executed on Linux JDK17",
+      "image": "sha256:c389887fc5fde91df87b8a63425d439df3abda5213d5e105dfc9590d043d3869",
+      "java_heap": "1g",
+      "java_stack": "4m",
+      "container_memory": "2g",
+      "cpus": 2,
+      "shm": "256m",
+      "network": "none",
+      "mounts": "source/classes/dependency cache read-only; private credentials not mounted",
+      "runner": "org.junit.runner.JUnitCore scalafim.phrfcmp.run.GlmSingleBridgeSuite",
+      "result": "OK (35 tests)",
+      "exit_code": 0,
+      "parent_death_seconds": 0.037,
+      "survivor_terminal_states": []
+    },
+    "full_comparison_jvm": {
+      "total": 476,
+      "passed": 466,
+      "skipped": 10,
+      "failed": 0,
+      "errors": 0,
+      "exit_code": 0,
+      "runtime": "Temurin21.0.12.1 Darwin arm64"
+    },
+    "full_comparison_js": {
+      "total": 243,
+      "passed": 243,
+      "failed": 0,
+      "errors": 0,
+      "exit_code": 0
+    },
+    "inventory": {
+      "supported_targets": 95,
+      "bounded_batches": 16,
+      "checker_exit_code": 0,
+      "existing_checker_tests": 5
+    }
+  },
+  "logs": {
+    "scalafim-linux-bridge-final-test.log.gz": "2e094c5c96cc9f8a20cf9c26f46a8d6c7a149b7b66c1c2ad37bfeef7292e403e",
+    "Dockerfile": "a5f3292d0840e4037480720a843b169823a385c23e52f3eaaa8343f79d7917f6",
+    "scalafim-bridge-comparison-both.log.gz": "1fc1cbf547fbb23690245e914caef71cf6c21abc06b844c98485038fcc1b521f",
+    "scalafim-bridge-comparison-jvm-final.log.gz": "2636c0aab037bd6f72ee09bcc51eb71d758bf38a663cf6d6ab91edba481c846d",
+    "scalafim-bridge-ownership-compile.log.gz": "e933e14df01ab3fb87740b7c53c3804a94367a5dafc23efa7bc8b57c5d8f7f26",
+    "scalafim-bridge-comparison-js.log.gz": "e2c767dd64cede2353b3c2922412275c8b8f1780dd31a4b8c49b979e2db9d8a3",
+    "watchdog-probe-receipt.json": "0e1e0fedbae63365605b5381be11401450b11f5092297dfeaa9a256782492066",
+    "scalafim-linux-bridge-owned-group-test.log.gz": "8cb1194e63a266992411344cfcdaef8f3dfd8b6256b0cb1b40e9f07a72af1a5d",
+    "scalafim-linux-bridge-test.log.gz": "ba895e14fa0b25acc853c6f105fc14fc20b15eb1362597f6eaa6f2b90f524662",
+    "watchdog-clean.log.gz": "e3353c9d796e03f962da4ba1c9e605a33f182107c8761035ed006880b68abe76"
+  },
+  "remaining_gate": "Fresh exact-head protected Linux full/focused/coverage checks; main has not merged"
+}

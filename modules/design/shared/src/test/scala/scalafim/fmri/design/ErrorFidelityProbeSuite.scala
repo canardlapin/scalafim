@@ -55,7 +55,8 @@ class ErrorFidelityProbeSuite extends munit.FunSuite:
         fail(s"expected UnknownBasisFunction, got $other")
 
   test("the paths that were already structured stay structured"):
-    assert(errorFor("onset ~ hrf(cond, basis = nope)").isInstanceOf[DesignError.UnknownBasis])
+    // Unknown HRF kinds are rejected by the parser, positioned at the argument.
+    assertEquals(errorFor("onset ~ hrf(cond, basis = nope)").asInstanceOf[DesignError.FormulaParse].pos, 18)
     assert(errorFor("onset ~ hrf(cond, contrasts = nosuch)").isInstanceOf[DesignError.UnknownContrast])
     assert(errorFor("""onset ~ hrf(cond, subset = rt < "fast")""").isInstanceOf[DesignError.InvalidSubset])
     assert(errorFor("onset ~ hrf(").isInstanceOf[DesignError.FormulaParse])

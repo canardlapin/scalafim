@@ -1,0 +1,44 @@
+{
+  "jvmPassed": true,
+  "jsPassed": true,
+  "epicAdmitted": false,
+  "productionCertificateAdmitted": false,
+  "compilerWarnings": [],
+  "otherBuildWarnings": [
+    "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+  ],
+  "commands": [
+    {
+      "command": "fitJVM/test",
+      "passed": 707
+    },
+    {
+      "command": "fitJS/test",
+      "passed": 649
+    },
+    {
+      "command": "firstLevelLawsJVM/testOnly",
+      "passed": 11
+    },
+    {
+      "command": "phrfComparisonJVM/testOnly",
+      "passed": 17
+    },
+    {
+      "command": "firstLevelLawsJS/testOnly",
+      "passed": 11
+    },
+    {
+      "command": "phrfComparisonJS/testOnly",
+      "passed": 17
+    }
+  ],
+  "compileAll": true,
+  "recoveryCasesPerPlatform": 80,
+  "recoveryToleranceChanged": false,
+  "scalaFimHostedCi": false,
+  "scalaFimPublished": false,
+  "galeCoreJVM": 810,
+  "galeCoreJS": 798,
+  "galeFormatting": true
+}

@@ -1,0 +1,5 @@
+name	value
+minEigen	0.75
+trueSlopeCross	0.015
+pooledResidualCross	-0.075
+pooledSurrogateCross	-0.0075

@@ -1,0 +1,23 @@
+{
+  "schema": "phrf-s10-rehearsal-source-lock/v1",
+  "scalafim_base": "139bbcae5cfec6733af93443c88722a2046839a9",
+  "glmsingle_revision": "1ab54a65edd3ea41a6133d4b4ecb78a9c7296684",
+  "generator_code_sha256": "b4ba7ac95cc226b7f4132167e67acab885543a0bd157c985bfb51bfd286d3edf",
+  "files": {
+    "build.sbt": "0733ba183111140f78c6b657c67a36f2f8104b8235f57da2fc603f966866e5eb",
+    "modules/phrf-comparison/jvm/src/main/scala/scalafim/phrfcmp/exec/PilotCorpusAssembler.scala": "efee5a91b976be55fc5efaa5ca225342809422a356b954225c87bd99ce2e10f9",
+    "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/exec/AlphaZeroRehearsal.scala": "8d491329e042bb819b37099694a08bab58f01cb1e434301cf511575ec79f7525",
+    "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/exec/PilotCorpusAssemblerSuite.scala": "69a8d1e156170460f96cecb84c43ae21c474996ba1797a3c5b445530a5d31631",
+    "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/exec/RealCpuGuardRehearsal.scala": "e50e59ccacc6428ce080ecdc19121cde2a47f5a805c96bf7b3e121c5712f31fe",
+    "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/exec/RealEngineRehearsal.scala": "45e103bc620ff362304511a0fd5fff663583308bd3a6f4a3d32610253262b66b",
+    "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/ingest/NoDeviationHarness.scala": "365b4d1c3be10fe60d9d78e31c6b92cbcb6b4ebb105af17f9075c1cc188f6447",
+    "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/exec/PilotScoreTruth.scala": "8564ed481eea3c49a373a81feb129a0d8edefcf5de86aa29023e664e784b9bfa",
+    "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/exec/PilotScoreTruthSuite.scala": "2b55b3a498bf4cd31fc8edbe0eb794030e1cf7a28c2128203fa55c003e71f799",
+    "tools/phrf-comparison/generator/requirements.lock": "d4adbadfe17268641789f06e12cdbb5e36e80ff88047afe1d6a35a560da0fa51",
+    "tools/phrf-comparison/glmsingle/requirements.lock": "383160e9b5a5fbf87a88cee2a72f4f2e5c29a8c474c0d4e6739329d99536e3ac",
+    "tools/phrf-comparison/rehearsal/README.md": "c66607acc9fe49ae84bd4c2922197b6aa8a91b26932385ecb259ecf9b5e92c65",
+    "tools/phrf-comparison/rehearsal/audit.py": "673e62506b227a440de53d8e3ec7c6a8d705c905912f70a726d35a91d8d72dd8",
+    "tools/phrf-comparison/rehearsal/generate.py": "4e959a6d5629a0d8cc9ef4d231fe049bcba6c8afd3624551ee26c99ecfd51b33"
+  },
+  "note": "Real engine final run and JVM/JS module gates use these Scala sources. Alpha/CPU run began before the scoring-grid boundary correction, which does not participate in their fitting paths; prior failed attempts are retained separately."
+}

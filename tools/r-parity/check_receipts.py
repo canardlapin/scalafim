@@ -26,6 +26,7 @@ AUXILIARY_SCHEMA = "scalafim-auxiliary-receipt-manifest/v1"
 class ReceiptJob:
   exporter: str
   finalizer: str | None
+  lock_path: str = "tools/r-parity/reference-lock.json"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -56,7 +57,10 @@ def receipt_jobs() -> tuple[ReceiptJob, ...]:
     finalizer = receipt.get("finalizer_path")
     if finalizer is not None and not isinstance(finalizer, str):
       raise SystemExit("auxiliary finalizer_path must be a string when present")
-    jobs.add(ReceiptJob(receipt["exporter_path"], finalizer))
+    lock_path = receipt.get("lock_path", "tools/r-parity/reference-lock.json")
+    if not isinstance(lock_path, str) or not (REPO_ROOT / lock_path).is_file():
+      raise SystemExit("auxiliary lock_path must name an existing environment lock")
+    jobs.add(ReceiptJob(receipt["exporter_path"], finalizer, lock_path))
   if not jobs:
     raise SystemExit("scenario manifest declares no external receipt generators")
   return tuple(sorted(jobs))
@@ -191,6 +195,8 @@ def regenerate_python(jobs: tuple[ReceiptJob, ...], lock: dict[str, Any]) -> Non
 
 def parse_args() -> argparse.Namespace:
   parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument("--lock-path", default="tools/r-parity/reference-lock.json",
+    help="environment lock selecting the receipts to regenerate; checks still cover every receipt")
   parser.add_argument(
     "--regenerate",
     choices=("all", "r", "python"),
@@ -202,14 +208,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
   args = parse_args()
   jobs = receipt_jobs()
-  lock = load_json(LOCK_PATH)
+  lock = load_json(REPO_ROOT / args.lock_path)
   if lock.get("schema_version") != LOCK_SCHEMA:
     raise SystemExit(f"environment lock schema must be {LOCK_SCHEMA}")
 
+  selected = tuple(job for job in jobs if job.lock_path == args.lock_path)
+  if args.regenerate is not None and not selected:
+    raise SystemExit(f"no receipt generators use environment lock {args.lock_path}")
   if args.regenerate in ("all", "r"):
-    regenerate_r(jobs, lock)
+    regenerate_r(selected, lock)
   if args.regenerate in ("all", "python"):
-    regenerate_python(jobs, lock)
+    regenerate_python(selected, lock)
 
   for job in jobs:
     check_job(job)

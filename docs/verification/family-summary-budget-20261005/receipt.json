@@ -1,0 +1,253 @@
+{
+  "verified_at_utc": "2026-10-06T02:18:10.181423+00:00",
+  "mote": "bd-01M47BDR7J7FKGXESZFY9J370P",
+  "runs": [
+    {
+      "label": "baseline-family",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryGridSuite scalafim.fmri.hrf.family.GaussianFamilySuite scalafim.fmri.hrf.family.LwuFamilySuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryGridSuite scalafim.fmri.hrf.family.GaussianFamilySuite scalafim.fmri.hrf.family.LwuFamilySuite"
+      ],
+      "exit_code": 0,
+      "seconds": 45.685,
+      "counts": [
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        }
+      ],
+      "log": "baseline-family.log"
+    },
+    {
+      "label": "baseline-consumer",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.HrfKernelBasisSuite",
+        "designJS/testOnly scalafim.fmri.design.HrfKernelBasisSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 17.952,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        },
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        }
+      ],
+      "log": "baseline-consumer.log"
+    },
+    {
+      "label": "mutation-selectors-baseline",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 2.832,
+      "counts": [
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3
+        }
+      ],
+      "log": "mutation-selectors-baseline.log"
+    },
+    {
+      "label": "mutant-sample-cap-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 0.866,
+      "counts": [
+        {
+          "total": 3,
+          "failed": 2,
+          "errors": 0,
+          "passed": 1
+        }
+      ],
+      "log": "mutant-sample-cap-jvm.log"
+    },
+    {
+      "label": "mutant-sample-cap-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.28,
+      "counts": [
+        {
+          "total": 3,
+          "failed": 2,
+          "errors": 0,
+          "passed": 1
+        }
+      ],
+      "log": "mutant-sample-cap-js.log"
+    },
+    {
+      "label": "mutant-last-time-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 0.866,
+      "counts": [
+        {
+          "total": 3,
+          "failed": 1,
+          "errors": 0,
+          "passed": 2
+        }
+      ],
+      "log": "mutant-last-time-jvm.log"
+    },
+    {
+      "label": "mutant-last-time-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.322,
+      "counts": [
+        {
+          "total": 3,
+          "failed": 1,
+          "errors": 0,
+          "passed": 2
+        }
+      ],
+      "log": "mutant-last-time-js.log"
+    },
+    {
+      "label": "restored-selectors",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryMutationSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 1.844,
+      "counts": [
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3
+        }
+      ],
+      "log": "restored-selectors.log"
+    },
+    {
+      "label": "restored-family",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryGridSuite scalafim.fmri.hrf.family.GaussianFamilySuite scalafim.fmri.hrf.family.LwuFamilySuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryGridSuite scalafim.fmri.hrf.family.GaussianFamilySuite scalafim.fmri.hrf.family.LwuFamilySuite"
+      ],
+      "exit_code": 0,
+      "seconds": 1.684,
+      "counts": [
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        }
+      ],
+      "log": "restored-family.log"
+    }
+  ],
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/FamilySummaryGrid.scala": "b12d2d6033b1333a39fa29a3220fa14b0c5a275eb2a50f254ee2dcb3fbae64bf",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/ParametricHrfFamily.scala": "65401bb3ae06791dd7838d030652b10e17aa5b17133c78752bcba4b15f14785e",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/LwuFamily.scala": "a05eede12d810c823708f6b8761f99bb77daaf5c4a7c52382f2473ae1b3ba94a",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/FamilySummaryGridSuite.scala": "7f2287029b9515d03a6a532106ab0d93005ce878f91dcaf62c77d47f94dd7c94",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": "b987d3e0aed0615e9602f46596dfe1ab0686c8be66addb79a0686bbce0d082fc",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala": "16bbcd368107b65f86f9bb8a866c9a9dd6b2de3fe8c875916dddf2ea8c9d9cc5"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "d662d011a15b14aa525fefe3ddc5bfa0916d4a253b5b7c123064126db1454235",
+  "source_restored": true,
+  "mutation_limits": "Sample-cap mutant admits only one extra sample (1,000,001), at most 2,000,002 array cells; last-time mutant uses three samples. Temporary selectors are removed.",
+  "scientific_fixtures": "Independent Python scalar Gaussian/LWU formula fixtures; existing LWU family tests compare raw library values. No statistical algorithm was ported.",
+  "scope_limits": [
+    "Bounds lag/value arrays and scalar sample count for one summary call, not custom family callback internals.",
+    "KernelBasis preflights tail grid and propagates typed diagnostic failures. Full nodes/jet/matrix/SVD and total held-out work admission remain a follow-up."
+  ],
+  "integrated_gates": {
+    "hrfJVM": 383,
+    "hrfJS": 383,
+    "designJVM": 458,
+    "designJS": 457,
+    "fitJVM": 660,
+    "fitJS": 603,
+    "observed_family_consumersJVM": 6,
+    "observed_family_consumersJS": 6,
+    "total_passed": 2956,
+    "compiler_warnings": [],
+    "sbt_diagnostics": [
+      "Existing multiple main classes diagnostic retained in integrated receipt."
+    ],
+    "receipt": "docs/verification/family-caps-20261005/receipt.json"
+  },
+  "follow_up_motes": [
+    "bd-01M47G78N9NB5BF8YX8HW9ZEKX",
+    "bd-01M47GK9VZNQRGCERREZ09PXW1"
+  ],
+  "fixture_sha256": {
+    "fixtures.py": "ac7206efb04f3d0f2ea268579ae437199e221a7adb4f60d9879f227eaefbeb79",
+    "fixtures.json": "7bb0d88b527384b461304c803fbd3c9e6371fc5484142d6be7645e72c8365e6a"
+  }
+}

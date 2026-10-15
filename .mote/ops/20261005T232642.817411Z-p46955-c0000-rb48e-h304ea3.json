@@ -1,0 +1,1 @@
+{"actor":"development-bbuchsbaum-mac","entity":"bd-01M47544JZTFW7J9MVYYSZGS84","expect":{"title":"20261005T230702.111489Z-p61826-c0000-rfe31-h4498b4"},"kind":"patch","op":"20261005T232642.817411Z-p46955-c0000-rb48e-h304ea3","set":{"title":"Set up migrated Mac toolchain and compare sbt/Mill performance"},"ts":"2026-10-05T23:26:42.817411Z","v":1}

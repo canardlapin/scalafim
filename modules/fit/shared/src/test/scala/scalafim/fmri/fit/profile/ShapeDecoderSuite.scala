@@ -6,6 +6,16 @@ import scalafim.fmri.hrf.family.{GaussianFamily, ShapeChart}
 
 class ShapeDecoderSuite extends munit.FunSuite:
 
+  test("all prepared grid nodes stay in their chart including cancellation-prone upper endpoints"):
+    val chart = scalafim.fmri.hrf.family.Cascade34Family.Default.chart
+    Vector(2, 3, 7).foreach: count =>
+      val grid = NodeGrid(chart, Vector.fill(chart.dimension)(count))
+      (0 until grid.count).foreach: node =>
+        assert(chart.point(grid.point(node).coordinates).isRight, s"count=$count node=$node")
+      chart.names.indices.foreach: axis =>
+        assertEqualsDouble(grid.coordinateOf(0, axis), chart.lower(axis), 0.0)
+        assertEqualsDouble(grid.coordinateOf(count - 1, axis), chart.upper(axis), 0.0)
+
   /** Smooth synthetic objective: `E = (x - x*)' A (x - x*) + 0.3 sum cos(2 x_i) + 5`, no amplitudes. */
   private final class Bowl(val grid: NodeGrid, target: Array[Double], a: Array[Double], val indefinite: Boolean = false) extends ShapeObjective:
     private val d = grid.dimension
@@ -638,3 +648,203 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assert(valid.status != DecodeStatus.NoAdmissibleNode)
     assert(valid.coordinates.forall(value => !value.isNaN && !value.isInfinite))
     assert(valid.amplitudes.forall(value => !value.isNaN && !value.isInfinite))
+
+  private final class CornerTrap(refuseCenter: Boolean = false) extends ShapeObjective:
+    val grid = NodeGrid(ShapeChart(("x", -3.0, 3.0)), Vector(2))
+    val amplitudeCount = 1
+    var continuousJets = 0
+    def scoreNode(node: Int): Double = 1.0 - math.cos(grid.point(node)(0) - 0.2)
+    private def fill(x: Double, out: ProfileJetBuffer): Unit =
+      out.energy = 1.0 - math.cos(x - 0.2)
+      out.gradient(0) = math.sin(x - 0.2)
+      out.hessian(0) = math.cos(x - 0.2)
+      out.amplitudes(0) = x
+      out.curvature = CurvatureStatus.PositiveDefinite
+    def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+      fill(grid.point(node)(0), out)
+      true
+    def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+      continuousJets += 1
+      fill(coordinates(0), out)
+      !(refuseCenter && coordinates(0) == 0.0)
+    def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+      fill(coordinates(0), out)
+      out.energy
+
+  test("an opt-in center probe escapes corner curvature and remains charged and terminally verified"):
+    val old = new ShapeDecoder(new CornerTrap, DecodeBudget(maxNewtonSteps = 6, maxJets = 8), None, 1.0)
+      .decode(new DecoderCounters)
+    assertEquals(old.status, DecodeStatus.CurvatureNotPositive)
+    val objective = new CornerTrap
+    val budget = DecodeBudget(maxNewtonSteps = 6, maxJets = 8, initialization = DecodeInitialization.ChartCenterProbe)
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective, budget, None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assertEqualsDouble(result.coordinates.head, 0.2, 1e-9)
+    assertEqualsDouble(result.amplitudes.head, result.coordinates.head, 1e-15)
+    assertEqualsDouble(result.dataHessian.head, math.cos(result.coordinates.head - 0.2), 1e-15)
+    assertEquals(counters.nodeScores, 2L)
+    assertEquals(counters.jets, 1L + objective.continuousJets)
+    assertEquals(counters.candidateAttempts, objective.continuousJets.toLong)
+    assert(counters.jets <= budget.maxJets)
+    assertEquals(counters.fallbacks, 0L)
+
+  test("center initialization cannot spend an exhausted jet budget or turn a failed probe into acceptance"):
+    val exhausted = new CornerTrap
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(exhausted,
+      DecodeBudget(maxJets = 1, initialization = DecodeInitialization.ChartCenterProbe), None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.CurvatureNotPositive)
+    assertEquals(exhausted.continuousJets, 0)
+    assertEquals(counters.jets, 1L)
+    val refusing = new CornerTrap(refuseCenter = true)
+    val refused = new ShapeDecoder(refusing,
+      DecodeBudget(maxJets = 2, initialization = DecodeInitialization.ChartCenterProbe), None, 1.0).decode(new DecoderCounters)
+    assertEquals(refused.status, DecodeStatus.CurvatureNotPositive)
+    assertEqualsDouble(refused.coordinates.head, 3.0, 1e-15)
+    assertEqualsDouble(refused.amplitudes.head, 3.0, 1e-15)
+
+  test("center probe selection includes the prior and has distinct reproducible policy provenance"):
+    val objective = new CornerTrap
+    val prior = ShapePrior(Vector(3.0), Vector(20.0))
+    val base = DecodeBudget(maxNewtonSteps = 0, maxJets = 2)
+    val probed = base.copy(initialization = DecodeInitialization.ChartCenterProbe)
+    val result = new ShapeDecoder(objective, probed, Some(prior), 1.0).decode(new DecoderCounters)
+    assertEqualsDouble(result.coordinates.head, 3.0, 1e-15)
+    assertEqualsDouble(result.amplitudes.head, 3.0, 1e-15)
+    assertEqualsDouble(result.dataHessian.head, math.cos(2.8), 1e-15)
+    val original = ConditionProfileProvenance.budgetCanonical(base)
+    assert(original.startsWith("decode-budget/v2|"))
+    assert(original.endsWith("|initialization=bank-node"))
+    assertEquals(ConditionProfileProvenance.budgetCanonical(probed), original.stripSuffix("|initialization=bank-node") + "|initialization=chart-center-probe")
+
+  test("bounded independent search escapes negative curvature and charges one voxel and every oracle call"):
+    val objective = new CornerTrap
+    val budget = DecodeBudget(maxNewtonSteps = 6, maxJets = 161, maxCandidateAttempts = 30,
+      initialization = DecodeInitialization.BoundedMultistart)
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective, budget, None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assertEqualsDouble(result.coordinates.head, 0.2, 1e-8)
+    assertEqualsDouble(result.amplitudes.head, result.coordinates.head, 1e-15)
+    assertEqualsDouble(result.dataHessian.head, math.cos(result.coordinates.head - 0.2), 1e-15)
+    val receipt = result.search.get
+    assertEquals(receipt.requestedStarts, 3)
+    assertEquals(receipt.trajectories.length, 3)
+    assertEquals(counters.voxels, 1L)
+    assertEquals(counters.nodeScores, 2L)
+    assertEquals(counters.jets, objective.continuousJets.toLong)
+    assert(counters.jets > receipt.trajectories.map(_.result.work.evaluations.toLong).sum)
+    assert(counters.jets <= budget.maxJets)
+    assert(counters.newtonSteps <= budget.maxNewtonSteps)
+    assert(counters.terminalVerifications >= 1)
+    assert(ConditionProfileProvenance.budgetCanonical(budget).endsWith("|initialization=bounded-multistart/v3"))
+
+  test("a jet budget too small for independent starts remains a coherent charged refusal"):
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(new CornerTrap,
+      DecodeBudget(maxJets = 1, initialization = DecodeInitialization.BoundedMultistart), None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.BudgetExceeded)
+    assertEquals(result.budgetExit, Some(DecodeBudgetExit.SearchStartJetQuota))
+    assertEquals(counters.jets, 1L)
+    assertEquals(counters.voxels, 1L)
+    assertEquals(result.search.get.trajectories.length, 0)
+    assertEqualsDouble(result.amplitudes.head, result.coordinates.head, 1e-15)
+
+  test("refused search oracles cannot fall through to a successful bank-only fit"):
+    val base = new CornerTrap
+    val objective = new ShapeObjective:
+      val grid = base.grid
+      val amplitudeCount = base.amplitudeCount
+      def scoreNode(node: Int): Double = base.scoreNode(node)
+      def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean = base.jetAtNode(node, out)
+      def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean = false
+      def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double = Double.PositiveInfinity
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective,
+      DecodeBudget(maxJets = 41, initialization = DecodeInitialization.BoundedMultistart), None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.NoAdmissibleNode)
+    assertEquals(result.search.get.trajectories.length, 3)
+    assert(result.search.get.trajectories.forall(_.result.point.isEmpty))
+    assertEquals(counters.jets, 4L)
+
+  test("bounded search ranks the prior-augmented objective but preserves data-curvature refusal"):
+    val prior = ShapePrior(Vector(3.0), Vector(20.0))
+    val result = new ShapeDecoder(new CornerTrap,
+      DecodeBudget(maxNewtonSteps = 6, maxJets = 161, maxCandidateAttempts = 30,
+        initialization = DecodeInitialization.BoundedMultistart), Some(prior), 1.0).decode(new DecoderCounters)
+    assert(result.coordinates.head > 2.9)
+    assertEquals(result.status, DecodeStatus.WeaklyIdentified)
+    assert(result.dataHessian.head < 0.0)
+    assert(result.augmentedHessian.head > 0.0)
+
+  test("independent trajectories retain a better well rather than the center's negative curvature"):
+    val objective = new ShapeObjective:
+      val grid = NodeGrid(ShapeChart(("x", -2.0, 2.0)), Vector(2))
+      val amplitudeCount = 1
+      private def fill(x: Double, out: ProfileJetBuffer): Unit =
+        out.energy = math.pow(x * x - 1.0, 2) + 0.2 * x
+        out.gradient(0) = 4.0 * x * (x * x - 1.0) + 0.2
+        out.hessian(0) = 12.0 * x * x - 4.0
+        out.amplitudes(0) = x
+      def scoreNode(node: Int): Double =
+        val x = grid.point(node)(0)
+        math.pow(x * x - 1.0, 2) + 0.2 * x
+      def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+        fill(grid.point(node)(0), out)
+        true
+      def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+        fill(coordinates(0), out)
+        true
+      def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+        fill(coordinates(0), out)
+        out.energy
+    val result = new ShapeDecoder(objective,
+      DecodeBudget(maxNewtonSteps = 6, maxJets = 161, maxCandidateAttempts = 30,
+        initialization = DecodeInitialization.BoundedMultistart), None, 1.0).decode(new DecoderCounters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assert(result.coordinates.head < -1.0)
+    assert(result.energy < -0.2)
+    assert(result.search.get.trajectories.exists(_.result.point.exists(_.coordinates.head > 0.5)))
+
+  test("first-order search includes prior, charges failures and always requires a full terminal jet"):
+    for behavior <- Vector("valid", "refused", "incomplete", "terminal-refused") do
+      var gradients = 0L
+      var fullJets = 0L
+      val objective = new FirstOrderShapeObjective:
+        val grid = NodeGrid(ShapeChart(("x", -1.0, 1.0)), Vector(2))
+        val amplitudeCount = 1
+        def scoreNode(node: Int): Double = math.pow(grid.point(node)(0) - 0.2, 2)
+        def gradientAt(x: Array[Double], out: ProfileGradientBuffer): Boolean =
+          gradients += 1L
+          out.energy = math.pow(x(0) - 0.2, 2)
+          if behavior != "incomplete" then out.gradient(0) = 2.0 * (x(0) - 0.2)
+          out.amplitudes(0) = x(0)
+          behavior != "refused"
+        def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean = jetAt(grid.point(node).coordinates.toArray, out)
+        def jetAt(x: Array[Double], out: ProfileJetBuffer): Boolean =
+          fullJets += 1L
+          out.energy = math.pow(x(0) - 0.2, 2)
+          out.gradient(0) = 2.0 * (x(0) - 0.2)
+          out.hessian(0) = 2.0
+          out.amplitudes(0) = x(0)
+          out.curvature = CurvatureStatus.PositiveDefinite
+          behavior != "terminal-refused"
+        def energyAt(x: Array[Double], out: ProfileJetBuffer): Double =
+          jetAt(x, out)
+          out.energy
+      val counters = new DecoderCounters
+      val result = new ShapeDecoder(objective,
+        DecodeBudget(maxNewtonSteps = 4, maxJets = 81, initialization = DecodeInitialization.BoundedMultistart),
+        Some(ShapePrior(Vector(0.6), Vector(1.0))), 1.0).decode(counters)
+      assertEquals(counters.firstOrderAttempts, gradients)
+      assertEquals(counters.jets, gradients + fullJets)
+      assert(counters.jets <= 81L)
+      assert(fullJets >= 1L)
+      assertEquals(result.search.get.trajectories.map(_.result.work.evaluations.toLong).sum, gradients)
+      if behavior == "valid" then
+        assertEquals(result.status, DecodeStatus.Accepted)
+        assertEqualsDouble(result.coordinates.head, 0.4, 1e-9)
+        assertEqualsDouble(result.dataHessian.head, 2.0, 0.0)
+        assertEqualsDouble(result.augmentedHessian.head, 4.0, 0.0)
+      else assert(result.status != DecodeStatus.Accepted)

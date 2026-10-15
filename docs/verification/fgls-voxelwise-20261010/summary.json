@@ -1,0 +1,98 @@
+{
+  "schema_version": "scalafim-fgls-voxelwise-receipt/v1",
+  "mote": "bd-01M4EMEBCBMBHA7BF4BQY6AFPB",
+  "protocol_sha256": "10e57f6ae511d0ece1084ed12f60725aeb724abe2749bf10360551bf32d5b28c",
+  "declaration_commit": "7f994394",
+  "frozen_candidate_commit": "1d03dfce",
+  "confirmation_source_base": "3d79675f",
+  "development": {
+    "platform": "JVM",
+    "datasets_per_cell": 1024,
+    "refusals": 0,
+    "candidate_scores": {
+      "run-continuous-conditional": 31,
+      "run-continuous-kr": 38,
+      "pooled-continuous-conditional": 39,
+      "pooled-continuous-kr": 42
+    },
+    "selected": "pooled-continuous-kr",
+    "scientific_admission": false
+  },
+  "confirmation": {
+    "candidate": "pooled-continuous-kr",
+    "datasets_per_cell": 2048,
+    "fits_per_platform": 36864,
+    "refusals": 0,
+    "jvm_scientific_pass": true,
+    "js_scientific_pass": true,
+    "cell_pass": {
+      "ar2-high-censored-short": true,
+      "ar2-high-censored-long": true,
+      "ar2-high-complete-short": true,
+      "ar2-high-censored-short-voxel-heterogeneous": true
+    },
+    "cross_platform": {
+      "matched": 36864,
+      "this": 36864,
+      "other": 36864,
+      "max_scaled_difference": {
+        "phiSquaredError": 2.41743171940523e-16,
+        "whiteness": 7.54144253196274e-16,
+        "nullEstimate": 1.31616141620896e-14,
+        "nullVariance": 4.48711592142878e-12,
+        "tDf": 2.5017406116284e-13,
+        "fDf": 3.56738624160016e-13,
+        "signalEstimate": 1.66005304226362e-14,
+        "signalVariance": 3.93475955268263e-12
+      },
+      "identical_decisions": true
+    },
+    "scope_boundary": {
+      "cell": "ar2-high-censored-short-run-heterogeneous",
+      "candidate_failed": [
+        "ar_rmse",
+        "whiteness"
+      ]
+    },
+    "baselines_failed": {
+      "existing-voxelwise": {
+        "ar2-high-censored-short": [
+          "null_t",
+          "null_f",
+          "ar_rmse"
+        ],
+        "ar2-high-complete-short": [
+          "coverage",
+          "ar_rmse"
+        ],
+        "ar2-high-censored-long": [
+          "effect_bias"
+        ]
+      },
+      "pooled-continuous-conditional": {
+        "ar2-high-censored-short-voxel-heterogeneous": [
+          "null_f"
+        ],
+        "ar2-high-complete-short": [
+          "coverage"
+        ]
+      }
+    },
+    "baseline_note": "existing-voxelwise whiteness excess is not evaluable in confirmation because its comparator (existing-known-restart) was not executed; the R table reports it as failed (NaN) and it is excluded here."
+  },
+  "scope": "One AR(2) filter per voxel shared across runs (noise homogeneous across runs within a voxel, heterogeneous across voxels), censored frames as missing observations of continuous noise, Kenward-Roger inference; this design family and censor rule. Production FitPlan GLS unchanged; per-run voxelwise estimation not admitted.",
+  "routine_gates": {
+    "scalafimCompileAll": "exit 0, no compiler warnings",
+    "JVM": {
+      "arJVM/test": 158,
+      "fitJVM/test": 748,
+      "firstLevelLawsJVM/test": 121
+    },
+    "JS": {
+      "arJS/test": 156,
+      "fitJS/test": 690,
+      "firstLevelLawsJS/test": "121 (2 ignored)"
+    },
+    "firstLevelLawsJVM/Test/scalafmtCheck": "new files formatted; 26 pre-existing unformatted files from the merged PHRF checkpoint untouched"
+  }
+}

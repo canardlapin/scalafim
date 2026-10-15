@@ -107,7 +107,7 @@ object ReducedRankGlsPrepared:
         "reduced-rank GLS target/event coefficient"
       )
       projection <- prepared.whitening match
-        case GlsWhitening.Shared(plan) =>
+        case GlsWhitening.Shared(plan, _) =>
           for
             fullFit <- prepared.fit(response, selectedVoxelIndices)
             reduced <- ReducedRankGlsProjection.from(
@@ -121,7 +121,7 @@ object ReducedRankGlsPrepared:
               config.inference
             )
           yield Some(reduced)
-        case GlsWhitening.Voxelwise(_) =>
+        case GlsWhitening.Voxelwise(_, _) =>
           if isFullRankRequest(config, designPartition.targetPredictors, response.voxels) &&
               config.inference == ReducedRankInferencePolicy.Conditional
           then Right(None)

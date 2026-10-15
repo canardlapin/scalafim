@@ -1,0 +1,92 @@
+{
+  "schema": "phrf-s10-real-rehearsal-audit/v1",
+  "harness_inventory_verified": true,
+  "owner_reconstruction": "Valid(0350adc8c8d24269,2,60,Vector())",
+  "real_cpu_guard_pass": true,
+  "glmsingle_successful_datasets": 4,
+  "all_alpha_slots_retained": true,
+  "alpha_complete": false,
+  "not_constant_endpoint": true,
+  "alpha_refusals": [
+    {
+      "dataset": 1,
+      "truth_case": "persistent",
+      "method": "phrf-ml",
+      "input_sha256": "cf462c2e0aed0740743e20ed9de3ad220824fcc25e7d089ca43ebbc04ce82ac4",
+      "selected_index": null,
+      "refusal": "Dataset(run,TrialMlFailure)",
+      "pair_cpu_seconds": 10.955148000000008,
+      "pilot_launch_authority": false
+    },
+    {
+      "dataset": 1,
+      "truth_case": "no-deviation",
+      "method": "phrf-ml",
+      "input_sha256": "cf462c2e0aed0740743e20ed9de3ad220824fcc25e7d089ca43ebbc04ce82ac4",
+      "selected_index": null,
+      "refusal": "Dataset(run,TrialMlFailure)",
+      "pair_cpu_seconds": 42.857046999999966,
+      "pilot_launch_authority": false
+    },
+    {
+      "dataset": 3,
+      "truth_case": "no-deviation",
+      "method": "phrf-ml",
+      "input_sha256": "7586d920797dc0e4f55e99c0e3330ad67ab34b38bdd528e1e06c8abf6389f520",
+      "selected_index": null,
+      "refusal": "Dataset(run,TrialMlFailure)",
+      "pair_cpu_seconds": 20.767527999999857,
+      "pilot_launch_authority": false
+    },
+    {
+      "dataset": 5,
+      "truth_case": "persistent",
+      "method": "phrf-ml",
+      "input_sha256": "0abd83e303b3da1bafd139a4f11fdd3b1a7c3f2467bb7e29d1c4e2c237f57d22",
+      "selected_index": null,
+      "refusal": "Dataset(run,TrialMlFailure)",
+      "pair_cpu_seconds": 13.369436999999834,
+      "pilot_launch_authority": false
+    },
+    {
+      "dataset": 6,
+      "truth_case": "persistent",
+      "method": "phrf-ml",
+      "input_sha256": "61ba2ec485a65921cc3f47c2063f3be38cefac9eb67f93e944f6c5c43d4f5120",
+      "selected_index": null,
+      "refusal": "Dataset(run,TrialMlFailure)",
+      "pair_cpu_seconds": 5.2299860000000535,
+      "pilot_launch_authority": false
+    },
+    {
+      "dataset": 7,
+      "truth_case": "no-deviation",
+      "method": "phrf-ml",
+      "input_sha256": "34ccbd06e7b0979bc747587db9220e5123ae48b05b722f240750fa33d67ce3a0",
+      "selected_index": null,
+      "refusal": "Dataset(run,TrialMlFailure)",
+      "pair_cpu_seconds": 32.12221999999997,
+      "pilot_launch_authority": false
+    }
+  ],
+  "real_engine_refusals": [
+    {
+      "cell": "T-TS-fast",
+      "dataset": 0,
+      "arm": "phrf-ml",
+      "refusal": "Dataset(run,TrialMlFailure)"
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 1,
+      "arm": "phrf-ml",
+      "refusal": "Dataset(run,TrialMlFailure)"
+    }
+  ],
+  "pilot_ready": false,
+  "pilot_launch_authority": false,
+  "remaining": [
+    "Resolve retained trial ML refusals before claiming clean rehearsal readiness",
+    "Actual pilot coverage policy, owner custody, review and frozen manifest are separate"
+  ]
+}

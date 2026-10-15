@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "da38f8c429294657d30ec29f06eae3fab636d428"
+lazy val galeRevision = "6f7a1f9509a07c2b3f5b956332d39a1bc5b64c3c"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -92,7 +92,7 @@ lazy val alderMetricsJS      = ProjectRef(alderBuild, "metricsJS")
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
 // coordinated development.
-lazy val locus4sRevision = "58c9739be51345ad9adc4bc9c9e7335023254ec9"
+lazy val locus4sRevision = "a67bc87c33b5da8a5dc2cad49919c015b59f3050"
 lazy val locus4sBuild =
   sys.props
     .get("scalafim.locus4s.build")
@@ -105,7 +105,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "2c0638fb0767058ccd59b37f93754e95fc27df28"
+lazy val image4sRevision = "20c9515495e43dff9d17bc1283a8ca1d56355c4a"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -130,7 +130,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
 // so reframe4s resolves the same image4s build. reframe4s accepts only a local
 // path, so the default pinned-URI build still loads reframe4s's own image4s pin.
-lazy val reframe4sRevision = "5f7152aada60335935843ddc968162f615337415"
+lazy val reframe4sRevision = "9662317912185c51e82dd04b2c87006ed2af82f2"
 lazy val reframe4sBuild = {
   sys.props
     .get("scalafim.image4s.build")
@@ -164,7 +164,7 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
-lazy val multivarRevision = "ab811e257dd67f77e8c3b70cb1ea600f274429a3"
+lazy val multivarRevision = "2bc14d14ba42a678fbbe169293153eddaba6175c"
 lazy val multivarBuild = {
   // Inference must share the same resample4s classes as native MVPA adapters.
   System.setProperty("multivar.resample4s.build.uri", resample4sBuild.toString)
@@ -398,6 +398,7 @@ lazy val scenarioTestkit =
       name := "scalafim-scenario-testkit",
       publish / skip := true
     )
+    .jvmSettings(libraryDependencies += "org.scalameta" %% "munit" % "1.2.1")
     .jsSettings(jsSettingsBase)
 
 lazy val scenarioTestkitJS  = scenarioTestkit.js
@@ -749,6 +750,23 @@ lazy val surface =
 lazy val surfaceJS  = surface.js
 lazy val surfaceJVM = surface.jvm
 
+// Unpublished JVM fixture support and its qualification courts. Tests that use these fixtures live here,
+// keeping the project graph acyclic: fixtures -> surface, atlas Test -> fixtures Compile.
+lazy val surfaceTestFixtures =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/surface-test-fixtures"))
+    .dependsOn(surface, scenarioTestkit)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-surface-test-fixtures",
+      publish / skip := true
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val surfaceTestFixturesJS = surfaceTestFixtures.js
+lazy val surfaceTestFixturesJVM = surfaceTestFixtures.jvm
+
 lazy val surfaceView =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -927,9 +945,29 @@ lazy val atlas =
       name := "scalafim-atlas"
     )
     .jvmSettings(
-      libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
+      libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0",
+      // Full-resolution MNI inversion retains large fields and residual arrays. Give this
+      // native oracle a fresh heap on every gate, independent of the resident sbt server.
+      Test / parallelExecution := false,
+      Test / testForkedParallel := false,
+      Test / testGrouping := {
+        val (nativeOracle, ordinary) = (Test / definedTests).value.partition(
+          _.name == "scalafim.atlas.io.MniTemplateBridgeFilesSuite"
+        )
+        val inherited = (Test / forkOptions).value
+        val nativeOptions = inherited.withRunJVMOptions(
+          inherited.runJVMOptions.filterNot(option => option.startsWith("-Xmx") || option.startsWith("-Xms")) ++
+            Vector("-Xmx3g", "-XX:ActiveProcessorCount=2")
+        )
+        Seq(
+          Tests.Group("atlas", ordinary, Tests.InProcess),
+          Tests.Group("atlas-mni-native-oracle", nativeOracle, Tests.SubProcess(nativeOptions))
+        ).filter(_.tests.nonEmpty)
+      }
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
+    // Test-only: the real-asset fsLR fixtures (locked asset gate, SimpleITK inverse oracle, qualification inputs)
+    // live in an unpublished fixture module; atlas drives the public standard-route entry point.
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, surfaceTestFixturesJVM % "test->compile"))
     .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
@@ -1173,7 +1211,7 @@ lazy val firstLevelLaws =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/first-level-laws"))
-    .dependsOn(fit, hrfLaws)
+    .dependsOn(fit, hrfLaws, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(
@@ -1193,7 +1231,8 @@ lazy val mvpa =
     .dependsOn(response, locusData, pipeline, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
-      name := "scalafim-fmri-mvpa"
+      name := "scalafim-fmri-mvpa",
+      libraryDependencies += "com.lihaoyi" %%% "ujson" % "4.1.0" % Test
     )
     .jvmConfigure(
       _.dependsOn(
@@ -1308,7 +1347,7 @@ lazy val mvpaSpatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-spatial"))
-    .dependsOn(mvpa, image, surface, atlas, locusData, mvpaDataset % "test->compile")
+    .dependsOn(mvpa, image, surface, atlas, locusData, threshold, mvpaDataset % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-spatial"
@@ -1376,6 +1415,20 @@ lazy val group =
 
 lazy val groupJS  = group.js
 lazy val groupJVM = group.jvm
+
+
+/** Consumer-owned subject uncertainty bridge; lower modules remain independent. */
+lazy val mvpaGroup =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/mvpa-group"))
+    .dependsOn(mvpa, group)
+    .settings(commonSettings)
+    .settings(name := "scalafim-fmri-mvpa-group")
+    .jsSettings(jsSettingsBase)
+
+lazy val mvpaGroupJS  = mvpaGroup.js
+lazy val mvpaGroupJVM = mvpaGroup.jvm
 
 lazy val fmriWorkflow =
   crossProject(JSPlatform, JVMPlatform)
@@ -1468,6 +1521,8 @@ lazy val root =
       motionJVM,
       surfaceJS,
       surfaceJVM,
+      surfaceTestFixturesJVM,
+      surfaceTestFixturesJS,
       surfaceViewJS,
       surfaceViewJVM,
       surfaceViewRasterJS,
@@ -1526,6 +1581,8 @@ lazy val root =
       workflowExamplesJS,
       groupJS,
       groupJVM,
+      mvpaGroupJS,
+      mvpaGroupJVM,
       fmriWorkflowJS,
       fmriWorkflowJVM,
       archiveZarrJS,
@@ -1538,13 +1595,13 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("scalafimCompileAll", ";locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;transformJVM/compile;transformJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;fitEstimatesJVM/compile;fitEstimatesJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;mvpaFoundationAdmissionJVM/compile;mvpaFoundationAdmissionJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;providerSpikeJVM/test;providerSpikeJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;transformJVM/test;transformJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;fitEstimatesJVM/test;fitEstimatesJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;mvpaFoundationAdmissionJVM/test;mvpaFoundationAdmissionJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("scalafimCompileAll", ";locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceTestFixturesJVM/compile;surfaceTestFixturesJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;transformJVM/compile;transformJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;fitEstimatesJVM/compile;fitEstimatesJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;mvpaFoundationAdmissionJVM/compile;mvpaFoundationAdmissionJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;providerSpikeJVM/test;providerSpikeJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;transformJVM/test;transformJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;fitEstimatesJVM/test;fitEstimatesJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;mvpaFoundationAdmissionJVM/test;mvpaFoundationAdmissionJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("compileAll", "scalafimCompileAll")
 addCommandAlias("testAll", "scalafimTestAll")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile;workflowExamplesJS/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test;workflowExamplesJS/test")
-addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")
+addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")
 addCommandAlias("surfaceViewAdmissionJVM", ";surfaceViewRasterJVM/runMain scalafim.surface.view.raster.SurfaceRasterAdmissionBenchmark;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceAdmissionBenchmark")
 addCommandAlias("surfaceViewVisualQaJVM", ";surfaceViewExamplesJVM/Test/runMain scalafim.surface.view.javafx.JavaFxGiftiParityProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceCorrectnessProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceInteractionProbe")
 addCommandAlias("atlasCoverage", ";set atlasJVM / coverageEnabled := true;atlasJVM/test;atlasJVM/coverageReport;set atlasJVM / coverageEnabled := false")

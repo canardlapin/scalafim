@@ -1,0 +1,978 @@
+{
+  "status": "proposed-inventory-not-source-frozen-not-executable",
+  "cells": [
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 80,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 80,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R0",
+      "rho": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R1",
+      "rho": [
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R2",
+      "rho": [
+        0.5,
+        0.3,
+        0,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-weak",
+      "rho": [
+        0.5,
+        0.3,
+        0.02,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-strong",
+      "rho": [
+        0.8,
+        0.6,
+        0.4,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 160,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3-near-unit",
+      "rho": [
+        0.98,
+        0.95,
+        0.9,
+        0
+      ],
+      "n": 160,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 320,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 320,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 320,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 320,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 640,
+      "p": 6,
+      "q": 4,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 640,
+      "p": 6,
+      "q": 4,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 640,
+      "p": 4,
+      "q": 6,
+      "nuisance": "intercept",
+      "datasets": 200,
+      "draws": 199
+    },
+    {
+      "population": "R3",
+      "rho": [
+        0.5,
+        0.3,
+        0.2,
+        0
+      ],
+      "n": 640,
+      "p": 4,
+      "q": 6,
+      "nuisance": "three-column",
+      "datasets": 200,
+      "draws": 199
+    }
+  ],
+  "unique_datasets": 12800,
+  "method_evaluations": 38400,
+  "methods": [
+    "historical-euclidean-coefficient-permutation/ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+    "canonical-rank-score-orthogonal-permutation/v2",
+    "canonical-rank-gaussian-interlacing-wilks/v1"
+  ],
+  "assigned_streams": 0,
+  "reason": "Cost inventory only; exact campaign source, stream and resource freeze still required.",
+  "population_source": {
+    "path": "docs/plans/unified-mvpa-inference-calibration-protocol.md",
+    "sha256": "d612ca89ebc9f4ae3f3f7e6988a6e5b905f642505c46fed4240093eb9e1314d3"
+  }
+}

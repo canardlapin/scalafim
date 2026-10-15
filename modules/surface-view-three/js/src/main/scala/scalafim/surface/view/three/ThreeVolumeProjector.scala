@@ -39,6 +39,12 @@ object ThreeVolumeProjector:
       ))
     else if policy.minimumSamples.value != 1 then
       Left(ThreeSurfaceError.InvalidPlan("GPU midpoint projection requires minimumSamples=1"))
+    else if !float32Representable(volume) then
+      // A finite value that overflows float32 would upload as an infinite texel,
+      // and the GPU would drop a sample that the CPU path keeps as an observation.
+      Left(ThreeSurfaceError.InvalidPlan(
+        "GPU volume projection requires every finite volume value to be representable in float32"
+      ))
     else
       attempt("GPU volume projection"):
         val started = nowNanos()
@@ -170,17 +176,24 @@ object ThreeVolumeProjector:
 
           val values = new Array[Double](vertexCount)
           val counts = new Array[Int](vertexCount)
+          val nonFiniteCounts = new Array[Int](vertexCount)
           val quality = new Array[Boolean](vertexCount)
           var renderedPixels = 0
           var nonFinite = 0L
           vertex = 0
           while vertex < vertexCount do
             val valid = coordinates(vertex * 4 + 3) > 0.5f
-            if valid && !output(vertex * 4).toDouble.isFinite then nonFinite += 1L
-            counts(vertex) = if valid then 1 else 0
-            quality(vertex) = valid
+            // A non-finite texel is not an observation: with minimumSamples=1 the
+            // vertex does not qualify, as in the shared CPU projection. With one
+            // midpoint sample, the CPU Nearest reducer (first finite sample) picks
+            // this texel exactly when it is finite, so the two paths agree.
+            val finite = valid && output(vertex * 4).toDouble.isFinite
+            if valid && !finite then nonFinite += 1L
+            counts(vertex) = if finite then 1 else 0
+            nonFiniteCounts(vertex) = if valid && !finite then 1 else 0
+            quality(vertex) = finite
             values(vertex) =
-              if valid then output(vertex * 4).toDouble
+              if finite then output(vertex * 4).toDouble
               else policy.fill match
                 case SurfaceProjectionFill.NaN => Double.NaN
                 case SurfaceProjectionFill.Constant(value) => value
@@ -190,9 +203,16 @@ object ThreeVolumeProjector:
           val projection = SurfaceProjectionResult(
             SurfaceField.full(geometry, values.toIndexedSeq, "gpu-surface-sample"),
             SurfaceField.full(geometry, counts.toIndexedSeq, "gpu-surface-sample-count"),
+            SurfaceField.full(geometry, nonFiniteCounts.toIndexedSeq, "gpu-surface-non-finite-sample-count"),
             SurfaceField.full(geometry, quality.toIndexedSeq, "gpu-surface-projection-quality"),
             SurfaceProjectionReceipt(
-              vertexCount,
+              // One sample per vertex, so a non-finite vertex is non-finite only.
+              SurfaceVertexTally(
+                vertices = vertexCount,
+                qualified = accepted - nonFinite.toInt,
+                nonFiniteOnly = nonFinite.toInt,
+                insufficient = vertexCount - accepted
+              ),
               // One midpoint sample per vertex; the GPU path applies no mask.
               SurfaceSampleTally(
                 requested = vertexCount.toLong,
@@ -201,10 +221,9 @@ object ThreeVolumeProjector:
                 nonFinite = nonFinite,
                 accepted = accepted.toLong - nonFinite
               ),
-              accepted,
               volumeValues.toLong,
               volumeValues.toLong * 8L,
-              vertexCount.toLong * 13L,
+              vertexCount.toLong * 17L,
               nowNanos() - started,
               morphism.plan.path,
               morphism.plan.aggregation
@@ -227,6 +246,16 @@ object ThreeVolumeProjector:
             )
           )
         finally renderer.applyDynamic("dispose")()
+
+  private def float32Representable(volume: SomeScalarVolume[Double]): Boolean =
+    val count = volume.space.spatialDims.product
+    var ordinal = 0
+    var representable = true
+    while representable && ordinal < count do
+      val value = volume.valueAtCanonicalOrdinal(ordinal)
+      if value.isFinite && value.toFloat.isInfinite then representable = false
+      ordinal += 1
+    representable
 
   private def worldPoint(geometry: SurfaceGeometry, vertex: VertexId): WorldPoint =
     SurfaceWorldLink.worldPoint(geometry, vertex)

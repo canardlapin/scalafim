@@ -1,0 +1,28 @@
+{
+  "base": "9ba2c57f2b483f8f81a64e30b610f345b13c1784",
+  "scope": "M5.01 arithmetic transport, no group inference or M5.02 covariance-source adapter admission",
+  "source": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala": "02c3a664e007516e6c70035f223d248f832dba1df71a4c9690ab163d1dc7d4a5",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinatesSuite.scala": "d51ff8050378b090d5261d76094bec366415e86d17ffe23009c603e768d64509"
+  },
+  "oracle_command": "LC_ALL=C LANG=C /usr/local/bin/Rscript docs/verification/umvpa-subject-coordinates-20261007/oracle.R docs/verification/umvpa-subject-coordinates-20261007",
+  "oracle_exit": 0,
+  "oracle": {
+    "expected.tsv": "81ad85990dc6b4bb743af3195035d61cf92c6ca23865c25a4b390b2d346fd429",
+    "focused-gates.json": "ce00e7052466dd7a812252f3ac4572c53fe09974e7f0e58b781666f7fa8edfe7",
+    "oracle.R": "3e4846cfc8d3432af0ccb743b493eb32fe562606f7057dc91b3a3e3f7dcc0b67",
+    "oracle.log": "1081b979a490e8dd44e2e1d66aeff016c7b4d24652cfd862fc5bce8a36a21c9f",
+    "R-session.txt": "cbd4f8441218763e283867b860de33cbd949399f49235c63749599394962fb65"
+  },
+  "gates": "Focused JVM17/17 and JS17/17; full integrated mvpaJVM/test433/433 and mvpaJS/test433/433 passed, zero failures/errors/warnings.",
+  "independent_review": {
+    "verdict": "accepted, no blocking implementation findings",
+    "reviewer": "atlas_test_isolation",
+    "receipt": "independent-review.md",
+    "sha256": "bbb4577bd7568a4ebf121c30631889a1124bc2a95273346e71d66828251504f3"
+  },
+  "integration_receipt": {
+    "path": "integration-gates.json",
+    "sha256": "262c717b9698b1e27dbe921bb9dbedd1a15fdc3d9c3367b7bf5af4328c6faf66"
+  }
+}

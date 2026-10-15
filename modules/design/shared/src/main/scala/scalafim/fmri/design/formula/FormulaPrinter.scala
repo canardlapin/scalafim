@@ -60,7 +60,7 @@ object FormulaPrinter:
       case None =>
         val tokens = unchecked(formula)
         FormulaParser.parseEither(tokens.map(_.text).mkString).flatMap: parsed =>
-          if parsed == formula then Right(tokens)
+          if parsed == canonicalBasis(formula) then Right(tokens)
           else Left(FormulaParser.ParseError("Formula cannot be represented losslessly by the admitted grammar", 0))
 
   /** Throwing convenience over [[renderEither]].
@@ -68,6 +68,19 @@ object FormulaPrinter:
     */
   def render(formula: ModelFormula): Vector[FormulaToken] =
     renderEither(formula).fold(throw _, identity)
+
+  /** Basis aliases print as their canonical kind name, which is what the parser stores. */
+  private def canonicalBasis(formula: ModelFormula): ModelFormula =
+    def canonical(name: Option[String]): Option[String] =
+      name.map(n => scalafim.fmri.hrf.HrfKind.fromString(n).map(_.canonicalName).getOrElse(n))
+    formula.copy(terms = formula.terms.map {
+      case h: HrfCall       => h.copy(basis = canonical(h.basis))
+      case t: TrialwiseCall => t.copy(basis = canonical(t.basis))
+      case c: CovariateCall => c
+    })
+
+  private def basisArg(basis: Option[String], params: Vector[BasisParam]): Vector[Arg] =
+    basis.toVector.map(name => Arg(Some("basis"), FormulaBasis.argValue(name, params)))
 
   private def nonFinite(value: ArgValue): Option[Double] = value match
     case ArgValue.Num(number) if !number.isFinite => Some(number)
@@ -77,9 +90,9 @@ object FormulaPrinter:
   private def formulaNonFinite(formula: ModelFormula): Option[Double] =
     def values(term: TermCall): Vector[ArgValue] = term match
       case h: HrfCall =>
-        h.vars ++ h.subset ++ h.onsets ++ h.durations ++ h.hrfFun ++ h.lag.map(ArgValue.Num(_))
+        h.vars ++ h.subset ++ h.onsets ++ h.durations ++ h.hrfFun ++ h.lag.map(ArgValue.Num(_)) ++ basisArg(h.basis, h.basisParams).map(_.value)
       case t: TrialwiseCall =>
-        t.subset.toVector ++ t.onsets ++ t.durations ++ t.id ++ t.lag.map(ArgValue.Num(_))
+        t.subset.toVector ++ t.onsets ++ t.durations ++ t.id ++ t.lag.map(ArgValue.Num(_)) ++ basisArg(t.basis, t.basisParams).map(_.value)
       case c: CovariateCall => c.vars
     formula.terms.iterator.flatMap(values).flatMap(nonFinite).nextOption()
 
@@ -158,7 +171,7 @@ object FormulaPrinter:
       term = Some(i)
       t match
         case h: HrfCall =>
-          renderValue(ArgValue.Call("hrf", h.vars.map(Arg(None, _)) ++ str("basis", h.basis) ++ raw("subset", h.subset) ++
+          renderValue(ArgValue.Call("hrf", h.vars.map(Arg(None, _)) ++ basisArg(h.basis, h.basisParams) ++ raw("subset", h.subset) ++
             raw("onsets", h.onsets) ++ raw("durations", h.durations) ++
             str("phase", h.phase.map(_.id.value)) ++ str("parent", h.phase.map(_.parent.value)) ++
             raw("hrf_fun", h.hrfFun) ++ str("contrasts", h.contrasts) ++ str("id", h.id.map(_.value)) ++
@@ -175,7 +188,7 @@ object FormulaPrinter:
               case EventResponseNormalization.UnitPeak(_) => "unit-peak"
             }) ++ num("event_peak_step", h.eventNormalization.collect { case EventResponseNormalization.UnitPeak(step) => step.value })), Vector.empty, emit)
         case t: TrialwiseCall =>
-          renderValue(ArgValue.Call("trialwise", str("basis", t.basis) ++ raw("subset", t.subset) ++ raw("onsets", t.onsets) ++
+          renderValue(ArgValue.Call("trialwise", basisArg(t.basis, t.basisParams) ++ raw("subset", t.subset) ++ raw("onsets", t.onsets) ++
             raw("durations", t.durations) ++ str("phase", t.phase.map(_.id.value)) ++
             str("parent", t.phase.map(_.parent.value)) ++ raw("id", t.id) ++ num("lag", t.lag) ++
             num("nbasis", t.nbasis.map(_.toDouble)) ++ bool("add_sum", t.addSum) ++ str("label", t.label.map(_.value)) ++

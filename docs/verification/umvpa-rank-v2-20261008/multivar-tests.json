@@ -1,0 +1,44 @@
+{
+  "core-jvm": {
+    "suites": 69,
+    "tests": 597,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "ir-jvm": {
+    "suites": 7,
+    "tests": 48,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "inference-jvm": {
+    "suites": 20,
+    "tests": 138,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "core-js": {
+    "suites": 69,
+    "tests": 597,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "ir-js": {
+    "suites": 6,
+    "tests": 46,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "inference-js": {
+    "suites": 19,
+    "tests": 137,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 54.07559585571289
+}

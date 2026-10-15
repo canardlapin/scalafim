@@ -1,0 +1,55 @@
+{
+  "columns": 1,
+  "expected_profile_decrease": true,
+  "ieee754_bits": {
+    "new_beta": [
+      "3ff0000000000000"
+    ],
+    "new_design": [
+      "3ff0000000000000",
+      "3ff0000000000000"
+    ],
+    "old_beta": [
+      "3ff0000000000000"
+    ],
+    "old_design": [
+      "3ff0000000000000",
+      "0000000000000000"
+    ],
+    "response": [
+      "3ff0000000000000",
+      "3ff0000000000000"
+    ]
+  },
+  "inputs": {
+    "new_beta": [
+      1
+    ],
+    "new_design": [
+      1,
+      1
+    ],
+    "old_beta": [
+      1
+    ],
+    "old_design": [
+      1,
+      0
+    ],
+    "response": [
+      1,
+      1
+    ]
+  },
+  "platform": "synthetic-control",
+  "prototype_result": {
+    "gram_eigenvalue_lower": 0.9999999999999996,
+    "lower": -1.0000000000000029,
+    "old_suboptimality_upper": 4.930380657631338e-32,
+    "profile_upper": -0.9999999999999978,
+    "upper": -0.9999999999999979
+  },
+  "rows": 2,
+  "schema": 1,
+  "storage": "row-major"
+}

@@ -25,7 +25,7 @@ object ModelBuildSpecJsonCodec:
   private def number(value: Double, path: String): Result[Value] = PortableJson.number(value, path)
 
   /** Exact, case-sensitive lookup of an enum case by its encoded name. */
-  private def enumCase[A](cursor: Cursor, kind: String, values: Array[A]): Result[A] =
+  private[model] def enumCase[A](cursor: Cursor, kind: String, values: Array[A]): Result[A] =
     cursor.str.flatMap { name =>
       values.find(_.toString == name).toRight(
         ModelJsonError(cursor.path, s"unknown $kind '$name' (expected one of ${values.map(_.toString).mkString(", ")})"))
@@ -35,8 +35,8 @@ object ModelBuildSpecJsonCodec:
 
   // ----------------------------------------------------------------- baseline
 
-  private def baseline(value: BaselineBasis): Result[Value] = value match
-    case BaselineBasis.Dct(cutoff) => number(cutoff.seconds, "$.baseline.cutoff").map(c => Obj("kind" -> Str("dct"), "cutoff" -> c))
+  private def baseline(value: BaselineBasis, path: String): Result[Value] = value match
+    case BaselineBasis.Dct(cutoff) => number(cutoff.seconds, s"$path.cutoff").map(c => Obj("kind" -> Str("dct"), "cutoff" -> c))
     case other => Right(Obj("kind" -> Str(other.id)))
 
   private def readBaseline(value: Cursor): Result[BaselineBasis] =
@@ -79,15 +79,47 @@ object ModelBuildSpecJsonCodec:
       case other => fail(s"${value.path}.kind", s"unknown AR coefficient policy $other")
     }
 
-  private def autocorrelation(value: AutocorrelationConfig, path: String): Result[Value] =
+  private[model] def autocorrelation(value: AutocorrelationConfig, path: String): Result[Value] =
     arCoefficients(value.coefficients, s"$path.coefficients").map: coefficients =>
-      Obj("order" -> Num(value.order.value), "iterations" -> Num(value.iterations), "global" -> Bool(value.global),
+      val encoded = Obj("order" -> Num(value.order.value), "iterations" -> Num(value.iterations), "global" -> Bool(value.global),
         "voxelwise" -> Bool(value.voxelwise), "exactFirst" -> Bool(value.exactFirst),
         "censoredTimepoints" -> Arr.from(value.censoredTimepoints.values.map(Num(_))), "coefficients" -> coefficients)
+      if value.censorTreatment != ArCensorTreatment.RestartWhitening then encoded("censorTreatment") = Str(value.censorTreatment.toString)
+      if value.initialization == ArInitialization.Stationary then encoded("initialization") = Str("Stationary")
+      value.fgls.foreach: policy =>
+        encoded("fgls") = Obj("scope" -> Str(policy.scope.toString), "uncertainty" -> Str(policy.uncertainty.toString))
+      value.biasCorrection match
+        case ArBiasCorrection.Raw => ()
+        case ArBiasCorrection.OlsDesign(ceiling) =>
+          encoded("biasCorrection") = Obj("kind" -> Str("ols-design"), "ceiling" -> Num(ceiling.value))
+        case ArBiasCorrection.OlsTailAnchored(maxLag) =>
+          encoded("biasCorrection") = Obj("kind" -> Str("ols-tail-anchored"), "maxLag" -> Num(maxLag.value))
+      encoded
 
-  private def readAutocorrelation(value: Cursor): Result[AutocorrelationConfig] =
+  private def readBiasCorrection(value: Cursor): Result[ArBiasCorrection] =
+    str(value, "kind").flatMap:
+      case "ols-design" =>
+        for
+          _ <- value.fields(Set("kind", "ceiling"))
+          ceiling <- value.field("ceiling").flatMap(_.integer)
+          policy <- admit(ArBiasCorrection.olsDesign(ceiling), s"${value.path}.ceiling")(_.message)
+        yield policy
+      case "ols-tail-anchored" =>
+        for
+          _ <- value.fields(Set("kind", "maxLag"))
+          maxLag <- value.field("maxLag").flatMap(_.integer)
+          policy <- admit(ArBiasCorrection.olsTailAnchored(maxLag), s"${value.path}.maxLag")(_.message)
+        yield policy
+      case other => fail(s"${value.path}.kind", s"unknown AR bias correction $other")
+
+  private[model] def readAutocorrelation(value: Cursor): Result[AutocorrelationConfig] =
     for
-      _ <- value.fields(Set("order", "iterations", "global", "voxelwise", "exactFirst", "censoredTimepoints", "coefficients"))
+      fields <- value.obj
+      _ <- value.fields(Set("order", "iterations", "global", "voxelwise", "exactFirst", "censoredTimepoints", "coefficients") ++
+        (if fields.contains("biasCorrection") then Set("biasCorrection") else Set.empty) ++
+        (if fields.contains("initialization") then Set("initialization") else Set.empty) ++
+        (if fields.contains("censorTreatment") then Set("censorTreatment") else Set.empty) ++
+        (if fields.contains("fgls") then Set("fgls") else Set.empty))
       order <- value.field("order").flatMap(_.integer)
       iterations <- value.field("iterations").flatMap(_.integer)
       global <- value.field("global").flatMap(_.bool)
@@ -95,16 +127,26 @@ object ModelBuildSpecJsonCodec:
       exactFirst <- value.field("exactFirst").flatMap(_.bool)
       censored <- value.field("censoredTimepoints").flatMap(_.arr).flatMap(items => traverse(items)(_.integer))
       coefficients <- value.field("coefficients").flatMap(readArCoefficients)
-      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients), value.path)(_.message)
+      policy <- if fields.contains("biasCorrection") then value.field("biasCorrection").flatMap(readBiasCorrection) else Right(ArBiasCorrection.Raw)
+      initialization <- if fields.contains("initialization") then value.field("initialization").flatMap(c => enumCase(c, "AR initialization", ArInitialization.values)).map(Some(_)) else Right(None)
+      censorTreatment <- if fields.contains("censorTreatment") then value.field("censorTreatment").flatMap(c => enumCase(c, "AR censor treatment", ArCensorTreatment.values)) else Right(ArCensorTreatment.RestartWhitening)
+      fgls <- if fields.contains("fgls") then value.field("fgls").flatMap: c =>
+        for
+          _ <- c.fields(Set("scope", "uncertainty"))
+          scope <- c.field("scope").flatMap(enumCase(_, "voxel AR scope", VoxelArScope.values))
+          uncertainty <- c.field("uncertainty").flatMap(enumCase(_, "covariance uncertainty", CovarianceUncertainty.values))
+        yield Some(VoxelwiseFglsOptions(scope, uncertainty))
+      else Right(None)
+      config <- admit(AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censored, coefficients, policy, initialization, censorTreatment, fgls), value.path)(_.message)
     yield config
 
-  private def lss(value: LssStrategyConfig, path: String): Result[Value] =
+  private[model] def lss(value: LssStrategyConfig, path: String): Result[Value] =
     for
       eps <- number(value.eps, s"$path.eps")
       rankTol <- number(value.rankTol, s"$path.rankTol")
     yield Obj("trialTerm" -> opt(value.trialTerm.map(_.value)), "eps" -> eps, "rankTol" -> rankTol)
 
-  private def readLss(value: Cursor): Result[LssStrategyConfig] =
+  private[model] def readLss(value: Cursor): Result[LssStrategyConfig] =
     for
       _ <- value.fields(Set("trialTerm", "eps", "rankTol"))
       trialTerm <- value.field("trialTerm").flatMap(_.nullable(_.str))
@@ -113,17 +155,17 @@ object ModelBuildSpecJsonCodec:
       config <- admit(LssStrategyConfig(trialTerm, eps, rankTol), value.path)(_.message)
     yield config
 
-  private def strategy(value: FitStrategy): Result[Value] = value match
+  private def strategy(value: FitStrategy, path: String): Result[Value] = value match
     case FitStrategy.OrdinaryLeastSquares(controls) if controls == FitControls() => Right(Str("ols"))
     case FitStrategy.RunwiseLeastSquares(controls) if controls == FitControls() => Right(Str("runwise-ols"))
     case FitStrategy.SeparateRunsThenFixedEffects(controls) if controls == FitControls() => Right(Str("fixed-effects-ols"))
     case FitStrategy.GeneralizedLeastSquares(ar, controls) if controls == FitControls() =>
-      autocorrelation(ar, "$.strategy.ar").map(a => Obj("kind" -> Str("gls"), "ar" -> a))
+      autocorrelation(ar, s"$path.ar").map(a => Obj("kind" -> Str("gls"), "ar" -> a))
     case FitStrategy.RunwiseGeneralizedLeastSquares(ar, controls) if controls == FitControls() =>
-      autocorrelation(ar, "$.strategy.ar").map(a => Obj("kind" -> Str("runwise-gls"), "ar" -> a))
+      autocorrelation(ar, s"$path.ar").map(a => Obj("kind" -> Str("runwise-gls"), "ar" -> a))
     case FitStrategy.LeastSquaresSeparate(config, controls) if controls == FitControls() =>
-      lss(config, "$.strategy.lss").map(l => Obj("kind" -> Str("lss"), "lss" -> l))
-    case _ => fail("$.strategy", "this strategy or its controls requires an extended portable profile")
+      lss(config, s"$path.lss").map(l => Obj("kind" -> Str("lss"), "lss" -> l))
+    case _ => fail(path, "this strategy or its controls requires an extended portable profile")
 
   private def readStrategy(value: Cursor): Result[FitStrategy] = value.value match
     case Str("ols") => Right(FitStrategy.OrdinaryLeastSquares())
@@ -146,8 +188,8 @@ object ModelBuildSpecJsonCodec:
 
   // ----------------------------------------------------------- missing values
 
-  private def missing(value: MissingValuePolicy): Result[Value] = value match
-    case MissingValuePolicy.ImputeConstant(v) => number(v, "$.missingValuePolicy.value").map(n => Obj("kind" -> Str("impute"), "value" -> n))
+  private def missing(value: MissingValuePolicy, path: String): Result[Value] = value match
+    case MissingValuePolicy.ImputeConstant(v) => number(v, s"$path.value").map(n => Obj("kind" -> Str("impute"), "value" -> n))
     case other => Right(Obj("kind" -> Str(other.label)))
 
   private def readMissing(value: Cursor): Result[MissingValuePolicy] =
@@ -163,13 +205,13 @@ object ModelBuildSpecJsonCodec:
 
   // --------------------------------------------------------- orthogonalization
 
-  private def orthogonalization(value: ModulatorOrthogonalizationPlan): Result[Value] =
+  private def orthogonalization(value: ModulatorOrthogonalizationPlan, path: String): Result[Value] =
     traverse(value.policies.toVector.zipWithIndex) { (p, index) =>
       val scope = p.scope match
         case OrthogonalizationScope.WholeTerm => Obj("kind" -> Str("term"))
         case OrthogonalizationScope.WithinRun => Obj("kind" -> Str("run"))
         case OrthogonalizationScope.WithinCells(factors) => Obj("kind" -> Str("cells"), "factors" -> Arr.from(factors.map(_.value)))
-      number(p.tolerance, s"$$.orthogonalization[$index].tolerance").map: tolerance =>
+      number(p.tolerance, s"$path[$index].tolerance").map: tolerance =>
         Obj("term" -> Str(p.term.value), "order" -> Arr.from(p.order.map(_.value)), "scope" -> scope,
           "degenerate" -> Str(p.degenerate.toString), "tolerance" -> tolerance)
     }.map(Arr.from(_))
@@ -212,16 +254,16 @@ object ModelBuildSpecJsonCodec:
 
   // ------------------------------------------------------------------ nuisance
 
-  private def nuisance(value: Option[NuisanceRegressors]): Result[Value] = value match
+  private def nuisance(value: Option[NuisanceRegressors], path: String): Result[Value] = value match
     case None => Right(Null)
     case Some(n) =>
       for
         matrices <- traverse(n.matrices.zipWithIndex) { (m, index) =>
-          PortableJson.numbers(m.data.toVector, s"$$.nuisance.matrices[$index].values").map(values =>
+          PortableJson.numbers(m.data.toVector, s"$path.matrices[$index].values").map(values =>
             Obj("rows" -> Num(m.rows), "cols" -> Num(m.cols), "values" -> values))
         }
-        tol <- number(n.tol, "$.nuisance.tol")
-        duplicateThreshold <- number(n.duplicateThreshold, "$.nuisance.duplicateThreshold")
+        tol <- number(n.tol, s"$path.tol")
+        duplicateThreshold <- number(n.duplicateThreshold, s"$path.duplicateThreshold")
       yield Obj("matrices" -> Arr.from(matrices),
         "names" -> n.names.fold[Value](Null)(blocks => Arr.from(blocks.map(Arr.from(_)))),
         "check" -> Str(n.check.toString), "naAction" -> Str(n.naAction.toString),
@@ -269,38 +311,50 @@ object ModelBuildSpecJsonCodec:
 
   def encode(spec: ModelBuildSpec): Either[ModelJsonError, String] =
     for
-      _ <- admit(FormulaParser.parseEither(spec.formula), "$.formula")(_.getMessage)
-      // Only the literal built-in singleton is admitted: equal user-supplied
-      // descriptors cannot certify an arbitrary executable HRF callback.
-      _ <- requirePortable(spec.defaultHrf eq Hrfs.SPMG1, "$.defaultHrf")
-      _ <- requirePortable(spec.factorSchemaBinding.isEmpty, "$.factorSchemaBinding")
-      _ <- requirePortable(spec.hrfByCell.isEmpty, "$.hrfByCell")
-      _ <- requirePortable(spec.hrfByPhase.isEmpty, "$.hrfByPhase")
-      baselineValue <- baseline(spec.baselineBasis)
-      strategyValue <- strategy(spec.strategy)
-      precision <- number(spec.precision.value, "$.precision")
-      contrastSets <- traverse(spec.contrastSets.toVector.sortBy(_._1)) { (name, set) =>
-        traverse(set.contrasts.zipWithIndex)((c, index) => ModelJsonCodec.contrastEnvelope(c, s"$$.contrastSets.$name[$index]"))
-          .map(values => name -> Arr.from(values))
-      }
-      nuisanceValue <- nuisance(spec.nuisance)
-      missingValue <- missing(spec.missingValuePolicy)
-      orthogonalizationValue <- orthogonalization(spec.orthogonalization)
-      text <- PortableJson.render(Obj("schema" -> Str("scalafim.model-build"), "version" -> Num(1), "formula" -> Str(spec.formula),
-        "blockColumn" -> opt(spec.blockColumn), "durationColumn" -> opt(spec.durationColumn),
-        "baseline" -> baselineValue, "baselineDegree" -> Num(spec.baselineDegree),
-        "intercept" -> Str(spec.baselineIntercept.toString), "strategy" -> strategyValue,
-        "defaultHrf" -> Str("SPMG1"), "precision" -> precision,
-        "dropEmpty" -> Bool(spec.dropEmpty), "summate" -> Bool(spec.summate), "strict" -> Bool(spec.strict),
-        "contrastSets" -> Obj.from(contrastSets),
-        "nuisance" -> nuisanceValue,
-        "factorLevels" -> Arr.from(spec.factorLevels.sets.map(s => Obj("factor" -> Str(s.factor.value), "levels" -> Arr.from(s.values)))),
-        "emptyCellPolicy" -> Str(spec.emptyCellPolicy.toString), "missingValuePolicy" -> missingValue,
-        "degenerateModulatorPolicy" -> Str(spec.degenerateModulatorPolicy.toString), "orthogonalization" -> orthogonalizationValue
-      ))
+      _ <- ensure(spec.derived.isEmpty, "$.derived", "derived declarations require the scalafim.model-document envelope")
+      formula <- formulaValue(spec, "$.formula")
+      body <- encodeBody(spec, "$", strategy)
+      text <- PortableJson.render(Obj.from(Vector("schema" -> Str("scalafim.model-build"), "version" -> Num(if spec.strategy.config.autocorrelation.fgls.nonEmpty then 2 else 1), "formula" -> formula) ++ body))
     yield text
 
-  private val buildFields = Set("schema", "version", "formula", "blockColumn", "durationColumn", "baseline", "baselineDegree",
+  private[model] def formulaValue(spec: ModelBuildSpec, path: String): Result[Value] =
+    admit(FormulaParser.parseEither(spec.formula), path)(_.getMessage).map(_ => Str(spec.formula))
+
+  /** Every build field except the schema header, formula and derived plan.
+    * `root` is the JSON path of the object these fields belong to.
+    */
+  private[model] def encodeBody(spec: ModelBuildSpec, root: String, encodeStrategy: (FitStrategy, String) => Result[Value]): Result[Vector[(String, Value)]] =
+    for
+      // Only the literal built-in singleton is admitted: equal user-supplied
+      // descriptors cannot certify an arbitrary executable HRF callback.
+      _ <- requirePortable(spec.defaultHrf eq Hrfs.SPMG1, s"$root.defaultHrf")
+      _ <- requirePortable(spec.factorSchemaBinding.isEmpty, s"$root.factorSchemaBinding")
+      _ <- requirePortable(spec.hrfByCell.isEmpty, s"$root.hrfByCell")
+      _ <- requirePortable(spec.hrfByPhase.isEmpty, s"$root.hrfByPhase")
+      baselineValue <- baseline(spec.baselineBasis, s"$root.baseline")
+      strategyValue <- encodeStrategy(spec.strategy, s"$root.strategy")
+      precision <- number(spec.precision.value, s"$root.precision")
+      contrastSets <- traverse(spec.contrastSets.toVector.sortBy(_._1)) { (name, set) =>
+        traverse(set.contrasts.zipWithIndex)((c, index) => ModelJsonCodec.contrastEnvelope(c, s"$root.contrastSets.$name[$index]"))
+          .map(values => name -> Arr.from(values))
+      }
+      nuisanceValue <- nuisance(spec.nuisance, s"$root.nuisance")
+      missingValue <- missing(spec.missingValuePolicy, s"$root.missingValuePolicy")
+      orthogonalizationValue <- orthogonalization(spec.orthogonalization, s"$root.orthogonalization")
+    yield Vector(
+      "blockColumn" -> opt(spec.blockColumn), "durationColumn" -> opt(spec.durationColumn),
+      "baseline" -> baselineValue, "baselineDegree" -> Num(spec.baselineDegree),
+      "intercept" -> Str(spec.baselineIntercept.toString), "strategy" -> strategyValue,
+      "defaultHrf" -> Str("SPMG1"), "precision" -> precision,
+      "dropEmpty" -> Bool(spec.dropEmpty), "summate" -> Bool(spec.summate), "strict" -> Bool(spec.strict),
+      "contrastSets" -> Obj.from(contrastSets),
+      "nuisance" -> nuisanceValue,
+      "factorLevels" -> Arr.from(spec.factorLevels.sets.map(s => Obj("factor" -> Str(s.factor.value), "levels" -> Arr.from(s.values)))),
+      "emptyCellPolicy" -> Str(spec.emptyCellPolicy.toString), "missingValuePolicy" -> missingValue,
+      "degenerateModulatorPolicy" -> Str(spec.degenerateModulatorPolicy.toString), "orthogonalization" -> orthogonalizationValue
+    )
+
+  private[model] val bodyFields = Set("blockColumn", "durationColumn", "baseline", "baselineDegree",
     "intercept", "strategy", "defaultHrf", "precision", "dropEmpty", "summate", "strict", "contrastSets", "nuisance",
     "factorLevels", "emptyCellPolicy", "missingValuePolicy", "degenerateModulatorPolicy", "orthogonalization")
 
@@ -313,20 +367,30 @@ object ModelBuildSpecJsonCodec:
   def decode(input: String): Either[ModelJsonError, ModelBuildSpec] =
     for
       v <- PortableJson.parse(input)
-      _ <- v.fields(buildFields)
+      _ <- v.fields(bodyFields ++ Set("schema", "version", "formula"))
       schema <- str(v, "schema")
       _ <- ensure(schema == "scalafim.model-build", "$.schema", "unsupported model-build schema")
       version <- v.field("version").flatMap(_.integer)
-      _ <- ensure(version == 1, "$.version", "unsupported model-build version")
+      _ <- ensure(version == 1 || version == 2, "$.version", "unsupported model-build version")
+      formula <- v.field("formula").flatMap(readFormula)
+      spec <- readBody(v, formula, readStrategy)
+      _ <- ensure(version >= 2 || spec.strategy.config.autocorrelation.fgls.isEmpty, "$.version", "voxelwise FGLS requires model-build version 2")
+    yield spec
+
+  private[model] def readFormula(cursor: Cursor): Result[String] =
+    cursor.str.flatMap(formula => admit(FormulaParser.parseEither(formula), cursor.path)(_.getMessage).map(_ => formula))
+
+  /** Read the build fields of `v`; the caller has checked its exact field set. */
+  private[model] def readBody(v: Cursor, formula: String, readStrategy: Cursor => Result[FitStrategy]): Result[ModelBuildSpec] =
+    val at = (name: String) => s"${v.path}.$name"
+    for
       defaultHrf <- str(v, "defaultHrf")
-      _ <- ensure(defaultHrf == "SPMG1", "$.defaultHrf", "unsupported default HRF")
-      formula <- str(v, "formula")
-      _ <- admit(FormulaParser.parseEither(formula), "$.formula")(_.getMessage)
+      _ <- ensure(defaultHrf == "SPMG1", at("defaultHrf"), "unsupported default HRF")
       blockColumn <- optionalColumn(v, "blockColumn")
       durationColumn <- optionalColumn(v, "durationColumn")
       baselineBasis <- v.field("baseline").flatMap(readBaseline)
       baselineDegree <- v.field("baselineDegree").flatMap(_.integer)
-      _ <- ensure(baselineDegree >= 1, "$.baselineDegree", "baseline degree must be at least 1")
+      _ <- ensure(baselineDegree >= 1, at("baselineDegree"), "baseline degree must be at least 1")
       intercept <- v.field("intercept").flatMap(enumCase(_, "intercept", Intercept.values))
       fitStrategy <- v.field("strategy").flatMap(readStrategy)
       precisionCursor <- v.field("precision")
@@ -349,7 +413,7 @@ object ModelBuildSpecJsonCodec:
           set <- admit(FactorLevelSet.from(factor, values), s.path)(_.message)
         yield set
       }
-      registry <- admit(FactorLevelRegistry.from(levels), "$.factorLevels")(_.message)
+      registry <- admit(FactorLevelRegistry.from(levels), at("factorLevels"))(_.message)
       emptyCellPolicy <- v.field("emptyCellPolicy").flatMap(enumCase(_, "empty-cell policy", EmptyCellPolicy.values))
       missingValuePolicy <- v.field("missingValuePolicy").flatMap(readMissing)
       degenerate <- v.field("degenerateModulatorPolicy").flatMap(enumCase(_, "degenerate modulator policy", DegenerateModulatorPolicy.values))

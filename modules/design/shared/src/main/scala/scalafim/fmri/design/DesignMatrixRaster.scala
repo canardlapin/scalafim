@@ -13,6 +13,23 @@ final case class DesignMatrixRaster private[design] (
     scene: Scene
 )
 
+/** Display colours for [[DesignMatrixRaster]]. Each cell mixes from `paper`
+  * towards an ink by its display-scaled magnitude: task columns use `positive`
+  * or `negative` by sign, every non-task column uses `nuisance` at 35% strength.
+  * All four channels, alpha included, are mixed. Colour is display-only and
+  * never changes column ids, scan identities or scaling.
+  */
+final case class DesignMatrixPalette(positive: Rgba32, negative: Rgba32, nuisance: Rgba32, paper: Rgba32)
+
+object DesignMatrixPalette:
+  /** The light palette: rust positive, blue negative, grey nuisance on off-white paper. */
+  val Default: DesignMatrixPalette = DesignMatrixPalette(
+    positive = Rgba32.unsafe(181, 96, 55),
+    negative = Rgba32.unsafe(63, 108, 143),
+    nuisance = Rgba32.unsafe(65, 82, 76),
+    paper = Rgba32.unsafe(248, 249, 247)
+  )
+
 enum DesignMatrixRasterError:
   case EmptyAxes(columns: Int, scans: Int)
   case InvalidCellBudget(maximumCells: Int)
@@ -65,7 +82,11 @@ object DesignMatrixRaster:
 
   private inline def mix(paper: Int, ink: Int, amount: Double): Int = math.round(paper + amount * (ink - paper)).toInt
 
-  def build(review: DesignReview, maximumCells: Int = 2000000): Either[DesignMatrixRasterError, DesignMatrixRaster] =
+  def build(
+      review: DesignReview,
+      maximumCells: Int = 2000000,
+      palette: DesignMatrixPalette = DesignMatrixPalette.Default
+  ): Either[DesignMatrixRasterError, DesignMatrixRaster] =
     val cells = review.columns.size.toLong * review.scans.size
     if review.columns.isEmpty || review.scans.isEmpty then Left(DesignMatrixRasterError.EmptyAxes(review.columns.size, review.scans.size))
     else if maximumCells < 1 then Left(DesignMatrixRasterError.InvalidCellBudget(maximumCells))
@@ -80,6 +101,7 @@ object DesignMatrixRaster:
           case StructuralColumnOrigin.Sampled(_, role, _) => isTask(role)
           case StructuralColumnOrigin.Legacy(ModelSource.Event, _, _) => true
           case _ => false).toArray
+        val paper = palette.paper
         val pixels = new Array[Int](dimensions.pixelCount)
         var row = 0
         while row < dimensions.height do
@@ -88,11 +110,10 @@ object DesignMatrixRaster:
             val value = review.scaled(row, column)
             val isTaskColumn = task(column)
             val amount = math.min(1.0, math.abs(value)) * (if isTaskColumn then 1.0 else 0.35)
-            val red = if !isTaskColumn then 65 else if value < 0 then 63 else 181
-            val green = if !isTaskColumn then 82 else if value < 0 then 108 else 96
-            val blue = if !isTaskColumn then 76 else if value < 0 then 143 else 55
+            val ink = if !isTaskColumn then palette.nuisance else if value < 0 then palette.negative else palette.positive
             pixels(row * dimensions.width + column) =
-              (mix(248, red, amount) << 24) | (mix(249, green, amount) << 16) | (mix(247, blue, amount) << 8) | 255
+              (mix(paper.red, ink.red, amount) << 24) | (mix(paper.green, ink.green, amount) << 16) |
+                (mix(paper.blue, ink.blue, amount) << 8) | mix(paper.alpha, ink.alpha, amount)
             column += 1
           row += 1
         val image = RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)

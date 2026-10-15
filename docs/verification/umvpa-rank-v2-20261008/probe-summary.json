@@ -1,0 +1,77 @@
+{
+  "status": "resource-fixtures-complete-no-rate-qualification",
+  "records": 16,
+  "unique_datasets": 8,
+  "failed_evaluations": 0,
+  "groups": [
+    {
+      "n": 80,
+      "method": "canonical-rank-score-orthogonal-permutation/v2",
+      "fixtures": 4,
+      "mean_seconds": 0.0723229375,
+      "median_seconds": 0.024143750000000002,
+      "minimum_seconds": 0.014385625,
+      "maximum_seconds": 0.226618625,
+      "maximum_planned_owned_cells": 161760
+    },
+    {
+      "n": 80,
+      "method": "canonical-rank-gaussian-interlacing-wilks/v1",
+      "fixtures": 4,
+      "mean_seconds": 0.07838488525000001,
+      "median_seconds": 0.072426333,
+      "minimum_seconds": 0.042925125,
+      "maximum_seconds": 0.12576175,
+      "maximum_planned_owned_cells": 145840
+    },
+    {
+      "n": 640,
+      "method": "canonical-rank-score-orthogonal-permutation/v2",
+      "fixtures": 4,
+      "mean_seconds": 0.076372385,
+      "median_seconds": 0.0679395415,
+      "minimum_seconds": 0.064605291,
+      "maximum_seconds": 0.105005166,
+      "maximum_planned_owned_cells": 6975280
+    },
+    {
+      "n": 640,
+      "method": "canonical-rank-gaussian-interlacing-wilks/v1",
+      "fixtures": 4,
+      "mean_seconds": 0.256157417,
+      "median_seconds": 0.253539834,
+      "minimum_seconds": 0.248709125,
+      "maximum_seconds": 0.268840875,
+      "maximum_planned_owned_cells": 6847920
+    }
+  ],
+  "pair_seconds_by_n": {
+    "80": [
+      0.319924916,
+      0.084154459,
+      0.141441166,
+      0.05731075
+    ],
+    "640": [
+      0.37384604099999996,
+      0.317264208,
+      0.318302125,
+      0.320706834
+    ]
+  },
+  "planning_sensitivity": {
+    "proposed_unique_datasets": 12800,
+    "method_scope": "Only the two new methods; excludes historical comparator, generation, startup, serialization and longer-run GC.",
+    "assumption": "Use n80 measurements for 5600 datasets and n640 measurements for all 7200 n160/n320/n640 datasets.",
+    "using_observed_means_seconds": 3238.1783818,
+    "using_observed_maxima_seconds": 4483.2710248,
+    "resource_admission": false
+  },
+  "limitations": [
+    "One fixture per shape, fixed method order and startup/JIT effects; no timing confidence interval or performance guarantee.",
+    "RSS samples begin after the resident sbt server exposes its socket; early startup memory is not observed.",
+    "The 4 GiB check covers the sampled resident sbt JVM, excluding the thin client and generator.",
+    "Historical-method timing and the complete aggregate budget remain necessary before the paired campaign.",
+    "No pilot/confirmation streams consumed and no error-rate or power conclusion follows from these fixtures."
+  ]
+}

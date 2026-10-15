@@ -216,16 +216,37 @@ private[run] object ScratchRegistry:
       installed = true
     live.put(s, new java.util.concurrent.atomic.AtomicLong(-1L)): Unit
   }
-  def unregister(s: Scratch): Unit = live.remove(s): Unit
-  def setGroup(s: Scratch, pgid: Long): Unit = Option(live.get(s)).foreach(_.set(pgid))
+  // Removing a RAM directory does not terminate a child using it on Linux.
+  // Keep group ownership independently until its termination is verified.
+  def unregister(s: Scratch): Unit = synchronized {
+    Option(live.get(s)).filter(_.get <= 0L).foreach(e => live.remove(s, e): Unit)
+  }
+  def setGroup(s: Scratch, pgid: Long): Unit = synchronized {
+    Option(live.get(s)).foreach(_.set(pgid))
+  }
+  def clearGroup(s: Scratch, pgid: Long): Unit = synchronized {
+    Option(live.get(s)).foreach(e => e.compareAndSet(pgid, -1L): Unit)
+  }
   def liveCount: Int = live.size()
 
   def shutdownAll(): Unit =
     live.entrySet().asScala.toVector.foreach { e =>
       val g = e.getValue.get
-      if g > 0 then Try(RamScratch.cmd(Seq("/bin/kill", "-KILL", "--", s"-$g"), 10L)): Unit
-      try e.getKey.release(): Unit
-      catch case _: Throwable => ()
+      val groupGone =
+        if g <= 0L then true
+        else
+          try
+            GlmSingleBridge.killAndVerifyGroup(g) {
+              val _ = RamScratch.cmd(Seq("/bin/kill", "-KILL", "--", s"-$g"), 10L)
+            } == 0
+          catch case _: Throwable => false
+      if groupGone && g > 0L then clearGroup(e.getKey, g)
+      val released =
+        try e.getKey.release().isRight
+        catch case _: Throwable => false
+      // release may already have completed during the refused run. It still
+      // cannot remove the registration until the real group kill is verified.
+      if groupGone && released then unregister(e.getKey)
     }
 
 /** Paths of the macOS tools, so a test can substitute a failing or hanging one. */
@@ -594,12 +615,19 @@ object RamScratch:
           try
             val d = Files.createTempDirectory(shm, s"$ShmPrefix$ownerPid-", PosixFilePermissions.asFileAttribute(rwx))
             val s = new ShmScratch(d, hook)
-            ScratchRegistry.register(s)
             try
+              // Registration may fail during JVM shutdown. The private path is
+              // already allocated, so it needs the same rollback as layout.
+              ScratchRegistry.register(s)
               subdirs(d)
               emit(hook, ScratchEvent.Created("linux-dev-shm", d.toString))
               Right(s)
             catch
+              case e: Exception =>
+                val refused = GlmSingleRefusal.ScratchSetupFailed("mkdir", e.getClass.getSimpleName)
+                s.release() match
+                  case Left(c)  => Left(GlmSingleRefusal.ScratchResidue("setup-cleanup", c.message, Some(refused.message)))
+                  case Right(_) => Left(refused)
               case t: Throwable =>
                 s.release(): Unit
                 throw t
@@ -894,6 +922,7 @@ object GlmSingleBridge:
         finally
           // Process-group kill comes first on every path (also when the child already exited: stragglers).
           survivors = killGroup(pgid, pr, config.hook, config.killer)
+          if survivors == 0 then ScratchRegistry.clearGroup(scratch, pgid)
           try { pr.waitFor(10, TimeUnit.SECONDS): Unit } catch case _: InterruptedException => interrupted = true
           try reader.join(5000L) catch case _: InterruptedException => interrupted = true
           if interrupted then Thread.currentThread().interrupt()
@@ -940,24 +969,35 @@ object GlmSingleBridge:
     * counted as surviving.
     */
   private[run] def killGroup(pgid: Long, process: Process, hook: ScratchHook, killer: GroupKiller): Int =
+    killAndVerifyGroup(pgid, left => RamScratch.emit(hook, ScratchEvent.ProcessGroupKilled(pgid, left)))(killer.kill(pgid, process))
+
+  /** The normal and shutdown paths share the same bounded kill/retry verifier.
+    * Every pgrep member, including zombies, counts; an unknown answer survives.
+    */
+  private[run] def killAndVerifyGroup(pgid: Long, report: Int => Unit = _ => ())(kill: => Unit): Int =
     var intr = Thread.interrupted()
     def members: Int =
       val r = RamScratch.cmd(Seq("/usr/bin/pgrep", "-g", pgid.toString), 10L)
       if r.exit == 0 then r.out.linesIterator.count(_.trim.nonEmpty).max(1)
       else if r.exit == 1 then 0
       else 1
-    killer.kill(pgid, process)
-    var left = members
-    var i = 0
-    while left > 0 && i < 20 do
+    try
+      kill
+      var left = members
+      var i = 0
+      while left > 0 && i < 20 do
+        if Thread.interrupted() then intr = true
+        try Thread.sleep(50L) catch case _: InterruptedException => intr = true
+        if i % 5 == 4 then kill
+        left = members
+        i += 1
+      // A hook may consume the thread's flag. Report before the final restore
+      // so it cannot swallow an interrupt held by this teardown operation.
+      report(left)
+      left
+    finally
       if Thread.interrupted() then intr = true
-      try Thread.sleep(50L) catch case _: InterruptedException => intr = true
-      if i % 5 == 4 then killer.kill(pgid, process)
-      left = members
-      i += 1
-    RamScratch.emit(hook, ScratchEvent.ProcessGroupKilled(pgid, left))
-    if intr then Thread.currentThread().interrupt()
-    left
+      if intr then Thread.currentThread().interrupt()
 
   private final class TailBuffer(cap: Int):
     private val buf = new java.io.ByteArrayOutputStream

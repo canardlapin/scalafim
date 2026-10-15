@@ -1,0 +1,9 @@
+{
+  "cells": 61,
+  "datasets": 12200,
+  "seed_assignments": "exact",
+  "archived_input_hashes": "exact",
+  "case_headers": "exact",
+  "model_fits_performed": 0,
+  "auditor_sha256": "dc382dd5c8213b6895ecd180265243353b0819a8a07881a8360b0df2d7067ecd"
+}

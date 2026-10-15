@@ -2,6 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.fmri.design.hrf.KernelBasisProvenance.{matrix, number, option, record}
 import scalafim.fmri.model.{
+  ArBiasCorrection,
   ArOptions,
   ArStructure,
   DvarsWeightEstimator,
@@ -113,22 +114,45 @@ private[fit] object ResponsePreparationIdentity:
         values.copyRowMajorTo(rowMajor)
         record("matrix_projection", matrix(values.rows, values.cols, rowMajor), regularization(lambda))
 
+  /** Scientific correction policy encoded in the versioned AR options record. */
+  private[fit] def biasCorrection(value: ArBiasCorrection): String =
+    value match
+      case ArBiasCorrection.Raw => record("raw")
+      case ArBiasCorrection.OlsDesign(ceiling) => record("ols_design", s"ceiling=${ceiling.value}")
+      case ArBiasCorrection.OlsTailAnchored(maxLag) => record("ols_tail_anchored", s"maxLag=${maxLag.value}")
+
+  private def voxelwiseFgls(value: scalafim.fmri.model.VoxelwiseFglsOptions): String =
+    import scalafim.fmri.model.{VoxelwiseFglsOptions, VoxelArScope, CovarianceUncertainty}
+    value match
+      case VoxelwiseFglsOptions(scope, uncertainty) =>
+        val rows = scope match
+          case VoxelArScope.PerRun => "per_run"
+          case VoxelArScope.AcrossRuns => "across_runs"
+        val inference = uncertainty match
+          case CovarianceUncertainty.Conditional => "conditional"
+          case CovarianceUncertainty.KenwardRoger => "kenward_roger"
+        record("voxelwise_fgls", s"scope=$rows", s"uncertainty=$inference")
+
   private[fit] def autocorrelation(value: ArOptions): String =
     value match
-      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi) =>
+      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi, correction, initialization, censorTreatment, fgls) =>
         val order = structure match
           case ArStructure.Iid => record("iid")
           case ArStructure.Ar(order) => record("ar", order.toString)
         record(
-          "ar_options",
-          s"structure=$order",
+          "ar_options/v4",
+          (Vector(s"structure=$order",
           s"iterations=$iterations",
           s"global=$global",
           s"voxelwise=$voxelwise",
           s"exactFirst=$exactFirst",
+          s"initialization=${initialization.fold("legacy")(_.toString)}",
+          s"censorTreatment=$censorTreatment",
+          s"fgls=${option(fgls.map(voxelwiseFgls))}",
           s"censoredTimepoints=${ints("timepoints", censoredTimepoints)}",
           s"rho=${option(rho.map(number))}",
           s"phi=${option(phi.map(numbers))}"
+          ) ++ (if correction == ArBiasCorrection.Raw then Vector.empty else Vector(s"biasCorrection=${biasCorrection(correction)}")))*
         )
 
   private[fit] def robust(value: RobustOptions): String =

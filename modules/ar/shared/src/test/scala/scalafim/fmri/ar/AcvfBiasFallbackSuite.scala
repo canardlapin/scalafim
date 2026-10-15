@@ -57,7 +57,7 @@ class AcvfBiasFallbackSuite extends munit.FunSuite:
     )
     val zeros = Matrix.tabulate(10, 1)((_, _) => 0.0)
     val pooled = ArEstimation
-      .pooledAutocovariance(zeros, TimeSegments.continuous(10), ArOrderValue.unsafe(1), Some(Identity))
+      .pooledAutocovariance(zeros, TimeSegments.continuous(10), ArOrderValue.unsafe(1), Some(AcvfCorrection(Identity)))
       .fold(e => fail(e.message), identity)
     assertEquals(pooled.correctionFallback, Some(CorrectionFallback.NonPositiveRawVariance(0.0)))
     assert(!pooled.correctionApplied)

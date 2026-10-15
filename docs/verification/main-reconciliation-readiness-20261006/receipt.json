@@ -1,0 +1,107 @@
+{
+  "recorded_at": "2026-10-06T12:54:42.522512+00:00",
+  "base_commit": "bc981ddf09016c1e29b30810f53cff4517df95d3",
+  "changes": [
+    "Deterministic JVM lifecycle test: otherReady latch inside interruption-catching region, plus distinct captured-thread joins within one5second deadline before retaining all4thread-death assertions"
+  ],
+  "withdrawn_initial_proposal": {
+    "patch": "withdrawn-bootstrap-proposal.patch",
+    "initial_receipt": "initial-withdrawn-proposal.json",
+    "reason": "Focused and coverage first-level dependency closures do not reach Multivar or its unpublished provider artifacts. Their historical jobs successfully reached scientific tests without bootstrap. The extra preparation added avoidable publication/loading cost and was withdrawn. Existing full-repository preparation remains byte-identical."
+  },
+  "authentication": {
+    "canonical_profile": "tools/github/gh-repo",
+    "verified_login": "canardlapin",
+    "api_user_status": 200,
+    "repository_admin_permissions": true,
+    "job_logs_retrieved": true,
+    "previous_401_403_records": "Retained in initial-withdrawn-proposal.json and public-ci-api.json; superseded after root refreshed canonical authentication"
+  },
+  "historical_runs": {
+    "37379226968": {
+      "head_sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+      "full_compile": "success",
+      "full_tests_failure": "firstLevelLawsJS CompactConditionRuntimeSuite synthetic cohort admitted21of24; unchanged law requires>=90%=22",
+      "focused_failure": "same law failure",
+      "coverage": "success"
+    },
+    "37383711609": {
+      "head_sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+      "full_compile": "success",
+      "full_tests_failure": "same firstLevelLawsJS synthetic-cohort admission failure",
+      "focused_failure": "same law failure",
+      "coverage_failure": "fitJVM ParallelBlockExecutorSuite worker-failure lifecycle test line129 immediate Thread.isAlive assertion; did not reach fit coverage floor report"
+    }
+  },
+  "historical_ci_runtime": {
+    "os": "Ubuntu24.04 x64",
+    "jdk": "Temurin17.0.20-1",
+    "node": "24.21.0"
+  },
+  "current_reproduction": {
+    "base": "bc981ddf",
+    "os": "macOS ARM64",
+    "jdk": "Temurin21.0.12.1+1",
+    "committed_provider_pins": true,
+    "source_overrides": [],
+    "baseline_jvm": {
+      "compact_tests_passed": 3,
+      "admitted": 24,
+      "cohort": 24,
+      "parallel_before_repair_passed": 10
+    },
+    "matching_node_js": {
+      "node": "24.21.0",
+      "compact_tests_passed": 3,
+      "admitted": 22,
+      "cohort": 24,
+      "max_latency_error": 0.00037063737046416634,
+      "max_relative_amplitude_error": 0.00010634654267688103,
+      "node_scores_per_voxel": 71.875,
+      "jets_per_voxel": 4.458333333333333,
+      "exact_evaluations_per_voxel": 0.041666666666666664
+    }
+  },
+  "native_lifecycle_validation": {
+    "ordinary_repeats": 10,
+    "coverage_instrumented_repeats": 5,
+    "tests_per_repeat": 10,
+    "passing_test_executions": 150,
+    "failed_tests": 0,
+    "failed_test_commands": 0,
+    "compiler_warnings": 0,
+    "combined_runner_exit": 1,
+    "combined_runner_failure": "Only final optional set coverageEnabled:=false exhausted the3GB server during settings reapply (GC99%, disconnect); all15 test commands had already succeeded. Attempt retained; unique server shutdown subsequently exited0. No coverage floors were changed or evaluated by this subset."
+  },
+  "tmp_only_decoder_diagnostics": {
+    "tests_passed": 3,
+    "admitted": 22,
+    "refused_voxels": [
+      4,
+      15
+    ],
+    "status": "BudgetExceeded",
+    "budget_exit": "CandidateAttemptCap",
+    "candidate_energy_ulp_increase": {
+      "4": 2,
+      "15": 1
+    },
+    "scope": "Post-fit full-jet probes in TMP test source only; decoder policy, cohorts, quotas and assertions unchanged",
+    "remaining_scientific_limit": "Predicted decreases are below halfULP at current energies; exact frozen-double-design high-precision RSS differences were not measured, so no true-uphill or harmless-roundoff classification is claimed."
+  },
+  "source_sha256": {
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala": "3b629935fdd667c6f03aac0273cfa65b13c9e2da23c637b5051d92d492f2891f"
+  },
+  "workflow_sha256": "babccdba938718685881f384da7e5e56a6e890584bb5e562bac0d516b5084f74",
+  "archive": {
+    "path": "authenticated-logs-and-reproduction.tar.gz",
+    "sha256": "957c0c5e62a359b8f7b66e0e77942e5a81142cb4a7a31f757da37bcda488b5f3"
+  },
+  "limits": [
+    "Current compactlaw+decoder bytes equal both historical heads; local Node24.21/macOS pass22of24 does not establish a fix for Linux/x64 failure21of24",
+    "Coverage failure was a lifecycle test assertion, not a scientific coverage floor failure",
+    "No scientific decoder policy, scientific thresholds, cohorts, source pins or production executor code were changed",
+    "Archived UnresolvableDecrease policy is not adopted: it relaxes stationarity and depends on additive energy offsets",
+    "No main merge or ScalaFIM publication was performed by this agent; exact candidate GitHub CI remains required"
+  ]
+}

@@ -1,0 +1,293 @@
+{
+  "verified_at_utc": "2026-10-06T12:46:27.592962+00:00",
+  "base_commit": "bc981ddf09016c1e29b30810f53cff4517df95d3",
+  "mote": "bd-01M3QQ8EBSWQA0V65NYQATJXB3",
+  "status": "PassColorKernelOnly",
+  "full_provider_admitted": false,
+  "consumer_admitted": false,
+  "host": {
+    "os": "macOS 15.1.1",
+    "architecture": "arm64",
+    "jdk": "Temurin21.0.12.1+1",
+    "context": {
+      "status": "PassContextOnly",
+      "vendor": "Apple",
+      "renderer": "Apple M2 Pro",
+      "version": "4.1 Metal - 89.3",
+      "capabilities": "GLCaps[rgba 8/8/8/8, opaque, accum-rgba 0/0/0/0, dp/st/ms 16/0/0, one, mono  , hw, GLProfile[GL3/GL4.hw], offscr[fbo]]",
+      "pixel": [
+        64,
+        128,
+        191,
+        255
+      ],
+      "surfaceRenderPlanProvider": false,
+      "scientificQualification": false
+    }
+  },
+  "runtime": [
+    {
+      "url": "https://jogamp.org/deployment/maven/org/jogamp/jogl/jogl-all/2.6.0/jogl-all-2.6.0.jar",
+      "file": "jogl-all-2.6.0.jar",
+      "bytes": 3991187,
+      "sha256": "34c919bc6073c2d9e73cbe7558c4e9de6b5c58146f3658e2bcc5f23ec3fccc9f",
+      "upstream_sha1": "dc0dd5ce77cf31ea1dd8fc2c2c27592be76feb7c"
+    },
+    {
+      "url": "https://jogamp.org/deployment/maven/org/jogamp/jogl/jogl-all/2.6.0/jogl-all-2.6.0-natives-macosx-universal.jar",
+      "file": "jogl-all-2.6.0-natives-macosx-universal.jar",
+      "bytes": 583638,
+      "sha256": "81db6a2b50f3803d4307a8bd7570a4f78c41ae0d44361208d0885a5cdf289dfa",
+      "upstream_sha1": "380dbba3613c1a3dafc18389074ca7fc6720076c"
+    },
+    {
+      "url": "https://jogamp.org/deployment/maven/org/jogamp/gluegen/gluegen-rt/2.6.0/gluegen-rt-2.6.0.jar",
+      "file": "gluegen-rt-2.6.0.jar",
+      "bytes": 411363,
+      "sha256": "465bbc8d410b872a76b5b901cdb9c2c07905edd5e61a7120dc6a4d007880ec2f",
+      "upstream_sha1": "524e9cc0f1939e201ae548229c66bafca0e1ed24"
+    },
+    {
+      "url": "https://jogamp.org/deployment/maven/org/jogamp/gluegen/gluegen-rt/2.6.0/gluegen-rt-2.6.0-natives-macosx-universal.jar",
+      "file": "gluegen-rt-2.6.0-natives-macosx-universal.jar",
+      "bytes": 9734,
+      "sha256": "e543d5e81bc8b8f63e5dc365ac47da009f82175b2c6eba16a24ce3b2eb031773",
+      "upstream_sha1": "4bf2501aaa5cf4fad1cb76c725b0960208b12178"
+    }
+  ],
+  "runs": [
+    {
+      "command": [
+        "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/temurin-21.0.12.1+1.jdk/Contents/Home/bin/javac",
+        "-Xlint:all",
+        "-cp",
+        "/private/tmp/scalafim-native-plan-replay-20261006/runtime/gluegen-rt-2.6.0-natives-macosx-universal.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/gluegen-rt-2.6.0.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/jogl-all-2.6.0-natives-macosx-universal.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/jogl-all-2.6.0.jar",
+        "-d",
+        "/private/tmp/scalafim-native-plan-replay-20261006/classes",
+        "/Users/bbuchsbaum/code/scala/scalafim/tools/surface/native-renderer-spike/NativeContextProbe.java",
+        "/Users/bbuchsbaum/code/scala/scalafim/tools/surface/native-renderer-spike/NativeAffineProbe.java"
+      ],
+      "exit_code": 0,
+      "seconds": 1.334
+    },
+    {
+      "command": [
+        "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/temurin-21.0.12.1+1.jdk/Contents/Home/bin/java",
+        "-XstartOnFirstThread",
+        "-Djava.awt.headless=true",
+        "-Xmx256m",
+        "-cp",
+        "/private/tmp/scalafim-native-plan-replay-20261006/classes:/private/tmp/scalafim-native-plan-replay-20261006/runtime/gluegen-rt-2.6.0-natives-macosx-universal.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/gluegen-rt-2.6.0.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/jogl-all-2.6.0-natives-macosx-universal.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/jogl-all-2.6.0.jar",
+        "com.jogamp.newt.util.MainThread",
+        "NativeContextProbe",
+        "/private/tmp/scalafim-native-plan-replay-20261006/context.json"
+      ],
+      "exit_code": 0,
+      "seconds": 2.437
+    },
+    {
+      "command": [
+        "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/temurin-21.0.12.1+1.jdk/Contents/Home/bin/java",
+        "-XstartOnFirstThread",
+        "-Djava.awt.headless=true",
+        "-Xmx256m",
+        "-cp",
+        "/private/tmp/scalafim-native-plan-replay-20261006/classes:/private/tmp/scalafim-native-plan-replay-20261006/runtime/gluegen-rt-2.6.0-natives-macosx-universal.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/gluegen-rt-2.6.0.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/jogl-all-2.6.0-natives-macosx-universal.jar:/private/tmp/scalafim-native-plan-replay-20261006/runtime/jogl-all-2.6.0.jar",
+        "com.jogamp.newt.util.MainThread",
+        "NativeAffineProbe",
+        "/private/tmp/scalafim-native-plan-replay-20261006/inputs",
+        "/private/tmp/scalafim-native-plan-replay-20261006/frames"
+      ],
+      "exit_code": 0,
+      "seconds": 4.844
+    },
+    {
+      "command": [
+        "/private/tmp/scalafim-native-plan-replay-20261006/python/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--disable-pip-version-check",
+        "numpy==2.2.6",
+        "Pillow==11.3.0"
+      ],
+      "exit_code": 0,
+      "seconds": 5.353
+    },
+    {
+      "command": [
+        "/private/tmp/scalafim-native-plan-replay-20261006/python/bin/python",
+        "/Users/bbuchsbaum/code/scala/scalafim/tools/surface-view/javafx-affine-color/check-oracle.py",
+        "/private/tmp/scalafim-native-plan-replay-20261006/frames"
+      ],
+      "exit_code": 0,
+      "seconds": 2.743
+    },
+    {
+      "command": [
+        "/private/tmp/scalafim-native-plan-replay-20261006/python/bin/python",
+        "/Users/bbuchsbaum/code/scala/scalafim/tools/surface-view/javafx-affine-color/oracle.py",
+        "/private/tmp/scalafim-native-plan-replay-20261006/frames"
+      ],
+      "exit_code": 0,
+      "seconds": 7.43
+    }
+  ],
+  "plan_producer": {
+    "passed_fixtures": 48,
+    "jvm_tests": 68,
+    "js_tests": 68,
+    "original_ids_preserved": true,
+    "receipt": "plan-producer/receipt.json"
+  },
+  "oracle": {
+    "passed": true,
+    "cases_passed": 48,
+    "permutation_comparisons": 32,
+    "permutation_failures": 0,
+    "tolerance": 2.0,
+    "plan_sha256": "66cf5d0e708914708c7a287bb87b30a27514897e85581ba7e72b339072b82a37",
+    "self_check": {
+      "kind": "independent closed-form fields validate the generic triangle/pixel intersection oracle",
+      "passed": true,
+      "errors": {
+        "diagonal": {
+          "expected": 5.684341886080802e-14,
+          "low": 5.684341886080802e-14,
+          "high": 5.684341886080802e-14
+        },
+        "rgb": {
+          "expected": 5.684341886080802e-14,
+          "low": 5.684341886080802e-14,
+          "high": 5.684341886080802e-14
+        },
+        "ramp32": {
+          "expected": 5.684341886080802e-14,
+          "low": 5.684341886080802e-14,
+          "high": 5.684341886080802e-14
+        }
+      }
+    }
+  },
+  "source_sha256": {
+    "tools/surface/native-renderer-spike/NativeContextProbe.java": "855d9102f15577870a5e1fdefb5c0cdbd4b8dced8fdae9eeb8a0852b23fa8c60",
+    "tools/surface/native-renderer-spike/NativeAffineProbe.java": "bedd50a45383d018ab77546fc19e672bdad64d064625ae77aa3e6110319bb585",
+    "tools/surface/native-renderer-spike/run.py": "15dc4fc1911bd07f21d41b66e8d02a1034c975b97733fddf62653aa730bd4ddf",
+    "tools/surface/native-renderer-spike/runtime.lock.json": "468cb7765817ea34c1a78f6d92f881dcdb9fc3d294acf27e79493878f897797a",
+    "modules/surface-view/jvm/src/test/scala/scalafim/surface/view/SurfacePlanAffineFixtureProbe.scala": "6f4e56fba94d2a091aea3c34dd8f5cff607c07637d8ec61c6109eccd85762916",
+    "tools/surface-view/javafx-affine-color/oracle.py": "f24180a5365e8081464443c79e26f67fa8d2fd143314590b57bf21ee8d4549ed",
+    "tools/surface-view/javafx-affine-color/check-oracle.py": "52d61e0d7b3fdc8cb081ebfc19f7d1d2050975cfa38c9b3ed79b487d97b9d4b9",
+    "tools/surface-view/javafx-affine-color/plan.json": "66cf5d0e708914708c7a287bb87b30a27514897e85581ba7e72b339072b82a37",
+    "tools/surface-view/javafx-affine-color/production-plan.json": "5fa5b64a9af6ac24907b502fcc34152df17a1a0aa4d35b3e76dc66fcf0b02e4f"
+  },
+  "frames_sha256": {
+    "color-report.json": "9166a587d9a189139773757dbedc5698958d6541f17eae27c1b232d0cf5cc6c6",
+    "diagonal-cyclic-front-BALANCED.bin": "bf6b019f377ee8f65b8dcb2c366212fbc2045931bc74c16403e600fb3ad0caca",
+    "diagonal-cyclic-front-BALANCED.png": "ca92cb0f0c6b536528ada61374f0993e013acc06c603ddf04884a6bb5ecf6778",
+    "diagonal-cyclic-front-DISABLED.bin": "bf6b019f377ee8f65b8dcb2c366212fbc2045931bc74c16403e600fb3ad0caca",
+    "diagonal-cyclic-front-DISABLED.png": "ca92cb0f0c6b536528ada61374f0993e013acc06c603ddf04884a6bb5ecf6778",
+    "diagonal-cyclic-oblique-BALANCED.bin": "56964e7b9665da80f17d3984c0676d0259cbe9aa9f9e0ea6a5c0e9839a1a7712",
+    "diagonal-cyclic-oblique-BALANCED.png": "8286b5b192d995ce90f75690b7303575656c2d0cd314c2505accedaeaa7094e9",
+    "diagonal-cyclic-oblique-DISABLED.bin": "56964e7b9665da80f17d3984c0676d0259cbe9aa9f9e0ea6a5c0e9839a1a7712",
+    "diagonal-cyclic-oblique-DISABLED.png": "9d0e6b6e0ecab629cca18f74d70c2ca3aec2d20cce747d1258e1f48cb9c8387f",
+    "diagonal-original-front-BALANCED.bin": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+    "diagonal-original-front-BALANCED.png": "ca92cb0f0c6b536528ada61374f0993e013acc06c603ddf04884a6bb5ecf6778",
+    "diagonal-original-front-DISABLED.bin": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+    "diagonal-original-front-DISABLED.png": "ca92cb0f0c6b536528ada61374f0993e013acc06c603ddf04884a6bb5ecf6778",
+    "diagonal-original-oblique-BALANCED.bin": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+    "diagonal-original-oblique-BALANCED.png": "8286b5b192d995ce90f75690b7303575656c2d0cd314c2505accedaeaa7094e9",
+    "diagonal-original-oblique-DISABLED.bin": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+    "diagonal-original-oblique-DISABLED.png": "9d0e6b6e0ecab629cca18f74d70c2ca3aec2d20cce747d1258e1f48cb9c8387f",
+    "diagonal-shuffled-front-BALANCED.bin": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+    "diagonal-shuffled-front-BALANCED.png": "ca92cb0f0c6b536528ada61374f0993e013acc06c603ddf04884a6bb5ecf6778",
+    "diagonal-shuffled-front-DISABLED.bin": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+    "diagonal-shuffled-front-DISABLED.png": "ca92cb0f0c6b536528ada61374f0993e013acc06c603ddf04884a6bb5ecf6778",
+    "diagonal-shuffled-oblique-BALANCED.bin": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+    "diagonal-shuffled-oblique-BALANCED.png": "8286b5b192d995ce90f75690b7303575656c2d0cd314c2505accedaeaa7094e9",
+    "diagonal-shuffled-oblique-DISABLED.bin": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+    "diagonal-shuffled-oblique-DISABLED.png": "9d0e6b6e0ecab629cca18f74d70c2ca3aec2d20cce747d1258e1f48cb9c8387f",
+    "ramp128-cyclic-front-BALANCED.bin": "6e1e16638f773a93d273d4e09187c5dd678b7a00668aa810ff0a433de947eb0d",
+    "ramp128-cyclic-front-BALANCED.png": "5a15b92f6d2fc0a88395674bac89769867d6ce354b7151f6a73d005a37f227ea",
+    "ramp128-cyclic-front-DISABLED.bin": "6e1e16638f773a93d273d4e09187c5dd678b7a00668aa810ff0a433de947eb0d",
+    "ramp128-cyclic-front-DISABLED.png": "d2eadc77ad4526c1af04cca6b65f267bf1c96a9854645647bbebf2b2abd751ed",
+    "ramp128-cyclic-oblique-BALANCED.bin": "c784cbbbd2394aad6a6ab24b46497e843e11f7ccd4c2526d30c062d94e138676",
+    "ramp128-cyclic-oblique-BALANCED.png": "6ac24d2186aa46cddd3d30579a4a93168e4bd50cceb5d8b8c75b102bad0f68db",
+    "ramp128-cyclic-oblique-DISABLED.bin": "c784cbbbd2394aad6a6ab24b46497e843e11f7ccd4c2526d30c062d94e138676",
+    "ramp128-cyclic-oblique-DISABLED.png": "22c5a47842d4d6ef91e4410aa55b6edec04d35a474f34376aa54189a442b4e34",
+    "ramp128-original-front-BALANCED.bin": "7a2190c8038d41f3ae478e07d7459a7762cd7c952b200950ab78978255794acb",
+    "ramp128-original-front-BALANCED.png": "81eb5b09498cdfed70a1a1aef09406fc2bcfe91acfe81a1e02cf2d7d930c536a",
+    "ramp128-original-front-DISABLED.bin": "7a2190c8038d41f3ae478e07d7459a7762cd7c952b200950ab78978255794acb",
+    "ramp128-original-front-DISABLED.png": "d2eadc77ad4526c1af04cca6b65f267bf1c96a9854645647bbebf2b2abd751ed",
+    "ramp128-original-oblique-BALANCED.bin": "723fca3cfae37628c5250ef39dfad6d5b440e66ab69a3c4bfcd50c782112775f",
+    "ramp128-original-oblique-BALANCED.png": "6ac24d2186aa46cddd3d30579a4a93168e4bd50cceb5d8b8c75b102bad0f68db",
+    "ramp128-original-oblique-DISABLED.bin": "723fca3cfae37628c5250ef39dfad6d5b440e66ab69a3c4bfcd50c782112775f",
+    "ramp128-original-oblique-DISABLED.png": "22c5a47842d4d6ef91e4410aa55b6edec04d35a474f34376aa54189a442b4e34",
+    "ramp128-shuffled-front-BALANCED.bin": "9ea78d9a931a31cac08c20ddb4be4480bd5be0626d6928eddfa6595cf8d44f6d",
+    "ramp128-shuffled-front-BALANCED.png": "7e7e741daf364a6967cdd2f7d2b1b7c836a6af3b25280b9b1b80b6243f0ba1cc",
+    "ramp128-shuffled-front-DISABLED.bin": "9ea78d9a931a31cac08c20ddb4be4480bd5be0626d6928eddfa6595cf8d44f6d",
+    "ramp128-shuffled-front-DISABLED.png": "d2eadc77ad4526c1af04cca6b65f267bf1c96a9854645647bbebf2b2abd751ed",
+    "ramp128-shuffled-oblique-BALANCED.bin": "5906f8c627bbfc600c9b775027a6f89beae6cac535d701fb5672d8f46e6d10c0",
+    "ramp128-shuffled-oblique-BALANCED.png": "b00c48fefbd61c9009e8ed71e942db1a34e7ecbd326182e30bc436a59ff18ce6",
+    "ramp128-shuffled-oblique-DISABLED.bin": "5906f8c627bbfc600c9b775027a6f89beae6cac535d701fb5672d8f46e6d10c0",
+    "ramp128-shuffled-oblique-DISABLED.png": "22c5a47842d4d6ef91e4410aa55b6edec04d35a474f34376aa54189a442b4e34",
+    "ramp32-cyclic-front-BALANCED.bin": "316812a7024679bdb2c8cdfcf36904efdd605a6d02f55f52f4cdf2f98b33325f",
+    "ramp32-cyclic-front-BALANCED.png": "9f5dfc966a9c208bfc939e2fc5dccb7fd81747a4af063a6e6866210b16d34682",
+    "ramp32-cyclic-front-DISABLED.bin": "316812a7024679bdb2c8cdfcf36904efdd605a6d02f55f52f4cdf2f98b33325f",
+    "ramp32-cyclic-front-DISABLED.png": "92bf54e2b095208f5fa8188bbdafbece97ba43efe56c505ea1f66724931dc2b9",
+    "ramp32-cyclic-oblique-BALANCED.bin": "20280b7dd8a0be54c70993e0d903e9ec4ea649322d0bb8fd1935e2b2673f6cd3",
+    "ramp32-cyclic-oblique-BALANCED.png": "1adbf07bd4588a86c45277f103028404bad558a00604e4227f4c3e728db1b811",
+    "ramp32-cyclic-oblique-DISABLED.bin": "20280b7dd8a0be54c70993e0d903e9ec4ea649322d0bb8fd1935e2b2673f6cd3",
+    "ramp32-cyclic-oblique-DISABLED.png": "391ca72da345fecf0d0ebef7b830409550b3cc978fa667171e7c014e460a7c4e",
+    "ramp32-original-front-BALANCED.bin": "64fea034584803b58d2321f823b396136615672330fe4b77d0316541cec129cb",
+    "ramp32-original-front-BALANCED.png": "f47dd48a47054594074690c3b0a437c322704d22fb572a7957a78ff476d34a7e",
+    "ramp32-original-front-DISABLED.bin": "64fea034584803b58d2321f823b396136615672330fe4b77d0316541cec129cb",
+    "ramp32-original-front-DISABLED.png": "92bf54e2b095208f5fa8188bbdafbece97ba43efe56c505ea1f66724931dc2b9",
+    "ramp32-original-oblique-BALANCED.bin": "87a31d9de3ea675152716c86bb51504b7d0a1a39755d036b3901c6608c44619b",
+    "ramp32-original-oblique-BALANCED.png": "807900fd23d6ad64db5b0d43b1dd24da648691b1634154c3b1b9924ec88af7e4",
+    "ramp32-original-oblique-DISABLED.bin": "87a31d9de3ea675152716c86bb51504b7d0a1a39755d036b3901c6608c44619b",
+    "ramp32-original-oblique-DISABLED.png": "391ca72da345fecf0d0ebef7b830409550b3cc978fa667171e7c014e460a7c4e",
+    "ramp32-shuffled-front-BALANCED.bin": "37c76da4f637260fa294e12c5f6563be2373446bf8209065df910e263217542d",
+    "ramp32-shuffled-front-BALANCED.png": "1b2690029181139003ece0ff78854cc46ab2f71197f1d8facb30bdb56c525fcc",
+    "ramp32-shuffled-front-DISABLED.bin": "37c76da4f637260fa294e12c5f6563be2373446bf8209065df910e263217542d",
+    "ramp32-shuffled-front-DISABLED.png": "92bf54e2b095208f5fa8188bbdafbece97ba43efe56c505ea1f66724931dc2b9",
+    "ramp32-shuffled-oblique-BALANCED.bin": "24f0aa7a4087297556b53bab6307aeaf9688762b16f518befab42e4bc3b025ed",
+    "ramp32-shuffled-oblique-BALANCED.png": "27139b5d9f3da69c9e35092320a3532f9b1301c3152467349a04371532d000d6",
+    "ramp32-shuffled-oblique-DISABLED.bin": "24f0aa7a4087297556b53bab6307aeaf9688762b16f518befab42e4bc3b025ed",
+    "ramp32-shuffled-oblique-DISABLED.png": "391ca72da345fecf0d0ebef7b830409550b3cc978fa667171e7c014e460a7c4e",
+    "rgb-cyclic-front-BALANCED.bin": "fbf55b2f3ac797382b17eaa233dbf9a9247607ae03fc45085a0f0ea1687f3677",
+    "rgb-cyclic-front-BALANCED.png": "67925b116e2578dd0e608c24433781ebc61cd166fdb8da4d72ca2f39afd16b69",
+    "rgb-cyclic-front-DISABLED.bin": "fbf55b2f3ac797382b17eaa233dbf9a9247607ae03fc45085a0f0ea1687f3677",
+    "rgb-cyclic-front-DISABLED.png": "67925b116e2578dd0e608c24433781ebc61cd166fdb8da4d72ca2f39afd16b69",
+    "rgb-cyclic-oblique-BALANCED.bin": "a66bc1d8ae9f9f0835b9685be21785cc6c2a1600ea83579284bc55fc5b9aad2f",
+    "rgb-cyclic-oblique-BALANCED.png": "a5eaae682a6406d0aa3453fc17386d04c2a896dfa53764022d1fece9a3a640da",
+    "rgb-cyclic-oblique-DISABLED.bin": "a66bc1d8ae9f9f0835b9685be21785cc6c2a1600ea83579284bc55fc5b9aad2f",
+    "rgb-cyclic-oblique-DISABLED.png": "266c1d11610afbd0467ff2de8c5ce8c0e28ef4a6eb5532bda00c77494f73c275",
+    "rgb-original-front-BALANCED.bin": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+    "rgb-original-front-BALANCED.png": "67925b116e2578dd0e608c24433781ebc61cd166fdb8da4d72ca2f39afd16b69",
+    "rgb-original-front-DISABLED.bin": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+    "rgb-original-front-DISABLED.png": "67925b116e2578dd0e608c24433781ebc61cd166fdb8da4d72ca2f39afd16b69",
+    "rgb-original-oblique-BALANCED.bin": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+    "rgb-original-oblique-BALANCED.png": "a5eaae682a6406d0aa3453fc17386d04c2a896dfa53764022d1fece9a3a640da",
+    "rgb-original-oblique-DISABLED.bin": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+    "rgb-original-oblique-DISABLED.png": "266c1d11610afbd0467ff2de8c5ce8c0e28ef4a6eb5532bda00c77494f73c275",
+    "rgb-shuffled-front-BALANCED.bin": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+    "rgb-shuffled-front-BALANCED.png": "67925b116e2578dd0e608c24433781ebc61cd166fdb8da4d72ca2f39afd16b69",
+    "rgb-shuffled-front-DISABLED.bin": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+    "rgb-shuffled-front-DISABLED.png": "67925b116e2578dd0e608c24433781ebc61cd166fdb8da4d72ca2f39afd16b69",
+    "rgb-shuffled-oblique-BALANCED.bin": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+    "rgb-shuffled-oblique-BALANCED.png": "a5eaae682a6406d0aa3453fc17386d04c2a896dfa53764022d1fece9a3a640da",
+    "rgb-shuffled-oblique-DISABLED.bin": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+    "rgb-shuffled-oblique-DISABLED.png": "266c1d11610afbd0467ff2de8c5ce8c0e28ef4a6eb5532bda00c77494f73c275"
+  },
+  "archive": "logs-sources-and-frames.tar.gz",
+  "archive_sha256": "a94f4f33729025610b4c05b0be756dd4005613f20c8e1592dd812557e9400e0c",
+  "scope_limits": [
+    "Known pixel-parallel external projection; application plan camera matrices/fitting excluded",
+    "Unlit only; normals/lighting semantics excluded",
+    "Fixture producer and typed input handoff only; no JOGL backend/provider or application lifecycle implemented",
+    "No cortical occlusion, multilayer alpha, fragment scalar, picking, export, DPR or renderer performance claim",
+    "No private runtime patches, original geometry/color corrections, changed oracle, changed scientific gate or changed production JavaFX admission.",
+    "This spike covers the frozen opaque/unlit fixture projection only; full typed renderer, real beta/FIR, picks, lifecycle, resources and human visual qualification remain pending.",
+    "No Windows/Linux, consumer, performance or production-width acceptance."
+  ]
+}

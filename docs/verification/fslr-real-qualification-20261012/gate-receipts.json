@@ -1,0 +1,53 @@
+[
+  {
+    "check": "P1-P5-L",
+    "route": "scalafim-route:sha256:68fc557306abb1b15dc02007d80f2a067d2190a3c1c421f3e339d8877350be6a",
+    "vertices": 32492,
+    "converged": 32492,
+    "unplaced": {},
+    "worstResidualMm": 9.999883238462373e-09,
+    "worstIterations": 30,
+    "placementVsOracleMaxMm": 1.5020796086550972e-08,
+    "voxelDisagreements": {
+      "res-01": 0,
+      "res-02": 0
+    },
+    "cortical": 29696,
+    "medialWall": 2796
+  },
+  {
+    "check": "P1-P5-R",
+    "route": "scalafim-route:sha256:68fc557306abb1b15dc02007d80f2a067d2190a3c1c421f3e339d8877350be6a",
+    "vertices": 32492,
+    "converged": 32492,
+    "unplaced": {},
+    "worstResidualMm": 9.999700566531676e-09,
+    "worstIterations": 20,
+    "placementVsOracleMaxMm": 1.5311129897981346e-08,
+    "voxelDisagreements": {
+      "res-01": 0,
+      "res-02": 0
+    },
+    "cortical": 29716,
+    "medialWall": 2776
+  },
+  {
+    "check": "P6-JVM",
+    "admitPlaceAndMapBothHemispheresSeconds": 14.083176041
+  },
+  {
+    "hemisphere": "L",
+    "vertices": 32492,
+    "placementVsOracleMaxMm": 1.5020796086550972e-08
+  },
+  {
+    "hemisphere": "R",
+    "vertices": 32492,
+    "placementVsOracleMaxMm": 1.5311129897981346e-08
+  },
+  {
+    "check": "P6-JS",
+    "loadSeconds": 55.108564666999996,
+    "placeBothHemispheresSeconds": 62.422803208000005
+  }
+]

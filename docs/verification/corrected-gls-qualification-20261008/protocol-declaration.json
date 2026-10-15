@@ -1,0 +1,11 @@
+{
+  "protocol": "tools/scenarios/corrected-gls/protocol.json",
+  "protocol_sha256": "5d046b21b8398697f6a07fbefb365dfa45489dc7446881c82282019b98f58d5e",
+  "seed_label": "scalafim-corrected-gls-known-truth-v1-20261008",
+  "seed": 1149777122,
+  "results_observed": false,
+  "source_base": "c59c21d8",
+  "superseded_pre_outcome_protocol_sha256": "a8de9538deee3b2da98b1a879200e0d75e2c55d582852bd8b76ec039cd668890",
+  "amendment": "Source inspection before outcomes: correction uses continuous within-run covariance; generator now follows it. Known-phi censor-reset comparator is explicitly approximate. Seeds, cases, budgets and acceptance limits unchanged.",
+  "simulator_control_bounds_declared_before_execution": true
+}

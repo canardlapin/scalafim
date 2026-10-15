@@ -37,6 +37,11 @@ run_batch() {
   sbt "${sbt_args[@]}" "$@"
 }
 
+# Run comparative compiler and platform controls first for prompt portability feedback.
+# Keep the comparative court separate: its real synthetic trial arm is expensive.
+run_batch phrf-comparison-jvm phrfComparisonJVM/test
+run_batch phrf-comparison-js phrfComparisonJS/test
+
 # Start a fresh sbt JVM for each bounded group. Scala.js linking and Node test
 # runners otherwise accumulate enough heap to exhaust ordinary CI runners.
 run_batch core-jvm \
@@ -50,10 +55,10 @@ run_batch core-js \
 
 run_batch image-surface-jvm \
   imageJVM/test imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
-  motionJVM/test surfaceJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
+  motionJVM/test surfaceJVM/test surfaceTestFixturesJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
 run_batch image-surface-js \
   imageJS/test imageViewJS/test imageViewCanvasJS/test thresholdJS/test \
-  motionJS/test surfaceJS/test surfaceViewJS/test surfaceViewRasterJS/test \
+  motionJS/test surfaceJS/test surfaceTestFixturesJS/test surfaceViewJS/test surfaceViewRasterJS/test \
   surfaceViewThreeJS/test
 
 run_batch data-jvm \
@@ -77,17 +82,13 @@ run_batch analysis-jvm \
 run_batch analysis-js \
   modelJS/test fitJS/test firstLevelLawsJS/test mvpaJS/test mvpaFitJS/test
 
-# Keep the comparative court separate: its real synthetic trial arm is expensive.
-run_batch phrf-comparison-jvm phrfComparisonJVM/test
-run_batch phrf-comparison-js phrfComparisonJS/test
-
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
-  mvpaFoundationAdmissionJVM/test groupJVM/test \
+  mvpaFoundationAdmissionJVM/test groupJVM/test mvpaGroupJVM/test \
   fmriWorkflowJVM/test archiveZarrJVM/test datasetZarrJVM/test
 run_batch downstream-js \
   connectivityJS/test mvpaDatasetJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
-  mvpaFoundationAdmissionJS/test groupJS/test \
+  mvpaFoundationAdmissionJS/test groupJS/test mvpaGroupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 
 # The JavaFX host tests require a display and are intentionally absent. Their

@@ -69,8 +69,9 @@ def test_wrong_head_refused(repo, tmp_path, home):
 
 
 def test_tracked_symlink_and_submodule_refused_and_clone_removed(repo, tmp_path, home):
-    os.symlink("build.sbt", repo / "link"); git(repo, "add", "link"); git(repo, "commit", "-qm", "ln")
-    with pytest.raises(C.CheckoutError, match="symlink"):
+    # an in-tree alias of a tracked file is accepted (test_checkout_symlinks.py); an escaping one is not
+    os.symlink("../outside", repo / "link"); git(repo, "add", "link"); git(repo, "commit", "-qm", "ln")
+    with pytest.raises(C.CheckoutError, match="symlink link: '..'"):
         prep(repo, tmp_path, home, "wt1")
     assert not (tmp_path / "wt1").exists()
     git(repo, "rm", "-q", "link"); git(repo, "commit", "-qm", "rm")

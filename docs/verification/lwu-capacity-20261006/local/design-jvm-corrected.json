@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite scalafim.fmri.design.HrfKernelBasisSuite"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "exit_code": 0,
+  "seconds": 87.57355904579163,
+  "heap": "4g",
+  "cpus": 2,
+  "gale_override": null,
+  "node": "v24.21.0"
+}

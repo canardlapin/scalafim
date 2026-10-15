@@ -1,0 +1,364 @@
+{
+  "issue": "bd-01M478XB9V86YE7SR8BGH457ND",
+  "actor": "scalafim-normalization-20261005",
+  "baseline_head": "fe3edc18e29dccb5fb71f4f87bfead1c7951f338",
+  "production_limits": {
+    "reference_samples": 1000000,
+    "scalar_basis_or_primitive_endpoint_evaluations": 10000000
+  },
+  "semantics": [
+    "Legacy ceil(span/dt)+1 grid and overshooting final finite point preserved for admitted work.",
+    "Fixed non-SPM grids preserve round(span*50)+1 (minimum2); SPM stays1600 samples over[0,32].",
+    "Known closed primitives charge two endpoint values per column; valid closed Stacked sums component work; fallback quadrature/finite decay multiplies offsets and nested descriptor work.",
+    "Exact piecewise integration conservatively charges every segment times Gauss points times basis evaluation work per reference sample.",
+    "Sample, derived horizon, final time and composite work refusal precede allocation/conversion/evaluation; HrfSpec keeps HrfNormalizationError in InvalidNormalization.",
+    "Custom kernel internal algorithms and Gauss rule construction costs are outside the scalar-evaluation budget.",
+    "Each cost estimate is floored at the declared returned vector width, including empty exact pieces and incomplete custom component metadata, before any basis-sized array allocation."
+  ],
+  "public_api": [
+    "HrfCombinators.normalizeWithTransformEither(dt): Either[HrfNormalizationError, TransformedBasis]",
+    "NormalizationReferenceGrid.MaxSamples / MaxScalarEvaluations",
+    "HrfNormalizationError.InvalidReferenceStep / NonFiniteReferenceTime / ReferenceSampleLimitExceeded / ReferenceWorkLimitExceeded"
+  ],
+  "runs": [
+    {
+      "name": "mutation-sample-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 34.213245207909495,
+      "test_totals": [
+        {
+          "total": 4,
+          "failed": 4,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-sample-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 6.64191187499091,
+      "test_totals": [
+        {
+          "total": 4,
+          "failed": 4,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-work-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.1712044579908252,
+      "test_totals": [
+        {
+          "total": 3,
+          "failed": 3,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-work-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.5982159590348601,
+      "test_totals": [
+        {
+          "total": 3,
+          "failed": 3,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-output-width-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.0412420420907438,
+      "test_totals": [
+        {
+          "total": 2,
+          "failed": 2,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "mutation-output-width-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 1.4868065831251442,
+      "test_totals": [
+        {
+          "total": 2,
+          "failed": 2,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "compiler_warnings": false
+    },
+    {
+      "name": "restored-focused",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationReferenceGridSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.NormalizationReferenceGridSuite",
+        "designJVM/testOnly scalafim.fmri.design.HrfGeneratorsSuite",
+        "designJS/testOnly scalafim.fmri.design.HrfGeneratorsSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 9.371031749993563,
+      "test_totals": [
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7
+        }
+      ],
+      "compiler_warnings": false
+    }
+  ],
+  "mutation_safety": "Finite guards retained. Sample/work sentinel cases stop at the first evaluation; output-width mutant selects allocation-free helper assertions and a canonical fixed-reference sentinel that allocates one factor. All4 sample,3 work and2 output-width regressions fail per JVM/JS, without huge loops or arrays.",
+  "restoration": {
+    "sha256": "0f9ab4e15537ef4660a44445af1af62ee22136a9d8c9afe2bcf63a2e1a68c27c",
+    "restored": true
+  },
+  "integrated_gates": {
+    "status": "passed",
+    "receipt": "../grid-safety-20261005/receipt.json",
+    "tests": {
+      "hrfJVM": 352,
+      "hrfJS": 352,
+      "designJVM": 455,
+      "designJS": 454,
+      "fitJVM": 660,
+      "fitJS": 603,
+      "consumer_admissionJVM": 4,
+      "consumer_admissionJS": 4
+    },
+    "total": 2884,
+    "compiler_warnings": false,
+    "sbt_diagnostic": "Existing multiple-main-class discovery diagnostic in lawJS build, recorded in root receipt."
+  },
+  "mutation_snapshot_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala": "daf5f2c4a6c5be20d74d6e7d8dc87a38cc9bb5a8664c0bfcf09df6dfc3ce47c9",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfNormalization.scala": "b2fe41b1bfda3c3bed493e8a58ffb35304bd6c203778266b153ac91792291bee",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "0f9ab4e15537ef4660a44445af1af62ee22136a9d8c9afe2bcf63a2e1a68c27c",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/NormalizationReferenceGridSuite.scala": "676e4176efb849fd832927cf012138a4232be0fc36f61078b0cebee2481a4372",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "99ae80274855d0a41d8d778ef42c487a3a247b7874df27b73173f52a94925754"
+  },
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala": "daf5f2c4a6c5be20d74d6e7d8dc87a38cc9bb5a8664c0bfcf09df6dfc3ce47c9",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfNormalization.scala": "b2fe41b1bfda3c3bed493e8a58ffb35304bd6c203778266b153ac91792291bee",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "0f9ab4e15537ef4660a44445af1af62ee22136a9d8c9afe2bcf63a2e1a68c27c",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/NormalizationReferenceGridSuite.scala": "676e4176efb849fd832927cf012138a4232be0fc36f61078b0cebee2481a4372",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "99ae80274855d0a41d8d778ef42c487a3a247b7874df27b73173f52a94925754"
+  },
+  "superseded_snapshot": {
+    "source_sha256": {
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala": "daf5f2c4a6c5be20d74d6e7d8dc87a38cc9bb5a8664c0bfcf09df6dfc3ce47c9",
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfNormalization.scala": "b2fe41b1bfda3c3bed493e8a58ffb35304bd6c203778266b153ac91792291bee",
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "54e68cdaa34e7a96749ac5e422bf46b29d618b1371ea786c159f50351c2224ca",
+      "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/NormalizationReferenceGridSuite.scala": "c97e693a2a09e0112d6abc3d12fe3e1f19f0caf8563b9878afbdacbe49a8a82c",
+      "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "99ae80274855d0a41d8d778ef42c487a3a247b7874df27b73173f52a94925754"
+    },
+    "mutation_source_sha256": {
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Decorators.scala": "07527eb0e4577529d51828c490b794bd49dcdebd7c3bac540e6c4a2b3a211e3d",
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfNormalization.scala": "418d7e6432d480a52c7e1d5091ed8902204d98e6a0de6bd887c26cf167b3d622",
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/NormalizationReferenceGrid.scala": "64aeda1bbd5e453cdddf5a683d35882176d47ad4fad5ec2d8d4c5e127b8b5214",
+      "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/NormalizationReferenceGridSuite.scala": "297ff7d1e3433535fb72911730adda209855d22e91bce2d6aa1f9981d3bfcec7",
+      "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfGeneratorsSuite.scala": "99ae80274855d0a41d8d778ef42c487a3a247b7874df27b73173f52a94925754"
+    },
+    "runs": [
+      {
+        "name": "mutation-sample-jvm",
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+        ],
+        "exit_code": 1,
+        "seconds": 31.345450082793832,
+        "test_totals": [
+          {
+            "total": 4,
+            "failed": 4,
+            "errors": 0,
+            "passed": 0
+          }
+        ],
+        "compiler_warnings": false
+      },
+      {
+        "name": "mutation-sample-js",
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJS/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+        ],
+        "exit_code": 1,
+        "seconds": 6.329749332740903,
+        "test_totals": [
+          {
+            "total": 4,
+            "failed": 4,
+            "errors": 0,
+            "passed": 0
+          }
+        ],
+        "compiler_warnings": false
+      },
+      {
+        "name": "mutation-work-jvm",
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+        ],
+        "exit_code": 1,
+        "seconds": 1.2628688751719892,
+        "test_totals": [
+          {
+            "total": 3,
+            "failed": 3,
+            "errors": 0,
+            "passed": 0
+          }
+        ],
+        "compiler_warnings": false
+      },
+      {
+        "name": "mutation-work-js",
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJS/testOnly scalafim.fmri.hrf.NormalizationBudgetMutationSuite"
+        ],
+        "exit_code": 1,
+        "seconds": 1.8613618751987815,
+        "test_totals": [
+          {
+            "total": 3,
+            "failed": 3,
+            "errors": 0,
+            "passed": 0
+          }
+        ],
+        "compiler_warnings": false
+      },
+      {
+        "name": "restored-focused",
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJVM/testOnly scalafim.fmri.hrf.NormalizationReferenceGridSuite",
+          "hrfJS/testOnly scalafim.fmri.hrf.NormalizationReferenceGridSuite",
+          "designJVM/testOnly scalafim.fmri.design.HrfGeneratorsSuite",
+          "designJS/testOnly scalafim.fmri.design.HrfGeneratorsSuite"
+        ],
+        "exit_code": 0,
+        "seconds": 8.894012666773051,
+        "test_totals": [
+          {
+            "total": 15,
+            "failed": 0,
+            "errors": 0,
+            "passed": 15
+          },
+          {
+            "total": 15,
+            "failed": 0,
+            "errors": 0,
+            "passed": 15
+          },
+          {
+            "total": 7,
+            "failed": 0,
+            "errors": 0,
+            "passed": 7
+          },
+          {
+            "total": 7,
+            "failed": 0,
+            "errors": 0,
+            "passed": 7
+          }
+        ],
+        "compiler_warnings": false
+      }
+    ],
+    "focused_initial": {
+      "exit_code": 0,
+      "test_totals": [
+        31,
+        31,
+        7,
+        7
+      ],
+      "compiler_warnings": false
+    }
+  },
+  "new_shared_tests": {
+    "hrf": 18,
+    "design": 1
+  },
+  "logs_archive_sha256": "ce7e5e85de5a44b292e052bbc00b80cb0a0e9c5584bcd38d1caddf9cdf84f128"
+}

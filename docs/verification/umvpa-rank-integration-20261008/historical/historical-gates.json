@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "show {https://github.com/canardlapin/multivar.git#ab811e257dd67f77e8c3b70cb1ea600f274429a3}inferenceJVM / baseDirectory",
+    "mvpaJVM/test",
+    "mvpaJS/test"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 201.461982625,
+  "heap": "3g",
+  "processors": 4,
+  "cleared_environment_variable_names": [],
+  "local_provider_override": false,
+  "public_provider_revision": "ab811e257dd67f77e8c3b70cb1ea600f274429a3"
+}

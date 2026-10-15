@@ -250,12 +250,23 @@ object SurfaceSceneCodec:
           "lower" -> number(band.lower),
           "upper" -> number(band.upper)
         )
-        case DisplayThreshold.Below(cutoff) => SceneJson.obj("kind" -> SceneJson.Str("below"), "cutoff" -> number(cutoff))
-        case DisplayThreshold.Above(cutoff) => SceneJson.obj("kind" -> SceneJson.Str("above"), "cutoff" -> number(cutoff))
+        case DisplayThreshold.Below(cutoff) => SceneJson.obj(
+          "kind" -> SceneJson.Str("below"),
+          "cutoff" -> number(cutoff)
+        )
+        case DisplayThreshold.Above(cutoff) => SceneJson.obj(
+          "kind" -> SceneJson.Str("above"),
+          "cutoff" -> number(cutoff)
+        )
         case DisplayThreshold.TwoSided(inner, outer) => SceneJson.obj(
-          "kind" -> SceneJson.Str("two-sided"), "lower" -> number(inner.lower), "upper" -> number(inner.upper),
-          "outer" -> outer.fold[SceneJson](SceneJson.Null)(band => SceneJson.Arr(Vector(number(band.lower), number(band.upper)))))
+          "kind" -> SceneJson.Str("two-sided"),
+          "inner" -> bandJson(inner),
+          "outer" -> outer.fold[SceneJson](SceneJson.Null)(bandJson)
+        )
     )
+
+  private def bandJson(band: ThresholdBand): SceneJson =
+    SceneJson.Arr(Vector(number(band.lower), number(band.upper)))
 
   private def provenanceJson(provenance: SurfaceProvenance): SceneJson =
     SceneJson.obj(
@@ -560,39 +571,53 @@ object SurfaceSceneCodec:
     value match
       case SceneJson.Null => Right(None)
       case other =>
+        def display[A](result: Either[DisplayError, A]): Either[SurfaceSceneError, A] =
+          result.left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+        def band(values: Vector[SceneJson], bandPath: String): Either[SurfaceSceneError, ThresholdBand] =
+          pair(values, bandPath).flatMap((lower, upper) => display(ThresholdBand.make(lower, upper)))
+        def cutoff(obj: SceneJson.Obj): Either[SurfaceSceneError, Double] =
+          SceneJsonRead.checkFields(obj, path, Set("kind", "cutoff"), policy)
+            .flatMap(_ => SceneJsonRead.double(obj, "cutoff", s"$path.cutoff"))
         for
-          obj <- SceneJsonRead.obj(other, path, Set("kind", "lower", "upper", "cutoff", "outer"), policy)
+          obj <- SceneJsonRead.obj(other, path, Set.empty, policy, allowAny = true)
           kind <- SceneJsonRead.string(obj, "kind", s"$path.kind")
           threshold <- kind match
             case "disabled" => SceneJsonRead.checkFields(obj, path, Set("kind"), policy).map(_ => DisplayThreshold.Disabled)
             case "transparent-band" =>
               for
+                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "lower", "upper"), policy)
                 lower <- SceneJsonRead.double(obj, "lower", s"$path.lower")
                 upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
-                result <- DisplayThreshold.transparentBand(lower, upper)
-                  .left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+                result <- display(DisplayThreshold.transparentBand(lower, upper))
               yield result
-            case "below" | "above" =>
-              for
-                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "cutoff"), policy)
-                cutoff <- SceneJsonRead.double(obj, "cutoff", s"$path.cutoff")
-                result <- (if kind == "below" then DisplayThreshold.below(cutoff) else DisplayThreshold.above(cutoff))
-                  .left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
-              yield result
+            case "below" => cutoff(obj).flatMap(value => display(DisplayThreshold.below(value)))
+            case "above" => cutoff(obj).flatMap(value => display(DisplayThreshold.above(value)))
             case "two-sided" =>
-              for
-                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "lower", "upper", "outer"), policy)
-                lower <- SceneJsonRead.double(obj, "lower", s"$path.lower")
-                upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
-                inner <- ThresholdBand.make(lower, upper).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
-                outerJson <- SceneJsonRead.value(obj, "outer", s"$path.outer")
-                outer <- outerJson match
+              def outer: Either[SurfaceSceneError, Option[ThresholdBand]] =
+                SceneJsonRead.value(obj, "outer", s"$path.outer").flatMap:
                   case SceneJson.Null => Right(None)
-                  case SceneJson.Arr(values) => pair(values, s"$path.outer").flatMap: (lo, hi) =>
-                    ThresholdBand.make(lo, hi).map(Some(_)).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
-                  case _ => Left(SurfaceSceneError.InvalidJson(s"$path.outer", "expected null or two endpoints"))
-                result <- DisplayThreshold.twoSided(inner, outer).left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
-              yield result
+                  case SceneJson.Arr(values) => band(values, s"$path.outer").map(Some(_))
+                  case _ => Left(SurfaceSceneError.InvalidJson(s"$path.outer", "expected null or a two-number array"))
+              val fields = obj.fields.map(_._1).toSet
+              if fields.contains("inner") && (fields.contains("lower") || fields.contains("upper")) then
+                Left(SurfaceSceneError.InvalidJson(path, "two-sided threshold cannot mix inner with lower or upper"))
+              else if fields.contains("inner") then
+                for
+                  _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "inner", "outer"), policy)
+                  innerValues <- SceneJsonRead.array(obj, "inner", s"$path.inner")
+                  inner <- band(innerValues, s"$path.inner")
+                  value <- outer
+                  result <- display(DisplayThreshold.twoSided(inner, value))
+                yield result
+              else
+                for
+                  _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "lower", "upper", "outer"), policy)
+                  lower <- SceneJsonRead.double(obj, "lower", s"$path.lower")
+                  upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
+                  inner <- display(ThresholdBand.make(lower, upper))
+                  value <- outer
+                  result <- display(DisplayThreshold.twoSided(inner, value))
+                yield result
             case unknown => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown threshold '$unknown'"))
         yield Some(threshold)
 

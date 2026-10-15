@@ -1,0 +1,11 @@
+{
+  "largest_training_array": 1999830,
+  "second_training_array": 831390,
+  "storage_cells": 14326919,
+  "training_work": 8498985,
+  "spectral_work": 46033293376,
+  "forward_applications": 113,
+  "adjoint_applications": 114,
+  "converged_triplets": 48,
+  "spectral_builds": 1
+}

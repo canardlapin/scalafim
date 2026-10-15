@@ -36,8 +36,10 @@ sealed trait TermCall
   */
 final case class PhaseRef(id: PhaseId, parent: ColumnId)
 
-/** `basis` and `contrasts` stay `String`: both key user-extensible registries,
-  * so an open set is the right model for them.
+/** `contrasts` stays `String`: it keys a user-extensible registry, so an open
+  * set is the right model for it. `basis` is an [[scalafim.fmri.hrf.HrfKind]]
+  * name (the parser stores the canonical spelling and rejects unknown kinds),
+  * with its named kind parameters in `basisParams`; see [[FormulaBasis]].
   */
 final case class HrfCall(
     vars: Vector[ArgValue],
@@ -67,7 +69,9 @@ final case class HrfCall(
     /** Serially project derivative basis columns off earlier basis columns after convolution. */
     orthogonalizeBasis: Option[Boolean] = None,
     temporalDerivative: Option[TemporalDerivativeConvention] = None,
-    eventNormalization: Option[EventResponseNormalization] = None
+    eventNormalization: Option[EventResponseNormalization] = None,
+    /** Named parameters of `basis = kind(name = value, ...)`; empty for constructor defaults. */
+    basisParams: Vector[BasisParam] = Vector.empty
 ) extends TermCall
 
 /** Fields added after the original `trialwise()` surface are appended so that
@@ -88,7 +92,9 @@ final case class TrialwiseCall(
     onsets: Option[ArgValue] = None,
     phase: Option[PhaseRef] = None,
     /** Per-run trial identity column. */
-    id: Option[ArgValue] = None
+    id: Option[ArgValue] = None,
+    /** Named parameters of `basis = kind(name = value, ...)`; empty for constructor defaults. */
+    basisParams: Vector[BasisParam] = Vector.empty
 ) extends TermCall
 
 final case class CovariateCall(

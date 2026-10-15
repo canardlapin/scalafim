@@ -1,0 +1,32 @@
+{
+  "status": "full-affected-owning-module-engineering-qualified; candidate-only",
+  "scientificRelease": "PendingFrozenProtocol",
+  "newChecksPerPlatform": 16,
+  "passed": {
+    "JVM": 662,
+    "JS": 661
+  },
+  "declaredScientificCampaignSkips": {
+    "JVM": 1,
+    "JS": 1
+  },
+  "files": {
+    "README.md": "6c0ee296bc0ac6fb2960cbf0a36dc63f78b88b21f84dae336f455bc6bced9d98",
+    "early-observations.json": "4478bd916df0a01f7ed15488204d4bc9430eb33f736a94a8d96005563dc4837c",
+    "focused-gates.json": "d0170a2b64c032ecedbba5c0aebc25f4fe4572205f94b965c498a46db4d8eb10",
+    "focused-verified-gates.json": "0aa598fbd490b6cd9440b585c3efc5ddc1273c290f31d9c55afbb0f53bdabbc5",
+    "integration-gates-pre-timeout.json": "de49af1643591f76408a15df4dd3730afb822a0648e0a3252c065021a9eaad37",
+    "integration-gates.json": "a722a9db8830f89aeb07c4ffafd81027efe4f73a099f69a134f7f56f3dbbe737",
+    "logs/umvpa-family-group-compile-first-20261007.log": "7a8630dd2bd6559f085c178e20cdf48c64eb40d900b86b1c35ab9aa4babd3b4d",
+    "logs/umvpa-family-group-focused-first-20261007.log": "dfd50743a2b20783693d55b5cadbda529824fda1aff0177f9f7dc0898fb09cd5",
+    "logs/umvpa-family-group-focused-retry-20261007.log": "10262936c0f57562bd3937f6a17835a1d018ab37b4fcd703871925503b738822",
+    "logs/umvpa-family-group-focused-verified-20261007.log": "86b3b84db682b10d84b451de89f1014e2575d677d5704cd80947af3d2cec3417",
+    "review-scope.md": "4ec002fbd1ced0195fb85c47ebf13e921099a324d6f14baab5e01e7868f99630",
+    "source-manifest.json": "60984dbaa09c0f6aabc5bd22958dea9ab9bc1b8e93c013a866a44a879340bf21"
+  },
+  "centralRawLogs": {
+    "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d",
+    "docs/verification/umvpa-subject-group-20261007/logs/full-js.log": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07",
+    "docs/verification/umvpa-inference-calibration-20261007/logs/post-timeout-mvpa.log": "e3122ac44387d4c4729e3825e01fa91c58a7c40fa7f29c57d2fa543593110891"
+  }
+}

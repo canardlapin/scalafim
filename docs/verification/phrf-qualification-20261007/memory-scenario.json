@@ -1,0 +1,14 @@
+{
+  "scope": "source-based simultaneous-reference array scenario, not a measured engine peak or complete live bound",
+  "trials": 1200,
+  "nodes": 8,
+  "workers": 8,
+  "preparedNumericBytes": 72933816,
+  "sharedArrayBytes": 204786040,
+  "fullReferenceBytes": 16481528,
+  "firstOrderReferenceBytes": 8067560,
+  "sharedPlusEightFirstOrderReferencesBytes": 269326520,
+  "sharedPlusEightFullReferencesBytes": 336638264,
+  "budgetBytes": 268435456,
+  "excluded": "source/basis/axis metadata, worker scratch, construction scratch, encoded responses, input/output blocks, result vectors, object headers"
+}

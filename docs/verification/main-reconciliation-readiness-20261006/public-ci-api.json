@@ -1,0 +1,1446 @@
+{
+  "retrieved_at": "2026-10-06T12:00:30.146937+00:00",
+  "authentication": "unauthenticated public GitHub REST API",
+  "records": [
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968",
+      "status": 200,
+      "body": {
+        "id": 37379226968,
+        "name": "first-level-ci",
+        "node_id": "WFR_kwLOTd_s8c8AAAAIs_m9WA",
+        "head_branch": "land/verified-main-bspline-20261005",
+        "head_sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+        "path": ".github/workflows/first-level.yml",
+        "display_title": "Integrate verified local main and endpoint-anchored B-spline parity",
+        "run_number": 73,
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "failure",
+        "workflow_id": 327756719,
+        "check_suite_id": 101250236494,
+        "check_suite_node_id": "CS_kwDOTd_s8c8AAAAXkvwATg",
+        "url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968",
+        "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37379226968",
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/canardlapin/scalafim/pulls/20",
+            "id": 4751233589,
+            "number": 20,
+            "head": {
+              "ref": "land/verified-main-bspline-20261005",
+              "sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+              "repo": {
+                "id": 1306520817,
+                "url": "https://api.github.com/repos/canardlapin/scalafim",
+                "name": "scalafim"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+              "repo": {
+                "id": 1306520817,
+                "url": "https://api.github.com/repos/canardlapin/scalafim",
+                "name": "scalafim"
+              }
+            }
+          }
+        ],
+        "created_at": "2026-10-05T21:56:41Z",
+        "updated_at": "2026-10-05T23:15:59Z",
+        "actor": {
+          "login": "canardlapin",
+          "id": 307091466,
+          "node_id": "U_kgDOEk3YCg",
+          "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/canardlapin",
+          "html_url": "https://github.com/canardlapin",
+          "followers_url": "https://api.github.com/users/canardlapin/followers",
+          "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+          "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+          "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+          "repos_url": "https://api.github.com/users/canardlapin/repos",
+          "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "run_attempt": 1,
+        "referenced_workflows": [],
+        "run_started_at": "2026-10-05T21:56:41Z",
+        "triggering_actor": {
+          "login": "canardlapin",
+          "id": 307091466,
+          "node_id": "U_kgDOEk3YCg",
+          "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/canardlapin",
+          "html_url": "https://github.com/canardlapin",
+          "followers_url": "https://api.github.com/users/canardlapin/followers",
+          "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+          "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+          "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+          "repos_url": "https://api.github.com/users/canardlapin/repos",
+          "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "jobs_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968/jobs",
+        "logs_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968/logs",
+        "check_suite_url": "https://api.github.com/repos/canardlapin/scalafim/check-suites/101250236494",
+        "artifacts_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968/artifacts",
+        "cancel_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968/cancel",
+        "rerun_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968/rerun",
+        "previous_attempt_url": null,
+        "workflow_url": "https://api.github.com/repos/canardlapin/scalafim/actions/workflows/327756719",
+        "head_commit": {
+          "id": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+          "tree_id": "a626538383422a12c743ab89775efef629d875fb",
+          "message": "docs: record vetted branch and worktree consolidation",
+          "timestamp": "2026-10-05T19:24:44Z",
+          "author": {
+            "name": "canardlapin",
+            "email": "307091466+canardlapin@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "canardlapin",
+            "email": "307091466+canardlapin@users.noreply.github.com"
+          }
+        },
+        "repository": {
+          "id": 1306520817,
+          "node_id": "R_kgDOTd_s8Q",
+          "name": "scalafim",
+          "full_name": "canardlapin/scalafim",
+          "private": false,
+          "owner": {
+            "login": "canardlapin",
+            "id": 307091466,
+            "node_id": "U_kgDOEk3YCg",
+            "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/canardlapin",
+            "html_url": "https://github.com/canardlapin",
+            "followers_url": "https://api.github.com/users/canardlapin/followers",
+            "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+            "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+            "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+            "repos_url": "https://api.github.com/users/canardlapin/repos",
+            "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+            "type": "User",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/canardlapin/scalafim",
+          "description": null,
+          "fork": false,
+          "url": "https://api.github.com/repos/canardlapin/scalafim",
+          "forks_url": "https://api.github.com/repos/canardlapin/scalafim/forks",
+          "keys_url": "https://api.github.com/repos/canardlapin/scalafim/keys{/key_id}",
+          "collaborators_url": "https://api.github.com/repos/canardlapin/scalafim/collaborators{/collaborator}",
+          "teams_url": "https://api.github.com/repos/canardlapin/scalafim/teams",
+          "hooks_url": "https://api.github.com/repos/canardlapin/scalafim/hooks",
+          "issue_events_url": "https://api.github.com/repos/canardlapin/scalafim/issues/events{/number}",
+          "events_url": "https://api.github.com/repos/canardlapin/scalafim/events",
+          "assignees_url": "https://api.github.com/repos/canardlapin/scalafim/assignees{/user}",
+          "branches_url": "https://api.github.com/repos/canardlapin/scalafim/branches{/branch}",
+          "tags_url": "https://api.github.com/repos/canardlapin/scalafim/tags",
+          "blobs_url": "https://api.github.com/repos/canardlapin/scalafim/git/blobs{/sha}",
+          "git_tags_url": "https://api.github.com/repos/canardlapin/scalafim/git/tags{/sha}",
+          "git_refs_url": "https://api.github.com/repos/canardlapin/scalafim/git/refs{/sha}",
+          "trees_url": "https://api.github.com/repos/canardlapin/scalafim/git/trees{/sha}",
+          "statuses_url": "https://api.github.com/repos/canardlapin/scalafim/statuses/{sha}",
+          "languages_url": "https://api.github.com/repos/canardlapin/scalafim/languages",
+          "stargazers_url": "https://api.github.com/repos/canardlapin/scalafim/stargazers",
+          "contributors_url": "https://api.github.com/repos/canardlapin/scalafim/contributors",
+          "subscribers_url": "https://api.github.com/repos/canardlapin/scalafim/subscribers",
+          "subscription_url": "https://api.github.com/repos/canardlapin/scalafim/subscription",
+          "commits_url": "https://api.github.com/repos/canardlapin/scalafim/commits{/sha}",
+          "git_commits_url": "https://api.github.com/repos/canardlapin/scalafim/git/commits{/sha}",
+          "comments_url": "https://api.github.com/repos/canardlapin/scalafim/comments{/number}",
+          "issue_comment_url": "https://api.github.com/repos/canardlapin/scalafim/issues/comments{/number}",
+          "contents_url": "https://api.github.com/repos/canardlapin/scalafim/contents/{+path}",
+          "compare_url": "https://api.github.com/repos/canardlapin/scalafim/compare/{base}...{head}",
+          "merges_url": "https://api.github.com/repos/canardlapin/scalafim/merges",
+          "archive_url": "https://api.github.com/repos/canardlapin/scalafim/{archive_format}{/ref}",
+          "downloads_url": "https://api.github.com/repos/canardlapin/scalafim/downloads",
+          "issues_url": "https://api.github.com/repos/canardlapin/scalafim/issues{/number}",
+          "pulls_url": "https://api.github.com/repos/canardlapin/scalafim/pulls{/number}",
+          "milestones_url": "https://api.github.com/repos/canardlapin/scalafim/milestones{/number}",
+          "notifications_url": "https://api.github.com/repos/canardlapin/scalafim/notifications{?since,all,participating}",
+          "labels_url": "https://api.github.com/repos/canardlapin/scalafim/labels{/name}",
+          "releases_url": "https://api.github.com/repos/canardlapin/scalafim/releases{/id}",
+          "deployments_url": "https://api.github.com/repos/canardlapin/scalafim/deployments"
+        },
+        "head_repository": {
+          "id": 1306520817,
+          "node_id": "R_kgDOTd_s8Q",
+          "name": "scalafim",
+          "full_name": "canardlapin/scalafim",
+          "private": false,
+          "owner": {
+            "login": "canardlapin",
+            "id": 307091466,
+            "node_id": "U_kgDOEk3YCg",
+            "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/canardlapin",
+            "html_url": "https://github.com/canardlapin",
+            "followers_url": "https://api.github.com/users/canardlapin/followers",
+            "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+            "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+            "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+            "repos_url": "https://api.github.com/users/canardlapin/repos",
+            "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+            "type": "User",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/canardlapin/scalafim",
+          "description": null,
+          "fork": false,
+          "url": "https://api.github.com/repos/canardlapin/scalafim",
+          "forks_url": "https://api.github.com/repos/canardlapin/scalafim/forks",
+          "keys_url": "https://api.github.com/repos/canardlapin/scalafim/keys{/key_id}",
+          "collaborators_url": "https://api.github.com/repos/canardlapin/scalafim/collaborators{/collaborator}",
+          "teams_url": "https://api.github.com/repos/canardlapin/scalafim/teams",
+          "hooks_url": "https://api.github.com/repos/canardlapin/scalafim/hooks",
+          "issue_events_url": "https://api.github.com/repos/canardlapin/scalafim/issues/events{/number}",
+          "events_url": "https://api.github.com/repos/canardlapin/scalafim/events",
+          "assignees_url": "https://api.github.com/repos/canardlapin/scalafim/assignees{/user}",
+          "branches_url": "https://api.github.com/repos/canardlapin/scalafim/branches{/branch}",
+          "tags_url": "https://api.github.com/repos/canardlapin/scalafim/tags",
+          "blobs_url": "https://api.github.com/repos/canardlapin/scalafim/git/blobs{/sha}",
+          "git_tags_url": "https://api.github.com/repos/canardlapin/scalafim/git/tags{/sha}",
+          "git_refs_url": "https://api.github.com/repos/canardlapin/scalafim/git/refs{/sha}",
+          "trees_url": "https://api.github.com/repos/canardlapin/scalafim/git/trees{/sha}",
+          "statuses_url": "https://api.github.com/repos/canardlapin/scalafim/statuses/{sha}",
+          "languages_url": "https://api.github.com/repos/canardlapin/scalafim/languages",
+          "stargazers_url": "https://api.github.com/repos/canardlapin/scalafim/stargazers",
+          "contributors_url": "https://api.github.com/repos/canardlapin/scalafim/contributors",
+          "subscribers_url": "https://api.github.com/repos/canardlapin/scalafim/subscribers",
+          "subscription_url": "https://api.github.com/repos/canardlapin/scalafim/subscription",
+          "commits_url": "https://api.github.com/repos/canardlapin/scalafim/commits{/sha}",
+          "git_commits_url": "https://api.github.com/repos/canardlapin/scalafim/git/commits{/sha}",
+          "comments_url": "https://api.github.com/repos/canardlapin/scalafim/comments{/number}",
+          "issue_comment_url": "https://api.github.com/repos/canardlapin/scalafim/issues/comments{/number}",
+          "contents_url": "https://api.github.com/repos/canardlapin/scalafim/contents/{+path}",
+          "compare_url": "https://api.github.com/repos/canardlapin/scalafim/compare/{base}...{head}",
+          "merges_url": "https://api.github.com/repos/canardlapin/scalafim/merges",
+          "archive_url": "https://api.github.com/repos/canardlapin/scalafim/{archive_format}{/ref}",
+          "downloads_url": "https://api.github.com/repos/canardlapin/scalafim/downloads",
+          "issues_url": "https://api.github.com/repos/canardlapin/scalafim/issues{/number}",
+          "pulls_url": "https://api.github.com/repos/canardlapin/scalafim/pulls{/number}",
+          "milestones_url": "https://api.github.com/repos/canardlapin/scalafim/milestones{/number}",
+          "notifications_url": "https://api.github.com/repos/canardlapin/scalafim/notifications{?since,all,participating}",
+          "labels_url": "https://api.github.com/repos/canardlapin/scalafim/labels{/name}",
+          "releases_url": "https://api.github.com/repos/canardlapin/scalafim/releases{/id}",
+          "deployments_url": "https://api.github.com/repos/canardlapin/scalafim/deployments"
+        }
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968/jobs",
+      "status": 200,
+      "body": {
+        "total_count": 3,
+        "jobs": [
+          {
+            "id": 111996515904,
+            "run_id": 37379226968,
+            "workflow_name": "first-level-ci",
+            "head_branch": "land/verified-main-bspline-20261005",
+            "run_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOTd_s8c8AAAAaE4M2QA",
+            "head_sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+            "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/111996515904",
+            "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37379226968/job/111996515904",
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-05T21:56:42Z",
+            "started_at": "2026-10-05T21:56:44Z",
+            "completed_at": "2026-10-05T23:15:59Z",
+            "name": "full repository JVM/Scala.js compile and test",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-05T21:56:44Z",
+                "completed_at": "2026-10-05T21:56:47Z"
+              },
+              {
+                "name": "Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-05T21:56:47Z",
+                "completed_at": "2026-10-05T21:56:50Z"
+              },
+              {
+                "name": "Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-05T21:56:50Z",
+                "completed_at": "2026-10-05T21:56:50Z"
+              },
+              {
+                "name": "Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-05T21:56:50Z",
+                "completed_at": "2026-10-05T21:56:54Z"
+              },
+              {
+                "name": "Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-05T21:56:54Z",
+                "completed_at": "2026-10-05T21:56:54Z"
+              },
+              {
+                "name": "Prepare exact pinned provider artifacts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-05T21:56:54Z",
+                "completed_at": "2026-10-05T22:00:03Z"
+              },
+              {
+                "name": "Compile every JVM and Scala.js module",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-05T22:00:03Z",
+                "completed_at": "2026-10-05T22:14:14Z"
+              },
+              {
+                "name": "Test every headless JVM and Scala.js module in bounded batches",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 8,
+                "started_at": "2026-10-05T22:14:14Z",
+                "completed_at": "2026-10-05T23:15:55Z"
+              },
+              {
+                "name": "Post Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13,
+                "started_at": "2026-10-05T23:15:55Z",
+                "completed_at": "2026-10-05T23:15:55Z"
+              },
+              {
+                "name": "Post Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-05T23:15:55Z",
+                "completed_at": "2026-10-05T23:15:55Z"
+              },
+              {
+                "name": "Post Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-05T23:15:55Z",
+                "completed_at": "2026-10-05T23:15:55Z"
+              },
+              {
+                "name": "Post Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16,
+                "started_at": "2026-10-05T23:15:55Z",
+                "completed_at": "2026-10-05T23:15:55Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-05T23:15:55Z",
+                "completed_at": "2026-10-05T23:15:55Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/111996515904",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003369,
+            "runner_name": "GitHub Actions 1000003369",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          },
+          {
+            "id": 111996516433,
+            "run_id": 37379226968,
+            "workflow_name": "first-level-ci",
+            "head_branch": "land/verified-main-bspline-20261005",
+            "run_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOTd_s8c8AAAAaE4M4UQ",
+            "head_sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+            "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/111996516433",
+            "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37379226968/job/111996516433",
+            "status": "completed",
+            "conclusion": "success",
+            "created_at": "2026-10-05T21:56:42Z",
+            "started_at": "2026-10-05T21:56:44Z",
+            "completed_at": "2026-10-05T22:34:20Z",
+            "name": "scoped first-level scientific coverage",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-05T21:56:44Z",
+                "completed_at": "2026-10-05T21:56:47Z"
+              },
+              {
+                "name": "Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-05T21:56:47Z",
+                "completed_at": "2026-10-05T21:56:50Z"
+              },
+              {
+                "name": "Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-05T21:56:50Z",
+                "completed_at": "2026-10-05T21:56:50Z"
+              },
+              {
+                "name": "Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-05T21:56:50Z",
+                "completed_at": "2026-10-05T21:56:53Z"
+              },
+              {
+                "name": "Enforce per-module scientific coverage floors",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-05T21:56:53Z",
+                "completed_at": "2026-10-05T22:34:15Z"
+              },
+              {
+                "name": "Post Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-05T22:34:15Z",
+                "completed_at": "2026-10-05T22:34:16Z"
+              },
+              {
+                "name": "Post Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-05T22:34:16Z",
+                "completed_at": "2026-10-05T22:34:16Z"
+              },
+              {
+                "name": "Post Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-05T22:34:16Z",
+                "completed_at": "2026-10-05T22:34:16Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-05T22:34:16Z",
+                "completed_at": "2026-10-05T22:34:16Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/111996516433",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003370,
+            "runner_name": "GitHub Actions 1000003370",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          },
+          {
+            "id": 111996516473,
+            "run_id": 37379226968,
+            "workflow_name": "first-level-ci",
+            "head_branch": "land/verified-main-bspline-20261005",
+            "run_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37379226968",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOTd_s8c8AAAAaE4M4eQ",
+            "head_sha": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+            "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/111996516473",
+            "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37379226968/job/111996516473",
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-05T21:56:42Z",
+            "started_at": "2026-10-05T21:56:56Z",
+            "completed_at": "2026-10-05T22:46:36Z",
+            "name": "focused first-level JVM/Scala.js gates",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-05T21:56:57Z",
+                "completed_at": "2026-10-05T21:57:01Z"
+              },
+              {
+                "name": "Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-05T21:57:01Z",
+                "completed_at": "2026-10-05T21:57:04Z"
+              },
+              {
+                "name": "Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-05T21:57:04Z",
+                "completed_at": "2026-10-05T21:57:04Z"
+              },
+              {
+                "name": "Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-05T21:57:04Z",
+                "completed_at": "2026-10-05T21:57:10Z"
+              },
+              {
+                "name": "Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-05T21:57:10Z",
+                "completed_at": "2026-10-05T21:57:10Z"
+              },
+              {
+                "name": "Run manifest, fixture, JVM, and Scala.js gates",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 6,
+                "started_at": "2026-10-05T21:57:10Z",
+                "completed_at": "2026-10-05T22:46:31Z"
+              },
+              {
+                "name": "Post Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9,
+                "started_at": "2026-10-05T22:46:31Z",
+                "completed_at": "2026-10-05T22:46:31Z"
+              },
+              {
+                "name": "Post Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-05T22:46:31Z",
+                "completed_at": "2026-10-05T22:46:31Z"
+              },
+              {
+                "name": "Post Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-05T22:46:31Z",
+                "completed_at": "2026-10-05T22:46:31Z"
+              },
+              {
+                "name": "Post Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-10-05T22:46:31Z",
+                "completed_at": "2026-10-05T22:46:31Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-05T22:46:31Z",
+                "completed_at": "2026-10-05T22:46:31Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/111996516473",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003371,
+            "runner_name": "GitHub Actions 1000003371",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/111996515904/annotations",
+      "status": 200,
+      "body": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/7057a8d5a2d898c1bfb528a28f3f635dda639b8b/.github",
+          "start_line": 10636,
+          "start_column": null,
+          "end_line": 10636,
+          "end_column": null,
+          "annotation_level": "failure",
+          "title": "",
+          "message": "Process completed with exit code 1.",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/7057a8d5a2d898c1bfb528a28f3f635dda639b8b/.github",
+          "start_line": 82,
+          "start_column": null,
+          "end_line": 82,
+          "end_column": null,
+          "annotation_level": "warning",
+          "title": "",
+          "message": "\u001b[1mvalue lookup of `streams` inside an `if` expression\u001b[0m",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/111996515904/logs",
+      "status": 403,
+      "body": {
+        "message": "Must have admin rights to Repository.",
+        "documentation_url": "https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run",
+        "status": "403"
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/111996516433/annotations",
+      "status": 200,
+      "body": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/7057a8d5a2d898c1bfb528a28f3f635dda639b8b/.github",
+          "start_line": 82,
+          "start_column": null,
+          "end_line": 82,
+          "end_column": null,
+          "annotation_level": "warning",
+          "title": "",
+          "message": "\u001b[1mvalue lookup of `streams` inside an `if` expression\u001b[0m",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/111996516433/logs",
+      "status": 403,
+      "body": {
+        "message": "Must have admin rights to Repository.",
+        "documentation_url": "https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run",
+        "status": "403"
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/111996516473/annotations",
+      "status": 200,
+      "body": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/7057a8d5a2d898c1bfb528a28f3f635dda639b8b/.github",
+          "start_line": 4872,
+          "start_column": null,
+          "end_line": 4872,
+          "end_column": null,
+          "annotation_level": "failure",
+          "title": "",
+          "message": "Process completed with exit code 1.",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/7057a8d5a2d898c1bfb528a28f3f635dda639b8b/.github",
+          "start_line": 82,
+          "start_column": null,
+          "end_line": 82,
+          "end_column": null,
+          "annotation_level": "warning",
+          "title": "",
+          "message": "\u001b[1mvalue lookup of `streams` inside an `if` expression\u001b[0m",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/111996516473/logs",
+      "status": 403,
+      "body": {
+        "message": "Must have admin rights to Repository.",
+        "documentation_url": "https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run",
+        "status": "403"
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609",
+      "status": 200,
+      "body": {
+        "id": 37383711609,
+        "name": "first-level-ci",
+        "node_id": "WFR_kwLOTd_s8c8AAAAItD4reQ",
+        "head_branch": "migration/20261005/handoff",
+        "head_sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+        "path": ".github/workflows/first-level.yml",
+        "display_title": "Consolidate development and version Mote history for machine migration",
+        "run_number": 75,
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "failure",
+        "workflow_id": 327756719,
+        "check_suite_id": 101262170155,
+        "check_suite_node_id": "CS_kwDOTd_s8c8AAAAXk7IYKw",
+        "url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609",
+        "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37383711609",
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/canardlapin/scalafim/pulls/21",
+            "id": 4751353863,
+            "number": 21,
+            "head": {
+              "ref": "migration/20261005/handoff",
+              "sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+              "repo": {
+                "id": 1306520817,
+                "url": "https://api.github.com/repos/canardlapin/scalafim",
+                "name": "scalafim"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+              "repo": {
+                "id": 1306520817,
+                "url": "https://api.github.com/repos/canardlapin/scalafim",
+                "name": "scalafim"
+              }
+            }
+          }
+        ],
+        "created_at": "2026-10-05T22:38:01Z",
+        "updated_at": "2026-10-06T00:01:34Z",
+        "actor": {
+          "login": "canardlapin",
+          "id": 307091466,
+          "node_id": "U_kgDOEk3YCg",
+          "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/canardlapin",
+          "html_url": "https://github.com/canardlapin",
+          "followers_url": "https://api.github.com/users/canardlapin/followers",
+          "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+          "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+          "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+          "repos_url": "https://api.github.com/users/canardlapin/repos",
+          "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "run_attempt": 1,
+        "referenced_workflows": [],
+        "run_started_at": "2026-10-05T22:38:01Z",
+        "triggering_actor": {
+          "login": "canardlapin",
+          "id": 307091466,
+          "node_id": "U_kgDOEk3YCg",
+          "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/canardlapin",
+          "html_url": "https://github.com/canardlapin",
+          "followers_url": "https://api.github.com/users/canardlapin/followers",
+          "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+          "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+          "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+          "repos_url": "https://api.github.com/users/canardlapin/repos",
+          "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "jobs_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609/jobs",
+        "logs_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609/logs",
+        "check_suite_url": "https://api.github.com/repos/canardlapin/scalafim/check-suites/101262170155",
+        "artifacts_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609/artifacts",
+        "cancel_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609/cancel",
+        "rerun_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609/rerun",
+        "previous_attempt_url": null,
+        "workflow_url": "https://api.github.com/repos/canardlapin/scalafim/actions/workflows/327756719",
+        "head_commit": {
+          "id": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+          "tree_id": "060dc3dfc1db435ad9572c244e0032d381910fa6",
+          "message": "Record feature-level recovery evidence and remaining qualification gaps",
+          "timestamp": "2026-10-05T22:37:14Z",
+          "author": {
+            "name": "canardlapin",
+            "email": "307091466+canardlapin@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "canardlapin",
+            "email": "307091466+canardlapin@users.noreply.github.com"
+          }
+        },
+        "repository": {
+          "id": 1306520817,
+          "node_id": "R_kgDOTd_s8Q",
+          "name": "scalafim",
+          "full_name": "canardlapin/scalafim",
+          "private": false,
+          "owner": {
+            "login": "canardlapin",
+            "id": 307091466,
+            "node_id": "U_kgDOEk3YCg",
+            "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/canardlapin",
+            "html_url": "https://github.com/canardlapin",
+            "followers_url": "https://api.github.com/users/canardlapin/followers",
+            "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+            "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+            "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+            "repos_url": "https://api.github.com/users/canardlapin/repos",
+            "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+            "type": "User",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/canardlapin/scalafim",
+          "description": null,
+          "fork": false,
+          "url": "https://api.github.com/repos/canardlapin/scalafim",
+          "forks_url": "https://api.github.com/repos/canardlapin/scalafim/forks",
+          "keys_url": "https://api.github.com/repos/canardlapin/scalafim/keys{/key_id}",
+          "collaborators_url": "https://api.github.com/repos/canardlapin/scalafim/collaborators{/collaborator}",
+          "teams_url": "https://api.github.com/repos/canardlapin/scalafim/teams",
+          "hooks_url": "https://api.github.com/repos/canardlapin/scalafim/hooks",
+          "issue_events_url": "https://api.github.com/repos/canardlapin/scalafim/issues/events{/number}",
+          "events_url": "https://api.github.com/repos/canardlapin/scalafim/events",
+          "assignees_url": "https://api.github.com/repos/canardlapin/scalafim/assignees{/user}",
+          "branches_url": "https://api.github.com/repos/canardlapin/scalafim/branches{/branch}",
+          "tags_url": "https://api.github.com/repos/canardlapin/scalafim/tags",
+          "blobs_url": "https://api.github.com/repos/canardlapin/scalafim/git/blobs{/sha}",
+          "git_tags_url": "https://api.github.com/repos/canardlapin/scalafim/git/tags{/sha}",
+          "git_refs_url": "https://api.github.com/repos/canardlapin/scalafim/git/refs{/sha}",
+          "trees_url": "https://api.github.com/repos/canardlapin/scalafim/git/trees{/sha}",
+          "statuses_url": "https://api.github.com/repos/canardlapin/scalafim/statuses/{sha}",
+          "languages_url": "https://api.github.com/repos/canardlapin/scalafim/languages",
+          "stargazers_url": "https://api.github.com/repos/canardlapin/scalafim/stargazers",
+          "contributors_url": "https://api.github.com/repos/canardlapin/scalafim/contributors",
+          "subscribers_url": "https://api.github.com/repos/canardlapin/scalafim/subscribers",
+          "subscription_url": "https://api.github.com/repos/canardlapin/scalafim/subscription",
+          "commits_url": "https://api.github.com/repos/canardlapin/scalafim/commits{/sha}",
+          "git_commits_url": "https://api.github.com/repos/canardlapin/scalafim/git/commits{/sha}",
+          "comments_url": "https://api.github.com/repos/canardlapin/scalafim/comments{/number}",
+          "issue_comment_url": "https://api.github.com/repos/canardlapin/scalafim/issues/comments{/number}",
+          "contents_url": "https://api.github.com/repos/canardlapin/scalafim/contents/{+path}",
+          "compare_url": "https://api.github.com/repos/canardlapin/scalafim/compare/{base}...{head}",
+          "merges_url": "https://api.github.com/repos/canardlapin/scalafim/merges",
+          "archive_url": "https://api.github.com/repos/canardlapin/scalafim/{archive_format}{/ref}",
+          "downloads_url": "https://api.github.com/repos/canardlapin/scalafim/downloads",
+          "issues_url": "https://api.github.com/repos/canardlapin/scalafim/issues{/number}",
+          "pulls_url": "https://api.github.com/repos/canardlapin/scalafim/pulls{/number}",
+          "milestones_url": "https://api.github.com/repos/canardlapin/scalafim/milestones{/number}",
+          "notifications_url": "https://api.github.com/repos/canardlapin/scalafim/notifications{?since,all,participating}",
+          "labels_url": "https://api.github.com/repos/canardlapin/scalafim/labels{/name}",
+          "releases_url": "https://api.github.com/repos/canardlapin/scalafim/releases{/id}",
+          "deployments_url": "https://api.github.com/repos/canardlapin/scalafim/deployments"
+        },
+        "head_repository": {
+          "id": 1306520817,
+          "node_id": "R_kgDOTd_s8Q",
+          "name": "scalafim",
+          "full_name": "canardlapin/scalafim",
+          "private": false,
+          "owner": {
+            "login": "canardlapin",
+            "id": 307091466,
+            "node_id": "U_kgDOEk3YCg",
+            "avatar_url": "https://avatars.githubusercontent.com/u/307091466?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/canardlapin",
+            "html_url": "https://github.com/canardlapin",
+            "followers_url": "https://api.github.com/users/canardlapin/followers",
+            "following_url": "https://api.github.com/users/canardlapin/following{/other_user}",
+            "gists_url": "https://api.github.com/users/canardlapin/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/canardlapin/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/canardlapin/subscriptions",
+            "organizations_url": "https://api.github.com/users/canardlapin/orgs",
+            "repos_url": "https://api.github.com/users/canardlapin/repos",
+            "events_url": "https://api.github.com/users/canardlapin/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/canardlapin/received_events",
+            "type": "User",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/canardlapin/scalafim",
+          "description": null,
+          "fork": false,
+          "url": "https://api.github.com/repos/canardlapin/scalafim",
+          "forks_url": "https://api.github.com/repos/canardlapin/scalafim/forks",
+          "keys_url": "https://api.github.com/repos/canardlapin/scalafim/keys{/key_id}",
+          "collaborators_url": "https://api.github.com/repos/canardlapin/scalafim/collaborators{/collaborator}",
+          "teams_url": "https://api.github.com/repos/canardlapin/scalafim/teams",
+          "hooks_url": "https://api.github.com/repos/canardlapin/scalafim/hooks",
+          "issue_events_url": "https://api.github.com/repos/canardlapin/scalafim/issues/events{/number}",
+          "events_url": "https://api.github.com/repos/canardlapin/scalafim/events",
+          "assignees_url": "https://api.github.com/repos/canardlapin/scalafim/assignees{/user}",
+          "branches_url": "https://api.github.com/repos/canardlapin/scalafim/branches{/branch}",
+          "tags_url": "https://api.github.com/repos/canardlapin/scalafim/tags",
+          "blobs_url": "https://api.github.com/repos/canardlapin/scalafim/git/blobs{/sha}",
+          "git_tags_url": "https://api.github.com/repos/canardlapin/scalafim/git/tags{/sha}",
+          "git_refs_url": "https://api.github.com/repos/canardlapin/scalafim/git/refs{/sha}",
+          "trees_url": "https://api.github.com/repos/canardlapin/scalafim/git/trees{/sha}",
+          "statuses_url": "https://api.github.com/repos/canardlapin/scalafim/statuses/{sha}",
+          "languages_url": "https://api.github.com/repos/canardlapin/scalafim/languages",
+          "stargazers_url": "https://api.github.com/repos/canardlapin/scalafim/stargazers",
+          "contributors_url": "https://api.github.com/repos/canardlapin/scalafim/contributors",
+          "subscribers_url": "https://api.github.com/repos/canardlapin/scalafim/subscribers",
+          "subscription_url": "https://api.github.com/repos/canardlapin/scalafim/subscription",
+          "commits_url": "https://api.github.com/repos/canardlapin/scalafim/commits{/sha}",
+          "git_commits_url": "https://api.github.com/repos/canardlapin/scalafim/git/commits{/sha}",
+          "comments_url": "https://api.github.com/repos/canardlapin/scalafim/comments{/number}",
+          "issue_comment_url": "https://api.github.com/repos/canardlapin/scalafim/issues/comments{/number}",
+          "contents_url": "https://api.github.com/repos/canardlapin/scalafim/contents/{+path}",
+          "compare_url": "https://api.github.com/repos/canardlapin/scalafim/compare/{base}...{head}",
+          "merges_url": "https://api.github.com/repos/canardlapin/scalafim/merges",
+          "archive_url": "https://api.github.com/repos/canardlapin/scalafim/{archive_format}{/ref}",
+          "downloads_url": "https://api.github.com/repos/canardlapin/scalafim/downloads",
+          "issues_url": "https://api.github.com/repos/canardlapin/scalafim/issues{/number}",
+          "pulls_url": "https://api.github.com/repos/canardlapin/scalafim/pulls{/number}",
+          "milestones_url": "https://api.github.com/repos/canardlapin/scalafim/milestones{/number}",
+          "notifications_url": "https://api.github.com/repos/canardlapin/scalafim/notifications{?since,all,participating}",
+          "labels_url": "https://api.github.com/repos/canardlapin/scalafim/labels{/name}",
+          "releases_url": "https://api.github.com/repos/canardlapin/scalafim/releases{/id}",
+          "deployments_url": "https://api.github.com/repos/canardlapin/scalafim/deployments"
+        }
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609/jobs",
+      "status": 200,
+      "body": {
+        "total_count": 3,
+        "jobs": [
+          {
+            "id": 112012213821,
+            "run_id": 37383711609,
+            "workflow_name": "first-level-ci",
+            "head_branch": "migration/20261005/handoff",
+            "run_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOTd_s8c8AAAAaFHK-PQ",
+            "head_sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+            "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/112012213821",
+            "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37383711609/job/112012213821",
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-05T22:39:30Z",
+            "started_at": "2026-10-05T22:39:32Z",
+            "completed_at": "2026-10-06T00:01:34Z",
+            "name": "full repository JVM/Scala.js compile and test",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-05T22:39:33Z",
+                "completed_at": "2026-10-05T22:39:37Z"
+              },
+              {
+                "name": "Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-05T22:39:37Z",
+                "completed_at": "2026-10-05T22:39:42Z"
+              },
+              {
+                "name": "Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-05T22:39:42Z",
+                "completed_at": "2026-10-05T22:39:42Z"
+              },
+              {
+                "name": "Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-05T22:39:42Z",
+                "completed_at": "2026-10-05T22:39:48Z"
+              },
+              {
+                "name": "Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-05T22:39:48Z",
+                "completed_at": "2026-10-05T22:39:49Z"
+              },
+              {
+                "name": "Prepare exact pinned provider artifacts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-10-05T22:39:49Z",
+                "completed_at": "2026-10-05T22:43:07Z"
+              },
+              {
+                "name": "Compile every JVM and Scala.js module",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-10-05T22:43:07Z",
+                "completed_at": "2026-10-05T22:57:26Z"
+              },
+              {
+                "name": "Test every headless JVM and Scala.js module in bounded batches",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 8,
+                "started_at": "2026-10-05T22:57:26Z",
+                "completed_at": "2026-10-06T00:01:28Z"
+              },
+              {
+                "name": "Post Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13,
+                "started_at": "2026-10-06T00:01:28Z",
+                "completed_at": "2026-10-06T00:01:28Z"
+              },
+              {
+                "name": "Post Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14,
+                "started_at": "2026-10-06T00:01:28Z",
+                "completed_at": "2026-10-06T00:01:28Z"
+              },
+              {
+                "name": "Post Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15,
+                "started_at": "2026-10-06T00:01:28Z",
+                "completed_at": "2026-10-06T00:01:28Z"
+              },
+              {
+                "name": "Post Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16,
+                "started_at": "2026-10-06T00:01:28Z",
+                "completed_at": "2026-10-06T00:01:28Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17,
+                "started_at": "2026-10-06T00:01:28Z",
+                "completed_at": "2026-10-06T00:01:28Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/112012213821",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003384,
+            "runner_name": "GitHub Actions 1000003384",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          },
+          {
+            "id": 112012214081,
+            "run_id": 37383711609,
+            "workflow_name": "first-level-ci",
+            "head_branch": "migration/20261005/handoff",
+            "run_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOTd_s8c8AAAAaFHK_QQ",
+            "head_sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+            "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/112012214081",
+            "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37383711609/job/112012214081",
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-05T22:39:30Z",
+            "started_at": "2026-10-05T22:39:32Z",
+            "completed_at": "2026-10-05T22:55:53Z",
+            "name": "scoped first-level scientific coverage",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-05T22:39:33Z",
+                "completed_at": "2026-10-05T22:39:36Z"
+              },
+              {
+                "name": "Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-05T22:39:36Z",
+                "completed_at": "2026-10-05T22:39:40Z"
+              },
+              {
+                "name": "Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-05T22:39:40Z",
+                "completed_at": "2026-10-05T22:39:40Z"
+              },
+              {
+                "name": "Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-05T22:39:40Z",
+                "completed_at": "2026-10-05T22:39:44Z"
+              },
+              {
+                "name": "Enforce per-module scientific coverage floors",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 5,
+                "started_at": "2026-10-05T22:39:44Z",
+                "completed_at": "2026-10-05T22:55:49Z"
+              },
+              {
+                "name": "Post Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-10-05T22:55:49Z",
+                "completed_at": "2026-10-05T22:55:49Z"
+              },
+              {
+                "name": "Post Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-10-05T22:55:49Z",
+                "completed_at": "2026-10-05T22:55:49Z"
+              },
+              {
+                "name": "Post Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-05T22:55:49Z",
+                "completed_at": "2026-10-05T22:55:50Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-05T22:55:50Z",
+                "completed_at": "2026-10-05T22:55:50Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/112012214081",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003386,
+            "runner_name": "GitHub Actions 1000003386",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          },
+          {
+            "id": 112012214112,
+            "run_id": 37383711609,
+            "workflow_name": "first-level-ci",
+            "head_branch": "migration/20261005/handoff",
+            "run_url": "https://api.github.com/repos/canardlapin/scalafim/actions/runs/37383711609",
+            "run_attempt": 1,
+            "node_id": "CR_kwDOTd_s8c8AAAAaFHK_YA",
+            "head_sha": "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f",
+            "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/112012214112",
+            "html_url": "https://github.com/canardlapin/scalafim/actions/runs/37383711609/job/112012214112",
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-05T22:39:30Z",
+            "started_at": "2026-10-05T22:39:32Z",
+            "completed_at": "2026-10-05T23:29:16Z",
+            "name": "focused first-level JVM/Scala.js gates",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-10-05T22:39:33Z",
+                "completed_at": "2026-10-05T22:39:35Z"
+              },
+              {
+                "name": "Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-10-05T22:39:35Z",
+                "completed_at": "2026-10-05T22:39:39Z"
+              },
+              {
+                "name": "Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-10-05T22:39:39Z",
+                "completed_at": "2026-10-05T22:39:39Z"
+              },
+              {
+                "name": "Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-10-05T22:39:39Z",
+                "completed_at": "2026-10-05T22:39:48Z"
+              },
+              {
+                "name": "Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-10-05T22:39:48Z",
+                "completed_at": "2026-10-05T22:39:49Z"
+              },
+              {
+                "name": "Run manifest, fixture, JVM, and Scala.js gates",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 6,
+                "started_at": "2026-10-05T22:39:49Z",
+                "completed_at": "2026-10-05T23:29:13Z"
+              },
+              {
+                "name": "Post Set up the declared Scala.js Node runtime",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9,
+                "started_at": "2026-10-05T23:29:13Z",
+                "completed_at": "2026-10-05T23:29:13Z"
+              },
+              {
+                "name": "Post Set up sbt",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-10-05T23:29:13Z",
+                "completed_at": "2026-10-05T23:29:13Z"
+              },
+              {
+                "name": "Post Set up the declared JDK baseline",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-10-05T23:29:13Z",
+                "completed_at": "2026-10-05T23:29:13Z"
+              },
+              {
+                "name": "Post Check out source",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-10-05T23:29:13Z",
+                "completed_at": "2026-10-05T23:29:14Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-10-05T23:29:14Z",
+                "completed_at": "2026-10-05T23:29:14Z"
+              }
+            ],
+            "check_run_url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/112012214112",
+            "labels": [
+              "ubuntu-24.04"
+            ],
+            "runner_id": 1000003385,
+            "runner_name": "GitHub Actions 1000003385",
+            "runner_group_id": 0,
+            "runner_group_name": "GitHub Actions"
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/112012213821/annotations",
+      "status": 200,
+      "body": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/ea6fe3ad43ece091ebcccd85fbc6cf80801d705f/.github",
+          "start_line": 10636,
+          "start_column": null,
+          "end_line": 10636,
+          "end_column": null,
+          "annotation_level": "failure",
+          "title": "",
+          "message": "Process completed with exit code 1.",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/ea6fe3ad43ece091ebcccd85fbc6cf80801d705f/.github",
+          "start_line": 82,
+          "start_column": null,
+          "end_line": 82,
+          "end_column": null,
+          "annotation_level": "warning",
+          "title": "",
+          "message": "\u001b[1mvalue lookup of `streams` inside an `if` expression\u001b[0m",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/112012213821/logs",
+      "status": 403,
+      "body": {
+        "message": "Must have admin rights to Repository.",
+        "documentation_url": "https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run",
+        "status": "403"
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/112012214081/annotations",
+      "status": 200,
+      "body": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/ea6fe3ad43ece091ebcccd85fbc6cf80801d705f/.github",
+          "start_line": 2663,
+          "start_column": null,
+          "end_line": 2663,
+          "end_column": null,
+          "annotation_level": "failure",
+          "title": "",
+          "message": "Process completed with exit code 1.",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/ea6fe3ad43ece091ebcccd85fbc6cf80801d705f/.github",
+          "start_line": 82,
+          "start_column": null,
+          "end_line": 82,
+          "end_column": null,
+          "annotation_level": "warning",
+          "title": "",
+          "message": "\u001b[1mvalue lookup of `streams` inside an `if` expression\u001b[0m",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/112012214081/logs",
+      "status": 403,
+      "body": {
+        "message": "Must have admin rights to Repository.",
+        "documentation_url": "https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run",
+        "status": "403"
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/check-runs/112012214112/annotations",
+      "status": 200,
+      "body": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/ea6fe3ad43ece091ebcccd85fbc6cf80801d705f/.github",
+          "start_line": 4872,
+          "start_column": null,
+          "end_line": 4872,
+          "end_column": null,
+          "annotation_level": "failure",
+          "title": "",
+          "message": "Process completed with exit code 1.",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/canardlapin/scalafim/blob/ea6fe3ad43ece091ebcccd85fbc6cf80801d705f/.github",
+          "start_line": 82,
+          "start_column": null,
+          "end_line": 82,
+          "end_column": null,
+          "annotation_level": "warning",
+          "title": "",
+          "message": "\u001b[1mvalue lookup of `streams` inside an `if` expression\u001b[0m",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "url": "https://api.github.com/repos/canardlapin/scalafim/actions/jobs/112012214112/logs",
+      "status": 403,
+      "body": {
+        "message": "Must have admin rights to Repository.",
+        "documentation_url": "https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run",
+        "status": "403"
+      }
+    }
+  ]
+}

@@ -29,6 +29,17 @@ enum SurfaceSamplingPath:
   case FractionalThickness(fractions: Vector[Double])
   case NormalLine(offsets: Vector[Double])
 
+/** How a vertex's samples reduce to one value. Every reducer skips non-finite
+  * samples: a non-finite value is not an observation. A vertex with no finite
+  * sample reduces to NaN.
+  *
+  *  - `Nearest`: the first finite sample in the path's declared order (the
+  *    order of `fractions` or `offsets`, as given). Each sample has already
+  *    taken its nearest voxel, rounding half up on every axis. Samples are
+  *    totally ordered, so no further tie rule is needed.
+  *  - `Average`: the arithmetic mean of the finite samples.
+  *  - `Mode`: the most frequent finite value. Ties go to the smallest value.
+  */
 enum SurfaceSampleAggregation:
   case Nearest, Average, Mode
 
@@ -62,14 +73,26 @@ final case class SurfaceSampleTally(
   def rejected: Long =
     outsideVolume + masked + nonFinite
 
-/** `sampleCounts` counts in-volume, in-mask samples per vertex, including
-  * non-finite volume values, which the aggregate then propagates.
+/** Per-vertex accounting splits the in-volume, in-mask samples in two.
+  * `sampleCounts` counts finite values only: a non-finite value is not an
+  * observation, so it never counts toward a minimum-sample rule.
+  * `nonFiniteCounts` counts the non-finite values separately so that they stay
+  * visible. `values` reduces the finite samples only (see
+  * [[SurfaceSampleAggregation]]), so it is NaN exactly when a vertex has no
+  * finite sample.
+  * Summed over the sampled vertices, the two fields equal `tally.accepted` and
+  * `tally.nonFinite`.
   */
 final case class SurfaceSampleResult(
   values: SurfaceField[Double],
   sampleCounts: SurfaceField[Int],
+  nonFiniteCounts: SurfaceField[Int],
   tally: SurfaceSampleTally
-)
+):
+  require(
+    sampleCounts.size == values.size && nonFiniteCounts.size == values.size,
+    "per-vertex sample counts must cover every vertex"
+  )
 
 enum SurfaceSampleOutcome:
   case OutsideVolume
@@ -86,9 +109,12 @@ final case class SurfaceVertexSample private[surface] (
   samples: Vector[SurfacePointSample],
   value: Double
 ):
+  /** In-mask samples with finite values, in declared path order. These are the
+    * samples that every reducer considers.
+    */
   def acceptedSampleIndices: Vector[Int] = samples.indices.filter: index =>
     samples(index).outcome match
-      case SurfaceSampleOutcome.Included(_, _) => true
+      case SurfaceSampleOutcome.Included(_, value) => value.isFinite
       case _ => false
   .toVector
 
@@ -115,6 +141,7 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     val vertexCount = plan.surfaces.white.vertexCount
     val values = Array.fill(vertexCount)(Double.NaN)
     val counts = Array.ofDim[Int](vertexCount)
+    val nonFiniteCounts = Array.ofDim[Int](vertexCount)
     val tally = TallyBuilder()
     selected.foreach(flags => require(flags.length == vertexCount, "selected vertex count differs from anatomy"))
 
@@ -123,13 +150,17 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
       if selected.forall(_(i)) then
         val vertex = VertexId.unsafe(i)
         val samples = sampleValues(volume, mask, samplePoints(vertex), tally)
-        counts(i) = samples.length
-        if samples.nonEmpty then values(i) = aggregate(samples)
+        var finite = 0
+        samples.foreach(value => if value.isFinite then finite += 1)
+        counts(i) = finite
+        nonFiniteCounts(i) = samples.length - finite
+        values(i) = aggregate(samples)
       i += 1
 
     SurfaceSampleResult(
       values = SurfaceField.full(plan.surfaces.white, values.toVector, "surface-sample"),
       sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count"),
+      nonFiniteCounts = SurfaceField.full(plan.surfaces.white, nonFiniteCounts.toVector, "surface-non-finite-sample-count"),
       tally = tally.result()
     )
 
@@ -140,7 +171,7 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     val receipts = Vector.newBuilder[SurfacePointSample]
     val values = sampleValues(volume, mask, samplePoints(vertex), TallyBuilder(), Some(receipt => { receipts += receipt; () }))
     SurfaceVertexSample(vertex, plan.path, plan.aggregation, receipts.result(),
-      if values.isEmpty then Double.NaN else aggregate(values))
+      aggregate(values))
 
   def inspectVertexEither(volume: SomeScalarVolume[Double], vertex: VertexId,
       mask: Option[SomeMaskVolume] = None): Either[SurfaceError, SurfaceVertexSample] =
@@ -221,8 +252,11 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
       Some(rounded.map(_.toInt))
     else None
 
-  private def aggregate(values: Vector[Double]): Double =
-    plan.aggregation match
+  /** Reduces the finite samples only; NaN when there are none. */
+  private def aggregate(samples: Vector[Double]): Double =
+    val values = samples.filter(_.isFinite)
+    if values.isEmpty then Double.NaN
+    else plan.aggregation match
       case SurfaceSampleAggregation.Nearest =>
         values.head
       case SurfaceSampleAggregation.Average =>

@@ -1,0 +1,29 @@
+{
+  "worker_exit": 0,
+  "elapsed_seconds": 38.472772916,
+  "server_pid": 79536,
+  "rss_samples": 20,
+  "observed_peak_rss_bytes": 3694215168,
+  "resource_refusal": null,
+  "rss_scope": "Resident sbt JVM; sampled every 0.2s. Excludes thin client and generator.",
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankV2ResourceProbeSuite"
+  ],
+  "records": 16,
+  "all_assignments_completed": true,
+  "evaluated": 16,
+  "source_commit": "72847e147efd8cae0e619e8e2fecd09ab5b4852c",
+  "provider_revision": "edb05de01401ec0b3aea4dc1190dd3100e70ee51",
+  "scientific_qualification": false,
+  "source_locks_unchanged": true,
+  "limits": {
+    "worker_processes": 1,
+    "cpus": 4,
+    "heap": "3g",
+    "max_wall_seconds": 900,
+    "max_rss_bytes": 4294967296
+  },
+  "startup_property": "-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rank-v2-20261008"
+}

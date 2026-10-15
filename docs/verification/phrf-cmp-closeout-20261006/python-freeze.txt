@@ -1,0 +1,6 @@
+iniconfig==2.3.0
+numpy==2.4.3
+packaging==26.3
+pluggy==1.6.0
+pytest==7.4.4
+scipy==1.17.1

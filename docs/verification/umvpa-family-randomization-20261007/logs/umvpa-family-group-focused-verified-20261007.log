@@ -1,0 +1,160 @@
+[info] compiling 8 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.VoxelLoadingConfirmationSuite:
+  + target-derived batched loadings match an independent orthogonal nuisance t/F oracle 0.206s
+  + an omitted intercept preserves the independent OLS and GLS oracles with shifted targets 0.046s
+  + an intercept in the nuisance span is retained without a redundant column 0.006s
+  + an existing intercept retains the last residual degree of freedom 0.009s
+  + aliased target dimensions and missing values refuse before any brain reads 0.013s
+  + foreign actual rows, target endpoint, budgets and replay refuse before brain reads 0.005s
+  + structured row whitening is an isometry against independent diagonal-plus-rank-one precision 0.01s
+  + known dependent row shape retains exact units and matches independent R GLS fixture 0.007s
+  + a frozen nonorthogonal target projection changes component loading coordinates and preserves the omnibus hypothesis 0.006s
+  + preflight budget refuses a poison target application and a foreign target endpoint 0.004s
+scalafim.fmri.mvpa.inference.FixedRepresentationInferenceSuite:
+  + serialized independent rank coordinates retain the actual nuisance and candidate scope 0.18s
+scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite:
+  + common Gaussian residual actions retain the independent GLS observed omnibus estimates 0.45s
+  + tiny exhausted MC group maxima agree with independent scalar regression enumeration 0.05s
+  + ordering and identical retries preserve actions, digests, denominator and bitwise maxima 0.041s
+  + omitted, cancelled and refused commits cannot report completed fixed B 0.014s
+  + one nonfinite voxel preserves valid local coefficients and blocks the complete family 0.019s
+  + all failed members retain every observed outcome and only one bounded failure summary per replicate 0.012s
+  + omnibus null-column fields ignore an alternative in a different voxel 0.015s
+  + complete family, source endpoints, law receipt and pre-exposure binding refuse before reads 0.062s
+  + actual action seed binds the adopted work address and separates different frozen plans 0.005s
+  + aggregate storage, transform indices and fixed candidate caps refuse without brain reads 0.008s
+scalafim.fmri.mvpa.inference.CalibrationProtocolSuite:
+  + raw UTF-8 SHA/64-bit roots and named provider child streams match external fixtures 0.011s
+  + root digest is not the existing length-framed axis digest 0.002s
+  + published resample seed-path fixture agrees independently 0.0s
+  + worker ordering, retries and plan capacity cannot alter immutable assignments 0.007s
+  + frozen phase counts preserve exact datasets and resampling budgets 0.0s
+scalafim.fmri.mvpa.analysis.SubjectCoordinatesSuite:
+  + oblique subject coefficients and full correlated covariance match the exact independent oracle 0.047s
+  + dropping cross-feature or cross-component covariance changes the transported uncertainty 0.006s
+  + signed rotation and component reindexing preserve the explicit coefficient orientation 0.003s
+  + stable subspaces return a named task operator with singular covariance and no forced component labels 0.004s
+  + task operator and its covariance are invariant to an oblique discovery gauge 0.003s
+  + unequal anatomical dimensions preserve every covariance cell without requiring positive definiteness 0.001s
+  + shared unstable axes cannot license component matches but retain task-operator comparison 0.003s
+  + all df classifications and source identities survive arithmetic transport without group admission 0.01s
+  + covariance origin is independent of known df and is immutable transport identity metadata 0.007s
+  + df role is explicit immutable transport metadata and approximate df requires an effective role 0.008s
+  + subject differences remain visible under the same admitted coordinates 0.004s
+  + dimension-only, reordered task and wrong destination bindings refuse 0.005s
+  + confirmation-derived or overlapping shared coordinate selection refuses 0.003s
+  + spatial alignment and stability cannot be selected from confirmation or borrowed discovery accounts 0.002s
+  + physical value units must match independently of anatomical coordinate units 0.002s
+  + covariance units are mechanically squared and cannot be replaced by unrelated physical labels 0.001s
+  + subject rows cannot silently relabel a multisubject confirmation fit 0.004s
+  + ill-conditioned, different task subspaces, invalid covariance and budgets fail closed 0.011s
+  + budget and metadata refusals never apply the original confirmation evidence source 0.004s
+[info] Passed: Total 45, Failed 0, Errors 0, Passed 45
+[success] elapsed time: 7 s
+[0J[sbt-warm] mvpaJVM/testOnly *VoxelFamilyRandomizationSuite *VoxelLoadingConfirmationSuite *SubjectCoordinatesSuite *CalibrationProtocolSuite *FixedRepresentationInferenceSuite: exit 0 in 7.3s
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] Passed: Total 4, Failed 0, Errors 0, Passed 4
+[success] elapsed time: 9 s
+[0J[sbt-warm] mvpaSpatialJVM/testOnly *FamilyThresholdSuite: exit 0 in 9.6s
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.SubjectGroupBridgeSuite:
+  + independent small-group known-variance fixture delegates to adopted group and retains full covariance 0.254s
+  + qualified loading bridge adopts full component Gram and explicit cross-feature covariance as Estimated 0.025s
+  + eager and materialized conversions preserve every covariance cell, df role and source 0.099s
+  + mismatched source declarations and unsupported uncertainty refuse instead of becoming known Gaussian 0.008s
+  + reordered subjects, task/space endpoints and tampered materialized covariance refuse 0.027s
+  + residual covariance must name actual loading values, dimensions and diagonal variances 0.01s
+  + relabelled duplicate brain evidence refuses before covariance access but independent brains may share row schemas and targets 0.007s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[success] elapsed time: 9 s
+[0J[sbt-warm] mvpaGroupJVM/testOnly *SubjectGroupBridgeSuite: exit 0 in 9.9s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa/js/target/scala-3.7.4/scalafim-fmri-mvpa-test-fastopt
+scalafim.fmri.mvpa.analysis.VoxelLoadingConfirmationSuite:
+  + target-derived batched loadings match an independent orthogonal nuisance t/F oracle 0.019s
+  + an omitted intercept preserves the independent OLS and GLS oracles with shifted targets 0.036s
+  + an intercept in the nuisance span is retained without a redundant column 0.002s
+  + an existing intercept retains the last residual degree of freedom 0.002s
+  + aliased target dimensions and missing values refuse before any brain reads 0.003s
+  + foreign actual rows, target endpoint, budgets and replay refuse before brain reads 0.003s
+  + structured row whitening is an isometry against independent diagonal-plus-rank-one precision 0.005s
+  + known dependent row shape retains exact units and matches independent R GLS fixture 0.002s
+  + a frozen nonorthogonal target projection changes component loading coordinates and preserves the omnibus hypothesis 0.002s
+  + preflight budget refuses a poison target application and a foreign target endpoint 0.001s
+scalafim.fmri.mvpa.analysis.SubjectCoordinatesSuite:
+  + oblique subject coefficients and full correlated covariance match the exact independent oracle 0.020s
+  + dropping cross-feature or cross-component covariance changes the transported uncertainty 0.025s
+  + signed rotation and component reindexing preserve the explicit coefficient orientation 0.006s
+  + stable subspaces return a named task operator with singular covariance and no forced component labels 0.004s
+  + task operator and its covariance are invariant to an oblique discovery gauge 0.005s
+  + unequal anatomical dimensions preserve every covariance cell without requiring positive definiteness 0.003s
+  + shared unstable axes cannot license component matches but retain task-operator comparison 0.002s
+  + all df classifications and source identities survive arithmetic transport without group admission 0.007s
+  + covariance origin is independent of known df and is immutable transport identity metadata 0.004s
+  + df role is explicit immutable transport metadata and approximate df requires an effective role 0.004s
+  + subject differences remain visible under the same admitted coordinates 0.002s
+  + dimension-only, reordered task and wrong destination bindings refuse 0.002s
+  + confirmation-derived or overlapping shared coordinate selection refuses 0.002s
+  + spatial alignment and stability cannot be selected from confirmation or borrowed discovery accounts 0.002s
+  + physical value units must match independently of anatomical coordinate units 0.003s
+  + covariance units are mechanically squared and cannot be replaced by unrelated physical labels 0.001s
+  + subject rows cannot silently relabel a multisubject confirmation fit 0.004s
+  + ill-conditioned, different task subspaces, invalid covariance and budgets fail closed 0.006s
+  + budget and metadata refusals never apply the original confirmation evidence source 0.002s
+scalafim.fmri.mvpa.inference.FixedRepresentationInferenceSuite:
+  + serialized independent rank coordinates retain the actual nuisance and candidate scope 0.019s
+scalafim.fmri.mvpa.analysis.VoxelFamilyRandomizationSuite:
+  + common Gaussian residual actions retain the independent GLS observed omnibus estimates 0.035s
+  + tiny exhausted MC group maxima agree with independent scalar regression enumeration 0.012s
+  + ordering and identical retries preserve actions, digests, denominator and bitwise maxima 0.016s
+  + omitted, cancelled and refused commits cannot report completed fixed B 0.013s
+  + one nonfinite voxel preserves valid local coefficients and blocks the complete family 0.006s
+  + all failed members retain every observed outcome and only one bounded failure summary per replicate 0.005s
+  + omnibus null-column fields ignore an alternative in a different voxel 0.009s
+  + complete family, source endpoints, law receipt and pre-exposure binding refuse before reads 0.001s
+  + actual action seed binds the adopted work address and separates different frozen plans 0.002s
+  + aggregate storage, transform indices and fixed candidate caps refuse without brain reads 0.002s
+scalafim.fmri.mvpa.inference.CalibrationProtocolSuite:
+  + raw UTF-8 SHA/64-bit roots and named provider child streams match external fixtures 0.004s
+  + root digest is not the existing length-framed axis digest 0.000s
+  + published resample seed-path fixture agrees independently 0.000s
+  + worker ordering, retries and plan capacity cannot alter immutable assignments 0.001s
+  + frozen phase counts preserve exact datasets and resampling budgets 0.000s
+[info] Passed: Total 45, Failed 0, Errors 0, Passed 45
+[success] elapsed time: 13 s
+[0J[sbt-warm] mvpaJS/testOnly *VoxelFamilyRandomizationSuite *VoxelLoadingConfirmationSuite *SubjectCoordinatesSuite *CalibrationProtocolSuite *FixedRepresentationInferenceSuite: exit 0 in 13.6s
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-spatial/js/target/scala-3.7.4/scalafim-fmri-mvpa-spatial-test-fastopt
+scalafim.fmri.mvpa.analysis.FamilyThresholdSuite:
+  + sealed complete fields use inclusive plus-one maxima and the same repaired cutoff decisions 0.036s
+  + foreign null, seed or alpha reference cannot reuse a completed family 0.015s
+  + the repaired threshold boundary rejects strictly above tied maximum null at B19 alpha .05 0.000s
+  + fixed alpha below attainable MC probability yields explicit no rejections 0.011s
+[info] Passed: Total 4, Failed 0, Errors 0, Passed 4
+[success] elapsed time: 10 s
+[0J[sbt-warm] mvpaSpatialJS/testOnly *FamilyThresholdSuite: exit 0 in 10.6s
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-family-group-20261007/modules/mvpa-group/js/target/scala-3.7.4/scalafim-fmri-mvpa-group-test-fastopt
+scalafim.fmri.mvpa.analysis.SubjectGroupBridgeSuite:
+  + independent small-group known-variance fixture delegates to adopted group and retains full covariance 0.043s
+  + qualified loading bridge adopts full component Gram and explicit cross-feature covariance as Estimated 0.009s
+  + eager and materialized conversions preserve every covariance cell, df role and source 0.010s
+  + mismatched source declarations and unsupported uncertainty refuse instead of becoming known Gaussian 0.006s
+  + reordered subjects, task/space endpoints and tampered materialized covariance refuse 0.013s
+  + residual covariance must name actual loading values, dimensions and diagonal variances 0.006s
+  + relabelled duplicate brain evidence refuses before covariance access but independent brains may share row schemas and targets 0.007s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[success] elapsed time: 6 s
+[0J[sbt-warm] mvpaGroupJS/testOnly *SubjectGroupBridgeSuite: exit 0 in 6.8s

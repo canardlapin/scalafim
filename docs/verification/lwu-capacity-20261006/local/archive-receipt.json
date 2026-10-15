@@ -1,0 +1,5 @@
+{
+  "archive": "local-results.tar.gz",
+  "sha256": "58bb0a7bdfcfeb811b63840f2cb240ea629791b5fa96aa49d3f25f87f267ed76",
+  "scope": "27 verified source/local-gate files including raw logs, compileAll0warnings, cleanup and existing admission caveat"
+}

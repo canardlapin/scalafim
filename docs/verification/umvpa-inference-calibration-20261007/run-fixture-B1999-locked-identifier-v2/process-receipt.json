@@ -1,0 +1,35 @@
+{
+  "phase": "fixture",
+  "batch": "fixture-B1999-locked",
+  "source_commit": "3b8d35e6aa989e2c6a5dadebabb2db608fc478cd",
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankConfirmationSuite"
+  ],
+  "input_list": "target/umvpa-calibration/fixture-B1999-locked/case-files.txt",
+  "input_sha256": "51300c8a3ef49ea8146dc09ccf77fac1ad01facbc95fff4b5aa740856b954acb",
+  "supervisor_sha256": "8600dd151b18bd4467de50efd5d4ec512e456eb86923fd9f4a3cf1d14a6ebcd1",
+  "elapsed_seconds": 42.285691334000006,
+  "server_pid": 52218,
+  "rss_samples": 30,
+  "observed_peak_rss_bytes": 2767716352,
+  "worker_exit": 0,
+  "resource_limits": {
+    "heap": "2g",
+    "cpus": 4,
+    "max_rss_bytes": 3221225472,
+    "max_wall_seconds": 900,
+    "worker_processes": 1
+  },
+  "resource_refusal": null,
+  "records_written": 1,
+  "scientific_release": "unavailable",
+  "status": "completed",
+  "records_sha256": "52805bdf89666158e1d1a8c1133b785d7427ed61194abf59de764a9ac58ea8bb",
+  "outcome_status_counts": {
+    "evaluated": 1
+  },
+  "expected_records": 1,
+  "outcome_scope": "Process completion alone is not dataset success or scientific qualification."
+}

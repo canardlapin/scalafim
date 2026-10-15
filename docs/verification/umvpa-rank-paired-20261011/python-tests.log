@@ -1,0 +1,20 @@
+.F.....
+======================================================================
+FAIL: test_assignment_matches_independent_retained_seed (test_protocol.PairedPilotProtocolTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/test_protocol.py", line 47, in test_assignment_matches_independent_retained_seed
+    self.assertEqual(a['r_noise_state'],[814777009,1734919326,1740522659,1854669298,1494250189,1850162044])
+AssertionError: Lists differ: [692210129, 10192853, 1005500419, 1813665521, 561851491, 2013787799] != [814777009, 1734919326, 1740522659, 1854669298, 1494250189, 1850162044]
+
+First differing element 0:
+692210129
+814777009
+
+- [692210129, 10192853, 1005500419, 1813665521, 561851491, 2013787799]
++ [814777009, 1734919326, 1740522659, 1854669298, 1494250189, 1850162044]
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.256s
+
+FAILED (failures=1)

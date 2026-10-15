@@ -1,0 +1,6 @@
+# Custody top-level requirements (input to requirements.lock; see the lock header for how it is regenerated).
+# py-ecc is the offline BLS verifier; cryptography is the sealing backend; numpy is imported by generator seeds.py.
+cryptography==50.0.2
+numpy==2.5.3
+py-ecc==8.0.0
+pytest==9.1.1

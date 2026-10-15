@@ -1,0 +1,35 @@
+{
+  "phase": "pilot",
+  "batch": "pilot-R1",
+  "source_commit": "3b8d35e6aa989e2c6a5dadebabb2db608fc478cd",
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "mvpaJVM/testOnly scalafim.fmri.mvpa.inference.RankConfirmationSuite"
+  ],
+  "input_list": "target/umvpa-calibration/pilot-R1/case-files.txt",
+  "input_sha256": "62824b04a76a8c62b67d0a131d91941c9d52d75866b56d015dc96c5eb5083774",
+  "supervisor_sha256": "8600dd151b18bd4467de50efd5d4ec512e456eb86923fd9f4a3cf1d14a6ebcd1",
+  "elapsed_seconds": 61.305948625,
+  "server_pid": 55494,
+  "rss_samples": 27,
+  "observed_peak_rss_bytes": 2595504128,
+  "worker_exit": 0,
+  "resource_limits": {
+    "heap": "2g",
+    "cpus": 4,
+    "max_rss_bytes": 3221225472,
+    "max_wall_seconds": 900,
+    "worker_processes": 1
+  },
+  "resource_refusal": null,
+  "records_written": 200,
+  "scientific_release": "unavailable",
+  "status": "completed",
+  "records_sha256": "e85585b9fa6dc2c1790e684667ef218d8809b6acd2759d688c3e523d293c50ce",
+  "outcome_status_counts": {
+    "evaluated": 200
+  },
+  "expected_records": 200,
+  "outcome_scope": "Process completion alone is not dataset success or scientific qualification."
+}

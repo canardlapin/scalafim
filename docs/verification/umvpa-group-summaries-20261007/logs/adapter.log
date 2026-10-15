@@ -1,0 +1,71 @@
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-group/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.HeldOutSubjectPredictionSuite:
+  + actual frozen-head predictions use subjects as units despite unequal row counts 0.195s
+  + the subject reducer is invariant to grouping rows into unequal independent blocks within each subject 0.016s
+  + a unit spanning subjects is rejected before assessment sources are read 0.007s
+  + learning-subject contamination cannot be relabelled held out 0.008s
+  + foreign row-bound columns and a borrowed head exposure account refuse 0.002s
+  + unknown or subsequently viewed assessment exposure and numeric budgets refuse without reads 0.008s
+  + single-subject head adaptation uses separate rows while shared coordinates stay external 0.011s
+  + adaptation cannot use another subject or replace the shared representation 0.007s
+  + complete cohort coverage rejects missing, repeated and reordered subjects 0.004s
+  + duplicated assessment evidence cannot create two additional subjects 0.003s
+  + negative subject usefulness is retained without clipping or assessment refitting 0.004s
+scalafim.fmri.mvpa.analysis.SubjectGroupSummarySuite:
+  + known-variance common-effect summary matches independent R and retains every subject covariance 0.097s
+  + Paule-Mandel heterogeneity stays distinct from observed variability with estimated uncertainty 0.023s
+  + homogeneous effects reach the zero heterogeneity boundary without losing subject variation provenance 0.008s
+  + estimated covariance cannot be promoted to common-effect known-Gaussian inference 0.007s
+  + too few subjects and summary allocation limits are explicit refusals 0.017s
+  + summary identity binds population and numerical policy and does not change the estimand silently 0.005s
+  + task-linked operator summaries retain their task axis and physical value units 0.003s
+  + a partially failed native map cannot become a complete group summary 0.009s
+scalafim.fmri.mvpa.analysis.SubjectGroupBridgeSuite:
+  + independent small-group known-variance fixture delegates to adopted group and retains full covariance 0.016s
+  + qualified loading bridge adopts full component Gram and explicit cross-feature covariance as Estimated 0.009s
+  + eager and materialized conversions preserve every covariance cell, df role and source 0.01s
+  + mismatched source declarations and unsupported uncertainty refuse instead of becoming known Gaussian 0.004s
+  + reordered subjects, task/space endpoints and tampered materialized covariance refuse 0.004s
+  + residual covariance must name actual loading values, dimensions and diagonal variances 0.003s
+  + marginal Gaussian row laws cannot stand in for a homogeneous separable joint model 0.003s
+  + relabelled duplicate brain evidence refuses before covariance access but independent brains may share row schemas and targets 0.004s
+[info] Passed: Total 27, Failed 0, Errors 0, Passed 27
+[success] elapsed time: 29 s
+[0J[sbt-warm] mvpaGroupJVM/test: exit 0 in 29.4s
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-group/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa-group/js/target/scala-3.7.4/scalafim-fmri-mvpa-group-test-fastopt
+scalafim.fmri.mvpa.analysis.SubjectGroupBridgeSuite:
+  + independent small-group known-variance fixture delegates to adopted group and retains full covariance 0.050s
+  + qualified loading bridge adopts full component Gram and explicit cross-feature covariance as Estimated 0.005s
+  + eager and materialized conversions preserve every covariance cell, df role and source 0.008s
+  + mismatched source declarations and unsupported uncertainty refuse instead of becoming known Gaussian 0.004s
+  + reordered subjects, task/space endpoints and tampered materialized covariance refuse 0.009s
+  + residual covariance must name actual loading values, dimensions and diagonal variances 0.004s
+  + marginal Gaussian row laws cannot stand in for a homogeneous separable joint model 0.002s
+  + relabelled duplicate brain evidence refuses before covariance access but independent brains may share row schemas and targets 0.004s
+scalafim.fmri.mvpa.analysis.HeldOutSubjectPredictionSuite:
+  + actual frozen-head predictions use subjects as units despite unequal row counts 0.051s
+  + the subject reducer is invariant to grouping rows into unequal independent blocks within each subject 0.018s
+  + a unit spanning subjects is rejected before assessment sources are read 0.003s
+  + learning-subject contamination cannot be relabelled held out 0.002s
+  + foreign row-bound columns and a borrowed head exposure account refuse 0.004s
+  + unknown or subsequently viewed assessment exposure and numeric budgets refuse without reads 0.003s
+  + single-subject head adaptation uses separate rows while shared coordinates stay external 0.012s
+  + adaptation cannot use another subject or replace the shared representation 0.007s
+  + complete cohort coverage rejects missing, repeated and reordered subjects 0.005s
+  + duplicated assessment evidence cannot create two additional subjects 0.006s
+  + negative subject usefulness is retained without clipping or assessment refitting 0.002s
+scalafim.fmri.mvpa.analysis.SubjectGroupSummarySuite:
+  + known-variance common-effect summary matches independent R and retains every subject covariance 0.012s
+  + Paule-Mandel heterogeneity stays distinct from observed variability with estimated uncertainty 0.009s
+  + homogeneous effects reach the zero heterogeneity boundary without losing subject variation provenance 0.007s
+  + estimated covariance cannot be promoted to common-effect known-Gaussian inference 0.007s
+  + too few subjects and summary allocation limits are explicit refusals 0.016s
+  + summary identity binds population and numerical policy and does not change the estimand silently 0.006s
+  + task-linked operator summaries retain their task axis and physical value units 0.010s
+  + a partially failed native map cannot become a complete group summary 0.006s
+[info] Passed: Total 27, Failed 0, Errors 0, Passed 27
+[success] elapsed time: 14 s
+[0J[sbt-warm] mvpaGroupJS/test: exit 0 in 14.4s

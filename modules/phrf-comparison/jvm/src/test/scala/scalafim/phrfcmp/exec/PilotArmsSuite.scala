@@ -75,7 +75,7 @@ class PilotArmsSuite extends munit.FunSuite:
       ConditionVoxel(1, ConditionArmStatus.Refused(RefusalKind.Decode(scalafim.fmri.fit.profile.DecodeStatus.Boundary)), None, None)), None, None)
     val c = ctx("can")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c), ArmResult.Done())
-    assertEquals(c.emitted.map(_.name), Vector("result"))
+    assertEquals(c.emitted.filterNot(_.name == ScorerContribution.EntryName).map(_.name), Vector("result"))
     assert(c.emitted.head.bytes.length > 100)
     assertEquals(f.conditions.length, 1)
   }
@@ -101,7 +101,7 @@ class PilotArmsSuite extends munit.FunSuite:
     val c = ctx("lsa")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c), ArmResult.Done())
     assertEquals(e.rlssSeen.toVector, Vector(None))
-    assertEquals(c.emitted.map(_.name), Vector("fit"))
+    assertEquals(c.emitted.filterNot(_.name == ScorerContribution.EntryName).map(_.name), Vector("fit"))
     assertEquals(f.trials.map(_._1), Vector(Method.Lsa))
     e.native = (_, _) => Left(NativeTrialRefusal.Fit(scalafim.fmri.fit.FitError.EmptyDesign))
     assertEquals(new PilotArmRunner(new Source, e, f).run(ctx("lss")), ArmResult.Failed("fit_EmptyDesign"))
@@ -130,14 +130,14 @@ class PilotArmsSuite extends munit.FunSuite:
     e.phrf = Left(PhrfTrialRefusal.Dataset("plan", "X"))
     val c = ctx("phrf-ml")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c), ArmResult.Refused("phrf_dataset_plan_X"))
-    assertEquals(c.emitted, Vector.empty)
+    assertEquals(c.emitted.map(_.name), Vector(ScorerContribution.EntryName))
     assertEquals(f.trials.map(_._1), Vector(Method.Phrf))
     e.phrf = Left(PhrfTrialRefusal.Setup("basis", "Y"))
     assertEquals(new PilotArmRunner(new Source, e, f).run(ctx("phrf-ml")), ArmResult.Failed("phrf_setup_basis_Y"))
   }
 
   private def glmOutcome(guard: Double, timing: Double) =
-    GlmSingleOutcome(Vector(VoxelOutcome.Estimated(TrialEstimate.of(Vector(1.0, 2.0)).toOption.get), VoxelOutcome.Failed), 2, guard, timing, Some(guard), guard, 3.0, "o" * 64, "i" * 64, 10, "commit", "script", "threads=1")
+    GlmSingleOutcome(Vector(VoxelOutcome.Estimated(TrialEstimate.of(Vector(1.0, 2.0)).toOption.get), VoxelOutcome.Failed), 2, guard, timing, Some(guard), guard, 3.0, "o" * 64, "b" * 64, 10, "commit", "script", "threads=1")
 
   test("GLMsingle: guard CPU goes to the scheduler, timing CPU to the timing endpoint; refusal text stays in the sealed note") {
     val e = new Fake; val f = new Feed
@@ -148,14 +148,14 @@ class PilotArmsSuite extends munit.FunSuite:
     assertEquals(f.timings, Vector((TimingQuantity.GlmsingleDataset, 7.25)))
     assertEquals(c.timings.toMap, Map("glmsingle_timing_cpu_s" -> 7.25, "glmsingle_guard_cpu_s" -> 9.5))
     assertEquals(f.trials.map(_._1), Vector(Method.GlmsD))
-    assertEquals(c.emitted.map(_.name), Vector("result"))
+    assertEquals(c.emitted.filterNot(_.name == ScorerContribution.EntryName).map(_.name), Vector("result"))
     // refusal: the tail is a note, the result is Failed with the child's CPU for the guard
     val failed = GlmSingleAttempt(Some(3), false, 2.0, Some(4.0), 3.5, None, None, 0)
     e.glmRun = GlmSingleRun(failed, Left(GlmSingleRefusal.ChildFailed(3, "SECRET-TAIL 0.123456")))
     val c2 = ctx("glmsingle")
     assertEquals(new PilotArmRunner(new Source, e, f).run(c2), ArmResult.Failed("glmsingle_ChildFailed", 4.0))
     assert(c2.notes.exists(_.contains("SECRET-TAIL")))
-    assertEquals(c2.emitted, Vector.empty)
+    assertEquals(c2.emitted.map(_.name), Vector(ScorerContribution.EntryName))
     assert(f.trials.last._2.forall(_ == VoxelOutcome.Failed))
   }
 
@@ -184,7 +184,7 @@ class PilotArmsSuite extends munit.FunSuite:
     val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("can"), arm("glmsingle")))), 3, maxRetries = 0)
     val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
     val clk = new FakeClock
-    val r = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e), CpuGuard(1000.0, 2000.0), clk)
+    val r = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e), CpuGuard(), clk)
     val rep = r.run().fold(x => fail(x.message), identity)
     assertEquals(rep.outcome.decision.D, 3)
     assertEquals(rep.totalCpuSeconds, 3 * 4.0, 1e-9) // child CPU of the three failed GLMsingle units
@@ -197,6 +197,139 @@ class PilotArmsSuite extends munit.FunSuite:
     Fs.listFiles(out).foreach(p => assert(!new String(Files.readAllBytes(p), "ISO-8859-1").contains("SECRET-TAIL"), p.toString))
   }
 
+  test("review 3: a feed exception after GLMsingle ran keeps the measured child CPU, on every attempt") {
+    val owner = TestOwner.random()
+    val throwing = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new IllegalStateException("feed broke")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = throw new IllegalStateException("feed broke")
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val direct = new PilotArmRunner(new Source, e, throwing).run(ctx("glmsingle"))
+    assertEquals(direct.childCpu, 37.0)
+    for retries <- Vector(0, 2) do
+      val out = Files.createTempDirectory("phrf-s7-feedcpu-")
+      val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = retries)
+      val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+      val rep = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e, throwing), CpuGuard(), new FakeClock)
+        .run().fold(x => fail(x.message), identity)
+      assertEqualsDouble(rep.totalCpuSeconds, 2 * (retries + 1) * 37.0, 1e-9)
+  }
+
+  test("re-review 2: an InterruptedException from the feed after GLMsingle ran still meters its CPU, then ends the run as Interrupted") {
+    val owner = TestOwner.random()
+    val interrupting = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new InterruptedException("feed interrupted")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val direct = new PilotArmRunner(new Source, e, interrupting).run(ctx("glmsingle"))
+    assertEquals(direct.childCpu, 37.0)
+    assert(Thread.interrupted(), "the interrupt flag is restored for the caller")
+    val out = Files.createTempDirectory("phrf-s7-intcpu-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 2)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val r = new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, new PilotArmRunner(new Source, e, interrupting), CpuGuard(), new FakeClock)
+    assertEquals(r.run().left.toOption, Some(PilotRefusal.Interrupted))
+    assertEquals(ujson.read(Files.readString(out.resolve("cost.json")))("cpu_seconds_total").num, 37.0)
+    assert(!Files.exists(out.resolve("accounting.open")))
+  }
+
+  test("review3 H1: a fatal throwable after GLMsingle ran leaves accounting.open, so the resume refuses uncertain accounting") {
+    val owner = TestOwner.random()
+    val fatal = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new OutOfMemoryError("synthetic")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val out = Files.createTempDirectory("phrf-s7-fatal-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 0)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val stamp = PilotStamp(Vector("k" -> "v"))
+    // munit's intercept does not catch fatal throwables
+    val thrown =
+      try
+        new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e, fatal), CpuGuard(), new FakeClock, runIds = () => "fatal1").run()
+        None
+      catch case t: OutOfMemoryError => Some(t)
+    assert(thrown.isDefined, "the fatal throwable propagates")
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "fatal1", "the measured 37 s may be missing: accounting stays open")
+    val resume = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e), CpuGuard(), new FakeClock).run()
+    assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("fatal1")))
+  }
+
+  test("review4 H1: a fatal throwable after GLMsingle ran keeps accounting.open even when a caller interrupt wins the exit") {
+    val owner = TestOwner.random()
+    val entered = new java.util.concurrent.CountDownLatch(1)
+    val release = new java.util.concurrent.CountDownLatch(1)
+    val fatal = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit =
+        entered.countDown()
+        var released = false
+        while !released do
+          try released = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
+          catch case _: InterruptedException => ()
+        throw new OutOfMemoryError("synthetic")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val out = Files.createTempDirectory("phrf-s7-fatalint-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 0)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val stamp = PilotStamp(Vector("k" -> "v"))
+    val r = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e, fatal), CpuGuard(), new FakeClock, runIds = () => "fatalint1")
+    @volatile var result: Option[Either[PilotRefusal, PilotReport]] = None
+    val t = new Thread(() => result = Some(r.run()))
+    t.start()
+    assert(entered.await(10, java.util.concurrent.TimeUnit.SECONDS))
+    t.interrupt()
+    Thread.sleep(200L)
+    release.countDown()
+    t.join(20000L)
+    assert(!t.isAlive)
+    assertEquals(result.flatMap(_.left.toOption), Some(PilotRefusal.Interrupted), "the caller interrupt wins the exit")
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "fatalint1", "the 37 s may be missing: accounting stays open")
+    val resume = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e), CpuGuard(), new FakeClock).run()
+    assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("fatalint1")))
+  }
+
+  test("review5 D2: a cleanup exception never masks a fatal throwable after GLMsingle ran; accounting stays open") {
+    val owner = TestOwner.random()
+    val fatal = new ScoreFeed:
+      def condition(job: Job, r: ConditionArmResult): Unit = ()
+      def trial(job: Job, m: Method, o: Vector[VoxelOutcome[TrialEstimate]]): Unit = throw new OutOfMemoryError("synthetic")
+      def timing(job: Job, q: TimingQuantity, s: Double): Unit = ()
+      def alphaProfile(job: Job, s: Vector[Double]): Unit = ()
+    val e = new Fake
+    e.glmRun = GlmSingleRun(GlmSingleAttempt(Some(3), false, 2.0, Some(37.0), 3.5, None, None, 0), Left(GlmSingleRefusal.ChildFailed(3, "tail")))
+    val inner = new PilotArmRunner(new Source, e, fatal)
+    val failingCleanup = new ArmRunner:
+      def run(ctx: ArmContext): ArmResult = inner.run(ctx)
+      override def jobFinished(job: Job): Unit = throw new IllegalStateException("cleanup failed")
+    val out = Files.createTempDirectory("phrf-s7-cleanup-")
+    val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("glmsingle")))), 2, probeDatasets = 1, maxRetries = 0)
+    val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
+    val stamp = PilotStamp(Vector("k" -> "v"))
+    val thrown =
+      try
+        new PilotRunner(plan, out, stamp, store, root, failingCleanup, CpuGuard(), new FakeClock, runIds = () => "cleanup1").run()
+        None
+      catch case t: Throwable => Some(t)
+    assert(thrown.isDefined, "the run fails")
+    assert(thrown.exists(_.isInstanceOf[OutOfMemoryError]), s"the fatal throwable propagates, not the cleanup failure: $thrown")
+    assert(thrown.exists(_.getSuppressed.exists(_.getMessage == "cleanup failed")), "the cleanup failure is attached")
+    assertEquals(Files.readString(out.resolve("accounting.open")).trim, "cleanup1")
+    val resume = new PilotRunner(plan, out, stamp, store, root, new PilotArmRunner(new Source, e), CpuGuard(), new FakeClock).run()
+    assertEquals(resume.left.toOption, Some(PilotRefusal.AccountingUncertain("cleanup1")))
+  }
+
   test("real S3 engine: CAN on synthetic condition data, two datasets in parallel, sealed result decrypts and feed receives estimates") {
     val owner = TestOwner.random()
     val out = Files.createTempDirectory("phrf-s7-real-")
@@ -206,7 +339,7 @@ class PilotArmsSuite extends munit.FunSuite:
     val arms = new PilotArmRunner(new Source, PilotEngines.real(dummy, clock), feed)
     val plan = PilotPlan(Vector(PilotCell(cell("C-X"), Vector(arm("can")))), 2, probeDatasets = 1)
     val store = SealedStore.open(out.resolve("sealed"), owner.recipient, owner.fingerprint).fold(x => fail(x.message), identity)
-    new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, arms, CpuGuard(1000.0, 2000.0), CpuClock.system, threads = 2).run().fold(x => fail(x.message), identity)
+    new PilotRunner(plan, out, PilotStamp(Vector("k" -> "v")), store, root, arms, CpuGuard(), CpuClock.system, threads = 2).run().fold(x => fail(x.message), identity)
     assert(feed.conditions.nonEmpty && feed.conditions.forall(_.statuses.forall(_.isEstimated)))
     val items = OwnerReader.readAll(out.resolve("sealed"), owner.priv, allowPartial = true).fold(x => fail(x), identity)
     assertEquals(items.keys.count(_.startsWith("data/C-X/")), 2)

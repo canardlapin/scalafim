@@ -1,0 +1,85 @@
+{
+  "mote": "bd-01M43MQB7S7X8TK76CE391CJPJ",
+  "status": "local candidate validation; publication and default pinned-URI admission pending",
+  "scalafim_base": "bc981ddf09016c1e29b30810f53cff4517df95d3",
+  "candidate_revisions": {
+    "locus4s": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+    "image4s": "20c9515495e43dff9d17bc1283a8ca1d56355c4a",
+    "reframe4s": "292c9bc7e0c026d893a4101560aa9a46e0fbcf04"
+  },
+  "provider_bases": {
+    "image4s": "c9fcab27f21bf60301260e0c084c3a20d279c5e6",
+    "reframe4s": "108028fb7127e71083bb46b5e4c033f831775c0e"
+  },
+  "passed": {
+    "jvm": 1708,
+    "js": 1498
+  },
+  "skipped": {
+    "jvm": 12,
+    "js": 2
+  },
+  "selected_test_gates": 34,
+  "compile_all": "JVM and JS passed without compiler warnings; no adapter edits",
+  "source_fixture_files": 1294,
+  "native_atlas_cases": 8,
+  "native_assets": [
+    {
+      "path": "/private/tmp/scalafim-templateflow-20261006/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5",
+      "bytes": 204735104,
+      "sha256": "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe",
+      "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5"
+    },
+    {
+      "path": "/private/tmp/scalafim-templateflow-20261006/tpl-MNI152NLin6Asym/tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5",
+      "bytes": 204735104,
+      "sha256": "2a19853bc99ebd1d711d230ea4a4dc4db3b9a60f8b50b9181f93b44036dfbd0f",
+      "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin6Asym/tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5"
+    }
+  ],
+  "requested_profile": {
+    "SBT_WARM_HEAP": "4g",
+    "SBT_WARM_CPUS": "4",
+    "note": "Requested launch values; no effective JVM flag or memory measurement claimed"
+  },
+  "platform_batches": "Commands serialized; at most three JS targets per batch, followed by explicit shutdown",
+  "classpath_scope": "Atlas JVM/JS fullClasspath has one classes entry per image4s/locus4s artifact; existing two Gale source revisions unchanged",
+  "surface_caveats": {
+    "jvm_missing_external_native_assets": [
+      "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres skipped 0.012s",
+      "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.001s",
+      "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.001s",
+      "==> s scalafim.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s",
+      "==> s scalafim.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s",
+      "==> s scalafim.surface.reference.RealPointwiseInverseSuite.P1-P3, P5, P6 (timing asserted with SCALAFIM_TIMING_BUDGETS=1): the pointwise route matches the oracle at every vertex and maps GM within budget skipped 0.002s",
+      "==> s scalafim.surface.reference.RealFrameEvidenceSuite.Conte69 anatomy carries the publisher's affine group-average basis; the inverse bridge is approximate skipped 0.001s",
+      "==> s scalafim.surface.reference.DeclaredSurfaceReaderSuite.TemplateFlow fsLR 32k left midthickness declares Talairach, CortexLeft, 32492 vertices skipped 0.0s",
+      "==> s scalafim.surface.reference.RealInverseOracleSuite.ITK solutions round-trip through ScalaFIM's exact declared map at every vertex skipped 0.0s",
+      "==> s scalafim.surface.reference.RealPointMapSuite.the real point map is the digest-bound 2009c -> 6Asym composite: displacement then affine skipped 0.001s",
+      "==> s scalafim.surface.reference.RealPointMapSuite.forward evaluation agrees with SimpleITK on the templateflow4s oracle to 1e-6 mm skipped 0.0s",
+      "==> s scalafim.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.0s"
+    ],
+    "js_opt_in_resource_timing_unset": [
+      "SCALAFIM_JS_TIMING",
+      "SCALAFIM_JS_REAL_TIMING"
+    ],
+    "no_performance_or_ci_caveat_acceptance_claim": true
+  },
+  "public_api_note": "Locus4s Relation.identity/tabulate/converse now return Either for overflow/allocation failures; exposed through ScalaFIM companion reexport, requiring external-caller migration note when pins land. No affected internal callsites or adapter edits.",
+  "remaining_gates": [
+    "Upstream publication/landing of accepted provider revisions and matching CI checkout pins",
+    "Full upstream CI/release/registration courts beyond selected provider modules",
+    "Clean checkout with actual public pins and no local overrides: compile, affected JVM/JS tests and one-image/locus classpath evidence",
+    "External surface native-fixture qualification and opt-in timing admission remain separate"
+  ],
+  "publication": "None; no root ScalaFIM pin/source changes or Mote mutations by this worker",
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "ba411403264cbaf7ec3dacefeb005bfcd3b974555973057ee07bdf174d66c75a",
+  "portable_artifact_sha256": {
+    "image4s.patch": "83261fe0fe74d4d1fa8802bf3753e2e3c333ad6405be5d81c1143fa3029a84ed",
+    "image4s.bundle": "b699c72a0fab1206b82868d785121102e690b65eaf66e2dddb618126cbb54a28",
+    "reframe4s.patch": "f17d653dceacfe94b7952a0115a2f1576947d7991077d24c47de31aa785c2ffc",
+    "reframe4s.bundle": "7ed9844b20a618d1ecb90ea7761ca0a8328ec1bc220ab8e2fa2f0709d5844005",
+    "scalafim-recommended-pins.patch": "fd92ffc1f011990f07b463e7dc3e563f2d481b131deb563583437c0ff740bed4"
+  }
+}

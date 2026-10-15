@@ -27,6 +27,7 @@ enum ArError:
   case EmptySpatialNoiseBlock
   case IncompatibleNoiseSummaries(detail: String)
   case NoiseSummaryCountOverflow(runIndex: Int, lag: ArLag)
+  case NoiseSumCapacityExceeded(lag: ArLag, currentTerms: Long, incomingTerms: Long)
   case NonFiniteNoiseSummary(runIndex: Int, lag: ArLag, value: Double)
   case NonFiniteArCoefficient(index: Int, value: Double)
   case NonFiniteMaCoefficient(index: Int, value: Double)
@@ -34,6 +35,9 @@ enum ArError:
   case InvalidStationarityBound(bound: Double)
   case InvalidExactFirstAr1(phi: Double)
   case InvalidInitialScale(scale: Double)
+  case StationaryWhiteningFailed(detail: String)
+  case StationaryWhiteningRequiresFactor
+  case CorrectionSolverPreparationFailed(detail: String)
   case NonStationaryArCoefficients(maxRootMagnitude: Double)
   case NonInvertibleMaCoefficients(maxRootMagnitude: Double)
   case StationarityCheckFailed(detail: String)
@@ -96,6 +100,8 @@ enum ArError:
         s"incompatible noise summaries: $detail"
       case NoiseSummaryCountOverflow(runIndex, lag) =>
         s"noise-summary pair count overflow for run $runIndex at lag ${lag.value}"
+      case NoiseSumCapacityExceeded(lag, currentTerms, incomingTerms) =>
+        s"noise sum at lag ${lag.value} exceeds the exact finite-input capacity: $currentTerms + $incomingTerms"
       case NonFiniteNoiseSummary(runIndex, lag, value) =>
         s"noise-summary sum for run $runIndex at lag ${lag.value} must be finite, got $value"
       case NonFiniteArCoefficient(index, value) =>
@@ -110,6 +116,12 @@ enum ArError:
         s"exact AR(1) first-row scaling requires abs(phi) < 1, got $phi"
       case InvalidInitialScale(scale) =>
         s"initial-condition scale must be finite and non-negative, got $scale"
+      case StationaryWhiteningFailed(detail) =>
+        s"stationary whitening failed: $detail"
+      case StationaryWhiteningRequiresFactor =>
+        "stationary whitening requires its covariance factor, not a scalar first-sample scale"
+      case CorrectionSolverPreparationFailed(detail) =>
+        s"could not prepare residual-bias correction solver: $detail"
       case NonStationaryArCoefficients(maxRootMagnitude) =>
         s"AR coefficients are not stationary; recurrence-root magnitude is $maxRootMagnitude"
       case NonInvertibleMaCoefficients(maxRootMagnitude) =>

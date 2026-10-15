@@ -1,0 +1,1 @@
+PASS: intercept draws unchanged, nuisance covariance/conditional truth and residual construction agree.

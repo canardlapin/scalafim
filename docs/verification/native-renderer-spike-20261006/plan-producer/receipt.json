@@ -1,0 +1,471 @@
+{
+  "admission": "Exactly48 frozen filenames; v23 only; bounded vertices<=20000 and faces<=40000; finite coordinates; opaqueRGBA; valid distinct boundaryIDs and no trailing data. All48 typed plans are admitted before any output files. Single surface, mesh, layer, pass; no clipping/worldoffset/selection; normal blending and opaque layer only.",
+  "artifacts": {
+    "logs-and-source.tar.gz": "db1e42cb1e873be0036cde80d61b74daab0689338c7dee992c79952e3ac533e2",
+    "plan-input-manifest.json": "37156caf110859431983bcecdd2b1ad122f3c68be04ce28cc2737e9db734701e",
+    "plan-inputs.tar.gz": "e6263a3a1da3fa92b6763a7a845919683c3f9ac5ee386550ac696b9b56b58a76",
+    "surface-plan-affine-fixture-producer.patch": "c278d3608a7189442739bce645f59b0655666894b1012ece76245bd066dfeb8c"
+  },
+  "base_commit": "bc981ddf09016c1e29b30810f53cff4517df95d3",
+  "binary_schema_version": 23,
+  "boundary_metadata": "The four original boundary VertexIds are copied as v23 oracle metadata only after unchanged vertex identity is proved; boundary IDs are not a SurfaceRenderPlan field.",
+  "compile_and_test": {
+    "JS_passed": 68,
+    "JVM_passed": 68,
+    "warning_count": 0
+  },
+  "fixture_count": 48,
+  "gates": {
+    "js": {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceViewJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-plan-fixture-producer-20261006",
+      "elapsed_seconds": 124.871737241745,
+      "exit_code": 0,
+      "log": "/private/tmp/scalafim-plan-fixture-evidence-20261006/js.log",
+      "requested_heap": "4g"
+    },
+    "jvm-producer": {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceViewJVM/test",
+        "surfaceViewJVM/Test/runMain scalafim.surface.view.SurfacePlanAffineFixtureProbe /private/tmp/scalafim-native-renderer-spike-20261006/inputs /private/tmp/scalafim-plan-fixture-evidence-20261006/plan-inputs"
+      ],
+      "cwd": "/private/tmp/scalafim-plan-fixture-producer-20261006",
+      "elapsed_seconds": 201.73041892051697,
+      "exit_code": 0,
+      "log": "/private/tmp/scalafim-plan-fixture-evidence-20261006/jvm-producer.log",
+      "requested_heap": "4g"
+    },
+    "shutdown": {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "--shutdown"
+      ],
+      "cwd": "/private/tmp/scalafim-plan-fixture-producer-20261006",
+      "elapsed_seconds": 0.12909913063049316,
+      "exit_code": 0,
+      "log": "/private/tmp/scalafim-plan-fixture-evidence-20261006/shutdown.log",
+      "requested_heap": "4g"
+    }
+  },
+  "identity_proof": "Every original VertexId ordinal has the same typed geometry and public packet Float raw bits and packed RGBA; every FaceId ordinal retains all three original ordered VertexIds. Buffer counts/profile and sole draw-pass/receipt resource addresses are checked. No explicit source-ID mapping fields exist on SurfaceMeshPacket; unchanged ordered contents are the identity proof.",
+  "limits": [
+    "Known pixel-parallel external projection; application plan camera matrices/fitting excluded",
+    "Unlit only; normals/lighting semantics excluded",
+    "Fixture producer and typed input handoff only; no JOGL backend/provider or application lifecycle implemented",
+    "No cortical occlusion, multilayer alpha, fragment scalar, picking, export, DPR or renderer performance claim"
+  ],
+  "plan_buffers": "Public meshes.positions, meshes.indices, layers.colors; no unsafeArray or private backend math",
+  "process_note": "Thin server restarted at JS launch (connection refused); task ran under a fresh isolated4g server. Explicit final --shutdown returned0 and reported no server running.",
+  "producer_sha256": "6f4e56fba94d2a091aea3c34dd8f5cff607c07637d8ec61c6109eccd85762916",
+  "producer_source": "modules/surface-view/jvm/src/test/scala/scalafim/surface/view/SurfacePlanAffineFixtureProbe.scala",
+  "provider_pins_changed": false,
+  "published_or_pushed": false,
+  "records": [
+    {
+      "faces": 2,
+      "name": "diagonal-original-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "source_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-original-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "source_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-original-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "source_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-original-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "source_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-cyclic-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "bf6b019f377ee8f65b8dcb2c366212fbc2045931bc74c16403e600fb3ad0caca",
+      "source_sha256": "bf6b019f377ee8f65b8dcb2c366212fbc2045931bc74c16403e600fb3ad0caca",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-cyclic-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "bf6b019f377ee8f65b8dcb2c366212fbc2045931bc74c16403e600fb3ad0caca",
+      "source_sha256": "bf6b019f377ee8f65b8dcb2c366212fbc2045931bc74c16403e600fb3ad0caca",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-cyclic-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "56964e7b9665da80f17d3984c0676d0259cbe9aa9f9e0ea6a5c0e9839a1a7712",
+      "source_sha256": "56964e7b9665da80f17d3984c0676d0259cbe9aa9f9e0ea6a5c0e9839a1a7712",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-cyclic-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "56964e7b9665da80f17d3984c0676d0259cbe9aa9f9e0ea6a5c0e9839a1a7712",
+      "source_sha256": "56964e7b9665da80f17d3984c0676d0259cbe9aa9f9e0ea6a5c0e9839a1a7712",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-shuffled-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "source_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-shuffled-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "source_sha256": "52649683e480973a30e30047f21688698fcf1eaec24863d1e99d2f4571625843",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-shuffled-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "source_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "diagonal-shuffled-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "source_sha256": "43fc5c700cfef2e9399d4c905f6d816849a318d8ea56f3985bc207b378cb7f7b",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-original-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "source_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-original-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "source_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-original-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "source_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-original-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "source_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-cyclic-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "fbf55b2f3ac797382b17eaa233dbf9a9247607ae03fc45085a0f0ea1687f3677",
+      "source_sha256": "fbf55b2f3ac797382b17eaa233dbf9a9247607ae03fc45085a0f0ea1687f3677",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-cyclic-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "fbf55b2f3ac797382b17eaa233dbf9a9247607ae03fc45085a0f0ea1687f3677",
+      "source_sha256": "fbf55b2f3ac797382b17eaa233dbf9a9247607ae03fc45085a0f0ea1687f3677",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-cyclic-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "a66bc1d8ae9f9f0835b9685be21785cc6c2a1600ea83579284bc55fc5b9aad2f",
+      "source_sha256": "a66bc1d8ae9f9f0835b9685be21785cc6c2a1600ea83579284bc55fc5b9aad2f",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-cyclic-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "a66bc1d8ae9f9f0835b9685be21785cc6c2a1600ea83579284bc55fc5b9aad2f",
+      "source_sha256": "a66bc1d8ae9f9f0835b9685be21785cc6c2a1600ea83579284bc55fc5b9aad2f",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-shuffled-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "source_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-shuffled-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "source_sha256": "f3eee89563ce3751197d9e07abf3b75addadd596267a20d93569565601c70148",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-shuffled-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "source_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "vertices": 4
+    },
+    {
+      "faces": 2,
+      "name": "rgb-shuffled-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "source_sha256": "a682336ac365635d45bba384a8484900951ffad07fe0b3dfb0f65a33822d7564",
+      "vertices": 4
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-original-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "64fea034584803b58d2321f823b396136615672330fe4b77d0316541cec129cb",
+      "source_sha256": "64fea034584803b58d2321f823b396136615672330fe4b77d0316541cec129cb",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-original-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "64fea034584803b58d2321f823b396136615672330fe4b77d0316541cec129cb",
+      "source_sha256": "64fea034584803b58d2321f823b396136615672330fe4b77d0316541cec129cb",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-original-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "87a31d9de3ea675152716c86bb51504b7d0a1a39755d036b3901c6608c44619b",
+      "source_sha256": "87a31d9de3ea675152716c86bb51504b7d0a1a39755d036b3901c6608c44619b",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-original-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "87a31d9de3ea675152716c86bb51504b7d0a1a39755d036b3901c6608c44619b",
+      "source_sha256": "87a31d9de3ea675152716c86bb51504b7d0a1a39755d036b3901c6608c44619b",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-cyclic-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "316812a7024679bdb2c8cdfcf36904efdd605a6d02f55f52f4cdf2f98b33325f",
+      "source_sha256": "316812a7024679bdb2c8cdfcf36904efdd605a6d02f55f52f4cdf2f98b33325f",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-cyclic-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "316812a7024679bdb2c8cdfcf36904efdd605a6d02f55f52f4cdf2f98b33325f",
+      "source_sha256": "316812a7024679bdb2c8cdfcf36904efdd605a6d02f55f52f4cdf2f98b33325f",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-cyclic-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "20280b7dd8a0be54c70993e0d903e9ec4ea649322d0bb8fd1935e2b2673f6cd3",
+      "source_sha256": "20280b7dd8a0be54c70993e0d903e9ec4ea649322d0bb8fd1935e2b2673f6cd3",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-cyclic-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "20280b7dd8a0be54c70993e0d903e9ec4ea649322d0bb8fd1935e2b2673f6cd3",
+      "source_sha256": "20280b7dd8a0be54c70993e0d903e9ec4ea649322d0bb8fd1935e2b2673f6cd3",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-shuffled-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "37c76da4f637260fa294e12c5f6563be2373446bf8209065df910e263217542d",
+      "source_sha256": "37c76da4f637260fa294e12c5f6563be2373446bf8209065df910e263217542d",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-shuffled-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "37c76da4f637260fa294e12c5f6563be2373446bf8209065df910e263217542d",
+      "source_sha256": "37c76da4f637260fa294e12c5f6563be2373446bf8209065df910e263217542d",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-shuffled-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "24f0aa7a4087297556b53bab6307aeaf9688762b16f518befab42e4bc3b025ed",
+      "source_sha256": "24f0aa7a4087297556b53bab6307aeaf9688762b16f518befab42e4bc3b025ed",
+      "vertices": 1089
+    },
+    {
+      "faces": 2048,
+      "name": "ramp32-shuffled-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "24f0aa7a4087297556b53bab6307aeaf9688762b16f518befab42e4bc3b025ed",
+      "source_sha256": "24f0aa7a4087297556b53bab6307aeaf9688762b16f518befab42e4bc3b025ed",
+      "vertices": 1089
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-original-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "7a2190c8038d41f3ae478e07d7459a7762cd7c952b200950ab78978255794acb",
+      "source_sha256": "7a2190c8038d41f3ae478e07d7459a7762cd7c952b200950ab78978255794acb",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-original-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "7a2190c8038d41f3ae478e07d7459a7762cd7c952b200950ab78978255794acb",
+      "source_sha256": "7a2190c8038d41f3ae478e07d7459a7762cd7c952b200950ab78978255794acb",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-original-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "723fca3cfae37628c5250ef39dfad6d5b440e66ab69a3c4bfcd50c782112775f",
+      "source_sha256": "723fca3cfae37628c5250ef39dfad6d5b440e66ab69a3c4bfcd50c782112775f",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-original-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "723fca3cfae37628c5250ef39dfad6d5b440e66ab69a3c4bfcd50c782112775f",
+      "source_sha256": "723fca3cfae37628c5250ef39dfad6d5b440e66ab69a3c4bfcd50c782112775f",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-cyclic-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "6e1e16638f773a93d273d4e09187c5dd678b7a00668aa810ff0a433de947eb0d",
+      "source_sha256": "6e1e16638f773a93d273d4e09187c5dd678b7a00668aa810ff0a433de947eb0d",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-cyclic-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "6e1e16638f773a93d273d4e09187c5dd678b7a00668aa810ff0a433de947eb0d",
+      "source_sha256": "6e1e16638f773a93d273d4e09187c5dd678b7a00668aa810ff0a433de947eb0d",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-cyclic-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "c784cbbbd2394aad6a6ab24b46497e843e11f7ccd4c2526d30c062d94e138676",
+      "source_sha256": "c784cbbbd2394aad6a6ab24b46497e843e11f7ccd4c2526d30c062d94e138676",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-cyclic-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "c784cbbbd2394aad6a6ab24b46497e843e11f7ccd4c2526d30c062d94e138676",
+      "source_sha256": "c784cbbbd2394aad6a6ab24b46497e843e11f7ccd4c2526d30c062d94e138676",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-shuffled-front-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "9ea78d9a931a31cac08c20ddb4be4480bd5be0626d6928eddfa6595cf8d44f6d",
+      "source_sha256": "9ea78d9a931a31cac08c20ddb4be4480bd5be0626d6928eddfa6595cf8d44f6d",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-shuffled-front-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "9ea78d9a931a31cac08c20ddb4be4480bd5be0626d6928eddfa6595cf8d44f6d",
+      "source_sha256": "9ea78d9a931a31cac08c20ddb4be4480bd5be0626d6928eddfa6595cf8d44f6d",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-shuffled-oblique-DISABLED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "5906f8c627bbfc600c9b775027a6f89beae6cac535d701fb5672d8f46e6d10c0",
+      "source_sha256": "5906f8c627bbfc600c9b775027a6f89beae6cac535d701fb5672d8f46e6d10c0",
+      "vertices": 16641
+    },
+    {
+      "faces": 32768,
+      "name": "ramp128-shuffled-oblique-BALANCED.bin",
+      "original_ids_retained": true,
+      "plan_sha256": "5906f8c627bbfc600c9b775027a6f89beae6cac535d701fb5672d8f46e6d10c0",
+      "source_sha256": "5906f8c627bbfc600c9b775027a6f89beae6cac535d701fb5672d8f46e6d10c0",
+      "vertices": 16641
+    }
+  ],
+  "root_production_or_mote_changes": false,
+  "source_custody": {
+    "archive": "/Users/bbuchsbaum/code/scala/scalafim/docs/verification/javafx-stock-metal-20260929-evidence.tar.gz",
+    "archive_sha256": "969933c2ebf547841191b2ab429ac6f1dc41041fc9a126cefe579b2b7380c209",
+    "archive_vs_plan_byte_matches": 48,
+    "member_prefix": "fx-24.0.1-es2-archived-control/"
+  },
+  "source_file_hashes": {
+    "build.sbt": "a91b1e35bc80a4380315d2f06172dda0f2e2e071bd63244c0ee21135caf5ed17",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala": "af13cd2e44fdadd6bc293f61d380bcf3fc2f92f4370f25351b719ca7deec024f",
+    "modules/surface-view/jvm/src/test/scala/scalafim/surface/view/SurfacePlanAffineFixtureProbe.scala": "6f4e56fba94d2a091aea3c34dd8f5cff607c07637d8ec61c6109eccd85762916",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala": "48da0fe6060dace16243124c50389b873a09c0a435a776b45173038311e871fe",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala": "9fbbac04876ce73b59c400942e7eb9b8ad7ea5be808037ae737e9a1303b73325"
+  },
+  "status": "prepared-in-isolated-checkout"
+}

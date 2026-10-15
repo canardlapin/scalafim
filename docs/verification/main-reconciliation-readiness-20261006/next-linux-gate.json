@@ -1,0 +1,12 @@
+{
+  "follow_up_mote": "bd-01M48MJPYE1N2DDV25CXJRE7R4",
+  "blocks_main_publication": true,
+  "scientific_policy_changed": false,
+  "matching_node_darwin_admitted": 22,
+  "linux_historical_admitted": 21,
+  "required_minimum": 22,
+  "fixture_voxels": 24,
+  "node": "24.21.0",
+  "required_linux_runtime": "Ubuntu24.04 x64 / Temurin17.0.20-1",
+  "remaining": "Trusted high-precision paired-decrease classification and unchanged-contract Linux qualification"
+}

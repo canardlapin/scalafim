@@ -60,6 +60,13 @@ val raster = reviewed.left.map(_.message).flatMap: review =>
   DesignMatrixRaster.build(review, maximumCells = 2000000).left.map(_.toString)
 ```
 
+Pass a `DesignMatrixPalette(positive, negative, nuisance, paper)` of intaglio
+`Rgba32` colours to theme the image, e.g. for a dark sheet:
+`DesignMatrixRaster.build(review, palette = darkPalette)`. The default,
+`DesignMatrixPalette.Default`, is the light rust/blue/grey palette. A palette
+changes pixel colours only; column ids, scans, scaling and the scene shape are
+unchanged, and colour never enters the `toCsv` sidecar.
+
 `DesignMatrixRaster` is an image-oriented overview; use `matrixPlot` when
 column labels and page selection are needed.
 
@@ -320,7 +327,11 @@ onset ~ hrf(condition,
 `center` accepts `none`, `run`, or `cell`; `scale` accepts `raw`, `z`, or `sd`.
 `sd` divides by sample SD without implicitly subtracting the mean. `z` with
 `center = none` centres globally within the run; the receipt records
-`effective-center`. With `center = cell`, the scale is the pooled within-cell SD
+`effective-center`. The receipt names scopes in formula spelling
+(`center=run`, `effective-center=run`) and the rows that actually share one mean
+as `grouping`: `none`, `run`, or `run-by-cell(<factors>)` for `center = cell`,
+which groups each run by the term's factor cells (a term without factors has one
+cell per run, so its grouping is `run`). With `center = cell`, the scale is the pooled within-cell SD
 `sqrt(SS_within / (n - k))` over `k` cells. Each run records an
 `observed-modulator` policy receipt, plus `observed-modulator-degenerate` when
 fewer than two values are observed or the prepared values do not vary. "Do not
@@ -432,6 +443,14 @@ The structural hypothesis and its compiled metadata retain the rule, sample
 count, and effective step. The two-argument overload keeps its exact default
 and rejects an unregistered primitive. A point readout is evaluated exactly and
 records exact evaluation with one sample, even under a declared window rule.
+
+Every formula build records one `sampling-reference` policy receipt per run,
+for example `run=0;reference=mid-volume;start-time=1;tr=2`. A `SamplingFrame`
+stores only the numeric start time, so the name classifies that number
+(`SamplingReference.classify`): exactly `TR / 2`, the default when no start time
+is given, is `mid-volume`; exactly `0` is `volume-onset`; any other value, such
+as a slice-time reference supplied by the caller, is `explicit-offset`, with its
+value in `start-time`.
 
 ## Diagnostics and run combination
 

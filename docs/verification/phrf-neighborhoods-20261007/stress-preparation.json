@@ -1,0 +1,31 @@
+{
+  "format": "phrf-neighborhood-feasibility/1",
+  "qualification": "not-admitted",
+  "mode": "stress-preparation",
+  "result": [
+    {
+      "trials": 1200,
+      "horizon": 48,
+      "admitted": true,
+      "sharedReferenceBytes": 204786040,
+      "basisRank": 10,
+      "bandwidth": 127,
+      "retainedPreparationDoubles": 9116727,
+      "seconds": 3.182048375
+    },
+    {
+      "trials": 1200,
+      "horizon": 96,
+      "admitted": false,
+      "refusal": "profile preparation failed: trial preparation needs 24022669 retained numeric values; limit is 16000000",
+      "seconds": 0.950497875
+    }
+  ],
+  "seconds": 4.135829709,
+  "limitations": [
+    "fixed shapes, no decoder",
+    "exploratory cohort, no scientific confirmation",
+    "all-eight reference comparison is an offline oracle, not runtime routing",
+    "dense certificate work exceeds the fast-path budget"
+  ]
+}

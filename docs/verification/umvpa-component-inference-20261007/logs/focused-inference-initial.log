@@ -1,0 +1,60 @@
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E050] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:94:83 
+[error] 94 |      f.brain.identity, f.responses.identity, exposure(f.snapshot.identity), right(Seed(73L)), right(MonteCarloDraws(draws)), budget)
+[error]    |                                                                                   ^^^^
+[error]    |       method Seed in package resample4s.kernel does not take parameters
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:179:39 
+[error] 179 |      val scale = math.sqrt(x.map(v => v * v).sum * y.map(v => v * v).sum)
+[error]     |                                       ^
+[error]     |Found:    (v : Nothing)
+[error]     |Required: ?{ * : ? }
+[error]     |Note that implicit conversions were not tried because the result of an implicit conversion
+[error]     |must be more specific than ?{ * : [applied to (v) returning B] }
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:179:49 
+[error] 179 |      val scale = math.sqrt(x.map(v => v * v).sum * y.map(v => v * v).sum)
+[error]     |                                                 ^
+[error]     |Ambiguous given instances: both object CharIsIntegral in object Numeric and object DoubleIsFractional in object Numeric match type Numeric[B] of parameter num of method sum in trait IterableOnceOps
+[error] -- [E007] Type Mismatch Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:180:75 
+[error] 180 |      def magnitude(p: Vector[Int]): Double = math.abs(x.indices.map(i => x(i) * y(p(i))).sum / scale)
+[error]     |                                                                          ^^^^
+[error]     |Found:    Nothing
+[error]     |Required: ?{ * : ? }
+[error]     |Note that implicit conversions were not tried because the result of an implicit conversion
+[error]     |must be more specific than ?{ * : [applied to (y(p(i))) returning B] }
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:180:93 
+[error] 180 |      def magnitude(p: Vector[Int]): Double = math.abs(x.indices.map(i => x(i) * y(p(i))).sum / scale)
+[error]     |                                                                                             ^
+[error]     |Ambiguous given instances: both object CharIsIntegral in object Numeric and object DoubleIsFractional in object Numeric match type Numeric[B] of parameter num of method sum in trait IterableOnceOps
+[error] -- [E171] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:188:12 
+[error] 188 |      assert(receipt.pValue.value >= lower && receipt.pValue.value <= upper)
+[error]     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assert in trait Assertions: (cond: => Boolean, clue: => Any)(implicit loc: munit.Location): Unit
+[error] -- [E171] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:189:24 
+[error] 189 |      assertEqualsDouble(receipt.pValue.value, (1.0 + receipt.exceedances) / 720.0, 1e-15)
+[error]     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assertEqualsDouble in trait Assertions: (obtained: Double, expected: Double, delta: Double, clue: => Any)
+[error]     |  (implicit loc: munit.Location): Unit
+[error] -- [E050] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:197:79 
+[error] 197 |      f.brain.identity, perfect.identity, exposure(f.snapshot.identity), right(Seed(13)), right(MonteCarloDraws(19))))
+[error]     |                                                                               ^^^^
+[error]     |     method Seed in package resample4s.kernel does not take parameters
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E050] Type Error: /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/ComponentInferenceSuite.scala:253:63 
+[error] 253 |        f.brain.identity, f.responses.identity, account, right(Seed(9)), right(MonteCarloDraws(19))).isLeft)
+[error]     |                                                               ^^^^
+[error]     |     method Seed in package resample4s.kernel does not take parameters
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] 9 errors found
+[error] elapsed time: 6 s
+[error] (mvpaJVM / Test / compileIncremental) Compilation failed
+[0J[sbt-warm] mvpaJVM/testOnly *ComponentInferenceSuite *ComponentInferenceNumericsSuite: exit 1 in 6.4s

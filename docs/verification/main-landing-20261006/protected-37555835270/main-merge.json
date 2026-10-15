@@ -1,0 +1,35 @@
+{
+  "pr": 21,
+  "url": "https://github.com/canardlapin/scalafim/pull/21",
+  "state": "MERGED",
+  "head": "0ec1a0fc378291b8c405d25ce174dac2edaa144d",
+  "merge": "9ef6a8ed90fa00603db4e48b5ed2962bec24fdfc",
+  "merged_at": "2026-10-07T02:28:02Z",
+  "required_run": 37555835270,
+  "required_contexts": {
+    "full repository JVM/Scala.js compile and test": "SUCCESS",
+    "focused first-level JVM/Scala.js gates": "SUCCESS",
+    "scoped first-level scientific coverage": "SUCCESS"
+  },
+  "merge_mode": "ordinary merge --match-head-commit; no admin/protection bypass",
+  "preservation": {
+    "ancestor": "e1cfa089",
+    "sealed_paths": 46,
+    "head_result": "PASS",
+    "main_result": "PASS"
+  },
+  "full_tests": {
+    "jvm_passed": 5120,
+    "js_passed": 4577,
+    "total_passed": 9697,
+    "failed": 0,
+    "errors": 0,
+    "declared_skips": 24,
+    "batches": 16,
+    "alias_targets": 95,
+    "display_exclusions": 2,
+    "extra_examples": 4,
+    "explicit_headless_commands": 97
+  },
+  "remaining_scientific_caveat": "Weak-LWU admission below95% remains reported; successful source/CI qualification does not establish clean campaign admission."
+}

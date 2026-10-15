@@ -1,0 +1,117 @@
+{
+  "galeRevision": "0a981febc163e539b019aa9379935e21d8987a20",
+  "noLocalGaleOverride": true,
+  "gates": [
+    {
+      "log": "workflow",
+      "command": "firstLevelLawsJVM/testOnly *DecodedTrialCheckpointSuite *TrialRecoverySuite *TrialRefinementSuite",
+      "exit": 0,
+      "seconds": 239.7
+    },
+    {
+      "log": "workflow",
+      "command": "firstLevelLawsJS/testOnly *DecodedTrialCheckpointSuite *TrialRecoverySuite *TrialRefinementSuite",
+      "exit": 0,
+      "seconds": 721.9
+    },
+    {
+      "log": "workflow",
+      "command": "firstLevelLawsJVM/Test/runMain scalafim.fmri.laws.profile.DecodedTrialCheckpointMain /private/tmp/phrf-bounded-stress-diagnostic.json dense-blocked 4 1200 1 penalized exact bounded-preparation-20261007 2 baseline 32",
+      "exit": 0,
+      "seconds": 20.2
+    },
+    {
+      "log": "regression",
+      "command": "designJVM/test",
+      "exit": 0,
+      "seconds": 69.1
+    },
+    {
+      "log": "regression",
+      "command": "designJS/test",
+      "exit": 0,
+      "seconds": 29.4
+    },
+    {
+      "log": "regression",
+      "command": "fitJVM/test",
+      "exit": 0,
+      "seconds": 53.6
+    },
+    {
+      "log": "regression",
+      "command": "fitJS/test",
+      "exit": 0,
+      "seconds": 74.2
+    },
+    {
+      "log": "regression",
+      "command": "firstLevelLawsJVM/testOnly *DecodedTrialCheckpointSuite *TrialRecoverySuite *TrialBandedSuite",
+      "exit": 0,
+      "seconds": 17.9
+    },
+    {
+      "log": "regression",
+      "command": "firstLevelLawsJS/testOnly *DecodedTrialCheckpointSuite *TrialRecoverySuite *TrialBandedSuite",
+      "exit": 0,
+      "seconds": 39.4
+    },
+    {
+      "log": "regression",
+      "command": "fitBenchJVM/compile",
+      "exit": 0,
+      "seconds": 6.8
+    },
+    {
+      "log": "regression",
+      "command": "scalafimCompileAll",
+      "exit": 0,
+      "seconds": 244.7
+    }
+  ],
+  "regressionTestTotals": [
+    {
+      "total": 481,
+      "failed": 0,
+      "errors": 0,
+      "passed": 481
+    },
+    {
+      "total": 480,
+      "failed": 0,
+      "errors": 0,
+      "passed": 480
+    },
+    {
+      "total": 705,
+      "failed": 0,
+      "errors": 0,
+      "passed": 705
+    },
+    {
+      "total": 647,
+      "failed": 0,
+      "errors": 0,
+      "passed": 647
+    },
+    {
+      "total": 18,
+      "failed": 0,
+      "errors": 0,
+      "passed": 18
+    },
+    {
+      "total": 18,
+      "failed": 0,
+      "errors": 0,
+      "passed": 18
+    }
+  ],
+  "developmentFailures": [
+    "Enum singleton initialization was fixed before targeted JVM/JS passes.",
+    "A test-only Fixture name collided with MUnit.Fixture; it was qualified before both workflow gates."
+  ],
+  "warnings": "Only the existing multiple-main discovery warning in workflow tests; no Scala compiler warnings.",
+  "scientificQualification": "not-admitted",
+  "hostedScalaFimCI": false
+}

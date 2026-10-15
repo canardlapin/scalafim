@@ -1,0 +1,176 @@
+{
+  "run_id": 37535757067,
+  "head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12",
+  "job_id": 112516623454,
+  "conclusion": "success",
+  "counts": {
+    "JVM": {
+      "batches": [
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5
+        },
+        {
+          "total": 155,
+          "failed": 0,
+          "errors": 0,
+          "passed": 155
+        },
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386
+        },
+        {
+          "total": 82,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82
+        },
+        {
+          "total": 478,
+          "failed": 0,
+          "errors": 0,
+          "passed": 478
+        },
+        {
+          "total": 53,
+          "failed": 0,
+          "errors": 0,
+          "passed": 53
+        },
+        {
+          "total": 686,
+          "failed": 0,
+          "errors": 0,
+          "passed": 686
+        },
+        {
+          "total": 84,
+          "failed": 0,
+          "errors": 0,
+          "passed": 84
+        }
+      ],
+      "total": 1929,
+      "passed": 1929,
+      "failed": 0,
+      "errors": 0
+    },
+    "JS": {
+      "batches": [
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5
+        },
+        {
+          "total": 153,
+          "failed": 0,
+          "errors": 0,
+          "passed": 153
+        },
+        {
+          "total": 386,
+          "failed": 0,
+          "errors": 0,
+          "passed": 386
+        },
+        {
+          "total": 82,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82
+        },
+        {
+          "total": 477,
+          "failed": 0,
+          "errors": 0,
+          "passed": 477
+        },
+        {
+          "total": 53,
+          "failed": 0,
+          "errors": 0,
+          "passed": 53
+        },
+        {
+          "total": 629,
+          "failed": 0,
+          "errors": 0,
+          "passed": 629
+        },
+        {
+          "total": 84,
+          "failed": 0,
+          "errors": 0,
+          "passed": 84
+        }
+      ],
+      "total": 1869,
+      "passed": 1869,
+      "failed": 0,
+      "errors": 0
+    }
+  },
+  "lwu_accuracy_lines": {
+    "JVM": [
+      "2026-10-06T21:59:16.9108646Z [milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.37 exact 0.09; oracle beaten under the exact kernel in 91/93 admitted voxels",
+      "2026-10-06T21:59:16.9116227Z [milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+      "2026-10-06T22:00:44.2569168Z [milestone] LWU SNR 0.50: admitted 82.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.49 exact 0.10; oracle beaten under the exact kernel in 79/82 admitted voxels",
+      "2026-10-06T22:00:44.2572678Z [milestone] LWU admission 82.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+    ],
+    "JS": [
+      "2026-10-06T22:26:45.4766697Z [milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.39 exact 0.10; oracle beaten under the exact kernel in 91/93 admitted voxels",
+      "2026-10-06T22:26:45.4771441Z [milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+      "2026-10-06T22:30:36.2234062Z [milestone] LWU SNR 0.50: admitted 81.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.51 exact 0.08; oracle beaten under the exact kernel in 78/81 admitted voxels",
+      "2026-10-06T22:30:36.2237459Z [milestone] LWU admission 81.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+    ]
+  },
+  "lwu_context_lines": {
+    "JVM": [
+      "2026-10-06T21:57:42.5514282Z [milestone] LWU basis rank 23, K = 69",
+      "2026-10-06T21:57:42.5560287Z [milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+      "2026-10-06T21:59:16.9110936Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+      "2026-10-06T22:00:44.2571529Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)"
+    ],
+    "JS": [
+      "2026-10-06T22:22:50.7632435Z [milestone] LWU basis rank 23, K = 69",
+      "2026-10-06T22:22:50.7634829Z [milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+      "2026-10-06T22:26:45.4769787Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+      "2026-10-06T22:30:36.2236185Z [milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)"
+    ]
+  },
+  "caveat": "LWU admission below 95% remains the original reported rho-weak gap; successful accuracy assertions do not establish clean 95% admission.",
+  "log_sha256": "90fb9a46f4b0f99c2ff835a266ff9aa621aefa7821cfc9b2aba134196b5531c8",
+  "lwu_source_context": {
+    "basis_training_grid": [
+      14,
+      9,
+      7
+    ],
+    "decode_bank_grid": [
+      13,
+      9,
+      7
+    ],
+    "oracle_grid": [
+      26,
+      11,
+      9
+    ],
+    "actual_decoder_budget": {
+      "maxNewtonSteps": 6,
+      "maxJetEvaluations": 8,
+      "maxExactEnergies": 2
+    },
+    "raw_diagnostic_note": "The printed 3 Newton steps / 3 jets line is stale reporting. Preserve it as raw historical evidence; actual configured values above are established by exact published source. Different training/decode/oracle grids do not imply conflicting fixtures.",
+    "source_sha256": "a04bd332674d8fd0686892adf2b4fdc9ca2516f31118e41f0520587929146ad2",
+    "source_path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala",
+    "source_head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12"
+  }
+}

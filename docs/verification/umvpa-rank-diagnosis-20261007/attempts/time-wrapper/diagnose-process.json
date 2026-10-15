@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-l",
+    "/usr/local/bin/Rscript",
+    "tools/mvpa-inference/diagnose_rank.R",
+    "docs/verification/umvpa-rank-diagnosis-20261007/case-index.tsv",
+    "docs/verification/umvpa-rank-diagnosis-20261007/oracle-power-bound.tsv",
+    "docs/verification/umvpa-rank-diagnosis-20261007"
+  ],
+  "exit_code": 1,
+  "wall_seconds": 98.89868998527527,
+  "wall_limit_seconds": 600,
+  "new_datasets": 0,
+  "new_random_draws": 0
+}

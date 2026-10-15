@@ -13,6 +13,10 @@ final case class SamplingFrame private (
   def allBlocks: BlockSelection =
     BlockSelection.all(nBlocks)
 
+  /** Per block, the named reference of its start time; see [[SamplingReference]]. */
+  def samplingReferences: Vector[SamplingReference] =
+    startTime.zip(tr).map((start, trb) => SamplingReference.classify(start, trb))
+
   def blockIdsPerSample: Vector[Int] =
     blockLens.zipWithIndex.flatMap { case (l, b) => Vector.fill(l)(b) }
 

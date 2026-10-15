@@ -1,0 +1,190 @@
+{
+  "commit": "e1cfa089",
+  "checked_head": "d8dd45c8f4a01d39c26d57e633798d52ac42ca12",
+  "files": [
+    {
+      "path": ".mote/ops/20261006T191634.794415Z-p2320-c0000-r4f56-h618f2a.json",
+      "sha256": "1d8fda44a86a428949fe807e39d97f30b2cea929e37a5e8a1de14a8fda54606d"
+    },
+    {
+      "path": ".mote/ops/20261006T191637.425450Z-p2342-c0000-r1eda-ha8834a.json",
+      "sha256": "d27db4d9995bb93b60741bd18a9ae63a7ed8d6151960f01de63041a846de0755"
+    },
+    {
+      "path": ".mote/ops/20261006T191639.022550Z-p2342-c0001-ra8fb-hf9beca.json",
+      "sha256": "4552699ae4c0ffb2e5b0343967bb5cf6fc2495846ad371bf3ab73d0502cc49ca"
+    },
+    {
+      "path": ".mote/ops/20261006T191640.655858Z-p2342-c0002-r033f-hfec6ad.json",
+      "sha256": "66f1fb7b700758b65b8cdbb9a6c83f376031a5f7654166d4aff2a52dcb370d53"
+    },
+    {
+      "path": ".mote/ops/20261006T191642.211735Z-p2342-c0003-re961-h260418.json",
+      "sha256": "4e977fa87237c1e224751cecc34615ab58c5286e08b6871f86c81a7aafc480a9"
+    },
+    {
+      "path": ".mote/ops/20261006T191643.541890Z-p2587-c0000-re96e-h5794d0.json",
+      "sha256": "1ddd4a17d321dbe184057c9c3083fe17e06c5a9295fcdc2c6e956a1341576e2c"
+    },
+    {
+      "path": ".mote/ops/20261006T191645.439353Z-p2587-c0001-red95-h1c074d.json",
+      "sha256": "e635572570ad32eb9caccbd03347278bffb648d2d8ceaa02f20babab6919dcf1"
+    },
+    {
+      "path": ".mote/ops/20261006T191647.633078Z-p2587-c0002-r2b4f-h1d578f.json",
+      "sha256": "5ca258a3b2f2d4a633629ab65f8dece9abc4a30ea8de316f2da9b489597da9df"
+    },
+    {
+      "path": ".mote/ops/20261006T191649.629633Z-p2587-c0003-ra0d6-h3e3e48.json",
+      "sha256": "9c372c9219ac881b2850b575ea8cc2cf313ada10c043e356a697b1f9b4c8f3bd"
+    },
+    {
+      "path": ".mote/ops/20261006T191651.176100Z-p2842-c0000-r64a2-h432592.json",
+      "sha256": "9e321c484b51ee57b2afe6a5cd67d509d76d17d761ee43d9f37fa3c89c7674a5"
+    },
+    {
+      "path": ".mote/ops/20261006T191652.596383Z-p2842-c0001-r3634-h034491.json",
+      "sha256": "80493eb2a03d7b3af83a51329aab3e82fb977fead25a6d4e4f001c5497d7e043"
+    },
+    {
+      "path": ".mote/ops/20261006T191654.039390Z-p2842-c0002-rf303-h62ac9e.json",
+      "sha256": "936b181b2675344b9c38f8d2b9338a656e1c452240744329eeb337d69c72fb45"
+    },
+    {
+      "path": ".mote/ops/20261006T191655.776614Z-p2842-c0003-reaf5-ha69381.json",
+      "sha256": "89ffbefa5c2e9071ffbbf10041f55cf6f7a212e2f2575bddc4136615454305af"
+    },
+    {
+      "path": ".mote/ops/20261006T194344.918514Z-p2124-c0000-rfe13-h721b82.json",
+      "sha256": "65145eb75e4e9591b1df8cfceb108f2577b47e29cf940cffbcbf8af57b1ce019"
+    },
+    {
+      "path": ".mote/ops/20261006T194345.625735Z-p2124-c0001-rafee-hbf14ff.json",
+      "sha256": "992da09215bba804f0283b6d50a333168c231884ed66019c8d8feb9c8669355b"
+    },
+    {
+      "path": ".mote/ops/20261006T194347.182313Z-p2124-c0002-r2026-h49f527.json",
+      "sha256": "6e8f22ebc23158666afc5947dcc989ab3237653e1fee657522b68b756bfdd15c"
+    },
+    {
+      "path": ".mote/ops/20261006T194348.697406Z-p2124-c0003-r6f5c-hb2abc5.json",
+      "sha256": "c3818747bdaa318924db2fd72e06e10624a9711422f5ec350c326647ff0c8635"
+    },
+    {
+      "path": ".mote/ops/20261006T194350.197275Z-p2384-c0000-r8a82-h71ac1e.json",
+      "sha256": "5e6717990f6e31cd43cdc0043e917e5032beaf6bc7b5f35d93e1c98509dd01c5"
+    },
+    {
+      "path": ".mote/ops/20261006T194350.992471Z-p2384-c0001-rb245-h6dfb69.json",
+      "sha256": "d53e6999d81c6a7609ada55655e8930008126ea6ec6362dbf69fe1b7f3533f4b"
+    },
+    {
+      "path": ".mote/ops/20261006T194352.577014Z-p2384-c0002-r09ef-h166eee.json",
+      "sha256": "c7a76f1a5d6a36d83fd8b6a67db3c0c4a18464e9d107282599d66ee9dfa54711"
+    },
+    {
+      "path": ".mote/ops/20261006T194354.018999Z-p2384-c0003-r1f85-h061d29.json",
+      "sha256": "da174da6e84472ea60b749e789b7d90a48a93f7a518fefd0759d94649098f39c"
+    },
+    {
+      "path": ".mote/ops/20261006T194355.772001Z-p2625-c0000-r1a2d-h53e227.json",
+      "sha256": "85db78649ee709965b34d84beabb49610c5ec95660f3f3f6726b6f2b2e3b71dc"
+    },
+    {
+      "path": ".mote/ops/20261006T194356.590884Z-p2625-c0001-rd832-hb9365f.json",
+      "sha256": "c56e07ecaa9019bab71d28b361e1624404288e528519c0c25734f5a5213794fd"
+    },
+    {
+      "path": ".mote/ops/20261006T194358.138746Z-p2625-c0002-rd0cd-h944a7a.json",
+      "sha256": "6c00e690acf80fcc4224cb08bbe8b8c8ce51cf9184a49af1a1e309cba3c5cc7c"
+    },
+    {
+      "path": ".mote/ops/20261006T194359.604670Z-p2625-c0003-rb3dc-he62d03.json",
+      "sha256": "94a3a6167e957db9048fc7025dc14bbd4508d05828d33ad10bd9495b727e7cab"
+    },
+    {
+      "path": ".mote/ops/20261006T194401.904388Z-p2885-c0000-r3236-hdf60b7.json",
+      "sha256": "59a4baeffa97963d43c50bf888e61b29f9b8d241839db7334cfd6dab20aca564"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/README.md",
+      "sha256": "b8096858ee077fbacc20846290db230fe2aa4a77cdc8b81cb746163ba07c4837"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/checks.json",
+      "sha256": "09ca7b066c1035a43a3048b6a3093bfbaeb739d297f4cb1ac546fe915be79449"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/compile-all.log.gz",
+      "sha256": "985e14b18ffcacb38528e6034a2ab92c0b00b697c32da1014f6846b2e934cfbd"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/configured-generator-probe.py",
+      "sha256": "086ca0b594789561cf18387b3c10ca716f16f083b8fddd09e569dfe6e7feb838"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/generator.log.gz",
+      "sha256": "7d99893030517f3f31c2f9419c0723ae2fade5c46aaf84b07cb4d22cf3fc2a14"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/jvm-final.log.gz",
+      "sha256": "b2f34413fc35ae6fda9ae58aa45cebf32432a1c00d19f102ac43f2a5aa4d3d63"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/jvm.log.gz",
+      "sha256": "cdb71c250f1fc7e10ba38a57f482bf5ff75e82bf47a0ad891b22cef1d053d8a0"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/negative-configure.log.gz",
+      "sha256": "cad93aa60785cdc7e61a8b03626aa16c7d1250982c2d70289280783c66daae0e"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/negative-generator.log.gz",
+      "sha256": "105a4cbab7a4bda75f7a715f5a28b10636241caa24c640460887114fdda0da78"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/negative-reset.log.gz",
+      "sha256": "3756366081ee68f11b41cb3ad83de5b762163ea79682bd04e72ce7c50834dd6e"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/portability.log.gz",
+      "sha256": "cdbb4ffac13eb95a7e94bc092170e4e938e85c8deabcd2eedf12467efc657fdc"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/python-freeze.txt",
+      "sha256": "c517cb1521b6a7ede33564c375981d479015e61b698a0839719c4ace899f87ab"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/restored-generator.log.gz",
+      "sha256": "3e87a8dc65fc4fb36acfcc7db3ebc0bb1ae3d8516b518849392820805e1fb5b8"
+    },
+    {
+      "path": "docs/verification/phrf-cmp-closeout-20261006/source-manifest.json",
+      "sha256": "3b40aa2de7b3e275aac3593e0b9c741bc7f487427b3757b8eded9291bb1a9f18"
+    },
+    {
+      "path": "modules/phrf-comparison/README.md",
+      "sha256": "d5f9ebfcc1ee29f08ccf0ffbfb9f887f7c3bdc492682e2166cab788a9a672e4f"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/ingest/RealGeneratorSuite.scala",
+      "sha256": "f9416a7a98cc78dadff120913b934a717aa7364441a1403f0d20c4dfe3af9054"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/prep/RhoBiasHeavySuite.scala",
+      "sha256": "dfed9edc9d61e4d511cd85ec1d61fbce1d05664142e60b2b599bdd06f32864f4"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/AdapterGoldenBytes.scala",
+      "sha256": "89c197f537f98c937506e188bcf05b2662b47fdda260cf8c52302ff69b2083c2"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/NpzSuite.scala",
+      "sha256": "d65fcc14beaa00805a0df44407ce9288f9a301b51fc5f9c3fa151a7ba8f27867"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/generate_adapter_golden.py",
+      "sha256": "5e8ca6311be6d5ff7564b6638cd935b42e5e653e83002c606c516a3bfa90f3ef"
+    }
+  ]
+}

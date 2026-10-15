@@ -1,0 +1,240 @@
+{
+  "verified_at_utc": "2026-10-06T02:19:22.032889+00:00",
+  "mote": "bd-01M47BDP95QPW2SZEV7TF52RQX",
+  "runs": [
+    {
+      "label": "gates-before",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.HrfConstructorCalibrationSuite scalafim.fmri.hrf.HrfRParitySuite scalafim.fmri.hrf.LwuSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.HrfConstructorCalibrationSuite scalafim.fmri.hrf.HrfRParitySuite scalafim.fmri.hrf.LwuSuite"
+      ],
+      "exit_code": 0,
+      "expected": "pass",
+      "seconds": 32.017,
+      "counts": [
+        {
+          "total": 33,
+          "failed": 0,
+          "errors": 0,
+          "passed": 33
+        },
+        {
+          "total": 33,
+          "failed": 0,
+          "errors": 0,
+          "passed": 33
+        }
+      ]
+    },
+    {
+      "label": "lwu-old-count-hrfJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.796,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "lwu-old-count-hrfJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 6.268,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "daguerre-basis-only-work-hrfJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.199,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "daguerre-basis-only-work-hrfJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.654,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "nonfinite-area-scale-hrfJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.659,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "nonfinite-area-scale-hrfJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.26,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "spec-throwing-route-hrfJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.602,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "spec-throwing-route-hrfJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJS/testOnly scalafim.fmri.hrf.HrfConstructorMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.91,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ]
+    },
+    {
+      "label": "gates-restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.HrfConstructorCalibrationSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.HrfConstructorCalibrationSuite"
+      ],
+      "exit_code": 0,
+      "expected": "pass",
+      "seconds": 2.541,
+      "counts": [
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13
+        }
+      ]
+    }
+  ],
+  "mutation_safety": "Named selectors exercise count/work admission only, or typed specification mapping; no oversized loops or allocations run under mutants.",
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfConstructorCalibration.scala": "16e854dc1826c23aef239471a2c4c6a6ebf598410e1fbc08448f25bb80bff621",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfSpec.scala": "42d8c2c2c1cc8876dfed950eeb311842076e058375d2600f1ae9b01660eab55b",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala": "1a181c4ed8088e1133f2aa13ed71e3beaeef31871a8c4bd992f4fcf485ff9b1a",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/HrfConstructorCalibrationSuite.scala": "c807957d8cabd7342568dfd2969e2f5101b55337bf691e15803ee98d1690fef9"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "ee6a0429db4001077db9c4479edc9b67d8eecc30eb13883cb833320763d2dd40",
+  "scope_limits": [
+    "Known family scalar work units bound loops and allocation, not wall clock time.",
+    "Unnormalized LWU does not use the calibration grid; valid parameters and span are still required.",
+    "Existing R parity fixtures and declared Daguerre fixed-grid semantics are preserved."
+  ],
+  "integrated_gates": {
+    "hrfJVM": 383,
+    "hrfJS": 383,
+    "designJVM": 458,
+    "designJS": 457,
+    "fitJVM": 660,
+    "fitJS": 603,
+    "observed_family_consumersJVM": 6,
+    "observed_family_consumersJS": 6,
+    "total_passed": 2956,
+    "compiler_warning_clean": true,
+    "sbt_diagnostics": [
+      "Existing multiple main classes diagnostic recorded separately in integrated receipt."
+    ],
+    "receipt": "docs/verification/family-caps-20261005/receipt.json"
+  }
+}

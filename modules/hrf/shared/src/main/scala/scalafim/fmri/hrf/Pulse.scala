@@ -59,6 +59,17 @@ object Pulse:
   def fromSummate(duration: Seconds, summate: Boolean): Either[TimeError, Pulse] =
     if summate then box(duration) else boxMass(duration)
 
+enum QuadratureError:
+  case InvalidWidth(value: Double)
+  case InvalidStep(value: Double)
+  case WorkLimitExceeded(intervals: Double, maximum: Int)
+
+  def message: String = this match
+    case InvalidWidth(value) => s"quadrature width must be finite and non-negative, got $value"
+    case InvalidStep(value) => s"quadrature step must be finite and positive, got $value"
+    case WorkLimitExceeded(intervals, maximum) =>
+      s"box quadrature needs $intervals intervals, exceeding maximum $maximum"
+
 /** Quadrature for integrating a causal kernel against a box.
   *
   * The box response is a genuine integral,
@@ -73,31 +84,58 @@ object Pulse:
   */
 object Quadrature:
 
+  /** At most this many trapezoids (and one more offset/weight) per box.
+    * Refuse excessive work instead of silently changing the requested step.
+    * This bounds the two result arrays to about 16 MB in total.
+    */
+  val MaxBoxIntervals: Int = 1_000_000
+
+  /** Allocation-free admission, including a possible partial final interval.
+    * Check in Double before converting counts to Int or adding array endpoints.
+    */
+  def boxIntervalCount(width: Double, step: Double): Either[QuadratureError, Int] =
+    if !width.isFinite || width < 0.0 then Left(QuadratureError.InvalidWidth(width))
+    else if !step.isFinite || step <= 0.0 then Left(QuadratureError.InvalidStep(step))
+    else
+      val full = math.floor(width / step)
+      val intervals = full + (if full * step < width then 1.0 else 0.0)
+      if !intervals.isFinite || intervals > MaxBoxIntervals.toDouble then
+        Left(QuadratureError.WorkLimitExceeded(intervals, MaxBoxIntervals))
+      else Right(intervals.toInt)
+
   /** Offsets into `[0, width]` and their trapezoid weights.
     *
     * The final offset is snapped to `width` so the interval is covered exactly
     * even when `width` is not a multiple of `step`; weights then sum to
-    * `width`.
+    * `width`. Throws `IllegalArgumentException` on invalid or excessive work;
+    * use [[boxOffsetsEither]] for typed refusal.
     */
   def boxOffsets(width: Double, step: Double): (Array[Double], Array[Double]) =
-    require(step > 0.0, "quadrature step must be > 0")
-    if width <= 0.0 then (Array(0.0), Array(1.0))
+    boxOffsetsEither(width, step).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  /** Checked box quadrature. Admission precedes all array allocation. */
+  def boxOffsetsEither(width: Double, step: Double): Either[QuadratureError, (Array[Double], Array[Double])] =
+    boxIntervalCount(width, step).map { _ =>
+      if width == 0.0 then (Array(0.0), Array(1.0))
+      else boxOffsetsUnsafe(width, step)
+    }
+
+  private def boxOffsetsUnsafe(width: Double, step: Double): (Array[Double], Array[Double]) =
+    val n = math.floor(width / step).toInt + 1
+    val base = Array.tabulate(n)(i => i * step)
+    val offsets =
+      if base(n - 1) < width then base :+ width else base
+    val m = offsets.length
+    if m == 1 then (offsets, Array(1.0))
     else
-      val n = math.floor(width / step).toInt + 1
-      val base = Array.tabulate(n)(i => i * step)
-      val offsets =
-        if base(n - 1) < width then base :+ width else base
-      val m = offsets.length
-      if m == 1 then (offsets, Array(1.0))
-      else
-        val weights = new Array[Double](m)
-        var i = 0
-        while i < m do
-          val left = if i == 0 then 0.0 else offsets(i) - offsets(i - 1)
-          val right = if i == m - 1 then 0.0 else offsets(i + 1) - offsets(i)
-          weights(i) = (left + right) / 2.0
-          i += 1
-        (offsets, weights)
+      val weights = new Array[Double](m)
+      var i = 0
+      while i < m do
+        val left = if i == 0 then 0.0 else offsets(i) - offsets(i - 1)
+        val right = if i == m - 1 then 0.0 else offsets(i + 1) - offsets(i)
+        weights(i) = (left + right) / 2.0
+        i += 1
+      (offsets, weights)
 
   /** Weights normalized to sum to one — the unit-mass box. */
   def normalized(weights: Array[Double]): Array[Double] =

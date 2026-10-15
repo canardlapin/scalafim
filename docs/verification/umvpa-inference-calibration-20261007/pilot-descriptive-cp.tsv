@@ -1,0 +1,16 @@
+cell	member	metric	successes	datasets	confidence	sidedness	role	rate	lower	upper	scope	confirmation_qualified
+R0	closed-sequence	closed-FWER	8	200	0.9	two-sided	pilot-primary-description	0.04	0.0200567595895093	0.0710141686160198	pilot-descriptive-only	FALSE
+R0	H1	closed-null-rejection	8	200	0.9	two-sided	pilot-member-description	0.04	0.0200567595895093	0.0710141686160198	pilot-descriptive-only	FALSE
+R0	H2	closed-null-rejection	1	200	0.9	two-sided	pilot-member-description	0.005	0.000256433587223474	0.0234984704349507	pilot-descriptive-only	FALSE
+R0	H3	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description	0	0	0.0148670392312721	pilot-descriptive-only	FALSE
+R0	H4	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description	0	0	0.0148670392312721	pilot-descriptive-only	FALSE
+R1	H2	closed-null-rejection	6	200	0.9	two-sided	pilot-primary-description	0.03	0.0131439870871809	0.0583497603759109	pilot-descriptive-only	FALSE
+R1	H1	closed-detection	161	200	0.95	lower-one-sided	pilot-member-description	0.805	0.753128689941223	1	pilot-descriptive-only	FALSE
+R1	H2	closed-null-rejection	6	200	0.9	two-sided	pilot-member-description	0.03	0.0131439870871809	0.0583497603759109	pilot-descriptive-only	FALSE
+R1	H3	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description	0	0	0.0148670392312721	pilot-descriptive-only	FALSE
+R1	H4	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description	0	0	0.0148670392312721	pilot-descriptive-only	FALSE
+R2	H3	closed-null-rejection	2	200	0.9	two-sided	pilot-primary-description	0.01	0.00177968144789257	0.0311425994140837	pilot-descriptive-only	FALSE
+R2	H1	closed-detection	182	200	0.95	lower-one-sided	pilot-member-description	0.91	0.869460952025509	1	pilot-descriptive-only	FALSE
+R2	H2	closed-detection	49	200	0.95	lower-one-sided	pilot-member-description	0.245	0.195567403688973	1	pilot-descriptive-only	FALSE
+R2	H3	closed-null-rejection	2	200	0.9	two-sided	pilot-member-description	0.01	0.00177968144789257	0.0311425994140837	pilot-descriptive-only	FALSE
+R2	H4	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description	0	0	0.0148670392312721	pilot-descriptive-only	FALSE

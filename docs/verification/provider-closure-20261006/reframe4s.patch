@@ -1,0 +1,39 @@
+From 292c9bc7e0c026d893a4101560aa9a46e0fbcf04 Mon Sep 17 00:00:00 2001
+From: canardlapin <brad@duckrabbit.ai>
+Date: Tue, 6 Oct 2026 08:00:49 -0400
+Subject: [PATCH] build: select coherent signed INT8 image provider
+
+---
+ .github/workflows/ci.yml | 2 +-
+ build.sbt                | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 4a30802..5a9f94b 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -28,7 +28,7 @@ jobs:
+         uses: actions/checkout@v7.0.1
+         with:
+           repository: canardlapin/image4s
+-          ref: 03288b6d5c4e8c24d3fcfa22df1e977839f007d0
++          ref: 20c9515495e43dff9d17bc1283a8ca1d56355c4a
+           path: .ci/image4s
+ 
+       - name: Check out immutable locus4s source
+diff --git a/build.sbt b/build.sbt
+index 0a6fcd8..fb041f7 100644
+--- a/build.sbt
++++ b/build.sbt
+@@ -48,7 +48,7 @@ lazy val galeCoreJS = ProjectRef(galeBuild, "coreJS")
+ // image4s is an independently owned foundation. Ordinary builds clone the
+ // exact reviewed revision; the property admits an audited local checkout for
+ // coordinated cross-repository development.
+-lazy val image4sRevision = "03288b6d5c4e8c24d3fcfa22df1e977839f007d0"
++lazy val image4sRevision = "20c9515495e43dff9d17bc1283a8ca1d56355c4a"
+ lazy val image4sBuild =
+   sys.props
+     .get("reframe4s.image4s.build")
+-- 
+2.39.5 (Apple Git-154)
+

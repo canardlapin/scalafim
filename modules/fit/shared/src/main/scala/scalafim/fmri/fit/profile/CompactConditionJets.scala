@@ -79,6 +79,11 @@ final class CompactConditionJets(val rHat: Array[Double], val rank: Int, val con
           q += 1
         p += 1
 
+  /** Copy the current value design without allocating a snapshot in the voxel loop. */
+  private[profile] def copyValueDesignInto(target: Array[Double]): Unit =
+    require(target.length == k * c, "value-design snapshot has the wrong shape")
+    System.arraycopy(design, 0, target, 0, target.length)
+
   /** The value design `D` (`K x C`, row-major) from the last [[assemble]]. */
   def valueDesign: Array[Double] = java.util.Arrays.copyOf(design, k * c)
 

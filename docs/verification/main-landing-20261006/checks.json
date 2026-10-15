@@ -1,0 +1,87 @@
+{
+  "base": "e1cfa089",
+  "landing_branch": "land/main-20261006",
+  "gale_merge": {
+    "mergeCommit": {
+      "oid": "d03eb99bde389ce9bce21b8e0fc59bec9ac9b4aa"
+    },
+    "mergedAt": "2026-10-06T20:27:27Z",
+    "state": "MERGED",
+    "url": "https://github.com/canardlapin/gale/pull/16"
+  },
+  "runtime": {
+    "java": "Temurin 21.0.12.1",
+    "node": "24.21.0",
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "sbt_heap": "5g",
+    "sbt_processors": 4
+  },
+  "gates": [
+    {
+      "commands": [
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite scalafim.fmri.design.HrfKernelBasisSuite",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite scalafim.fmri.design.HrfKernelBasisSuite",
+        "firstLevelLawsJVM/test",
+        "firstLevelLawsJS/test"
+      ],
+      "passed_by_command": [
+        29,
+        29,
+        84,
+        84
+      ],
+      "exit_code": 0,
+      "log": "first-level-full.log.gz"
+    },
+    {
+      "commands": [
+        "fitJVM/test",
+        "fitJS/test"
+      ],
+      "passed_by_command": [
+        686,
+        629
+      ],
+      "exit_code": 0,
+      "log": "fit-full.log.gz"
+    },
+    {
+      "commands": [
+        "scalafimCompileAll"
+      ],
+      "exit_code": 0,
+      "compiler_warnings": 0,
+      "log": "compile-all.log.gz"
+    }
+  ],
+  "lwu_observed_js": {
+    "largest_training_array": 1999830,
+    "second_training_array": 831390,
+    "storage_cells": 14326919,
+    "training_work": 8498985,
+    "spectral_work": 46033293376,
+    "forward_applications": 113,
+    "adjoint_applications": 114,
+    "converged_triplets": 48,
+    "spectral_builds": 1
+  },
+  "publication_state": "user-authorized isolated landing; preserve concurrent original-checkout work and stop on competing remote changes",
+  "compiler_limits_unchanged": true,
+  "frozen_scientific_inputs_and_thresholds_unchanged": true,
+  "local_scientific_checks_pass": true,
+  "artifact_sha256": {
+    "compile-all.log.gz": "5951cafcbcea2bebb0c34dbea14bcfa88e331ca8b68756021479746e96d5bdbf",
+    "first-level-full.log.gz": "39d82081aa17a305f1677f0fbdfb638228eacb810760137eb2f8c09b4af1da02",
+    "first-level-js-results.json": "0de35e1324efb48ce868e1205d3d0d0a9a08d0ee678ccad1be4d4faac9eea809",
+    "first-level-jvm-results.json": "a143ac027e0730dd441ec382c9e9f324cbaed84c59947497600aaa5f97e447a2",
+    "fit-full.log.gz": "94dc1c83fad99d1a3eacf64c34c9c05e8280c9e0940a38689d59c90b0f737dfc",
+    "fit-js-results.json": "155b3a925642820e1f1e3c3c7bef044c1bb50df60ef85aec312e0172ac410668",
+    "fit-jvm-results.json": "186d39281c1d8e3bf627edc3413dfe207272ba8d9c018c6687d2563e920baebb",
+    "gale-merge.json": "384f44ac889b1eb85a441c48d9097544fd4aa3ed8fb32d06121348084aee5c38",
+    "initial-compile-failure.log.gz": "75866b42e0253b75c4f8d955aa70354c5c9440b2c2d17ff401ed7280eaf54b43",
+    "lwu-observed-js.json": "5a28a00aa75763b13f69c601fcf5a82c2773050e59b2730253fb7bfb2d8b8d2b",
+    "preliminary-jvm.log.gz": "b9fcf0ec6446e071dc0f0df084ebb42feab74d84f72b66955d04457d3434676a",
+    "source-manifest.json": "54d5c722b3f549f8b507c3a3cc11dade930a1aaa8232ac3686524dc76873cdd1"
+  }
+}

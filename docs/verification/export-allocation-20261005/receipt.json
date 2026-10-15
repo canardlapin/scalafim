@@ -1,0 +1,168 @@
+{
+  "mote": "bd-01M43ZTQCPH834TY936D7YYGKD",
+  "date": "2026-10-05",
+  "scope": "Complete StatMap construction including AnalysisProvenance.fromResult, source identity/status records, payload and selected-axis validation; input fit fixtures are prepared before measurement.",
+  "platform": "Darwin arm64",
+  "toolchain": {
+    "jdk": "Temurin 21.0.12.1",
+    "sbt": "1.11.7",
+    "scala": "3.7.4"
+  },
+  "mutation": {
+    "description": "Restore resolvedVoxelStatuses(position) expansion in the shared runwise status producer used by runwise and patterned provenance.",
+    "from": "result.runs.map(_.voxelStatuses.fold(VoxelFitStatus.Estimable)(_(position)))",
+    "to": "result.runs.map(_.resolvedVoxelStatuses(position))",
+    "restored_source_sha256": "6696a09020d249118837339d508fb48ca69af36869f3a22359e14df5f9a2dec9",
+    "both_whole_export_regressions_rejected_mutation": true
+  },
+  "commands": [
+    {
+      "label": "mutation",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.ResultArtifactsAllocationSuite"
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 41.104
+    },
+    {
+      "label": "restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.ResultArtifactsSuite scalafim.fmri.fit.ResultArtifactsAllocationSuite",
+        "fitJS/testOnly scalafim.fmri.fit.ResultArtifactsSuite"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.413
+    }
+  ],
+  "allocations": {
+    "focused": [
+      {
+        "kind": "runwise",
+        "voxels": 1024,
+        "bytes": 1167848
+      },
+      {
+        "kind": "runwise",
+        "voxels": 4096,
+        "bytes": 4640744
+      },
+      {
+        "kind": "patterned",
+        "voxels": 1024,
+        "bytes": 1119088
+      },
+      {
+        "kind": "patterned",
+        "voxels": 4096,
+        "bytes": 4442720
+      }
+    ],
+    "mutation": [
+      {
+        "kind": "runwise",
+        "voxels": 1024,
+        "bytes": 11326456
+      },
+      {
+        "kind": "runwise",
+        "voxels": 4096,
+        "bytes": 164220680
+      },
+      {
+        "kind": "patterned",
+        "voxels": 1024,
+        "bytes": 11275424
+      },
+      {
+        "kind": "patterned",
+        "voxels": 4096,
+        "bytes": 164547168
+      }
+    ],
+    "restored": [
+      {
+        "kind": "runwise",
+        "voxels": 1024,
+        "bytes": 1151464
+      },
+      {
+        "kind": "runwise",
+        "voxels": 4096,
+        "bytes": 4443912
+      },
+      {
+        "kind": "patterned",
+        "voxels": 1024,
+        "bytes": 1084576
+      },
+      {
+        "kind": "patterned",
+        "voxels": 4096,
+        "bytes": 4311648
+      }
+    ]
+  },
+  "limitations": [
+    "JVM allocation counters require a supported ThreadMXBean; the allocation suite assumes this capability and skips on unsupported runtimes.",
+    "Allocation measurements use two status-free runs and 1024/4096 voxels; they are regression evidence, not general runtime or throughput benchmarks.",
+    "Allocation bytes are measured on the JVM only; Scala.js gates verify scientific/provenance semantics and compilation, not JS heap allocation."
+  ],
+  "combined_fit_gates": {
+    "status": "passed",
+    "receipt": "../scalafim-chunk-20261005/receipt.json",
+    "fit": {
+      "jvm_passed": 660,
+      "js_passed": 603
+    },
+    "hrf": {
+      "jvm_passed": 321,
+      "js_passed": 321
+    },
+    "design": {
+      "jvm_passed": 454,
+      "js_passed": 453
+    },
+    "observed_family_admission_consumer": {
+      "jvm_passed": 4,
+      "js_passed": 4
+    }
+  },
+  "initial_focused_gates": {
+    "log": "focused.log",
+    "jvm": {
+      "command": "fitJVM/testOnly scalafim.fmri.fit.ResultArtifactsSuite scalafim.fmri.fit.ResultArtifactsAllocationSuite",
+      "passed": 9,
+      "exit_code": 0
+    },
+    "js": {
+      "command": "fitJS/testOnly scalafim.fmri.fit.ResultArtifactsSuite",
+      "passed": 7,
+      "exit_code": 0
+    }
+  },
+  "source_sha256": {
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "6696a09020d249118837339d508fb48ca69af36869f3a22359e14df5f9a2dec9",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ResultArtifactsSuite.scala": "394ba0522404af7e56cc60fbecf4180f9b76d96a58ba40a4ccd5bd346a7f5fbf",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/ResultArtifactsAllocationSuite.scala": "03937270458a2ac035999722f405e9c7a6c6af8200254ee18379e89e8dfdd28f"
+  },
+  "log_sha256": {
+    "focused.log": "ee4ea7cd1714a5501f793dc806cfc593267b0a11b9df4b9ac9892046adbbeb73",
+    "mutation.log": "e0cf983d5593bda65d8f9256ce706b5fcf4f706069d0bcb85efcd8212815af52",
+    "restored.log": "72eee3f6f66cde18bf97b5afb74d55bb78221e5d039c0ba563ea3aa52adc5132"
+  },
+  "evidence_archive": {
+    "path": "logs.tar.gz",
+    "sha256": "fc582d1f0a0e85e657a8ed404e962213f60d71ab2343775e1c9201ae22045e23",
+    "members": [
+      "focused.log",
+      "mutation.log",
+      "restored.log",
+      "mutation-runner.py"
+    ],
+    "runner_origin": "The Python body executed inline via stdin for the recorded mutation/restored gates, saved verbatim."
+  }
+}

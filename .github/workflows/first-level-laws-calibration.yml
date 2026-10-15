@@ -17,7 +17,9 @@ jobs:
   generated-laws:
     name: generated laws on JVM and Scala.js (seed ${{ matrix.seed_long }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The exhaustive PHRF recovery sweep takes about 7 minutes on JVM and
+    # substantially longer on Scala.js; retain all 80 cells on both platforms.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:

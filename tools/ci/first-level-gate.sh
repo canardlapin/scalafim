@@ -38,6 +38,7 @@ echo "[first-level-ci] JDK $java_version"
 
 echo "[first-level-ci] validating scenario manifest with Python stdlib only"
 python3 -S tools/ci/check_test_inventory.py --check
+python3 -S -m unittest tools/ci/test_pinned_dependencies.py
 python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json
 
 echo "[first-level-ci] checking checked-in fixture coherence without external packages"

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "--shutdown"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "exit_code": 0,
+  "seconds": 0.11108708381652832,
+  "heap": "4g",
+  "cpus": 2,
+  "gale_override": null,
+  "node": "v24.21.0"
+}

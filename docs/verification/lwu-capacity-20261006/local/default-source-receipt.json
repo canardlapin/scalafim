@@ -1,0 +1,21 @@
+{
+  "root_head": "e1cfa0891e7f9267ee4896bd8a3f09a6afd9081c",
+  "gale_loaded_path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/1afc292237c3fa1b/staging/e42c03c83b742859e853/gale",
+  "gale_loaded_head": "b56a9dd0b8ad479621a3594880f90c9add8c2824",
+  "gale_loaded_origin": "https://github.com/canardlapin/gale.git",
+  "gale_override": null,
+  "root_build_sbt": "\"b56a9dd0b8ad479621a3594880f90c9add8c2824\"",
+  "stage_ids": [
+    "design-jvm:initial-compiler-failure-retained",
+    "design-jvm-corrected:29pass",
+    "design-js:29pass",
+    "lwu-jvm:final29kernel+3compact+1LWUpass",
+    "lwu-js:3compact+1LWUpass",
+    "final-compile-all:both-platforms0warn",
+    "final-shutdown:exit0"
+  ],
+  "requested_heap": "4g",
+  "requested_cpus": 2,
+  "node": "v24.21.0",
+  "framework_selector": "verification-only exact1 inherited complete frozen LWU test"
+}

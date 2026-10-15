@@ -284,7 +284,12 @@ object Robust:
     )
 
   private[fit] def validateRobustAutocorrelation(config: AutocorrelationConfig): Either[FitError, Unit] =
-    if config.voxelwise then
+    if config.biasCorrection != scalafim.fmri.model.ArBiasCorrection.Raw then
+      Left(FitError.UnsupportedRobust("OLS residual-bias correction is not valid for robust residuals"))
+    else if config.initialization == scalafim.fmri.model.ArInitialization.Stationary ||
+        config.censorTreatment == scalafim.fmri.model.ArCensorTreatment.EstimateOnly then
+      Left(FitError.UnsupportedRobust("robust AR re-estimation does not support stationary initialization or estimation-only censoring"))
+    else if config.voxelwise then
       Left(FitError.UnsupportedRobust("robust AR re-estimation currently requires shared or run-pooled AR"))
     else
       config.coefficients match

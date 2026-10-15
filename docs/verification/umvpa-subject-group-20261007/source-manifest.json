@@ -1,0 +1,119 @@
+{
+  "base": "d6e922a038049ce30d4de5f5c72b11eae71ca11f",
+  "source": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala": "5dac8b1bfa75da7b98b7164b630cecb2525bf1cc13c5b244ef6193b7b85e4387",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinatesSuite.scala": "0d178ac22607338cb0ddcbba85ad0de7488c820a0f63b6855e1ce8141e6d7018",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelLoadingConfirmation.scala": "e00962e8ca2f18a31ea052d159ccb2d12236ad9bca51b4ac6c06f2383c91933d",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelLoadingConfirmationSuite.scala": "f37c2dacf4b7e24058f0e1ad22c86927f01bbfae278d276789a728f24090703f",
+    "modules/mvpa-group/shared/src/main/scala/scalafim/fmri/mvpa/group/SubjectGroupBridge.scala": "84267786eb51734833cc5625f1d727a2be8311ed2961c225fe326a607703d2f3",
+    "modules/mvpa-group/shared/src/test/scala/scalafim/fmri/mvpa/group/SubjectGroupBridgeSuite.scala": "7bbcf5105cf6e93cbbc0d531e7c56073f6779f9bf3a9d24d9e5d92ebda6efe53",
+    "build.sbt": "f96aac20a2d2b26cf82c5d55be3eb343be6c8918c438f6db7395e3426f879498"
+  },
+  "oracle_command": "LC_ALL=C LANG=C /usr/local/bin/Rscript docs/verification/umvpa-subject-group-20261007/oracle.R docs/verification/umvpa-subject-group-20261007",
+  "oracle_exit": 0,
+  "artifacts": {
+    "expected.tsv": "618b470abedab42b3691a61b5e481b890b3b8d1855fd6c2147db3c012490f969",
+    "independent-review.md": "91d6f3e6d82906c7b4ab7e1cacbe0a0948c7b2004a5cf48e12d600b8c4eaba17",
+    "integration-gates-pre-timeout.json": "de49af1643591f76408a15df4dd3730afb822a0648e0a3252c065021a9eaad37",
+    "integration-gates.json": "664edf5ea71b6997ef436c5f161401953d3d0c02e28e42cdb49e954d6ea6b68b",
+    "oracle.R": "b96ed84c63f8a43790c310d7a6645a2d898e423233b22c20b289c8d3f0f434dc",
+    "README.md": "23b69ff739342ddabb1d899c8f1a6b042a1cafc56e6067ce9b392c11ea774bff",
+    "oracle.log": "c666355a2f6d89c60decb8912f12cda9107543c2fe2b3c833cd7ac18f5497e3e",
+    "nonseparable-expected.tsv": "046ab8bed82c90ea61235b4ab49e7e64b94436917b396f030efbf8d76d35f48f",
+    "R-session.txt": "cbd4f8441218763e283867b860de33cbd949399f49235c63749599394962fb65",
+    "nonseparable-counterexample.log": "248135396814c4b64f66753190ac74842e7b79d5ade5c84a6205551308db110d",
+    "nonseparable-counterexample.R": "42f2b4eb098d5049545184e5953ed3c7ccda0e4bb9c7cd5dddba2912410b2a16",
+    "logs/full-jvm.log": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d",
+    "logs/full-js.log": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07",
+    "logs/focused-pre-replay.log": "86b3b84db682b10d84b451de89f1014e2575d677d5704cd80947af3d2cec3417"
+  },
+  "gates": {
+    "runner": "parent root agent; this subagent ran no sbt builds",
+    "jvm_passed": 662,
+    "js_passed": 661,
+    "jvm_opt_in_skips": 1,
+    "js_opt_in_skips": 1,
+    "compiler_warnings": 0,
+    "test_errors": 0,
+    "commands": [
+      "python3 tools/build/sbt-warm mvpaJVM/test",
+      "python3 tools/build/sbt-warm mvpaSpatialJVM/test",
+      "python3 tools/build/sbt-warm mvpaGroupJVM/test",
+      "python3 tools/build/sbt-warm groupJVM/test",
+      "python3 tools/build/sbt-warm estimatesJVM/test",
+      "python3 tools/build/sbt-warm thresholdJVM/test",
+      "python3 tools/build/sbt-warm mvpaJS/test",
+      "python3 tools/build/sbt-warm mvpaSpatialJS/test",
+      "python3 tools/build/sbt-warm mvpaGroupJS/test",
+      "python3 tools/build/sbt-warm groupJS/test",
+      "python3 tools/build/sbt-warm estimatesJS/test",
+      "python3 tools/build/sbt-warm thresholdJS/test"
+    ],
+    "module_counts": {
+      "mvpa": [
+        454,
+        454
+      ],
+      "mvpaSpatial": [
+        24,
+        24
+      ],
+      "mvpaGroup": [
+        8,
+        8
+      ],
+      "group": [
+        75,
+        74
+      ],
+      "estimates": [
+        11,
+        11
+      ],
+      "threshold": [
+        90,
+        90
+      ]
+    },
+    "scope": "pointwise native adapter implementation; no G1 release, joint inference, fake geometry or homogeneous-law inference from marginals",
+    "post_gate_amendment": {
+      "change": "test-only opt-in MUnit timeout15min; no production/statistic changes",
+      "source": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/inference/RankConfirmationSuite.scala",
+      "previous_sha256": "446ffab878bd7a95131ea034cb5e2fb2c8f4a1a2ccfbd637cfe47af863d48df5",
+      "current_sha256": "60cb2da95dc4136e0c544297e97df62f7c91534d536d071b9f080963429a0beb",
+      "commands": [
+        "python3 tools/build/sbt-warm mvpaJVM/test",
+        "python3 tools/build/sbt-warm mvpaJS/test"
+      ],
+      "each_result": {
+        "passed": 454,
+        "skipped": 1,
+        "failed": 0,
+        "errors": 0,
+        "warnings": 0
+      },
+      "raw_log": "docs/verification/umvpa-inference-calibration-20261007/logs/post-timeout-mvpa.log",
+      "sha256": "e3122ac44387d4c4729e3825e01fa91c58a7c40fa7f29c57d2fa543593110891",
+      "remaining_module_gates": "Other five module sources unchanged; original full logs retained, not relabelled as a new run."
+    }
+  },
+  "nonseparable_oracle_command": "LC_ALL=C LANG=C /usr/local/bin/Rscript docs/verification/umvpa-subject-group-20261007/nonseparable-counterexample.R docs/verification/umvpa-subject-group-20261007",
+  "nonseparable_oracle_exit": 0,
+  "review": {
+    "verdict": "accepted, no remaining blocker",
+    "reviewer": "sbt_resource_contract",
+    "receipt": "independent-review.md",
+    "tests_run_by_reviewer": false
+  },
+  "integration_receipt": {
+    "path": "integration-gates.json",
+    "sha256": "a722a9db8830f89aeb07c4ffafd81027efe4f73a099f69a134f7f56f3dbbe737",
+    "raw_logs": {
+      "docs/verification/umvpa-subject-group-20261007/logs/full-jvm.log": "f2a7eb98ebf80113bc2b66ccb31787e60217f46b987c657257a321ca03ee0a0d",
+      "docs/verification/umvpa-subject-group-20261007/logs/full-js.log": "0f7ef6a5a21118bacde1ee97598c993ee35a0d6d8d34aa342c977a0971a80d07",
+      "docs/verification/umvpa-inference-calibration-20261007/logs/post-timeout-mvpa.log": "e3122ac44387d4c4729e3825e01fa91c58a7c40fa7f29c57d2fa543593110891"
+    },
+    "verified_source_count": 17,
+    "verification": "All17currentsourcehashes, both original full logs, and additive post-timeout MVPA log match amendedreceipt. Originalreceipt preservedhistorically."
+  }
+}

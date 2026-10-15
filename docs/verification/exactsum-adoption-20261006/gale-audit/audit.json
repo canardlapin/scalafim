@@ -1,0 +1,68 @@
+{
+  "old_gale": "da38f8c429294657d30ec29f06eae3fab636d428",
+  "new_gale": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "kernel_storage_work_formula_repair_required": false,
+  "unchanged_sources": [
+    {
+      "path": "core/shared/src/main/scala/gale/spectral/DenseSvdKernel.scala",
+      "sha256": "ad40cc20d9e6f63161f187a152be8f1217deb385fe6da36974af114e42e944d1",
+      "unchanged": true
+    },
+    {
+      "path": "core/shared/src/main/scala/gale/spectral/SVD.scala",
+      "sha256": "5d4d4974dd5fa5122f6d70710874df48eac510114b81c73ae882d684c66bcc8d",
+      "unchanged": true
+    },
+    {
+      "path": "core/shared/src/main/scala/gale/spectral/SpectralBackend.scala",
+      "sha256": "b78776044f93cfa99523b2a15fd90bbbc57c9d33814f09d593f9a00ae5c3af65",
+      "unchanged": true
+    },
+    {
+      "path": "core/shared/src/main/scala/gale/linalg/MutableMatrix.scala",
+      "sha256": "5d12dae7c2a97861b3e6d3b6efc6a193dcedbd7b16ccb784968b8ca56be52008",
+      "unchanged": true
+    },
+    {
+      "path": "core/shared/src/main/scala/gale/linalg/Vec.scala",
+      "sha256": "e3bacd41c739d1672b86ff6c6c372be0ed04ba96bb01796a0f6b121346e68dc6",
+      "unchanged": true
+    },
+    {
+      "path": "core/jvm/src/main/scala/gale/platform/PlatformArrays.scala",
+      "sha256": "15310a8d0f5e62ab9c02e5a964d0dbc0b37944d7909dc6962df928f61dc13505",
+      "unchanged": true
+    },
+    {
+      "path": "core/jvm/src/main/scala/gale/platform/PlatformMath.scala",
+      "sha256": "d1a8115557402494b586307b8572e1082723e738d9a8b108de8d33263ec61c91",
+      "unchanged": true
+    },
+    {
+      "path": "core/js/src/main/scala/gale/platform/PlatformArrays.scala",
+      "sha256": "3e8f186cd10d6aeae86e55b025e69dd7b74b1fdaed7396a4cf5ce1ea59638b8f",
+      "unchanged": true
+    },
+    {
+      "path": "core/js/src/main/scala/gale/platform/PlatformMath.scala",
+      "sha256": "e4a68d9acee8b8620927ce8ef32f64f0e686bcc0a8f0d693a10e0497554c8655",
+      "unchanged": true
+    }
+  ],
+  "full_svd_routing_canonicalization_diagnostics_normalized_sha256": "3a7eb0cf352c9300aee1f08e0ceec2de8d1d3624e1cc4a998e8d4796fcca9c20",
+  "max_sweeps_per_value": 60,
+  "allocation_notes": "Same training builder ownership transfer, tall raw clone and k\u00b2 right factor, full/economy canonical factors, residuals and Gram diagnostics; new ValidatedSvd/TruncatedSvd not invoked by KernelBasis.svd. Historical receipt remains immutable; revision-bound comment may update.",
+  "cholesky_notes": "One n\u00b2 owned lower buffer and finite arithmetic order unchanged; finite pivot/RHS/solution guards now reject nonfinite/overflow rather than returning invalid results. No budget storage repair identified.",
+  "pinv_notes": "New TruncatedSvd finite validation and retained-factor copies; no Root .pinv callsites found.",
+  "jdk17_notes": "Root workflows require17; Gale upstream qualifies21. New core Java calls are available17; platform fma/arrays unchanged. This worker ran21, not17; reference baseline gate remains separate.",
+  "added_build_graph": "Gale optional interopRavel now loads immutable Ravel9b53145e; Root default Ravel9c566939 remains sole reachable source. No local override or transitive pin changes.",
+  "classpath_proof": "classpath-proof.json",
+  "compiler_tests": {
+    "kernel-jvm": 25,
+    "kernel-js": 25
+  },
+  "settings_count": 364031,
+  "memory_scope": "Requested4g profile cold load and bounded commands passed; no reload/set or effective heap/GC guarantee claimed.",
+  "capture_repairs": "Two successful exports lost stdout(designJS,fitJVM). Logged show repairs recover ordering; originals and repair logs retained. No test reruns.",
+  "provider_adoption": "Published image20c951/reframe292c9 exact build/CI source bytes match prior local qualification; this phase retains original Root provider pins and does not claim provider default-URI admission."
+}

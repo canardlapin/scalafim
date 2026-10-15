@@ -1,0 +1,38 @@
+{
+  "profile": "pull-request",
+  "qualification_campaign_registered": false,
+  "gates": [
+    {
+      "command": "firstLevelLawsJVM/test",
+      "exit_code": 0,
+      "started_at": "2026-10-08T17:50:35.489250+00:00",
+      "ended_at": "2026-10-08T18:02:21.651143+00:00",
+      "log": "gate-1.log",
+      "sha256": "1384e0ae5a4015bc10cd0ce6081ed73e7c1cdcc1a3f394cf3d51264569105936"
+    },
+    {
+      "command": "firstLevelLawsJS/test",
+      "exit_code": 0,
+      "started_at": "2026-10-08T18:02:21.657927+00:00",
+      "ended_at": "2026-10-08T18:23:48.392634+00:00",
+      "log": "gate-2.log",
+      "sha256": "49a11f1aa5f0264015ad4c25a3551f8632a1422de45aabfcc708799bbce8bb6d"
+    },
+    {
+      "command": "firstLevelLawsJVM/Test/scalafmtCheck",
+      "exit_code": 0,
+      "started_at": "2026-10-08T18:23:48.396919+00:00",
+      "ended_at": "2026-10-08T18:23:50.834449+00:00",
+      "log": "gate-3.log",
+      "sha256": "b018d1f94578522d9b0e1f29bc1a1809c351d06950fb9b40e140a9294cb61654"
+    },
+    {
+      "command": "firstLevelLawsJS/Test/scalafmtCheck",
+      "exit_code": 0,
+      "started_at": "2026-10-08T18:23:50.834862+00:00",
+      "ended_at": "2026-10-08T18:23:52.026942+00:00",
+      "log": "gate-4.log",
+      "sha256": "aef9e82eb0f765f365326bc5751c17001a2e7d6854e89cf5cffb398c69ab265c"
+    }
+  ]
+}

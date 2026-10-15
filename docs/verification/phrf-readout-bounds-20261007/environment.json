@@ -1,0 +1,16 @@
+{
+  "host": "M2 Pro; 10 physical cores; 32 GiB; macOS 15.1.1",
+  "hostEvidence": "prior qualification packet environment; same machine",
+  "java": "Temurin 21.0.12.1",
+  "node": "24.21.0",
+  "jvmHeapGiB": 5,
+  "jvmVisibleProcessors": 4,
+  "resourceExecutorWorkers": 8,
+  "provider": "0a981febc163e539b019aa9379935e21d8987a20",
+  "limitations": [
+    "not frozen reference host",
+    "other JVM activity observed during resource attempts",
+    "FastOpt Scala.js tests and probe",
+    "single bounded resource attempts; no complete workload inference"
+  ]
+}

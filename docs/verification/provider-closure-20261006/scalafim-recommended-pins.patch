@@ -1,0 +1,31 @@
+diff --git a/build.sbt b/build.sbt
+index 26939526..d9f13569 100644
+--- a/build.sbt
++++ b/build.sbt
+@@ -92,7 +92,7 @@ lazy val alderMetricsJS      = ProjectRef(alderBuild, "metricsJS")
+ // locus4s is independently owned. Ordinary builds clone the exact reviewed
+ // revision; the property is an explicit sibling-checkout override for
+ // coordinated development.
+-lazy val locus4sRevision = "58c9739be51345ad9adc4bc9c9e7335023254ec9"
++lazy val locus4sRevision = "a67bc87c33b5da8a5dc2cad49919c015b59f3050"
+ lazy val locus4sBuild =
+   sys.props
+     .get("scalafim.locus4s.build")
+@@ -105,7 +105,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
+ 
+ // image4s is independently owned. Ordinary builds use its immutable source
+ // revision; coordinated development can select a sibling checkout explicitly.
+-lazy val image4sRevision = "2c0638fb0767058ccd59b37f93754e95fc27df28"
++lazy val image4sRevision = "20c9515495e43dff9d17bc1283a8ca1d56355c4a"
+ lazy val image4sBuild = {
+   sys.props
+     .get("scalafim.locus4s.build")
+@@ -130,7 +130,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
+ // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
+ // so reframe4s resolves the same image4s build. reframe4s accepts only a local
+ // path, so the default pinned-URI build still loads reframe4s's own image4s pin.
+-lazy val reframe4sRevision = "5f7152aada60335935843ddc968162f615337415"
++lazy val reframe4sRevision = "292c9bc7e0c026d893a4101560aa9a46e0fbcf04"
+ lazy val reframe4sBuild = {
+   sys.props
+     .get("scalafim.image4s.build")

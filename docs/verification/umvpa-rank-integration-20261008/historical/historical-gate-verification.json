@@ -1,0 +1,30 @@
+{
+  "tests": {
+    "jvm": {
+      "suites": 65,
+      "tests": 468,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 465
+    },
+    "js": {
+      "suites": 65,
+      "tests": 468,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 465
+    }
+  },
+  "provider_revision": "ab811e257dd67f77e8c3b70cb1ea600f274429a3",
+  "provider_checkout": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/ce143c09860ffee4/staging/04c54b2d3f3921f04b0c/multivar",
+  "source_compiler_warnings": 0,
+  "log_sha256": "6b69b3407c11c55dab2ec58dee14fec864d0424278a7e5ca7efc9a1a7ac8c1da",
+  "complete_xml_archive": "historical-test-reports-complete.tar.gz",
+  "retained_archive_attempt": {
+    "file": "historical-test-reports.tar.gz",
+    "status": "partial-JVM-only",
+    "reason": "Archival helper incorrectly expected 466 passing tests; actual successful gate reports 465 passed and 3 skipped. Assertion stopped archiving after JVM; full unchanged reports retained in separate complete archive. No test or experiment rerun."
+  }
+}

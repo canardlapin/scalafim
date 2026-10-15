@@ -55,7 +55,7 @@ private[fit] object BoundedReducedRankGlsPreparation:
             config.autocorrelation.toLegacy, Vector(0)).map(_.copy(selectedVoxelIndices = source.retainedVoxelIndices))
         else PooledGlsPreparation.shared(source)
       whitening <- gls.whitening match
-        case GlsWhitening.Shared(value) => Right(value)
+        case GlsWhitening.Shared(value, _) => Right(value)
         case _ => Left(FitError.UnsupportedEngine("reduced-rank shared preparation requires shared whitening"))
       white <- WhiteningTransform(whitening, source.design.value, Matrix.zeros(source.design.timepoints, 1)).left.map(Gls.arToFitError)
       target = selectColumns(white.design, partition.targetColumns)

@@ -1,0 +1,13 @@
+{
+  "status": "Root published Gale54 selected integration gates passed; provider adoption andJDK17 remain separate",
+  "passed": {
+    "kernel-jvm": 25,
+    "kernel-js": 25
+  },
+  "settings_count": 364031,
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "69296cf79a1fc40f620cbaab68d5ca5fc1730c2feef16f9a6cf33a5dae5790f3",
+  "source_root_head": "37a84e990e6e28d1a00cbf6d1be841c56691564c",
+  "root_source_edit": false,
+  "publication": false
+}

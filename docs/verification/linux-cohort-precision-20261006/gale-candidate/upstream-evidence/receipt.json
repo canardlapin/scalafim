@@ -1,0 +1,50 @@
+{
+  "base": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+  "passed": {
+    "jvm": 786,
+    "js": 774
+  },
+  "new_suite_tests": 23,
+  "unique_full_core_tests": 1560,
+  "compiler_warnings": 0,
+  "formatting": "scalafmtCheckAll passed in both full-core commands",
+  "requested_profile": {
+    "heap": "3g",
+    "cpus": 4
+  },
+  "domain_policy_change": false,
+  "fixture_count": 13,
+  "source_sha256": {
+    "README.md": "4d23ff91f94342970bc817c2fc30b3842d67e2bb63007a14f8f5dcaedce82424",
+    "core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala": "3f96a50ed6e55d73136bc9f0e4e17042c99008c029586573f5fd6e0ea3c209e4",
+    "core/shared/src/test/scala/gale/numeric/PairedSquaredResidualComparisonSuite.scala": "9721f4ddfc7655c8917a241a1229895425875f46ae79b938d8b160afedf2c2e7",
+    "core/shared/src/test/scala/gale/numeric/PairedResidualFixtures.scala": "c0f56c12ed29d79f961fdfed5c9ef1bfc059bd55ce40d6746560ead03470f61e",
+    "docs/verification/paired-residual-comparison-20261006/darwin-jvm-voxel-15.json": "89ae5a3061addb27bb561ba570f0b75c946deecc6e6472934499300325b25ff4",
+    "docs/verification/paired-residual-comparison-20261006/darwin-jvm-voxel-2.json": "c8d199fbff1223c371dfd733484b8d0cc62ed0517743c12f23d00d62fba3b349",
+    "docs/verification/paired-residual-comparison-20261006/darwin-node2421-voxel-15.json": "1862e01a802fee64e64ffc669ec0170275db58922a92aa0d989c8767345e9a2e",
+    "docs/verification/paired-residual-comparison-20261006/darwin-node2421-voxel-4.json": "9d216efd4802f5fb5f66330c7c4d7503a73b4109f9924fdc0235a12a1545b745",
+    "docs/verification/paired-residual-comparison-20261006/linux-node2421-voxel-15.json": "de3666ce90969f1a85454dbebb0e472a2fa77f8cefa9d9974f0cf390a27765a9",
+    "docs/verification/paired-residual-comparison-20261006/linux-node2421-voxel-17.json": "d07554ace45961e49edf4702c1affacc11c4fa316a16e5abd9da8245291c0705",
+    "docs/verification/paired-residual-comparison-20261006/linux-node2421-voxel-2.json": "2624f3c5f15587dc6b0a087ddfd85696e1dc29b6ffeab20210b111c1c45c70f5",
+    "docs/verification/paired-residual-comparison-20261006/manifest.json": "5b1e0c981b86d6b197725c0b1f5e5a45688a38da3d1513ee87ca3c1211dc4114",
+    "docs/verification/paired-residual-comparison-20261006/mp-js.json": "3da5b002897b3581882033a59b7be219d812d7a863feee860d4bc807bfd2639f",
+    "docs/verification/paired-residual-comparison-20261006/mp-jvm.json": "7ce36f375f3b663ee36e388eee3c85823fd528a54659f4a7c76dd8bcd0ec796e",
+    "docs/verification/paired-residual-comparison-20261006/pair-replay-binding.json": "95fc4fc3bb781723b4573449c390815e44bf8973d758cfdf217c1694f3df6323",
+    "docs/verification/paired-residual-comparison-20261006/profile-interval-js.json": "48b8da5589673c3103a4d26c2902df584a528c3ba7b54d4f9e295512f71748d6",
+    "docs/verification/paired-residual-comparison-20261006/profile-interval-jvm.json": "4a71ac5d10640726809b6360601bf3fd061cd7d88f2fa2fd623080b1383a74d1",
+    "docs/verification/paired-residual-comparison-20261006/synthetic-coupled-profile-descent.json": "095fe07ebe03f6bd44737d524ebd6791a3dc0e4140957b10c3a76ae43b4024e1",
+    "docs/verification/paired-residual-comparison-20261006/synthetic-exact-equality.json": "33e6e7aea7522053526fc0d44d4be614c755853bb12a057917ae83d62b91a82e",
+    "docs/verification/paired-residual-comparison-20261006/synthetic-insufficient-gram-bound.json": "0a863ef8aecb9d041f6b46fda492c41d66512212a2108492d1abe74b4da2ad55",
+    "docs/verification/paired-residual-comparison-20261006/synthetic-old-poor-beta.json": "9c2ec41e6c718ce2ae651b5d416b5c668bff4df397eeb04b8342f1b1831c85d4",
+    "docs/verification/paired-residual-comparison-20261006/synthetic-profile-descent.json": "953d9fe88a429e2f7814533e9736d3baae54d7263168a86a270da7b9dc8b61d8",
+    "docs/verification/paired-residual-comparison-20261006/synthetic-true-uphill.json": "bc0601d9a41f59690d83e731cbda055e79c6103db5d2a489319731f7f44e7107",
+    "docs/verification/paired-residual-comparison-20261006/README.md": "727dfaeb88425577d7e3fec34efae9ae2a177ca3be2356d5d8b61173f7f4626f"
+  },
+  "log_sha256": {
+    "full-core-js.log": "42fa60df989317a84c16883a89f6c23400937f692c5bb68e49578e0d3d2689a3",
+    "full-core-jvm.log": "87e2bddec2a7625a700800cb76fab7f134e7a04515a02d8945abe2845f2db3e0",
+    "selected-jvm-development.log": "139d693c7f736cadd90c97701a89d641bfc1d1338aaeb13c244a55bd16b81249"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "f4bda332cef8600ffbbc4d5e5b4684dbdfdb960578bc8639cd366cda4ea0ced7"
+}

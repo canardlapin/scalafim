@@ -29,12 +29,18 @@ enum EventResponseNormalizationError:
   case NonFiniteResponse(basis: Int, sample: Int, value: Double)
   case InvalidResponseSpan(value: Double)
   case ReferenceGridTooLarge(samples: Double, maximum: Int)
+  case NonFiniteReferenceTime(value: Double)
+  case ReferenceWorkTooLarge(evaluations: Double, maximum: Int)
+  case ScaleLimitExceeded(basis: Int, maximum: Int)
 
   def message: String = this match
     case ZeroPeak(basis) => s"event response basis ${basis + 1} has zero peak over its declared response span"
     case NonFiniteResponse(basis, sample, value) => s"event response basis ${basis + 1} is non-finite at reference sample ${sample + 1}: $value"
     case InvalidResponseSpan(value) => s"event response span must be finite and non-negative, got $value"
     case ReferenceGridTooLarge(samples, maximum) => s"event response reference grid needs $samples samples, exceeding maximum $maximum"
+    case NonFiniteReferenceTime(value) => s"event response reference grid has a non-finite final lag $value"
+    case ReferenceWorkTooLarge(evaluations, maximum) => s"event response normalization needs $evaluations scalar evaluations, exceeding maximum $maximum"
+    case ScaleLimitExceeded(basis, maximum) => s"event response needs $basis basis scales, exceeding maximum $maximum"
 
 /** A prepared pulse response whose optional scale belongs to this event alone. */
 final case class EventResponse private (
@@ -69,7 +75,18 @@ final case class EventResponse private (
     Mat.unsafe(grid.length, kernel.nbasis, data)
 
 object EventResponse:
-  private val MaximumReferenceSamples = 1000000
+  /** Unit-peak admission shares the kernel normalization limits. The work
+    * estimate includes basis width, nested kernels and the actual integration
+    * convention. Exact piecewise rules charge every segment conservatively;
+    * arbitrary custom kernel internals cannot be inferred from descriptors.
+    * Requested reference steps are refused rather than coarsened.
+    */
+  val MaximumReferenceSamples: Int = NormalizationReferenceGrid.MaxSamples
+  val MaximumReferenceEvaluations: Int = NormalizationReferenceGrid.MaxScalarEvaluations
+  /** Bound the basis-sized peaks and retained scale vector, including when
+    * pulse scaling is preserved and no reference grid is evaluated.
+    */
+  val MaximumBasisScales: Int = NormalizationReferenceGrid.MaxSamples
 
   def prepare(
       kernel: Hrf,
@@ -78,6 +95,8 @@ object EventResponse:
       integration: Integration = Integration.Exact,
       precision: PositiveSeconds = PositiveSeconds.unsafe(0.2.s)
   ): Either[EventResponseNormalizationError, EventResponse] =
+    if kernel.nbasis > MaximumBasisScales then
+      return Left(EventResponseNormalizationError.ScaleLimitExceeded(kernel.nbasis, MaximumBasisScales))
     normalization match
       case EventResponseNormalization.PreservePulseScale =>
         Right(EventResponse(kernel, pulse, normalization, Vector.fill(kernel.nbasis)(1.0), precision.seconds, integration))
@@ -87,7 +106,16 @@ object EventResponse:
         else
           val intervals = math.ceil(responseSpan / referenceStep.value)
           if !intervals.isFinite || intervals + 1.0 > MaximumReferenceSamples.toDouble then Left(EventResponseNormalizationError.ReferenceGridTooLarge(intervals + 1.0, MaximumReferenceSamples))
+          else if !(intervals * referenceStep.value).isFinite then
+            Left(EventResponseNormalizationError.NonFiniteReferenceTime(intervals * referenceStep.value))
           else
+            val workPerSample =
+              if pulse.isImpulse then NormalizationReferenceGrid.evaluationWork(kernel.descriptor)
+              else NormalizationReferenceGrid.blockedSampleWork(kernel.descriptor,
+                pulse.durationSeconds, referenceStep.seconds, Double.PositiveInfinity, integration)
+            val work = (intervals + 1.0) * workPerSample
+            if !work.isFinite || work > MaximumReferenceEvaluations.toDouble then
+              return Left(EventResponseNormalizationError.ReferenceWorkTooLarge(work, MaximumReferenceEvaluations))
             val samples = intervals.toInt + 1
             val peaks = Array.fill(kernel.nbasis)(0.0)
             var sample = 0

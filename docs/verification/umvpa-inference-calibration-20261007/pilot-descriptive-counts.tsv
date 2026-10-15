@@ -1,0 +1,16 @@
+cell	member	metric	successes	datasets	confidence	sidedness	role
+R0	closed-sequence	closed-FWER	8	200	0.9	two-sided	pilot-primary-description
+R0	H1	closed-null-rejection	8	200	0.9	two-sided	pilot-member-description
+R0	H2	closed-null-rejection	1	200	0.9	two-sided	pilot-member-description
+R0	H3	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description
+R0	H4	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description
+R1	H2	closed-null-rejection	6	200	0.9	two-sided	pilot-primary-description
+R1	H1	closed-detection	161	200	0.95	lower-one-sided	pilot-member-description
+R1	H2	closed-null-rejection	6	200	0.9	two-sided	pilot-member-description
+R1	H3	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description
+R1	H4	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description
+R2	H3	closed-null-rejection	2	200	0.9	two-sided	pilot-primary-description
+R2	H1	closed-detection	182	200	0.95	lower-one-sided	pilot-member-description
+R2	H2	closed-detection	49	200	0.95	lower-one-sided	pilot-member-description
+R2	H3	closed-null-rejection	2	200	0.9	two-sided	pilot-member-description
+R2	H4	closed-null-rejection	0	200	0.9	two-sided	pilot-member-description

@@ -110,3 +110,73 @@ class DesignMatrixRasterSuite extends munit.FunSuite:
     assertEquals(raster.scans, Vector(1, 2, 3).map(ScanIndex.unsafeOneBased))
     val lastRow = DesignMatrixRaster.toCsv(r).fold(error => fail(error.message), identity).linesIterator.toVector.last
     assertEquals(lastRow, "3,1,1.25,false,0,-1")
+
+  // Golden pixels captured from the pre-palette implementation (hard-coded colours)
+  // on both the JVM and Scala.js. Values are exact binary fractions so display
+  // scaling is bit-identical on every platform.
+  private def paletteSpecimen: DesignReview =
+    custom(
+      Vector(Vector(-4.0, 3.0, 0.125), Vector(-1.0, -1.5, 0.25), Vector(0.0, 0.0, 0.0), Vector(0.5, 0.75, -0.375),
+        Vector(1.5, -3.0, 1.0), Vector(4.0, 0.25, -1.0)),
+      Vector(column(1, event), column(2, nuisance), column(3, StructuralColumnOrigin.Legacy(ModelSource.Event, "task2", 3)))
+    )
+
+  private def pixels(raster: DesignMatrixRaster): Vector[Rgba32] =
+    (for y <- 0 until raster.image.height; x <- 0 until raster.image.width yield raster.image.pixelUnsafe(x, y)).toVector
+
+  private def rasterDigest(raster: DesignMatrixRaster): Int =
+    pixels(raster).foldLeft(0x811c9dc5)((hash, pixel) => (hash ^ pixel.toPackedInt) * 0x01000193)
+
+  test("default palette reproduces the pre-palette pixels byte for byte"):
+    val golden = Vector(
+      (63, 108, 143), (184, 191, 187), (240, 230, 223),
+      (202, 214, 221), (216, 220, 217), (231, 211, 199),
+      (248, 249, 247), (248, 249, 247), (248, 249, 247),
+      (240, 230, 223), (232, 234, 232), (179, 196, 208),
+      (223, 192, 175), (184, 191, 187), (181, 96, 55),
+      (181, 96, 55), (243, 244, 242), (63, 108, 143)
+    ).map((r, g, b) => Rgba32.unsafe(r, g, b))
+    val implicitDefault = DesignMatrixRaster.build(paletteSpecimen).fold(error => fail(error.message), identity)
+    val explicitDefault = DesignMatrixRaster.build(paletteSpecimen, palette = DesignMatrixPalette.Default)
+      .fold(error => fail(error.message), identity)
+    assertEquals(pixels(implicitDefault), golden)
+    assertEquals(explicitDefault.image, implicitDefault.image)
+
+  test("default palette reproduces the pre-palette digest of a 40 by 50 mixed task and nuisance review"):
+    val cols = 40
+    val rows = 50
+    val columns = Vector.tabulate(cols)(i => column(i + 1,
+      if i % 3 == 2 then StructuralColumnOrigin.Nuisance(TermId.unsafe("nuisance"), ModulatorId.unsafe(s"m$i"), RunScope.PerRun)
+      else StructuralColumnOrigin.Legacy(ModelSource.Event, s"c$i", i + 1)))
+    val frame = SamplingFrame(blockLens = Seq(rows), tr = Seq(2.0))
+    val data = Array.tabulate(rows * cols)(i => ((i * 7919) % 33 - 16).toDouble / 8.0)
+    val schema = DesignSchema.validated(Mat.unsafe(rows, cols, data), RowLayout.fromSamplingFrame(frame), columns)
+      .fold(error => fail(error.message), identity)
+    val r = DesignReview.forRun(schema, frame, RunIndex.unsafeOneBased(1), schema.rows.selectedRows, DesignReviewScope.SourceColumns)
+      .fold(error => fail(error.message), identity)
+    val raster = DesignMatrixRaster.build(r).fold(error => fail(error.message), identity)
+    assertEquals(rasterDigest(raster), -184634315)
+    assertEquals(pixels(raster).distinct.size, 49)
+
+  test("a custom palette changes colour only, never column ids, scaling or scene identity"):
+    val dark = DesignMatrixPalette(
+      positive = Rgba32.unsafe(255, 160, 100),
+      negative = Rgba32.unsafe(100, 170, 255),
+      nuisance = Rgba32.unsafe(200, 200, 200),
+      paper = Rgba32.unsafe(20, 22, 24, 128)
+    )
+    val r = paletteSpecimen
+    val light = DesignMatrixRaster.build(r).fold(error => fail(error.message), identity)
+    val themed = DesignMatrixRaster.build(r, palette = dark).fold(error => fail(error.message), identity)
+    assertEquals(themed.fingerprint, light.fingerprint)
+    assertEquals(themed.columns, light.columns)
+    assertEquals(themed.scans, light.scans)
+    assertEquals((themed.image.width, themed.image.height), (light.image.width, light.image.height))
+    assertEquals(themed.scene.size, light.scene.size)
+    assertNotEquals(themed.image, light.image)
+    // Full-strength cells take the ink, zero cells the paper (alpha included), nuisance mixes at 35%.
+    assertEquals(themed.image.pixelUnsafe(0, 0), dark.negative)
+    assertEquals(themed.image.pixelUnsafe(2, 4), dark.positive)
+    assertEquals(themed.image.pixelUnsafe(0, 2), dark.paper)
+    def mixed(paper: Int, ink: Int): Int = math.round(paper + 0.35 * (ink - paper)).toInt
+    assertEquals(themed.image.pixelUnsafe(1, 0), Rgba32.unsafe(mixed(20, 200), mixed(22, 200), mixed(24, 200), mixed(128, 255)))

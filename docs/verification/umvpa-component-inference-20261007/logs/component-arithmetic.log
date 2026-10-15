@@ -1,0 +1,35 @@
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.ComponentConfirmationSuite:
+  + correlated components require reduced-head refitting; analytic held-out metric losses 0.095s
+  + association is paired nuisance-adjusted correlation, not incremental usefulness 0.898s
+  + intercept addition retains the training layout and all arithmetic 0.003s
+  + unequal run sizes receive equal unit weights, not equal fold or row weights 0.009s
+  + budget, foreign rows, and incomplete units refuse before operator reads 0.004s
+  + family and exposure are frozen and cannot silently gain another uncorrected view 0.001s
+  + nonfinite targets refuse the complete family before brain reads 0.002s
+  + aliased components fail without producing fallback or partially fitted heads 0.002s
+  + negative held-out usefulness is retained and confirmation never refits heads 0.002s
+  + nuisance-aliased scores are refused, while perfect nonconstant association remains descriptive 0.002s
+  + foreign training nuisance and missing training targets refuse before brain reads 0.001s
+[info] Passed: Total 11, Failed 0, Errors 0, Passed 11
+[success] elapsed time: 3 s
+[0J[sbt-warm] mvpaJVM/testOnly *ComponentConfirmationSuite: exit 0 in 3.7s
+[info] compiling 1 Scala source to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] Fast optimizing /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/js/target/scala-3.7.4/scalafim-fmri-mvpa-test-fastopt
+scalafim.fmri.mvpa.analysis.ComponentConfirmationSuite:
+  + correlated components require reduced-head refitting; analytic held-out metric losses 0.015s
+  + association is paired nuisance-adjusted correlation, not incremental usefulness 0.005s
+  + intercept addition retains the training layout and all arithmetic 0.003s
+  + unequal run sizes receive equal unit weights, not equal fold or row weights 0.004s
+  + budget, foreign rows, and incomplete units refuse before operator reads 0.006s
+  + family and exposure are frozen and cannot silently gain another uncorrected view 0.002s
+  + nonfinite targets refuse the complete family before brain reads 0.002s
+  + aliased components fail without producing fallback or partially fitted heads 0.002s
+  + negative held-out usefulness is retained and confirmation never refits heads 0.002s
+  + nuisance-aliased scores are refused, while perfect nonconstant association remains descriptive 0.002s
+  + foreign training nuisance and missing training targets refuse before brain reads 0.002s
+[info] Passed: Total 11, Failed 0, Errors 0, Passed 11
+[success] elapsed time: 3 s
+[0J[sbt-warm] mvpaJS/testOnly *ComponentConfirmationSuite: exit 0 in 3.0s

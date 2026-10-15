@@ -1,0 +1,21 @@
+{
+  "checked_at_utc": "2026-10-06T14:03:55.200120+00:00",
+  "authenticated_account": "canardlapin",
+  "default_account_preserved": "bbuchsbaum",
+  "merges_performed_by_this_task": false,
+  "published": [
+    {
+      "author": {
+        "id": "U_kgDOEk3YCg",
+        "is_bot": false,
+        "login": "canardlapin",
+        "name": ""
+      },
+      "headRefOid": "54e73f8e8f1218c4cb115a850aa80e1a36c6978f",
+      "isDraft": false,
+      "mergedAt": "2026-10-06T13:22:35Z",
+      "state": "MERGED",
+      "url": "https://github.com/canardlapin/gale/pull/15"
+    }
+  ]
+}

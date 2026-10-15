@@ -1,0 +1,21 @@
+{
+  "scope": "source-based possible simultaneous array storage, not measured liveness or engine peak",
+  "trials": 1200,
+  "bandwidth": 127,
+  "basisRank": 10,
+  "releaseColumns": 9,
+  "workers": 8,
+  "sharedPreparationAndBankBytes": 204786040,
+  "valueReferenceBytes": 3860576,
+  "previousFirstOrderReferenceBytes": 8067560,
+  "fullJetReferenceBytes": 16481528,
+  "sharedPlusEightSearchReferencesBytes": 235670648,
+  "sharedPlusEightFullReferencesBytes": 336638264,
+  "excludes": [
+    "worker and construction scratch",
+    "response and input/output blocks",
+    "basis and metadata",
+    "collection and object overhead"
+  ],
+  "engineGateAdmitted": false
+}

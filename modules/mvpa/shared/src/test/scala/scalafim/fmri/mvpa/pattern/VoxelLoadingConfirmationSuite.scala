@@ -76,6 +76,9 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
       assertEqualsDouble(result.estimates(i, j), beta(i)(j), 1e-12)
       assertEqualsDouble(result.standardErrors(i, j), se(i), 1e-12)
       assertEqualsDouble(result.tStatistics(i, j), beta(i)(j) / se(i), 1e-11)
+      // Independent Walsh Gram: each nuisance-residual target has SS=8,
+      // and the off-diagonal is zero. This is a shape, not a known variance.
+      assertEqualsDouble(result.normalizedComponentCovariance(i, j), if i == j then .125 else 0.0, 1e-12)
     assertEqualsDouble(result.omnibusF(0), 40.0, 1e-10)
     assertEqualsDouble(result.omnibusF(1), 320.0, 1e-9)
     // R qt(.975,4), independently generated; no automatic coverage claim.
@@ -199,6 +202,10 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
     val expected = Vector(1.25, -1.0, -1.25, 3.0)
     for i <- 0 until 2; j <- 0 until 2 do assertEqualsDouble(result.estimates(i, j), expected(2 * i + j), 1e-12)
     assertEqualsDouble(result.standardErrors(0, 0), .25 * math.sqrt(.3125), 1e-12)
+    // C^-1 C^-T / 8 for C=[[2,.5],[0,1]], derived independently.
+    val covarianceShape = Vector(Vector(.0390625, -.03125), Vector(-.03125, .125))
+    for i <- 0 until 2; j <- 0 until 2 do
+      assertEqualsDouble(result.normalizedComponentCovariance(i, j), covarianceShape(i)(j), 1e-12)
     assertEqualsDouble(result.omnibusF(0), 40.0, 1e-10)
     assertEqualsDouble(result.omnibusF(1), 320.0, 1e-9)
     assertNotEquals(result.designIdentity, f.design.identity)

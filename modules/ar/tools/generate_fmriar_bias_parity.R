@@ -27,7 +27,13 @@ scala_out <- Sys.getenv(
     "fmri", "ar", "fixtures", "FmriArBiasRFixture.scala"
   )
 )
-fmriar_pkg <- Sys.getenv("FMRIAR_R", file.path(path.expand("~"), "code", "fmriAR"))
+fmriar_pkg <- Sys.getenv("FMRIAR_AR_R", file.path(path.expand("~"), "code", "fmriAR"))
+
+fmrireg_pkg <- Sys.getenv("FMRIREG_AR_R", file.path(path.expand("~"), "code", "fmrireg"))
+# Load the exact adapter source without installing fmrireg's unrelated IO/model
+# dependencies. This is the reference function itself, not a rewritten formula.
+fmrireg_reference <- new.env(parent = globalenv())
+source(file.path(fmrireg_pkg, "R", "fmriAR_adapter.R"), local = fmrireg_reference)
 
 # --- deterministic inputs -----------------------------------------------------
 
@@ -302,7 +308,7 @@ acvf_cases <- list(
 adaptive_case <- function(name, design, lens, censor, order, ceiling) {
   ends <- cumsum(lens)
   idx <- lapply(seq_along(lens), function(r) seq.int(ends[r] - lens[r] + 1L, ends[r]))
-  budget <- fmrireg:::.ar_correction_lag_budget(
+  budget <- fmrireg_reference$.ar_correction_lag_budget(
     design, target_order = order, run_indices = idx,
     censor = if (length(censor)) censor else NULL, max_lag = ceiling)
   list(name = name, design = design, lens = lens, censor = censor, order = order,
@@ -482,3 +488,37 @@ writeLines(
   scala_out
 )
 message("wrote ", scala_out)
+
+receipt_out <- Sys.getenv("FMRIAR_BIAS_RECEIPT_OUT",
+  file.path("docs", "scenarios", "fixtures", "ar.fmriar-bias.v1.r.json"))
+source_info <- list(
+  fmriAR_revision = git_revision(fmriar_pkg),
+  fmriAR_version = as.character(utils::packageVersion("fmriAR")),
+  fmrireg_revision = git_revision(fmrireg_pkg),
+  fmrireg_version = as.character(read.dcf(file.path(fmrireg_pkg, "DESCRIPTION"), fields = "Version")[[1]]),
+  r_version = as.character(getRversion()),
+  producer = "modules/ar/tools/generate_fmriar_bias_parity.R",
+  reference = "fmriAR design-corrected ACVF and AR estimation; fmrireg adaptive lag budget from the pinned adapter source"
+)
+inputs <- list(
+  bias_cases = lapply(bias_cases, function(x) x[c("name", "design", "lens", "censor", "max_lag")]),
+  fit_cases = lapply(fit_cases, function(x) c(x[c("name", "design", "resid", "lens", "censor", "corr_lag")],
+    list(recipes = lapply(x$fits, function(f) f[c("p", "p_max", "pooling")])))),
+  adaptive_cases = lapply(adaptive_cases, function(x) x[c("name", "design", "lens", "censor", "order", "ceiling")])
+)
+outputs <- list(
+  bias_cases = lapply(bias_cases, function(x) x[c("name", "lag", "capped", "A", "rcond")]),
+  fit_cases = lapply(fit_cases, function(x) list(name = x$name, fits = x$fits)),
+  adaptive_budgets = lapply(adaptive_cases, function(x) list(name = x$name, budget = x$budget)),
+  acvf = acvf_cases,
+  rejected_raw_phi = raw4$phi[[1L]], rejected_reciprocal_condition = rcond(A4)
+)
+payload <- list(
+  schema_version = "scalafim-r-fmriar-bias-fixture/v1",
+  inputs = canonicalize_receipt_numbers(inputs), outputs = canonicalize_receipt_numbers(outputs),
+  source = source_info,
+  receipt = list(source = source_info, conventions = list(reference_serialization = receipt_serialization_convention())))
+dir.create(dirname(receipt_out), recursive = TRUE, showWarnings = FALSE)
+jsonlite::write_json(payload, receipt_out, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS,
+  pretty = TRUE, na = "null")
+message("wrote ", receipt_out)

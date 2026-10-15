@@ -56,6 +56,8 @@ enum GiftiDataType(val code: String):
   case UInt8 extends GiftiDataType("NIFTI_TYPE_UINT8")
   case Int32 extends GiftiDataType("NIFTI_TYPE_INT32")
   case Float32 extends GiftiDataType("NIFTI_TYPE_FLOAT32")
+  /** Reader interoperability extension beyond the standard GIFTI scalar types. */
+  case Float64 extends GiftiDataType("NIFTI_TYPE_FLOAT64")
   case Other(value: String) extends GiftiDataType(value)
 
 object GiftiDataType:
@@ -65,6 +67,7 @@ object GiftiDataType:
       case UInt8.code => UInt8
       case Int32.code => Int32
       case Float32.code => Float32
+      case Float64.code => Float64
       case _ => Other(raw)
 
 enum GiftiEndian(val code: String):

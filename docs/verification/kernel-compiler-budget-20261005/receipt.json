@@ -1,0 +1,372 @@
+{
+  "verified_at_utc": "2026-10-06T03:04:05.141073+00:00",
+  "mote": "bd-01M47G78N9NB5BF8YX8HW9ZEKX",
+  "verification_command": [
+    "python3",
+    "docs/verification/kernel-compiler-budget-20261005/verify.py",
+    "--budget-only"
+  ],
+  "runs": [
+    {
+      "label": "gates-before",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite"
+      ],
+      "exit_code": 0,
+      "expected": "pass",
+      "seconds": 48.126,
+      "counts": [
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "limit-cap-designJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.007,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "limit-cap-designJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 4.355,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "requested-rank-as-SVD-width-designJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.87,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "requested-rank-as-SVD-width-designJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.579,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "value-only-certification-undercount-designJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.533,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "value-only-certification-undercount-designJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 3.103,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "unchecked-chart-nodes-designJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.604,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "unchecked-chart-nodes-designJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.854,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "nonfinite-certificate-derived-values-designJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.991,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "nonfinite-certificate-derived-values-designJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.876,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "nonfinite-training-norm-designJVM",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 1.483,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "nonfinite-training-norm-designJS",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisMutationSuite"
+      ],
+      "exit_code": 1,
+      "expected": "test-failure",
+      "seconds": 2.368,
+      "counts": [
+        {
+          "total": 1,
+          "failed": 1,
+          "errors": 0,
+          "passed": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "gates-restored",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite"
+      ],
+      "exit_code": 0,
+      "expected": "pass",
+      "seconds": 3.7,
+      "counts": [
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "prior_scientific_gate": {
+    "run": {
+      "label": "gates-before",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "designJVM/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite scalafim.fmri.design.HrfKernelBasisSuite scalafim.fmri.design.KernelBasisDesignSuite",
+        "designJS/testOnly scalafim.fmri.design.hrf.KernelBasisBudgetSuite scalafim.fmri.design.HrfKernelBasisSuite scalafim.fmri.design.KernelBasisDesignSuite"
+      ],
+      "exit_code": 0,
+      "expected": "pass",
+      "seconds": 114.521,
+      "counts": [
+        {
+          "total": 32,
+          "failed": 0,
+          "errors": 0,
+          "passed": 32
+        },
+        {
+          "total": 32,
+          "failed": 0,
+          "errors": 0,
+          "passed": 32
+        }
+      ],
+      "warnings": []
+    },
+    "source_sha256": {
+      "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisBudget.scala": "2bc63a23722d4ade4684e751c66dd67bc32c2471d2fb0af9d88bf0c05e550082",
+      "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": "f4c8d5fb794d66985bf3aec3add4a35c8f1cf1668b9cd27260e8e343eacbaf8a",
+      "modules/design/shared/src/test/scala/scalafim/fmri/design/hrf/KernelBasisBudgetSuite.scala": "856395ccd6060b4bf56aacfe51d1d6822787bf8256fcc0f5ed541574164cf362",
+      "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala": "b723b6c9c7c4b6f07bc898beaf63fe4df95658bd04e1a6dbd0732606aacd1637"
+    },
+    "context": "Scientific focused fixtures passed before conservative counts were expanded to include all owned validation and tail-grid loops. Final exact-source scientific integration is recorded separately."
+  },
+  "mutation_safety": "Metadata-only estimates/admission or tiny synthetic arrays under exact inherited selectors; no oversized compile allocations run under mutants.",
+  "source_sha256": {
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisBudget.scala": "523ce2c7fb6949485d3ab10443850d969baa26ec0287947db0c724bbd456df5c",
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala": "f4c8d5fb794d66985bf3aec3add4a35c8f1cf1668b9cd27260e8e343eacbaf8a",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/hrf/KernelBasisBudgetSuite.scala": "856395ccd6060b4bf56aacfe51d1d6822787bf8256fcc0f5ed541574164cf362",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/HrfKernelBasisSuite.scala": "b723b6c9c7c4b6f07bc898beaf63fe4df95658bd04e1a6dbd0732606aacd1637"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "969885c3c07699a340bd9bae7430dfabaa9430c1286e180b51bb2e0790672869",
+  "gale_revision": "da38f8c429294657d30ec29f06eae3fab636d428",
+  "backend": "Lexically resolved SpectralBackend.none; pure full/economy SVD",
+  "scope_limits": [
+    "Primitive-cell storage envelope excludes object headers and garbage-collection behavior.",
+    "Spectral work units count paired-rotation/scalar accumulation iterations, not primitive reads/writes or elapsed time.",
+    "Custom family callback and overridden tail diagnostic internal allocations/work cannot be inferred.",
+    "Finite owned chart nodes preserve original IEEE arithmetic, including rounded endpoint overshoots.",
+    "Scientific kernel provenance encoding is unchanged; resource estimates are inspectable metadata."
+  ],
+  "integrated_gates": {
+    "hrfJVM": 386,
+    "hrfJS": 386,
+    "designJVM": 474,
+    "designJS": 473,
+    "fitJVM": 669,
+    "fitJS": 612,
+    "observed_family_consumersJVM": 6,
+    "observed_family_consumersJS": 6,
+    "total_passed": 3012,
+    "compiler_warning_clean": true,
+    "receipt": "docs/verification/compiler-summary-20261005/receipt.json"
+  }
+}

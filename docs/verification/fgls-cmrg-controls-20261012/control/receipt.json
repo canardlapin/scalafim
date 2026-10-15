@@ -1,0 +1,85 @@
+{
+  "schema": "scalafim-fgls-cmrg-qualification/v1",
+  "role": "simulator QA and known-control qualification only; no candidate selection or confirmation",
+  "phase": "control",
+  "passed": true,
+  "source_locks": {
+    "qualify.R": "e905b3003a80b210218a71b0e1678b99230a81d83ab790ef011251f3a9fa00a7",
+    "protocol.json": "564d8bd3247c23b59a0b9a9fa4524e9a8fdfbc7b3e80855e40c2803de41b6144",
+    "cells.json": "c3e1037d04976a950562b607cf0cb4c67d4741a06646891d8ce6b9155b97d0d3"
+  },
+  "replicates": 2048,
+  "scalar_checks": 0,
+  "bounds": {
+    "mean": 0.126632413893758,
+    "variance": [0.831111268540837, 1.18962071167027]
+  },
+  "failures": [],
+  "qa_reports": [],
+  "legacy_negative_control": {},
+  "inputs": [
+    {
+      "cell": "ar2-high-censored-short",
+      "file": "ar2-high-censored-short.f64le",
+      "sha256": "7feaadb92c7957cfb90672323b8566ab24584843bdbb5802cbe6a968885187c3",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    },
+    {
+      "cell": "ar2-high-censored-long",
+      "file": "ar2-high-censored-long.f64le",
+      "sha256": "e8da9da23013c9e640bf428c1b10dbd83b06a2e5d3a6f5ad5fabba2a995ac932",
+      "shape": [
+        2048,
+        4,
+        480
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 31457280
+    },
+    {
+      "cell": "ar2-high-complete-short",
+      "file": "ar2-high-complete-short.f64le",
+      "sha256": "a487c5c80541db75b93e314b761599221e783556e67e053eb7c0262a4caccd2b",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    },
+    {
+      "cell": "ar2-high-censored-short-voxel-heterogeneous",
+      "file": "ar2-high-censored-short-voxel-heterogeneous.f64le",
+      "sha256": "608f9fa15b2bf026f92453c62de3451418d48a1021a211e12976b06c1f34b870",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    },
+    {
+      "cell": "ar2-high-censored-short-run-heterogeneous",
+      "file": "ar2-high-censored-short-run-heterogeneous.f64le",
+      "sha256": "9bee512726c19268b123e31f5ae3def9f4f1b9cf2023b4253c9f1a0e256bef36",
+      "shape": [
+        2048,
+        4,
+        240
+      ],
+      "order": "dataset,voxel,time; time fastest",
+      "bytes": 15728640
+    }
+  ],
+  "stream_states_sha256": "038676dedbac59727bd0e5d03c6b3ecc517bd687123ab4798dae8bd4cd39c974",
+  "control_fit_results_qualified": false,
+  "scientific_admission": false
+}

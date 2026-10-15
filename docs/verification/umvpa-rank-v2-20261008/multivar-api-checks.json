@@ -1,0 +1,25 @@
+[
+  {
+    "command": [
+      "tools/public-surface.sh",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.917082500000003
+  },
+  {
+    "command": [
+      "tools/inference-surface.sh",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 69.82732175000001
+  },
+  {
+    "command": [
+      "tools/check-boundary.sh"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15221795799999427
+  }
+]

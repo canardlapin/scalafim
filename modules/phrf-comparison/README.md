@@ -60,6 +60,23 @@ contains no sources of its own; it only compiles and tests `shared`.
 - `PilotAggregator.aggregate` and `aggregateGuarded`; both platforms test it (`DistIccSuite`,
   `ImputationEndpointsSuite`, `WhitelistAggregatorSuite`, `FollowUpSuite`).
 
+## S10 production scorer contributions
+
+`PilotArmRunner` now hands deterministic, truth-free `PilotContribution` bytes to `ArmContext.contribute` for
+condition, native trial, PHRF-ML and GLMsingle outcomes. Only committed attempts reach the scorer. Dataset failures
+retain a sealed unavailable contribution; malformed or missing owner-side inputs refuse reconstruction.
+
+`PilotScoreTruth.fromBound` snapshots held generator truth separately from fitting. `PilotCorpusAssembler` checks
+all seven cells' exact unit inventory and input identities, computes condition MISE, preserves trial order and
+constructs the PHRF TG accuracy/coverage observations. Callers explicitly select `GaussianCoverageTarget`; its
+identity is sealed in the contribution schema. GLMsingle estimates also bind the actual child-read NPZ hash.
+
+Use `PilotAggregation.aggregateContributions` for a verifiable aggregate. `ScoreFeed` remains a legacy observation
+hook and is not authoritative. The owner supplies the same assembler and held truth to `OwnerVerification`.
+See [the sealed format](../../docs/plans/phrf-pilot-sealed-format.md) for exact byte and scoring rules and the
+[synthetic rehearsal receipt](../../docs/verification/phrf-s10-scoring-20261011/README.md).
+This slice does not launch a pilot or satisfy the full S10 freeze, real-engine rehearsal and independent review.
+
 ## Test fixtures
 
 `jvm/src/test/resources/fixtures/` holds two real generator outputs (HARNESS root, dataset 0),
@@ -75,11 +92,31 @@ and asserts byte equality. Use the generator's `requirements.lock`: NumPy and Sc
 versions are part of the fixture manifests. The embedded `GoldenBytes` in the shared tests is real `phrf_gen.io.npz_bytes`
 output as well.
 
+An explicit `PHRF_GENERATOR_PYTHON` makes generator launch and execution failures
+fail the fixture test. Without it, a missing default NumPy/SciPy environment may
+skip regeneration. `AdapterGoldenBytes` holds output from the frozen adapter with
+a deterministic wrapper double; its Python-derived decode fingerprint is checked
+on JVM and JS. Regenerate it with the generator lock environment:
+
+```
+"$PHRF_GENERATOR_PYTHON" tools/phrf-comparison/parity/generate_adapter_golden.py
+```
+
 ## Commands
 
 ```
 sbt phrfComparisonJVM/test phrfComparisonJS/test
 ```
+
+The S2 acceptance gate is opt-in and uses `PHRF_GENERATOR_PYTHON` as well:
+
+```
+sbt -Dphrf.s2.bias=true "phrfComparisonJVM/testOnly scalafim.phrfcmp.prep.RhoBiasHeavySuite"
+```
+
+Acceptance requires the default 50 datasets for **both** cell kinds; a skipped
+test or a reduced dataset count does not qualify it. The frozen historical
+verdict seeds are reused for reproducibility, rather than supplying a new draw.
 
 For native qualification, set `PHRF_GLMSINGLE_PYTHON` to the pinned GLMsingle
 interpreter, `PHRF_GENERATOR_PYTHON` to the generator interpreter, and

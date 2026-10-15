@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "groupJVM/test",
+    "groupJS/test"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 8.31218409538269
+}

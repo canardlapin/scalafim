@@ -159,12 +159,15 @@ object DatasetAcquisitionDomain:
       val times = timeResolution.space
       val full = fullResolution.space
       val active = activeDomain.value
+      // VoxelDomain.indices materializes a vector. Reuse its ordinals for
+      // both maps instead of rebuilding the whole vector for every voxel.
+      val activeIndices = requestedVoxelDomain.indices.toArray
       val mapping =
         TotalMap
           .fromTargetOrdinals(
             active,
             full,
-            requestedVoxelDomain.indices.toArray
+            activeIndices
           )
           .toOption
           .get
@@ -172,8 +175,8 @@ object DatasetAcquisitionDomain:
         Injection.validate(mapping).toOption.get
       val reverse = Array.fill(requestedShape.spatialSize)(-1)
       var sample = 0
-      while sample < requestedVoxelDomain.indices.length do
-        reverse(requestedVoxelDomain.indices(sample)) = sample
+      while sample < activeIndices.length do
+        reverse(activeIndices(sample)) = sample
         sample += 1
 
       Right:

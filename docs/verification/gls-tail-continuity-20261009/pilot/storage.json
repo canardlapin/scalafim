@@ -1,0 +1,27 @@
+{
+  "records-jvm.jsonl": {
+    "stored": "records-jvm.jsonl.gz",
+    "decoded_sha256": "13c092ac99afb976254cb6c0e5632f292c12b5f62a31ac14948b3b6568a283ea",
+    "stored_sha256": "ca96704f47b10c5073739d81598176a68a5b80883d34a75576624e22542ab035"
+  },
+  "records-js.jsonl": {
+    "stored": "records-js.jsonl.gz",
+    "decoded_sha256": "35dd4077f9336053786cc8c8d58daa409c462f1655575b74df9d2dc4ecbf9529",
+    "stored_sha256": "9fd62f84e8f3acc43a0ad2fff1f35a5507d3dcf1f957a85ef8dd4aab668b5934"
+  },
+  "js.log": {
+    "stored": "js.log.gz",
+    "decoded_sha256": "53385c8116c2e90a287b2c6a682b8854db2bd45ba93dc22848d0f64e4519ea50",
+    "stored_sha256": "bd69d4a22194c9a01c04c6afb2f7f55e6f260f823e331a70970698f78030e7bf"
+  },
+  "jvm.log": {
+    "stored": "jvm.log.gz",
+    "decoded_sha256": "31f0e1ed102f4e0645c613e50891dcfbe28a5b53268d7b21edf36a6caf6b3b1e",
+    "stored_sha256": "cc1ba0396ad247a8dae52fd6b8a5f15ea031f9d68e4548fbe5ddc331ce604b94"
+  },
+  "analysis/replicate-records.json": {
+    "stored": "analysis/replicate-records.json.gz",
+    "decoded_sha256": "8d160d1d15a9db9a538491c3ce4027e5367df2ce7dcb63149fbeac8827d19c18",
+    "stored_sha256": "a3c0372f421b37c76c48f30d5e1e09e8b58d761daa7af72249584003688a084b"
+  }
+}

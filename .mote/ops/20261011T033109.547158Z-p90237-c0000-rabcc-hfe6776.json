@@ -1,0 +1,1 @@
+{"actor":"codex-tranche-20261011","entity":"bd-01M4KETP6X061HN0QHW83XR0WV","kind":"reserve_open","mode":"exclusive","op":"20261011T033109.547158Z-p90237-c0000-rabcc-hfe6776","paths":["tools/build/sbt-warm","tools/build/test_sbt_warm.py"],"reservation_id":"rv-01M4MG7BKBVC59YVKQJJ10GJEZ","ts":"2026-10-11T03:31:09.547158Z","ttl_s":14400,"v":2}

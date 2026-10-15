@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-08T01:44:49.567392+00:00",
+  "physical_memory_bytes": 34359738368,
+  "free_inactive_speculative_bytes": 14275608576,
+  "java_processes": [],
+  "probe_rss_cap_bytes": 4294967296,
+  "proposed_heap": "3g",
+  "processors": 4,
+  "headroom_policy": "at least 8 GiB in free+inactive+speculative pages before probe; monitor own JVM at 4 GiB cap",
+  "scope_note": "Initial planning snapshot; Java filter required a /java suffix and may omit basename-only commands. The execution preflight in probe/host-before.json supersedes this snapshot."
+}

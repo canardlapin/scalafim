@@ -1,0 +1,100 @@
+{
+  "change": "Zero-pad diagnostic coefficient vectors to their common AR order before averaging and validation. Native filters and correction outcomes are preserved.",
+  "compiler_warnings": 0,
+  "fix_files": [
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Gls.scala",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/CorrectedGlsSuite.scala",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala",
+    "docs/audits/ar-fmriar-fmrireg.md"
+  ],
+  "gates": {
+    "fitJS/test": {
+      "exit_code": 0,
+      "failed": 0,
+      "tests": 647
+    },
+    "fitJVM/test": {
+      "exit_code": 0,
+      "failed": 0,
+      "tests": 704
+    }
+  },
+  "head_at_verification": "65cee7830ac2a5f0e3986e496a6719ab3e554ae1",
+  "independent_recheck": {
+    "new_actionable_findings": [],
+    "original_P2_resolved": true,
+    "reviewer": "/root/ar_consumer_review"
+  },
+  "limits": [
+    "The broader source-bound AR/model and R-regeneration evidence is retained in the original summary; those unchanged sources were not rerun for this diagnostics-only fix"
+  ],
+  "log": {
+    "path": "docs/verification/ar-consumer-closure-20261007/censor-fix/fit-tests.log.gz",
+    "uncompressed_sha256": "e7e92d6a81350d33799d53b33263d65475545251e887f6438402512b594ac9ba"
+  },
+  "mote": "bd-01M3WA0GGQ4Q0064E4FEP7WGF1",
+  "original_review": "docs/verification/ar-consumer-closure-20261007/review/review.json",
+  "original_verification": "docs/verification/ar-consumer-closure-20261007/summary.json",
+  "recorded_at": "2026-10-08T00:41:34.165956+00:00",
+  "regression_coverage": {
+    "bounded_block_sizes": [
+      1,
+      2,
+      4
+    ],
+    "censored_run_correction": "NotAttempted",
+    "native_IID_order": 0,
+    "orders": [
+      1,
+      2
+    ],
+    "pooling": [
+      "global",
+      "run",
+      "voxelwise"
+    ]
+  },
+  "resolved_finding": "P2: fully censored runs break corrected GLS diagnostics",
+  "schema_version": "scalafim-ar-censored-run-remediation/v1",
+  "source_sha256": {
+    ".github/workflows/scenario-receipts.yml": "9108ae34f7daf7ab9823b481c67b6dbfc14d0c766a4ec3d2346b6ec4359a31c6",
+    "docs/audits/ar-fmriar-fmrireg.md": "0ebc6f41d9ff2e98a65b48620e7c33e18069d82e324d93b808a14bae6376d96b",
+    "docs/scenarios/fixtures/ar.fmriar-bias.v1.r.json": "55b4012adc8585a0aa9bb373f765000b5bbd810f2c34e97601b934a477b91f16",
+    "docs/scenarios/fixtures/fit.fmriar-corrected-gls.v1.r.json": "96d83481ede1bd6f1ca75e6d4ed6dfbbe65d162feec06b8e8cfb8ec679276408",
+    "modules/ar/README.md": "4a605a87356ef96c2a3d3efc15b67a6dad35fb300d4ed5c6f5b8644dbc03920b",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala": "396883b0bc52ad32e7abf6b7ca826c33f7ccb61967bf40d0821bbc0381fa553c",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/NoiseAcvf.scala": "fce25d4d5c346816adc65a5eb92a78c1ed616f1cfff86bc206e65adca82aeed2",
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/NoiseFit.scala": "55a0f8899b3da861d65e3cff51d3ca13dde4c8f5ee248f34e1b4043eb07d53d0",
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/CorrectedNoiseSummarySuite.scala": "8f2be9876bfe0a33375e5ebc56d5926098fefcc8c9251abb5bb30eb34142f0cb",
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/fixtures/FmriArBiasRFixture.scala": "44dcf63561f91f53c3c987003f80aab06a942e6bb7f39c88afb269fd3f4cc013",
+    "modules/ar/tools/generate_fmriar_bias_parity.R": "a5f584204f5eaf92700fa5e8199c14e95749b58efe3aca771b99cfd6d12386e3",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/BoundedReducedRankGlsPreparation.scala": "1c10d51ad5384d4da72f39eb20a2125dbd3002200bbf83c70d89742f83c063de",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "acddc5d8f4d626b5598f791315323019448e96be65cdadb084dbfe7c2c2acb03",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Gls.scala": "823ce7031b9abcaf22c6852fe9b7778c51c2d09024abdbb11a7ed8b6f734eae8",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Ols.scala": "4a1ac62cbc1135d482e3b5f63b76cdfeb89f323ae8e4ab047451b488efc28df9",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala": "bc666fc18c8ed5737ad4d9934096ed45507299be9c5080a01a4ff6ab0251d7ab",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala": "ddad9c9e3f6c28d5dab4b9615ca2b1f3bf4b0efb095c48e95060d988b28f425f",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "d891057752ea2e10409d7049228c447ee649f5b85049e745ecf079e0f6091a55",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparationIdentity.scala": "bfe5ceb38075b5f1e9b76cf30a48ddf022d9dbf278b3daf4511a7d181bf18fad",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Robust.scala": "27b013190442a3698f55981433c16d23b60ec2f72ae2ba9b9ef019111c5d7cea",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/BoundedReducedRankGlsPreparationSuite.scala": "a722477f98c61cfdfc24292ba85b0188d50a3927b126b52b1c4ec04187b839a9",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/CorrectedGlsSuite.scala": "45ce273aa12a5f2fe20ad96c5b37cdd3a11d02e9348cdf604c803ca0fdc4b49f",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/OlsDiagnosticsSuite.scala": "8e112865ef959e464d960e44acf6e660d93604b1c2681e305dddda02021f0ace",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala": "9447587431241ec001b133f8199af1039c3a97295d366d627bfb8beaf9644e66",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/FmriArCorrectedGlsFixture.scala": "ccebe9a1155206160c98b684513f6db6d0173297287e5b4e06010e07938d8a5b",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ConditionProfileProvenanceSuite.scala": "229aeffc92d520f3e699de383838585112af0bab8a3bff0d5e3cde82a799236d",
+    "modules/fit/tools/generate_fmriar_corrected_gls_parity.R": "0433c4bd5f951a0850112cb5e7210a5b74c39b3dfc33f9ca59464cbcdecd3863",
+    "modules/model/shared/src/main/scala/scalafim/fmri/model/ArBiasCorrection.scala": "88d3f8a92e65e86a09392387612d62bde7664b4129d9d1d5c2b1d5edebcecf0f",
+    "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "e7231ba5cf762b8cbcb32c0e4c0150980e2dbb8cde683a6a06bc4d63cc75f83c",
+    "modules/model/shared/src/main/scala/scalafim/fmri/model/ModelBuildSpecJsonCodec.scala": "ee9a271ffd8f515ac2bcb1daf06f50d710ca9755c29d23ad9814519fc1556bd0",
+    "modules/model/shared/src/test/scala/scalafim/fmri/model/ArBiasCorrectionSuite.scala": "47634f86cb80423918a632b4924f52823e5dad241c61c38d10c010ef92f5da20",
+    "tools/r-parity/ar-reference-lock.json": "c1485b88bc5e5575dae7e56127f7421a95bd94bf465939467386445d59882e6a",
+    "tools/r-parity/auxiliary-manifest.json": "2024cdc38f33392cfd8772f1c08848213badc344fa25be387dbc367c7dbaf26e",
+    "tools/r-parity/check_receipts.py": "85e305f406198d5eb2e6a27bede3f010f0d31d723c0df8d39af3cbccc9f4f4c0",
+    "tools/r-parity/finalize_fmriar_bias_receipt.py": "194a53d21b93192b129de827eb4b0e88e3c54f3e2c3fb40813d42f353fe76d0b",
+    "tools/r-parity/finalize_fmriar_corrected_gls_receipt.py": "a02c0bba0c086b97005ee479634a22e945d8d1d9afe6456845a16d157715c64b",
+    "tools/r-parity/receipt_tools.py": "50034d9299b461a40cf663e3568a8d6b2dbcedbc393864e2995d8cdb2f5431f7",
+    "tools/r-parity/test_check_receipts.py": "b5945451beb5dea6863797627b3e58129ba0095c311505776e3c7a91ce89c7c2"
+  },
+  "source_state": "uncommitted shared-worktree changes"
+}

@@ -1,0 +1,551 @@
+{
+  "cells": [
+    "C-TX-.5",
+    "C-TS-1",
+    "C-TS-.5",
+    "C-TG-.5",
+    "T-TX-fast",
+    "T-TX-jit",
+    "T-TS-fast"
+  ],
+  "datasets_per_cell": 2,
+  "generator_code_sha256": "b4ba7ac95cc226b7f4132167e67acab885543a0bd157c985bfb51bfd286d3edf",
+  "generator_entry_sha256": "4e959a6d5629a0d8cc9ef4d231fe049bcba6c8afd3624551ee26c99ecfd51b33",
+  "no_deviation_datasets": 10,
+  "pilot_launch_authority": false,
+  "records": [
+    {
+      "cell": "C-TX-.5",
+      "dataset": 0,
+      "npz_sha256": "c79f66dc79454ec00d5526e0ff4b0b9ef222a6260c91dfff43a1bf35c1d274ce",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TX-.5",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 0.5,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "C-TX-.5",
+      "dataset": 1,
+      "npz_sha256": "43e979da946f3713c8f9be86176c1a6595ee21eea4a0b4e9497c727410d8ca06",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TX-.5",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 0.5,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "C-TS-1",
+      "dataset": 0,
+      "npz_sha256": "c13c1ef7bf0525eb1dca2f6a754b7c3cb75130054ba59dd1b6a43f6edb628f12",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TS-1",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TS"
+      }
+    },
+    {
+      "cell": "C-TS-1",
+      "dataset": 1,
+      "npz_sha256": "7ea6f830057d9f45e50cdfadc8ce05a3600203e8fc3700ad13fa2b53c6a15e7f",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TS-1",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TS"
+      }
+    },
+    {
+      "cell": "C-TS-.5",
+      "dataset": 0,
+      "npz_sha256": "17639ade217ae28802a042aef3633a40be454b14e4445be6476493fce22a77ab",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TS-.5",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 0.5,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TS"
+      }
+    },
+    {
+      "cell": "C-TS-.5",
+      "dataset": 1,
+      "npz_sha256": "6e3cb066de75efa153e85eb65e9f77ca870a7801ac4ca748ab8fca4418df0204",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TS-.5",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 0.5,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TS"
+      }
+    },
+    {
+      "cell": "C-TG-.5",
+      "dataset": 0,
+      "npz_sha256": "8510722e63295b8840b66d735a25c4eee7c4014dfef89ac908466b3bb814bbc7",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TG-.5",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 0.5,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TG"
+      }
+    },
+    {
+      "cell": "C-TG-.5",
+      "dataset": 1,
+      "npz_sha256": "ec96f8e615402195b5c47c0a8dd67bd10177d85860a0e11c01746fdbef0bb91f",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "C-TG-.5",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "condition",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 0.5,
+        "spacing": "dense",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TG"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 0,
+      "npz_sha256": "b237475578a1698bec68ea3ea41a3ced49553f9384114731f92b458a79aa0082",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 1,
+      "npz_sha256": "cf462c2e0aed0740743e20ed9de3ad220824fcc25e7d089ca43ebbc04ce82ac4",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 2,
+      "npz_sha256": "80713309f3e9e6176e79110f619676e7949d806806813016be3208e8bdbdec38",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 3,
+      "npz_sha256": "7586d920797dc0e4f55e99c0e3330ad67ab34b38bdd528e1e06c8abf6389f520",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 4,
+      "npz_sha256": "bc196b4194476db7d4b7dcf680625d7d661b4f28022bfa1c11eca00ad2550ab6",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 5,
+      "npz_sha256": "0abd83e303b3da1bafd139a4f11fdd3b1a7c3f2467bb7e29d1c4e2c237f57d22",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 6,
+      "npz_sha256": "61ba2ec485a65921cc3f47c2063f3be38cefac9eb67f93e944f6c5c43d4f5120",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 7,
+      "npz_sha256": "34ccbd06e7b0979bc747587db9220e5123ae48b05b722f240750fa33d67ce3a0",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 8,
+      "npz_sha256": "22493d5475cde10619785a3444de00e5282873b424fb44c29102181cd68121f4",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-fast",
+      "dataset": 9,
+      "npz_sha256": "f4ac373cd7120308cb8e789a89995ee5e5e63a862960bc1f840bf09b8bbbb1ae",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-jit",
+      "dataset": 0,
+      "npz_sha256": "43eebc35135ace7e34b32e3551471ca21d2c74a5f594baa795156d9c0baa925e",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-jit",
+        "deviation": "heavy",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": true,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TX-jit",
+      "dataset": 1,
+      "npz_sha256": "b71ded215f3a6621118e70064d7e2b50ab5ed8e40cdc2600af275fa7c922e412",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TX-jit",
+        "deviation": "heavy",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": true,
+        "n_pool": 4000,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": true,
+        "truth": "TX"
+      }
+    },
+    {
+      "cell": "T-TS-fast",
+      "dataset": 0,
+      "npz_sha256": "469118b46c473af9d29d6b32ef425ee98f9fbc2e1cc9f6607d1bce5359df70d8",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TS-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TS"
+      }
+    },
+    {
+      "cell": "T-TS-fast",
+      "dataset": 1,
+      "npz_sha256": "004c3615b5526d0a2638f059ce6c20e1b54b0a8768dcb442fbed61f655c690ee",
+      "spec": {
+        "ar": [
+          0.3
+        ],
+        "cell_id": "T-TS-fast",
+        "deviation": "persistent",
+        "duration": 0.0,
+        "kind": "trial",
+        "latency_jitter": false,
+        "n_pool": 0,
+        "n_voxels": 40,
+        "note": "",
+        "null_cal": false,
+        "snr": 1.0,
+        "spacing": "fast",
+        "tr": 1.0,
+        "tr_aligned_onsets": false,
+        "truth": "TS"
+      }
+    }
+  ],
+  "root_hex": "7a3c91d50b44e2f1",
+  "root_kind": "harness",
+  "schema": "phrf-s10-real-rehearsal-inputs/v1",
+  "scientific_admission": false,
+  "scored_voxels": 40
+}

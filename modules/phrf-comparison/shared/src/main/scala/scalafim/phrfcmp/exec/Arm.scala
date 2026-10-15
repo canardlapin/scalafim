@@ -46,8 +46,20 @@ final class ArmContext(val unit: WorkUnit, val attempt: Int, val root: PilotRoot
 
   def emit(name: String, bytes: Array[Byte]): Unit = synchronized {
     require(SafeName.valid(name), "unsafe blob name")
+    require(name != ScorerContribution.EntryName, "the scorer contribution is handed over with contribute")
     require(!blobs.exists(_.name == name), "blob names are distinct within an attempt")
     blobs += new RawBlob(name, bytes.clone()): Unit
+  }
+
+  /** This attempt's truth-free scorer contribution (S10): the canonical bytes from which the corpus assembler builds
+    * the unit's share of the scorer's corpus. At most once per attempt. It is sealed inside the unit payload under
+    * [[ScorerContribution.EntryName]], and it reaches the in-process assembler only if this attempt commits: a
+    * retried or abandoned attempt's contribution is discarded with the attempt. Like every emitted blob it must be
+    * deterministic in the unit and the root, since the owner rebuilds the corpus from the first completed attempts.
+    */
+  def contribute(bytes: Array[Byte]): Unit = synchronized {
+    require(!blobs.exists(_.name == ScorerContribution.EntryName), "one scorer contribution per attempt")
+    blobs += new RawBlob(ScorerContribution.EntryName, bytes.clone()): Unit
   }
 
   private[exec] def emitted: Vector[RawBlob] = synchronized(blobs.toVector.sortBy(_.name))
@@ -69,6 +81,10 @@ final class ArmContext(val unit: WorkUnit, val attempt: Int, val root: PilotRoot
   private[exec] def notes: Vector[String] = synchronized(noteBuf.toVector)
   private[exec] def timings: Vector[(String, Double)] = synchronized(timingBuf.toVector)
 
+/** The reserved unit-payload entry that holds a unit's scorer contribution (S10, [[ArmContext.contribute]]). */
+object ScorerContribution:
+  val EntryName: String = "scorer-contribution"
+
 /** The interface the scheduler calls for one (cell, dataset, arm) attempt. Implemented by the condition runner
   * (S3), the native trial runner (S4), the PHRF trial runner (S5) and the GLMsingle bridge (S6). Its emitted blobs
   * must be deterministic in `ctx.unit` and `ctx.root` alone: they must not depend on `ctx.attempt`, on the run id,
@@ -79,7 +95,10 @@ final class ArmContext(val unit: WorkUnit, val attempt: Int, val root: PilotRoot
 trait ArmRunner:
   def run(ctx: ArmContext): ArmResult
 
-  /** Called once per job after its last arm ran (or the run stopped), so per-dataset caches can be released. */
+  /** Called once per job after its last arm ran (or the run stopped), so per-dataset caches can be released. It
+    * should not throw; if it does while the job is already failing, its exception is attached to the job's own
+    * (`addSuppressed`) and never replaces it.
+    */
   def jobFinished(job: Job): Unit = ()
 
 /** Logical names inside the sealed store (format spec section 4; runner layout in the format spec section 10).
@@ -115,4 +134,15 @@ object SealedNames:
   def aggregateRecord(runId: String): String = s"aggregate/$runId/record"
 
   val RootCheck: String = "meta/root-check"
+
+  /** The owner ceiling raise an invocation used, under that invocation's run id. */
+  def ceilingRaise(runId: String): String = s"meta/ceiling-raise/$runId"
+
+  /** The owner accounting recovery applied for an uncertain run, under the uncertain run's id. */
+  def accountingRecovery(uncertainRunId: String): String = s"meta/accounting-recovery/$uncertainRunId"
+
+  /** The largest dataset count a plan may have: indices `0 until MaxDatasets` keep the fixed 4-digit `dNNNN` naming
+    * of journal markers and sealed names, so every name the writer emits is one recovery accepts.
+    */
+  val MaxDatasets: Int = 10000
   val Stamp: String = "meta/stamp"

@@ -1,0 +1,46 @@
+{
+  "scope": "reference-profile inspection only; no benchmark execution",
+  "observations": {
+    "model": {
+      "exit_code": 0,
+      "stdout": "Mac14,12",
+      "stderr": ""
+    },
+    "physical_cpus": {
+      "exit_code": 0,
+      "stdout": "10",
+      "stderr": ""
+    },
+    "memory_bytes": {
+      "exit_code": 0,
+      "stdout": "34359738368",
+      "stderr": ""
+    },
+    "os_version": {
+      "exit_code": 0,
+      "stdout": "15.1.1",
+      "stderr": ""
+    },
+    "os_build": {
+      "exit_code": 0,
+      "stdout": "24B91",
+      "stderr": ""
+    },
+    "node": {
+      "exit_code": 0,
+      "stdout": "v24.21.0",
+      "stderr": ""
+    },
+    "java": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)"
+    }
+  },
+  "resource_admission": "unavailable",
+  "reasons": [
+    "Observed macOS/Node must match the frozen reference profile before qualification.",
+    "Concurrent PHRF work prevents assuming an idle reference host.",
+    "Complete component-specific voxel-family and matched baseline workloads remain unavailable."
+  ]
+}

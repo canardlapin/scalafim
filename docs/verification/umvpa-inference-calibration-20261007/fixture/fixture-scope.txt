@@ -1,0 +1,3 @@
+fixture phase only; no calibration datasets or study confirmation streams
+R SHA256 uses unframed UTF-8 with explicit NUL separators
+seed vectors checked: 6

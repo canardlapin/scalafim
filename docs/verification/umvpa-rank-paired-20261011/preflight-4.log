@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/probe.py", line 128, in <module>
+    main()
+  File "/private/tmp/scalafim-rank-paired-pilot-20261011/tools/mvpa-inference/paired/probe.py", line 82, in main
+    raise RuntimeError('fixture replay failed; receipts retained')
+RuntimeError: fixture replay failed; receipts retained

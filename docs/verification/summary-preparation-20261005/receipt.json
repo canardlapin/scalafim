@@ -1,0 +1,363 @@
+{
+  "verified_at_utc": "2026-10-06T03:10:04.881858+00:00",
+  "mote": "bd-01M47GK9VZNQRGCERREZ09PXW1",
+  "runs": [
+    {
+      "label": "baseline-summary",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "hrfJVM/testOnly scalafim.fmri.hrf.family.FamilySummaryGridSuite",
+        "hrfJS/testOnly scalafim.fmri.hrf.family.FamilySummaryGridSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite",
+        "fitJS/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 63.978,
+      "counts": [
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10
+        },
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10
+        },
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        },
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        }
+      ],
+      "warnings": [],
+      "log": "baseline-summary.log"
+    },
+    {
+      "label": "mutant-condition-preflight-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 6.815,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 2,
+          "errors": 0,
+          "passed": 7
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-condition-preflight-jvm.log"
+    },
+    {
+      "label": "mutant-condition-preflight-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJS/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 7.145,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 2,
+          "errors": 0,
+          "passed": 7
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-condition-preflight-js.log"
+    },
+    {
+      "label": "mutant-compact-preflight-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 6.695,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 2,
+          "errors": 0,
+          "passed": 7
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-compact-preflight-jvm.log"
+    },
+    {
+      "label": "mutant-compact-preflight-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJS/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 8.163,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 2,
+          "errors": 0,
+          "passed": 7
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-compact-preflight-js.log"
+    },
+    {
+      "label": "mutant-runtime-constructor-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 5.021,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 1,
+          "errors": 0,
+          "passed": 8
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-runtime-constructor-jvm.log"
+    },
+    {
+      "label": "mutant-runtime-constructor-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJS/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 6.522,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 1,
+          "errors": 0,
+          "passed": 8
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-runtime-constructor-js.log"
+    },
+    {
+      "label": "mutant-raw-fixed-summary-jvm",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 7.396,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 1,
+          "errors": 0,
+          "passed": 8
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-raw-fixed-summary-jvm.log"
+    },
+    {
+      "label": "mutant-raw-fixed-summary-js",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJS/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 1,
+      "seconds": 7.631,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 1,
+          "errors": 0,
+          "passed": 8
+        }
+      ],
+      "warnings": [],
+      "log": "mutant-raw-fixed-summary-js.log"
+    },
+    {
+      "label": "restored-summary",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite",
+        "fitJS/testOnly scalafim.fmri.fit.profile.SummaryPreparationSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 13.391,
+      "counts": [
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        },
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9
+        }
+      ],
+      "warnings": [],
+      "log": "restored-summary.log"
+    },
+    {
+      "label": "existing-profile-parity",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.ProfileHrfFitSuite",
+        "fitJS/testOnly scalafim.fmri.fit.profile.ProfileHrfFitSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 13.236,
+      "counts": [
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21
+        },
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21
+        }
+      ],
+      "warnings": [],
+      "log": "existing-profile-parity.log"
+    },
+    {
+      "label": "public-output-parallel",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "fitJVM/testOnly scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite scalafim.fmri.fit.profile.ProfileHrfFitParallelSuite",
+        "fitJS/testOnly scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 62.809,
+      "counts": [
+        {
+          "total": 71,
+          "failed": 0,
+          "errors": 0,
+          "passed": 71
+        },
+        {
+          "total": 37,
+          "failed": 0,
+          "errors": 0,
+          "passed": 37
+        }
+      ],
+      "warnings": [],
+      "compiler_warnings": [],
+      "log": "public-output-parallel.log"
+    },
+    {
+      "label": "condition-compact-fixtures",
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.ConditionProfileFitSuite scalafim.fmri.laws.profile.CompactConditionRuntimeSuite",
+        "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ConditionProfileFitSuite scalafim.fmri.laws.profile.CompactConditionRuntimeSuite"
+      ],
+      "exit_code": 0,
+      "seconds": 37.886,
+      "counts": [
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10
+        },
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10
+        }
+      ],
+      "warnings": [
+        "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+      ],
+      "compiler_warnings": [],
+      "log": "condition-compact-fixtures.log"
+    }
+  ],
+  "source_sha256": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/ParametricHrfFamily.scala": "07154da247d6a6d9e9b342d91c25b5898fdad4b8b669f9f575d15b2c90ac01c8",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/LwuFamily.scala": "ae349f049f23f29978cfba3da0a7560d847958b82a4242f2d3d7eb5a1c105755",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/FamilySummaryGrid.scala": "7e0794e986194cc72e766ec46a9f5e79aa27a3d567911dc968a0d7d2e353f475",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/FamilySummaryGridSuite.scala": "d768b3830fdca0054d747c9e328e41c4e665c10d7067f82d81c6e6cab4fb3068",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala": "ec7d6515ca474733182dcc52b2d5ee77a994c2a216519405bb138b2c01dd5ec4",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala": "13ba1ea58745d703e2030c36b4e8d211085892b2a963d8f01313a4e16b6fbaf9",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala": "dfdb32ce1fc533dbb39c31ac4608b085cd79515d18a53fedf8bb05f86c2057fc",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputs.scala": "50326cda613882a2a74dab4c1a15fbae3a7f4c4f12fdafe4e73dc988866ee941",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/SummaryPreparationSuite.scala": "e34ea72877240135f6513d0c72351e55d59557f533bd080d3929703f48570688"
+  },
+  "archive": "logs-and-sources.tar.gz",
+  "archive_sha256": "a7b1d4d438bb0075887f3d9cf95ab5d19da3bdd4d942f159dfc41c2ef53ccd75",
+  "source_restored": true,
+  "mutation_limits": "All mutation fits use admitted Gaussian grids and 60 rows / 2 voxels. Summary cap refusal is a declared probe; removing admission cannot allocate a large grid. Raw fixed summary mutant only calls a sentinel summary callback.",
+  "scope_limits": [
+    "Structural admission is point-independent; decoded summary errors are handled during fitting.",
+    "Unified raw fixed, compact and trial outputs request no summaries and invoke neither summary admission nor summary evaluation.",
+    "Reusable compact geometry preparation does not require summary admission; prepareWithSummaries opts in, and summary runtime construction independently admits before callbacks/scratch.",
+    "Custom sampled-summary families must declare allocation-free grid admission by overriding validateSummaryGrid."
+  ],
+  "runner_sha256": {
+    "verify.py": "d70faa38b3b0826622972a90e52d216f4f44d54a40a1ad61d6612e84f689af0f",
+    "consumer-gates.py": "194e474e66036db0eba59d6eea584a61b9b328bc22f62ca84bd7668daa0c11d8"
+  },
+  "compiler_warning_clean": true,
+  "sbt_diagnostics": [
+    "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+  ],
+  "mutation_runner_validation": "An initial if-false constructor mutation caused an unused parameter Werror and was rejected before tests. The retained predicate preserves parameter use; every retained mutant executes selected tests and fails the intended regressions on JVM and JS.",
+  "integrated_gates": {
+    "hrfJVM": 386,
+    "hrfJS": 386,
+    "designJVM": 474,
+    "designJS": 473,
+    "fitJVM": 669,
+    "fitJS": 612,
+    "observed_family_consumersJVM": 6,
+    "observed_family_consumersJS": 6,
+    "total_passed": 3012,
+    "compiler_warnings": [],
+    "receipt": "docs/verification/compiler-summary-20261005/receipt.json"
+  },
+  "decoded_summary_handling": "Typed boundaries revalidate decoded chart points, reject nonfinite returned peak/FWHM/undershoot scalars, and represent summary/admission callback failures. Standalone per-voxel summary failure preserves previously delivered blocks. Unified raw outputs never invoke summary admission or evaluation; emitted numeric IEEE bits, status, provenance and progress match the admitted baseline."
+}

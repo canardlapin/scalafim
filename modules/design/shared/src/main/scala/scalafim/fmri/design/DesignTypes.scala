@@ -1,5 +1,7 @@
 package scalafim.fmri.design
 
+import scalafim.fmri.design.formula.DerivedEventError
+
 enum DesignError:
   case InvalidId(kind: String, value: String, reason: String)
   case InvalidSchedule(detail: String)
@@ -32,6 +34,8 @@ enum DesignError:
   case FormulaBinding(detail: String)
   case InvalidSchema(detail: String)
   case BuildFailed(detail: String)
+  /** A derived-column declaration failed to evaluate, or its missing-row policy rejected rows. */
+  case DerivedColumns(cause: DerivedEventError)
 
   def message: String =
     this match
@@ -91,6 +95,8 @@ enum DesignError:
         s"Invalid design schema: $detail"
       case BuildFailed(detail) =>
         detail
+      case DerivedColumns(cause) =>
+        s"derived columns: ${cause.message}"
 
 object DesignError:
   def fromThrowable(t: Throwable): DesignError =

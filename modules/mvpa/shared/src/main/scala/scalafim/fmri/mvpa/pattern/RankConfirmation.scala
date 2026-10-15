@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.pattern
 
 import gale.linalg.DMat
 import multivar.core.SemanticSpace
-import multivar.inference.{Alpha, CanonicalRankSampling, CanonicalResidualBasis, CanonicalResidualMethod, FixedCanonicalRank, FixedCanonicalRankResult, InferenceError, MonteCarloDraws, PermutationAction, RowCount, StepwiseCanonicalRank}
+import multivar.inference.{Alpha, CanonicalRankMethod, CanonicalRankResult, CanonicalRankSampling, CanonicalRankSpectrum, CanonicalResidualBasis, CanonicalResidualMethod, FixedCanonicalRank, GaussianCanonicalRank, InferenceError, MonteCarloDraws, PermutationAction, RowCount, StepwiseCanonicalRank}
 import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, EvidenceIdentity, MultiResponse, Observations}
 import scalafim.fmri.mvpa.analysis.{EvidenceExposure, ExposureControl, ExposureScope}
@@ -69,7 +69,7 @@ final case class RankConfirmationBudget(maximumOwnedCells: Long = 10000000L, max
   * Detectable rank concerns these fixed candidate spaces, never an upper bound
   * on the association rank in the original feature spaces. */
 final class RankConfirmationResult private[pattern] (
-    val candidateArithmetic: FixedCanonicalRankResult,
+    val candidateArithmetic: CanonicalRankResult,
     val brainCandidateAxis: AxisDescriptor, val targetCandidateAxis: AxisDescriptor,
     val confirmationRows: AxisDescriptor, val independentUnits: AxisDescriptor,
     val rowUnitOrdinals: Vector[Int], val residualRows: Int, val nuisanceRank: Int,
@@ -78,6 +78,7 @@ final class RankConfirmationResult private[pattern] (
     val plannedOwnedCells: Long, val residualBasis: CanonicalResidualBasis,
     val nuisanceWorkingDesign: DMat, val residualBasisIdentity: String, val jointLaw: RankJointGaussian
 ):
+  val method: CanonicalRankMethod = candidateArithmetic.method
   val calibrationStatus: RankCalibrationStatus = RankCalibrationStatus.PendingFrozenProtocol
   def admittedDetectableRank: Either[RankConfirmationError, Int] =
     Left(RankConfirmationError.Unavailable("rank calibration under the frozen protocol is pending"))
@@ -85,26 +86,30 @@ final class RankConfirmationResult private[pattern] (
 object RankConfirmation:
   /** One projection application per source, without materializing the full
     * brain matrix. The residual design includes the intercept and all nuisance columns.
-    * Gaussian Huh-Jhun coordinates admit unrestricted residual-row actions;
-    * this does not admit raw-row shuffles or non-Gaussian/restricted actions.
+    * Gaussian Huh-Jhun coordinates preserve iid zero-mean joint Gaussian rows.
+    * The default interlacing reference has a conservative Gaussian argument;
+    * the score-completed permutation comparator still needs partial-null qualification.
     * Owned numeric storage excludes borrowed evidence, private provider/Gale
     * scratch, and receipt collection overhead. */
   def run[S <: SemanticSpace, N <: SemanticSpace, Q <: SemanticSpace, U](
       design: ConfirmationDesign[?, U], candidates: RankFrozenSubspaces, jointLaw: RankJointGaussian,
       observations: Observations[S, N], targets: MultiResponse[S, Q],
-      seed: Seed, draws: MonteCarloDraws, alpha: Alpha, budget: RankConfirmationBudget = RankConfirmationBudget()
+      seed: Seed, draws: MonteCarloDraws, alpha: Alpha, budget: RankConfirmationBudget = RankConfirmationBudget(),
+      method: CanonicalRankMethod = CanonicalRankMethod.GaussianInterlacingWilksV1
   ): Either[RankConfirmationError, RankConfirmationResult] =
     val rows = design.confirmation.samples.rows.descriptor
     val n = BigInt(observations.rows); val p = BigInt(candidates.brain.matrix.cols); val q = BigInt(candidates.target.matrix.cols)
     val z = BigInt(design.nuisance.matrix.cols) + 1; val k = p.min(q)
     val retained = k * (p + q) - k * (k - 1)
-    val transformElements = BigInt(draws.value) * n
-    val cells = 16 * n * n + 24 * n * (p + q + z) + 4 * n * retained + 48 * (p * p + q * q + p * q + z * z) + transformElements
+    val transformElements = method match
+      case CanonicalRankMethod.ScoreOrthogonalPermutationV2 => BigInt(draws.value) * n
+      case CanonicalRankMethod.GaussianInterlacingWilksV1 => BigInt(0)
+    val cells = 16 * n * n + 24 * n * (p + q + z) + 4 * n * retained + 48 * (p * p + q * q + p * q + z * z) + transformElements + 4 * BigInt(draws.value) * k
     val nullValues = BigInt(draws.value) * k
     if observations.sampleAxis != rows || targets.sampleAxis != rows then Left(RankConfirmationError.AxisMismatch("actual confirmation rows"))
     else if observations.neuralAxis != candidates.brain.input.descriptor || targets.featureAxis != candidates.target.input.descriptor then Left(RankConfirmationError.AxisMismatch("actual frozen candidate endpoints"))
     else if candidates.discoveryIdentity != design.discovery.identity || jointLaw.designIdentity != design.identity then Left(RankConfirmationError.AxisMismatch("candidate discovery or joint-law design binding"))
-    else if budget.maximumTransformCandidates < draws.value then Left(RankConfirmationError.Numerical(InferenceError.CanonicalDrawBudgetExhausted(0, 0, draws.value)))
+    else if method == CanonicalRankMethod.ScoreOrthogonalPermutationV2 && budget.maximumTransformCandidates < draws.value then Left(RankConfirmationError.Numerical(InferenceError.CanonicalDrawBudgetExhausted(0, 0, draws.value)))
     else if cells > budget.maximumOwnedCells || nullValues > budget.maximumNullValues || nullValues > Int.MaxValue || Vector(n * n, n * p, n * q, n * z, p * p, q * q, z * z).exists(_ > Int.MaxValue) then Left(RankConfirmationError.Budget(cells.max(nullValues), if nullValues > budget.maximumNullValues then budget.maximumNullValues else budget.maximumOwnedCells))
     else
       val augmented = DMat.tabulate(observations.rows, z.toInt)((i, j) => if j == 0 then 1.0 else design.nuisance.matrix(i, j - 1))
@@ -115,10 +120,18 @@ object RankConfirmation:
         ry <- basis.project(y, budget.maximumOwnedCells).left.map(RankConfirmationError.Numerical.apply)
         x <- observations.patterns(candidates.brain.matrix).left.map(error => RankConfirmationError.Evidence(error.toString))
         rx <- basis.project(x, budget.maximumOwnedCells).left.map(RankConfirmationError.Numerical.apply)
-        problem <- StepwiseCanonicalRank.from(rx, ry, budget.maximumOwnedCells).left.map(RankConfirmationError.Numerical.apply)
-        count <- RowCount(basis.matrix.cols).left.map(RankConfirmationError.Numerical.apply)
-        result <- FixedCanonicalRank.run(problem, PermutationAction.unrestricted(count), seed, draws, alpha, budget.maximumNullValues,
-          CanonicalRankSampling.DistinctNonIdentity(budget.maximumTransformCandidates), budget.maximumOwnedCells).left.map(RankConfirmationError.Numerical.apply)
+        result <- (method match
+          case CanonicalRankMethod.GaussianInterlacingWilksV1 =>
+            CanonicalRankSpectrum.from(rx, ry, budget.maximumOwnedCells).flatMap: problem =>
+              GaussianCanonicalRank.run(problem, seed, draws, alpha, budget.maximumNullValues, budget.maximumOwnedCells)
+          case CanonicalRankMethod.ScoreOrthogonalPermutationV2 =>
+            for
+              problem <- StepwiseCanonicalRank.from(rx, ry, budget.maximumOwnedCells)
+              count <- RowCount(basis.matrix.cols)
+              result <- FixedCanonicalRank.run(problem, PermutationAction.unrestricted(count), seed, draws, alpha, budget.maximumNullValues,
+                CanonicalRankSampling.DistinctNonIdentity(budget.maximumTransformCandidates), budget.maximumOwnedCells)
+            yield result
+        ).left.map(RankConfirmationError.Numerical.apply)
         basisIdentity = AxisDigest.sha256Hex: writer =>
           writer.string("scalafim.rank-residual-basis.v1"); writer.string(design.identity)
           writer.string(basis.method.toString); writer.string(java.lang.Double.toHexString(basis.qrRankTolerance)); writer.string(java.lang.Double.toHexString(basis.lawTolerance))

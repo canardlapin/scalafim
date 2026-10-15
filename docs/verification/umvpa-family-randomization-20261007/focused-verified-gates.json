@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "scientificRelease": "PendingFrozenProtocol",
+  "executedBy": "parent agent; implementation author ran no build",
+  "platformCounts": {
+    "JVM": {
+      "newVoxelFamily": 10,
+      "newFamilyThreshold": 4,
+      "otherFocusedControls": 42,
+      "total": 56
+    },
+    "JS": {
+      "newVoxelFamily": 10,
+      "newFamilyThreshold": 4,
+      "otherFocusedControls": 42,
+      "total": 56
+    }
+  },
+  "testedSources": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala": "a8d96908771f74b7434a7162c40251aea52cb02ab31814fc224bbd253e645c5d",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomizationSuite.scala": "b377ca8b95315952535354b7191d842905090f519545960d6d95e4b6035ca018",
+    "modules/mvpa-spatial/shared/src/main/scala/scalafim/fmri/mvpa/spatial/FamilyThreshold.scala": "cb4875e198c6d36424bef3ef91bd5ee1eb94ffc336cafaa9ae628e920f79bd36",
+    "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/FamilyThresholdSuite.scala": "7cf19a453a58d52e6b938a2e193d330d16bc1f6fc14ae482548e7cb6c7de9697"
+  },
+  "log": {
+    "path": "logs/umvpa-family-group-focused-verified-20261007.log",
+    "sha256": "86b3b84db682b10d84b451de89f1014e2575d677d5704cd80947af3d2cec3417"
+  },
+  "scope": "focused engineering; not frozen C1, strong-FWER rate, FDR or mixed2r admission"
+}

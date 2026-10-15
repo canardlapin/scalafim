@@ -1,0 +1,35 @@
+{
+  "checked_at_utc": "2026-10-06T14:03:55.200120+00:00",
+  "authenticated_account": "canardlapin",
+  "default_account_preserved": "bbuchsbaum",
+  "merges_performed_by_this_task": false,
+  "published": [
+    {
+      "author": {
+        "id": "U_kgDOEk3YCg",
+        "is_bot": false,
+        "login": "canardlapin",
+        "name": ""
+      },
+      "headRefOid": "20c9515495e43dff9d17bc1283a8ca1d56355c4a",
+      "isDraft": false,
+      "mergedAt": "2026-10-06T13:23:05Z",
+      "state": "MERGED",
+      "url": "https://github.com/canardlapin/image4s/pull/16"
+    },
+    {
+      "author": {
+        "id": "U_kgDOEk3YCg",
+        "is_bot": false,
+        "login": "canardlapin",
+        "name": ""
+      },
+      "headRefOid": "292c9bc7e0c026d893a4101560aa9a46e0fbcf04",
+      "isDraft": true,
+      "mergedAt": null,
+      "state": "OPEN",
+      "url": "https://github.com/canardlapin/reframe4s/pull/3"
+    }
+  ],
+  "credential_repair": "Owner-selected private canardlapin file-backed profile, mode0600; standard CLI verified workflow in sandbox. No tokens recorded."
+}

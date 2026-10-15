@@ -143,10 +143,12 @@ class TypedCoreSuite extends munit.FunSuite:
       case other =>
         fail(s"expected InvalidHrfFun, got $other")
 
-    assertEquals(
-      buildError("onset ~ hrf(cond, basis = nope)"),
-      DesignError.UnknownBasis("nope")
-    )
+    buildError("onset ~ hrf(cond, basis = nope)") match
+      case DesignError.FormulaParse(detail, pos) =>
+        assert(detail.contains("Unknown HRF kind 'nope'"), detail)
+        assertEquals(pos, 18)
+      case other =>
+        fail(s"expected a positioned FormulaParse, got $other")
 
     assertEquals(
       buildError("onset ~ hrf(cond, contrasts = missing)"),

@@ -1,0 +1,25 @@
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 61 Scala sources to /Users/bbuchsbaum/code/scala/scalafim/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.SubjectCoordinatesSuite:
+  + oblique subject coefficients and full correlated covariance match the exact independent oracle 0.148s
+  + dropping cross-feature or cross-component covariance changes the transported uncertainty 0.005s
+  + signed rotation and component reindexing preserve the explicit coefficient orientation 0.003s
+  + stable subspaces return a named task operator with singular covariance and no forced component labels 0.005s
+  + task operator and its covariance are invariant to an oblique discovery gauge 0.005s
+  + unequal anatomical dimensions preserve every covariance cell without requiring positive definiteness 0.005s
+  + shared unstable axes cannot license component matches but retain task-operator comparison 0.003s
+  + all df classifications and source identities survive arithmetic transport without group admission 0.006s
+  + subject differences remain visible under the same admitted coordinates 0.004s
+  + dimension-only, reordered task and wrong destination bindings refuse 0.005s
+  + confirmation-derived or overlapping shared coordinate selection refuses 0.003s
+  + spatial alignment and stability cannot be selected from confirmation or borrowed discovery accounts 0.008s
+  + physical value units must match independently of anatomical coordinate units 0.001s
+  + covariance units are mechanically squared and cannot be replaced by unrelated physical labels 0.003s
+  + subject rows cannot silently relabel a multisubject confirmation fit 0.001s
+  + ill-conditioned, different task subspaces, invalid covariance and budgets fail closed 0.008s
+  + budget and metadata refusals never apply the original confirmation evidence source 0.002s
+[info] Passed: Total 17, Failed 0, Errors 0, Passed 17
+[success] elapsed time: 9 s
+[0J[sbt-warm] mvpaJVM/testOnly *SubjectCoordinatesSuite: exit 0 in 9.6s

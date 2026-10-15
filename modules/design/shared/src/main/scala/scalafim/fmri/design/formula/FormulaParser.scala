@@ -540,6 +540,55 @@ object FormulaParser:
           case other                 => throw ParseError(s"'$name' must be a string/identifier or numeric scalar, found $other", position(name))
         }
 
+      /** `basis = kind` or `basis = kind(name = value, ...)`, canonicalized and
+        * checked against the kind's parameters so mistakes are positioned here.
+        */
+      def basisChoice(): (Option[String], Vector[BasisParam]) =
+        val at = position("basis")
+        def valueAt(value: ArgValue): Int =
+          Option(expressionSpans.get(value)).map(_.start).getOrElse(at)
+        def kindOf(name: String): scalafim.fmri.hrf.HrfKind =
+          FormulaBasis.kind(name).fold(error => throw ParseError(error.message, at), identity)
+        def bare(name: String): (Option[String], Vector[BasisParam]) =
+          val kind = kindOf(name)
+          FormulaBasis.admit(kind, Vector.empty).left.foreach(error => throw ParseError(error.message, at))
+          (Some(kind.canonicalName), Vector.empty)
+        named.get("basis") match
+          case None => (None, Vector.empty)
+          case Some(ArgValue.Str(v))   => bare(v)
+          case Some(ArgValue.Ident(v)) => bare(v.value)
+          case Some(ArgValue.Call(fun, callArgs)) =>
+            val kind = kindOf(fun)
+            val params = callArgs.map {
+              case Arg(None, value) =>
+                throw ParseError(s"basis ${kind.canonicalName}(...) parameters must be named, e.g. ${kind.canonicalName}(name = value)", valueAt(value))
+              case Arg(Some(param), value) =>
+                val literal = value match
+                  case ArgValue.Num(v)   => BasisParamValue.Number(v)
+                  case ArgValue.Bool(v)  => BasisParamValue.Flag(v)
+                  case ArgValue.Str(v)   => BasisParamValue.Word(v)
+                  case ArgValue.Ident(v) => BasisParamValue.Word(v.value)
+                  case ArgValue.Call("c", items) if items.forall(_.name.isEmpty) =>
+                    BasisParamValue.Numbers(items.map {
+                      case Arg(_, ArgValue.Num(v)) => v
+                      case Arg(_, other) =>
+                        throw ParseError(s"basis ${kind.canonicalName}(...) parameter '$param' vectors hold numeric literals, found $other", valueAt(other))
+                    })
+                  case other =>
+                    throw ParseError(s"basis ${kind.canonicalName}(...) parameter '$param' must be a literal, found $other", valueAt(other))
+                BasisParam(param, literal)
+            }
+            FormulaBasis.admit(kind, params).left.foreach { error =>
+              val pos = error.param
+                .flatMap(name => callArgs.reverseIterator.find(_.name.contains(name)))
+                .map(arg => valueAt(arg.value))
+                .getOrElse(at)
+              throw ParseError(error.message, pos)
+            }
+            (Some(kind.canonicalName), params)
+          case Some(other) =>
+            throw ParseError(s"'basis' must be an HRF kind name or kind(name = value, ...), found $other", at)
+
       def stringOrIdentRef(name: String): Option[ArgValue] =
         named.get(name).map {
           case v @ ArgValue.Str(_)   => v
@@ -557,7 +606,7 @@ object FormulaParser:
           throw ParseError(s"hrf(...) positional args must be identifiers or calls, found $other", at)
       }
 
-      val basis = schema.stringOrIdent("basis")
+      val (basis, basisParams) = schema.basisChoice()
       val subset = schema.raw("subset")
       val onsets = schema.vectorRef("onsets")
       val durations = schema.vectorRef("durations")
@@ -633,14 +682,15 @@ object FormulaParser:
         sharedSlopes = schema.boolean("shared_slopes"),
         orthogonalizeBasis = schema.boolean("orthogonalize_basis"),
         temporalDerivative = temporalDerivative,
-        eventNormalization = eventNormalization
+        eventNormalization = eventNormalization,
+        basisParams = basisParams
       )
 
     private def buildTrialwiseCall(args: Vector[Arg]): TrialwiseCall =
       val schema = TermArgs("trialwise", args)
       schema.requireNoPositional()
 
-      val basis = schema.stringOrIdent("basis")
+      val (basis, basisParams) = schema.basisChoice()
       val subset = schema.raw("subset")
       val onsets = schema.vectorRef("onsets")
       val durations = schema.vectorRef("durations")
@@ -681,7 +731,8 @@ object FormulaParser:
         addSum = addSum,
         label = label,
         scaling = scaling,
-        normalize = normalize
+        normalize = normalize,
+        basisParams = basisParams
       )
 
     private def buildCovariateCall(args: Vector[Arg]): CovariateCall =

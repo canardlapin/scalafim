@@ -1,0 +1,42 @@
+[
+  {
+    "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala",
+    "current_sha256": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb",
+    "historical_sha256": {
+      "7057a8d5a2d898c1bfb528a28f3f635dda639b8b": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb",
+      "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f": "72f99bedd386a9c5721aeb214d08ee429aa3be1d0d92b96233e751f0db24aadb"
+    }
+  },
+  {
+    "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala",
+    "current_sha256": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554",
+    "historical_sha256": {
+      "7057a8d5a2d898c1bfb528a28f3f635dda639b8b": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554",
+      "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554"
+    }
+  },
+  {
+    "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala",
+    "current_sha256": "13ba1ea58745d703e2030c36b4e8d211085892b2a963d8f01313a4e16b6fbaf9",
+    "historical_sha256": {
+      "7057a8d5a2d898c1bfb528a28f3f635dda639b8b": "a079bd7733d258b25d1967da9a83c788a85eda5815e7ef23eeb7c0f64c5483e6",
+      "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f": "a079bd7733d258b25d1967da9a83c788a85eda5815e7ef23eeb7c0f64c5483e6"
+    }
+  },
+  {
+    "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala",
+    "current_sha256": "9d3ba2c2ee8db9f34aebe6db4d8889d24bfe83b485e89fd4ee5e33ab0d9e9d60",
+    "historical_sha256": {
+      "7057a8d5a2d898c1bfb528a28f3f635dda639b8b": "9d3ba2c2ee8db9f34aebe6db4d8889d24bfe83b485e89fd4ee5e33ab0d9e9d60",
+      "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f": "9d3ba2c2ee8db9f34aebe6db4d8889d24bfe83b485e89fd4ee5e33ab0d9e9d60"
+    }
+  },
+  {
+    "path": "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/profile/ParallelBlockExecutor.scala",
+    "current_sha256": "df04fb32d3c9a9e03f700a8405afd65c2c36aa38343d67fc2f616d229eb0f6e6",
+    "historical_sha256": {
+      "7057a8d5a2d898c1bfb528a28f3f635dda639b8b": "df04fb32d3c9a9e03f700a8405afd65c2c36aa38343d67fc2f616d229eb0f6e6",
+      "ea6fe3ad43ece091ebcccd85fbc6cf80801d705f": "df04fb32d3c9a9e03f700a8405afd65c2c36aa38343d67fc2f616d229eb0f6e6"
+    }
+  }
+]

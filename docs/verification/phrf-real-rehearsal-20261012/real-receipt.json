@@ -1,0 +1,24 @@
+{
+  "schema": "phrf-s10-real-rehearsal/v1",
+  "root_kind": "harness",
+  "datasets_per_cell": 2,
+  "cells": [
+    "C-TX-.5",
+    "C-TS-1",
+    "C-TS-.5",
+    "C-TG-.5",
+    "T-TX-fast",
+    "T-TX-jit",
+    "T-TS-fast"
+  ],
+  "units": 60,
+  "process_and_child_cpu_seconds": 357.61199200000004,
+  "rerun_jobs": 1,
+  "owner_verdict": "Valid(0350adc8c8d24269,2,60,Vector())",
+  "corpus_outcomes_sha256": "3c78d9f6c5348f43c8035f2f83a08950eaf6db8d850246726166552f755c3db4",
+  "input_inventory_sha256": "7cd7a2d1b21aebe4c514f0d1747e2d59a836414a17d17b5378b2e34038101efd",
+  "coverage_target": "tau-rehearsal-only",
+  "pilot_launch_authority": false,
+  "scientific_admission": false,
+  "whitelist_released": false
+}

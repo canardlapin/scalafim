@@ -1,0 +1,120 @@
+{
+  "default_gale_revision": "b56a9dd0b8ad479621a3594880f90c9add8c2824",
+  "local_override": null,
+  "kernel_tests": {
+    "JVM": 29,
+    "JS": 29
+  },
+  "compact_cohort": {
+    "JVM": {
+      "tests": 3,
+      "admitted": 24,
+      "total": 24
+    },
+    "JS": {
+      "tests": 3,
+      "admitted": 23,
+      "total": 24
+    }
+  },
+  "frozen_LWU_accuracy": {
+    "JVM": {
+      "tests": 1,
+      "SNR1_admitted": 91,
+      "SNR05_admitted": 81,
+      "printed_metrics": [
+        {
+          "SNR": "1.00",
+          "admission_percent": "91.0",
+          "latency_p95_seconds": "0.0000",
+          "FWHM_p95_seconds": "0.0100",
+          "relative_amplitude_p95": "2.91e-04",
+          "nodes_per_voxel": "163.1",
+          "jets_per_voxel": "4.47",
+          "exact_per_voxel": "0.12",
+          "oracle_beaten_in_admitted": "89/91"
+        },
+        {
+          "SNR": "0.50",
+          "admission_percent": "81.0",
+          "latency_p95_seconds": "0.0100",
+          "FWHM_p95_seconds": "0.0100",
+          "relative_amplitude_p95": "4.50e-04",
+          "nodes_per_voxel": "161.3",
+          "jets_per_voxel": "4.53",
+          "exact_per_voxel": "0.08",
+          "oracle_beaten_in_admitted": "78/81"
+        }
+      ]
+    },
+    "JS": {
+      "tests": 1,
+      "SNR1_admitted": 91,
+      "SNR05_admitted": 83,
+      "printed_metrics": [
+        {
+          "SNR": "1.00",
+          "admission_percent": "91.0",
+          "latency_p95_seconds": "0.0000",
+          "FWHM_p95_seconds": "0.0100",
+          "relative_amplitude_p95": "3.19e-04",
+          "nodes_per_voxel": "163.1",
+          "jets_per_voxel": "4.42",
+          "exact_per_voxel": "0.11",
+          "oracle_beaten_in_admitted": "89/91"
+        },
+        {
+          "SNR": "0.50",
+          "admission_percent": "83.0",
+          "latency_p95_seconds": "0.0100",
+          "FWHM_p95_seconds": "0.0100",
+          "relative_amplitude_p95": "4.50e-04",
+          "nodes_per_voxel": "161.3",
+          "jets_per_voxel": "4.43",
+          "exact_per_voxel": "0.02",
+          "oracle_beaten_in_admitted": "80/83"
+        }
+      ]
+    },
+    "voxels_per_cell": 100,
+    "rank": 23,
+    "compact_dimension": 69,
+    "accuracy_assertions": "original assertions passed on both platforms",
+    "admission95": "unmet on both platforms; no admission-policy qualification claimed"
+  },
+  "capacity": {
+    "default_array_cells": 2000000,
+    "default_spectral_work": 100000000000,
+    "LWU_array_cells": 3000000,
+    "LWU_spectral_work": 128000000000,
+    "max_total_storage_cells": 16000000,
+    "max_training_work": 20000000,
+    "max_certification_work": 100000000,
+    "max_exact_spectral_policy": 9007199254740991
+  },
+  "estimate": {
+    "fine_samples": 321,
+    "grid_points": 882,
+    "training_columns": 8820,
+    "training_cells": 2831220,
+    "storage_cells": 9024270,
+    "training_work": 8498985,
+    "spectral_work": 120096758484,
+    "certification_work": 49833900
+  },
+  "compile_all": {
+    "exit_code": 0,
+    "warning_lines": 0,
+    "seconds": 698.3929572105408,
+    "platforms": [
+      "JVM",
+      "JS"
+    ]
+  },
+  "cleanup": {
+    "explicit_shutdown_exit_code": 0,
+    "message": "no server running"
+  },
+  "native_results": "See sibling ../native; parent-owned verified qualification, not conflated with these Darwin local runs.",
+  "printed_metric_precision": "These stdout metrics retain their original display precision; e.g.0.0000 is rounded, not a claim of exact zero."
+}

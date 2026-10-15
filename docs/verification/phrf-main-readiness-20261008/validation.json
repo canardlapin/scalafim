@@ -1,0 +1,118 @@
+{
+  "mainReady": true,
+  "scope": "Local main engineering integration; opt-in diagnostics with production qualification open.",
+  "mainBase": "c59c21d8",
+  "checkpoint": "8992a2bb",
+  "results": [
+    {
+      "command": "scalafimCompileAll",
+      "exitCode": 0,
+      "seconds": 459.3
+    },
+    {
+      "command": "fitJVM/test",
+      "exitCode": 0,
+      "seconds": 43.1,
+      "total": 738,
+      "passed": 738,
+      "skipped": 0
+    },
+    {
+      "command": "designJVM/test",
+      "exitCode": 0,
+      "seconds": 34.6,
+      "total": 481,
+      "passed": 481,
+      "skipped": 0
+    },
+    {
+      "command": "datasetJVM/test",
+      "exitCode": 0,
+      "seconds": 6.0,
+      "total": 76,
+      "passed": 76,
+      "skipped": 0
+    },
+    {
+      "command": "firstLevelLawsJVM/testOnly *DecodedTrialCheckpointSuite *TrialReferencePlacementSuite *TrialDomainGateSuite *TrialNeighborhoodAuditSuite *TrialObservationEnclosureSuite *TrialReadoutBoundAuditSuite *TrialQualificationAuditSuite",
+      "exitCode": 0,
+      "seconds": 36.3,
+      "total": 19,
+      "passed": 19,
+      "skipped": 0
+    },
+    {
+      "command": "mvpaJVM/test",
+      "exitCode": 0,
+      "seconds": 16.4,
+      "total": 471,
+      "passed": 468,
+      "skipped": 3
+    },
+    {
+      "command": "fitJS/test",
+      "exitCode": 0,
+      "seconds": 104.4,
+      "total": 680,
+      "passed": 680,
+      "skipped": 0
+    },
+    {
+      "command": "designJS/test",
+      "exitCode": 0,
+      "seconds": 34.7,
+      "total": 480,
+      "passed": 480,
+      "skipped": 0
+    },
+    {
+      "command": "datasetJS/test",
+      "exitCode": 0,
+      "seconds": 8.0,
+      "total": 62,
+      "passed": 62,
+      "skipped": 0
+    },
+    {
+      "command": "phrfComparisonJVM/test",
+      "exitCode": 0,
+      "seconds": 253.0,
+      "total": 476,
+      "passed": 466,
+      "skipped": 10
+    },
+    {
+      "command": "firstLevelLawsJS/testOnly *DecodedTrialCheckpointSuite *TrialReferencePlacementSuite *TrialDomainGateSuite *TrialNeighborhoodAuditSuite *TrialObservationEnclosureSuite *TrialReadoutBoundAuditSuite *TrialQualificationAuditSuite",
+      "exitCode": 0,
+      "seconds": 116.1,
+      "total": 19,
+      "passed": 19,
+      "skipped": 0
+    },
+    {
+      "command": "mvpaJS/test",
+      "exitCode": 0,
+      "seconds": 23.0,
+      "total": 471,
+      "passed": 468,
+      "skipped": 3
+    },
+    {
+      "command": "phrfComparisonJS/test",
+      "exitCode": 0,
+      "seconds": 110.3,
+      "total": 243,
+      "passed": 243,
+      "skipped": 0
+    }
+  ],
+  "compilerWarnings": [],
+  "buildMessages": [
+    "[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list"
+  ],
+  "skips": "Existing MVPA optional inventory/replay probes (3 per platform) and PHRF comparison JVM opt-in/heavy tests (10). Test sources unchanged by this branch.",
+  "productionQualified": false,
+  "hostedCiRun": false,
+  "mainMoved": false,
+  "remotePublished": false
+}

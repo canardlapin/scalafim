@@ -1,0 +1,11 @@
+{
+  "replay_only": true,
+  "scientific_pass": null,
+  "replicates_per_cell": 16,
+  "fits_per_platform": 288,
+  "same_dataset_keys": true,
+  "same_decisions": true,
+  "max_scaled_error_against_pre_registration_pilot": 5.783379636074792e-15,
+  "tolerance": 1e-09,
+  "pass": true
+}

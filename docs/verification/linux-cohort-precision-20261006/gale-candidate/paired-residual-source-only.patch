@@ -1,0 +1,1341 @@
+diff --git a/README.md b/README.md
+index e4163ef3adb2a783aca3a4e358a64aa2a27ab271..64df387401f5913ad4d85b6649a421f25635a7b4 100644
+--- a/README.md
++++ b/README.md
+@@ -108,6 +108,40 @@ A capacity refusal leaves the builder unchanged. Builders are not thread-safe.
+ Nonfinite inputs follow a separate IEEE addition channel; NaN payload bits and
+ their ordering are unspecified.
+ 
++### Paired squared residual comparisons
++
++`gale.numeric.PairedResidualWorkspace` outward encloses the difference between
++two stored row-major linear predictions without subtracting independently
++rounded residual energies. A reusable workspace owns `2 * rows + 2 * columns`
++primitive scratch cells; `requiredArrayCells` checks that shape before allocation.
++
++```scala
++import gale.numeric.*
++
++val workspace = PairedResidualWorkspace(2, 1).toOption.get
++val comparison = workspace.compare(
++  response = Array(1.0, 1.0),
++  previousDesign = Array(1.0, 0.0),
++  candidateDesign = Array(1.0, 1.0),
++  previousCoefficients = Array(1.0),
++  candidateCoefficients = Array(1.0)
++).toOption.get
++assert(comparison.certifiesProfileDecrease)
++```
++
++The default profile check bounds the previous coefficients' possible
++suboptimality using the normal-equation residual and a positive Gershgorin
++lower bound for the previous Gram matrix. It certifies only a strictly negative
++profile-difference upper bound. A nonpositive sufficient Gram bound or an
++inconclusive sign returns explicit `Unresolved`; shape, nonfinite input and
++unbounded arithmetic return typed errors. Candidate rank need not be assumed.
++
++Inputs must stay unchanged during the synchronous call; workspaces are not
++thread-safe and results retain no input/scratch aliases. Common additive energy
++offsets are absent from this API. Priors, optimizer acceptance policy, callback
++identity and evaluation quotas remain the caller's responsibility. A data-only
++certificate cannot establish decrease of an augmented objective.
++
+ ## Fit and boundaries
+ 
+ Gale targets the real-`Double` linear algebra slice used by scientific and data
+diff --git a/core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala b/core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala
+new file mode 100644
+index 0000000000000000000000000000000000000000..c6e95a86c139851be48fa361e7c7545f4ae548dc
+--- /dev/null
++++ b/core/shared/src/main/scala/gale/numeric/PairedSquaredResidualComparison.scala
+@@ -0,0 +1,295 @@
++package gale.numeric
++
++import gale.linalg.OutwardInterval
++
++enum PairedResidualInput:
++  case Response, PreviousDesign, CandidateDesign, PreviousCoefficients, CandidateCoefficients
++
++enum PairedResidualStage:
++  case CoefficientDifference, ReturnedModels, NormalEquation, Gram, Gershgorin, OldGap, ProfileDifference
++
++enum PairedResidualError:
++  case InvalidDimensions(rows: Int, columns: Int)
++  case MatrixSizeOverflow(rows: Int, columns: Int)
++  case MissingInput(input: PairedResidualInput)
++  case MissingScope
++  case LengthMismatch(input: PairedResidualInput, expected: Int, actual: Int)
++  case NonFiniteInput(input: PairedResidualInput, index: Int)
++  case UnboundedArithmetic(stage: PairedResidualStage, row: Int, column: Int)
++
++  def message: String = this match
++    case InvalidDimensions(rows, columns) => s"paired residual comparison needs positive dimensions, got $rows x $columns"
++    case MatrixSizeOverflow(rows, columns) => s"paired residual design storage overflows: $rows x $columns"
++    case MissingInput(input) => s"paired residual input $input is absent"
++    case MissingScope => "paired residual comparison scope is absent"
++    case LengthMismatch(input, expected, actual) => s"paired residual input $input has length $actual, expected $expected"
++    case NonFiniteInput(input, index) => s"paired residual input $input is nonfinite at $index"
++    case UnboundedArithmetic(stage, row, column) => s"paired residual arithmetic is unbounded in $stage at ($row,$column)"
++
++enum PairedResidualScope:
++  case ReturnedModels, ProfileMinimum
++
++enum ResidualDifferenceDirection:
++  case Decrease, Increase, Unresolved
++
++/** A bound on the previous coefficient error in squared-residual units.
++  * For G0=D0' D0 and q0=D0' (z-D0 beta0), a positive certified Gram lower
++  * eigenvalue implies RSS0(beta0)-min RSS0=q0' inverse(G0) q0, bounded by
++  * ||q0||²/lambdaLower. Since min RSS1 <= RSS1(beta1), the stored-model
++  * difference plus this old gap is an upper bound on min RSS1-min RSS0.
++  * No candidate rank or candidate optimum needs to be assumed or computed.
++  */
++final class PreviousProfileMinimumBound private[numeric] (
++    val gramEigenvalueLower: Double,
++    val normalEquationSquaredUpper: Double,
++    val suboptimalityUpper: Double,
++    val differenceUpper: Double
++)
++
++enum ProfileMinimumUnresolved:
++  case NonPositiveGramLowerBound(lower: Double)
++  case DecreaseNotCertified(bound: PreviousProfileMinimumBound)
++
++enum ProfileMinimumComparison:
++  case NotRequested
++  case CertifiedDecrease(bound: PreviousProfileMinimumBound)
++  case Unresolved(reason: ProfileMinimumUnresolved)
++
++/** Bounds concern the supplied, stored predictors and coefficients. No common
++  * energy offset, prior, optimizer policy, refit, or altered coefficient enters
++  * this comparison. Inputs must remain unchanged during the synchronous call.
++  */
++final class PairedResidualComparison private[numeric] (
++    val modelDifference: OutwardInterval,
++    val profileMinimum: ProfileMinimumComparison
++):
++  def direction: ResidualDifferenceDirection =
++    if modelDifference.upper < 0.0 then ResidualDifferenceDirection.Decrease
++    else if modelDifference.lower > 0.0 then ResidualDifferenceDirection.Increase
++    else ResidualDifferenceDirection.Unresolved
++
++  def certifiesProfileDecrease: Boolean = profileMinimum match
++    case ProfileMinimumComparison.CertifiedDecrease(_) => true
++    case _ => false
++
++/** Thread-confined, reusable primitive scratch for paired row-major designs.
++  * Array storage is exactly `2 * rows + 2 * columns` Double cells. Model work
++  * is O(rows * columns); optional previous-Gram certification adds
++  * O(rows * columns^2) work and no matrix-sized workspace. Outputs retain no
++  * input or scratch aliases. The hot loops allocate no interval/tuple records.
++  */
++final class PairedResidualWorkspace private[numeric] (val rows: Int, val columns: Int):
++  val arrayCells: Long = 2L * rows + 2L * columns
++  private val betaDifferenceLower = new Array[Double](columns)
++  private val betaDifferenceUpper = new Array[Double](columns)
++  private val previousResidualLower = new Array[Double](rows)
++  private val previousResidualUpper = new Array[Double](rows)
++  private val arithmetic = new PairedResidualArithmetic
++
++  def compare(
++      response: Array[Double],
++      previousDesign: Array[Double],
++      candidateDesign: Array[Double],
++      previousCoefficients: Array[Double],
++      candidateCoefficients: Array[Double],
++      scope: PairedResidualScope = PairedResidualScope.ProfileMinimum
++  ): Either[PairedResidualError, PairedResidualComparison] =
++    val cells = rows * columns // constructor admitted the Long product first
++    for
++      _ <- if scope == null then Left(PairedResidualError.MissingScope) else Right(())
++      _ <- validate(response, rows, PairedResidualInput.Response)
++      _ <- validate(previousDesign, cells, PairedResidualInput.PreviousDesign)
++      _ <- validate(candidateDesign, cells, PairedResidualInput.CandidateDesign)
++      _ <- validate(previousCoefficients, columns, PairedResidualInput.PreviousCoefficients)
++      _ <- validate(candidateCoefficients, columns, PairedResidualInput.CandidateCoefficients)
++      result <- compareFinite(response, previousDesign, candidateDesign, previousCoefficients, candidateCoefficients, scope)
++    yield result
++
++  private def validate(values: Array[Double], size: Int, input: PairedResidualInput): Either[PairedResidualError, Unit] =
++    if values == null then Left(PairedResidualError.MissingInput(input))
++    else if values.length != size then Left(PairedResidualError.LengthMismatch(input, size, values.length))
++    else
++      var i = 0
++      while i < size do
++        if !values(i).isFinite then return Left(PairedResidualError.NonFiniteInput(input, i))
++        i += 1
++      Right(())
++
++  private def compareFinite(
++      response: Array[Double], d0: Array[Double], d1: Array[Double],
++      b0: Array[Double], b1: Array[Double], scope: PairedResidualScope
++  ): Either[PairedResidualError, PairedResidualComparison] =
++    arithmetic.reset()
++    var column = 0
++    while column < columns do
++      arithmetic.subtract(b1(column), b1(column), b0(column), b0(column))
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.CoefficientDifference, -1, column))
++      betaDifferenceLower(column) = arithmetic.lower
++      betaDifferenceUpper(column) = arithmetic.upper
++      column += 1
++    var totalLower = 0.0
++    var totalUpper = 0.0
++    var row = 0
++    while row < rows do
++      var predictionLower = 0.0
++      var predictionUpper = 0.0
++      var deltaLower = 0.0
++      var deltaUpper = 0.0
++      var normalResidualLower = response(row)
++      var normalResidualUpper = response(row)
++      column = 0
++      while column < columns && arithmetic.valid do
++        val index = row * columns + column
++        val old = d0(index)
++        arithmetic.multiply(old, old, b0(column), b0(column))
++        val termLower = arithmetic.lower
++        val termUpper = arithmetic.upper
++        arithmetic.add(predictionLower, predictionUpper, termLower, termUpper)
++        predictionLower = arithmetic.lower
++        predictionUpper = arithmetic.upper
++        if scope == PairedResidualScope.ProfileMinimum then
++          arithmetic.subtract(normalResidualLower, normalResidualUpper, termLower, termUpper)
++          normalResidualLower = arithmetic.lower
++          normalResidualUpper = arithmetic.upper
++        arithmetic.subtract(d1(index), d1(index), old, old)
++        val designLower = arithmetic.lower
++        val designUpper = arithmetic.upper
++        arithmetic.multiply(designLower, designUpper, b1(column), b1(column))
++        arithmetic.add(deltaLower, deltaUpper, arithmetic.lower, arithmetic.upper)
++        deltaLower = arithmetic.lower
++        deltaUpper = arithmetic.upper
++        arithmetic.multiply(old, old, betaDifferenceLower(column), betaDifferenceUpper(column))
++        arithmetic.add(deltaLower, deltaUpper, arithmetic.lower, arithmetic.upper)
++        deltaLower = arithmetic.lower
++        deltaUpper = arithmetic.upper
++        column += 1
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.ReturnedModels, row, column))
++      previousResidualLower(row) = normalResidualLower
++      previousResidualUpper(row) = normalResidualUpper
++      arithmetic.subtract(response(row), response(row), predictionLower, predictionUpper)
++      arithmetic.multiply(2.0, 2.0, arithmetic.lower, arithmetic.upper)
++      arithmetic.subtract(deltaLower, deltaUpper, arithmetic.lower, arithmetic.upper)
++      arithmetic.multiply(deltaLower, deltaUpper, arithmetic.lower, arithmetic.upper)
++      arithmetic.add(totalLower, totalUpper, arithmetic.lower, arithmetic.upper)
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.ReturnedModels, row, -1))
++      totalLower = arithmetic.lower
++      totalUpper = arithmetic.upper
++      row += 1
++    val difference = OutwardInterval(totalLower, totalUpper).toOption.get // finite ordered arithmetic invariant
++    scope match
++      case PairedResidualScope.ReturnedModels =>
++        Right(new PairedResidualComparison(difference, ProfileMinimumComparison.NotRequested))
++      case PairedResidualScope.ProfileMinimum =>
++        profileBound(d0, difference).map(profile => new PairedResidualComparison(difference, profile))
++
++  /** Certify only an upper bound: min RSS1-min RSS0 <= deltaRSSUpper+oldGapUpper.
++    * Gershgorin positivity is sufficient and incomplete. An unavailable lower
++    * bound is unresolved, even when the actual Gram matrix is positive definite.
++    */
++  private def profileBound(d0: Array[Double], difference: OutwardInterval): Either[PairedResidualError, ProfileMinimumComparison] =
++    var normalSquaredUpper = 0.0
++    var left = 0
++    while left < columns do
++      var lower = 0.0
++      var upper = 0.0
++      var row = 0
++      while row < rows && arithmetic.valid do
++        val value = d0(row * columns + left)
++        arithmetic.multiply(value, value, previousResidualLower(row), previousResidualUpper(row))
++        arithmetic.add(lower, upper, arithmetic.lower, arithmetic.upper)
++        lower = arithmetic.lower
++        upper = arithmetic.upper
++        row += 1
++      val magnitude = math.max(math.abs(lower), math.abs(upper))
++      arithmetic.multiply(magnitude, magnitude, magnitude, magnitude)
++      arithmetic.add(0.0, normalSquaredUpper, arithmetic.lower, arithmetic.upper)
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.NormalEquation, -1, left))
++      normalSquaredUpper = arithmetic.upper
++      left += 1
++    var eigenvalueLower = Double.PositiveInfinity
++    left = 0
++    while left < columns do
++      var diagonalLower = 0.0
++      var offDiagonalUpper = 0.0
++      var right = 0
++      while right < columns do
++        var lower = 0.0
++        var upper = 0.0
++        var row = 0
++        while row < rows && arithmetic.valid do
++          val x = d0(row * columns + left)
++          val y = d0(row * columns + right)
++          arithmetic.multiply(x, x, y, y)
++          arithmetic.add(lower, upper, arithmetic.lower, arithmetic.upper)
++          lower = arithmetic.lower
++          upper = arithmetic.upper
++          row += 1
++        if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.Gram, left, right))
++        if left == right then diagonalLower = lower
++        else
++          val magnitude = math.max(math.abs(lower), math.abs(upper))
++          arithmetic.add(0.0, offDiagonalUpper, magnitude, magnitude)
++          if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.Gershgorin, left, right))
++          offDiagonalUpper = arithmetic.upper
++        right += 1
++      arithmetic.subtract(diagonalLower, diagonalLower, offDiagonalUpper, offDiagonalUpper)
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.Gershgorin, left, -1))
++      eigenvalueLower = math.min(eigenvalueLower, arithmetic.lower)
++      left += 1
++    if eigenvalueLower <= 0.0 then
++      Right(ProfileMinimumComparison.Unresolved(ProfileMinimumUnresolved.NonPositiveGramLowerBound(eigenvalueLower)))
++    else
++      arithmetic.dividePositiveUpper(normalSquaredUpper, eigenvalueLower)
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.OldGap, -1, -1))
++      val gapUpper = arithmetic.upper
++      arithmetic.add(difference.upper, difference.upper, gapUpper, gapUpper)
++      if !arithmetic.valid then return Left(PairedResidualError.UnboundedArithmetic(PairedResidualStage.ProfileDifference, -1, -1))
++      val bound = new PreviousProfileMinimumBound(eigenvalueLower, normalSquaredUpper, gapUpper, arithmetic.upper)
++      if bound.differenceUpper < 0.0 then Right(ProfileMinimumComparison.CertifiedDecrease(bound))
++      else Right(ProfileMinimumComparison.Unresolved(ProfileMinimumUnresolved.DecreaseNotCertified(bound)))
++
++object PairedResidualWorkspace:
++  /** Allocation-free admission shape for callers enforcing their own budgets. */
++  def requiredArrayCells(rows: Int, columns: Int): Either[PairedResidualError, Long] =
++    if rows <= 0 || columns <= 0 then Left(PairedResidualError.InvalidDimensions(rows, columns))
++    else if rows.toLong * columns.toLong > Int.MaxValue then Left(PairedResidualError.MatrixSizeOverflow(rows, columns))
++    else Right(2L * rows + 2L * columns)
++
++  def apply(rows: Int, columns: Int): Either[PairedResidualError, PairedResidualWorkspace] =
++    requiredArrayCells(rows, columns).map(_ => new PairedResidualWorkspace(rows, columns))
++
++/** Mutable primitive endpoints; invalid arithmetic never becomes a result. */
++private final class PairedResidualArithmetic:
++  var lower = 0.0
++  var upper = 0.0
++  var valid = true
++
++  def reset(): Unit =
++    lower = 0.0
++    upper = 0.0
++    valid = true
++
++  private def rounded(lo: Double, hi: Double): Unit =
++    val nextLower = java.lang.Math.nextDown(lo)
++    val nextUpper = java.lang.Math.nextUp(hi)
++    if !lo.isFinite || !hi.isFinite || !nextLower.isFinite || !nextUpper.isFinite then valid = false
++    else
++      lower = nextLower
++      upper = nextUpper
++
++  def add(aLower: Double, aUpper: Double, bLower: Double, bUpper: Double): Unit =
++    rounded(aLower + bLower, aUpper + bUpper)
++
++  def subtract(aLower: Double, aUpper: Double, bLower: Double, bUpper: Double): Unit =
++    rounded(aLower - bUpper, aUpper - bLower)
++
++  def multiply(aLower: Double, aUpper: Double, bLower: Double, bUpper: Double): Unit =
++    val a = aLower * bLower
++    val b = aLower * bUpper
++    val c = aUpper * bLower
++    val d = aUpper * bUpper
++    if !a.isFinite || !b.isFinite || !c.isFinite || !d.isFinite then valid = false
++    else rounded(math.min(math.min(a, b), math.min(c, d)), math.max(math.max(a, b), math.max(c, d)))
++
++  def dividePositiveUpper(numerator: Double, denominator: Double): Unit =
++    rounded(0.0, numerator / denominator)
+diff --git a/core/shared/src/test/scala/gale/numeric/PairedResidualFixtures.scala b/core/shared/src/test/scala/gale/numeric/PairedResidualFixtures.scala
+new file mode 100644
+index 0000000000000000000000000000000000000000..b9973d3334f8538878b06f8b4f763bf600a2fe5d
+--- /dev/null
++++ b/core/shared/src/test/scala/gale/numeric/PairedResidualFixtures.scala
+@@ -0,0 +1,798 @@
++package gale.numeric
++
++private[numeric] object PairedResidualFixtures:
++  final case class Fixture(name: String, rows: Int, columns: Int, response: Array[Double], previousDesign: Array[Double], candidateDesign: Array[Double], previousCoefficients: Array[Double], candidateCoefficients: Array[Double], profileDecrease: Boolean)
++
++  private def bits(hex: String): Array[Double] =
++    hex.split("\\s+").filter(_.nonEmpty).map(h => java.lang.Double.longBitsToDouble(BigInt(h, 16).toLong))
++
++  def all: Vector[Fixture] = Vector(
++    Fixture("darwin-jvm-voxel-15.json", 72, 3,
++      bits("""
++      3ffc3cd835fa22da 3fe8582e0104f950 3f8f3f198fd07d90 bffafd5587dc127d c000ab7061b2303d bffeb082a883b2f3
++      4001c89c309d791a bfc53752685fcf89 3fe677b5b8489bbb 3f90653c19157957 bfe0d06d98331364 c001d1c4574d449a
++      bfe0d791889c06c1 bfe2f5a200560588 40024b1d5d37294e 3ff34d116cf2366a bfc3004cad7529b2 3fea24a4a6d62f0e
++      3fe2151c8e2b921c bfd4c62789baed3e bff146f5e45db019 bff71b12f5d03803 bffbeac4199450c8 3ff5c4ed07715172
++      3fe7668d23554e14 c0078d3df6a4f668 bff6feeaf45d7ee9 bff152f53b276ca9 3fc80d09b115d9c8 3fe6cc8b001451c7
++      3fe0938bf317fdb3 3fef74c845397d93 3ff4afc19e042384 3ff3589a6335e68f bfa15d4fe677283b 40000b3055e2aebb
++      4001bc417a1d9d2c bfd152907efa0a6d 3ff6082776093463 3fd96e474b2342d1 bffaeca3c38481cf bffd92376b31f1ac
++      bfc0a2120064b71b 3fd5c57982a677c5 400033ba2c7df2cf 3ff542feb5e5b4d3 400bfaac1a0456b9 3fea96c2b087eb0c
++      3ff87cafd8fc15ed bfe8e66a3208fa2c bfe9a41c300ef3bf 3ffa308aa27195f4 bffa8ddaeef5bac2 c00f7d0e2191fea6
++      bff22e42f1581bf5 bff82ba06378a614 c004d5ad789cc3b3 3fff69b4daebe2f5 bff1a89c086acd33 c00c059ef4a4cfa9
++      bff68d073786fe28 3fde47bd9978e29b c00db69e56c91a87 c011885f5b23f7a0 3fe018391a5a51ef 400b644a5d7cdcd4
++      4001b9ca7c613b92 c001ab886cedabdc 4015a59b5375879c 3fbdb604f8c05bea c007764ed626338e 3ff247bc803e75b3
++      """),
++      bits("""
++      3fb7bae590fc4bd4 3f90325536f30026 bfc78197fd1819f0 bfc141d06b69a8cc bfa2862fa0bb6664 3fa4f1339beb7dc6
++      3fb4391d33e886d8 3f6eb8dafd20cbd3 3f88791729829fb1 bfbbde92904364a4 bf9565ab6b458869 3fcd0c9891209ef0
++      3fd0c7177dd94be4 3fbd0d23879fde51 bf7981f95b6b53ed 3f8b78df945e376c bfa0db0d69e8a333 bf9658c8c32b0395
++      3fb6bb9498ff24ef bf96e51ebdd61b52 bfd4a2340c93d57e bfc205a6fbd1f3c4 3fb02a5f53c7a51c bf91918136d6c164
++      bfbfb915529496a5 bf74c29ce39c0c53 3fab84ed345513f5 3f477bcb4b076001 3fab828e8bdd49a8 3fc177f198dceccc
++      bfcd000875e18ecc bfa33403faa82b9c 3fb2b8be43e89168 3fc94059f2fe3170 3fa3880f74667c7a bfcd552a63072b0d
++      bfcd73718a6110b0 bfc54586e61d3f99 bfa1a90841d7cf40 bfd2256e11ab75b9 bfd177d27e7856d6 3f9d079e44ae62ab
++      bfc8fffa686d2814 3f8069e844c85442 3fb0afa6e1e7eb9e bfcb694e5200b4be bfa2941996360dbb 3fb8a7633f9db5b3
++      bfbc0ee4c4b04d46 3fb48bf549a024a6 3f9964e4da4bb7f2 bfb9594abf522f7f bfbbd32a884c04b5 3fcd2e939a208051
++      3fc04889692f8c7a 3f95e8d47607535b 3fbb592f0ef96f38 bfd66f0209f09a8e bfb1e7112a630880 3fd001ec787bb8ee
++      bf9ed4b5664f3f60 3fc35d1abd7ebe23 3fd90fc30882f2e9 3fd222eff9584a1d 3fcf377a6c316f56 3fd174f228ad6b9c
++      3fd8636edf58baba 3fc53a727a0c1c7a bfc82e9b8f5094ff bfccdc779db0ec67 bfb390966d97a5e6 bfc75b2ba2626793
++      3fbf4da74fecc0db 3fc53406f2ca64ff bfe14ef50430f20a 3fd3b5f77332ddf1 3fb1951d8796626d 3fcb7e15c43b8392
++      bfc23515aadca21e 3fb74c229fe13560 3fd5a969b96144e4 3fae778fbd3ebd48 3fc62a31474d37e6 3fcf8d268e4d342f
++      bfc523c4a82c6473 3fa4dc4dfa602835 3fcb94bc2b10efb9 bfc5ecd980b92147 bfc3753ec22b3f28 bf91bfae075f407d
++      3fb9adff6490eba0 bfc5552718c371fa 3fb87203b6518785 bfb30bab1c895a64 bfdae86141101b00 bfd031f1a152ccb8
++      3fcc301e304b2004 bf75f1f81e50c247 bfd2f6fef5c4a62f bfdf0ad4bb69ac83 bfb8f14dfea3e439 bfb5ced8f2949ff4
++      bfb8f54af97764c0 3fb11bd75a493ae0 bfd1f92c9ab5e54c bf71e32e243916dc bfb5f2ff5f6bfebd bfe053f74f727953
++      bfb443691c6466e6 bfc5f8126fa1c6ef bfd9597c692289ae bf90fbcba4060b0a 3fd0a6555450f797 3fcfc178dfabbe10
++      bfdca4efd43b9f4b bfd965a5f818989f bfcce00d5c0bafca bfb790f9aa69d4b3 3fcd57d06375d44d 3fc562aa92065042
++      bfcb26218ad4fd73 3fd0af6a8c37fa78 bf9d03a7c11f6e67 3fd92f4dcd754623 3f30526290c39a83 3fc5046667c2b088
++      3fb709035ef87011 bfa7a4e16eb2491e bfaa6ebbdc2f1da1 3faa56c4c49f1ba2 bf8fdf003cec1f96 bfdf80a0d590edef
++      bfe0b2cb10cd8c6d 3fa1b7b48547b63e bfc768cb10633a8e bf8f61d6fc8dbbcc bfd792d803b7f87a bfa66039eb4cd580
++      bfe16502fe6bf561 bfb80acd1c474824 bfc639bc71033e68 bfd1e67c462ed63f 3fd306f0b50afc57 bfd2203af12588ae
++      bfc9eb9214841414 bfd2f2c858733b9a 3fd460605ba05f08 bfaca177d8a17a94 bfe86e6f79a20969 3fd129d0b42acfbb
++      3fbe3bafd6e5eb78 3fd6085166435231 3f9e35594520e421 3fc174e5a2784cf0 bff83d7b1b46d139 3fe1946f3dcbfd12
++      3fc2479b4c7d888a 3f96bc6bbdf7fece 3fe0efe0e90e2073 bfc3b9b728a22e57 400471cef1f57737 bfe2a8436bb57948
++      bfcf6b2f3e215496 3fecf2f77dd3111e bfd09afbf02a113a 3fdf8b75d81947c5 bfa5e338aab2b3d9 3fdfe19ae507e3f7
++      3fd6a87aa55c127c bf7d6bf1bbde8596 3fd1bf3ad2735866 bfda83177f8365bc bf9c68354b4549cc bfc21761de16f573
++      bfe65e11808a1bb1 3fae10a2ee890217 3ff137baefca28b4 3ff3d76167f11f1e 3f99ec73c56f50b1 3fc98167b3588ce7
++      3fb8945bfdc08ecc 3fb33ec4baad4bbe 3fa0fe41a0db41ce bfe5400ad4ccb851 3fa3dedb8aba124c 3fc8ec6fbc29ba87
++      400138db7b661088 bfb6a06101ff9964 3fe2e98caa17b87f bfd52161c204fb52 3fa85d28d9d00f2b 4001a4fe69a780ac
++      3fbead861e768cf3 bfd61bdea02e5b59 bfc9eab7119d8fe7 bfcdb802dc0c36eb bfdf804fbbd35e46 bfe477f207b34c4c
++      bfe02b68bd3e055b 3fc0509d22f1a801 3fe32478a0dbd318 3fdb32766a761f1e 3fcbc43acedbb429 3fda49d6922af8e2
++      bfcf2ce44193d0d6 bfff5be6b4ff5331 bfe7ad7c294dad29 bfd1ce07efa3886a 0000000000000000 bfc32e62b2b80c36
++      3ff867e1f98cb571 0000000000000000 3fe0a44a0d48f34d 0000000000000000 0000000000000000 bff4d31818817499
++      """),
++      bits("""
++      3fb7bae58d4350e0 3f9032552a7c6e32 bfc78197fde3ba85 bfc141d069f24679 bfa2862f99dde11d 3fa4f133a41043fd
++      3fb4391d33207bf6 3f6eb8dac91c3308 3f88791721a86fa7 bfbbde928e148680 bf9565ab66b8faba 3fcd0c98929b9dbd
++      3fd0c7177e65a8ef 3fbd0d238acaf79e bf7981f93d222fc2 3f8b78df85941676 bfa0db0d6de8b512 bf9658c8c6397e77
++      3fb6bb9495e7677f bf96e51ed5db9245 bfd4a2340cf88652 bfc205a6fdfd76e4 3fb02a5f4f05a6ef bf91918137d9b0cb
++      bfbfb915528e3dda bf74c29cee1309cf 3fab84ed319f2a4f 3f477bcb49377ee2 3fab828e8917e03a 3fc177f199ce2e30
++      bfcd00087470b522 bfa33403f727de43 3fb2b8be44a51d84 3fc94059f0f7ad47 3fa3880f71a64e7e bfcd552a6557a81a
++      bfcd7371898e4902 bfc54586e4d79270 bfa1a90839f8be0a bfd2256e1126061c bfd177d27f8cad5a 3f9d079e35f0c093
++      bfc8fffa6707db9e 3f8069e850ec3898 3fb0afa6e23c0ea1 bfcb694e509e4580 bfa294199bc7adb8 3fb8a7633827bb11
++      bfbc0ee4c94abe14 3fb48bf54983f73e 3f9964e4dbd1bf6b bfb9594abf6e69f2 bfbbd32a8751f7b5 3fcd2e9399abc6ab
++      3fc04889674ec175 3f95e8d47d4737d1 3fbb592f1979a18f bfd66f020a028468 bfb1e7112c7b64d7 3fd001ec7875e1df
++      bf9ed4b56d1e9a3d 3fc35d1abe3b3cc4 3fd90fc307874309 3fd222eff8075dcc 3fcf377a6b7ab309 3fd174f2276db22b
++      3fd8636edd62f36a 3fc53a727bfdeaeb bfc82e9b8e7d62bd bfccdc77a2432f18 bfb390966ee993c3 bfc75b2ba138afbe
++      3fbf4da75de2d178 3fc53406f493f75a bfe14ef5045785ba 3fd3b5f77389a2ad 3fb1951d88ab677f 3fcb7e15c502102b
++      bfc23515abad954c 3fb74c22a321a0b5 3fd5a969bb5a16ef 3fae778fb4bf61f5 3fc62a314777af3e 3fcf8d268e624e78
++      bfc523c4a54d65e1 3fa4dc4e04377071 3fcb94bc2dcce83c bfc5ecd98487c6a3 bfc3753ebfda3ed5 bf91bfae06bba703
++      3fb9adff683fe46f bfc5552717310058 3fb87203ba629fb8 bfb30bab16c09c7e bfdae861406d028a bfd031f19f22e6d6
++      3fcc301e307ba11b bf75f1f808824803 bfd2f6fef787354d bfdf0ad4bcda6c5d bfb8f14e002b2ece bfb5ced8ef19bdcf
++      bfb8f54afb2ca1a4 3fb11bd757bcc801 bfd1f92c99f6125f bf71e32e619b3019 bfb5f2ff6330c491 bfe053f74f881e57
++      bfb44369269bc19d bfc5f81273d8c9e8 bfd9597c69e8f85b bf90fbcbab352ad9 3fd0a65553c4ef02 3fcfc178dfba36e0
++      bfdca4efd2e86f46 bfd965a5f710be4e bfcce00d5999414a bfb790f9af430a5c 3fcd57d067907863 3fc562aa8e35bc5c
++      bfcb26218aa5ec7f 3fd0af6a8aa56291 bf9d03a7d02b7575 3fd92f4dce210b4b 3f305268839f2cfc 3fc504666763140c
++      3fb709035ed59671 bfa7a4e16c2d91d4 bfaa6ebbf0d226e5 3faa56c4d48e41d0 bf8fdf0034db7351 bfdf80a0d6155492
++      bfe0b2cb10ac51bf 3fa1b7b47998af0d bfc768cb115ddaee bf8f61d721602262 bfd792d804bbf097 bfa66039f3306f4d
++      bfe16502ff03f4c9 bfb80acd1424f1cd bfc639bc78512c41 bfd1e67c43a56805 3fd306f0b5c53420 bfd2203af0b872f4
++      bfc9eb9217ff07c6 bfd2f2c8570ee98f 3fd460605c62f67b bfaca177c612f3cc bfe86e6f7b1c54cf 3fd129d0b4d2b015
++      3fbe3bafd5e0baf5 3fd60851677ff256 3f9e3559597e67d3 3fc174e5a3d5bc93 bff83d7b1b2d2fb9 3fe1946f3e80aef3
++      3fc2479b4cadf45f 3f96bc6baad92572 3fe0efe0e85bcd9f bfc3b9b722a8cf5f 400471cef1b6eed9 bfe2a8436b8733c9
++      bfcf6b2f3f9a1260 3fecf2f77ddee92a bfd09afbf2dddb92 3fdf8b75d674559a bfa5e338bc4684c8 3fdfe19ae453caf9
++      3fd6a87aa8c98edb bf7d6bf17e38a016 3fd1bf3ad1c625cd bfda83178079a4a2 bf9c683546ad7bbe bfc21761de90866c
++      bfe65e1180f6e34a 3fae10a2ea9b5c50 3ff137baef77f7f4 3ff3d76167e9c895 3f99ec73d0f1a541 3fc98167b669c6da
++      3fb8945bfd79dfb6 3fb33ec4b5ec7d1b 3fa0fe41a76f1af5 bfe5400ad47045a8 3fa3dedb884ca455 3fc8ec6fbf4191fc
++      400138db7b1fd2a4 bfb6a06111a7e808 3fe2e98cac3d17ac bfd52161c5d47044 3fa85d28dee34de7 4001a4fe6957d655
++      3fbead8620e47ff3 bfd61bdea23ae06f bfc9eab70f3cf6dd bfcdb802dcaab2d6 bfdf804fb4365002 bfe477f207f866d0
++      bfe02b68be25a67d 3fc0509d2436813f 3fe32478a19fdfc2 3fdb32766ac40c3d 3fcbc43ad104914a 3fda49d68adca62e
++      bfcf2ce4422e7409 bfff5be6b76fb80e bfe7ad7c2b252063 bfd1ce07e8fd2718 0000000000000000 bfc32e62b435f7b4
++      3ff867e1fb72a80f 0000000000000000 3fe0a44a0e944e9f 0000000000000000 0000000000000000 bff4d3181a2018e4
++      """),
++      bits("""
++      bffe468234c60160 bfff16ac5ca754ab bffe33cf29375a04
++      """),
++      bits("""
++      bffe468234bf0818 bfff16ac5be00290 bffe33cf28eb21d0
++      """),
++      true),
++    Fixture("darwin-jvm-voxel-2.json", 72, 3,
++      bits("""
++      3fca7c639339212b bfdb0c30f93bd933 3fea29d85ca0aec4 3fe252bb7b56a31c bfd78e749004391a 3fc3d0c97d69cb54
++      bfc70e07a01c7de9 3fed31aa2139666e bff085ea2a1fb05b 3ff19012ee3eed24 bfc0b90438c77bfa bfc411208941be77
++      bfa8fa5228404525 3fc56ee3347833d4 bfb68f3e7b601ee8 3fc8bbaa6b82373f bfec9da2d464017e bfd6514a0e39e1fa
++      bfc4c236a1e975f5 3fdf626d8b0f2ccc bfe3ed139d7c6cb3 bfc8c61e8a1642c8 bfd0026af554ddee bfe3d27ec2e87490
++      bfe13cf3b6d869e0 bfe5fabd47b124e6 3fed30e63467351f bfd723ca3ed32a54 bfc9be5e773f08f3 bfecfe5e16487c13
++      3fb10cf4301db2d3 3ff92fde2fb49ab9 bfe4a79da3d9758f bfc51380b641dffa 3fdfea65bb23bbd4 3fdf15787620dbf2
++      3fe72f373d55497f 3fe1fad69d8da70e 3f9871babfdff9e7 bff9786087edd081 3ffb8548dbc6801e bfe8571fe27a1595
++      bfe652bd68aaccbe 3fc19a453403e763 3fd8740b91f8d400 3fec7140620202f7 bfecb3393bd166c0 3fe7481c698fdb15
++      bfe7ad138e05a00a 40023343a54b6129 bfd0ba9c4b20a091 3ff76e7878dce699 bfda641c0a4b160a 3fedf7959907865a
++      3f999678425dbb28 3ff134574b43f59f 3fcacf315a2b8f09 bfdd7e89bb773999 3fe5e329515931ca 3fe0c40be39302db
++      3ff0e8493ea10bab 3fddf91fcb7a72f8 4009ace47d297da0 c0002c6e498d8265 3fef8f427ce82686 c00f7d634b52de76
++      3fe081209bc758cb bff78b00629a3508 4010687405dc4775 3fd59a7f93a7bfe1 4002ffadfc4765f6 3fdb2ff9bcf2fc59
++      """),
++      bits("""
++      bfd0c7a2c1aa3a3f bf9d9797b4022cfe bfbfe0b61704f9d3 3f9a2a0d4c0fa383 3fc9da634f68185c 3fcb153ef519069a
++      bfbd228a0fb9328c bfb10d63c64cbd49 bfbc48a62eb8980c 3fc50e7ba01b9636 3fb70c7c8e441996 3fc58d0510bda5e0
++      3fc1bcf93499a2aa 3fc27decdeb147ee bf8e5f0a2529f7f4 bfc998eab4cb119e bfbaae5212d25851 bfbe0391633c70f0
++      bfd00338b56666bf bfc294e78906285f bfba5619f87c9d69 bfd74fabd9ee52cb bfc6046041ff2c41 3f98775c4868fb34
++      bfc9f77bbc5ce116 bfb84012886a61cc bf8636c40a440fdc bfb2c7effe14fefa bfbd6167d18fdac8 3fc2db6ff5c6e1aa
++      3fc459044d0545f4 3fbe5e68d88e2fba 3fa046ace01d9207 bfca5edac6af2544 bfa82fbc86e5be15 bfd0a07ff2958857
++      bfa43a952a01ead1 3fc77138677337f5 3fc58e0c94bd3482 3f9f6e94a6ad9b69 bfd0d373ed27e765 3f9d9094d170226b
++      3fc5e3a0c8108354 3fad1c6ffd1b42dd 3fb15d5a40c98740 3fd5512bbc209740 bfb956372ea863d0 bfd9362433eae067
++      bfd52a065c7ecf4b 3fb0a3934acd7c63 3fb6ecb039842cc9 bfc62b50f7623eba bf7920eb5c1557cf 3fb9e3deac36b5ce
++      bfd521c3b5baf8c0 3fc65070bd2eb957 3fd745d3fb9ad459 bfbd42ad258ffc64 bfb730992523ea3b bfc21cb015b38900
++      bfc0e298b197631e 3fc09c5cfa4ee77c bfba1a7958538a9d bfd4c861b0b349bb bfb2f93b1906a408 3fe05681516e8dcb
++      bfd426f43977562c 3fcf281dd7d97163 3fca80fc639e2917 bfc401596d4fced5 bf9f20d0d5b21099 3fbc733444a46d15
++      3fe97f28ecb0de7d 3fd0f9f6d71871af bfbd5785ab5ea421 3fcde6637b0c10ae 3f9b4a99e8973824 3fab72da0cdb6545
++      bfa2e336511d255c 3fa1b93717a3183a 3fd95102dff29296 bfcd4e75d3653f64 3f7247626289fe08 bfaacbaa7e7ae95a
++      3fcb64a2020a2b9b 3fd5904d7b5204e3 3fd3575d002194aa bfd3e87839801a56 3fca38b156dc3ad9 bfc487e0337b0577
++      3fc23118d08abda4 3fa1c2333d81f2c9 3fc584f082e0c196 3fdd92a4c0eab920 bfe38de615ff6b29 3fdc5523aeae25fb
++      3faa991d5b157d49 3fadbdb8e9aaf854 bfd7f20f0a2f93bd bfd9bda5b0a045d9 bfb1fc5afe126c5f 3fb7961788f5378e
++      bfc73cbb14dbd2f4 bfa29c3319cbe940 3fd3c8efb015a762 bfc98e533a3c1986 bfd14d2d822ac68a bfb6c188b14375f0
++      bfd612b8e4e0a6cf bfdb25be3598671f bfc959edc439d49f bfc5871bd90a233e bfbe1754692fcb61 3f814e3d2938b9cf
++      bfd824a3fa2fc570 3fd35745d970be5d 3fc75b8975735c30 bfcabb0cd3ce07e6 3fc459241d76cc3e bfd868fa7b4d9070
++      bf9edd463d6353ec bfd86dee96ebb2fa bfd0c6264c696fc5 3fc0f7eeef852f42 3fd27adce92a336e bfaeb178d8d1c462
++      3faba0fee8220f40 bfa526cf72199f87 bfdccf209919fcaf 3fdaed796382604a 3fb5406bbc6c964e bf92a131e7eb0049
++      3fb72514288f6b63 bfd3a03a3380206d bfc032029bb07a11 bfd0f96901cff1b2 bfd67f6ad1e14f14 bfc7eb3002bc84c6
++      bfc3be6d3885b947 3fd75afecf759456 bfef2d54c25bae90 3fe1c111253cc7b1 3fc5ff30c7435960 bfafea6c04f9bfa7
++      bfdb712a9f8e9942 3fce087ef0a6848b 3fbbf7b9d618d6fa 3fda882be6793ed0 bfcdd1a34eaa9fb3 3fc8d15e10828af8
++      bfa9847a6a796ff6 3fd347f08a596264 3fac81a26ca2c83f 3fd329482cfe091b bfc6db2da4aac2a4 3fd4564ce0221215
++      bf9b58c89e8146ca bfd25d4c800eaaf2 bfd0608f90990285 3fe7dd47e5925e7c bfc1df4f84727366 3f612acb29c6bb3e
++      bfcc7965f23c4aa0 bfa612868acedb5f bfe34f4965752a9f bfd2622b4708c00c bfe053b6ad85928c bfc6c7bd6ae338ed
++      3fd539928865756f 3fcced2d90d54f85 bfcffb878744c75d bfd1703578d44d1f 3fb1ca9d03434691 bfb3ed383389b903
++      bfc6db6f5b62adc5 bfbe938c9a4dae16 3faf945d7b77800c 3fc84ee9990d2112 3fc5410983220789 3fcc143acddee010
++      bf7f2e6dde511a70 bfd21d2e3be8742d 3fc610bf8a33160a 3fce7a7e4eafa8d0 bfb2fbd920908996 3fd77e7931b40e52
++      bfcde9e8a15b1b97 bfed0df7038795ae 3ff00f2952ae573e bfeba32201876cb6 3fc27bccc864d303 bfd46a6302b96ba6
++      3fc0e91fd0df56bf bfdcd5857e01e075 3fc7a49eee85a845 bfab3c08bfec62dc 3ffd223eb9497a0a bf9cae1f5305ffae
++      bfd8686285a7709e 3fc1a418e62d151e 3f9ffc86558c0df2 3fa276b94e3bea6c 3fce06002efe0264 bffbe021565901d5
++      bfa9da8bf159356a c000f43663b5bd78 bfe99a2cad41b76f 3ff93ef8e4736cef 0000000000000000 bfc4bd82eb95c31e
++      3ffa63b916b43daa 0000000000000000 3fe1fe92f2efef78 0000000000000000 0000000000000000 bff6846a803a5fc1
++      """),
++      bits("""
++      bfd0c7a2c1a670f3 bf9d9797b5b9af58 bfbfe0b617e6a51e 3f9a2a0d4ed024b1 3fc9da634ec36398 3fcb153ef48c83c7
++      bfbd228a10452623 bfb10d63c6836d76 bfbc48a62d65cc7d 3fc50e7b9fa6dd2b 3fb70c7c8d2c8f6e 3fc58d0510c7fcf3
++      3fc1bcf9355cd051 3fc27decdf0ee562 bf8e5f0a1b95b702 bfc998eab4ff76fc bfbaae521338199a bfbe039163063aff
++      bfd00338b5845434 bfc294e788b6d877 bfba5619fa05d55e bfd74fabd9e4ec02 bfc604604219afe4 3f98775c423d20f4
++      bfc9f77bbad8a499 bfb840128778f6c7 bf8636c41a9d32b7 bfb2c7effe19c783 bfbd6167d02c8b3b 3fc2db6ff5feb331
++      3fc459044ce7a0c0 3fbe5e68d810cafc 3fa046acdec62bf6 bfca5edac5a073d7 bfa82fbc85ceb188 bfd0a07ff33c4b09
++      bfa43a9530ca8a22 3fc77138662b602f 3fc58e0c9437cd8c 3f9f6e94a4f579e3 bfd0d373ed663cf4 3f9d9094d35b3ab5
++      3fc5e3a0c742c3c6 3fad1c6ffc8b9118 3fb15d5a3f89c414 3fd5512bbb7fa9a6 bfb956372f258f07 bfd9362434073be6
++      bfd52a065c5fcf27 3fb0a39349ac88cf 3fb6ecb0387ad411 bfc62b50f6044e88 bf7920eb55d42706 3fb9e3deab75b010
++      bfd521c3b5095a21 3fc65070bc472a38 3fd745d3fc29307e bfbd42ad2747f134 bfb73099259e9d67 bfc21cb014e5a7f6
++      bfc0e298b0754c57 3fc09c5cfc14adf8 bfba1a79583462c1 bfd4c861b0879cb8 bfb2f93b19434c3f 3fe0568150b094fb
++      bfd426f438bbe3b6 3fcf281dd80f7dcc 3fca80fc62d86bd7 bfc401596d82fec9 bf9f20d0d9669b5e 3fbc7334446bae8c
++      3fe97f28ecdd7402 3fd0f9f6d6a1b879 bfbd5785af41ab25 3fcde6637ad644d9 3f9b4a99e4db1dd7 3fab72da12917494
++      bfa2e3365634c5e2 3fa1b93719b5eec3 3fd95102e0140db4 bfcd4e75d3305189 3f72476275b8dc3f bfaacbaa79717275
++      3fcb64a201e2f171 3fd5904d7b3a77b1 3fd3575d002fa2e3 bfd3e8783a1f151d 3fca38b1578a5084 bfc487e0329415bf
++      3fc23118d08bb4fc 3fa1c2333e67f1d2 3fc584f082572932 3fdd92a4c009f921 bfe38de615719b94 3fdc5523ae9a7b51
++      3faa991d5c3f9ce5 3fadbdb8ec68ffcb bfd7f20f0a4acdb9 bfd9bda5b0d2774b bfb1fc5afe37dcf7 3fb796178a0e81a9
++      bfc73cbb13f173e8 bfa29c3319042640 3fd3c8efafb30b4e bfc98e533abce8f3 bfd14d2d821eaa92 bfb6c188b2c9e8bd
++      bfd612b8e50ec964 bfdb25be35de9003 bfc959edc509129a bfc5871bd8904a48 bfbe175468e66e27 3f814e3d1eef261f
++      bfd824a3f94b0489 3fd35745d8d4e20e 3fc75b8975378944 bfcabb0cd3d155fc 3fc459241d5dcc43 bfd868fa7b3375e3
++      bf9edd46476e991d bfd86dee96eb1f54 bfd0c6264c46da39 3fc0f7eef073f61b 3fd27adce92d950c bfaeb178da389ffc
++      3faba0fee7071748 bfa526cf70937b39 bfdccf2099197025 3fdaed796418d409 3fb5406bb9e43dc1 bf92a131ef46cdcf
++      3fb72514263c308c bfd3a03a33655398 bfc032029b4b3269 bfd0f96901ecf182 bfd67f6ad2678d68 bfc7eb30036d2305
++      bfc3be6d3ad55274 3fd75afecfdd73f0 bfef2d54c26ffd3e 3fe1c1112541ff0d 3fc5ff30c77cf1fc bfafea6c0d02c7cd
++      bfdb712a9f9ed400 3fce087ef027c347 3fbbf7b9d72449ce 3fda882be6e0358f bfcdd1a351360285 3fc8d15e11170e75
++      bfa9847a6b02c63c 3fd347f08abf41f6 3fac81a26a8fa636 3fd329482d0f3dbd bfc6db2da204e610 3fd4564ce0afcb8f
++      bf9b58c8a1eb4833 bfd25d4c802e22d1 bfd0608f8fa6ca4e 3fe7dd47e5c26d52 bfc1df4f7ebb8c9b 3f612acb3507b777
++      bfcc7965f28e8322 bfa612867d846450 bfe34f496589a6ae bfd2622b46eff2e2 bfe053b6ad984936 bfc6c7bd685827cf
++      3fd53992892d2e92 3fcced2d90f0301c bfcffb8786e9f675 bfd1703579267f9a 3fb1ca9d03478e59 bfb3ed3833b205f3
++      bfc6db6f5d240e86 bfbe938c9a4fce5f 3faf945d6e1de308 3fc84ee9963ca043 3fc54109833d2128 3fcc143ace22038a
++      bf7f2e6dde60b240 bfd21d2e3bf167ab 3fc610bf8a5fe2a2 3fce7a7e4c20c618 bfb2fbd92090b44c 3fd77e7931f4fd92
++      bfcde9e89c776dba bfed0df703a99fda 3ff00f2952dc6a22 bfeba32201b68e68 3fc27bccc88284e6 bfd46a63004c0024
++      3fc0e91fd10ccd6a bfdcd5857e47d158 3fc7a49eedf1b1b0 bfab3c08c0e605c0 3ffd223eb9578b0c bf9cae1f593aa911
++      bfd8686285fc2ace 3fc1a418e65d18ce 3f9ffc86621d2226 3fa276b94fe5c780 3fce06002f4fb9c4 bffbe0215668452e
++      bfa9da8bf25c64c6 c000f43663e3e272 bfe99a2cad876642 3ff93ef8e4840f86 0000000000000000 bfc4bd82ebce3647
++      3ffa63b916fc110e 0000000000000000 3fe1fe92f320e96a 0000000000000000 0000000000000000 bff6846a8077a90e
++      """),
++      bits("""
++      3fe8272f9b4f2e44 c001d8c39d746b5b 3fe3ff64b6272bca
++      """),
++      bits("""
++      3fe8272f9b918bf9 c001d8c39d605bfd 3fe3ff64b5c8ddf0
++      """),
++      true),
++    Fixture("darwin-node2421-voxel-15.json", 72, 3,
++      bits("""
++      3ffc3cd835fa22cb 3fe8582e0104f957 3f8f3f198fd07756 bffafd5587dc1272 c000ab7061b2303d bffeb082a883b2fa
++      4001c89c309d7923 bfc53752685fcee9 3fe677b5b8489b71 3f90653c19157215 bfe0d06d9833134a c001d1c4574d4486
++      bfe0d791889c0678 bfe2f5a2005605a4 40024b1d5d372940 3ff34d116cf23667 bfc3004cad752901 3fea24a4a6d62e69
++      3fe2151c8e2b9220 bfd4c62789baeced bff146f5e45daffd bff71b12f5d037c6 bffbeac41994508c 3ff5c4ed07715135
++      3fe7668d2355502b c0078d3df6a4f697 bff6feeaf45d7f44 bff152f53b276c3b 3fc80d09b115d954 3fe6cc8b0014510b
++      3fe0938bf317fce6 3fef74c845397cff 3ff4afc19e042351 3ff3589a6335e653 bfa15d4fe6772f81 40000b3055e2aea8
++      4001bc417a1d9d3c bfd152907efa0948 3ff608277609346a 3fd96e474b234226 bffaeca3c38482c9 bffd92376b31f1cc
++      bfc0a2120064b838 3fd5c57982a67748 400033ba2c7df2fb 3ff542feb5e5b245 400bfaac1a04569c 3fea96c2b087eb05
++      3ff87cafd8fc1440 bfe8e66a3208fb85 bfe9a41c300ef47e 3ffa308aa27195ba bffa8ddaeef5bb25 c00f7d0e2191ff0a
++      bff22e42f1581ca1 bff82ba06378a565 c004d5ad789cc3a5 3fff69b4daebe26f bff1a89c086acd45 c00c059ef4a4cfa3
++      bff68d073786fd92 3fde47bd9978e6a1 c00db69e56c91ac2 c011885f5b23f7bf 3fe018391a5a510e 400b644a5d7cdce0
++      4001b9ca7c613c0d c001ab886cedaba6 4015a59b53758771 3fbdb604f8c067c0 c007764ed62633c4 3ff247bc803e7494
++      """),
++      bits("""
++      3fb7bae592ef7a09 3f9032553d7a42de bfc78197fcad70ab bfc141d06c2e4a24 bfa2862fa454019b 3fa4f13397a777c7
++      3fb4391d34514f0c 3f6eb8db1860267c 3f8879172d9f953c bfbbde9291682236 bf9565ab6da786b1 3fcd0c98905a1948
++      3fd0c7177d8fc5ca 3fbd0d2385f701d7 bf7981f96b4888b0 3f8b78df9c1d6e44 bfa0db0d67d037ec bf9658c8c19124af
++      3fb6bb949a9ddd7f bf96e51eb140f289 bfd4a2340c5f173c bfc205a6faaef7f0 3fb02a5f5645a495 bf919181364f1d90
++      bfbfb9155297e9c8 bf74c29cde20c2aa 3fab84ed35c08ee2 3f477bcb4bfa5709 3fab828e8d50e2eb 3fc177f1985e8d45
++      bfcd000876a2c43a bfa33403fc7da9c0 3fb2b8be4385ce6c 3fc94059f40dcc04 3fa3880f75d7585f bfcd552a61d0d0ef
++      bfcd73718acf7937 bfc54586e6c7d729 bfa1a90845f75227 bfd2256e11f15aeb bfd177d27de79743 3f9d079e4c670fc8
++      bfc8fffa69285026 3f8069e83e6c62ca 3fb0afa6e1bbd927 bfcb694e52ba5ca0 bfa29419934b4d9c 3fb8a76343862dbe
++      bfbc0ee4c24705d7 3fb48bf549aee6c5 3f9964e4d97f6992 bfb9594abf436583 bfbbd32a88cefed3 3fcd2e939a5da477
++      3fc048896a2b6486 3f95e8d4723b30ca 3fbb592f09795516 bfd66f0209e73882 bfb1e711294a1501 3fd001ec787ec80f
++      bf9ed4b562be1034 3fc35d1abd1c01ae 3fd90fc30906c8fe 3fd222effa08c607 3fcf377a6c91278e 3fd174f22954e4ef
++      3fd8636ee05f90cd 3fc53a7279075a69 bfc82e9b8fbf3586 bfccdc779b4bee2d bfb390966ce6a2cd bfc75b2ba2fe5a43
++      3fbf4da7489c9d53 3fc53406f1dab772 bfe14ef5041cbd39 3fd3b5f773056a9d 3fb1951d8705474f 3fcb7e15c3d3832b
++      bfc23515aa6f2ebe 3fb74c229e2d2e2e 3fd5a969b858d6b3 3fae778fc1b237b7 3fc62a314736f88a 3fcf8d268e422648
++      bfc523c4a9ad640a 3fa4dc4df538874c 3fcb94bc29a2492f bfc5ecd97eba99ad bfc3753ec361de26 bf91bfae07b4efb6
++      3fb9adff62a2fb57 bfc555271996401d 3fb87203b4303277 bfb30bab1f90fb42 bfdae8614165895d bfd031f1a278146e
++      3fcc301e3031b7ac bf75f1f829bce8f6 bfd2f6fef4d8a40d bfdf0ad4baa884ea bfb8f14dfdd6ee2e bfb5ced8f46747a9
++      bfb8f54af8925dab 3fb11bd75b9efcb4 bfd1f92c9b1a6012 bf71e32e0411e255 bfb5f2ff5d72a3a1 bfe053f74f6722f1
++      bfb44369170a743e bfc5f8126d6c9442 bfd9597c68ba98c0 bf90fbcba042b237 3fd0a655549a514a 3fcfc178dfa429dd
++      bfdca4efd4ed4ad7 bfd965a5f8a2ce48 bfcce00d5d53d137 bfb790f9a7dfacbe 3fcd57d0614f7ebd 3fc562aa9405db49
++      bfcb26218aeda47c 3fd0af6a8d0adc77 bf9d03a7b93daca5 3fd92f4dcd1b4c78 3f30525f7312fc8c 3fc5046667f4c5f6
++      3fb709035f0ab1d7 bfa7a4e1700402df bfaa6ebbd15fccf2 3faa56c4bc46689f bf8fdf00412592ce bfdf80a0d54b939a
++      bfe0b2cb10def453 3fa1b7b48b66723e bfc768cb0fdff2e6 bf8f61d6e94408d2 bfd792d8032fc93c bfa66039e72af2e3
++      bfe16502fe1c57a4 bfb80acd208a0bc3 bfc639bc6d2fc17c bfd1e67c4783047a 3fd306f0b4a970f3 bfd2203af15eac27
++      bfc9eb9212b1622c bfd2f2c8592de01f 3fd460605b3a71d9 bfaca177e259d966 bfe86e6f78dbe19f 3fd129d0b3d2e053
++      3fbe3bafd76ebe36 3fd60851659d7837 3f9e35593a760522 3fc174e5a1c143a7 bff83d7b1b543e24 3fe1946f3d6d56b8
++      3fc2479b4c642bcb 3f96bc6bc7fbfe75 3fe0efe0e96b88db bfc3b9b72bc3488a 400471cef21638b5 bfe2a8436bcdb61b
++      bfcf6b2f3d5bfc98 3fecf2f77dccdcfc bfd09afbeebfb34b 3fdf8b75d8f5c6c9 bfa5e338a17da5b2 3fdfe19ae56639d0
++      3fd6a87aa3906f99 bf7d6bf1dc29420a 3fd1bf3ad2ce111c bfda83177f026960 bf9c68354dad33fc bfc21761ddd74748
++      bfe65e11805120eb 3fae10a2f097c84e 3ff137baeff53623 3ff3d76167f4f731 3f99ec73bf67feb8 3fc98167b1bd3d93
++      3fb8945bfde5973e 3fb33ec4bd2aac71 3fa0fe419d69395a bfe5400ad4fd2504 3fa3dedb8bff95f2 3fc8ec6fba8af2de
++      400138db7b8adba3 bfb6a060f9cc00dc 3fe2e98ca8f7f414 bfd52161c00606dc 3fa85d28d727804f 4001a4fe69d13b7d
++      3fbead861d30c4af bfd61bde9f1b9b99 bfc9eab712dc5a3e bfcdb802dbb932b4 bfdf804fbfd04e6e bfe477f2078f19da
++      bfe02b68bcc4b0cc 3fc0509d22477f4a 3fe32478a07521ce 3fdb32766a4d4dca 3fcbc43acdba1bc8 3fda49d695feab4c
++      bfcf2ce44142d0c3 bfff5be6b3b842bf bfe7ad7c2856b9c1 bfd1ce07f31f424c 0000000000000000 bfc32e62b1effe9b
++      3ff867e1f88e2a01 0000000000000000 3fe0a44a0c9b61c4 0000000000000000 0000000000000000 bff4d31817a842fc
++      """),
++      bits("""
++      3fb7bae58d4350ba 3f9032552a7c704b bfc78197fde3bab5 bfc141d069f24697 bfa2862f99dde0e4 3fa4f133a41044af
++      3fb4391d33207b3e 3f6eb8dac91c2f24 3f88791721a86fce bfbbde928e148668 bf9565ab66b8f7bc 3fcd0c98929b9da0
++      3fd0c7177e65a8e5 3fbd0d238acaf7bd bf7981f93d2237c5 3f8b78df85941787 bfa0db0d6de8b4c3 bf9658c8c6397e78
++      3fb6bb9495e7674e bf96e51ed5db8fd6 bfd4a2340cf88633 bfc205a6fdfd76bd 3fb02a5f4f05a721 bf91918137d9af16
++      bfbfb915528e3de3 bf74c29cee130852 3fab84ed319f2af1 3f477bcb493777a7 3fab828e8917e066 3fc177f199ce2dec
++      bfcd00087470b567 bfa33403f727de39 3fb2b8be44a51de4 3fc94059f0f7ad22 3fa3880f71a64f3d bfcd552a6557a7ff
++      bfcd7371898e48f3 bfc54586e4d7923c bfa1a90839f8bd63 bfd2256e11260622 bfd177d27f8cad69 3f9d079e35f0c390
++      bfc8fffa6707db91 3f8069e850ec3970 3fb0afa6e23c0e95 bfcb694e509e454d bfa294199bc7af3f 3fb8a7633827bbba
++      bfbc0ee4c94abe18 3fb48bf54983f704 3f9964e4dbd1beba bfb9594abf6e6975 bfbbd32a8751f730 3fcd2e9399abc68e
++      3fc04889674ec14f 3f95e8d47d473847 3fbb592f1979a214 bfd66f020a02847c bfb1e7112c7b64c3 3fd001ec7875e1dc
++      bf9ed4b56d1e9bab 3fc35d1abe3b3c97 3fd90fc307874307 3fd222eff8075de4 3fcf377a6b7ab331 3fd174f2276db1fb
++      3fd8636edd62f343 3fc53a727bfdea5c bfc82e9b8e7d62c5 bfccdc77a2432f41 bfb390966ee99370 bfc75b2ba138afd0
++      3fbf4da75de2cf92 3fc53406f493f828 bfe14ef5045785df 3fd3b5f77389a29e 3fb1951d88ab6768 3fcb7e15c5021038
++      bfc23515abad950d 3fb74c22a321a0fe 3fd5a969bb5a16d6 3fae778fb4bf6310 3fc62a314777ae52 3fcf8d268e624e46
++      bfc523c4a54d661b 3fa4dc4e04376fb3 3fcb94bc2dcce884 bfc5ecd98487c691 bfc3753ebfda3f0f bf91bfae06bba4dc
++      3fb9adff683fe460 bfc5552717310093 3fb87203ba62a0ac bfb30bab16c09c6b bfdae861406d029a bfd031f19f22e6cb
++      3fcc301e307ba0e5 bf75f1f808824501 bfd2f6fef7873515 bfdf0ad4bcda6c61 bfb8f14e002b2f1f bfb5ced8ef19be14
++      bfb8f54afb2ca253 3fb11bd757bcc772 bfd1f92c99f6125e bf71e32e619b2f37 bfb5f2ff6330c4ed bfe053f74f881e60
++      bfb44369269bc1b7 bfc5f81273d8c9ad bfd9597c69e8f842 bf90fbcbab352c43 3fd0a65553c4eed2 3fcfc178dfba3757
++      bfdca4efd2e86f56 bfd965a5f710be7d bfcce00d5999410c bfb790f9af430aef 3fcd57d0679078d0 3fc562aa8e35bccb
++      bfcb26218aa5ec06 3fd0af6a8aa562a2 bf9d03a7d02b6ed0 3fd92f4dce210b33 3f305268839ecc9f 3fc5046667631474
++      3fb709035ed596fa bfa7a4e16c2d9603 bfaa6ebbf0d22513 3faa56c4d48e41cc bf8fdf0034db65c4 bfdf80a0d615548d
++      bfe0b2cb10ac51bc 3fa1b7b47998afe3 bfc768cb115ddb0d bf8f61d72160146d bfd792d804bbee00 bfa66039f3306fd4
++      bfe16502ff03f534 bfb80acd1424f583 bfc639bc78512c45 bfd1e67c43a56891 3fd306f0b5c533b5 bfd2203af0b87290
++      bfc9eb9217ff0671 bfd2f2c8570ee91c 3fd460605c62f724 bfaca177c612f2fc bfe86e6f7b1c5493 3fd129d0b4d2b015
++      3fbe3bafd5e0bd79 3fd60851677ff25f 3f9e3559597e6c46 3fc174e5a3d5bd0c bff83d7b1b2d2fb2 3fe1946f3e80aee9
++      3fc2479b4cadf4be 3f96bc6baad92c3e 3fe0efe0e85bcd9a bfc3b9b722a8cff2 400471cef1b6eef8 bfe2a8436b8733d1
++      bfcf6b2f3f9a11a8 3fecf2f77ddee93a bfd09afbf2dddb87 3fdf8b75d67455b0 bfa5e338bc468348 3fdfe19ae453ca86
++      3fd6a87aa8c98ecd bf7d6bf17e38a49b 3fd1bf3ad1c6257d bfda83178079a4ac bf9c683546ad7fda bfc21761de9085a7
++      bfe65e1180f6e358 3fae10a2ea9b5db9 3ff137baef77f80a 3ff3d76167e9c8af 3f99ec73d0f1a4a8 3fc98167b669c6cc
++      3fb8945bfd79e1b6 3fb33ec4b5ec7d71 3fa0fe41a76f16e0 bfe5400ad4704583 3fa3dedb884ca516 3fc8ec6fbf4190a2
++      400138db7b1fd2a2 bfb6a06111a7e71c 3fe2e98cac3d177a bfd52161c5d4700e 3fa85d28dee34dd5 4001a4fe6957d65a
++      3fbead8620e4802f bfd61bdea23ae05d bfc9eab70f3cf70c bfcdb802dcaab292 bfdf804fb43650aa bfe477f207f866d2
++      bfe02b68be25a65a 3fc0509d24368139 3fe32478a19fdfcc 3fdb32766ac40c6c 3fcbc43ad1049160 3fda49d68adca6d0
++      bfcf2ce4422e7418 bfff5be6b76fb7ef bfe7ad7c2b25203e bfd1ce07e8fd2794 0000000000000000 bfc32e62b435f7c8
++      3ff867e1fb72a7f4 0000000000000000 3fe0a44a0e944e7b 0000000000000000 0000000000000000 bff4d3181a2018cf
++      """),
++      bits("""
++      bffe468234c9a8a0 bfff16ac5d0fbc8e bffe33cf295f4684
++      """),
++      bits("""
++      bffe468234bf083e bfff16ac5be00284 bffe33cf28eb21ab
++      """),
++      false),
++    Fixture("darwin-node2421-voxel-4.json", 72, 3,
++      bits("""
++      bff00b45552082bf bfd0b1c83652bf68 bff7842b5785da49 3fe548ffebd7b103 bfdb6fcf1071908f 3fe1ed4ca20023f3
++      3ffff163570f5762 3fd38479449edd6e bf914ccb526fda77 bff939bbdbc46f8a 3ff9135302f8b26b bfedf5ba92b5c83b
++      3fbfb807b11e10f8 bfb2c2620b2b826c 3fdaefe63682da1a 3fdd67429af8eb65 bfeb9b2c7f118974 bfd9f233c1b5ed7c
++      bfdfeb4f2529ee06 3ff8474c4ba317a8 bfd205021795275a 3faf15eb52975e7f bff28526ce6fc521 bfd545061f275ced
++      3ff13fc9854a6ac7 bfa8679f0b8a975a bfdd4cae953dcee5 bff8e2853defab49 bfbfccc09aae98e6 bff73f6466964f98
++      bfe1ee60ff41caf7 3ffc6877416a9c43 3fd2f04058f82a01 3fe33e357bd6bcc5 bffbd10b721c261e 3fd927c7ac5400e1
++      40038f9eadb9e790 bfec07bd4c65f581 4008fee7101ccfbf c003698e48639cce 3ff198b786777f0b c001c969b4aa9285
++      3fd6aed9e98b476a 3ff4f3d5dff203d4 3ff74df7042f7f47 3ff53379d896cfa0 3ff1d183af2f704b bfd86f4cbb5c9a27
++      bfd21c0eeefa8e1e 3ff7905573197e4f bff69c54e030af8e bffedf2455b66f6d bff7c8e63c0394a8 c012b750ba4626cc
++      c0048cdff7eddc72 bff997012f0da4e0 3fd99abf56144c4d bf8568cc402d53f0 3f9f0c0dd939b666 bfe2d72a4beff8ad
++      3fe83ca2f0e1aeab 3ff24c57d834ff6a c0106a821dbe9b70 c0052cba79e93b8e 3ffaf2e30b37506a 3ff3e5f770a2602e
++      3fd8024265f9c382 bff414d8e84aee04 40109be4f80601e7 3fdfc5dfb34b5cda c00a85bd3544e790 3ff3f213ca6c215e
++      """),
++      bits("""
++      3fc1170c9f1e6594 3f9a29c7ffcc9470 bfcba9cdb52f8ce4 bfafd68891485391 bfb2046dbb95aa34 bfb0c61df6f6d3d9
++      3fa7efce258eaa7b 3f9d3573f05a195a 3fb698bf08056c3b bfc27b406194ac7b bfa07aad16797911 3fc6d2efe83c80c8
++      3fd2705379f328c8 3fc45c9a3cb53cf5 bf9a60b4b89b42fe 3f8e8a9375ab8154 bfacc3e2d28e4566 bfa1d401126bf65c
++      3fa59ba40c8f9c21 bface87177994f3f bfd1ad47cfc58ef9 bfa194308ba12304 3faed13feec0b1a3 3f982318a0c2b203
++      bf8ec6d5884b835d bf9112e9d7db3e40 bfc087b75ff673be 3f7e14ba16217cc0 3fb7e155d1e6b1c0 3fb952829ab2c44e
++      bfcf879568f2d0fd bfb94274c1e60529 bfa6cb81f9bac06b 3fd24151cfc710ad 3fc19b9e5b630f98 bfc84f383b0493e0
++      bfad1aaec7272bcc bfd0e0e2f7a968dd bfd0a25f924dc25b bfd2f5695d2aae25 bfd117b150d2cd0a bfa2fc6cdf35125f
++      bfc0f082ab24fc0c bfacc8848ff0a286 bfac7e1279b73189 bfd897148f2c1e96 bfa43cbccdd4ebd5 3fc296e32097f0f3
++      bfa82fda8102b140 bfb512323ba77878 bf8f4f231bf06540 3f9e64df4dcdc351 bf6607d226af6884 3faef4ed7287e209
++      3fd8071c314d2966 bfcbbd0c915f3719 3fb1a53de47a14cf bfd50d0576644adb bf907cbb6e0f8513 3fc32428bf06c57b
++      3fcd54d2715b8d38 3fa2cbd0689ad8b5 3fd627f1d9e22da9 3fb1de818c8e67ec 3fc9323d5f6e05ed 3fa006b36c5e676d
++      3fe4178cb63f2184 3fbc6427fbda62aa bfd1aabf331800df bfd1a12746022eee bfbb11292acbe3e9 bfb1a3d73755de86
++      3fd0d7eb4f97f968 bfb07194c13188f9 bfe532aa6f21fed4 3fd4ef5983d39f70 bf9e1e2e7ddce372 3fcc4dbdc085ccde
++      bfce4dd713e81a0a 3f996c15667612d2 3fd24650d6f22974 3f94989baffbfe1c 3fca97d9ea3ea221 3fd7d302e7683f0c
++      bfc0af9ab1e2e318 3f9c9ef0ce4af33d 3fb8b5ac8f96bad8 bfcc9dabc95e056b bfb06e02d1f04574 3fc9cbe4ecdcd124
++      3fac369fd9510d0d bfce18f3cdc1556d 3f9632cf8c65b94c bfd57aa947b869c9 bfca8dd3debf33d9 bfb1cc1536fb95c8
++      3fc71cbc2ce7135c 3fb42b342a4a68da bfc572e7199628d6 bfd2e951f462c706 bfaeb06cf74f16ab bfc00f56a8b68c71
++      3fb61cc66856adf1 3fc79672c1dfdb82 bfd2d7afed2c4441 bfb5199814c14062 3f923c4e6fcfb04e bfdfb454a33d9a5f
++      bfc2a81013dbd091 bfc4ed9ebd8bbcc6 bfd5e80b27272f26 bf821f56419e108e 3fc8c65e3b925797 bfad5ccb7ce92f72
++      bfd571b5fc7a61db bfdcbc2d0f2fc9df bfd32b836f25836d 3f97f9f05356bdb7 3fd1964b0d2f4b65 3fc2f0df2d985e83
++      bfdb468ca7e0b031 3fbda7ba460d6414 bfb3760cff901616 3fd40ce3d5910346 bf59b313ce6e50bd bf7a9dc938878fd4
++      3fa567b57271905b bfbc0b3fc8fbded4 3fa42569980dd48d 3fc5e7a48b15ae13 bfd382709f8fdbb5 bfd462bdb8f2a082
++      bfdb8b6b7a3fc3f2 3fabceaadadb0644 3f96115c454a3ac4 bfa4690ccdb97962 bfe1ea4f55d2e408 bfc2ec7c58175e78
++      bfe3e7996f8af63d 3fb229d33069ce97 bfce19920ec83b15 bfc1c913f6278f80 3fceb9e602bd6382 bfe50fe44280320e
++      bfc8d9090410f934 bfd4f2eeac8c63b7 3faa1ff4d52b63af bfa47a63508957a3 bfc806c1238fe212 3fd8d9f7c132f9b0
++      bf959f1976a530d7 3fd61ccff13d3d25 3fc2b35dd0ae0da6 3fd095fd58142a91 bfd3459e56cfc070 3fe0050d2020517e
++      3f2d45fcf541caf0 bfb068447cd51331 3fe5e1402d5fe294 3fcc4acd56e75078 4003ebda1f24d8be bfd1cff4a4d33743
++      bfd36500f92f2331 3ff5eb90124b1e68 bfc821629b9b10ef 3fd49ee837ff2da2 bfb990aa33f05753 3ff211470176975c
++      bfc4b1f182e536fd 3f9c17b5ac603101 3fabcc0943537fd0 bfd6c32c2ffd842c bf804c56a8254919 bfc930a8fa444f1c
++      bfe75d8e54105b57 3f952f3def2c38e3 3fc5c8cbfe500ec0 3fb97bb8ee697591 3fa464b1af47cc45 bfa6417e53ed85fa
++      3f9a3b40a0292ff2 3f8019e697bf77fd 3f97a5c1f8e36e41 bff0e59b2ef4285d 3f8d7522132ff626 3fcec509df3624b9
++      4000f33f35ad0a7a bfc7c240019cb720 3fe2d6b4c292eb19 bfd568ad13d95288 3faa2214995b5f3a 40011bd6e0e874a3
++      3fb87dda57c1d279 bfd2489e2fc62fe0 bf9d76e37822a844 bfc40aa3f67f431a bfad6a09d7275d60 bfd7c7212fd8f116
++      bfd838beb154f56a 3fb9f3abc6c35c92 3fc00e038746f099 3fd1c8bddcc84b14 3fc61578ddfd49be 3f90b9e87bad7e60
++      bfc4ed6e16a67ac9 bff8f0ece0486c2f bfe2d4f3cb8cde9b 3fa74116d1d2b310 0000000000000000 bfbe82dea053d918
++      3ff36933c426d447 0000000000000000 3fda78c5acbba680 0000000000000000 0000000000000000 bff0900abc3e76ed
++      """),
++      bits("""
++      3fc1170c9ec78fd9 3f9a29c7ff6fd68c bfcba9cdb4c1e9ec bfafd68894f4ce9b bfb2046dbc1d1dd4 bfb0c61df66bc58a
++      3fa7efce25ee02c8 3f9d3573efd555d0 3fb698bf06a71f10 bfc27b40617476b7 bfa07aad18d389db 3fc6d2efe8ccee3c
++      3fd2705379d2cf9a 3fc45c9a3c5ef6fe bf9a60b4b5f70f58 3f8e8a9381890497 bfacc3e2d21a46e2 bfa1d40113e61df5
++      3fa59ba40dcb1b33 bface871765b2163 bfd1ad47d0221c66 bfa194309242a336 3faed13ff0e85a32 3f9823189c5f8a78
++      bf8ec6d5a3d423c0 bf9112e9d862e087 bfc087b75e836eda 3f7e14ba094771ec 3fb7e155d1389f62 3fb952829c34f178
++      bfcf87956873cb15 bfb94274c0c939a7 bfa6cb81f7765619 3fd24151cfc39180 3fc19b9e5a53d9ec bfc84f383bc4df22
++      bfad1aaecf8ddd57 bfd0e0e2f7782d84 bfd0a25f91a8b738 bfd2f5695d6098a6 bfd117b151001ee5 bfa2fc6cdb8844a3
++      bfc0f082ac26591c bfacc8848ef2619d bfac7e1274e8a22f bfd897148e52ab76 bfa43cbccbc7e740 3fc296e320fafd17
++      bfa82fda83472e56 bfb512323864f80f bf8f4f230d43a277 3f9e64df403a5e8d bf6607d26ba2046f 3faef4ed7bb41e14
++      3fd8071c305a51f3 bfcbbd0c8f7349af 3fb1a53de14c23d8 bfd50d0576d0ff7f bf907cbb6d1ea86f 3fc32428bf559fb7
++      3fcd54d26f369dc8 3fa2cbd06eb70746 3fd627f1da60cb55 3fb1de818f5ee6a2 3fc9323d5fd07e33 3fa006b387217dd1
++      3fe4178cb6396d65 3fbc6427fc0e753c bfd1aabf32b86e4c bfd1a1274421d2f5 bfbb11292a488ac0 bfb1a3d7397b369f
++      3fd0d7eb4f0fbd3f bfb07194bd5c2501 bfe532aa6f228470 3fd4ef598462780f bf9e1e2e7aaf916c 3fcc4dbdc0574e13
++      bfce4dd712f6d9ec 3f996c1562c80b0b 3fd24650d6e16289 3f94989bb32d1572 3fca97d9e9fc1f31 3fd7d302e714329f
++      bfc0af9ab243b808 3f9c9ef0d0d26bef 3fb8b5ac90f3e0c5 bfcc9dabc86c1ec5 bfb06e02d3dba939 3fc9cbe4ea7a7842
++      3fac369fd99f212b bfce18f3cdf96cfc 3f9632cf8d0e5f54 bfd57aa946a7c3ec bfca8dd3e5379223 bfb1cc153a2daaf5
++      3fc71cbc2d6bb555 3fb42b3428afc887 bfc572e71a4e5559 bfd2e951f53af122 bfaeb06cf894c3cd bfc00f56a9223860
++      3fb61cc664bc275b 3fc79672c1a5e731 bfd2d7afed0a3e79 bfb5199812fb3306 3f923c4e6d112600 bfdfb454a360f5d9
++      bfc2a810127dfa61 bfc4ed9ebd2920f8 bfd5e80b2783c69b bf821f564671f461 3fc8c65e3c74022b bfad5ccb737f73b7
++      bfd571b5ff1be7e0 bfdcbc2d0f27dccf bfd32b836f2863e4 3f97f9f04f606ce7 3fd1964b0bbf3a7e 3fc2f0df2ddc44d5
++      bfdb468ca75ac1bf 3fbda7ba489c0dbd bfb3760cff47ed64 3fd40ce3d5d63f45 bf59b313e09f0df3 bf7a9dc91ec6aec6
++      3fa567b574ce8c59 bfbc0b3fc96f44be 3fa425699accb014 3fc5e7a489ce46e3 bfd382709eaaeb08 bfd462bdb9577504
++      bfdb8b6b7aa91ff7 3fabceaadadd5e70 3f96115c3f23630f bfa4690ccc818d66 bfe1ea4f55b1cc80 bfc2ec7c57667d74
++      bfe3e7996f62c86d 3fb229d32d56e251 bfce19920edfe7d8 bfc1c913f79c720f 3fceb9e603779d2a bfe50fe4421b1ec5
++      bfc8d909045fb5a4 bfd4f2eeacc2f8b9 3faa1ff4db9a7fa3 bfa47a63547b23ab bfc806c125497b3b 3fd8d9f7c12dd0b7
++      bf959f196fa505c0 3fd61ccff156cabb 3fc2b35dcdb5077d 3fd095fd57fa611f bfd3459e5bb4d2ae 3fe0050d20452228
++      3f2d46017eb25a60 bfb068447b99561e 3fe5e1402d545634 3fcc4acd547e47b8 4003ebda1f5231d1 bfd1cff4a6295eeb
++      bfd36500f942c344 3ff5eb90121925e7 bfc821629c25a648 3fd49ee838e92e17 bfb990aa32fc1cb6 3ff21147011fb1a4
++      bfc4b1f181bfc51b 3f9c17b5aa0df558 3fabcc0948a9cce8 bfd6c32c30584dc3 bf804c56aaced909 bfc930a8fa65722b
++      bfe75d8e542744d4 3f952f3df1baa127 3fc5c8cc06795388 3fb97bb9004907ea 3fa464b1aecc1b19 bfa6417e4f054a6c
++      3f9a3b40a400c66a 3f8019e6a0c5c71f 3f97a5c1f87e7147 bff0e59b2ec9d069 3f8d7522167967ae 3fcec509deeed6fe
++      4000f33f35d20ce5 bfc7c24000cceef2 3fe2d6b4c2a0c117 bfd568ad13d5b85f 3faa2214993ef9d6 40011bd6e110ecf4
++      3fb87dda582aec85 bfd2489e3007555a bf9d76e387c949f0 bfc40aa3f722c227 bfad6a09e5c27410 bfd7c72130ccc52c
++      bfd838beb1de7987 3fb9f3abc734cb1f 3fc00e0389138e4e 3fd1c8bddd673d3b 3fc61578de5dd046 3f90b9e8962c0c80
++      bfc4ed6e17539a3c bff8f0ece0b56fcb bfe2d4f3cbdf2e4f 3fa74116c6f5b5f0 0000000000000000 bfbe82dea0d9354e
++      3ff36933c47babf6 0000000000000000 3fda78c5ad2f5ad1 0000000000000000 0000000000000000 bff0900abc86db8d
++      """),
++      bits("""
++      bffb9ab5cb253526 c000f46d22ee2972 bff7b2284dc45ec4
++      """),
++      bits("""
++      bffb9ab5cb121037 c000f46d22bdd99d bff7b2284db5e97c
++      """),
++      true),
++    Fixture("linux-node2421-voxel-15.json", 72, 3,
++      bits("""
++      3ffc3cd835fa22d6 3fe8582e0104f94d 3f8f3f198fd0867a bffafd5587dc127b c000ab7061b23039 bffeb082a883b2ff
++      4001c89c309d7921 bfc53752685fcf74 3fe677b5b8489bae 3f90653c19157d14 bfe0d06d9833133c c001d1c4574d4495
++      bfe0d791889c06d8 bfe2f5a200560590 40024b1d5d37294b 3ff34d116cf2368e bfc3004cad7529ee 3fea24a4a6d62f00
++      3fe2151c8e2b91ee bfd4c62789baed0f bff146f5e45db023 bff71b12f5d037ea bffbeac4199450d2 3ff5c4ed07715180
++      3fe7668d23554e27 c0078d3df6a4f672 bff6feeaf45d7f1d bff152f53b276c9d 3fc80d09b115d8b4 3fe6cc8b001451da
++      3fe0938bf317fd5c 3fef74c845397da6 3ff4afc19e042387 3ff3589a6335e697 bfa15d4fe6772959 40000b3055e2aed1
++      4001bc417a1d9d3c bfd152907efa0aa5 3ff608277609342e 3fd96e474b234313 bffaeca3c38481d1 bffd92376b31f1c2
++      bfc0a2120064b843 3fd5c57982a67842 400033ba2c7df2d8 3ff542feb5e5b4cc 400bfaac1a0456dc 3fea96c2b087eae5
++      3ff87cafd8fc1602 bfe8e66a3208fa0c bfe9a41c300ef3dc 3ffa308aa27195fe bffa8ddaeef5bad4 c00f7d0e2191fe82
++      bff22e42f1581bde bff82ba06378a5d8 c004d5ad789cc3d0 3fff69b4daebe2bc bff1a89c086acd1f c00c059ef4a4cfb2
++      bff68d073786fe25 3fde47bd9978e27e c00db69e56c91a79 c011885f5b23f79f 3fe018391a5a51ad 400b644a5d7cdcee
++      4001b9ca7c613b9c c001ab886cedabe3 4015a59b53758792 3fbdb604f8c05d7e c007764ed626336c 3ff247bc803e75a0
++      """),
++      bits("""
++      3fb7bae592ef7a08 3f9032553d7a405b bfc78197fcad706e bfc141d06c2e4a0a bfa2862fa4540199 3fa4f13397a777b0
++      3fb4391d34514fc3 3f6eb8db186027a1 3f8879172d9f942a bfbbde9291682238 bf9565ab6da78912 3fcd0c98905a1977
++      3fd0c7177d8fc5cb 3fbd0d2385f701c0 bf7981f96b487ece 3f8b78df9c1d6ebe bfa0db0d67d0382b bf9658c8c191246a
++      3fb6bb949a9dddcc bf96e51eb140f634 bfd4a2340c5f175d bfc205a6faaef82d 3fb02a5f5645a443 bf919181364f1eb6
++      bfbfb9155297e9c7 bf74c29cde20c417 3fab84ed35c08ed4 3f477bcb4bfa60b4 3fab828e8d50e274 3fc177f1985e8d8e
++      bfcd000876a2c3ec bfa33403fc7da992 3fb2b8be4385ce45 3fc94059f40dcbfd 3fa3880f75d75757 bfcd552a61d0d0fa
++      bfcd73718acf7941 bfc54586e6c7d73b bfa1a90845f751d1 bfd2256e11f15add bfd177d27de79732 3f9d079e4c670bfe
++      bfc8fffa69285034 3f8069e83e6c62e7 3fb0afa6e1bbd961 bfcb694e52ba5cac bfa29419934b4c73 3fb8a76343862d25
++      bfbc0ee4c24705e9 3fb48bf549aee72e 3f9964e4d97f6af5 bfb9594abf436636 bfbbd32a88ceff5e 3fcd2e939a5da4a2
++      3fc048896a2b647c 3f95e8d4723b3220 3fbb592f097954b8 bfd66f0209e7386d bfb1e711294a1542 3fd001ec787ec820
++      bf9ed4b562be10ac 3fc35d1abd1c01c7 3fd90fc30906c8fa 3fd222effa08c5f8 3fcf377a6c912773 3fd174f22954e50d
++      3fd8636ee05f90d0 3fc53a7279075af9 bfc82e9b8fbf357a bfccdc779b4bee20 bfb390966ce6a31c bfc75b2ba2fe5a41
++      3fbf4da7489c9f3e 3fc53406f1dab6e7 bfe14ef5041cbd07 3fd3b5f773056aa6 3fb1951d87054798 3fcb7e15c3d382fd
++      bfc23515aa6f2ed3 3fb74c229e2d2df4 3fd5a969b858d6de 3fae778fc1b2366a 3fc62a314736f965 3fcf8d268e422656
++      bfc523c4a9ad63c0 3fa4dc4df538884b 3fcb94bc29a248fb bfc5ecd97eba99c4 bfc3753ec361ddff bf91bfae07b4f296
++      3fb9adff62a2fba8 bfc5552719963fb5 3fb87203b43031c2 bfb30bab1f90facd bfdae86141658949 bfd031f1a278147b
++      3fcc301e3031b7d6 bf75f1f829bcee2c bfd2f6fef4d8a454 bfdf0ad4baa884f1 bfb8f14dfdd6ee08 bfb5ced8f4674740
++      bfb8f54af8925d7c 3fb11bd75b9efcfe bfd1f92c9b1a600c bf71e32e0411e299 bfb5f2ff5d72a36c bfe053f74f6722ec
++      bfb44369170a7457 bfc5f8126d6c9480 bfd9597c68ba98e2 bf90fbcba042b0cb 3fd0a655549a5181 3fcfc178dfa429a2
++      bfdca4efd4ed4ab1 bfd965a5f8a2ce16 bfcce00d5d53d14c bfb790f9a7dfac5f 3fcd57d0614f7e72 3fc562aa9405dacf
++      bfcb26218aeda4b3 3fd0af6a8d0adc6c bf9d03a7b93db326 3fd92f4dcd1b4c92 3f30525f7313a051 3fc5046667f4c5b3
++      3fb709035f0ab166 bfa7a4e17003fe48 bfaa6ebbd15fcf75 3faa56c4bc46686b bf8fdf0041259c5a bfdf80a0d54b93a4
++      bfe0b2cb10def454 3fa1b7b48b66711f bfc768cb0fdff2db bf8f61d6e9441710 bfd792d8032fcbbf bfa66039e72af1d2
++      bfe16502fe1c5733 bfb80acd208a0832 bfc639bc6d2fc16a bfd1e67c478303df 3fd306f0b4a97167 bfd2203af15eac59
++      bfc9eb9212b163a3 bfd2f2c8592de084 3fd460605b3a714c bfaca177e259da28 bfe86e6f78dbe1f3 3fd129d0b3d2e048
++      3fbe3bafd76ebbe2 3fd60851659d782d 3f9e35593a760189 3fc174e5a1c14310 bff83d7b1b543e4a 3fe1946f3d6d56c3
++      3fc2479b4c642b9c 3f96bc6bc7fbf7e8 3fe0efe0e96b88cb bfc3b9b72bc3482b 400471cef216388c bfe2a8436bcdb626
++      bfcf6b2f3d5bfd43 3fecf2f77dccdcde bfd09afbeebfb360 3fdf8b75d8f5c6b9 bfa5e338a17da722 3fdfe19ae5663a1c
++      3fd6a87aa3906fe2 bf7d6bf1dc293c8f 3fd1bf3ad2ce1176 bfda83177f026957 bf9c68354dad2fcd bfc21761ddd747ee
++      bfe65e11805120d2 3fae10a2f097c6ce 3ff137baeff53626 3ff3d76167f4f732 3f99ec73bf67ffbc 3fc98167b1bd3e05
++      3fb8945bfde5956a 3fb33ec4bd2aac32 3fa0fe419d693d65 bfe5400ad4fd2524 3fa3dedb8bff9508 3fc8ec6fba8af41c
++      400138db7b8adb9b bfb6a060f9cc01a8 3fe2e98ca8f7f449 bfd52161c006072a 3fa85d28d72780bb 4001a4fe69d13b6f
++      3fbead861d30c449 bfd61bde9f1b9bbc bfc9eab712dc5a17 bfcdb802dbb93300 bfdf804fbfd04dc8 bfe477f2078f19e4
++      bfe02b68bcc4b0f9 3fc0509d22477f54 3fe32478a07521da 3fdb32766a4d4dad 3fcbc43acdba1bb1 3fda49d695feaac2
++      bfcf2ce44142d0a8 bfff5be6b3b842eb bfe7ad7c2856b9ed bfd1ce07f31f41b8 0000000000000000 bfc32e62b1effe85
++      3ff867e1f88e2a27 0000000000000000 3fe0a44a0c9b61f0 0000000000000000 0000000000000000 bff4d31817a8431a
++      """),
++      bits("""
++      3fb7bae58d4350b2 3f9032552a7c6de8 bfc78197fde3ba81 bfc141d069f2466f bfa2862f99dde10e 3fa4f133a4104466
++      3fb4391d33207bfa 3f6eb8dac91c30b4 3f88791721a86f31 bfbbde928e148670 bf9565ab66b8fa90 3fcd0c98929b9dc7
++      3fd0c7177e65a8f2 3fbd0d238acaf7af bf7981f93d222dcb 3f8b78df859417f0 bfa0db0d6de8b506 bf9658c8c6397e83
++      3fb6bb9495e76774 bf96e51ed5db9362 bfd4a2340cf8865c bfc205a6fdfd76f7 3fb02a5f4f05a6e1 bf91918137d9b0a1
++      bfbfb915528e3de5 bf74c29cee130a59 3fab84ed319f2a89 3f477bcb49377acb 3fab828e8917e004 3fc177f199ce2e2d
++      bfcd00087470b520 bfa33403f727de33 3fb2b8be44a51da4 3fc94059f0f7ad27 3fa3880f71a64e33 bfcd552a6557a808
++      bfcd7371898e4907 bfc54586e4d79258 bfa1a90839f8bd7e bfd2256e11260614 bfd177d27f8cad57 3f9d079e35f0bfcc
++      bfc8fffa6707db9a 3f8069e850ec38bd 3fb0afa6e23c0eb5 bfcb694e509e4563 bfa294199bc7ae2c 3fb8a7633827bb16
++      bfbc0ee4c94abe2d 3fb48bf54983f745 3f9964e4dbd1bfa2 bfb9594abf6e69fe bfbbd32a8751f7ae 3fcd2e9399abc6aa
++      3fc04889674ec14b 3f95e8d47d4738ee 3fbb592f1979a1c1 bfd66f020a028467 bfb1e7112c7b6515 3fd001ec7875e1e4
++      bf9ed4b56d1e9b09 3fc35d1abe3b3cb4 3fd90fc307874308 3fd222eff8075dcc 3fcf377a6b7ab312 3fd174f2276db210
++      3fd8636edd62f34c 3fc53a727bfdeaec bfc82e9b8e7d62b3 bfccdc77a2432f37 bfb390966ee993b8 bfc75b2ba138afc3
++      3fbf4da75de2d18e 3fc53406f493f77a bfe14ef5045785b4 3fd3b5f77389a2a7 3fb1951d88ab6797 3fcb7e15c502101c
++      bfc23515abad9536 3fb74c22a321a0ca 3fd5a969bb5a16fb 3fae778fb4bf61c0 3fc62a314777af39 3fcf8d268e624e59
++      bfc523c4a54d65d4 3fa4dc4e043770af 3fcb94bc2dcce84a bfc5ecd98487c6a8 bfc3753ebfda3edf bf91bfae06bba72c
++      3fb9adff683fe498 bfc555271731003d 3fb87203ba629fde bfb30bab16c09c37 bfdae861406d0279 bfd031f19f22e6d7
++      3fcc301e307ba112 bf75f1f808824987 bfd2f6fef7873553 bfdf0ad4bcda6c65 bfb8f14e002b2eea bfb5ced8ef19bdb3
++      bfb8f54afb2ca1e1 3fb11bd757bcc7e4 bfd1f92c99f61257 bf71e32e619b31bc bfb5f2ff6330c4a2 bfe053f74f881e5c
++      bfb44369269bc1da bfc5f81273d8c9e8 bfd9597c69e8f864 bf90fbcbab352ad5 3fd0a65553c4ef07 3fcfc178dfba36f5
++      bfdca4efd2e86f27 bfd965a5f710be48 bfcce00d59994136 bfb790f9af430a6a 3fcd57d067907874 3fc562aa8e35bc62
++      bfcb26218aa5ec61 3fd0af6a8aa5628d bf9d03a7d02b7556 3fd92f4dce210b4d 3f305268839f5a46 3fc5046667631419
++      3fb709035ed5968c bfa7a4e16c2d918e bfaa6ebbf0d22756 3faa56c4d48e41fe bf8fdf0034db7121 bfdf80a0d6155490
++      bfe0b2cb10ac51bd 3fa1b7b47998aeeb bfc768cb115ddaf7 bf8f61d721602308 bfd792d804bbf092 bfa66039f3306ed3
++      bfe16502ff03f4c5 bfb80acd1424f1f6 bfc639bc78512c44 bfd1e67c43a567f2 3fd306f0b5c53422 bfd2203af0b872e5
++      bfc9eb9217ff07e1 bfd2f2c8570ee98a 3fd460605c62f68b bfaca177c612f3a4 bfe86e6f7b1c54d7 3fd129d0b4d2b00c
++      3fbe3bafd5e0bb12 3fd60851677ff256 3f9e3559597e686e 3fc174e5a3d5bc8c bff83d7b1b2d2fc8 3fe1946f3e80aef5
++      3fc2479b4cadf469 3f96bc6baad92572 3fe0efe0e85bcd96 bfc3b9b722a8cf74 400471cef1b6eed6 bfe2a8436b8733d7
++      bfcf6b2f3f9a1250 3fecf2f77ddee91d bfd09afbf2dddb9a 3fdf8b75d674559f bfa5e338bc4684c8 3fdfe19ae453cad7
++      3fd6a87aa8c98ef6 bf7d6bf17e389e9b 3fd1bf3ad1c625cb bfda83178079a4a5 bf9c683546ad7b97 bfc21761de90865c
++      bfe65e1180f6e33f 3fae10a2ea9b5c32 3ff137baef77f803 3ff3d76167e9c8a3 3f99ec73d0f1a5b1 3fc98167b669c71a
++      3fb8945bfd79dfe2 3fb33ec4b5ec7d37 3fa0fe41a76f1ae0 bfe5400ad47045a1 3fa3dedb884ca424 3fc8ec6fbf4191e6
++      400138db7b1fd2a0 bfb6a06111a7e7f4 3fe2e98cac3d17b1 bfd52161c5d4705b 3fa85d28dee34e3f 4001a4fe6957d651
++      3fbead8620e47fc3 bfd61bdea23ae07c bfc9eab70f3cf6df bfcdb802dcaab2d5 bfdf804fb4364ff0 bfe477f207f866d4
++      bfe02b68be25a682 3fc0509d2436813f 3fe32478a19fdfcc 3fdb32766ac40c46 3fcbc43ad1049144 3fda49d68adca636
++      bfcf2ce4422e73f4 bfff5be6b76fb815 bfe7ad7c2b252066 bfd1ce07e8fd26f2 0000000000000000 bfc32e62b435f7ae
++      3ff867e1fb72a815 0000000000000000 3fe0a44a0e944ea4 0000000000000000 0000000000000000 bff4d3181a2018e9
++      """),
++      bits("""
++      bffe468234c9a87a bfff16ac5d0fbc8d bffe33cf295f46a1
++      """),
++      bits("""
++      bffe468234bf0814 bfff16ac5be00282 bffe33cf28eb21cf
++      """),
++      true),
++    Fixture("linux-node2421-voxel-17.json", 72, 3,
++      bits("""
++      bfb5fe1791483b0a 3feb6783a28257f2 3fdd39f7ac4e9b67 3fde08cfd3e321ee 3f9bc7677ebbbf90 bfb489f714a4edc6
++      bfd69353c077d0c0 3fe5eb1a2466c7e0 3fe9c726dd06a8ae bfd252a260b05b3e 3fe7bb94e621e1de 3fed5968e8a614bc
++      bfbded8432e6fa2b bfe6b51bf9df4525 3ff6714c23044d23 3fdd43cf552084ef bff1e718116d1113 bfab25d53369b344
++      bfd59742c216e74e 3fbb4bafc7762bc6 3fd4ee59cadf1369 bff060fe2833341b bfeb15b6f8ec4137 bff46a4a5caf436c
++      3ff38236fa21cea1 3fe64524e801a791 bfb5ec973da5ef1c bfe7938fdafa2e49 bfd227dfd6da4af6 3fdf8c352849e5ec
++      bfb486f1a7d30574 bfe0fe0db974a534 3fea8604e205e478 bfe979fbdd9aa433 bfe842e7416d6564 3fe3eeebc16b2ab7
++      bfe3e16ff2ba1cc4 bfd1a9019599fea3 bfe2bf52cd747b3a 3fe49484994891a6 bfd4dcfc9f9c208f bfc47edc8f9b6c46
++      3fec1c33dcab3e03 3ff05aa6821b5d06 3ff01f44d1a3a726 bfd098b808763629 3ff777833a5841ef 3fe0e57a97688d4b
++      bfeccbf5a1d9291a 3fe225e747153e07 bfa15cce14e44f48 bf7ef0c8aff32e08 3fd9d388b51e11c9 3fe30115c8270690
++      3ff50decf2670421 bff52de25f589386 3ff02d2d3197d1be 3fe6107729970b59 bfe0e1b80a201214 bfd0acd5dd125b7f
++      3fd1d41366b17e02 bfe80e196d4d7845 c002a7ba3e15f39c 3fd2c64a3b20e124 bfc89981efb0bdfe 3ff35f6988b7e5cd
++      bfe58f36a2717999 4005d05e16795c2c bff5d0c7e9bda84a 3ff54ef147e976f5 3fc9b30997941ec1 40013b5efcfc1412
++      """),
++      bits("""
++      bfc9a2150dde4fea bfaf01c508e958a5 bfbf622137e3538e 3fb3f06113f4b6b9 3fca8be24252afc8 3fc9949d2ff34c80
++      bfc2265b30d45d4b bfb7a33506dd60ce bfaded05d5da2475 3fc12c7ef40c4002 3fb6b0acf73128d1 3fc44f36e3102ae6
++      3fbf431027bf22b8 3fc8ceaf697be3b3 3f9aab7a27193289 bfcf41dc6b905f84 bfb693bfd770554f bfa264edfbe8d839
++      bfc4ab39bbdcfbc9 bfc205c86bd7f0ca bfaaba08125f92b3 bfd5cf28021e170d bfcba7600108bdd4 3f96d9624dba6669
++      bfb641bfa840abf5 bf9da90c4db175d2 bf94e753e34965bb bfa13f08b3569ff5 bfb694e4aafcc40a 3fc38cf9631b7e60
++      3fbb75bd40f54116 3fc29bdd4bd3c1f2 3fbba921f60ec194 bfc7e0d0e7e3a6d4 bf980299cf805832 bfd43539415a116f
++      bfc2bdec94f15ebc 3fc72443a197eece 3fc726bbb01f6411 3fab79bf4c6d8606 bfd1fa8441cd1ab3 bf913c6dc00fc7a5
++      3fcd9144c156c4c5 3fc0090d77f52ba8 3fb6dafa51fb137a 3fca35be314c790a bfb7b29a47e11bbb bfd4f3d6f8a5358f
++      bfd009c53c161fba 3f949315bb2d041b 3fbeccba8b31ca0c bfc7c3e90bed9c05 3f97ff6d2cc9877e 3fbd21413c7b28a5
++      bfc8f8df4221afab 3fc1cb081213bb85 3fd1ada4bb72b05c bfa86843fc4deb31 bf9f99976b0f5996 bfb3090bdadf1254
++      bfc4e7b6d23d6001 3fcfb3567085df08 bfc0890943b45e7a bfd5e7cad17098cb bfacacbf61817961 3fce8004ddc600a1
++      bfd06dc61b8f3c68 3fc67ed8368fa847 3fbf46d25d4077c8 bfcb185db2be061c bfb7ea8390ca0594 3fb47189439cbd3f
++      3fea62e4e9636eef 3fd3150eae5ee8a4 bfc45883684df17e 3fd344b44052058a 3f9eb0b2f9cbaac7 bf7b4ffd51a239a5
++      3f78cbf224c46220 3fb37b5f5191bbee 3fdb9fb79f9dc10a bfcfa1cf815765d2 bf9d696096290614 3fa8305fa7054a07
++      3fd03207d00e353c 3fd35910363e2402 3fd1813b75f3c9db bfd69fc92d5aa940 3fc512bea2ce20f6 bfc45e80c0288edb
++      3fcc9f39f860526a 3fac55aaa8bcd511 3fc0cb1d15fca8b1 3fdafa4888a427d2 bfdd181dcce5e11f 3fe00787dd5d103d
++      3f731310dc6bb188 3fa9abac3206109d bfd8b829a6b07549 bfd7bf900ce885ce bfbb2d353fed20a8 3f87a88da5276883
++      bfcde2d6c9a485a4 bf9fcbe3225e8d61 3fcefdd5835775d8 bfc2e19b7f6fd154 bfd3f859b60b02b6 bfb461caeaa6bf78
++      bfd7ebd898aab833 bfdad300329ce0b6 bfcb8d2e04cab1e2 bfc6c156a4c3cec4 bfa699ca7480130d 3fb4b5fbee9dfb32
++      bfce17a21d03eee8 3fc803e858a50cb6 3fca999a191afdad bfcfc5876e8dda34 3fcd9d6b8028f7da bfdf5973224d31db
++      bf409e7a3725c699 bfd3c7f48882aed9 bfd2ffa5e34b8461 3fbe4c17a49b21a7 3fd6f1d8860128ec bfa6e49eb3b17d40
++      3fa34bb8112dbd80 bfb0425bb3b71e89 bfdb804516a74a65 3fd5bc64f14ca3f4 3fa2d847ae12fd5f bf99aa9119ddd3bb
++      3fb17d701f05c90e bfd66746ffb11c03 bfb91c99f1a2baf6 bfcea82c950a562b bfd74c21a71a8906 bfd041f21a5a024e
++      bfcb8645c86b80f8 3fdbfab539918b55 bfee1701aadcebd3 3fe0eab6a48499bb 3fd04d78d30ffb91 bfa36a328f46140e
++      bfdeebe6a57fa162 3fce68c7af443ed4 3fc1c5ac542bcacb 3fd6319c8abf377d bfc60fc177649c3c 3fd39fc32cb5b0ec
++      bfb70f7d4c0aaecc 3fd3cd5bdec2c242 3fbcb0369b843ca4 3fd1422e316a8fc0 bfc939338e6c937a 3fd52b7f54fb2b62
++      3fbd82118a7093ad bfd2578dba4764bb bfcc70eab183c2e6 3fe88505cf92956d bfd6b106d1f4c961 3f816dccc9680a18
++      bfd3121099bed222 3fdb63ce5b3e581c bfe597d75d6e436b bfd38481ce944358 bfe07c59a56c5d65 3fd004c3a3d8e1bc
++      3fd409a66f3b11ed 3fcca18cfbdca41d bfcb6d905f10fbf9 bfd03a07fb685d07 3fb07c74b7b2424a bfb9f930b999977c
++      bfd1d704857dd98b bfbbdbdbb6240f94 3fbf41ea500e63ce 3fcb3416f82dd2ac 3fc5b6538772db50 3fd3b0799ac69d51
++      bfa33cefa4617610 bfd135ff9999b9ff 3fc65c000598cf52 bfc78f601979b1c2 bfb130582eca27aa 3fd6ffe83aacb1f7
++      bfdb04099c378c52 bfed679c9aec1eb2 3ff0a2263a8af2ac bfed52a4976cc153 3fc3718653709133 bfdfc49bd0ee569c
++      3fc37755c20f45b9 bfe03f92aee0c52d 3fc0d09203484a25 bfb7c30fe9c68297 3ffba53023055451 bfbf31a7663feb6e
++      bfddd91819541f1d 3fc45c58d03ff488 3fa2cb2f4fb9ed70 3fbbdf78bd5f1efb 3fd1537a6d9470eb bffa9ddfd39b5ef4
++      bfb79339bd8a623d c003915889955469 bfed8ca2c971b599 3ff85d1b9e4eb315 0000000000000000 bfc7f0150e524714
++      3ffe7541d9f0a087 0000000000000000 3fe4c4c5c58cef39 0000000000000000 0000000000000000 bff9fd1eab665f38
++      """),
++      bits("""
++      bfc9a2150ac6d07f bfaf01c50bf885bb bfbf6221363af669 3fb3f06116bbe452 3fca8be2423a1af3 3fc9949d2f4d7cd2
++      bfc2265b324af562 bfb7a33507b5ff24 bfaded05cddb8a5b 3fc12c7ef23aca85 3fb6b0acf82cc1f3 3fc44f36e2d3bcac
++      3fbf431024738c2d 3fc8ceaf6acc4706 3f9aab7a2edba990 bfcf41dc6d72f1af bfb693bfd66e817a bfa264edee9ce597
++      bfc4ab39b746afd4 bfc205c86ccbed4a bfaaba0805f2387b bfd5cf2801863c0e bfcba76002b08302 3f96d9624d46d715
++      bfb641bf9efc51fe bf9da90c3752fa2f bf94e753e16e80d2 bfa13f08ac53f178 bfb694e4a84ef816 3fc38cf963e677b2
++      3fbb75bd3ebc1c4d 3fc29bdd4d0e4a6a 3fbba921fa90a68f bfc7e0d0e6ca2bb1 bf980299cec9c718 bfd4353941ebb5b6
++      bfc2bdec974f077b 3fc72443a0c15327 3fc726bbb0c8c02d 3fab79bf51133e9f bfd1fa84420d8493 bf913c6dd44d16da
++      3fcd9144c3953eb5 3fc0090d7ad74030 3fb6dafa5447d7a0 3fca35be2cb4ad6a bfb7b29a450aec12 bfd4f3d6f6cb6e43
++      bfd009c53a2eede9 3f949315b39b2b77 3fbeccba8e5e24f0 bfc7c3e90bff9ca0 3f97ff6d378843be 3fbd21413e8b2c99
++      bfc8f8df3c944e97 3fc1cb0810e0a05e 3fd1ada4b906c542 bfa86843f09c37b8 bf9f9997539c1781 bfb3090bd4806c4e
++      bfc4e7b6d471fe36 3fcfb356739c19d5 bfc0890945e0e002 bfd5e7cad184a4df bfacacbf603dcec3 3fce8004d5fd7086
++      bfd06dc61a2aab61 3fc67ed83325bfdf 3fbf46d2543c2822 bfcb185db2a618e6 bfb7ea8395c176a7 3fb471893fff53b9
++      3fea62e4e9416c8e 3fd3150eaee6d203 bfc4588369547c55 3fd344b441adfc81 3f9eb0b2fc9eeed6 bf7b4ffd9952ff1c
++      3f78cbf25fac42fb 3fb37b5f5528a71b 3fdb9fb7a00b01d3 bfcfa1cf8199a278 bf9d6960a2e256f7 3fa8305fb8c6d8f8
++      3fd03207d0d87d73 3fd35910356e11e4 3fd1813b75412d4c bfd69fc92dfa654c 3fc512bea0e483ff bfc45e80bfc38f4d
++      3fcc9f39fb891c33 3fac55aaaf1582d9 3fc0cb1d141794cf 3fdafa4887d4c9be bfdd181dcb4c22dc 3fe00787ddf21a74
++      3f7313109c593454 3fa9abac2f71336f bfd8b829a6ba4867 bfd7bf900bf5c0d6 bfbb2d3543396c6f 3f87a88d7648b9bf
++      bfcde2d6cc4b5567 bf9fcbe3250ddfe7 3fcefdd57f9ddebd bfc2e19b7c2b8315 bfd3f859b737c968 bfb461cae7afc8b0
++      bfd7ebd89911936f bfdad300323e9de0 bfcb8d2e0551c9c5 bfc6c156a4a35897 bfa699ca6662181e 3fb4b5fbf4a3b067
++      bfce17a21a57ffb7 3fc803e8533d4c5f 3fca999a1b0842a4 bfcfc5877074f24b 3fcd9d6b81e3bbd2 bfdf597324de07bc
++      bf409e7869d3a77e bfd3c7f486a14fd0 bfd2ffa5e3c25972 3fbe4c17a2829650 3fd6f1d8878bf96e bfa6e49eaf3ce7fe
++      3fa34bb80d14a081 bfb0425bb4ed5936 bfdb804515db639d 3fd5bc64ef149f90 3fa2d847a62059e6 bf99aa911c63595f
++      3fb17d701d2d5003 bfd6674700a289ee bfb91c99f12f7b2d bfcea82c936d9f45 bfd74c21a6ba67af bfd041f21bb3a9a0
++      bfcb8645caf19afb 3fdbfab53b04aa70 bfee1701aa101e63 3fe0eab6a40b6be8 3fd04d78d4cb0dfa bfa36a3283faf882
++      bfdeebe6a6570cf6 3fce68c7afc9f38e 3fc1c5ac557ccae6 3fd6319c893d138d bfc60fc175d67eab 3fd39fc32f27ce51
++      bfb70f7d4fef012f 3fd3cd5bde9ba32c 3fbcb0369e0ec856 3fd1422e302a14ba bfc939338dfead08 3fd52b7f551e6668
++      3fbd821197e65e67 bfd2578db9f20736 bfcc70eab06096cd 3fe88505cf5eacdc bfd6b106d8557678 3f816dccd0853c16
++      bfd312109b197e70 3fdb63ce6531caa7 bfe597d75e1a2fd5 bfd38481cf1d2252 bfe07c59a544a645 3fd004c3acf410b4
++      3fd409a66f878bf5 3fcca18cfb5c6130 bfcb6d905cac0b2d bfd03a07fa8f36ed 3fb07c74b6f29772 bfb9f930bba0087e
++      bfd1d70487801a5d bfbbdbdbb4ab2a6a 3fbf41ea53365d01 3fcb3416f8691923 3fc5b6538758685d 3fd3b0799cf429b7
++      bfa33cefa96aef3c bfd135ff99016cbb 3fc65c0005755f44 bfc78f602bcd3307 bfb130582dd54e1c 3fd6ffe83a2a99f6
++      bfdb0409a1be38e9 bfed679c9aac3d8e 3ff0a2263a84953d bfed52a497b7bbce 3fc371865391e816 bfdfc49bd60e50ec
++      3fc37755c2d61e96 bfe03f92af676e4b 3fc0d09201939420 bfb7c30fed9244ea 3ffba530220ca407 bfbf31a76fe5a204
++      bfddd9181b22f1d0 3fc45c58d114cb5f 3fa2cb2f549391ea 3fbbdf78c48e8f40 3fd1537a6e498ed2 bffa9ddfd2be0610
++      bfb79339c18b08ae c00391588a61e132 bfed8ca2caa699e5 3ff85d1b9da01acc 0000000000000000 bfc7f0150f4c827b
++      3ffe7541db2f0483 0000000000000000 3fe4c4c5c66609ab 0000000000000000 0000000000000000 bff9fd1eac760b0f
++      """),
++      bits("""
++      3feb7de351ac45b3 3fe9bf670260c0ed bff60decd53c8b04
++      """),
++      bits("""
++      3feb7de351dd5865 3fe9bf6701f41697 bff60decd4c332b8
++      """),
++      true),
++    Fixture("linux-node2421-voxel-2.json", 72, 3,
++      bits("""
++      3fca7c639339213a bfdb0c30f93bd939 3fea29d85ca0aed1 3fe252bb7b56a320 bfd78e7490043930 3fc3d0c97d69cb11
++      bfc70e07a01c7dae 3fed31aa21396675 bff085ea2a1fb05e 3ff19012ee3eed20 bfc0b90438c77b9c bfc411208941be3d
++      bfa8fa52284045ba 3fc56ee3347833e2 bfb68f3e7b601ef4 3fc8bbaa6b8237ca bfec9da2d464017d bfd6514a0e39e1ff
++      bfc4c236a1e976a2 3fdf626d8b0f2d0e bfe3ed139d7c6cb6 bfc8c61e8a16424f bfd0026af554ddce bfe3d27ec2e87479
++      bfe13cf3b6d869ca bfe5fabd47b124f1 3fed30e6346734d2 bfd723ca3ed32a43 bfc9be5e773f0966 bfecfe5e16487c25
++      3fb10cf4301db134 3ff92fde2fb49abe bfe4a79da3d9758b bfc51380b641dfb4 3fdfea65bb23bbab 3fdf15787620dc45
++      3fe72f373d55498b 3fe1fad69d8da6fd 3f9871babfdff2bd bff9786087edd072 3ffb8548dbc6801b bfe8571fe27a15b4
++      bfe652bd68aaccdd 3fc19a453403e867 3fd8740b91f8d410 3fec7140620202f2 bfecb3393bd16665 3fe7481c698fdb06
++      bfe7ad138e059fea 40023343a54b6130 bfd0ba9c4b20a0c2 3ff76e7878dce69b bfda641c0a4b164e 3fedf795990786a2
++      3f999678425dc1dc 3ff134574b43f5cd 3fcacf315a2b8e48 bfdd7e89bb773a1c 3fe5e329515931d7 3fe0c40be39302cc
++      3ff0e8493ea10bb1 3fddf91fcb7a7301 4009ace47d297da9 c0002c6e498d8271 3fef8f427ce8264b c00f7d634b52de5c
++      3fe081209bc758e2 bff78b00629a3513 4010687405dc4772 3fd59a7f93a7bfee 4002ffadfc47660f 3fdb2ff9bcf2fc56
++      """),
++      bits("""
++      bfd0c7a2c1aa3a3f bf9d9797b4022cc7 bfbfe0b61704f9d6 3f9a2a0d4c0fa35b 3fc9da634f68185a 3fcb153ef519069a
++      bfbd228a0fb93287 bfb10d63c64cbd40 bfbc48a62eb89810 3fc50e7ba01b9640 3fb70c7c8e441990 3fc58d0510bda5e6
++      3fc1bcf93499a2a5 3fc27decdeb147e6 bf8e5f0a2529f863 bfc998eab4cb119e bfbaae5212d25858 bfbe0391633c70fb
++      bfd00338b56666c3 bfc294e789062866 bfba5619f87c9d6b bfd74fabd9ee52cc bfc6046041ff2c39 3f98775c4868fb2e
++      bfc9f77bbc5ce123 bfb84012886a61d3 bf8636c40a440fd7 bfb2c7effe14ff17 bfbd6167d18fdadf 3fc2db6ff5c6e1ab
++      3fc459044d054602 3fbe5e68d88e2fae 3fa046ace01d91e1 bfca5edac6af2552 bfa82fbc86e5be30 bfd0a07ff2958859
++      bfa43a952a01eaa3 3fc77138677337f4 3fc58e0c94bd3485 3f9f6e94a6ad9b8f bfd0d373ed27e760 3f9d9094d17022de
++      3fc5e3a0c8108359 3fad1c6ffd1b42f2 3fb15d5a40c98740 3fd5512bbc20974d bfb956372ea863ca bfd9362433eae067
++      bfd52a065c7ecf4c 3fb0a3934acd7c62 3fb6ecb039842cd1 bfc62b50f7623ebf bf7920eb5c155795 3fb9e3deac36b5c5
++      bfd521c3b5baf8c6 3fc65070bd2eb95f 3fd745d3fb9ad462 bfbd42ad258ffc7c bfb730992523ea54 bfc21cb015b38904
++      bfc0e298b197631c 3fc09c5cfa4ee761 bfba1a7958538aaf bfd4c861b0b349ba bfb2f93b1906a3f8 3fe05681516e8dd1
++      bfd426f439775634 3fcf281dd7d9715a 3fca80fc639e291c bfc401596d4fcec7 bf9f20d0d5b21046 3fbc733444a46d32
++      3fe97f28ecb0de79 3fd0f9f6d71871ac bfbd5785ab5ea416 3fcde6637b0c10ac 3f9b4a99e8973810 3fab72da0cdb6563
++      bfa2e336511d2555 3fa1b93717a3183e 3fd95102dff29292 bfcd4e75d3653f66 3f7247626289fdde bfaacbaa7e7ae9a7
++      3fcb64a2020a2b93 3fd5904d7b5204e7 3fd3575d002194ab bfd3e87839801a53 3fca38b156dc3ad7 bfc487e0337b057c
++      3fc23118d08abd96 3fa1c2333d81f2b8 3fc584f082e0c190 3fdd92a4c0eab923 bfe38de615ff6b2d 3fdc5523aeae25f5
++      3faa991d5b157d50 3fadbdb8e9aaf836 bfd7f20f0a2f93be bfd9bda5b0a045db bfb1fc5afe126c47 3fb7961788f537a4
++      bfc73cbb14dbd2f5 bfa29c3319cbe8f6 3fd3c8efb015a767 bfc98e533a3c1989 bfd14d2d822ac693 bfb6c188b14375ee
++      bfd612b8e4e0a6cd bfdb25be35986726 bfc959edc439d494 bfc5871bd90a2336 bfbe1754692fcb63 3f814e3d2938b924
++      bfd824a3fa2fc584 3fd35745d970be6b 3fc75b8975735c39 bfcabb0cd3ce07c8 3fc459241d76cc36 bfd868fa7b4d9067
++      bf9edd463d635414 bfd86dee96ebb2ff bfd0c6264c696fbc 3fc0f7eeef852f3f 3fd27adce92a336e bfaeb178d8d1c444
++      3faba0fee8220f49 bfa526cf72199f7b bfdccf209919fcb4 3fdaed796382604c 3fb5406bbc6c9654 bf92a131e7eb00ac
++      3fb72514288f6b74 bfd3a03a33802071 bfc032029bb07a0d bfd0f96901cff1b0 bfd67f6ad1e14f11 bfc7eb3002bc84c2
++      bfc3be6d3885b93c 3fd75afecf75944f bfef2d54c25bae8e 3fe1c111253cc7b4 3fc5ff30c7435957 bfafea6c04f9bf85
++      bfdb712a9f8e9941 3fce087ef0a68489 3fbbf7b9d618d6f7 3fda882be6793ed6 bfcdd1a34eaa9fb0 3fc8d15e10828aec
++      bfa9847a6a797037 3fd347f08a596269 3fac81a26ca2c7ec 3fd329482cfe091c bfc6db2da4aac2b1 3fd4564ce022120f
++      bf9b58c89e814704 bfd25d4c800eaaf4 bfd0608f90990286 3fe7dd47e5925e7c bfc1df4f8472734d 3f612acb29c6bbae
++      bfcc7965f23c4a9c bfa612868acedb86 bfe34f4965752a9e bfd2622b4708c008 bfe053b6ad859290 bfc6c7bd6ae338fe
++      3fd5399288657575 3fcced2d90d54f83 bfcffb878744c756 bfd1703578d44d21 3fb1ca9d0343469f bfb3ed383389b8dc
++      bfc6db6f5b62adb5 bfbe938c9a4dade9 3faf945d7b777fe3 3fc84ee9990d2124 3fc5410983220798 3fcc143acddedfff
++      bf7f2e6dde511a70 bfd21d2e3be87429 3fc610bf8a331608 3fce7a7e4eafa8c0 bfb2fbd9209089b6 3fd77e7931b40e51
++      bfcde9e8a15b1ba2 bfed0df7038795a6 3ff00f2952ae573d bfeba32201876cbb 3fc27bccc864d310 bfd46a6302b96baf
++      3fc0e91fd0df56a2 bfdcd5857e01e07d 3fc7a49eee85a85a bfab3c08bfec62c4 3ffd223eb9497a0c bf9cae1f5305ffe9
++      bfd8686285a7709c 3fc1a418e62d1519 3f9ffc86558c0d5e 3fa276b94e3bea44 3fce06002efe0254 bffbe021565901d5
++      bfa9da8bf1593576 c000f43663b5bd77 bfe99a2cad41b76a 3ff93ef8e4736cf4 0000000000000000 bfc4bd82eb95c310
++      3ffa63b916b43da8 0000000000000000 3fe1fe92f2efef78 0000000000000000 0000000000000000 bff6846a803a5fbf
++      """),
++      bits("""
++      bfd0c7a2c1a670f3 bf9d9797b5b9af05 bfbfe0b617e6a50e 3f9a2a0d4ed02452 3fc9da634ec3639a 3fcb153ef48c83d1
++      bfbd228a10452621 bfb10d63c6836d6d bfbc48a62d65cc89 3fc50e7b9fa6dd3b 3fb70c7c8d2c8f6b 3fc58d0510c7fcf7
++      3fc1bcf9355cd041 3fc27decdf0ee559 bf8e5f0a1b95b7a3 bfc998eab4ff76f6 bfbaae5213381995 bfbe039163063b08
++      bfd00338b5845433 bfc294e788b6d87d bfba5619fa05d54a bfd74fabd9e4ec03 bfc604604219afd8 3f98775c423d2115
++      bfc9f77bbad8a4af bfb840128778f6d3 bf8636c41a9d31ff bfb2c7effe19c7a1 bfbd6167d02c8b51 3fc2db6ff5feb327
++      3fc459044ce7a0c4 3fbe5e68d810caf8 3fa046acdec62bec bfca5edac5a073f0 bfa82fbc85ceb1a2 bfd0a07ff33c4b05
++      bfa43a9530ca89d6 3fc77138662b603d 3fc58e0c9437cd95 3f9f6e94a4f57a1e bfd0d373ed663cea 3f9d9094d35b3aeb
++      3fc5e3a0c742c3d7 3fad1c6ffc8b913f 3fb15d5a3f89c427 3fd5512bbb7fa9b6 bfb956372f258efb bfd9362434073be3
++      bfd52a065c5fcf28 3fb0a39349ac88db 3fb6ecb0387ad427 bfc62b50f6044e9f bf7920eb55d42723 3fb9e3deab75b012
++      bfd521c3b5095a2e 3fc65070bc472a4b 3fd745d3fc293078 bfbd42ad2747f126 bfb73099259e9d74 bfc21cb014e5a7ff
++      bfc0e298b0754c65 3fc09c5cfc14add4 bfba1a79583462d5 bfd4c861b0879cba bfb2f93b19434c2d 3fe0568150b09508
++      bfd426f438bbe3c0 3fcf281dd80f7dbc 3fca80fc62d86be6 bfc401596d82feb5 bf9f20d0d9669af6 3fbc7334446baea8
++      3fe97f28ecdd73fd 3fd0f9f6d6a1b87d bfbd5785af41aaf5 3fcde6637ad644dd 3f9b4a99e4db1de9 3fab72da1291747a
++      bfa2e3365634c595 3fa1b93719b5eeba 3fd95102e0140dab bfcd4e75d330518f 3f72476275b8dafe bfaacbaa797172f2
++      3fcb64a201e2f167 3fd5904d7b3a77b5 3fd3575d002fa2e0 bfd3e8783a1f1514 3fca38b1578a5076 bfc487e0329415d5
++      3fc23118d08bb4f1 3fa1c2333e67f1ae 3fc584f082572933 3fdd92a4c009f92e bfe38de615719b9d 3fdc5523ae9a7b4c
++      3faa991d5c3f9cd8 3fadbdb8ec68ff9b bfd7f20f0a4acdb8 bfd9bda5b0d27748 bfb1fc5afe37dce1 3fb796178a0e81ae
++      bfc73cbb13f173f5 bfa29c33190425f8 3fd3c8efafb30b57 bfc98e533abce8ec bfd14d2d821eaa9b bfb6c188b2c9e8a6
++      bfd612b8e50ec960 bfdb25be35de9005 bfc959edc5091285 bfc5871bd8904a48 bfbe175468e66e1f 3f814e3d1eef262a
++      bfd824a3f94b04a7 3fd35745d8d4e221 3fc75b897537894b bfcabb0cd3d155de 3fc459241d5dcc34 bfd868fa7b3375dd
++      bf9edd46476e98d5 bfd86dee96eb1f56 bfd0c6264c46da34 3fc0f7eef073f60c 3fd27adce92d950d bfaeb178da389fd3
++      3faba0fee707175f bfa526cf70937b50 bfdccf2099197028 3fdaed796418d406 3fb5406bb9e43de3 bf92a131ef46cdd0
++      3fb72514263c30ba bfd3a03a3365539e bfc032029b4b3264 bfd0f96901ecf17d bfd67f6ad2678d61 bfc7eb30036d22fb
++      bfc3be6d3ad5524a 3fd75afecfdd73e4 bfef2d54c26ffd37 3fe1c1112541ff0e 3fc5ff30c77cf1f5 bfafea6c0d02c756
++      bfdb712a9f9ed3fe 3fce087ef027c348 3fbbf7b9d72449c3 3fda882be6e0358f bfcdd1a351360253 3fc8d15e11170e65
++      bfa9847a6b02c67f 3fd347f08abf41f6 3fac81a26a8fa5f2 3fd329482d0f3dbd bfc6db2da204e642 3fd4564ce0afcb81
++      bf9b58c8a1eb4810 bfd25d4c802e22d1 bfd0608f8fa6ca5a 3fe7dd47e5c26d4f bfc1df4f7ebb8cca 3f612acb3507b6c9
++      bfcc7965f28e831f bfa612867d8464f0 bfe34f496589a6ad bfd2622b46eff2de bfe053b6ad984937 bfc6c7bd685827f0
++      3fd53992892d2e88 3fcced2d90f03018 bfcffb8786e9f673 bfd1703579267f98 3fb1ca9d03478e67 bfb3ed3833b205cb
++      bfc6db6f5d240e68 bfbe938c9a4fce32 3faf945d6e1de3a2 3fc84ee9963ca079 3fc54109833d2135 3fcc143ace220378
++      bf7f2e6dde60b260 bfd21d2e3bf167a7 3fc610bf8a5fe29e 3fce7a7e4c20c618 bfb2fbd92090b46a 3fd77e7931f4fd8f
++      bfcde9e89c776e00 bfed0df703a99fd0 3ff00f2952dc6a20 bfeba32201b68e6c 3fc27bccc88284f2 bfd46a63004c004c
++      3fc0e91fd10ccd4b bfdcd5857e47d15c 3fc7a49eedf1b1c6 bfab3c08c0e605a4 3ffd223eb9578b0c bf9cae1f593aa911
++      bfd8686285fc2aca 3fc1a418e65d18c7 3f9ffc86621d20be 3fa276b94fe5c758 3fce06002f4fb9b1 bffbe0215668452c
++      bfa9da8bf25c64d0 c000f43663e3e26f bfe99a2cad87663b 3ff93ef8e4840f8a 0000000000000000 bfc4bd82ebce3638
++      3ffa63b916fc110a 0000000000000000 3fe1fe92f320e968 0000000000000000 0000000000000000 bff6846a8077a90a
++      """),
++      bits("""
++      3fe8272f9b4f2e59 c001d8c39d746b59 3fe3ff64b6272bc8
++      """),
++      bits("""
++      3fe8272f9b918c00 c001d8c39d605bfb 3fe3ff64b5c8ddf8
++      """),
++      false),
++    Fixture("synthetic-coupled-profile-descent.json", 3, 2,
++      bits("""
++      3ff0000000000000 3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000 0000000000000000 3ff0000000000000 0000000000000000 0000000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000 3fd0000000000000 3ff0000000000000 3fe0000000000000 3fd0000000000000
++      """),
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff1be9ab76d4231 3fe91f1a515885fb
++      """),
++      true),
++    Fixture("synthetic-exact-equality.json", 2, 1,
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      false),
++    Fixture("synthetic-insufficient-gram-bound.json", 2, 2,
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 4000000000000000 0000000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 4000000000000000 0000000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000
++      """),
++      bits("""
++      bff0000000000000 3ff0000000000000
++      """),
++      false),
++    Fixture("synthetic-old-poor-beta.json", 2, 1,
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000
++      """),
++      bits("""
++      0000000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      false),
++    Fixture("synthetic-profile-descent.json", 2, 1,
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000
++      """),
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      true),
++    Fixture("synthetic-true-uphill.json", 2, 1,
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000 0000000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      bits("""
++      3ff0000000000000
++      """),
++      false)
++  )
+diff --git a/core/shared/src/test/scala/gale/numeric/PairedSquaredResidualComparisonSuite.scala b/core/shared/src/test/scala/gale/numeric/PairedSquaredResidualComparisonSuite.scala
+new file mode 100644
+index 0000000000000000000000000000000000000000..d4476a6aa7c3d868f073d0c0e4df49418faccaa4
+--- /dev/null
++++ b/core/shared/src/test/scala/gale/numeric/PairedSquaredResidualComparisonSuite.scala
+@@ -0,0 +1,185 @@
++package gale.numeric
++
++class PairedSquaredResidualComparisonSuite extends munit.FunSuite:
++  private def ok[A](value: Either[PairedResidualError, A]): A = value.fold(e => fail(e.message), identity)
++
++  // This oracle evaluates two complete squared residual sums as exact dyadic
++  // rationals. It does not use the implementation's paired difference formula.
++  private final case class Dyadic(value: BigInt, exponent: Int):
++    def +(that: Dyadic): Dyadic =
++      val power = math.min(exponent, that.exponent)
++      Dyadic((value << (exponent - power)) + (that.value << (that.exponent - power)), power)
++    def unary_- : Dyadic = Dyadic(-value, exponent)
++    def -(that: Dyadic): Dyadic = this + (-that)
++    def *(that: Dyadic): Dyadic = Dyadic(value * that.value, exponent + that.exponent)
++    def compare(that: Dyadic): Int =
++      val power = math.min(exponent, that.exponent)
++      (value << (exponent - power)).compare(that.value << (that.exponent - power))
++
++  private val zero = Dyadic(BigInt(0), 0)
++
++  private def exact(value: Double): Dyadic =
++    assert(value.isFinite)
++    val bits = java.lang.Double.doubleToRawLongBits(value)
++    val exponent = ((bits >>> 52) & 0x7ffL).toInt
++    val fraction = bits & 0x000fffffffffffffL
++    val significand = if exponent == 0 then fraction else fraction | (1L << 52)
++    Dyadic(BigInt(if bits < 0 then -significand else significand), if exponent == 0 then -1074 else exponent - 1075)
++
++  private def residualEnergy(f: PairedResidualFixtures.Fixture, design: Array[Double], beta: Array[Double]): Dyadic =
++    var sum = zero
++    var row = 0
++    while row < f.rows do
++      var prediction = zero
++      var col = 0
++      while col < f.columns do
++        prediction = prediction + exact(design(row * f.columns + col)) * exact(beta(col))
++        col += 1
++      val residual = exact(f.response(row)) - prediction
++      sum = sum + residual * residual
++      row += 1
++    sum
++
++  private def difference(f: PairedResidualFixtures.Fixture): Dyadic =
++    residualEnergy(f, f.candidateDesign, f.candidateCoefficients) - residualEnergy(f, f.previousDesign, f.previousCoefficients)
++
++  private def compare(f: PairedResidualFixtures.Fixture, scope: PairedResidualScope = PairedResidualScope.ProfileMinimum): PairedResidualComparison =
++    val workspace = ok(PairedResidualWorkspace(f.rows, f.columns))
++    ok(workspace.compare(f.response, f.previousDesign, f.candidateDesign, f.previousCoefficients, f.candidateCoefficients, scope))
++
++  private def enclosed(result: PairedResidualComparison, oracle: Dyadic): Unit =
++    assert(exact(result.modelDifference.lower).compare(oracle) <= 0, "exact RSS difference below lower endpoint")
++    assert(exact(result.modelDifference.upper).compare(oracle) >= 0, "exact RSS difference above upper endpoint")
++    result.direction match
++      case ResidualDifferenceDirection.Decrease => assert(oracle.compare(zero) < 0)
++      case ResidualDifferenceDirection.Increase => assert(oracle.compare(zero) > 0)
++      case ResidualDifferenceDirection.Unresolved => ()
++
++  PairedResidualFixtures.all.foreach: fixture =>
++    test(s"bit-exact independent witness: ${fixture.name}"):
++      val result = compare(fixture)
++      enclosed(result, difference(fixture))
++      assertEquals(result.certifiesProfileDecrease, fixture.profileDecrease)
++      if fixture.name == "darwin-node2421-voxel-15.json" || fixture.name == "linux-node2421-voxel-2.json" then
++        assertEquals(result.direction, ResidualDifferenceDirection.Increase)
++        assert(!result.certifiesProfileDecrease)
++
++  test("poor previous coefficients cannot falsely certify a profile decrease"):
++    val f = PairedResidualFixtures.all.find(_.name == "synthetic-old-poor-beta.json").get
++    val result = compare(f)
++    assertEquals(result.direction, ResidualDifferenceDirection.Decrease)
++    // Previous best RSS is exactly 0; candidate best RSS is exactly 1, although
++    // these supplied previous coefficients have RSS 2.
++    assert(result.modelDifference.contains(-1.0))
++    result.profileMinimum match
++      case ProfileMinimumComparison.Unresolved(ProfileMinimumUnresolved.DecreaseNotCertified(bound)) =>
++        assert(bound.suboptimalityUpper >= 2.0)
++        assert(bound.differenceUpper >= 1.0)
++      case other => fail(s"expected the old-gap guard, got $other")
++
++  test("a positive definite Gram need not have a positive Gershgorin lower bound"):
++    val f = PairedResidualFixtures.all.find(_.name == "synthetic-insufficient-gram-bound.json").get
++    // D=[[1,2],[0,1]], so Gram=[[1,2],[2,5]] has determinant 1 > 0.
++    val result = compare(f)
++    assertEquals(result.direction, ResidualDifferenceDirection.Decrease)
++    result.profileMinimum match
++      case ProfileMinimumComparison.Unresolved(ProfileMinimumUnresolved.NonPositiveGramLowerBound(lower)) => assert(lower <= 0.0)
++      case other => fail(s"expected an unresolved sufficient bound, got $other")
++
++  test("returned-model scope never implies an unrequested profile certificate"):
++    val f = PairedResidualFixtures.all.find(_.name == "synthetic-profile-descent.json").get
++    val result = compare(f, PairedResidualScope.ReturnedModels)
++    assertEquals(result.direction, ResidualDifferenceDirection.Decrease)
++    assertEquals(result.profileMinimum, ProfileMinimumComparison.NotRequested)
++    assert(!result.certifiesProfileDecrease)
++
++  test("common scalar energy offsets cannot erase a proven tiny uphill difference"):
++    val f = PairedResidualFixtures.all.find(_.name == "darwin-node2421-voxel-15.json").get
++    val result = compare(f)
++    enclosed(result, difference(f))
++    assertEquals(result.direction, ResidualDifferenceDirection.Increase)
++    def roundedEnergy(design: Array[Double], beta: Array[Double]): Double =
++      var energy = 0.0
++      var row = 0
++      while row < f.rows do
++        var residual = f.response(row)
++        var col = 0
++        while col < f.columns do
++          residual -= design(row * f.columns + col) * beta(col)
++          col += 1
++        energy += residual * residual
++        row += 1
++      energy
++    for common <- Vector(1e8, 1e16) do
++      val previous = common + roundedEnergy(f.previousDesign, f.previousCoefficients)
++      val candidate = common + roundedEnergy(f.candidateDesign, f.candidateCoefficients)
++      assertEqualsDouble(candidate - previous, 0.0, 0.0)
++    // The generic API has no common energy constant or acceptance tolerance.
++    assert(!result.certifiesProfileDecrease)
++
++  test("uniform dyadic column scaling preserves the physical model comparison"):
++    val f = PairedResidualFixtures.all.find(_.name == "synthetic-coupled-profile-descent.json").get
++    val reference = difference(f)
++    for power <- Vector(-40, -10, 10, 40) do
++      val scale = math.pow(2.0, power.toDouble)
++      val scaled = f.copy(previousDesign = f.previousDesign.map(_ * scale), candidateDesign = f.candidateDesign.map(_ * scale),
++        previousCoefficients = f.previousCoefficients.map(_ / scale), candidateCoefficients = f.candidateCoefficients.map(_ / scale))
++      assertEquals(difference(scaled).compare(reference), 0)
++      val result = compare(scaled)
++      enclosed(result, reference)
++      assert(result.certifiesProfileDecrease)
++
++  test("zero and subnormal changes remain conservative rather than manufacturing descent"):
++    for value <- Vector(0.0, Double.MinPositiveValue, -Double.MinPositiveValue) do
++      val f = PairedResidualFixtures.Fixture("tiny", 1, 1, Array(0.0), Array(1.0), Array(1.0), Array(0.0), Array(value), false)
++      val result = compare(f)
++      enclosed(result, difference(f))
++      assertEquals(result.direction, ResidualDifferenceDirection.Unresolved)
++      assert(!result.certifiesProfileDecrease)
++
++  test("finite input overflow or an infinite outward endpoint refuses certification"):
++    val workspace = ok(PairedResidualWorkspace(1, 1))
++    assert(workspace.compare(Array(0.0), Array(Double.MaxValue), Array(Double.MaxValue), Array(2.0), Array(2.0)).isLeft)
++    assert(workspace.compare(Array(Double.MaxValue), Array(0.0), Array(0.0), Array(0.0), Array(0.0)).isLeft)
++
++  test("shape admission and every nonfinite input channel are typed failures"):
++    assert(PairedResidualWorkspace(0, 1).isLeft)
++    assert(PairedResidualWorkspace.requiredArrayCells(46341, 46341).isLeft)
++    assertEquals(ok(PairedResidualWorkspace.requiredArrayCells(72, 3)), 150L)
++    val workspace = ok(PairedResidualWorkspace(2, 1))
++    assert(workspace.compare(Array(1.0), Array(1.0, 1.0), Array(1.0, 0.0), Array(0.0), Array(1.0)).isLeft)
++    assertEquals(workspace.compare(null, Array(1.0, 1.0), Array(1.0, 0.0), Array(0.0), Array(1.0)),
++      Left(PairedResidualError.MissingInput(PairedResidualInput.Response)))
++    for bad <- Vector(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity); channel <- 0 until 5 do
++      val arrays = Array(Array(1.0, 1.0), Array(1.0, 1.0), Array(1.0, 0.0), Array(0.0), Array(1.0))
++      arrays(channel)(0) = bad
++      workspace.compare(arrays(0), arrays(1), arrays(2), arrays(3), arrays(4)) match
++        case Left(PairedResidualError.NonFiniteInput(_, 0)) => ()
++        case other => fail(s"expected nonfinite input failure, got $other")
++
++  test("workspace reuse after failure cannot mutate an earlier immutable result"):
++    val f = PairedResidualFixtures.all.find(_.name == "synthetic-profile-descent.json").get
++    val workspace = ok(PairedResidualWorkspace(f.rows, f.columns))
++    val first = ok(workspace.compare(f.response, f.previousDesign, f.candidateDesign, f.previousCoefficients, f.candidateCoefficients))
++    val lower = java.lang.Double.doubleToRawLongBits(first.modelDifference.lower)
++    val upper = java.lang.Double.doubleToRawLongBits(first.modelDifference.upper)
++    val invalid = f.response.clone()
++    invalid(0) = Double.NaN
++    assert(workspace.compare(invalid, f.previousDesign, f.candidateDesign, f.previousCoefficients, f.candidateCoefficients).isLeft)
++    val again = ok(workspace.compare(f.response, f.previousDesign, f.candidateDesign, f.previousCoefficients, f.candidateCoefficients))
++    assertEquals(java.lang.Double.doubleToRawLongBits(first.modelDifference.lower), lower)
++    assertEquals(java.lang.Double.doubleToRawLongBits(first.modelDifference.upper), upper)
++    assertEquals(java.lang.Double.doubleToRawLongBits(again.modelDifference.lower), lower)
++    assertEquals(java.lang.Double.doubleToRawLongBits(again.modelDifference.upper), upper)
++
++  test("deterministic finite paired matrices enclose an independent exact RSS subtraction"):
++    var sample = 0
++    while sample < 128 do
++      val old = Array.tabulate(12)(i => ((i * 37 + sample * 11) % 127 - 63).toDouble / 32.0)
++      val next = old.zipWithIndex.map((x, i) => x + ((sample + i) % 7 - 3).toDouble / 1048576.0)
++      val b0 = Array(0.25 + sample.toDouble / 1024.0, -0.75, 1.5)
++      val b1 = Array(b0(0) - 1.0 / 65536.0, b0(1) + 1.0 / 32768.0, b0(2))
++      val y = Array.tabulate(4)(i => (i * 17 - sample % 13).toDouble / 16.0)
++      val f = PairedResidualFixtures.Fixture("generated", 4, 3, y, old, next, b0, b1, false)
++      enclosed(compare(f, PairedResidualScope.ReturnedModels), difference(f))
++      sample += 1

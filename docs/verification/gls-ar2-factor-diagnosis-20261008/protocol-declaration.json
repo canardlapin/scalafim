@@ -1,0 +1,9 @@
+{
+  "protocol": "tools/scenarios/gls-factor-diagnosis/protocol.json",
+  "protocol_sha256": "cb6b6ad72cdbbff293662bc48b9f7df66a779f12e99cf15b5246e4e9e92cb1e3",
+  "source_base": "81c7e1f6a8d6524094e9eb8433cf5618e33061a4",
+  "results_observed": false,
+  "seed": 973860617,
+  "declared_before_diagnostic_and_confirmation_outcomes": true,
+  "original_adverse_protocol_sha256": "5d046b21b8398697f6a07fbefb365dfa45489dc7446881c82282019b98f58d5e"
+}

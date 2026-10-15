@@ -1,0 +1,99 @@
+From b56a9dd0b8ad479621a3594880f90c9add8c2824 Mon Sep 17 00:00:00 2001
+From: canardlapin <brad@duckrabbit.ai>
+Date: Tue, 6 Oct 2026 14:17:11 -0400
+Subject: [PATCH] docs: correct unrecorded Node runtime and add measured
+ qualification
+
+---
+ .../README.md                                 |  2 +-
+ .../comparison-node2421.json                  | 22 +++++++++++++++++++
+ .../comparison-node2421.log                   | 21 ++++++++++++++++++
+ .../runtime-correction.md                     |  7 ++++++
+ 4 files changed, 51 insertions(+), 1 deletion(-)
+ create mode 100644 docs/verification/paired-residual-comparison-20261006/comparison-node2421.json
+ create mode 100644 docs/verification/paired-residual-comparison-20261006/comparison-node2421.log
+ create mode 100644 docs/verification/paired-residual-comparison-20261006/runtime-correction.md
+
+diff --git a/docs/verification/paired-residual-comparison-20261006/README.md b/docs/verification/paired-residual-comparison-20261006/README.md
+index c6f916a..1fd2d0d 100644
+--- a/docs/verification/paired-residual-comparison-20261006/README.md
++++ b/docs/verification/paired-residual-comparison-20261006/README.md
+@@ -20,6 +20,6 @@ The DarwinJVMV15 pair was constructed by an additional diagnostic after Remainin
+ 
+ ## Gates
+ 
+-Selected new suite:23/23 JVM. Full coreJVM:786/786. Full coreJS:774/774. Both full gates ran scalafmtCheckAll and emitted no compiler warnings. The23 new tests are included in full totals, not added again. JDK21.0.12.1, sbt1.11.7 and Node24.1 were used with requested3g/4CPUs and private sbt global/boot/ivy state. Optional native lanes were not run.
++Selected new suite:23/23 JVM. Full coreJVM:786/786. Full coreJS:774/774. Both full gates ran scalafmtCheckAll and emitted no compiler warnings. The23 new tests are included in full totals, not added again. JDK21.0.12.1 and sbt1.11.7 were used with requested3g/4CPUs and private sbt global/boot/ivy state. The historical Node version was not captured; the earlier Node24.1 wording was stale. The additive [runtime correction](runtime-correction.md) records23passing tests under explicitly measured Node24.21.0, preserving the original archive/receipt. Optional native lanes were not run.
+ 
+ Portable patch/bundle and the source-bound receipt archive are prepared by the root coordinator/worker after gates. Publication is withheld pending concrete root review and separate scientific domain integration.
+diff --git a/docs/verification/paired-residual-comparison-20261006/comparison-node2421.json b/docs/verification/paired-residual-comparison-20261006/comparison-node2421.json
+new file mode 100644
+index 0000000..fa212e8
+--- /dev/null
++++ b/docs/verification/paired-residual-comparison-20261006/comparison-node2421.json
+@@ -0,0 +1,22 @@
++{
++  "status": "selected test task passed; additive runtime record repaired after recorder failure",
++  "passed_tests": 23,
++  "node_binary": "/private/tmp/scalafim-main-reconciliation-readiness-20261006/node-v24.21.0-darwin-arm64/bin/node",
++  "node_version_verified_before_test": "v24.21.0",
++  "node_version_verified_after_test": "v24.21.0",
++  "node_binary_sha256": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b",
++  "command": [
++    "sbt",
++    "-batch",
++    "coreJS/testOnly gale.numeric.PairedSquaredResidualComparisonSuite"
++  ],
++  "explicit_path_prefix": "/private/tmp/scalafim-main-reconciliation-readiness-20261006/node-v24.21.0-darwin-arm64/bin",
++  "requested_heap": "3g",
++  "requested_cpus": 4,
++  "source_candidate": "a57146ff55404039c3261a9af4a82ed307f6e625",
++  "source_only_patch_sha256": "a18e2746e43e0414436d69c23534df74c3220c42d8ab5dc350fd032adc49736c",
++  "log_sha256": "dd0ad1c50e380cc225625ed65150843f44b3ae2aace4d8d7fb56e440df1123a8",
++  "sbt_test_task_elapsed_seconds": 24,
++  "instrumentation_caveat": "Post-run recorder raised AttributeError on hashlib.file_digest before writing its JSON. Actual sbt process exit code and whole-process elapsed time were not retained. The raw task log records 23 passes and success; repaired metadata does not infer a recorded process exit code. The same passed tests were not rerun.",
++  "historical_correction": "The original evidence README named Node24.1 from an earlier environment assumption. Prototype full-core run records did not capture a Node version. Current Node24.21 wrapper predates those logs but is not a historical runtime measurement; original archive/receipt remain unmodified."
++}
+diff --git a/docs/verification/paired-residual-comparison-20261006/comparison-node2421.log b/docs/verification/paired-residual-comparison-20261006/comparison-node2421.log
+new file mode 100644
+index 0000000..2bf1a8a
+--- /dev/null
++++ b/docs/verification/paired-residual-comparison-20261006/comparison-node2421.log
+@@ -0,0 +1,21 @@
++WARNING: Using incubator modules: jdk.incubator.vector
++WARNING: Using incubator modules: jdk.incubator.vector
++[info] welcome to sbt 1.11.7 (Eclipse Adoptium Java 21.0.12.1)
++[info] loading settings for project scalafim-paired-residual-gale-20261006-build from plugins.sbt...
++[info] loading project definition from /private/tmp/scalafim-paired-residual-gale-20261006/project
++[info] loading settings for project root from build.sbt...
++[info] loading settings for project ravel-build from plugins.sbt...
++[info] loading project definition from /private/tmp/scalafim-paired-residual-gale-build-20261006/global/staging/6c77ef03ad5f6b5be136/ravel/project
++[info] loading settings for project root from build.sbt...
++[info] resolving key references (31736 settings) ...
++[info] set current project to gale (in build file:/private/tmp/scalafim-paired-residual-gale-20261006/)
++[info] compiling 65 Scala sources to /private/tmp/scalafim-paired-residual-gale-20261006/core/js/target/scala-3.7.4/classes ...
++[info] done compiling
++[info] compiling 106 Scala sources to /private/tmp/scalafim-paired-residual-gale-20261006/core/js/target/scala-3.7.4/test-classes ...
++[info] done compiling
++[info] Fast optimizing /private/tmp/scalafim-paired-residual-gale-20261006/core/js/target/scala-3.7.4/gale-core-test-fastopt
++Test run gale.numeric.PairedSquaredResidualComparisonSuite started
++gale.numeric.PairedSquaredResidualComparisonSuite: finished 0.051s
++Test run gale.numeric.PairedSquaredResidualComparisonSuite finished: 0 failed, 0 ignored, 23 total 0.051s
++[info] Passed: Total 23, Failed 0, Errors 0, Passed 23
++[success] Total time: 24 s, completed Oct 6, 2026, 2:14:36 p.m.
+diff --git a/docs/verification/paired-residual-comparison-20261006/runtime-correction.md b/docs/verification/paired-residual-comparison-20261006/runtime-correction.md
+new file mode 100644
+index 0000000..f7f60f7
+--- /dev/null
++++ b/docs/verification/paired-residual-comparison-20261006/runtime-correction.md
+@@ -0,0 +1,7 @@
++# Runtime correction and additive Node24.21 qualification
++
++The first candidate evidence README claimed Node24.1. That text was carried from an older environment assumption, not measured in the prototype gate. The full786JVM/774JS runs remain recorded, but their Node version was not captured. The original sealed receipt and118,128-byte archive are preserved as historical snapshots; their old Node wording is superseded by this correction.
++
++The23 new comparison tests were subsequently run with an explicit Node24.21.0 binary directory first on PATH. Its version was checked before invocation; the recorded binary hash and raw success log are attached. All23 tests passed without compiler warnings, including both measured uphill controls and the false-positive previous-beta control. The numeric/test/public README source-only patch remains SHA256a18e2746e43e0414436d69c23534df74c3220c42d8ab5dc350fd032adc49736c.
++
++The additive recorder failed after the test gate on an unavailable hashlib.file_digest attribute. Portable SHA256 metadata repairs that instrumentation failure. The raw sbt task log confirms23passes and24second task time; process exit code and whole-process elapsed time were not written, so the supplement does not invent them. No passed test was rerun.
+-- 
+2.39.5 (Apple Git-154)
+

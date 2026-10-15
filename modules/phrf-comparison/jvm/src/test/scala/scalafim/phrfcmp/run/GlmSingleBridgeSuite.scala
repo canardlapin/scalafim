@@ -8,6 +8,7 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 import scala.jdk.CollectionConverters.*
+import scala.jdk.OptionConverters.*
 import scala.util.Try
 import scala.util.chaining.*
 
@@ -29,6 +30,7 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
     * scratch released) before munit abandons the test.
     */
   private val RealRunTimeout = 240.0
+  private val isMac = System.getProperty("os.name", "").toLowerCase.contains("mac")
 
   // ---- locations --------------------------------------------------------------------------------------------
   private val Fixture = "T-TX-fast__d0000"
@@ -184,8 +186,11 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
     assertCleaned(events)
     // lifecycle order, every step logged as an event
     val names = events.list.map(_.getClass.getSimpleName)
+    val expectedLifecycle =
+      if isMac then Vector("DeviceAttached", "Created", "Formatted", "Mounted", "ChildStarted", "ProcessGroupKilled", "Wiped", "Unmounted", "Detached", "Removed", "Verified")
+      else Vector("Created", "ChildStarted", "ProcessGroupKilled", "Wiped", "Removed", "Verified")
     assertEquals(names.filter(Set("Created", "DeviceAttached", "Formatted", "Mounted", "ChildStarted", "ProcessGroupKilled", "Wiped", "Unmounted", "Detached", "Removed", "Verified")).toVector.distinct,
-      Vector("DeviceAttached", "Created", "Formatted", "Mounted", "ChildStarted", "ProcessGroupKilled", "Wiped", "Unmounted", "Detached", "Removed", "Verified"))
+      expectedLifecycle)
     val wiped = events.list.collectFirst { case w: ScratchEvent.Wiped => w }.get
     assert(wiped.files >= 2, "result files (npz + sidecar) must have been present and wiped")
     assertEquals(wiped.residueAfterWipe, 0)
@@ -471,13 +476,32 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
   /** Releases a scratch the test deliberately left behind, with the real tools. */
   private def manualCleanup(path: String, device: String, sc: Scratch): Unit =
     ScratchRegistry.unregister(sc)
-    RamScratch.cmd(Seq("/sbin/umount", path)): Unit
-    RamScratch.cmd(Seq("/usr/bin/hdiutil", "detach", device)): Unit
+    if isMac then
+      RamScratch.cmd(Seq("/sbin/umount", path)): Unit
+      RamScratch.cmd(Seq("/usr/bin/hdiutil", "detach", device)): Unit
+    else Files.deleteIfExists(Paths.get(device)): Unit
     Files.deleteIfExists(Paths.get(path)): Unit
 
-  private def capturing(tools: MacTools, ownerPid: Long = ProcessHandle.current().pid()): (ScratchProvider, java.util.concurrent.atomic.AtomicReference[Scratch]) =
+  /** Darwin uses its real RAM mount. Other hosts exercise the same MacScratch teardown with a regular device
+    * marker and a mount-table double; this admits no real mount or native security properties.
+    */
+  private def capturing(dir: Path, tools: MacTools): (ScratchProvider, java.util.concurrent.atomic.AtomicReference[Scratch]) =
     val ref = new java.util.concurrent.atomic.AtomicReference[Scratch]
-    val base = RamScratch.forOsWith("Mac OS X", 128, tools, ownerPid)
+    val base: ScratchProvider =
+      if isMac then RamScratch.forOsWith("Mac OS X", 128, tools, ProcessHandle.current().pid())
+      else (hook: ScratchHook) =>
+        val root = Files.createDirectory(dir.resolve("fake-mount"))
+        val device = Files.createFile(dir.resolve("fake-device"))
+        for sub <- Seq("out", "tmp", "home") do Files.createDirectory(root.resolve(sub)): Unit
+        val mount = stub(Files.createDirectory(dir.resolve("mount-tool")), s"echo '$device on $root (hfs, nobrowse, nosuid, nodev)'")
+        val failedDetach = stub(Files.createDirectory(dir.resolve("detach-tool")), "exit 1")
+        val sc = new RamScratch.MacScratch(device.toString, Some(root), hook,
+          tools.copy(mount = mount.toString, hdiutil = failedDetach.toString))
+        sc.markMounted()
+        ScratchRegistry.register(sc)
+        RamScratch.emit(hook, ScratchEvent.DeviceAttached(device.toString, 0L))
+        RamScratch.emit(hook, ScratchEvent.Created("test-mac-teardown", root.toString))
+        Right(sc)
     ((h: ScratchHook) => base.create(h).map { sc => ref.set(sc); sc }, ref)
 
   tmp.test("F1: an Error (OutOfMemoryError) in the output path still detaches the scratch") { dir =>
@@ -522,28 +546,49 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
     assert((System.nanoTime() - t0) / 1e9 < 15.0)
   }
 
+  test("F2: group verification reports with interrupts cleared, then restores the pre-existing flag") {
+    val process = new ProcessBuilder("/usr/bin/true").start()
+    assert(process.waitFor(10, TimeUnit.SECONDS), "control process did not exit")
+    val noKill: GroupKiller = (_, _) => ()
+    var observed = Option.empty[Boolean]
+    val hook = new ScratchHook:
+      def event(e: ScratchEvent): Unit = e match
+        case ScratchEvent.ProcessGroupKilled(_, _) => observed = Some(Thread.interrupted())
+        case _ => ()
+    Thread.currentThread().interrupt()
+    try
+      assertEquals(GlmSingleBridge.killGroup(process.pid(), process, hook, noKill), 0)
+      assertEquals(observed, Some(false), "the reporting hook must see the interrupt cleared")
+      assert(Thread.currentThread().isInterrupted, "the reporting hook consumed the restored interrupt")
+    finally Thread.interrupted(): Unit
+  }
+
   tmp.test("F2c: a hanging umount is reported as residue after the remaining steps ran; then the leftovers are removed") { dir =>
     val hang = dir.resolve("hang-umount")
-    Files.writeString(hang, "#!/bin/sh\nsleep 300\n")
+    Files.writeString(hang, "#!/bin/sh\nexec sleep 300\n")
     Files.setPosixFilePermissions(hang, PosixFilePermissions.fromString("rwxr-xr-x"))
-    val (prov, ref) = capturing(MacTools(umount = hang.toString, cmdTimeoutSeconds = 2L, retries = 2, retryPauseMillis = 50L))
+    val (prov, ref) = capturing(dir, MacTools(umount = hang.toString, cmdTimeoutSeconds = 2L, retries = 2, retryPauseMillis = 50L))
     val ev = new Events
     val r = GlmSingleBridge.run(inputs, config(stub(dir, "exit 3"), 60.0, ev, prov))
-    assert(r.left.toOption.exists { case GlmSingleRefusal.ScratchResidue(s, _, Some(_)) => s.contains("unmount"); case _ => false }, s"$r")
-    assert(ev.list.exists { case ScratchEvent.StepFailed("detach", _) => true; case _ => false }, "detach was not attempted after the failed unmount")
-    assert(ev.list.contains(ScratchEvent.Verified(pathGone = false, deviceGone = false)))
-    manualCleanup(ev.scratchPath.get, ev.device.get, ref.get())
+    try
+      assert(r.left.toOption.exists { case GlmSingleRefusal.ScratchResidue(s, _, Some(_)) => s.contains("unmount"); case _ => false }, s"$r")
+      assert(ev.list.exists { case ScratchEvent.StepFailed("detach", _) => true; case _ => false }, "detach was not attempted after the failed unmount")
+      assert(ev.list.contains(ScratchEvent.Verified(pathGone = false, deviceGone = false)))
+    finally
+      if ref.get() != null then manualCleanup(ev.scratchPath.get, ev.device.get, ref.get())
     assert(!Files.exists(Paths.get(ev.device.get)))
   }
 
   tmp.test("F2c: a failing unmount still runs detach, remove and verify, and reports ScratchResidue") { dir =>
-    val (prov, ref) = capturing(MacTools(umount = "/usr/bin/false", retries = 2, retryPauseMillis = 20L))
+    val (prov, ref) = capturing(dir, MacTools(umount = "/usr/bin/false", retries = 2, retryPauseMillis = 20L))
     val ev = new Events
     val r = GlmSingleBridge.run(inputs, config(stub(dir, "exit 3"), 60.0, ev, prov))
-    assert(r.left.toOption.exists(_.isInstanceOf[GlmSingleRefusal.ScratchResidue]), s"$r")
-    val names = ev.list.collect { case ScratchEvent.StepFailed(s, _) => s }
-    assert(names.contains("unmount") && names.contains("detach") && names.contains("verify"), names.toString)
-    manualCleanup(ev.scratchPath.get, ev.device.get, ref.get())
+    try
+      assert(r.left.toOption.exists(_.isInstanceOf[GlmSingleRefusal.ScratchResidue]), s"$r")
+      val names = ev.list.collect { case ScratchEvent.StepFailed(s, _) => s }
+      assert(names.contains("unmount") && names.contains("detach") && names.contains("verify"), names.toString)
+    finally
+      if ref.get() != null then manualCleanup(ev.scratchPath.get, ev.device.get, ref.get())
   }
 
   tmp.test("F3: a refused attempt still reports exit, wall and CPU (a timed-out CPU burner is not free)") { dir =>
@@ -593,39 +638,63 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
 
   tmp.test("F5: the startup sweep releases a deliberately leaked scratch of a dead owner, and nothing else") { _ =>
     val dead = { val p = new ProcessBuilder("/usr/bin/true").start(); p.waitFor(); p.pid() }
-    val ev = new Events
-    val leaked = RamScratch.forOsWith("Mac OS X", 128, MacTools(), dead).create(ev).fold(r => fail(r.message), identity)
-    ScratchRegistry.unregister(leaked) // simulate a dead JVM: no hook will run
-    val leakedPath = Paths.get(ev.scratchPath.get).toRealPath().toString // `mount(8)` reports the real path
-    val leakedDev = ev.device.get
-    Files.writeString(leaked.root.resolve("home/leftover.bin"), "x")
-    // a live owner's scratch and a foreign (not phrfcmp-named) RAM volume must be left alone
-    val liveEv = new Events
-    val live = RamScratch.host().create(liveEv).fold(r => fail(r.message), identity)
-    val foreign = Files.createTempDirectory("other-ram-")
-    val fdev = RamScratch.cmd(Seq("/usr/bin/hdiutil", "attach", "-nomount", "ram://4096")).out.trim
-    assert(fdev.startsWith("/dev/disk"), fdev)
-    RamScratch.cmd(Seq("/sbin/newfs_hfs", fdev)): Unit
-    assertEquals(RamScratch.cmd(Seq("/sbin/mount", "-t", "hfs", "-o", "nobrowse", fdev, foreign.toString)).exit, 0)
-    // an empty stale mountpoint
-    val stale = Files.createTempDirectory(s"phrfcmp-ram-$dead-")
-    val staleReal = stale.toRealPath().toString
-    try
-      val swept = RamScratch.sweepStaleWith("Mac OS X", ScratchHook.none, MacTools())
-      val byPath = swept.map(x => x.path -> x).toMap
-      assertEquals(byPath(leakedPath).outcome, "released")
-      assertEquals(byPath(leakedPath).device, Some(leakedDev))
-      assertEquals(byPath(staleReal).outcome, "removed empty stale mountpoint")
-      assert(!Files.exists(Paths.get(leakedPath)) && !Files.exists(Paths.get(ev.scratchPath.get)) && !Files.exists(Paths.get(leakedDev)))
-      assert(!Files.exists(stale))
-      assert(!swept.exists(x => x.path == liveEv.scratchPath.get || x.path.contains("other-ram-")), "swept something that is not a stale phrfcmp scratch")
-      assert(Files.exists(Paths.get(liveEv.device.get)) && Files.exists(Paths.get(fdev)))
-    finally
-      assertEquals(live.release().isRight, true)
-      RamScratch.cmd(Seq("/sbin/umount", foreign.toString)): Unit
-      RamScratch.cmd(Seq("/usr/bin/hdiutil", "detach", fdev)): Unit
-      Files.deleteIfExists(foreign): Unit
-      Files.deleteIfExists(stale): Unit
+    if isMac then
+      val ev = new Events
+      val leaked = RamScratch.forOsWith("Mac OS X", 128, MacTools(), dead).create(ev).fold(r => fail(r.message), identity)
+      ScratchRegistry.unregister(leaked) // simulate a dead JVM: no hook will run
+      val leakedPath = Paths.get(ev.scratchPath.get).toRealPath().toString // `mount(8)` reports the real path
+      val leakedDev = ev.device.get
+      Files.writeString(leaked.root.resolve("home/leftover.bin"), "x")
+      // a live owner's scratch and a foreign (not phrfcmp-named) RAM volume must be left alone
+      val liveEv = new Events
+      val live = RamScratch.host().create(liveEv).fold(r => fail(r.message), identity)
+      val foreign = Files.createTempDirectory("other-ram-")
+      val fdev = RamScratch.cmd(Seq("/usr/bin/hdiutil", "attach", "-nomount", "ram://4096")).out.trim
+      assert(fdev.startsWith("/dev/disk"), fdev)
+      RamScratch.cmd(Seq("/sbin/newfs_hfs", fdev)): Unit
+      assertEquals(RamScratch.cmd(Seq("/sbin/mount", "-t", "hfs", "-o", "nobrowse", fdev, foreign.toString)).exit, 0)
+      // an empty stale mountpoint
+      val stale = Files.createTempDirectory(s"phrfcmp-ram-$dead-")
+      val staleReal = stale.toRealPath().toString
+      try
+        val swept = RamScratch.sweepStaleWith("Mac OS X", ScratchHook.none, MacTools())
+        val byPath = swept.map(x => x.path -> x).toMap
+        assertEquals(byPath(leakedPath).outcome, "released")
+        assertEquals(byPath(leakedPath).device, Some(leakedDev))
+        assertEquals(byPath(staleReal).outcome, "removed empty stale mountpoint")
+        assert(!Files.exists(Paths.get(leakedPath)) && !Files.exists(Paths.get(ev.scratchPath.get)) && !Files.exists(Paths.get(leakedDev)))
+        assert(!Files.exists(stale))
+        assert(!swept.exists(x => x.path == liveEv.scratchPath.get || x.path.contains("other-ram-")), "swept something that is not a stale phrfcmp scratch")
+        assert(Files.exists(Paths.get(liveEv.device.get)) && Files.exists(Paths.get(fdev)))
+      finally
+        assertEquals(live.release().isRight, true)
+        RamScratch.cmd(Seq("/sbin/umount", foreign.toString)): Unit
+        RamScratch.cmd(Seq("/usr/bin/hdiutil", "detach", fdev)): Unit
+        Files.deleteIfExists(foreign): Unit
+        Files.deleteIfExists(stale): Unit
+    else
+      val ev = new Events
+      val leaked = RamScratch.forOsWith("Linux", 128, MacTools(), dead).create(ev).fold(r => fail(r.message), identity)
+      ScratchRegistry.unregister(leaked) // simulate a dead JVM: no hook will run
+      Files.writeString(leaked.root.resolve("home/leftover.bin"), "x")
+      val liveEv = new Events
+      val live = RamScratch.host().create(liveEv).fold(r => fail(r.message), identity)
+      val foreign = Files.createTempDirectory(Paths.get("/dev/shm"), "other-ram-")
+      val stale = Files.createTempDirectory(Paths.get("/dev/shm"), s"phrfcmp-$dead-")
+      try
+        val swept = RamScratch.sweepStaleWith("Linux", ScratchHook.none, MacTools())
+        val byPath = swept.map(x => x.path -> x).toMap
+        assertEquals(byPath(leaked.root.toString).outcome, "released")
+        assertEquals(byPath(leaked.root.toString).device, None)
+        assertEquals(byPath(stale.toString).outcome, "released")
+        assert(!Files.exists(leaked.root) && !Files.exists(stale))
+        assert(!swept.exists(x => x.path == live.root.toString || x.path == foreign.toString), "swept live or foreign scratch")
+        assert(Files.isDirectory(live.root) && Files.isDirectory(foreign))
+      finally
+        assertEquals(live.release().isRight, true)
+        leaked.release(): Unit
+        Files.deleteIfExists(foreign): Unit
+        Files.deleteIfExists(stale): Unit
   }
 
   tmp.test("F5: the JVM shutdown path kills the child's process group and releases a live scratch") { _ =>
@@ -650,31 +719,82 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
     val ev = new Events
     val cfg = config(s, 1.0, ev).copy(killer = noKill)
     val run = GlmSingleBridge.runAttempt(inputs, cfg)
-    try
-      assert(run.attempt.groupSurvivors > 0, s"${run.attempt}")
-      assert(run.result.left.toOption.exists { case GlmSingleRefusal.ScratchResidue("kill", _, _) => true; case _ => false }, s"${run.result}")
-      assert(ev.list.exists { case ScratchEvent.ProcessGroupKilled(_, n) => n > 0; case _ => false })
-    finally
-      ScratchRegistry.shutdownAll() // the real kill, then a real release
+    def state(pid: Long): Option[String] =
+      val r = RamScratch.cmd(Seq("/bin/ps", "-o", "stat=", "-p", pid.toString))
+      if r.exit == 0 then Some(r.out.trim)
+      else if r.exit == 1 then None
+      else fail(s"could not inspect process $pid: exit ${r.exit}, ${r.out}")
+    def stillRunning(identity: (Long, Option[java.time.Instant])): Boolean =
+      val (pid, started) = identity
+      ProcessHandle.of(pid).toScala.exists { handle =>
+        val currentStart = handle.info().startInstant().toScala
+        val same = started.isEmpty || currentStart.isEmpty || currentStart == started
+        same && handle.isAlive && state(pid).exists(s => !s.startsWith("Z"))
+      }
+    val (pgid, recorded, identities) =
+      try
+        val g = ev.list.collectFirst { case ScratchEvent.ChildStarted(_, group) => group }.getOrElse(fail("no process group started"))
+        val pids = Files.readAllLines(pidFile).asScala.map(_.trim.toLong).toVector
+        assert(pids.nonEmpty, "the background survivor did not record its pid")
+        val captured = pids.map { pid =>
+          val handle = ProcessHandle.of(pid).toScala.getOrElse(fail(s"recorded survivor $pid disappeared before the real kill"))
+          assert(handle.isAlive, s"recorded survivor $pid was not alive before the real kill")
+          assertEquals(pgidOf(pid), Some(g))
+          pid -> handle.info().startInstant().toScala
+        }
+        assert(run.attempt.groupSurvivors > 0, s"${run.attempt}")
+        assert(run.result.left.toOption.exists { case GlmSingleRefusal.ScratchResidue("kill", _, _) => true; case _ => false }, s"${run.result}")
+        assert(ev.list.exists { case ScratchEvent.ProcessGroupKilled(_, n) => n > 0; case _ => false })
+        assert(captured.exists(stillRunning), "the noKill fault must leave an actual running group member")
+        assertEquals(ScratchRegistry.liveCount, 1, "a refused live group must remain registered for real shutdown")
+        (g, pids, captured)
+      finally
+        ScratchRegistry.shutdownAll() // the real kill, then a real release
     assertCleaned(ev, "(after the survivors were killed for real)")
-    Files.readAllLines(pidFile).asScala.map(_.trim.toLong).foreach(p => assert(!ProcessHandle.of(p).map(_.isAlive).orElse(false)))
+    // Linux ProcessHandle.isAlive includes defunct children awaiting their OS reaper. A zombie cannot execute or
+    // retain scratch resources. Keep the real kill and noKill controls, then independently refuse every runnable
+    // member of the original group; capture PID/start identity so reuse cannot be mistaken for a survivor.
+    val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+    while identities.exists(stillRunning) && System.nanoTime() < deadline do Thread.sleep(10L)
+    val diagnostic = RamScratch.cmd(Seq("/bin/ps", "-o", "pid=,ppid=,pgid=,stat=", "-p", recorded.mkString(","))).out.trim
+    println(s"[S6 survivors] group=$pgid; terminal states=[$diagnostic]")
+    assert(!identities.exists(stillRunning), s"recorded process still running after real shutdown: $diagnostic")
+    val group = RamScratch.cmd(Seq("/usr/bin/pgrep", "-g", pgid.toString))
+    assert(Set(0, 1).contains(group.exit), s"process-group verification failed: ${group.exit}")
+    if group.exit == 0 then
+      val members = group.out.linesIterator.map(_.trim.toLong).toVector
+      assert(members.nonEmpty, "pgrep reported success without members")
+      members.foreach { pid =>
+        assert(state(pid).forall(_.startsWith("Z")), s"live process-group member $pid survives real shutdown: ${state(pid)}")
+      }
   }
 
-  tmp.test("F6: the volume is nosuid/nodev/nobrowse, root mode 0700 before the child starts; mdutil state recorded") { dir =>
+  tmp.test("F6: the native RAM backend and root mode 0700 are verified before the child starts") { dir =>
     val seen = new java.util.concurrent.atomic.AtomicReference[String]("")
     val ev = new Events
     val hook = onEvent(ev) {
       case _: ScratchEvent.ChildStarted =>
         val root = Paths.get(ev.scratchPath.get)
         val mode = PosixFilePermissions.toString(Files.getPosixFilePermissions(root))
-        val mnt = RamScratch.cmd(Seq("/sbin/mount")).out.linesIterator.filter(_.contains(root.getFileName.toString)).mkString
-        val md = RamScratch.cmd(Seq("/usr/bin/mdutil", "-s", root.toString)).out.replace('\n', ' ')
-        seen.set(s"mode=$mode; mount=[$mnt]; mdutil -s: $md")
+        if isMac then
+          val mnt = RamScratch.cmd(Seq("/sbin/mount")).out.linesIterator.filter(_.contains(root.getFileName.toString)).mkString
+          val md = RamScratch.cmd(Seq("/usr/bin/mdutil", "-s", root.toString)).out.replace('\n', ' ')
+          assert(Files.isRegularFile(root.resolve(".metadata_never_index")), "Darwin indexing marker absent")
+          seen.set(s"mode=$mode; mount=[$mnt]; mdutil -s: $md")
+        else
+          assertEquals(root.getParent, Paths.get("/dev/shm"))
+          assert(RamScratch.shmIsTmpfs(), "/dev/shm is not RAM backed")
+          val mnt = Files.readAllLines(Paths.get("/proc/mounts")).asScala.find { line =>
+            line.split(" ").lift(1).contains("/dev/shm")
+          }.getOrElse(fail("no /dev/shm mount entry"))
+          seen.set(s"mode=$mode; mount=[$mnt]")
     }
     GlmSingleBridge.run(inputs, config(stub(dir, "exit 3"), 60.0, hook))
     println(s"[S6 mount] ${seen.get}")
     assert(seen.get.startsWith("mode=rwx------"), seen.get)
-    for o <- Seq("nosuid", "nodev", "nobrowse") do assert(seen.get.contains(o), seen.get)
+    for o <- Seq("nosuid", "nodev") do assert(seen.get.contains(o), seen.get)
+    if isMac then assert(seen.get.contains("nobrowse"), seen.get)
+    else assert(!ev.list.exists(_.isInstanceOf[ScratchEvent.DeviceAttached]), "Linux directory must not attach a device")
   }
 
   tmp.test("F6: an unparseable sidecar's parser message (which can quote result bytes) is not carried") { dir =>
@@ -687,17 +807,23 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
     assert(m.contains("not parseable") && !m.contains("SECRETBETA"), m)
   }
 
-  tmp.test("a registry failure during setup (JVM shutting down) releases the attached device") { _ =>
+  tmp.test("a registry failure during setup (JVM shutting down) releases every acquired native resource") { _ =>
     val ev = new Events
     ScratchRegistry.registerFault = Some(new IllegalStateException("Shutdown in progress"))
-    val thrown =
-      try { RamScratch.host().create(ev); None }
-      catch case e: IllegalStateException => Some(e)
+    val result =
+      try Right(RamScratch.host().create(ev))
+      catch case e: IllegalStateException => Left(e)
       finally ScratchRegistry.registerFault = None
-    assert(thrown.isDefined, "the failure must surface")
-    val dev = ev.device.getOrElse(fail("no device was attached"))
-    assert(!Files.exists(Paths.get(dev)), s"RAM device $dev survives")
-    assert(ev.list.exists { case ScratchEvent.Detached(_) => true; case _ => false })
+    if isMac then
+      assert(result.left.toOption.exists(_.getMessage == "Shutdown in progress"), "the failure must surface")
+      val dev = ev.device.getOrElse(fail("no device was attached"))
+      assert(!Files.exists(Paths.get(dev)), s"RAM device $dev survives")
+      assert(ev.list.exists { case ScratchEvent.Detached(_) => true; case _ => false })
+    else
+      assertEquals(result, Right(Left(GlmSingleRefusal.ScratchSetupFailed("mkdir", "IllegalStateException"))))
+      val path = ev.list.collectFirst { case ScratchEvent.Removed(p) => p }.getOrElse(fail("setup did not remove its directory"))
+      assert(!Files.exists(Paths.get(path)), s"RAM directory $path survives registration failure")
+      assert(ev.list.contains(ScratchEvent.Verified(pathGone = true, deviceGone = true)))
     assertEquals(ScratchRegistry.liveCount, 0)
   }
 
@@ -713,22 +839,34 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
   private def pgidOf(pid: Long): Option[Long] =
     RamScratch.cmd(Seq("/bin/ps", "-o", "pgid=", "-p", pid.toString)).out.trim.toLongOption
 
+  /** Match the production watchdog launch's cleared environment. In particular, an inherited Linux C.UTF-8
+    * locale makes Darwin's system Perl abort before it can run the watchdog or its payload.
+    */
+  private def watchdogEnvironment(pb: ProcessBuilder): ProcessBuilder =
+    pb.environment().clear()
+    pb.environment().put("PATH", "/usr/bin:/bin"): Unit
+    pb
+
   tmp.test("M5: when the runner-side parent is SIGKILLed, the watchdog kills the child's own process group within the bound") { dir =>
     val pids = dir.resolve("pids")
     val wpidFile = dir.resolve("wpid")
+    val intermediateLog = dir.resolve("intermediate.log")
     // The payload records its pid and a background grandchild's pid, then sleeps (stands in for GLMsingle).
     val payload = s"echo $$$$ >> $pids; sleep 300 & echo $$! >> $pids; sleep 300"
     // An intermediate parent stands in for the runner JVM: it starts the real launcher with ITS pid as the
     // guarded parent (`$$` in sh), records the launcher's pid and waits. Argument $$0 is the watchdog script.
-    val intermediate = new ProcessBuilder(
+    val intermediate = watchdogEnvironment(new ProcessBuilder(
       "/bin/sh", "-c", s"""/usr/bin/perl -e "$$0" $$$$ -- "$$@" & echo $$! > $wpidFile; wait""",
       GlmSingleBridge.WatchdogScript, "/bin/sh", "-c", payload
-    ).redirectErrorStream(true).redirectOutput(dir.resolve("intermediate.log").toFile).start()
+    )).redirectErrorStream(true).redirectOutput(intermediateLog.toFile).start()
+    def startupDiagnostic: String =
+      val output = Try(Files.readString(intermediateLog)).getOrElse("<unreadable>")
+      s"intermediate pid=${intermediate.pid()}, alive=${intermediate.isAlive}, log=[$output]"
     var launcher = -1L
     try
-      launcher = awaitLines(wpidFile, 1, 10.0).headOption.getOrElse(fail("launcher pid not recorded"))
+      launcher = awaitLines(wpidFile, 1, 10.0).headOption.getOrElse(fail(s"launcher pid not recorded; $startupDiagnostic"))
       val members = awaitLines(pids, 2, 10.0)
-      assertEquals(members.length, 2, "payload did not start")
+      assertEquals(members.length, 2, s"payload did not start; $startupDiagnostic")
       // The child group is the launcher's own group, not the intermediate's (the sanctioned exception).
       assertEquals(pgidOf(launcher), Some(launcher))
       members.foreach(p => assertEquals(pgidOf(p), Some(launcher), s"pid $p is not in the launcher's group"))
@@ -756,9 +894,10 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
   tmp.test("M5: a launcher whose guarded parent is already gone never runs the command") { dir =>
     val marker = dir.resolve("ran")
     val dead = { val p = new ProcessBuilder("/usr/bin/true").start(); p.waitFor(); p.pid() }
-    val pr = new ProcessBuilder(GlmSingleBridge.watchdogCommand(dead, Seq("/usr/bin/touch", marker.toString))*).start()
+    val pr = watchdogEnvironment(new ProcessBuilder(GlmSingleBridge.watchdogCommand(dead, Seq("/usr/bin/touch", marker.toString))*))
+      .redirectErrorStream(true).start()
     assert(pr.waitFor(10, TimeUnit.SECONDS))
-    assertEquals(pr.exitValue(), 137)
+    assertEquals(pr.exitValue(), 137, new String(pr.getInputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8))
     assert(!Files.exists(marker), "the command ran under an orphaned launcher")
   }
 
