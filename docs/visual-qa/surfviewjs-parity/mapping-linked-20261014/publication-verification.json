@@ -1,0 +1,163 @@
+{
+  "verifiedAtUtc": "2026-10-15T00:40:50.225718+00:00",
+  "candidateCommit": "221948858884d7bc3d9175a9fb0330211ffed96f",
+  "intaglioCommit": "13747a3a8bf75fd788ff68e1c979d6c84f740605",
+  "remoteMainReceipt": "13747a3a8bf75fd788ff68e1c979d6c84f740605\trefs/heads/main",
+  "publicationAuthorized": true,
+  "publicationMethod": "ordinary fast-forward push to existing canardlapin/intaglio origin; no force",
+  "sbtClonePath": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio",
+  "sbtCloneCommit": "13747a3a8bf75fd788ff68e1c979d6c84f740605",
+  "sbtCloneTrackedTree": "00335977859a4ecf63c76559b729cff8b1bd6218",
+  "sbtCloneStatusPorcelain": "",
+  "localOverrideObserved": "None",
+  "fullFrozenMatrixQualified": false,
+  "originalVisualCaptures": "unchanged; produced using local override at the identical provider commit",
+  "verificationCompletedAtUtc": "2026-10-15T00:47:29.124283+00:00",
+  "gates": [
+    {
+      "log": "verification/default-pin-jvm-44.log",
+      "metadata": "verification/default-pin-jvm-44.log.meta.json",
+      "exitCode": 0,
+      "durationSeconds": 405.713639,
+      "passedTests": 833,
+      "testCountsInCommandOrder": [
+        230,
+        49,
+        51,
+        12,
+        2,
+        447,
+        42
+      ],
+      "completedCommands": [
+        {
+          "command": "eval println(\"INTAGLIO_LOCAL_OVERRIDE=\" + sys.props.get(\"scalafim.intaglio.build\"))",
+          "exitCode": 0,
+          "seconds": 64.6
+        },
+        {
+          "command": "show {https://github.com/canardlapin/intaglio.git#13747a3a8bf75fd788ff68e1c979d6c84f740605}coreJVM/baseDirectory",
+          "exitCode": 0,
+          "seconds": 0.3
+        },
+        {
+          "command": "surfaceViewJVM/test",
+          "exitCode": 0,
+          "seconds": 22.6
+        },
+        {
+          "command": "surfaceViewRasterJVM/test",
+          "exitCode": 0,
+          "seconds": 6.2
+        },
+        {
+          "command": "surfaceViewJavafxJVM/test",
+          "exitCode": 0,
+          "seconds": 8.6
+        },
+        {
+          "command": "surfaceViewExamplesJVM/test",
+          "exitCode": 0,
+          "seconds": 7.4
+        },
+        {
+          "command": "surfaceViewConnectivityJVM/test",
+          "exitCode": 0,
+          "seconds": 5.4
+        },
+        {
+          "command": "designJVM/test",
+          "exitCode": 0,
+          "seconds": 11.6
+        },
+        {
+          "command": "imageViewJVM/test",
+          "exitCode": 0,
+          "seconds": 5.1
+        },
+        {
+          "command": "scalafimCompileAll",
+          "exitCode": 0,
+          "seconds": 273.7
+        }
+      ]
+    },
+    {
+      "log": "verification/default-pin-js-45.log",
+      "metadata": "verification/default-pin-js-45.log.meta.json",
+      "exitCode": 0,
+      "durationSeconds": 138.982953,
+      "passedTests": 830,
+      "testCountsInCommandOrder": [
+        230,
+        49,
+        50,
+        11,
+        2,
+        446,
+        42
+      ],
+      "completedCommands": [
+        {
+          "command": "eval println(\"INTAGLIO_LOCAL_OVERRIDE=\" + sys.props.get(\"scalafim.intaglio.build\"))",
+          "exitCode": 0,
+          "seconds": 39.4
+        },
+        {
+          "command": "show {https://github.com/canardlapin/intaglio.git#13747a3a8bf75fd788ff68e1c979d6c84f740605}coreJS/baseDirectory",
+          "exitCode": 0,
+          "seconds": 0.6
+        },
+        {
+          "command": "surfaceViewJS/test",
+          "exitCode": 0,
+          "seconds": 25.0
+        },
+        {
+          "command": "surfaceViewRasterJS/test",
+          "exitCode": 0,
+          "seconds": 8.7
+        },
+        {
+          "command": "surfaceViewThreeJS/test",
+          "exitCode": 0,
+          "seconds": 7.4
+        },
+        {
+          "command": "surfaceViewExamplesJS/test",
+          "exitCode": 0,
+          "seconds": 7.5
+        },
+        {
+          "command": "surfaceViewConnectivityJS/test",
+          "exitCode": 0,
+          "seconds": 5.9
+        },
+        {
+          "command": "designJS/test",
+          "exitCode": 0,
+          "seconds": 30.8
+        },
+        {
+          "command": "imageViewJS/test",
+          "exitCode": 0,
+          "seconds": 7.1
+        },
+        {
+          "command": "surfaceViewThreeJS/fastLinkJS",
+          "exitCode": 0,
+          "seconds": 6.3
+        }
+      ]
+    }
+  ],
+  "browserModuleSha256": "78e61d3954506bceaaaa7a4f95a077c5d390559aee18b424757859cae134015c",
+  "browserModuleByteIdenticalToVisualCaptures": true,
+  "sourceChangesSinceVisualCaptures": "none; only evidence, documentation and immutable Mote operations changed",
+  "retainedWarnings": "upstream sbt unused settings and linops4s build-task lint warning; no ScalaFIM source compiler warnings",
+  "cleanup": {
+    "ownedSbtServer": "stopped after gates",
+    "browserAudit": "verification/browser-audit-post-publication.txt",
+    "browserAuditResult": "No automated top-level browser processes found."
+  }
+}

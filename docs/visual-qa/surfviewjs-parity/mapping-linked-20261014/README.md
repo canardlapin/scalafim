@@ -47,10 +47,13 @@ scales; glyph diameter doubles from approximately 10 to 20 output pixels.
 
 Candidate/provider revisions and source hashes are recorded in
 `source-binding.json`. The upstream Intaglio candidate is
-`13747a3a8bf75fd788ff68e1c979d6c84f740605`. It is locally merged and reviewed;
-remote publication is pending user authorization. These runs use the explicit
-`-Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display` override. Do not
-treat them as a clean-clone build from the remote pin.
+`13747a3a8bf75fd788ff68e1c979d6c84f740605`. Following explicit user approval,
+that reviewed commit was published to `canardlapin/intaglio` main and its remote
+SHA verified. The original captures and gates use the explicit
+`-Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display` override;
+publication does not change that historical provenance. The separate
+`publication-verification.json` receipt records verification through the normal
+remote pin, with the local override absent.
 
 After compiling `surfaceViewThreeJS/fastLinkJS`, run:
 

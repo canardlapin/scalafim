@@ -432,18 +432,44 @@ criteria and does not admit a full C02/C03/C07/C08/C10/C11/C12 family pass.
 
 Current gates pass: shared surface-view 230 tests on each JVM/JS, raster 49 on
 each, Three.js 50, JavaFX 51, examples 12 JVM/11 JS, and connectivity 2 on each.
-Intaglio core passes 712 JVM/703 JS; its design consumers pass 447 on each and
+Intaglio core passes 712 JVM/703 JS; its design consumers pass 447 JVM/446 JS and
 image-view passes 42 on each. `scalafimCompileAll` passes warning-clean on both
 platforms using the explicit reviewed local Intaglio override. Updating Intaglio
 also required the existing design graphics domain annotation to become
 `DiscreteDomain[String]`.
 
-Intaglio `13747a3a8bf75fd788ff68e1c979d6c84f740605` is independently reviewed
-and locally merged, but remains unpublished. The ScalaFIM candidate pin targets
-that exact revision. Its default clean-clone resolution and local landing must
-wait for upstream publication authorization; no remote push is claimed. P0–P3
-remain locally merged at `53feab621013d0c148a5b5d2567408a153354218`.
+At the original capture checkpoint, Intaglio
+`13747a3a8bf75fd788ff68e1c979d6c84f740605` was independently reviewed and
+locally merged, with remote publication pending authorization. The ScalaFIM
+candidate pin targets that exact revision. P0–P3 were already locally merged at
+`53feab621013d0c148a5b5d2567408a153354218`. The subsequent publication and
+verification checkpoint below supersedes that dependency blocker.
 
 Full frozen-matrix qualification, cortical interaction/resource budgets, strict
 raster antialiasing, JVM/browser glyph equivalence, and the remaining native
 mixed-gradient pixel discrepancy are still open P6 evidence/implementation work.
+
+## Published dependency verification checkpoint
+
+With explicit user approval, reviewed Intaglio
+`13747a3a8bf75fd788ff68e1c979d6c84f740605` was fast-forward pushed to
+`canardlapin/intaglio` main; a fresh remote read confirmed the exact SHA.
+ScalaFIM candidate `221948858884d7bc3d9175a9fb0330211ffed96f` then resolved
+that public source pin into a clean sbt dependency clone with
+`scalafim.intaglio.build` absent. The original visual captures retain their local
+override provenance.
+
+The default-pin gates pass: 833 JVM tests and 830 Scala.js tests across the
+affected surface viewers, examples, connectivity, design and image-view
+consumers, plus `scalafimCompileAll` and `surfaceViewThreeJS/fastLinkJS`.
+The rebuilt browser module has SHA-256
+`78e61d3954506bceaaaa7a4f95a077c5d390559aee18b424757859cae134015c`,
+identical to the module used for the retained visual comparisons. Raw logs and
+exact command/exit receipts are linked from
+[the publication verification record](../visual-qa/surfviewjs-parity/mapping-linked-20261014/publication-verification.json).
+Upstream sbt settings/lint warnings are retained; no ScalaFIM source compiler
+warnings were emitted. The earlier design JS count was a documentation error:
+both the original consumer log and this rerun report 446 passing tests.
+
+This removes the dependency-publication blocker for the authorized local merge.
+It does not qualify the full P6 matrix or constitute ScalaFIM remote publication.
