@@ -127,6 +127,16 @@ try {
       checks[`${capture.name}Pixels`] = [115,365].every(x => JSON.stringify(pixel(img,x,125)) === JSON.stringify(expected));
       checks[`${capture.name}Picks`] = capture.overlayPicks.length === 2 && capture.overlayPicks.every(p => p.id === last);
     }
+    if (capture.name.startsWith('rounded-')) {
+      const expected = capture.name === 'rounded-opaque-blocker' ? [255,255,255,255]
+        : capture.name === 'rounded-near-first' ? [61,153,41,255] : [153,61,41,255];
+      const expectedId = capture.name === 'rounded-opaque-blocker' ? 'anchor'
+        : capture.name === 'rounded-near-first' ? 'far-rounded' : 'near-rounded';
+      checks[`${capture.name}Pixels`] = [115,365].every(x => pixel(img,x,125).every((c,i) => Math.abs(c-expected[i]) <= 1));
+      checks[`${capture.name}OpaqueScientificOcclusion`] = [135,385].every(x => JSON.stringify(pixel(img,x,125)) === '[0,0,255,255]');
+      checks[`${capture.name}Picks`] = capture.orderedPicks.length === 4 && capture.orderedPicks.every(p =>
+        p.id === ([115.5,365.5].includes(p.x) ? expectedId : 'cover'));
+    }
     if (capture.name === 'gray') checks.displayGray = [125,375].every(cx => pixel(img,cx,125).slice(0,3).every(c => Math.abs(c-128) <= 1));
     if (capture.name === 'overlay-text') {
       checks.overlayAfterText = [125,375].every(cx => {

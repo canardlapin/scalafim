@@ -1,0 +1,115 @@
+{
+  "id": "orthographic-240-single",
+  "repeatExact": true,
+  "errors": [],
+  "reference": {
+    "core": {
+      "pixels": 628,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "halo-flank": {
+      "pixels": 330,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "endpoint-cap": {
+      "pixels": 26,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    }
+  },
+  "routes": {
+    "native": {
+      "oracle": {
+        "core": {
+          "pixels": 628,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "halo-flank": {
+          "pixels": 330,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "endpoint-cap": {
+          "pixels": 26,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        }
+      },
+      "fullFrame": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 107,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 240,
+          "height": 240,
+          "referenceForeground": 57600,
+          "candidateForeground": 57600,
+          "foregroundIntersection": 57600,
+          "foregroundIoU": 1,
+          "maximumChannelError": 107,
+          "meanMaximumChannelError": 0.04814236111111111
+        },
+        "elements": []
+      }
+    },
+    "raster": {
+      "oracle": {
+        "core": {
+          "pixels": 628,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "halo-flank": {
+          "pixels": 330,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "endpoint-cap": {
+          "pixels": 26,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        }
+      },
+      "fullFrame": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 77,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 240,
+          "height": 240,
+          "referenceForeground": 57600,
+          "candidateForeground": 57600,
+          "foregroundIntersection": 57600,
+          "foregroundIoU": 1,
+          "maximumChannelError": 77,
+          "meanMaximumChannelError": 0.22569444444444445
+        },
+        "elements": []
+      }
+    }
+  },
+  "primitivePass": true,
+  "fullFramePass": false
+}

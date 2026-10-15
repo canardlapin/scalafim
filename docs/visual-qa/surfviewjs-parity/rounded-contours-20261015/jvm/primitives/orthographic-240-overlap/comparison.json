@@ -1,0 +1,60 @@
+{
+  "id": "orthographic-240-overlap",
+  "group": "primitives",
+  "hostPass": true,
+  "inputSha256": "75a16cf9725f51cbea52436070d0b37f2ed180e94ec51344d3438167247e38e6",
+  "native": {
+    "status": "refused",
+    "reason": "JavaFX surface plan is incompatible with the existing scene: ordered depth testing without depth writes requires the raster fallback"
+  },
+  "masks": {
+    "core": {
+      "pixels": 628,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "halo-flank": {
+      "pixels": 330,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "endpoint-cap": {
+      "pixels": 26,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "overlap": {
+      "pixels": 958,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    }
+  },
+  "primitivePass": true,
+  "browserRasterPixelsEqual": true,
+  "fullFrame": {
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 107,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 240,
+      "height": 240,
+      "referenceForeground": 57600,
+      "candidateForeground": 57600,
+      "foregroundIntersection": 57600,
+      "foregroundIoU": 1,
+      "maximumChannelError": 107,
+      "meanMaximumChannelError": 0.23368055555555556
+    },
+    "elements": []
+  },
+  "warmSnapshotMedianMs": 17.655083
+}

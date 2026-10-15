@@ -8,6 +8,17 @@ class JavaFxSurfaceCompositionSuite extends munit.FunSuite:
   private def base: SurfaceCompositionPlan =
     ok(SurfaceCompositionPlan.fromLegacy(SurfaceFaceFixture.plan))
 
+  test("ordered depth testing without depth writes explicitly requires the raster fallback"):
+    val plan = base
+    val marker = SurfaceMarkerDecoration(ok(SurfaceDecorationId.make("ordered")),
+      SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(SurfaceFaceFixture.Surface, scalafim.surface.VertexId(0))),
+      SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.pixels(4)), intaglio.Rgba32.unsafe(0, 0, 0),
+      SurfaceDecorationDepthPolicy.OrderedDepthTest)
+    val geometry = ok(SurfaceDecorationGeometry.lower(ok(SurfaceDecorationCompiler.compile(Vector(marker), plan)), plan, 100, 100))
+    assert(JavaFxSurfaceComposition.validateDepthPolicy(geometry).isLeft)
+    assert(JavaFxSurfaceComposition.validateDepthPolicy(geometry.copy(meshes = geometry.meshes.map(
+      _.copy(depthPolicy = SurfaceDecorationDepthPolicy.DepthTest)))).isRight)
+
   test("toolkit-free preflight rejects unsupported fragment and clipping policies before native mutation"):
     val plan = base
     val fragment = ok(SurfaceCompositionPlan.fromLegacy(SurfaceScalarFixture.plan()))

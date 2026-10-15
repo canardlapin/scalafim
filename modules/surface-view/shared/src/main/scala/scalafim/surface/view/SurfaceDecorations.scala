@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import intaglio.Rgba32
+import intaglio.*
 import scalafim.surface.{FaceId, VertexId}
 
 opaque type SurfaceDecorationId = String
@@ -57,6 +57,10 @@ enum SurfaceDecorationUnit:
 
 enum SurfaceDecorationDepthPolicy:
   case DepthTest, Overlay
+  /** Paint in declaration order after ordinary depth-tested decorations. Test
+    * against opaque scene depth without updating it. Opaque scientific scenes
+    * are required; these strokes may overlap and accumulate alpha. */
+  case OrderedDepthTest
 
 final case class SurfaceDecorationSize private (value: Double, unit: SurfaceDecorationUnit):
   require(value.isFinite && value > 0.0, "decoration size must be finite and positive")
@@ -68,11 +72,22 @@ object SurfaceDecorationSize:
     else Right(SurfaceDecorationSize(value, unit))
 
 final case class SurfaceContourHalo(color: Rgba32, width: SurfaceDecorationSize)
+enum SurfaceContourMode:
+  case SideBands
+  /** Pixel-space rounded cores followed by full-width translucent halos.
+    * All core edges precede all halo edges and neither pass writes depth. */
+  case RoundedStrokes
+
 /** Widths are full visible stroke widths. A halo is an equally wide band split
-  * around the core, so it must share the core's unit. */
+  * around the core by default. RoundedStrokes instead adds the halo width to
+  * the core's full width and paints a complete second stroke. */
 final case class SurfaceContourStyle(width: SurfaceDecorationSize, color: Rgba32, halo: Option[SurfaceContourHalo] = None,
-    depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest):
+    depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest,
+    mode: SurfaceContourMode = SurfaceContourMode.SideBands):
   require(halo.forall(_.width.unit == width.unit), "contour and halo widths must use the same unit")
+  require(mode != SurfaceContourMode.RoundedStrokes ||
+    (width.unit == SurfaceDecorationUnit.Pixels && color.alpha == 255 && depthPolicy == SurfaceDecorationDepthPolicy.DepthTest),
+    "rounded contour strokes require pixel widths, an opaque core and depth testing")
 
 /** Label values are scientific vertex labels. `Ignore` has no inferred medial-wall
   * meaning: callers must name every ignored label explicitly.

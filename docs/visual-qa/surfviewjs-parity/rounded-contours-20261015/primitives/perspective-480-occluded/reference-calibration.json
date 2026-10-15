@@ -1,0 +1,7 @@
+{
+  "repeatExact": true,
+  "repetitions": 3,
+  "maximumInteriorError": 2,
+  "edgeMarginPixels": 1.5,
+  "frozenBeforeCandidate": true
+}

@@ -74,3 +74,22 @@ Layer keys identify their immutable payloads.
 The plan constructor also checks viewport ownership, rigid camera/projection
 forms, resource domains, and required fragment composition. Renderers report a
 `SurfaceDisplayOrigin(view, instance)` alongside the original scientific pick.
+
+## Contour strokes
+
+`SurfaceContourStyle.mode` defaults to `SideBands`, preserving the existing
+opaque border geometry. Opt into `SurfaceContourMode.RoundedStrokes` for
+pixel-width capsule strokes with round endpoint caps. The core must be opaque;
+the optional halo may carry alpha. A halo's full width is the core width plus
+`halo.width`, and halos composite after all cores in declared edge order.
+
+The lowerer binds these meshes to their source edge, camera, and output size.
+Re-lower after changing the camera or canvas dimensions. Rounded strokes require
+positive clip-W endpoints and opaque scientific surfaces; unsupported inputs
+return an explicit refusal. Three.js and the raster backend implement this
+policy. Native JavaFX refuses it so callers can use `JavaFxRasterSurfaceHost`.
+Decorations are not currently persisted by the general scene codec.
+
+The [contour comparison gallery](../../docs/visual-qa/surfviewjs-parity/rounded-contours-20261015/index.html)
+records the supported interior geometry/blending checks and remaining edge,
+performance, and full-matrix qualification gaps.

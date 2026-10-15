@@ -1,0 +1,26 @@
+{
+  "schema": "surface-bounded-review.v1",
+  "candidateBase": "c8da444b0d0767c6ab267b6c3166bc6a6abe14a2",
+  "scope": "Rounded-stroke policy; identity-bounded native decoration reuse; six-specimen contour proof",
+  "verdict": "accepted-for-bounded-source-claim; full P6 qualification remains incomplete",
+  "reviewer": "linear_sampling_review (independent read-only lean_expert)",
+  "corrections": [
+    "Builder-only identity token prevents arbitrary ordered alpha geometry",
+    "Positive clip-W endpoints avoid capsule self-overlap across eye plane",
+    "Cache invalidates before native cleanup attempts",
+    "Removing active decorations forces a redraw",
+    "Oracle validates image dimensions and RGBA length before indexing",
+    "Proof retains Three module and core hashes and source bytes"
+  ],
+  "sourceSha256": {
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala": "56245ff3488359e874787bb3d90f1270c4e42484269213d35d72ddd360eaccb8",
+    "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceBackendSuite.scala": "5ae88d0873c26ac4c6db901a862f2a988dfacf87907d569b74e36e99e64d5fea",
+    "tools/surface-view/parity/run-rounded-contour-proof.mjs": "a1eb0cfb5d0bb7a5fcbedbfaa2beaa1c2abf0950c9c3a1a1d4152e9f8f3db358"
+  },
+  "evidence": "primitives/rounded-contour-proof.json",
+  "limitations": [
+    "Review did not rerun builds or browsers",
+    "Performance measurements separately recorded",
+    "No full-frame pass or P6 merge approval claimed"
+  ]
+}

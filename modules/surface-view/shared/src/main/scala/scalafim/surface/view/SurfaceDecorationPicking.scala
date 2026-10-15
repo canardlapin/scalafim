@@ -44,9 +44,10 @@ object SurfaceDecorationPicking:
       val orthographic = p(15) == 1f
       val origin = if orthographic then eye + right * ((nx - p(3)) / p(0)) + up * ((ny - p(7)) / p(5)) else eye
       val direction = if orthographic then back * -1 else right * (nx / p(0)) + up * (ny / p(5)) - back
-      var winner: Option[(SurfaceDecorationHit, Boolean, Int)] = None
+      val candidates = Vector.newBuilder[(SurfaceDecorationHit, SurfaceDecorationMesh, Int)]
       geometry.meshes.zipWithIndex.foreach: (mesh, meshIndex) =>
-        if mesh.origin.view == view.id && mesh.pickable then
+        if mesh.origin.view == view.id then
+          var nearest: Option[SurfaceDecorationHit] = None
           var face = 0
           while face < mesh.indices.length / 3 do
             val ia = mesh.indices(face * 3)
@@ -68,16 +69,22 @@ object SurfaceDecorationPicking:
                   val v = texture.coordinates(ia * 2 + 1) * (1 - b - c) + texture.coordinates(ib * 2 + 1) * b + texture.coordinates(ic * 2 + 1) * c
                   texture.image.pixelUnsafe((u * texture.image.width).toInt.max(0).min(texture.image.width - 1),
                     (v * texture.image.height).toInt.max(0).min(texture.image.height - 1)).alpha
-              val overlay = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay
-              val visible = clipW > 0 && depth >= 0 && depth <= 1 && worldVisible && alpha > 0 &&
-                (overlay || scientificDepth.forall(depth <= _ + 1e-14))
-              if visible && winner.forall: (hit, isOverlay, priorMesh) =>
-                  (overlay && !isOverlay) ||
-                    (overlay && isOverlay && (meshIndex > priorMesh || depth <= hit.depth)) ||
-                    (!overlay && !isOverlay && depth <= hit.depth)
-              then winner = Some((SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, depth), overlay, meshIndex))
+              val visible = clipW > 0 && depth >= 0 && depth <= 1 && worldVisible && alpha > 0
+              if visible && nearest.forall(depth <= _.depth) then
+                nearest = Some(SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, depth))
             face += 1
-      winner.map(_._1)
+          nearest.foreach(hit => candidates += ((hit, mesh, meshIndex)))
+      val hits = candidates.result()
+      val establishedDepth = hits.iterator.filter: (_, mesh, _) =>
+        mesh.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest && mesh.texture.isEmpty && mesh.color.alpha == 255
+      .foldLeft(scientificDepth.getOrElse(Double.PositiveInfinity))((depth, candidate) => math.min(depth, candidate._1.depth))
+      val pickable = hits.filter: (hit, mesh, _) =>
+        mesh.pickable && (mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay || hit.depth <= establishedDepth + 1e-14)
+      pickable.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).lastOption
+        .orElse(pickable.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest).lastOption)
+        .orElse(pickable.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
+          .sortBy(candidate => (candidate._1.depth, -candidate._3)).headOption)
+        .map(_._1)
 
   private final case class V(x: Double, y: Double, z: Double):
     def +(v: V): V = V(x + v.x, y + v.y, z + v.z)

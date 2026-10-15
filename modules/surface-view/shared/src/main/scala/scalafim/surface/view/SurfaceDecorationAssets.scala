@@ -31,6 +31,9 @@ object SurfaceDecorationValidation:
         geometry.binding != SurfaceDecorationBinding.key(plan, width, height) then
       Left("decoration geometry is stale; lower again for this camera, geometry and output size")
     else if geometry.labels.nonEmpty then Left("label packets require raster assets before rendering")
+    else if geometry.meshes.exists(_.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest) &&
+        plan.views.exists(view => view.surfaceBase.alpha != 255 || view.instances.exists(_.opacity != DisplayOpacity.Opaque)) then
+      Left("ordered depth-tested decorations require opaque scientific surfaces")
     else
       var failure: Option[String] = None
       val ids = scala.collection.mutable.HashSet.empty[(SurfaceDisplayOrigin, SurfaceDecorationElementId)]
@@ -62,7 +65,13 @@ object SurfaceDecorationValidation:
         else if !(0 until mesh.indices.length).forall(i => mesh.indices(i) >= 0 && mesh.indices(i) < count) then
           failure = Some("decoration index outside vertex buffer")
         else if mesh.texture.nonEmpty && mesh.pickable then failure = Some("textured decorations must pass through picking")
-        else if mesh.texture.isEmpty && mesh.color.alpha != 255 then failure = Some("solid decorations require opaque color")
+        else if mesh.texture.nonEmpty && mesh.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest then
+          failure = Some("ordered depth-tested decorations require solid colors")
+        else if mesh.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest &&
+            !mesh.roundedStroke.exists(_.accepts(mesh, geometry.binding)) then
+          failure = Some("ordered depth testing requires unchanged rounded contour geometry from the builder")
+        else if mesh.texture.isEmpty && mesh.color.alpha != 255 && mesh.depthPolicy != SurfaceDecorationDepthPolicy.OrderedDepthTest then
+          failure = Some("solid decorations require opaque color unless using ordered depth testing")
         else if mesh.texture.exists(_.coordinates.length != count * 2) then failure = Some("texture coordinates do not match decoration vertices")
         index += 1
       failure.toLeft(())

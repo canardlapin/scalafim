@@ -62,7 +62,8 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
     requireActive().flatMap: _ =>
       SurfaceDecorationValidation.validate(geometry, next, dimensions.width, dimensions.height)
         .left.map(JavaFxSurfaceError.IncompatiblePlan(_)).flatMap: _ =>
-          validateLabelPlanes(geometry, next).flatMap(_ => stageDecorations(geometry)).flatMap: staged =>
+          JavaFxSurfaceComposition.validateDepthPolicy(geometry).flatMap(_ => validateLabelPlanes(geometry, next))
+            .flatMap(_ => stageDecorations(geometry)).flatMap: staged =>
             render(next, dimensions).flatMap: receipt =>
               nativeStep("decoration mount"):
                 decorations = staged
@@ -326,6 +327,11 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
         mounted.scene.setCamera(mounted.perspective)
 
 object JavaFxSurfaceComposition:
+  private[javafx] def validateDepthPolicy(geometry: SurfaceDecorationGeometry): Either[JavaFxSurfaceError, Unit] =
+    if geometry.meshes.exists(_.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("ordered depth testing without depth writes requires the raster fallback"))
+    else Right(())
+
   val DefaultAtlas: JavaFxAtlasConfig = JavaFxAtlasConfig.make(lightingPolicy = JavaFxAtlasLighting.WorldVertexLambert).toOption.get
 
   def create(config: JavaFxAtlasConfig = DefaultAtlas): Either[JavaFxSurfaceError, JavaFxSurfaceComposition] =

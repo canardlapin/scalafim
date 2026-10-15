@@ -19,6 +19,16 @@ const out = resolve(arg('--out') ?? '/private/tmp/scalafim-qualification');
 const depthPolicy = arg('--depth-policy') ?? 'conditioned';
 const jvmResults = arg('--jvm-results');
 const referenceClient = {followMorphAnnotations:process.argv.includes('--reference-follow-morph')};
+const roundedContours = process.argv.includes('--rounded-contours');
+// Explicit candidate display policy. The pinned reference already uses rounded
+// strokes with 0.6 halo opacity. Preserve the original side-band captures too.
+function prepare(variant, cortex) {
+  const result = qualificationSpec(variant, cortex);
+  if (roundedContours) for (const surface of result.spec.surfaces) for (const layer of surface.layers ?? []) {
+    if (layer.kind === 'outline') Object.assign(layer, {mode: 'rounded-strokes', haloOpacity: 0.6});
+  }
+  return result;
+}
 if (!['conditioned', 'preserved'].includes(depthPolicy)) throw new Error('unknown depth policy');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = (path, value) => writeFile(path, JSON.stringify(value, null, 2) + '\n');
@@ -58,7 +68,7 @@ if (process.argv.includes('--prepare-only')) {
     await mkdir(directory, { recursive: true });
     await json(resolve(directory, 'contract.json'), variant);
     try {
-      const prepared = qualificationSpec(variant, cortex);
+      const prepared = prepare(variant, cortex);
       await json(resolve(directory, 'input.json'), prepared.spec);
       await json(resolve(directory, 'oracle.json'), prepared.scientific);
       rows.push({ id: variant.id, inputSha256: sha(await readFile(resolve(directory, 'input.json'))) });
@@ -69,7 +79,7 @@ if (process.argv.includes('--prepare-only')) {
   process.exit(0);
 }
 const provenance = { schema: 'surface-qualification-endpoints.v1', startedAt: new Date().toISOString(), candidateCommit: command('git', ['rev-parse', 'HEAD'], repo), referenceCommit,
-  candidateSource: await sourceIdentity(), referenceClient,
+  candidateSource: await sourceIdentity(), referenceClient, roundedContours,
   moduleSha256: sha(await readFile(modulePath)), depthPolicy, frozenContractsSha256: all.frozenContractsSha256, browserProfile: 'lean-browser-playwright', rendererRequest: 'ANGLE Metal', auditBefore: audit(),
   runnerHashes: Object.fromEntries(await Promise.all(['run-qualification.mjs', 'reference-view.mjs', 'qualification-contracts.mjs', 'qualification-specs.mjs', 'scientific-oracle.mjs', 'compare.mjs', 'resource-contracts.mjs'].map(async name => [name, sha(await readFile(resolve(here, name)))]))) };
 if (arg('--build-receipt')) {
@@ -112,7 +122,7 @@ try {
     await json(resolve(directory, 'contract.json'), variant);
     let page;
     try {
-      const prepared = qualificationSpec(variant, cortex);
+      const prepared = prepare(variant, cortex);
       await json(resolve(directory, 'input.json'), prepared.spec); await json(resolve(directory, 'oracle.json'), prepared.scientific);
       row.inputSha256 = sha(await readFile(resolve(directory, 'input.json')));
       const jvmRoute = variant.effectiveInput.productRoute === 'JVM viewer';

@@ -20,7 +20,8 @@ final case class SurfaceDecorationMesh(
   color: Rgba32,
   depthPolicy: SurfaceDecorationDepthPolicy,
   texture: Option[SurfaceDecorationTexture] = None,
-  pickable: Boolean = true
+  pickable: Boolean = true,
+  roundedStroke: Option[SurfaceDecorationGeometry.RoundedStroke] = None
 ):
   require(positions.length >= 9 && positions.length % 3 == 0, "decoration positions must contain triangle triples")
   require(normals.length == positions.length, "decoration normals must cover every position")
@@ -42,6 +43,17 @@ final case class SurfaceDecorationGeometry(
   require(canvasWidth > 0 && canvasHeight > 0, "decoration canvas dimensions must be positive")
 
 object SurfaceDecorationGeometry:
+  /** Proof of the builder's nonoverlapping capsule triangulation in this view.
+    * A copied mesh cannot reuse this proof with different geometry or origin.
+    * Only this builder can construct it. Buffers are publicly read-only;
+    * trusted internal consumers must not mutate their unsafe arrays. */
+  final class RoundedStroke private[SurfaceDecorationGeometry] (
+      positions: FloatBufferView, normals: FloatBufferView, indices: IntBufferView,
+      origin: SurfaceDisplayOrigin, target: SurfaceDecorationTarget, binding: String):
+    private[view] def accepts(mesh: SurfaceDecorationMesh, currentBinding: String): Boolean =
+      (mesh.positions eq positions) && (mesh.normals eq normals) && (mesh.indices eq indices) &&
+        mesh.origin == origin && mesh.target == target && binding == currentBinding
+
   def lower(packets: SurfaceDecorationPackets, plan: SurfaceCompositionPlan,
       canvasWidth: Int, canvasHeight: Int): Either[SurfaceDecorationError, SurfaceDecorationGeometry] =
     if packets.binding != SurfaceDecorationBinding.key(plan, 1, 1) then
@@ -50,6 +62,8 @@ object SurfaceDecorationGeometry:
       Left(SurfaceDecorationError.InvalidSize(math.min(canvasWidth, canvasHeight)))
     else
       val meshes = Vector.newBuilder[SurfaceDecorationMesh]
+      val halos = Vector.newBuilder[SurfaceDecorationMesh]
+      val binding = SurfaceDecorationBinding.key(plan, canvasWidth, canvasHeight)
       var failure: Option[SurfaceDecorationError] = None
       var marker = 0
       while marker < packets.markers.length && failure.isEmpty do
@@ -59,13 +73,17 @@ object SurfaceDecorationGeometry:
         marker += 1
       var contour = 0
       while contour < packets.contours.length && failure.isEmpty do
-        contourMeshes(packets.contours(contour), plan, canvasWidth, canvasHeight) match
-          case Right(values) => meshes ++= values
+        contourMeshes(packets.contours(contour), plan, canvasWidth, canvasHeight, binding) match
+          case Right(values) =>
+            if packets.contours(contour).style.mode == SurfaceContourMode.RoundedStrokes then
+              meshes += values.head
+              halos ++= values.tail
+            else meshes ++= values
           case Left(error) => failure = Some(error)
         contour += 1
       failure.fold[Either[SurfaceDecorationError, SurfaceDecorationGeometry]](
-        Right(SurfaceDecorationGeometry(meshes.result(), packets.labels, canvasWidth, canvasHeight,
-          SurfaceDecorationBinding.key(plan, canvasWidth, canvasHeight))))(Left(_))
+        Right(SurfaceDecorationGeometry(meshes.result() ++ halos.result(), packets.labels, canvasWidth, canvasHeight,
+          binding)))(Left(_))
 
   private def markerMesh(packet: SurfaceMarkerPacket, plan: SurfaceCompositionPlan,
       width: Int, height: Int): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
@@ -84,9 +102,18 @@ object SurfaceDecorationGeometry:
           case SurfaceMarkerShape.Sphere => sphere(packet, values._1))
 
   private def contourMeshes(packet: SurfaceContourPacket, plan: SurfaceCompositionPlan,
-      width: Int, height: Int): Either[SurfaceDecorationError, Vector[SurfaceDecorationMesh]] =
+      width: Int, height: Int, binding: String): Either[SurfaceDecorationError, Vector[SurfaceDecorationMesh]] =
     view(packet.origin, plan).flatMap: target =>
-      contourOffsets(packet, target, width, height).map: offsets =>
+      if packet.style.mode == SurfaceContourMode.RoundedStrokes then
+        for
+          core <- capsule(packet, target, width, height, packet.id, packet.style.width.value, packet.style.color, binding)
+          halo <- packet.style.halo match
+            case None => Right(Vector.empty)
+            case Some(value) => capsule(packet, target, width, height,
+              SurfaceDecorationElementId(packet.id.decoration, s"${packet.id.suffix}-halo"),
+              packet.style.width.value + value.width.value, value.color, binding).map(Vector(_))
+        yield Vector(core) ++ halo
+      else contourOffsets(packet, target, width, height).map: offsets =>
         val edge = SurfaceDecorationTarget.Edge(packet.surface, packet.sourceEdge._1, packet.sourceEdge._2)
         val core = ribbon(packet.id, packet.origin, edge, offsets.coreLeftStart, offsets.coreLeftEnd,
           offsets.coreRightStart, offsets.coreRightEnd, packet.style.color, packet.style.depthPolicy)
@@ -102,6 +129,71 @@ object SurfaceDecorationGeometry:
                 halo.color, packet.style.depthPolicy),
               core
             )
+
+  /** The body and both semicircles share one mesh, so one edge contributes
+    * once per pixel while separate edges retain their overlapping alpha. */
+  private def capsule(packet: SurfaceContourPacket, view: SurfaceCompositionView, width: Int, height: Int,
+      id: SurfaceDecorationElementId, strokeWidth: Double, color: Rgba32, binding: String): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
+    for
+      _ <- roundedProjection(packet.start, packet.end, view.camera)
+      start <- project(packet.start, view, width, height)
+      end <- project(packet.end, view, width, height)
+      startAxes <- pixelAxes(packet.start, view, width, height)
+      endAxes <- pixelAxes(packet.end, view, width, height)
+    yield
+      val (right, up, normal) = basis(view.camera)
+      val dx = end._1 - start._1
+      val dy = end._2 - start._2
+      val length = math.hypot(dx, dy)
+      val tangent = if length <= 1e-9 then (1.0, 0.0) else (dx / length, dy / length)
+      val radius = strokeWidth / 2.0
+      // Fixed geometric approximation, independent of captured candidate pixels.
+      val segments = 32
+      val capVertices = segments + 2
+      val positions = new Array[Float]((4 + 2 * capVertices) * 3)
+      val normals = new Array[Float](positions.length)
+      val indices = new Array[Int](6 + 6 * segments)
+      def offset(point: P, axes: (Double, Double), along: Double, across: Double): P =
+        val x = (tangent._1 * along - tangent._2 * across) * radius * axes._1
+        val y = (tangent._2 * along + tangent._1 * across) * radius * axes._2
+        add(point, add(scale(right, x), scale(up, y)))
+      put(positions, 0, offset(packet.start, startAxes, 0, 1))
+      put(positions, 1, offset(packet.end, endAxes, 0, 1))
+      put(positions, 2, offset(packet.start, startAxes, 0, -1))
+      put(positions, 3, offset(packet.end, endAxes, 0, -1))
+      Array(0, 1, 2, 2, 1, 3).copyToArray(indices)
+      var cap = 0
+      while cap < 2 do
+        val centre = 4 + cap * capVertices
+        val point = if cap == 0 then packet.start else packet.end
+        val axes = if cap == 0 then startAxes else endAxes
+        put(positions, centre, point)
+        var vertex = 0
+        while vertex <= segments do
+          val angle = (if cap == 0 then math.Pi / 2 else -math.Pi / 2) + math.Pi * vertex / segments
+          put(positions, centre + 1 + vertex, offset(point, axes, math.cos(angle), math.sin(angle)))
+          if vertex < segments then
+            val index = 6 + (cap * segments + vertex) * 3
+            indices(index) = centre
+            indices(index + 1) = centre + 1 + vertex
+            indices(index + 2) = centre + 2 + vertex
+          vertex += 1
+        cap += 1
+      var vertex = 0
+      while vertex < positions.length / 3 do
+        put(normals, vertex, normal)
+        vertex += 1
+      val mesh = make(id, packet.origin, SurfaceDecorationTarget.Edge(packet.surface, packet.sourceEdge._1, packet.sourceEdge._2),
+        positions, normals, indices, color, SurfaceDecorationDepthPolicy.OrderedDepthTest)
+      mesh.copy(roundedStroke = Some(new RoundedStroke(mesh.positions, mesh.normals, mesh.indices, mesh.origin, mesh.target, binding)))
+
+  private def roundedProjection(start: P, end: P, camera: SurfaceCameraPacket): Either[SurfaceDecorationError, Unit] =
+    val inFront = Vector(start, end).forall: point =>
+      val eye = mul(camera.viewMatrix, point, 1.0)
+      val p = camera.projectionMatrix
+      val w = p(12) * eye._1 + p(13) * eye._2 + p(14) * eye._3 + p(15) * eye._4
+      w.isFinite && w > 1e-12
+    if inFront then Right(()) else Left(SurfaceDecorationError.InvalidProjection)
 
   private final case class ContourOffsets(
     coreLeftStart: P, coreLeftEnd: P, coreRightStart: P, coreRightEnd: P,

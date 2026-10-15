@@ -39,6 +39,61 @@ class SurfaceDecorationRasterSuite extends munit.FunSuite:
     val marker = SurfaceMarkerDecoration(markerId, anchor, SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.pixels(12)), red, depth)
     ok(SurfaceDecorationGeometry.lower(ok(SurfaceDecorationCompiler.compile(Vector(marker), plan)), plan, size.width, size.height))
 
+  private def orderedPair(plan: SurfaceCompositionPlan): SurfaceDecorationGeometry =
+    val style = SurfaceContourStyle(ok(SurfaceDecorationSize.pixels(4)), red,
+      Some(SurfaceContourHalo(Rgba32.unsafe(255, 0, 0, 153), ok(SurfaceDecorationSize.pixels(20)))),
+      mode = SurfaceContourMode.RoundedStrokes)
+    val contour = SurfaceContourDecoration(markerId, id, Vector(0, 1, 1, 1), SurfaceContourPolicy.Transitions, style)
+    val source = ok(SurfaceDecorationCompiler.compile(Vector(contour), plan))
+    def stroke(name: String, z: Float, color: Rgba32): SurfaceDecorationMesh =
+      val packet = source.contours.head.copy(id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make(name)), "stroke"),
+        start = SurfaceDecorationWorldPoint(-.3, 0, z), end = SurfaceDecorationWorldPoint(.3, 0, z),
+        style = style.copy(halo = style.halo.map(_.copy(color = color))))
+      ok(SurfaceDecorationGeometry.lower(source.copy(contours = Vector(packet)), plan, size.width, size.height)).meshes.last
+    glyph(plan).copy(meshes = Vector(stroke("near-red", .3f, Rgba32.unsafe(255, 0, 0, 153)),
+      stroke("far-green", .1f, Rgba32.unsafe(0, 255, 0, 153))))
+
+  test("ordered depth-tested strokes blend by declaration without writing depth and picks follow the visible last stroke"):
+    val plan = composition()
+    val geometry = orderedPair(plan)
+    val result = ok(SurfaceDecorationRaster.render(plan, geometry, size))
+    assertEquals(result.image.pixelUnsafe(64, 64), Rgba32.unsafe(61, 153, 41))
+    assertEquals(ok(result.pick(64, 64)).collect { case SurfaceDisplayHit.Decoration(hit) => hit.id }, Some(geometry.meshes.last.id))
+    val depth = ok(result.scientific.pick(64, 64)).map(_.depth)
+    assertEquals(SurfaceDecorationPicking.pick(geometry, plan, 64.5, 64.5, depth).map(_.id), Some(geometry.meshes.last.id))
+    val reversed = ok(SurfaceDecorationRaster.render(plan, geometry.copy(meshes = geometry.meshes.reverse), size))
+    assertEquals(reversed.image.pixelUnsafe(64, 64), Rgba32.unsafe(153, 61, 41))
+    assert(SurfaceDecorationRaster.renderChecked(plan, geometry, size, SurfaceRasterStyle(), 1).isLeft)
+
+  test("ordered strokes respect scientific and nonpickable opaque decoration depth while overlays remain final"):
+    val plan = composition(occluder = true)
+    val geometry = orderedPair(plan)
+    val result = ok(SurfaceDecorationRaster.render(plan, geometry, size))
+    assertEquals(result.image.pixelUnsafe(69, 64), blue)
+    assertEquals(result.image.pixelUnsafe(59, 64), Rgba32.unsafe(61, 153, 41))
+    val plain = glyph(plan).meshes.head
+    val blocker = plain.copy(pickable = false,
+      positions = new FloatBufferView(Array.tabulate(plain.positions.length)(i =>
+        if i % 3 == 2 then .5f else plain.positions(i))))
+    val hidden = geometry.copy(meshes = Vector(blocker) ++ geometry.meshes)
+    val hiddenResult = ok(SurfaceDecorationRaster.render(plan, hidden, size))
+    assertEquals(hiddenResult.image.pixelUnsafe(59, 64), red)
+    assertEquals(SurfaceDecorationPicking.pick(hidden, plan, 59.5, 64.5,
+      ok(hiddenResult.scientific.pick(59, 64)).map(_.depth)), None)
+    assert(ok(hiddenResult.pick(59, 64)).get.isInstanceOf[SurfaceDisplayHit.Scientific[?]])
+    val overlay = blocker.copy(pickable = true, color = Rgba32.unsafe(255, 255, 255), depthPolicy = SurfaceDecorationDepthPolicy.Overlay)
+    val top = ok(SurfaceDecorationRaster.render(plan, geometry.copy(meshes = Vector(overlay) ++ geometry.meshes), size))
+    assertEquals(top.image.pixelUnsafe(69, 64), overlay.color)
+
+  test("ordered strokes refuse translucent scientific policy and transparent base overrides"):
+    val plan = composition()
+    val view = plan.views.head
+    val translucent = ok(SurfaceCompositionPlan.make(Vector(view.copy(instances = view.instances.map(
+      _.copy(opacity = ok(DisplayOpacity.make(.5)))))), plan.resources))
+    assert(SurfaceDecorationRaster.render(translucent, orderedPair(translucent), size).isLeft)
+    assert(SurfaceDecorationRaster.render(plan, orderedPair(plan), size,
+      SurfaceRasterStyle(surfaceBase = Rgba32.unsafe(0, 0, 0, 0))).isLeft)
+
   test("pixel disk draws at its declared size and returns decoration identity without changing scientific buffers"):
     val plan = composition()
     val geometry = glyph(plan)

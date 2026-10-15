@@ -408,19 +408,25 @@ object SurfaceQualificationFixture:
       _ <- check(labels.length == geometry.vertexCount, s"$path: outline labels differ from vertex count")
       color <- number(obj, "color", path).flatMap(packedColor)
       width <- number(obj, "width", path).flatMap(SurfaceDecorationSize.pixels(_).left.map(_.toString))
+      mode <- obj.fields.toMap.get("mode") match
+        case None | Some(SceneJson.Str("side-bands")) => Right(SurfaceContourMode.SideBands)
+        case Some(SceneJson.Str("rounded-strokes")) => Right(SurfaceContourMode.RoundedStrokes)
+        case _ => Left(s"$path.mode: expected side-bands or rounded-strokes")
       halo <- optionalBoolean(obj, "halo", false).flatMap: enabled =>
         if !enabled then Right(None)
         else for
           haloColor <- number(obj, "haloColor", path).flatMap(packedColor)
           haloWidth <- number(obj, "haloWidth", path).flatMap(SurfaceDecorationSize.pixels(_).left.map(_.toString))
-        yield Some(SurfaceContourHalo(haloColor, haloWidth))
+          haloOpacity <- optionalNumber(obj, "haloOpacity", 1).flatMap(DisplayOpacity.make(_).left.map(_.toString))
+        yield Some(SurfaceContourHalo(Rgba32.unsafe(haloColor.red, haloColor.green, haloColor.blue,
+          math.round(haloOpacity.toDouble * 255).toInt), haloWidth))
       offset <- obj.fields.toMap.get("offset") match
         case None => Right(SurfaceContourOffset.Zero)
         case Some(SceneJson.Num(value)) => value.toDoubleOption.filter(_.isFinite).toRight(s"$path.offset: expected finite number").flatMap(SurfaceContourOffset.make(_).left.map(_.toString))
         case _ => Left(s"$path.offset: expected number")
       policy = SurfaceContourPolicy.Transitions
       id <- SurfaceDecorationId.make(s"${surface.value}/boundaries").left.map(_.toString)
-    yield SurfaceContourDecoration(id, surface, labels, policy, SurfaceContourStyle(width, color, halo), offset)
+    yield SurfaceContourDecoration(id, surface, labels, policy, SurfaceContourStyle(width, color, halo, mode = mode), offset)
 
   private def parseAnnotations(value: SceneJson, surface: SurfaceId, geometry: SurfaceGeometry, path: String): Either[String, Vector[SurfaceDecoration]] =
     array(value, s"$path.annotations").flatMap: entries =>

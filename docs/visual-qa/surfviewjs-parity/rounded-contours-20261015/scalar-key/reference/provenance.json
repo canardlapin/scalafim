@@ -1,0 +1,12 @@
+{
+  "referenceBundleSha256": "7a2e51871275b03be0951cbfae0dc8d201201b5cce586ed48e36a4c1a8d316f9",
+  "runnerSha256": "4638f5ba3c217604125f3595e877fe5a036e2aecd4103e6c10b8a9054a9ff000",
+  "inputMappingSha256": "048143842af24100958028126296686fbdaa0449694f4901980db7b0ea87dd7a",
+  "startedAt": "2026-10-15T17:51:40.455Z",
+  "sourceFiles": {
+    "run-scalar-key-qualification.mjs": "4638f5ba3c217604125f3595e877fe5a036e2aecd4103e6c10b8a9054a9ff000",
+    "reference-view.mjs": "055bbbf231bd554e550eb399bf32a528cbc94d3f2328d18e82fe7205115e22c6",
+    "resource-contracts.mjs": "2e0b8d815e1e293fcec33e3204bafe1afb43ff74acecdf8698042deefa30d704",
+    "index.html": "6ff3f8e1a87e63479707f662e5b083b96e76cab2732fa5d9d223d3002851c0ef"
+  }
+}

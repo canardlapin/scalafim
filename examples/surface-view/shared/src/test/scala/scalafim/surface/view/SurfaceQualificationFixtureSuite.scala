@@ -96,11 +96,22 @@ class SurfaceQualificationFixtureSuite extends munit.FunSuite:
     val outline = prepared.sourceDecorations.collectFirst { case value: SurfaceContourDecoration => value }.get
     assertEqualsDouble(outline.offset.worldUnits, .2, 0.0)
 
+  test("qualification descriptors preserve explicit rounded contour mode and halo alpha"):
+    val layer = """[{"id":"boundary","kind":"outline","labels":[0,1,1,2],"color":0,"width":2,"halo":true,"haloColor":16777215,"haloWidth":2,"haloOpacity":0.6,"mode":"rounded-strokes"}]"""
+    val prepared = SurfaceQualificationFixture.decode(input(layer)).fold(fail(_), identity)
+    val contour = prepared.sourceDecorations.collectFirst { case value: SurfaceContourDecoration => value }.get
+    assertEquals(contour.style.mode, SurfaceContourMode.RoundedStrokes)
+    import intaglio.*
+    assertEquals(contour.style.halo.get.color.alpha, 153)
+    assert(prepared.decorations.meshes.forall(_.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest))
+    assert(SurfaceQualificationFixture.decode(input(layer.replace("rounded-strokes", "unknown"))).isLeft)
+    assert(SurfaceQualificationFixture.decode(input(layer.replace("0.6", "1.1"))).isLeft)
+
   test("signed C09 network input filters top-N edges, scales world tubes, and honors showNodes"):
     val network = """[{"id":"network","kind":"network","edges":[{"source":0,"target":1,"weight":0.8},{"source":1,"target":2,"weight":-0.6},{"source":2,"target":3,"weight":0.4},{"source":3,"target":0,"weight":-0.2}],"colorMap":[[0,0,1],[1,0,0]],"weightRange":[-1,1],"threshold":0,"renderMode":"tube","tubeRadius":0.5,"tubeRadiusScale":true,"showNodes":false,"nodeRadius":2,"nodeColor":10066329,"topN":2}]"""
     val prepared = SurfaceQualificationFixture.decode(input(network)).fold(fail(_), identity)
     val edges = prepared.decorations.meshes.collect:
-      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _, _) => mesh
     assertEquals(edges.length, 2)
     assertEquals(edges.map(_.color).toSet, Set(intaglio.Rgba32.unsafe(255, 0, 0), intaglio.Rgba32.unsafe(0, 0, 255)))
     assertEquals(edges.map(_.target).toSet, Set(

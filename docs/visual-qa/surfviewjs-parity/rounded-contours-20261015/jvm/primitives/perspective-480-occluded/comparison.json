@@ -1,0 +1,66 @@
+{
+  "id": "perspective-480-occluded",
+  "group": "primitives",
+  "hostPass": true,
+  "inputSha256": "bc7451dafd285a09ac9a15ea0e7bfd2a953ee2b10e44b18ca9d3afc34b626464",
+  "native": {
+    "status": "refused",
+    "reason": "JavaFX surface plan is incompatible with the existing scene: ordered depth testing without depth writes requires the raster fallback"
+  },
+  "masks": {
+    "core": {
+      "pixels": 475,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "halo-flank": {
+      "pixels": 139,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "endpoint-cap": {
+      "pixels": 18,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "overlap": {
+      "pixels": 600,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "occlusion": {
+      "pixels": 415,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    }
+  },
+  "primitivePass": true,
+  "browserRasterPixelsEqual": true,
+  "fullFrame": {
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 77,
+        "maximum": 2
+      }
+    ],
+    "metrics": {
+      "width": 480,
+      "height": 320,
+      "referenceForeground": 153600,
+      "candidateForeground": 153600,
+      "foregroundIntersection": 153600,
+      "foregroundIoU": 1,
+      "maximumChannelError": 77,
+      "meanMaximumChannelError": 0.07499348958333334
+    },
+    "elements": []
+  },
+  "warmSnapshotMedianMs": 42.826625
+}

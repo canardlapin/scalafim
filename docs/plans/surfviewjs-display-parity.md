@@ -616,3 +616,20 @@ The ledger accounts for all 636 expanded variants with 162 distinct paired
 endpoints across historical/current builds. This is coverage accounting, not
 162 qualified variants. No P6 family is marked complete. The candidate may be
 published as a draft for review; the full-matrix merge gate remains unsatisfied.
+
+### Rounded contour compatibility and warm reuse (2026-10-15)
+
+The [new comparison appendix](../visual-qa/surfviewjs-parity/rounded-contours-20261015/README.md)
+adds opt-in rounded, pixel-width contour strokes with translucent full-width
+halos. Six source-defined synthetic specimens pass interior geometry, alpha,
+overlap and occlusion checks on native Three.js and the raster backend; strict
+full-frame edge comparisons still fail. Actual native picks and cleanup pass.
+JavaFX explicitly refuses the native policy and uses its raster host.
+
+Native decoration reuse preserves byte-identical cortex captures and reduces
+median render-plus-PNG time from 172–188 ms to 86–90 ms in three fixed views.
+Raster latency remains above target. Corrected scalar-key exports check range,
+palette interiors and threshold metadata while retaining visible publication
+and transparency differences. These supplementary receipts do not complete a
+frozen matrix family or waive the P6 merge gate. Draft PR #61 contains the
+reviewable candidate; final source and runtime hashes accompany the appendix.

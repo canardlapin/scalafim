@@ -1,0 +1,12 @@
+{
+  "referenceRepeatCount": 3,
+  "repeatPixelsIdentical": true,
+  "maximumUnlitInteriorChannelError": 2,
+  "minimumForegroundIoU": 0.995,
+  "maximumLandmarkPixels": 1,
+  "edgeEnvelopePixels": 0,
+  "warmNativeBudgetMs": 50,
+  "warmFallbackBudgetMs": 100,
+  "frozenBeforeCandidate": true,
+  "note": "strict full-frame comparison; no candidate-derived exclusions"
+}

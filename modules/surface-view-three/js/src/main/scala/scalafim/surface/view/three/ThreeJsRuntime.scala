@@ -254,7 +254,7 @@ final class ThreeJsRuntime private (
       val staged = mutable.ArrayBuffer.empty[DecorationInstance]
       val additions = mutable.ArrayBuffer.empty[js.Dynamic]
       try
-        next.meshes.zipWithIndex.foreach((packet, index) => staged += makeDecoration(packet, index))
+        next.meshes.zipWithIndex.foreach((packet, index) => staged += makeDecoration(packet, index, next.meshes.length))
         staged.foreach: decoration =>
           additions += decoration.mesh
           scene.applyDynamic("add")(decoration.mesh)
@@ -444,21 +444,32 @@ final class ThreeJsRuntime private (
             decodePick(instance.bundle, instance.translationX, instance.translationY, instance.translationZ,
               hit, Some(instance.origin), scientific = true)
               .map(value => (hit.selectDynamic("distance").asInstanceOf[Double], SurfaceDisplayHit.Scientific(value)))
+      val scientificHits = scientific.toVector
       val hits = decorations.iterator
-        .filter(decoration => decoration.origin.view == entry.view.id && decoration.pickable)
+        .filter(decoration => decoration.origin.view == entry.view.id)
         .flatMap: decoration =>
           raycaster.applyDynamic("intersectObject")(decoration.mesh, false).asInstanceOf[js.Array[js.Dynamic]].find(hit => retainedByClip(hit, entry.view.clipping))
             .map(hit => (hit.selectDynamic("distance").asInstanceOf[Double], decoration))
         .toVector
-      val overlay = hits.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).lastOption
+      val establishedDepth = (scientificHits.iterator.map(_._1) ++ hits.iterator.filter: (_, decoration) =>
+        decoration.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest && decoration.texture.isEmpty
+      .map(_._1)).foldLeft(Double.PositiveInfinity)(math.min)
+      def visible(depth: Double): Boolean =
+        depth <= establishedDepth + 1e-7 * math.max(1.0, math.abs(establishedDepth))
+      val pickable = hits.filter(_._2.pickable)
+      val overlay = pickable.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).lastOption
       overlay.map: (depth, decoration) =>
         SurfaceDisplayHit.Decoration(SurfaceDecorationHit(decoration.id, decoration.origin, decoration.target, depth))
       .orElse:
-        val depthTested = hits.iterator
-          .filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
+        pickable.filter((depth, decoration) => decoration.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest && visible(depth))
+          .lastOption.map: (depth, decoration) =>
+            SurfaceDisplayHit.Decoration(SurfaceDecorationHit(decoration.id, decoration.origin, decoration.target, depth))
+      .orElse:
+        val depthTested = pickable.iterator
+          .filter((depth, decoration) => decoration.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest && visible(depth))
           .map: (depth, decoration) =>
             (depth, SurfaceDisplayHit.Decoration(SurfaceDecorationHit(decoration.id, decoration.origin, decoration.target, depth)))
-        val candidates = scientific.toVector ++ depthTested
+        val candidates = scientificHits ++ depthTested
         candidates.sortWith: (left, right) =>
           val tolerance = 1e-7 * math.max(1.0, math.max(math.abs(left._1), math.abs(right._1)))
           if math.abs(left._1 - right._1) <= tolerance then
@@ -712,8 +723,8 @@ final class ThreeJsRuntime private (
       try texture.applyDynamic("dispose")()
       catch case _: Throwable => ()
 
-  private def makeDecoration(packet: SurfaceDecorationMesh, index: Int): DecorationInstance =
-    if packet.texture.isEmpty && packet.color.alpha != 255 then
+  private def makeDecoration(packet: SurfaceDecorationMesh, index: Int, count: Int): DecorationInstance =
+    if packet.texture.isEmpty && packet.color.alpha != 255 && packet.depthPolicy != SurfaceDecorationDepthPolicy.OrderedDepthTest then
       throw new IllegalArgumentException("semi-transparent solid decorations are not yet qualified")
     var geometry: js.Dynamic = null
     var material: js.Dynamic = null
@@ -726,6 +737,7 @@ final class ThreeJsRuntime private (
       geometry.applyDynamic("computeBoundingSphere")()
       val color = (packet.color.red << 16) | (packet.color.green << 8) | packet.color.blue
       val overlay = packet.depthPolicy == SurfaceDecorationDepthPolicy.Overlay
+      val ordered = packet.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest
       texture = packet.texture.map(textureFor)
       packet.texture.foreach: source =>
         geometry.applyDynamic("setAttribute")("uv", construct("BufferAttribute")(floats(source.coordinates), 2))
@@ -752,21 +764,22 @@ final class ThreeJsRuntime private (
             color = color,
             // Overlay joins the final transparent queue so text cannot paint
             // over it; renderOrder keeps it after ordinary labels.
-            transparent = overlay,
+            transparent = overlay || ordered,
+            opacity = packet.color.alpha / 255.0,
             toneMapped = false,
             side = three.selectDynamic("DoubleSide"),
             depthTest = !overlay,
-            depthWrite = !overlay
+            depthWrite = !overlay && !ordered
           ))
       val mesh = construct("Mesh")(geometry, material)
       mesh.updateDynamic("matrixAutoUpdate")(false)
       mesh.updateDynamic("frustumCulled")(true)
       // Overlay is a painter-ordered display layer, independent of world depth.
-      mesh.updateDynamic("renderOrder")(if overlay then index + 1 else 0)
+      mesh.updateDynamic("renderOrder")(if overlay then count.toDouble + index + 1 else if ordered then index.toDouble + 1 else 0.0)
       mesh.applyDynamic("updateMatrix")()
       mesh.applyDynamic("updateMatrixWorld")(true)
       DecorationInstance(packet.id, packet.origin, packet.target, packet.depthPolicy, geometry, material, texture, mesh,
-        packet.pickable, ThreeJsRuntime.positionBounds(packet.positions))
+        packet.pickable && packet.color.alpha > 0, ThreeJsRuntime.positionBounds(packet.positions))
     catch
       case error: Throwable =>
         if !missing(material) then

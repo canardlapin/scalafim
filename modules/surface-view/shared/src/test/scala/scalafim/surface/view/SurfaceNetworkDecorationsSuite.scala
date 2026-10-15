@@ -47,12 +47,12 @@ class SurfaceNetworkDecorationsSuite extends munit.FunSuite:
     val before = plan.resources.meshes.values.map(mesh => mesh.resourceKey -> mesh.positions).toMap
     val geometry = lower(plan, leftId, rightId)
     val nodes = geometry.meshes.collect:
-      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.Anchor(_), _, _, _, _, _, _, _) => mesh
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.Anchor(_), _, _, _, _, _, _, _, _) => mesh
     assertEquals(nodes.length, 2)
     val rightNode = nodes.find(_.origin.instance == rightId).get
     assertEqualsDouble(rightNode.positions(0), 6.0, 1e-6)
     val edge = geometry.meshes.collectFirst:
-      case mesh @ SurfaceDecorationMesh(_, origin, SurfaceDecorationTarget.NetworkEdge(source, target), _, _, _, _, _, _, _) =>
+      case mesh @ SurfaceDecorationMesh(_, origin, SurfaceDecorationTarget.NetworkEdge(source, target), _, _, _, _, _, _, _, _) =>
         assertEquals(origin.instance, leftId)
         assertEquals(source.surface, left)
         assertEquals(target.surface, right)
@@ -93,7 +93,7 @@ class SurfaceNetworkDecorationsSuite extends munit.FunSuite:
     val geometry = ok(SurfaceNetworkDecorations.lower(shown, plan,
       SurfaceNetworkDecorationMapping(plan.views.head.id, Map(left -> leftId, right -> rightId)),
       SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200, Some(scaled)))
-    val edges = geometry.meshes.collect { case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh }
+    val edges = geometry.meshes.collect { case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _, _) => mesh }
     assertEquals(edges.length, 2)
     assertEquals(edges.map(_.id).distinct.length, 2)
     assert(edges.exists(_.color == SurfaceNetworkPalette().positive))
@@ -112,9 +112,9 @@ class SurfaceNetworkDecorationsSuite extends munit.FunSuite:
     val withoutNodes = ok(SurfaceNetworkDecorations.lower(shown, plan, mapping,
       SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200, showNodes = false))
     val selected = withNodes.meshes.collect:
-      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _, _) => mesh
     val retained = withoutNodes.meshes.collect:
-      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _, _) => mesh
     assertEquals(withoutNodes.meshes.count(_.target.isInstanceOf[SurfaceDecorationTarget.Anchor]), 0)
     assertEquals(retained.map(_.id), selected.map(_.id))
     assertEquals(retained.map(_.color), selected.map(_.color))
@@ -166,7 +166,7 @@ class SurfaceNetworkDecorationsSuite extends munit.FunSuite:
     val geometry = lower(plan, leftId, rightId,
       display(style = SurfaceNetworkStyle.line(SurfaceNetworkRadius.unsafe(.1))))
     val ribbon = geometry.meshes.collectFirst:
-      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _, _) => mesh
     assertEquals(ribbon.get.positions.length, 12)
     assertEquals(ribbon.get.indices.length, 6)
 
@@ -181,7 +181,7 @@ class SurfaceNetworkDecorationsSuite extends munit.FunSuite:
     val (plan, leftId, rightId) = composition()
     val valid = lower(plan, leftId, rightId)
     val invalid = valid.meshes.map:
-      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(source, _), _, _, _, _, _, _, _) =>
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(source, _), _, _, _, _, _, _, _, _) =>
         mesh.copy(target = SurfaceDecorationTarget.NetworkEdge(source, SurfaceVertexAnchor.make(right, VertexId(99))))
       case mesh => mesh
     assert(SurfaceDecorationValidation.validate(valid.copy(meshes = invalid), plan, 300, 200).isLeft)

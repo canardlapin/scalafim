@@ -37,7 +37,9 @@ object SurfaceDecorationRaster:
       explicitCapacity: Boolean): Either[SurfaceRasterError, SurfaceDecoratedRasterResult] =
     SurfaceDecorationValidation.validate(geometry, plan, dimensions.width, dimensions.height)
       .left.map(SurfaceRasterError.InvalidPlan(_)).flatMap: _ =>
-        if geometry.meshes.isEmpty && geometry.labels.isEmpty then
+        if geometry.meshes.exists(_.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest) && style.surfaceBase.alpha != 255 then
+          Left(SurfaceRasterError.InvalidPlan("ordered depth-tested decorations require an opaque surface base"))
+        else if geometry.meshes.isEmpty && geometry.labels.isEmpty then
           SurfaceRasterizer.renderCompositionChecked(plan, dimensions, style, fragmentCapacity,
             forceCollection = false, allowLegacyFastPath = false, explicitFragmentCapacity = explicitCapacity).map: surface =>
             new SurfaceDecoratedRasterResult(surface.image, surface, Array.fill(dimensions.pixelCount)(None))
@@ -102,24 +104,22 @@ object SurfaceDecorationRaster:
             val decorations = fragments(pixel)
             // Untouched pixels already contain the resolved scientific stack.
             if decorations.nonEmpty then
-              val ordered = decorations.sortBy: fragment =>
-                val mesh = geometry.meshes(fragment.mesh)
-                val overlay = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay
-                (if overlay then 1 else 0, if overlay then 0.0 else -fragment.depth, fragment.mesh)
+              val ordinary = decorations.filter(fragment =>
+                geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
+              // Only ordinary opaque solids write depth. Ordered strokes and
+              // textured labels leave the established scene depth unchanged.
+              val establishedDepth = ordinary.iterator.filter(fragment =>
+                geometry.meshes(fragment.mesh).texture.isEmpty && fragment.color.alpha == 255)
+                .foldLeft(surface.depthAt(pixel))((depth, fragment) => math.min(depth, fragment.depth))
+              val strokes = decorations.filter(fragment =>
+                geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest &&
+                  fragment.depth <= establishedDepth + 1e-14).sortBy(_.mesh)
+              val overlays = decorations.filter(fragment =>
+                geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.Overlay).sortBy(_.mesh)
+              val ordered = ordinary.sortBy(fragment => (-fragment.depth, fragment.mesh)) ++ strokes ++ overlays
               surface.collected match
                 case Some(scientific) =>
-                  val depthTested = decorations.iterator
-                    .filter(fragment => geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
-                    .map: fragment =>
-                      val color = fragment.color
-                      SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
-                        -1, -1, -1, 0f, 0f, 0f, s"decoration-${fragment.mesh}", false)
-                  val overlays = decorations.iterator
-                    .filter(fragment => geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.Overlay)
-                    .toVector.sortBy(_.mesh).iterator.map: fragment =>
-                      val color = fragment.color
-                      SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
-                        -1, -1, -1, 0f, 0f, 0f, s"overlay-${fragment.mesh}", false)
+                  val depthTested = ordinary.iterator.map(collected)
                   // At exactly equal depth, a decoration is the final visual
                   // contribution. Use the domain rank explicitly; resource IDs
                   // must not decide whether a marker is visible.
@@ -127,7 +127,7 @@ object SurfaceDecorationRaster:
                     depthTested.map(value => (value, 1))).toVector
                     .sortBy { case (value, domain) => (-value.depth, domain, value.tie, value.face, value.vertex) }
                     .map(_._1)
-                  val all = base ++ overlays.toVector
+                  val all = base ++ (strokes ++ overlays).map(collected)
                   if all.nonEmpty then
                     pixels(pixel) = compositeStack(style.background, all)
                 case None =>
@@ -137,12 +137,17 @@ object SurfaceDecorationRaster:
               ordered.foreach: fragment =>
                 val mesh = geometry.meshes(fragment.mesh)
                 val frontVisible = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay ||
-                  fragment.depth <= surface.depthAt(pixel) + 1e-14
+                  fragment.depth <= establishedDepth + 1e-14
                 if mesh.pickable && frontVisible then
                   hits(pixel) = Some(SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, fragment.depth))
             pixel += 1
           if overflow then Left(SurfaceRasterError.FragmentCapacityExceeded(fragmentCapacity))
           else Right(new SurfaceDecoratedRasterResult(RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels), surface, hits))
+
+  private def collected(fragment: Fragment): SurfaceCollectedFragment =
+    val color = fragment.color
+    SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
+      -1, -1, -1, 0f, 0f, 0f, s"decoration-${fragment.mesh}", false)
 
   private def draw(a: ScreenVertex, b: ScreenVertex, c: ScreenVertex, mesh: SurfaceDecorationMesh, sampler: Option[SurfaceTextureSampler],
       dimensions: RasterDimensions, depths: Array[Double], colors: Array[Int], touched: scala.collection.mutable.ArrayBuffer[Int]): Unit =

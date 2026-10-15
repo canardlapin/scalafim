@@ -1,0 +1,708 @@
+{
+  "native": {
+    "status": "captured",
+    "coldNanos": 19600000,
+    "warmNanos": 2000000,
+    "coldSnapshotNanos": 22599999,
+    "warmSnapshotNanos": 4700000,
+    "timingBoundary": "render and synchronous PNG readback; submission times reported separately",
+    "warmSnapshotSamplesNanos": [
+      5500000,
+      4500000,
+      4400001,
+      3300000,
+      4700000
+    ],
+    "warmImagesIdentical": true,
+    "warmResourceCounts": [
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
+    "warmUploadBytes": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "coldGeometryUploads": 3,
+    "warmGeometryUploads": 0,
+    "warmColorUploads": 0,
+    "drawCalls": 1,
+    "depthPolicy": "conditioned",
+    "projections": [
+      {
+        "view": "qualification",
+        "columnMajorProjection": [
+          2.114396572113037,
+          0,
+          0,
+          0,
+          0,
+          3.1715948581695557,
+          0,
+          0,
+          0,
+          0,
+          -3.195464611053467,
+          -1,
+          0,
+          0,
+          -8.798650741577148,
+          0
+        ],
+        "viewport": [
+          0,
+          0,
+          480,
+          320
+        ]
+      }
+    ]
+  },
+  "raster": {
+    "status": "captured",
+    "provider": "Canvas2D/reference-raster",
+    "coldNanos": 247399999,
+    "resizeBackExact": true,
+    "warmNanos": 146599999,
+    "warmSamplesNanos": [
+      164500000,
+      152700000,
+      148000000,
+      144800000,
+      146599999
+    ]
+  },
+  "viewMatrix": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    -3,
+    0,
+    0,
+    0,
+    1
+  ],
+  "projectionMatrix": [
+    2.114396572113037,
+    0,
+    0,
+    0,
+    0,
+    3.1715948581695557,
+    0,
+    0,
+    0,
+    0,
+    -1.0020020008087158,
+    -0.0200200192630291,
+    0,
+    0,
+    -1,
+    0
+  ],
+  "viewCameras": [
+    {
+      "id": "qualification",
+      "viewMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -3,
+        0,
+        0,
+        0,
+        1
+      ],
+      "projectionMatrix": [
+        2.114396572113037,
+        0,
+        0,
+        0,
+        0,
+        3.1715948581695557,
+        0,
+        0,
+        0,
+        0,
+        -1.0020020008087158,
+        -0.0200200192630291,
+        0,
+        0,
+        -1,
+        0
+      ]
+    }
+  ],
+  "matrixOrder": "row-major",
+  "picks": [
+    {
+      "x": 80,
+      "y": 53.333333333333336,
+      "raster": {
+        "surface": "background",
+        "vertex": 3,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 3,
+        "face": 1,
+        "world": [
+          -1.2611951333243578,
+          0.8407967555495717,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 160,
+      "y": 53.333333333333336,
+      "raster": {
+        "surface": "background",
+        "vertex": 3,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 3,
+        "face": 1,
+        "world": [
+          -0.6305975666621789,
+          0.8407967555495717,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 240,
+      "y": 53.333333333333336,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 3,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 3,
+        "face": 1,
+        "world": [
+          0,
+          0.44141830167506435,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 320,
+      "y": 53.333333333333336,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 3,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 3,
+        "face": 1,
+        "world": [
+          0.3310637262562982,
+          0.44141830167506435,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 400,
+      "y": 53.333333333333336,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.6621274525125966,
+          0.44141830167506435,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 80,
+      "y": 106.66666666666667,
+      "raster": {
+        "surface": "background",
+        "vertex": 3,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 3,
+        "face": 1,
+        "world": [
+          -1.2611951333243576,
+          0.4203983777747857,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 160,
+      "y": 106.66666666666667,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          -0.6305975666621789,
+          0.4203983777747858,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 240,
+      "y": 106.66666666666667,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 3,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 3,
+        "face": 1,
+        "world": [
+          0,
+          0.22070915083753215,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 320,
+      "y": 106.66666666666667,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.3310637262562982,
+          0.22070915083753215,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 400,
+      "y": 106.66666666666667,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.6621274525125966,
+          0.22070915083753215,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 80,
+      "y": 160,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          -1.2611951333243578,
+          0,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 160,
+      "y": 160,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          -0.6305975666621789,
+          0,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 240,
+      "y": 160,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0,
+          0,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 320,
+      "y": 160,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.3310637262562982,
+          0,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 400,
+      "y": 160,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.6621274525125966,
+          0,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 80,
+      "y": 213.33333333333334,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          -1.2611951333243576,
+          -0.42039837777478606,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 160,
+      "y": 213.33333333333334,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          -0.6305975666621789,
+          -0.42039837777478606,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 240,
+      "y": 213.33333333333334,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0,
+          -0.2207091508375323,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 320,
+      "y": 213.33333333333334,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.3310637262562982,
+          -0.2207091508375323,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 400,
+      "y": 213.33333333333334,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.6621274525125966,
+          -0.2207091508375323,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 80,
+      "y": 266.6666666666667,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          -1.2611951333243578,
+          -0.8407967555495719,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 160,
+      "y": 266.6666666666667,
+      "raster": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 0,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "background",
+        "vertex": 0,
+        "face": 0,
+        "world": [
+          -0.6305975666621789,
+          -0.8407967555495719,
+          -1
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 240,
+      "y": 266.6666666666667,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0,
+          -0.44141830167506446,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 320,
+      "y": 266.6666666666667,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.3310637262562982,
+          -0.44141830167506446,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    },
+    {
+      "x": 400,
+      "y": 266.6666666666667,
+      "raster": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "view": "qualification"
+      },
+      "native": {
+        "surface": "occluder",
+        "vertex": 0,
+        "face": 1,
+        "world": [
+          0.6621274525125966,
+          -0.44141830167506446,
+          0.8999999761581421
+        ],
+        "view": "qualification"
+      }
+    }
+  ],
+  "disposal": {
+    "canvasPresentedFrameReleased": true,
+    "backendResourceCount": 0
+  },
+  "numericReadouts": [],
+  "markerCenters": [],
+  "sourceSummaries": [
+    {
+      "surface": "background",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "surface": "contour",
+      "vertices": 6,
+      "faces": 2
+    },
+    {
+      "surface": "occluder",
+      "vertices": 4,
+      "faces": 2
+    }
+  ]
+}

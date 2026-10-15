@@ -1,0 +1,142 @@
+{
+  "status": "incomplete",
+  "scope": "Source key mapping checks only; different publication layout and surface alpha behavior retained without alignment",
+  "rows": [
+    {
+      "variant": "baseline",
+      "size": "single",
+      "image": "baseline-single-side-by-side.png",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "foreground-iou-below-minimum",
+            "actual": 0.25622257938404064,
+            "minimum": 0.995
+          },
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 255,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 1200,
+          "height": 1200,
+          "referenceForeground": 914854,
+          "candidateForeground": 241926,
+          "foregroundIntersection": 235940,
+          "foregroundIoU": 0.25622257938404064,
+          "maximumChannelError": 255,
+          "meanMaximumChannelError": 104.88375416666666
+        },
+        "elements": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "size": "double",
+      "image": "baseline-double-side-by-side.png",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "foreground-iou-below-minimum",
+            "actual": 0.29042417580234486,
+            "minimum": 0.995
+          },
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 255,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 2400,
+          "height": 1400,
+          "referenceForeground": 1250268,
+          "candidateForeground": 698408,
+          "foregroundIntersection": 438571,
+          "foregroundIoU": 0.29042417580234486,
+          "maximumChannelError": 255,
+          "meanMaximumChannelError": 72.39595892857143
+        },
+        "elements": []
+      }
+    },
+    {
+      "variant": "changed",
+      "size": "single",
+      "image": "changed-single-side-by-side.png",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "foreground-iou-below-minimum",
+            "actual": 0.25637846230686545,
+            "minimum": 0.995
+          },
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 255,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 1200,
+          "height": 1200,
+          "referenceForeground": 914957,
+          "candidateForeground": 242155,
+          "foregroundIntersection": 236122,
+          "foregroundIoU": 0.25637846230686545,
+          "maximumChannelError": 255,
+          "meanMaximumChannelError": 52.74304722222222
+        },
+        "elements": []
+      }
+    },
+    {
+      "variant": "changed",
+      "size": "double",
+      "image": "changed-double-side-by-side.png",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "foreground-iou-below-minimum",
+            "actual": 0.29178144432468284,
+            "minimum": 0.995
+          },
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 255,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 2400,
+          "height": 1400,
+          "referenceForeground": 1250371,
+          "candidateForeground": 697151,
+          "foregroundIntersection": 439897,
+          "foregroundIoU": 0.29178144432468284,
+          "maximumChannelError": 255,
+          "meanMaximumChannelError": 39.508287202380956
+        },
+        "elements": []
+      }
+    }
+  ]
+}

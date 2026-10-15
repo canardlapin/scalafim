@@ -121,6 +121,62 @@ class SurfaceDecorationGeometrySuite extends munit.FunSuite:
     assertEquals(geometry.meshes.length, packets.contours.length * 3)
     assert(geometry.meshes.exists(_.id.suffix.endsWith("halo-left")))
 
+  test("rounded contour caps preserve pixel widths through camera and output-size changes"):
+    for projection <- Vector(orthographic, perspective); (width, height) <- Vector((400, 200), (800, 600)) do
+      val plan = planFor(camera(projection))
+      val style = SurfaceContourStyle(ok(SurfaceDecorationSize.pixels(8)), black,
+        Some(SurfaceContourHalo(Rgba32.unsafe(255, 255, 255, 153), ok(SurfaceDecorationSize.pixels(4)))),
+        mode = SurfaceContourMode.RoundedStrokes)
+      val contour = SurfaceContourDecoration(ok(SurfaceDecorationId.make("rounded")), surface,
+        Vector(1, 2, 2, 2), SurfaceContourPolicy.Transitions, style)
+      val source = ok(SurfaceDecorationCompiler.compile(Vector(contour), plan))
+      // Short diagonal edges discriminate round end caps from butt-ended bands.
+      val first = source.contours.head.copy(start = SurfaceDecorationWorldPoint(-.03, -.02, .2),
+        end = SurfaceDecorationWorldPoint(.03, .02, -.2))
+      val second = first.copy(id = SurfaceDecorationElementId(first.id.decoration, "second"))
+      val packets = source.copy(contours = Vector(first, second))
+      val geometry = ok(SurfaceDecorationGeometry.lower(packets, plan, width, height))
+      assert(SurfaceDecorationValidation.validate(geometry, plan, width, height).isRight)
+      val firstMesh = geometry.meshes.head
+      val replaced = firstMesh.copy(positions = new FloatBufferView(Array.tabulate(firstMesh.positions.length)(firstMesh.positions.apply)))
+      assert(SurfaceDecorationValidation.validate(geometry.copy(meshes = Vector(replaced)), plan, width, height).isLeft)
+      assert(SurfaceDecorationValidation.validate(geometry.copy(meshes = Vector(firstMesh.copy(roundedStroke = None))), plan, width, height).isLeft)
+      if projection(15) == 0 then
+        val behind = first.copy(start = SurfaceDecorationWorldPoint(0, 0, 6))
+        assertEquals(SurfaceDecorationGeometry.lower(packets.copy(contours = Vector(behind)), plan, width, height),
+          Left(SurfaceDecorationError.InvalidProjection))
+      assertEquals(geometry.meshes.map(_.id.suffix), Vector(first.id.suffix, "second", s"${first.id.suffix}-halo", "second-halo"))
+      assert(geometry.meshes.forall(_.depthPolicy == SurfaceDecorationDepthPolicy.OrderedDepthTest))
+      assertEquals(geometry.meshes.head.target, SurfaceDecorationTarget.Edge(surface, first.sourceEdge._1, first.sourceEdge._2))
+      for (mesh, strokeWidth) <- Vector((geometry.meshes.head, 8.0), (geometry.meshes(2), 12.0)) do
+        val start = project(plan.views.head.camera, first.start, width, height)
+        val end = project(plan.views.head.camera, first.end, width, height)
+        assertEqualsDouble(distance(project(plan.views.head.camera, point(mesh, 0), width, height),
+          project(plan.views.head.camera, point(mesh, 2), width, height)), strokeWidth, 1e-5)
+        for i <- 5 to 37 do
+          assertEqualsDouble(distance(project(plan.views.head.camera, point(mesh, i), width, height), start), strokeWidth / 2, 1e-5)
+        for i <- 39 to 71 do
+          assertEqualsDouble(distance(project(plan.views.head.camera, point(mesh, i), width, height), end), strokeWidth / 2, 1e-5)
+      assert(SurfaceDecorationValidation.validate(geometry, plan, width + 1, height).isLeft)
+
+  test("rounded contours reject unsupported world widths and nonopaque cores at construction"):
+    intercept[IllegalArgumentException]:
+      SurfaceContourStyle(ok(SurfaceDecorationSize.world(1)), black, mode = SurfaceContourMode.RoundedStrokes)
+    intercept[IllegalArgumentException]:
+      SurfaceContourStyle(ok(SurfaceDecorationSize.pixels(1)), Rgba32.unsafe(0, 0, 0, 128), mode = SurfaceContourMode.RoundedStrokes)
+    intercept[IllegalArgumentException]:
+      SurfaceContourStyle(ok(SurfaceDecorationSize.pixels(1)), black,
+        depthPolicy = SurfaceDecorationDepthPolicy.Overlay, mode = SurfaceContourMode.RoundedStrokes)
+
+  test("ordered depth testing refuses arbitrary translucent spheres and copied capsule geometry"):
+    val plan = planFor(camera(orthographic))
+    val sphere = pixelPacket(plan, SurfaceDecorationWorldPoint(0, 0, 0)).copy(
+      shape = SurfaceMarkerShape.Sphere, size = ok(SurfaceDecorationSize.world(.2)),
+      color = Rgba32.unsafe(255, 0, 0, 153), depthPolicy = SurfaceDecorationDepthPolicy.OrderedDepthTest)
+    val geometry = ok(SurfaceDecorationGeometry.lower(SurfaceDecorationPackets(Vector(sphere), Vector.empty,
+      Vector.empty, SurfaceDecorationBinding.key(plan, 1, 1)), plan, 400, 200))
+    assert(SurfaceDecorationValidation.validate(geometry, plan, 400, 200).isLeft)
+
   test("pixel marker axes follow rectangular Fill and square Contain viewports"):
     val fill = planFor(camera(orthographic))
     val fillPacket = pixelPacket(fill, SurfaceDecorationWorldPoint(0, 0, 0))

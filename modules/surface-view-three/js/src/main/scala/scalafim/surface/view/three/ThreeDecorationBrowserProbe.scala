@@ -148,6 +148,34 @@ object ThreeDecorationBrowserProbe:
           js.Dynamic.literal(x = x, y = 125.5, id = id.getOrElse("missing"))
         captures.push(js.Dynamic.literal(name = name, png = canvas.applyDynamic("toDataURL")("image/png"),
           picks = js.Array(), overlayPicks = picked))
+      // Actual generated capsules, with opposed world depth and painter order.
+      // Keep only their halo passes to expose alpha/order independently of cores.
+      def rounded(name: String, z: Double, color: Rgba32): Vector[SurfaceDecorationMesh] =
+        val contour = SurfaceContourDecoration(ok(SurfaceDecorationId.make(name)), id, Vector(0, 1, 1, 1),
+          SurfaceContourPolicy.Transitions, SurfaceContourStyle(ok(SurfaceDecorationSize.pixels(8)), red,
+            Some(SurfaceContourHalo(color, ok(SurfaceDecorationSize.pixels(32)))), mode = SurfaceContourMode.RoundedStrokes))
+        val packets = ok(SurfaceDecorationCompiler.compile(Vector(contour), plan))
+        val edges = plan.views.map: view =>
+          packets.contours.find(_.origin.view == view.id).get.copy(
+            start = SurfaceDecorationWorldPoint(-.3, 0, z), end = SurfaceDecorationWorldPoint(.3, 0, z))
+        ok(SurfaceDecorationGeometry.lower(packets.copy(contours = edges), plan, size.width, size.height))
+          .meshes.filter(_.id.suffix.endsWith("-halo"))
+      val roundedNear = rounded("near-rounded", .2, Rgba32.unsafe(255, 0, 0, 153))
+      val roundedFar = rounded("far-rounded", .1, Rgba32.unsafe(0, 255, 0, 153))
+      val roundedBlocker = rounded("rounded-blocker", .3, Rgba32.unsafe(255, 255, 255))
+        .map(_.copy(depthPolicy = SurfaceDecorationDepthPolicy.DepthTest, pickable = false))
+      for (name, meshes) <- Vector("rounded-near-first" -> (roundedNear ++ roundedFar),
+          "rounded-far-first" -> (roundedFar ++ roundedNear),
+          "rounded-opaque-blocker" -> (roundedBlocker ++ roundedNear ++ roundedFar)) do
+        ok(backend.renderDecorated(plan, overlapGeometry.copy(meshes = meshes), size))
+        val picked = js.Array(115.5, 135.5, 365.5, 385.5).map: x =>
+          val hit = ok(backend.pickDisplay(x, 125.5))
+          val identity = hit.map:
+            case SurfaceDisplayHit.Decoration(value) => value.id.decoration.value
+            case SurfaceDisplayHit.Scientific(value) => value.surface.value
+          js.Dynamic.literal(x = x, y = 125.5, id = identity.getOrElse("missing"))
+        captures.push(js.Dynamic.literal(name = name, png = canvas.applyDynamic("toDataURL")("image/png"),
+          picks = js.Array(), orderedPicks = picked))
       val decos = cases.head._2
       val firstGeometry = geometry(decos, plan)
       ok(backend.renderDecorated(plan, firstGeometry, size))

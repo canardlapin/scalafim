@@ -1,0 +1,1371 @@
+[
+  {
+    "id": "orthographic-240-single",
+    "width": 240,
+    "height": 240,
+    "camera": {
+      "projection": "orthographic",
+      "eye": [
+        0,
+        0,
+        3
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "left": -1,
+      "right": 1,
+      "bottom": -1,
+      "top": 1,
+      "near": 0.01,
+      "far": 10,
+      "aspect": 1
+    },
+    "kind": "single",
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0
+    },
+    "surfaces": [
+      {
+        "id": "background",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            2,
+            -1
+          ],
+          [
+            -2,
+            2,
+            -1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "contour",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -0.15,
+            0,
+            0.1
+          ],
+          [
+            0.15,
+            0,
+            0.1
+          ],
+          [
+            -0.15,
+            0.7,
+            0.1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "boundaries",
+            "kind": "outline",
+            "labels": [
+              0,
+              1,
+              0
+            ],
+            "color": 0,
+            "width": 8,
+            "halo": true,
+            "haloColor": 16777215,
+            "haloWidth": 8,
+            "offset": 0.3,
+            "mode": "rounded-strokes",
+            "haloOpacity": 0.6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "orthographic-240-overlap",
+    "width": 240,
+    "height": 240,
+    "camera": {
+      "projection": "orthographic",
+      "eye": [
+        0,
+        0,
+        3
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "left": -1,
+      "right": 1,
+      "bottom": -1,
+      "top": 1,
+      "near": 0.01,
+      "far": 10,
+      "aspect": 1
+    },
+    "kind": "overlap",
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0
+    },
+    "surfaces": [
+      {
+        "id": "background",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            2,
+            -1
+          ],
+          [
+            -2,
+            2,
+            -1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "contour",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -0.15,
+            0,
+            0.1
+          ],
+          [
+            0.15,
+            0,
+            0.1
+          ],
+          [
+            -0.15,
+            0.7,
+            0.1
+          ],
+          [
+            -0.15,
+            0,
+            0.2
+          ],
+          [
+            0.15,
+            0,
+            0.2
+          ],
+          [
+            -0.15,
+            0.7,
+            0.2
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "boundaries",
+            "kind": "outline",
+            "labels": [
+              0,
+              1,
+              0,
+              0,
+              1,
+              0
+            ],
+            "color": 0,
+            "width": 8,
+            "halo": true,
+            "haloColor": 16777215,
+            "haloWidth": 8,
+            "offset": 0.3,
+            "mode": "rounded-strokes",
+            "haloOpacity": 0.6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "orthographic-240-occluded",
+    "width": 240,
+    "height": 240,
+    "camera": {
+      "projection": "orthographic",
+      "eye": [
+        0,
+        0,
+        3
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "left": -1,
+      "right": 1,
+      "bottom": -1,
+      "top": 1,
+      "near": 0.01,
+      "far": 10,
+      "aspect": 1
+    },
+    "kind": "occluded",
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0
+    },
+    "surfaces": [
+      {
+        "id": "background",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            2,
+            -1
+          ],
+          [
+            -2,
+            2,
+            -1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "contour",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -0.15,
+            0,
+            0.1
+          ],
+          [
+            0.15,
+            0,
+            0.1
+          ],
+          [
+            -0.15,
+            0.7,
+            0.1
+          ],
+          [
+            -0.15,
+            0,
+            0.2
+          ],
+          [
+            0.15,
+            0,
+            0.2
+          ],
+          [
+            -0.15,
+            0.7,
+            0.2
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "boundaries",
+            "kind": "outline",
+            "labels": [
+              0,
+              1,
+              0,
+              0,
+              1,
+              0
+            ],
+            "color": 0,
+            "width": 8,
+            "halo": true,
+            "haloColor": 16777215,
+            "haloWidth": 8,
+            "offset": 0.3,
+            "mode": "rounded-strokes",
+            "haloOpacity": 0.6
+          }
+        ]
+      },
+      {
+        "id": "occluder",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            0,
+            -2,
+            0.9
+          ],
+          [
+            2,
+            -2,
+            0.9
+          ],
+          [
+            2,
+            2,
+            0.9
+          ],
+          [
+            0,
+            2,
+            0.9
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "perspective-480-single",
+    "width": 480,
+    "height": 320,
+    "camera": {
+      "projection": "perspective",
+      "eye": [
+        0,
+        0,
+        3
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "fovDegrees": 35,
+      "near": 0.01,
+      "far": 10,
+      "aspect": 1.5
+    },
+    "kind": "single",
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0
+    },
+    "surfaces": [
+      {
+        "id": "background",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            2,
+            -1
+          ],
+          [
+            -2,
+            2,
+            -1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "contour",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -0.15,
+            0,
+            0.1
+          ],
+          [
+            0.15,
+            0,
+            0.1
+          ],
+          [
+            -0.15,
+            0.7,
+            0.1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "boundaries",
+            "kind": "outline",
+            "labels": [
+              0,
+              1,
+              0
+            ],
+            "color": 0,
+            "width": 8,
+            "halo": true,
+            "haloColor": 16777215,
+            "haloWidth": 8,
+            "offset": 0.3,
+            "mode": "rounded-strokes",
+            "haloOpacity": 0.6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "perspective-480-overlap",
+    "width": 480,
+    "height": 320,
+    "camera": {
+      "projection": "perspective",
+      "eye": [
+        0,
+        0,
+        3
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "fovDegrees": 35,
+      "near": 0.01,
+      "far": 10,
+      "aspect": 1.5
+    },
+    "kind": "overlap",
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0
+    },
+    "surfaces": [
+      {
+        "id": "background",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            2,
+            -1
+          ],
+          [
+            -2,
+            2,
+            -1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "contour",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -0.15,
+            0,
+            0.1
+          ],
+          [
+            0.15,
+            0,
+            0.1
+          ],
+          [
+            -0.15,
+            0.7,
+            0.1
+          ],
+          [
+            -0.15,
+            0,
+            0.2
+          ],
+          [
+            0.15,
+            0,
+            0.2
+          ],
+          [
+            -0.15,
+            0.7,
+            0.2
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "boundaries",
+            "kind": "outline",
+            "labels": [
+              0,
+              1,
+              0,
+              0,
+              1,
+              0
+            ],
+            "color": 0,
+            "width": 8,
+            "halo": true,
+            "haloColor": 16777215,
+            "haloWidth": 8,
+            "offset": 0.3,
+            "mode": "rounded-strokes",
+            "haloOpacity": 0.6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "perspective-480-occluded",
+    "width": 480,
+    "height": 320,
+    "camera": {
+      "projection": "perspective",
+      "eye": [
+        0,
+        0,
+        3
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "fovDegrees": 35,
+      "near": 0.01,
+      "far": 10,
+      "aspect": 1.5
+    },
+    "kind": "occluded",
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0
+    },
+    "surfaces": [
+      {
+        "id": "background",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            -2,
+            -1
+          ],
+          [
+            2,
+            2,
+            -1
+          ],
+          [
+            -2,
+            2,
+            -1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "contour",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            -0.15,
+            0,
+            0.1
+          ],
+          [
+            0.15,
+            0,
+            0.1
+          ],
+          [
+            -0.15,
+            0.7,
+            0.1
+          ],
+          [
+            -0.15,
+            0,
+            0.2
+          ],
+          [
+            0.15,
+            0,
+            0.2
+          ],
+          [
+            -0.15,
+            0.7,
+            0.2
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3,
+            4,
+            5
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          },
+          {
+            "id": "boundaries",
+            "kind": "outline",
+            "labels": [
+              0,
+              1,
+              0,
+              0,
+              1,
+              0
+            ],
+            "color": 0,
+            "width": 8,
+            "halo": true,
+            "haloColor": 16777215,
+            "haloWidth": 8,
+            "offset": 0.3,
+            "mode": "rounded-strokes",
+            "haloOpacity": 0.6
+          }
+        ]
+      },
+      {
+        "id": "occluder",
+        "hemisphere": "left",
+        "vertices": [
+          [
+            0,
+            -2,
+            0.9
+          ],
+          [
+            2,
+            -2,
+            0.9
+          ],
+          [
+            2,
+            2,
+            0.9
+          ],
+          [
+            0,
+            2,
+            0.9
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "layers": [
+          {
+            "id": "blue",
+            "kind": "rgba",
+            "values": [
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                1,
+                1
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

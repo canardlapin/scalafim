@@ -374,6 +374,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     var nextPick: Option[ThreePick] = None
     var nextDisplayPick: Option[SurfaceDisplayHit[ThreePick]] = None
     var decorationFailure = false
+    var clearFailure = false
     var drawFailure = false
 
     def contextState: ThreeContextState = state
@@ -410,7 +411,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
 
     override def clearComposition(): Either[ThreeSurfaceError, Unit] =
       calls += "composition-clear"
-      Right(())
+      if clearFailure then Left(ThreeSurfaceError.RuntimeFailure("composition clear", "injected")) else Right(())
 
     override def updateDecorations(geometry: SurfaceDecorationGeometry): Either[ThreeSurfaceError, Unit] =
       calls += s"decorations:${geometry.meshes.length}"
@@ -418,7 +419,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
 
     override def clearDecorations(): Either[ThreeSurfaceError, Unit] =
       calls += "decorations-clear"
-      Right(())
+      if clearFailure then Left(ThreeSurfaceError.RuntimeFailure("decoration clear", "injected")) else Right(())
 
     def resize(size: ThreeCanvasSize): Either[ThreeSurfaceError, Unit] =
       calls += s"resize:${size.width}x${size.height}"
@@ -517,6 +518,12 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     runtime.calls.clear()
     backend.renderDecorated(plan, geometry, size).toOption.get
     assertEquals(runtime.calls.count(_.startsWith("geometry:")), 0)
+    assertEquals(runtime.calls.count(_.startsWith("decorations")), 0)
+    assertEquals(runtime.calls.count(_ == "draw"), 1)
+    runtime.calls.clear()
+    backend.render(plan, size).toOption.get
+    assertEquals(runtime.calls.toVector, Vector("decorations-clear", "draw"))
+    backend.renderDecorated(plan, geometry, size).toOption.get
     val moved = SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.OrbitBy(15, 10)).toOption.get
     val movedPlan = SurfaceCompositionPlan.make(
       plan.views.updated(0, plan.views.head.copy(camera = compile(viewer, moved).camera)), plan.resources).toOption.get
@@ -527,9 +534,17 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assertEquals(cameraOnly.geometryUploads, 0)
     assertEquals(cameraOnly.geometryUpdates, 0)
     assertEquals(cameraOnly.colorUploads, 0)
+    assert(runtime.calls.contains(s"decorations:${movedGeometry.meshes.length}"))
     runtime.calls.clear()
     backend.render(plan, size).toOption.get
     assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+    runtime.calls.clear()
+    backend.renderDecorated(plan, geometry, size).toOption.get
+    assert(runtime.calls.contains(s"decorations:${geometry.meshes.length}"))
+    runtime.calls.clear()
+    backend.renderDecorated(plan, geometry.copy(), size).toOption.get
+    assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+    assert(runtime.calls.contains(s"decorations:${geometry.meshes.length}"))
 
   test("stale decoration geometry refuses before fake runtime mutation"):
     val (viewer, state) = fixture()
@@ -538,6 +553,29 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     val backend = ThreeSurfaceBackend.create(runtime).toOption.get
     val stale = SurfaceDecorationGeometry(Vector.empty, Vector.empty, size.width - 1, size.height, "stale")
     assert(backend.renderDecorated(plan, stale, size).isLeft)
+    assertEquals(runtime.calls.toVector, Vector.empty)
+
+  test("ordered strokes admit solid alpha only with opaque scientific surfaces before native mutation"):
+    val (viewer, state) = fixture()
+    val plan = fourViewComposition(compile(viewer, state))
+    val marker = SurfaceContourDecoration(SurfaceDecorationId.make("ordered").toOption.get,
+      surfaceId, Vector.tabulate(plan.resources.meshes.values.head.positions.length / 3)(i => if i == 0 then 0 else 1),
+      SurfaceContourPolicy.Transitions, SurfaceContourStyle(SurfaceDecorationSize.pixels(8).toOption.get,
+        Rgba32.unsafe(255, 0, 0), Some(SurfaceContourHalo(Rgba32.unsafe(255, 255, 255, 153),
+          SurfaceDecorationSize.pixels(2).toOption.get)), mode = SurfaceContourMode.RoundedStrokes))
+    def lower(value: SurfaceCompositionPlan) = SurfaceDecorationGeometry.lower(
+      SurfaceDecorationCompiler.compile(Vector(marker), value).toOption.get, value, size.width, size.height).toOption.get
+    val geometry = lower(plan)
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    assert(backend.renderDecorated(plan, geometry, size).isRight)
+    runtime.calls.clear()
+    val defaultDepth = geometry.copy(meshes = geometry.meshes.map(_.copy(depthPolicy = SurfaceDecorationDepthPolicy.DepthTest)))
+    assert(backend.renderDecorated(plan, defaultDepth, size).isLeft)
+    assertEquals(runtime.calls.toVector, Vector.empty)
+    val translucent = SurfaceCompositionPlan.make(plan.views.map(view => view.copy(instances =
+      view.instances.map(_.copy(opacity = DisplayOpacity.make(.5).toOption.get)))), plan.resources).toOption.get
+    assert(backend.renderDecorated(translucent, lower(translucent), size).isLeft)
     assertEquals(runtime.calls.toVector, Vector.empty)
 
   test("failed decoration replacement clears the old native decoration state"):
@@ -553,8 +591,13 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     backend.renderDecorated(plan, geometry, size).toOption.get
     runtime.calls.clear()
     runtime.decorationFailure = true
-    assert(backend.renderDecorated(plan, geometry, size, forceDraw = true).isLeft)
+    val replacement = geometry.copy(meshes = geometry.meshes.map(_.copy(color = Rgba32.unsafe(0, 255, 0))))
+    assert(backend.renderDecorated(plan, replacement, size, forceDraw = true).isLeft)
     assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+    runtime.calls.clear()
+    runtime.decorationFailure = false
+    backend.renderDecorated(plan, geometry, size).toOption.get
+    assert(runtime.calls.contains(s"decorations:${geometry.meshes.length}"))
 
   test("draw failure after a successful decoration install is cleared by a later plain render"):
     val (viewer, state) = fixture()
@@ -572,7 +615,32 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assert(backend.renderDecorated(plan, geometry, size).isLeft)
     runtime.calls.clear()
     backend.render(plan, size).toOption.get
-    assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+    assertEquals(runtime.calls.toVector, Vector("decorations-clear", "draw"))
+
+  test("failed native cleanup invalidates decoration reuse before an identical retry"):
+    val (viewer, state) = fixture()
+    val legacy = compile(viewer, state)
+    val plan = fourViewComposition(legacy)
+    val marker = SurfaceMarkerDecoration(SurfaceDecorationId.make("clear-failure-marker").toOption.get,
+      SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(surfaceId, VertexId(0))),
+      SurfaceMarkerShape.Disk, SurfaceDecorationSize.world(0.1).toOption.get, Rgba32.unsafe(255, 0, 0))
+    val geometry = SurfaceDecorationGeometry.lower(
+      SurfaceDecorationCompiler.compile(Vector(marker), plan).toOption.get, plan, size.width, size.height).toOption.get
+    for clearComposition <- Vector(false, true) do
+      val runtime = new RecordingRuntime()
+      val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+      backend.renderDecorated(plan, geometry, size).toOption.get
+      runtime.calls.clear()
+      runtime.clearFailure = true
+      val failed = if clearComposition then backend.render(legacy, size) else backend.render(plan, size)
+      assert(failed.isLeft)
+      assertEquals(runtime.calls.toVector,
+        Vector(if clearComposition then "composition-clear" else "decorations-clear"))
+      runtime.calls.clear()
+      runtime.clearFailure = false
+      backend.renderDecorated(plan, geometry, size).toOption.get
+      assertEquals(runtime.calls.headOption, Some("decorations-clear"))
+      assert(runtime.calls.contains(s"decorations:${geometry.meshes.length}"))
 
   test("display picking preserves tagged decoration hits without manufacturing a surface id"):
     val runtime = new RecordingRuntime()
