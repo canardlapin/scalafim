@@ -473,3 +473,9 @@ both the original consumer log and this rerun report 446 passing tests.
 
 This removes the dependency-publication blocker for the authorized local merge.
 It does not qualify the full P6 matrix or constitute ScalaFIM remote publication.
+
+Local landing completed by fast-forwarding main from `53feab62` to
+`7ec313d769f9fd494d67618e6bf4109491652eab`, including the P4/P5 implementation,
+paired evidence and publication receipts. Existing immutable Mote operations
+were preserved byte-for-byte. ScalaFIM has not been pushed; the parity epic
+remains open for the P6 work listed above.
