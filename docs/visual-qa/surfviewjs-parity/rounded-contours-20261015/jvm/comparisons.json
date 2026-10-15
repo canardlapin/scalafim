@@ -1,9 +1,10 @@
 {
   "schema": "rounded-contour-jvm-comparison.v1",
   "status": "incomplete",
+  "crossPlatformPass": true,
   "sourceOracle": "/private/tmp/surface-rounded-reference-proof-04/source-oracles.json",
   "sourceOracleSha256": "7137a9fd5b80aa1ec0d83352e146c2c57609551fe1c205f921d5d89d4503f4fa",
-  "runnerSha256": "99136bbfd31272d6c23750effc9389f4b92e4cd053b008cf5855329a61c9ec93",
+  "runnerSha256": "d8cd13a4eb5f89b9c6296181ab6719f4cecf7308839850067259a22165c0510b",
   "rows": [
     {
       "id": "orthographic-240-occluded",

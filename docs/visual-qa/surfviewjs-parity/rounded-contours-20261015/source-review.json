@@ -22,5 +22,22 @@
     "Review did not rerun builds or browsers",
     "Performance measurements separately recorded",
     "No full-frame pass or P6 merge approval claimed"
-  ]
+  ],
+  "productionCandidate": "6c083ea3df04d58e807e1ce7806dcffd2e8b0348",
+  "jvmComparatorReview": {
+    "verdict": "accepted for bounded evidence contract after correction",
+    "sourceSha256": "d8cd13a4eb5f89b9c6296181ab6719f4cecf7308839850067259a22165c0510b",
+    "priorSourceSha256": "99136bbfd31272d6c23750effc9389f4b92e4cd053b008cf5855329a61c9ec93",
+    "priorBlockers": [
+      "Cross-platform byte mismatch did not fail process",
+      "Frozen oracle hashes and reference admission not verified"
+    ],
+    "corrections": [
+      "All nine cross-platform comparisons gate success",
+      "Input/oracle hashes and reference repeat/source-oracle checks required",
+      "Three negative controls fail for intended reasons"
+    ],
+    "receipt": "jvm/comparisons.json",
+    "negativeControls": "jvm/negative-controls.json"
+  }
 }

@@ -13,9 +13,22 @@ const {PNG}=(await import(pathToFileURL(resolve(referenceRoot,'node_modules/play
 const json=async path=>JSON.parse(await readFile(path));
 const save=(path,value)=>writeFile(path,JSON.stringify(value,null,2)+'\n');
 const sha=value=>createHash('sha256').update(value).digest('hex');
-const specs=await json(resolve(primitiveProof,'inputs.json'));
-const oracles=await json(resolve(primitiveProof,'source-oracles.json'));
+const inputBytes=await readFile(resolve(primitiveProof,'inputs.json'));
+const oracleBytes=await readFile(resolve(primitiveProof,'source-oracles.json'));
+const proof=await json(resolve(primitiveProof,'rounded-contour-proof.json'));
+if(sha(inputBytes)!==proof.provenance?.inputSha256||sha(oracleBytes)!==proof.provenance?.oracleSha256)
+  throw new Error('frozen primitive input or oracle hash mismatch');
+const specs=JSON.parse(inputBytes),oracles=JSON.parse(oracleBytes);
 if(specs.length!==6||oracles.length!==6)throw new Error('expected six frozen primitive cases');
+if(proof.primitivePass!==true||proof.rows?.length!==6||new Set(proof.rows.map(row=>row.id)).size!==6)
+  throw new Error('primitive proof was not admitted');
+const calibrated=new Map(specs.map((spec,index)=>{
+  const row=proof.rows.find(row=>row.id===spec.id),oracle=oracles[index];
+  if(row?.repeatExact!==true||!oracle.required?.length||oracle.required.some(name=>
+      row.reference?.[name]?.pass!==true||row.reference[name].pixels!==oracle.masks[name]?.length))
+    throw new Error('reference repeat or source-oracle admission failed '+spec.id);
+  return [spec.id,true];
+}));
 const rows=[];
 for(const [group,source,reference] of [['primitives',primitiveJvm,primitiveProof],['cortex',cortexJvm,cortexProof]]){
   const groupOut=resolve(out,group);await mkdir(groupOut,{recursive:true});
@@ -52,7 +65,7 @@ for(const [group,source,reference] of [['primitives',primitiveJvm,primitiveProof
     const samples=host.raster.warmSnapshotSamplesNanos;
     if(samples.length!==5||samples.some(x=>!Number.isFinite(x)||x<0))throw new Error('invalid timing samples '+id);
     const fullFrame=compareRgba({reference:ref.data,candidate:jvm.data,width,height,candidateWidth:jvm.width,candidateHeight:jvm.height,
-      tolerances:{maximumChannelError:2,colorPolicy:{calibrated:group==='primitives'}}});
+      tolerances:{maximumChannelError:2,colorPolicy:{calibrated:calibrated.get(id)===true}}});
     const result={id,group,hostPass,inputSha256:expectedInputSha256,native:host.native,masks,
       primitivePass:masks?Object.values(masks).every(mask=>mask.pass)&&hostPass:null,
       browserRasterPixelsEqual:jvm.data.equals(browser.data),fullFrame,
@@ -65,8 +78,9 @@ for(const [group,source,reference] of [['primitives',primitiveJvm,primitiveProof
     await save(resolve(directory,'comparison.json'),result);rows.push(result);
   }
 }
-await save(resolve(out,'comparisons.json'),{schema:'rounded-contour-jvm-comparison.v1',status:'incomplete',
+const crossPlatformPass=rows.every(row=>row.hostPass&&row.primitivePass!==false&&row.browserRasterPixelsEqual);
+await save(resolve(out,'comparisons.json'),{schema:'rounded-contour-jvm-comparison.v1',status:crossPlatformPass?'incomplete':'fail',crossPlatformPass,
   sourceOracle:resolve(primitiveProof,'source-oracles.json'),
   sourceOracleSha256:sha(await readFile(resolve(primitiveProof,'source-oracles.json'))),
   runnerSha256:sha(await readFile(fileURLToPath(import.meta.url))),rows});
-if(rows.some(row=>!row.hostPass||row.primitivePass===false))process.exitCode=1;
+if(!crossPlatformPass)process.exitCode=1;

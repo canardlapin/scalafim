@@ -2,19 +2,19 @@
   "schema": "surface-evidence-artifact-manifest.v1",
   "qualification": "not-qualified",
   "bundle": {
-    "path": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/surface-rounded-qualification-20261015/evidence.tar.gz",
-    "sha256": "1f8a3882369a1fc01abe7887e4c362e047734a9f40c2256b5e25ac2aad8b4003",
-    "bytes": 14186972,
-    "manifestSha256": "89a9f9edea0ed841903e223b7e1b62f4c0d46d493001d177f31069e9a103ae56",
-    "files": 631,
-    "uniqueObjects": 274,
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/surface-rounded-qualification-20261015-review/evidence.tar.gz",
+    "sha256": "60d42055014c2ec415ec2f1ce204b3d355e8be74343b062c8fd7d084e6ef8d32",
+    "bytes": 14322411,
+    "manifestSha256": "9aac53310087821ccb7f4117e9f2d81e253d3d75292c86383f17d4eacd0305f3",
+    "files": 850,
+    "uniqueObjects": 284,
     "objectsVerified": true,
     "locationPolicy": "Local retained appendix; previous archive untouched; external cortex coordinates excluded."
   },
   "galleryFiles": {
     "README.md": {
-      "sha256": "084008ac95551cfdce433c143d2d912a94e4dc9a194f098c193814769409e462",
-      "bytes": 5809
+      "sha256": "b64f59ec2d58a59c932224363d518c5fa4d36aa3d1f294d0522025c8fe881a9b",
+      "bytes": 6074
     },
     "checks.json": {
       "sha256": "ba567718538a7f9cd3b2d9b3585c02053ed0adfa1cdb805476b61d4b437509ec",
@@ -141,12 +141,12 @@
       "bytes": 1134150
     },
     "index.html": {
-      "sha256": "09de3278b6a09f912e6c34f5c24df192a2ae0f44c2426b7d4e0b9dc4673c6e56",
-      "bytes": 7156
+      "sha256": "3a6ad812bd763e2574c0e11e35993fd8cb6234cc595179dc931e47b4ad4da070",
+      "bytes": 7218
     },
     "jvm/comparisons.json": {
-      "sha256": "9608d4ab8ca4c4d2a35301e5defa783ba38611e3edfe62103b6f3b147e5820b4",
-      "bytes": 14085
+      "sha256": "125690539d3044ca31310f52a5ff40ca83b0b0619349dae037f4cb67f0a2216f",
+      "bytes": 14114
     },
     "jvm/cortex/C05-BR-parcels--halo--1b8160a35bd97ccd/candidate.json": {
       "sha256": "1f9c4cb32da5d8badfb3135a7b9c15832c8df70469cf3ef109b4e2a88cfc8a27",
@@ -203,6 +203,10 @@
     "jvm/cortex/runtime.json": {
       "sha256": "aae5aa315651ebd433d78c18597af7ac94770fed3acb1cad7d052011541d8cf3",
       "bytes": 1720
+    },
+    "jvm/negative-controls.json": {
+      "sha256": "dd4bf5354ae4904cc8a90574c07db372efa08f39ac629590afa6cabce096440d",
+      "bytes": 2442
     },
     "jvm/primitives/orthographic-240-occluded/candidate.json": {
       "sha256": "c21cba5af1996c1b4044287bd0ee947928ed54cb7d79dd3755ce12d0f6098e90",
@@ -689,8 +693,8 @@
       "bytes": 2350423
     },
     "source-review.json": {
-      "sha256": "cd47e9cf1c910f5b17568b23290c4ec3ca0362360d476e689582e0599af7be05",
-      "bytes": 1545
+      "sha256": "7409dd486f9fa4756eb5b454fc6bf7ce2370324c55ce6aa160dbb55fbc8df0c0",
+      "bytes": 2372
     }
   }
 }

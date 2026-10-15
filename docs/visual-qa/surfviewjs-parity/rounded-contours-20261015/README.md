@@ -37,7 +37,10 @@ masks and captures all three cortex inputs. All nine JVM raster images equal
 their browser-raster counterparts byte-for-byte. Published snapshot pixels,
 warm repeat stability, resize-back, and disposal checks pass; every native
 JavaFX attempt reports the intended ordered-depth-policy refusal. Strict
-reference full-frame comparisons remain failed on all nine.
+reference full-frame comparisons remain failed on all nine. The JVM comparator
+verifies frozen oracle hashes and reference admission and requires all nine
+cross-platform byte equalities. [Three negative controls](jvm/negative-controls.json)
+reject a changed cortex pixel, changed oracle bytes, and a failed reference repeat.
 
 ## Warm rendering
 
