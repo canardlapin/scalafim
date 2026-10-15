@@ -551,7 +551,7 @@ object SurfaceCompiler:
       case _: CameraProjection.Orthographic => frame.radius * 2.0
     math.max(4.0, fitDistance)
 
-  private def lookAt(
+  private[view] def lookAt(
     ex: Double, ey: Double, ez: Double,
     tx: Double, ty: Double, tz: Double,
     upx: Double, upy: Double, upz: Double
@@ -568,7 +568,7 @@ object SurfaceCompiler:
       0.0f, 0.0f, 0.0f, 1.0f
     )
 
-  private def perspective(fovDegrees: Double, aspect: Double, near: Double, far: Double): Array[Float] =
+  private[view] def perspective(fovDegrees: Double, aspect: Double, near: Double, far: Double): Array[Float] =
     val f = 1.0 / math.tan(fovDegrees * math.Pi / 360.0)
     Array(
       (f / aspect).toFloat, 0.0f, 0.0f, 0.0f,

@@ -66,6 +66,15 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
   private def projectedDepth(matrix: js.Array[Double], z: Double): Double =
     (matrix(10) * z + matrix(14)) / (matrix(11) * z + matrix(15))
 
+  test("explicit depth preservation keeps supplied coefficients for every occupied interval"):
+    for perspective <- Vector(false, true) do
+      val projection = depthCamera(perspective)
+      for objects <- Vector(Vector.empty, Vector((identityMatrix, ThreeJsRuntime.PositionBounds(-1, -1, -200, 1, 1, -100))),
+          Vector((identityMatrix, ThreeJsRuntime.PositionBounds(-1, -1, -1, 1, 1, 1))),
+          Vector((identityMatrix, ThreeJsRuntime.PositionBounds(-1, -1, -1100, 1, 1, -.005)))) do
+        val actual = ThreeJsRuntime.depthProjection(projection, objects, ThreeDepthPrecision.PreserveDepthProjection)
+        assertEquals(actual.toVector, projection.toVector)
+
   test("occupied depth conditioning preserves screen coordinates and separates close perspective surfaces"):
     val bounds = ThreeJsRuntime.PositionBounds(-2, -3, -200, 2, 3, -100)
     for perspective <- Vector(false, true) do

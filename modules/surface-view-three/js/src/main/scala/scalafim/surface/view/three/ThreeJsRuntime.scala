@@ -72,6 +72,12 @@ final class ThreeJsRuntime private (
   private var activeClipping: SurfaceClipping = SurfaceClipping.Disabled
   private var composition = Vector.empty[CompositionView]
   private var decorations = Vector.empty[DecorationInstance]
+  private var projections = Vector.empty[ThreeProjectionReceipt]
+  def projectionReceipts: Vector[ThreeProjectionReceipt] = projections
+
+  private def recordProjection(view: Option[SurfaceViewId], matrix: js.Array[Double], viewport: ThreeJsRuntime.NativeViewport): Unit =
+    projections :+= ThreeProjectionReceipt(view, options.depthPrecision, matrix.toVector.map(_.toFloat),
+      (viewport.x, viewport.y, viewport.width, viewport.height))
 
   def contextState: ThreeContextState =
     if disposed then ThreeContextState.Lost
@@ -248,7 +254,7 @@ final class ThreeJsRuntime private (
       val staged = mutable.ArrayBuffer.empty[DecorationInstance]
       val additions = mutable.ArrayBuffer.empty[js.Dynamic]
       try
-        next.meshes.foreach(packet => staged += makeDecoration(packet))
+        next.meshes.zipWithIndex.foreach((packet, index) => staged += makeDecoration(packet, index))
         staged.foreach: decoration =>
           additions += decoration.mesh
           scene.applyDynamic("add")(decoration.mesh)
@@ -327,6 +333,7 @@ final class ThreeJsRuntime private (
 
   def draw(): Either[ThreeSurfaceError, Unit] =
     attempt("draw"):
+      projections = Vector.empty
       if composition.nonEmpty then drawComposition()
       else drawLegacy()
 
@@ -344,7 +351,7 @@ final class ThreeJsRuntime private (
           (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], bundle.depthBounds)
       // All slots share the same depth transform, including overlapping slots.
       val depthProjection = ThreeJsRuntime.depthProjection(
-        originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs)
+        originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs, options.depthPrecision)
       try
         drawSlots.foreach: slot =>
           bundles.valuesIterator.foreach: bundle =>
@@ -358,6 +365,7 @@ final class ThreeJsRuntime private (
           val projection = ThreeJsRuntime.viewportProjection(
             depthProjection, viewport)
           camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
+          recordProjection(None, projection, viewport)
           val ratio = canvasSize.pixelRatio
           renderer.applyDynamic("setViewport")(viewport.x / ratio, viewport.y / ratio,
             viewport.width / ratio, viewport.height / ratio)
@@ -393,15 +401,16 @@ final class ThreeJsRuntime private (
             .applyDynamic("multiply")(decoration.mesh.selectDynamic("matrixWorld"))
           (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], decoration.depthBounds)
         val depthProjection = ThreeJsRuntime.depthProjection(
-          originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs ++ decorationDepthInputs)
+          originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs ++ decorationDepthInputs, options.depthPrecision)
         val viewport = ThreeJsRuntime.nativeViewport(viewportBox, canvasSize)
         val projection = ThreeJsRuntime.viewportProjection(depthProjection, viewport)
         camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
+        recordProjection(Some(entry.view.id), projection, viewport)
         val ratio = canvasSize.pixelRatio
         renderer.applyDynamic("setViewport")(viewport.x / ratio, viewport.y / ratio, viewport.width / ratio, viewport.height / ratio)
         renderer.applyDynamic("setScissor")(viewport.x / ratio, viewport.y / ratio, viewport.width / ratio, viewport.height / ratio)
-        renderer.applyDynamic("render")(scene, camera)
-        camera.selectDynamic("projectionMatrix").applyDynamic("copy")(originalProjection)
+        try renderer.applyDynamic("render")(scene, camera)
+        finally camera.selectDynamic("projectionMatrix").applyDynamic("copy")(originalProjection)
       renderer.applyDynamic("setScissorTest")(false)
       decorations.foreach(_.mesh.updateDynamic("visible")(false))
       ()
@@ -441,7 +450,7 @@ final class ThreeJsRuntime private (
           raycaster.applyDynamic("intersectObject")(decoration.mesh, false).asInstanceOf[js.Array[js.Dynamic]].find(hit => retainedByClip(hit, entry.view.clipping))
             .map(hit => (hit.selectDynamic("distance").asInstanceOf[Double], decoration))
         .toVector
-      val overlay = hits.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).sortBy(_._1).headOption
+      val overlay = hits.filter(_._2.depthPolicy == SurfaceDecorationDepthPolicy.Overlay).lastOption
       overlay.map: (depth, decoration) =>
         SurfaceDisplayHit.Decoration(SurfaceDecorationHit(decoration.id, decoration.origin, decoration.target, depth))
       .orElse:
@@ -478,7 +487,16 @@ final class ThreeJsRuntime private (
           // The camera carries our compiled matrices and may use either projection.
           // Three's setFromCamera dispatches on the native camera class, which does
           // not change when our projection changes. Unproject the clip segment instead.
-          val inverseProjection = camera.selectDynamic("projectionMatrixInverse")
+          val inputs = fittedSlots.flatMap: slot =>
+            bundles.get(slot.surface).map: source =>
+              position(source, slot)
+              val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
+                .applyDynamic("multiply")(source.mesh.selectDynamic("matrixWorld"))
+              (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], source.depthBounds)
+          position(bundle, selected)
+          val projected = ThreeJsRuntime.depthProjection(
+            camera.selectDynamic("projectionMatrix").selectDynamic("elements").asInstanceOf[js.Array[Double]], inputs, options.depthPrecision)
+          val inverseProjection = construct("Matrix4")().applyDynamic("fromArray")(projected).applyDynamic("invert")()
           val world = camera.selectDynamic("matrixWorld")
           val near = construct("Vector3")(localX * 2.0 - 1.0, 1.0 - localY * 2.0, -1.0)
             .applyDynamic("applyMatrix4")(inverseProjection).applyDynamic("applyMatrix4")(world)
@@ -513,11 +531,8 @@ final class ThreeJsRuntime private (
           (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], decoration.depthBounds)
         val projection = ThreeJsRuntime.depthProjection(
           camera.selectDynamic("projectionMatrix").selectDynamic("elements").asInstanceOf[js.Array[Double]],
-          depthInputs ++ decorationDepthInputs)
-        camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(projection)
-        camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
-        camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
-        val inverseProjection = camera.selectDynamic("projectionMatrixInverse")
+          depthInputs ++ decorationDepthInputs, options.depthPrecision)
+        val inverseProjection = construct("Matrix4")().applyDynamic("fromArray")(projection).applyDynamic("invert")()
         val world = camera.selectDynamic("matrixWorld")
         val near = construct("Vector3")(localX * 2.0 - 1.0, 1.0 - localY * 2.0, -1.0)
           .applyDynamic("applyMatrix4")(inverseProjection).applyDynamic("applyMatrix4")(world)
@@ -697,7 +712,7 @@ final class ThreeJsRuntime private (
       try texture.applyDynamic("dispose")()
       catch case _: Throwable => ()
 
-  private def makeDecoration(packet: SurfaceDecorationMesh): DecorationInstance =
+  private def makeDecoration(packet: SurfaceDecorationMesh, index: Int): DecorationInstance =
     if packet.texture.isEmpty && packet.color.alpha != 255 then
       throw new IllegalArgumentException("semi-transparent solid decorations are not yet qualified")
     var geometry: js.Dynamic = null
@@ -746,7 +761,8 @@ final class ThreeJsRuntime private (
       val mesh = construct("Mesh")(geometry, material)
       mesh.updateDynamic("matrixAutoUpdate")(false)
       mesh.updateDynamic("frustumCulled")(true)
-      mesh.updateDynamic("renderOrder")(if overlay then 1 else 0)
+      // Overlay is a painter-ordered display layer, independent of world depth.
+      mesh.updateDynamic("renderOrder")(if overlay then index + 1 else 0)
       mesh.applyDynamic("updateMatrix")()
       mesh.applyDynamic("updateMatrixWorld")(true)
       DecorationInstance(packet.id, packet.origin, packet.target, packet.depthPolicy, geometry, material, texture, mesh,
@@ -925,7 +941,9 @@ object ThreeJsRuntime:
     depthProjection(projection, Vector((modelView, bounds)))
 
   private[three] def depthProjection(projection: js.Array[Double],
-      objects: Vector[(js.Array[Double], PositionBounds)]): js.Array[Double] =
+      objects: Vector[(js.Array[Double], PositionBounds)],
+      precision: ThreeDepthPrecision = ThreeDepthPrecision.ConditionOccupiedRange): js.Array[Double] =
+    if precision == ThreeDepthPrecision.PreserveDepthProjection then return projection
     // Sixteen float epsilons conservatively cover each four-term dot product,
     // coefficient rounding and propagation through the second matrix product.
     val roundoff = 16.0 * math.pow(2.0, -23)

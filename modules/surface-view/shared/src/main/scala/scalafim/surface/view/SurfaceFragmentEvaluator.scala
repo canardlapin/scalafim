@@ -23,6 +23,23 @@ final class SurfaceFragmentEvaluator(
       wa * signs(a) + wb * signs(b) + wc * signs(c)
 
   private val normals = mesh.sampleNormals.getOrElse(mesh.normals)
+  private val linearVertexColors = colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight &&
+    layers.forall(_.interpolation == SurfaceMapInterpolation.VertexColor)
+  // Whole-surface color stacks are independent of the face and fragment.
+  // Face-restricted stacks retain direct evaluation; sharing a vertex must not
+  // leak a layer into a face outside its declared coverage.
+  private val vertexStackColors = Option.when(linearVertexColors && layers.forall(_.coverage == SurfaceLayerCoverage.All))(
+    Array.tabulate(normals.length / 3)(vertex => composeVertex(0, vertex)))
+
+  private def composeVertex(face: Int, vertex: Int): Int =
+    var composed = base
+    var index = 0
+    while index < layers.length do
+      val layer = layers(index)
+      if layer.coverage.contains(face) && layer.thresholdEdge.isEmpty then
+        composed = layer.blendMode.composite(composed, Rgba32.fromPackedInt(layer.sampleColors.get(vertex)), layer.opacity)
+      index += 1
+    composed.toPackedInt
 
   private val regionSamples = layers.map: layer =>
     for triangle <- region if layer.coverage.contains(triangle.sourceFace); field <- layer.scalarField yield
@@ -54,7 +71,7 @@ final class SurfaceFragmentEvaluator(
     evaluate(face, a, b, c, wa, wb, wc, true)
 
   private def evaluate(face: Int, a: Int, b: Int, c: Int, wa: Double, wb: Double, wc: Double, extrapolate: Boolean, edgeWidth: Double = 0.0): Rgba32 =
-    if colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight && layers.forall(_.interpolation == SurfaceMapInterpolation.VertexColor) then
+    if linearVertexColors then
       return linearVertexStack(face, a, b, c, wa, wb, wc, edgeWidth)
     var composed = base
     var index = 0
@@ -116,15 +133,7 @@ final class SurfaceFragmentEvaluator(
     */
   private def linearVertexStack(face: Int, a: Int, b: Int, c: Int,
       wa: Double, wb: Double, wc: Double, edgeWidth: Double): Rgba32 =
-    def at(vertex: Int): Int =
-      var composed = base
-      var index = 0
-      while index < layers.length do
-        val layer = layers(index)
-        if layer.coverage.contains(face) && layer.thresholdEdge.isEmpty then
-          composed = layer.blendMode.composite(composed, Rgba32.fromPackedInt(layer.sampleColors.get(vertex)), layer.opacity)
-        index += 1
-      composed.toPackedInt
+    def at(vertex: Int): Int = vertexStackColors.fold(composeVertex(face, vertex))(_(vertex))
     val factor = lighting match
       case SurfaceLighting.Unlit => 1.0
       case SurfaceLighting.Directional(ambient, diffuse, dx, dy, dz) =>

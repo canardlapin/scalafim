@@ -49,16 +49,26 @@ object SurfaceNetworkDecorations:
     canvasWidth: Int,
     canvasHeight: Int,
     width: Option[SurfaceNetworkDecorationRadius] = None,
-    nodeColor: Rgba32 = Rgba32.unsafe(245, 245, 245)
+    nodeColor: Rgba32 = Rgba32.unsafe(245, 245, 245),
+    showNodes: Boolean = true,
+    depthPolicy: SurfaceDecorationDepthPolicy = SurfaceDecorationDepthPolicy.DepthTest
   ): Either[SurfaceDecorationError, SurfaceDecorationGeometry] =
-    for
+    if canvasWidth <= 0 || canvasHeight <= 0 then Left(SurfaceDecorationError.InvalidSize(math.min(canvasWidth, canvasHeight)))
+    else for
       view <- plan.views.find(_.id == mapping.view).toRight(SurfaceDecorationError.NetworkMapping("network view is absent"))
       _ <- validateMapping(display, view, mapping)
-      packets <- nodePackets(display, plan, mapping, nodeShape, nodeSize, nodeColor)
-      nodes <- SurfaceDecorationGeometry.lower(packets, plan, canvasWidth, canvasHeight)
+      nodes <-
+        if showNodes then
+          nodePackets(display, plan, mapping, nodeShape, nodeSize, nodeColor, depthPolicy).flatMap:
+            packets => SurfaceDecorationGeometry.lower(packets, plan, canvasWidth, canvasHeight)
+        else
+          Right(SurfaceDecorationGeometry(Vector.empty, Vector.empty, canvasWidth, canvasHeight,
+            SurfaceDecorationBinding.key(plan, canvasWidth, canvasHeight)))
       edges <- edgeMeshes(display, plan, mapping, width.getOrElse(SurfaceNetworkDecorationRadius.Fixed(display.style.radius)),
-        display.style.shape, display.style.sides)
-    yield SurfaceDecorationGeometry(nodes.meshes ++ edges, nodes.labels, canvasWidth, canvasHeight,
+        display.style.shape, display.style.sides, depthPolicy)
+    yield SurfaceDecorationGeometry(
+      if depthPolicy == SurfaceDecorationDepthPolicy.Overlay then edges ++ nodes.meshes else nodes.meshes ++ edges,
+      nodes.labels, canvasWidth, canvasHeight,
       SurfaceDecorationBinding.key(plan, canvasWidth, canvasHeight))
 
   private def validateMapping(display: SurfaceNetworkDisplay, view: SurfaceCompositionView,
@@ -77,7 +87,7 @@ object SurfaceNetworkDecorations:
 
   private def nodePackets(display: SurfaceNetworkDisplay, plan: SurfaceCompositionPlan,
       mapping: SurfaceNetworkDecorationMapping, shape: SurfaceMarkerShape, size: SurfaceDecorationSize,
-      color: Rgba32): Either[SurfaceDecorationError, SurfaceDecorationPackets] =
+      color: Rgba32, depthPolicy: SurfaceDecorationDepthPolicy): Either[SurfaceDecorationError, SurfaceDecorationPackets] =
     val nodes = scala.collection.mutable.LinkedHashMap.empty[SurfaceNetworkNodeId, SurfaceNetworkNode]
     display.edges.foreach: edge =>
       nodes.getOrElseUpdate(edge.source.id, edge.source)
@@ -94,14 +104,14 @@ object SurfaceNetworkDecorations:
             SurfaceDecorationElementId(decorationId("node", node.id.value), "glyph"),
             SurfaceDisplayOrigin(mapping.view, mapping.instances(node.surface)),
             SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(node.surface, node.vertex)), point,
-            shape, size, color, SurfaceDecorationDepthPolicy.DepthTest)
+            shape, size, color, depthPolicy)
     failure.fold[Either[SurfaceDecorationError, SurfaceDecorationPackets]](
       Right(SurfaceDecorationPackets(resolved.result(), Vector.empty, Vector.empty,
         SurfaceDecorationBinding.key(plan, 1, 1))))(Left(_))
 
   private def edgeMeshes(display: SurfaceNetworkDisplay, plan: SurfaceCompositionPlan,
       mapping: SurfaceNetworkDecorationMapping, width: SurfaceNetworkDecorationRadius,
-      shape: SurfaceNetworkShape, sides: Int): Either[SurfaceDecorationError, Vector[SurfaceDecorationMesh]] =
+      shape: SurfaceNetworkShape, sides: Int, depthPolicy: SurfaceDecorationDepthPolicy): Either[SurfaceDecorationError, Vector[SurfaceDecorationMesh]] =
     val output = Vector.newBuilder[SurfaceDecorationMesh]
     var error: Option[SurfaceDecorationError] = None
     var index = 0
@@ -116,9 +126,9 @@ object SurfaceNetworkDecorations:
           else
             val mesh = shape match
               case SurfaceNetworkShape.Line => ribbon(decorationId("edge", edge.source.id.value, edge.target.id.value),
-                occurrence, edge, start, end, width, plan, mapping)
+                occurrence, edge, start, end, width, plan, mapping, depthPolicy)
               case SurfaceNetworkShape.Tube => tube(decorationId("edge", edge.source.id.value, edge.target.id.value),
-                occurrence, edge, start, end, width, sides, mapping)
+                occurrence, edge, start, end, width, sides, mapping, depthPolicy)
             mesh match
               case Left(value) => error = Some(value)
               case Right(mesh) => output += mesh
@@ -141,7 +151,8 @@ object SurfaceNetworkDecorations:
 
   private def tube(id: SurfaceDecorationId, occurrence: Int, edge: SurfaceNetworkDisplayEdge,
       start: SurfaceDecorationWorldPoint, end: SurfaceDecorationWorldPoint, radiusPolicy: SurfaceNetworkDecorationRadius,
-      sides: Int, mapping: SurfaceNetworkDecorationMapping): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
+      sides: Int, mapping: SurfaceNetworkDecorationMapping,
+      depthPolicy: SurfaceDecorationDepthPolicy): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
     val r = radiusPolicy.radiusFor(edge.weight)
     val dx = end.x - start.x
     val dy = end.y - start.y
@@ -191,13 +202,14 @@ object SurfaceNetworkDecorations:
         SurfaceDecorationTarget.NetworkEdge(SurfaceVertexAnchor.make(edge.source.surface, edge.source.vertex),
           SurfaceVertexAnchor.make(edge.target.surface, edge.target.vertex)),
         new FloatBufferView(positions), new FloatBufferView(normals), new IntBufferView(indices), edge.color,
-        SurfaceDecorationDepthPolicy.DepthTest))
+        depthPolicy))
 
   /** A line is a camera-facing world ribbon. It remains independent of the
     * scientific mesh, unlike the legacy network compiler's appended faces. */
   private def ribbon(id: SurfaceDecorationId, occurrence: Int, edge: SurfaceNetworkDisplayEdge,
       start: SurfaceDecorationWorldPoint, end: SurfaceDecorationWorldPoint, radiusPolicy: SurfaceNetworkDecorationRadius,
-      plan: SurfaceCompositionPlan, mapping: SurfaceNetworkDecorationMapping): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
+      plan: SurfaceCompositionPlan, mapping: SurfaceNetworkDecorationMapping,
+      depthPolicy: SurfaceDecorationDepthPolicy): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
     val dx = end.x - start.x
     val dy = end.y - start.y
     val dz = end.z - start.z
@@ -235,7 +247,7 @@ object SurfaceNetworkDecorations:
         SurfaceDecorationTarget.NetworkEdge(SurfaceVertexAnchor.make(edge.source.surface, edge.source.vertex),
           SurfaceVertexAnchor.make(edge.target.surface, edge.target.vertex)),
         new FloatBufferView(positions), new FloatBufferView(normals), new IntBufferView(Array(0, 1, 2, 0, 2, 3)), edge.color,
-        SurfaceDecorationDepthPolicy.DepthTest))
+        depthPolicy))
 
   private def decorationId(kind: String, values: String*): SurfaceDecorationId =
     SurfaceDecorationId.make(s"network-$kind-${values.map(value => s"${value.length}:$value").mkString("-")}").toOption.get

@@ -271,10 +271,10 @@ object SurfaceCompositionPlan:
         v(1).toDouble * (v(4).toDouble * v(10) - v(6).toDouble * v(8)) +
         v(2).toDouble * (v(4).toDouble * v(9) - v(5).toDouble * v(8))
       val direction = close(camera.directionX, v(8)) && close(camera.directionY, v(9)) && close(camera.directionZ, v(10))
-      val centered = Vector(1, 2, 3, 4, 6, 7, 8, 9, 12, 13).forall(p(_) == 0) && p(0) > 0 && p(5) > 0
-      val projection = (p(14) == -1 && p(15) == 0 && p(10) < -1 && p(11) < 0) ||
+      val axes = Vector(1, 2, 4, 6, 8, 9, 12, 13).forall(p(_) == 0) && p(0) > 0 && p(5) > 0
+      val projection = (p(14) == -1 && p(15) == 0 && p(3) == 0 && p(7) == 0 && p(10) < -1 && p(11) < 0) ||
         (p(14) == 0 && p(15) == 1 && p(10) < 0)
-      rigid && close(determinant, 1) && direction && centered && projection
+      rigid && close(determinant, 1) && direction && axes && projection
   private def cameraKey(camera: SurfaceCameraPacket): String =
     ((0 until 16).map(index => s"${camera.viewMatrix(index)}:${camera.projectionMatrix(index)}") :+
       s"${camera.directionX}:${camera.directionY}:${camera.directionZ}").mkString("camera:")

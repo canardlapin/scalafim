@@ -7,7 +7,22 @@ import intaglio.alpha
 /** Browser-interpreter options. The clear colour is an already-validated
   * `Rgba32`; it does not leak Three.js values into the shared surface model.
   */
-final case class ThreeJsRuntimeOptions(clearColor: Rgba32)
+enum ThreeDepthPrecision:
+  /** Redistribute unused depth precision over occupied geometry. */
+  case ConditionOccupiedRange
+  /** Keep the supplied depth projection, including its finite depth precision.
+    * Fractional viewport correction may still adjust clip X/Y.
+    */
+  case PreserveDepthProjection
+
+final case class ThreeJsRuntimeOptions(clearColor: Rgba32,
+  depthPrecision: ThreeDepthPrecision = ThreeDepthPrecision.ConditionOccupiedRange)
+
+/** Matrix submitted for one native draw, after depth and viewport correction.
+  * Values are rounded to the Float32 uniforms consumed by WebGL.
+  */
+final case class ThreeProjectionReceipt(view: Option[SurfaceViewId], depthPrecision: ThreeDepthPrecision,
+  columnMajorProjection: Vector[Float], viewport: (Int, Int, Int, Int))
 
 object ThreeJsRuntimeOptions:
   val Default: ThreeJsRuntimeOptions =

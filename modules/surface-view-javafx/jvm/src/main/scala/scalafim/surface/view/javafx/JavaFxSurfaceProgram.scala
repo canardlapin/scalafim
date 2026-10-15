@@ -435,7 +435,9 @@ final class JavaFxSurfaceBackend private (
 
 object JavaFxSurfaceBackend:
   private[javafx] def validateCapabilities(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
-    if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
+    if plan.camera.projectionMatrix(3) != 0f || plan.camera.projectionMatrix(7) != 0f then
+      Left(JavaFxSurfaceError.IncompatiblePlan("asymmetric orthographic frusta require JavaFxRasterSurfaceHost"))
+    else if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
         plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
       Left(JavaFxSurfaceError.IncompatiblePlan("explicit color pipeline and surface alpha require JavaFxRasterSurfaceHost"))
     else if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then

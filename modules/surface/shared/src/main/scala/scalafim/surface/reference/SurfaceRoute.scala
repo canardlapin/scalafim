@@ -242,6 +242,8 @@ enum Contribution:
     * In both cases the mapped value is the weighted sum.
     */
   case Included(voxel: VoxelCoord, value: Double, weight: Double)
+  /** A linear lookup with its positive-weight source stencil. */
+  case Interpolated(contributors: Vector[SurfaceVoxelContributor], value: Double, weight: Double)
 
 final case class ContributionSample(world: WorldPoint, contribution: Contribution)
 
@@ -373,6 +375,7 @@ final class AdmittedSurfaceRoute private[reference] (
             val accepted = receipt.acceptedCount
             val winners = receipt.samples.count:
               case SurfacePointSample(_, SurfaceSampleOutcome.Included(_, value)) => value == receipt.value
+              case SurfacePointSample(_, SurfaceSampleOutcome.Interpolated(_, value)) => value == receipt.value
               case _ => false
             def weight(value: Double): Double = request.semantics match
               case ValueSemantics.Continuous => 1.0 / accepted
@@ -382,6 +385,8 @@ final class AdmittedSurfaceRoute private[reference] (
               val contribution = sample.outcome match
                 case SurfaceSampleOutcome.OutsideVolume => Contribution.OutsideGrid
                 case SurfaceSampleOutcome.Included(voxel, value) => Contribution.Included(voxel, value, weight(value))
+                case SurfaceSampleOutcome.Interpolated(contributors, value) => Contribution.Interpolated(contributors, value, weight(value))
+                case SurfaceSampleOutcome.NonFinite(voxel, value) => Contribution.NonFinite(voxel, value)
                 case SurfaceSampleOutcome.Masked(voxel) =>
                   val value = volume(voxel)
                   val supported = support.forall(mask => mask(voxel))

@@ -338,6 +338,8 @@ object JavaFxSurfaceComposition:
     */
   private[javafx] def resourcePlan(plan: SurfaceCompositionPlan): Either[JavaFxSurfaceError, SurfaceRenderPlan] =
     val first = plan.views.head
+    if plan.views.exists(v => v.camera.projectionMatrix(3) != 0f || v.camera.projectionMatrix(7) != 0f) then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("asymmetric orthographic frusta require JavaFxRasterSurfaceHost"))
     val active = plan.views.flatMap(view => view.instances.map(instance => (view, instance)))
     if plan.views.exists(view =>
       view.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes ||

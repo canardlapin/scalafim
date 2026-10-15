@@ -21,8 +21,8 @@ object SurfaceDecorationPicking:
       if w <= 0 || !w.isFinite then None
       else
         val box = view.viewportFit.resolve(Vector(SurfaceViewSlot(view.instances.head.surface, view.viewport)), width, height).head.viewport
-        Some(Projected((box.x + (p(0) * x / w + 1) * box.width / 2) * width,
-          (box.y + (1 - p(5) * y / w) * box.height / 2) * height, ((p(10) * z + p(11)) / w + 1) / 2))
+        Some(Projected((box.x + ((p(0) * x + p(3)) / w + 1) * box.width / 2) * width,
+          (box.y + (1 - (p(5) * y + p(7)) / w) * box.height / 2) * height, ((p(10) * z + p(11)) / w + 1) / 2))
 
   def pick(geometry: SurfaceDecorationGeometry, plan: SurfaceCompositionPlan, x: Double, y: Double,
       scientificDepth: Option[Double]): Option[SurfaceDecorationHit] =
@@ -42,10 +42,10 @@ object SurfaceDecorationPicking:
       val back = V(m(8), m(9), m(10))
       val eye = right * -m(3).toDouble + up * -m(7).toDouble + back * -m(11).toDouble
       val orthographic = p(15) == 1f
-      val origin = if orthographic then eye + right * (nx / p(0)) + up * (ny / p(5)) else eye
+      val origin = if orthographic then eye + right * ((nx - p(3)) / p(0)) + up * ((ny - p(7)) / p(5)) else eye
       val direction = if orthographic then back * -1 else right * (nx / p(0)) + up * (ny / p(5)) - back
-      var winner: Option[(SurfaceDecorationHit, Boolean)] = None
-      geometry.meshes.foreach: mesh =>
+      var winner: Option[(SurfaceDecorationHit, Boolean, Int)] = None
+      geometry.meshes.zipWithIndex.foreach: (mesh, meshIndex) =>
         if mesh.origin.view == view.id && mesh.pickable then
           var face = 0
           while face < mesh.indices.length / 3 do
@@ -71,9 +71,11 @@ object SurfaceDecorationPicking:
               val overlay = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay
               val visible = clipW > 0 && depth >= 0 && depth <= 1 && worldVisible && alpha > 0 &&
                 (overlay || scientificDepth.forall(depth <= _ + 1e-14))
-              if visible && winner.forall: (hit, isOverlay) =>
-                  (overlay && !isOverlay) || (overlay == isOverlay && depth <= hit.depth)
-              then winner = Some(SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, depth) -> overlay)
+              if visible && winner.forall: (hit, isOverlay, priorMesh) =>
+                  (overlay && !isOverlay) ||
+                    (overlay && isOverlay && (meshIndex > priorMesh || depth <= hit.depth)) ||
+                    (!overlay && !isOverlay && depth <= hit.depth)
+              then winner = Some((SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, depth), overlay, meshIndex))
             face += 1
       winner.map(_._1)
 

@@ -103,6 +103,57 @@ class SurfaceNetworkDecorationsSuite extends munit.FunSuite:
     val farRadius = math.abs(edges.find(_.color == SurfaceNetworkPalette().negative).get.positions(2))
     assert(farRadius > nearRadius)
 
+  test("node glyphs can be suppressed while the selected edges remain unchanged"):
+    val (plan, leftId, rightId) = composition()
+    val shown = distinctDisplay(SurfaceNetworkStyle.tube(SurfaceNetworkRadius.unsafe(.1), sides = 6).toOption.get)
+    val mapping = SurfaceNetworkDecorationMapping(plan.views.head.id, Map(left -> leftId, right -> rightId))
+    val withNodes = ok(SurfaceNetworkDecorations.lower(shown, plan, mapping,
+      SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200))
+    val withoutNodes = ok(SurfaceNetworkDecorations.lower(shown, plan, mapping,
+      SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200, showNodes = false))
+    val selected = withNodes.meshes.collect:
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh
+    val retained = withoutNodes.meshes.collect:
+      case mesh @ SurfaceDecorationMesh(_, _, SurfaceDecorationTarget.NetworkEdge(_, _), _, _, _, _, _, _, _) => mesh
+    assertEquals(withoutNodes.meshes.count(_.target.isInstanceOf[SurfaceDecorationTarget.Anchor]), 0)
+    assertEquals(retained.map(_.id), selected.map(_.id))
+    assertEquals(retained.map(_.color), selected.map(_.color))
+
+  test("invalid dimensions return InvalidSize with and without node glyphs"):
+    val (plan, leftId, rightId) = composition()
+    val mapping = SurfaceNetworkDecorationMapping(plan.views.head.id, Map(left -> leftId, right -> rightId))
+    for shown <- Vector(true, false); (width, height) <- Vector((0, 200), (200, 0), (-1, 200), (200, -1)) do
+      val result = SurfaceNetworkDecorations.lower(display(), plan, mapping,
+        SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), width, height, showNodes = shown)
+      assert(result.left.exists(_.isInstanceOf[SurfaceDecorationError.InvalidSize]), s"showNodes=$shown ${width}x$height")
+
+  test("overlay networks keep edge geometry but place edges below overlay node glyphs"):
+    val (plan, leftId, rightId) = composition()
+    val shown = distinctDisplay(SurfaceNetworkStyle.tube(SurfaceNetworkRadius.unsafe(.1), sides = 6).toOption.get)
+    val mapping = SurfaceNetworkDecorationMapping(plan.views.head.id, Map(left -> leftId, right -> rightId))
+    val depth = ok(SurfaceNetworkDecorations.lower(shown, plan, mapping,
+      SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200))
+    val overlay = ok(SurfaceNetworkDecorations.lower(shown, plan, mapping,
+      SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200,
+      depthPolicy = SurfaceDecorationDepthPolicy.Overlay))
+    def edge(mesh: SurfaceDecorationMesh) = mesh.target.isInstanceOf[SurfaceDecorationTarget.NetworkEdge]
+    def signature(mesh: SurfaceDecorationMesh) =
+      (mesh.id, mesh.color, Vector.tabulate(mesh.positions.length)(mesh.positions(_)), Vector.tabulate(mesh.indices.length)(mesh.indices(_)))
+    assert(depth.meshes.take(3).forall(mesh => !edge(mesh)))
+    assert(depth.meshes.drop(3).forall(edge))
+    assert(depth.meshes.forall(_.depthPolicy == SurfaceDecorationDepthPolicy.DepthTest))
+    assert(overlay.meshes.take(2).forall(edge))
+    assert(overlay.meshes.drop(2).forall(mesh => !edge(mesh)))
+    assert(overlay.meshes.forall(_.depthPolicy == SurfaceDecorationDepthPolicy.Overlay))
+    assertEquals(overlay.meshes.filter(edge).map(signature), depth.meshes.filter(edge).map(signature))
+    assertEquals(overlay.meshes.filterNot(edge).map(signature), depth.meshes.filterNot(edge).map(signature))
+    val edgeOnly = ok(SurfaceNetworkDecorations.lower(shown, plan, mapping,
+      SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(.2)), 300, 200,
+      showNodes = false, depthPolicy = SurfaceDecorationDepthPolicy.Overlay))
+    assert(edgeOnly.meshes.forall(edge))
+    assert(edgeOnly.meshes.forall(_.depthPolicy == SurfaceDecorationDepthPolicy.Overlay))
+    assertEquals(edgeOnly.meshes.map(signature), overlay.meshes.filter(edge).map(signature))
+
   test("duplicate ordered endpoints are refused until the network has stable edge ids"):
     val (plan, leftId, rightId) = composition()
     val duplicate = SurfaceNetworkDecorations.lower(display(Vector(.5, -.5)), plan,

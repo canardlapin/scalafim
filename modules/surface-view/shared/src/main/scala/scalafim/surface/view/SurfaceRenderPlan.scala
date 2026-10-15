@@ -1,5 +1,6 @@
 package scalafim.surface.view
 
+import image4s.geometry.{D3, Frame, Vec}
 import intaglio.*
 
 opaque type SurfaceResourceKey = String
@@ -127,6 +128,52 @@ final case class SurfaceCameraPacket(
   directionY: Double,
   directionZ: Double
 )
+
+object SurfaceCameraPacket:
+  /** Checked explicit camera for public composition clients. Uses the supplied
+    * up direction and frustum without fitting the mesh. High-level viewpoint
+    * cameras and scene-document framing retain their existing behavior.
+    */
+  def lookAt[F <: Frame[D3]](pose: SurfaceCameraPose[F], up: Vec[F, D3],
+      frustum: SurfaceCameraFrustum): Either[SurfaceCameraFrustumError, SurfaceCameraPacket] =
+    Frame.alignOwners[D3, F, F](up.frame, pose.frame).flatMap(_.vectorToRight(up))
+      .left.map(SurfaceCameraFrustumError.FrameMismatch.apply).flatMap: ownedUp =>
+        checkedPacket(pose, ownedUp, frustum)
+
+  private def checkedPacket[F <: Frame[D3]](pose: SurfaceCameraPose[F], up: Vec[F, D3],
+      frustum: SurfaceCameraFrustum): Either[SurfaceCameraFrustumError, SurfaceCameraPacket] =
+    val u = up.coordinates
+    val direction = pose.direction.coordinates
+    val norm = math.sqrt(u(0) * u(0) + u(1) * u(1) + u(2) * u(2))
+    val parallel = if norm == 0.0 then Double.NaN else math.abs((u(0) * direction(0) + u(1) * direction(1) + u(2) * direction(2)) / norm)
+    if !u.forall(_.isFinite) || !norm.isFinite || norm <= 0.0 || !parallel.isFinite || parallel >= 1.0 - 1e-12 then
+      Left(SurfaceCameraFrustumError.InvalidUp(u(0), u(1), u(2)))
+    else projection(frustum).flatMap: matrix =>
+      val depthRepresentable = frustum match
+        case _: SurfaceCameraFrustum.Perspective => matrix(10) < -1f && matrix(11) < 0f
+        case _: SurfaceCameraFrustum.Orthographic => matrix(10) < 0f && matrix(11) < -1f
+      if !matrix.forall(_.isFinite) || matrix(0) <= 0f || matrix(5) <= 0f || !depthRepresentable then
+        Left(SurfaceCameraFrustumError.UnrepresentableProjection)
+      else
+        val eye = pose.eye.coordinates
+        val target = pose.target.coordinates
+        val view = SurfaceCompiler.lookAt(eye(0), eye(1), eye(2), target(0), target(1), target(2), u(0), u(1), u(2))
+        if !view.forall(_.isFinite) then Left(SurfaceCameraFrustumError.UnrepresentablePose)
+        else Right(SurfaceCameraPacket(new FloatBufferView(view), new FloatBufferView(matrix), direction(0), direction(1), direction(2)))
+
+  private def projection(frustum: SurfaceCameraFrustum): Either[SurfaceCameraFrustumError, Array[Float]] = frustum match
+    case SurfaceCameraFrustum.Perspective(fov, aspect, near, far) if fov.isFinite && fov > 0 && fov < 180 && aspect.isFinite && aspect > 0 && near.isFinite && far.isFinite && near > 0 && far > near =>
+      Right(SurfaceCompiler.perspective(fov, aspect, near, far))
+    case SurfaceCameraFrustum.Perspective(fov, aspect, near, far) => Left(SurfaceCameraFrustumError.InvalidPerspective(fov, aspect, near, far))
+    case SurfaceCameraFrustum.Orthographic(left, right, bottom, top, near, far) if Vector(left, right, bottom, top, near, far).forall(_.isFinite) && right > left && top > bottom && near > 0 && far > near =>
+      Right(Array(
+        (2.0 / (right - left)).toFloat, 0f, 0f, (-(right + left) / (right - left)).toFloat,
+        0f, (2.0 / (top - bottom)).toFloat, 0f, (-(top + bottom) / (top - bottom)).toFloat,
+        0f, 0f, (2.0 / (near - far)).toFloat, ((far + near) / (near - far)).toFloat,
+        0f, 0f, 0f, 1f
+      ))
+    case SurfaceCameraFrustum.Orthographic(left, right, bottom, top, near, far) =>
+      Left(SurfaceCameraFrustumError.InvalidOrthographic(left, right, bottom, top, near, far))
 
 final case class SurfaceDrawPass(
   slot: Int,

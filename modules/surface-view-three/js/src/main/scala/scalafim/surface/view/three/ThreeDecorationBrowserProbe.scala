@@ -131,6 +131,23 @@ object ThreeDecorationBrowserProbe:
           "label-over-opaque" -> (near ++ opaque)) do
         ok(backend.renderDecorated(plan, overlapGeometry.copy(meshes = meshes), size))
         captures.push(js.Dynamic.literal(name = name, png = canvas.applyDynamic("toDataURL")("image/png"), picks = js.Array()))
+      // World depth opposes painter order: the final opaque overlay must
+      // determine both the displayed color and the actual native pick.
+      val overlayNear = near.map(_.copy(texture = None, color = red, pickable = true,
+        id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("near-overlay")), "quad"),
+        depthPolicy = SurfaceDecorationDepthPolicy.Overlay))
+      val overlayFar = far.map(_.copy(texture = None, color = Rgba32.unsafe(0, 255, 0), pickable = true,
+        id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("far-overlay")), "quad"),
+        depthPolicy = SurfaceDecorationDepthPolicy.Overlay))
+      for (name, meshes) <- Vector("overlay-near-first" -> (overlayNear ++ overlayFar),
+          "overlay-far-first" -> (overlayFar ++ overlayNear)) do
+        ok(backend.renderDecorated(plan, overlapGeometry.copy(meshes = meshes), size))
+        val picked = js.Array(115.5, 365.5).map: x =>
+          val hit = ok(backend.pickDisplay(x, 125.5))
+          val id = hit.collect { case SurfaceDisplayHit.Decoration(value) => value.id.decoration.value }
+          js.Dynamic.literal(x = x, y = 125.5, id = id.getOrElse("missing"))
+        captures.push(js.Dynamic.literal(name = name, png = canvas.applyDynamic("toDataURL")("image/png"),
+          picks = js.Array(), overlayPicks = picked))
       val decos = cases.head._2
       val firstGeometry = geometry(decos, plan)
       ok(backend.renderDecorated(plan, firstGeometry, size))

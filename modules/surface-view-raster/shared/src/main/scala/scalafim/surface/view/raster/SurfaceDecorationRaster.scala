@@ -23,16 +23,27 @@ object SurfaceDecorationRaster:
 
   def render(plan: SurfaceCompositionPlan, geometry: SurfaceDecorationGeometry,
       dimensions: RasterDimensions, style: SurfaceRasterStyle = SurfaceRasterStyle()): Either[SurfaceRasterError, SurfaceDecoratedRasterResult] =
-    renderChecked(plan, geometry, dimensions, style, DefaultFragmentCapacity)
+    renderWithCollectionPolicy(plan, geometry, dimensions, style, DefaultFragmentCapacity, explicitCapacity = false)
 
   /** Decorations and scientific surfaces consume one shared contribution
     * budget, so a decorated render cannot bypass the visibility cap. */
   def renderChecked(plan: SurfaceCompositionPlan, geometry: SurfaceDecorationGeometry,
       dimensions: RasterDimensions, style: SurfaceRasterStyle,
       fragmentCapacity: Int): Either[SurfaceRasterError, SurfaceDecoratedRasterResult] =
+    renderWithCollectionPolicy(plan, geometry, dimensions, style, fragmentCapacity, explicitCapacity = true)
+
+  private def renderWithCollectionPolicy(plan: SurfaceCompositionPlan, geometry: SurfaceDecorationGeometry,
+      dimensions: RasterDimensions, style: SurfaceRasterStyle, fragmentCapacity: Int,
+      explicitCapacity: Boolean): Either[SurfaceRasterError, SurfaceDecoratedRasterResult] =
     SurfaceDecorationValidation.validate(geometry, plan, dimensions.width, dimensions.height)
       .left.map(SurfaceRasterError.InvalidPlan(_)).flatMap: _ =>
-        SurfaceRasterizer.renderChecked(plan, dimensions, style, fragmentCapacity, forceCollection = true).flatMap: surface =>
+        if geometry.meshes.isEmpty && geometry.labels.isEmpty then
+          SurfaceRasterizer.renderCompositionChecked(plan, dimensions, style, fragmentCapacity,
+            forceCollection = false, allowLegacyFastPath = false, explicitFragmentCapacity = explicitCapacity).map: surface =>
+            new SurfaceDecoratedRasterResult(surface.image, surface, Array.fill(dimensions.pixelCount)(None))
+        else SurfaceRasterizer.renderCompositionChecked(plan, dimensions, style, fragmentCapacity,
+          forceCollection = false, allowLegacyFastPath = false, explicitFragmentCapacity = explicitCapacity,
+          retainOpaqueWinners = true).flatMap: surface =>
           val count = dimensions.width * dimensions.height
           var contributionCount = surface.collected.fold(0)(_.iterator.map(_.length).sum)
           var overflow = false
@@ -89,43 +100,46 @@ object SurfaceDecorationRaster:
           var pixel = 0
           while pixel < count && !overflow do
             val decorations = fragments(pixel)
-            val ordered = decorations.sortBy: fragment =>
-              val mesh = geometry.meshes(fragment.mesh)
-              (if mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay then 1 else 0, -fragment.depth, fragment.mesh)
-            surface.collected match
-              case Some(scientific) =>
-                val depthTested = decorations.iterator
-                  .filter(fragment => geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
-                  .map: fragment =>
+            // Untouched pixels already contain the resolved scientific stack.
+            if decorations.nonEmpty then
+              val ordered = decorations.sortBy: fragment =>
+                val mesh = geometry.meshes(fragment.mesh)
+                val overlay = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay
+                (if overlay then 1 else 0, if overlay then 0.0 else -fragment.depth, fragment.mesh)
+              surface.collected match
+                case Some(scientific) =>
+                  val depthTested = decorations.iterator
+                    .filter(fragment => geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.DepthTest)
+                    .map: fragment =>
+                      val color = fragment.color
+                      SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
+                        -1, -1, -1, 0f, 0f, 0f, s"decoration-${fragment.mesh}", false)
+                  val overlays = decorations.iterator
+                    .filter(fragment => geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.Overlay)
+                    .toVector.sortBy(_.mesh).iterator.map: fragment =>
+                      val color = fragment.color
+                      SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
+                        -1, -1, -1, 0f, 0f, 0f, s"overlay-${fragment.mesh}", false)
+                  // At exactly equal depth, a decoration is the final visual
+                  // contribution. Use the domain rank explicitly; resource IDs
+                  // must not decide whether a marker is visible.
+                  val base = (scientific(pixel).iterator.map(value => (value, 0)) ++
+                    depthTested.map(value => (value, 1))).toVector
+                    .sortBy { case (value, domain) => (-value.depth, domain, value.tie, value.face, value.vertex) }
+                    .map(_._1)
+                  val all = base ++ overlays.toVector
+                  if all.nonEmpty then
+                    pixels(pixel) = compositeStack(style.background, all)
+                case None =>
+                  ordered.foreach: fragment =>
                     val color = fragment.color
-                    SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
-                      -1, -1, -1, 0f, 0f, 0f, s"decoration-${fragment.mesh}", false)
-                val overlays = decorations.iterator
-                  .filter(fragment => geometry.meshes(fragment.mesh).depthPolicy == SurfaceDecorationDepthPolicy.Overlay)
-                  .toVector.sortBy(_.mesh).iterator.map: fragment =>
-                    val color = fragment.color
-                    SurfaceCollectedFragment(fragment.depth, color.red, color.green, color.blue, color.alpha / 255.0,
-                      -1, -1, -1, 0f, 0f, 0f, s"overlay-${fragment.mesh}", false)
-                // At exactly equal depth, a decoration is the final visual
-                // contribution. Use the domain rank explicitly; resource IDs
-                // must not decide whether a marker is visible.
-                val base = (scientific(pixel).iterator.map(value => (value, 0)) ++
-                  depthTested.map(value => (value, 1))).toVector
-                  .sortBy { case (value, domain) => (-value.depth, domain, value.tie, value.face, value.vertex) }
-                  .map(_._1)
-                val all = base ++ overlays.toVector
-                if all.nonEmpty then
-                  pixels(pixel) = compositeStack(style.background, all)
-              case None =>
-                ordered.foreach: fragment =>
-                  val color = fragment.color
-                  pixels(pixel) = compositeOverOpaque(pixels(pixel), color.red, color.green, color.blue, color.alpha)
-            ordered.foreach: fragment =>
-              val mesh = geometry.meshes(fragment.mesh)
-              val frontVisible = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay ||
-                fragment.depth <= surface.depthAt(pixel) + 1e-14
-              if mesh.pickable && frontVisible then
-                hits(pixel) = Some(SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, fragment.depth))
+                    pixels(pixel) = compositeOverOpaque(pixels(pixel), color.red, color.green, color.blue, color.alpha)
+              ordered.foreach: fragment =>
+                val mesh = geometry.meshes(fragment.mesh)
+                val frontVisible = mesh.depthPolicy == SurfaceDecorationDepthPolicy.Overlay ||
+                  fragment.depth <= surface.depthAt(pixel) + 1e-14
+                if mesh.pickable && frontVisible then
+                  hits(pixel) = Some(SurfaceDecorationHit(mesh.id, mesh.origin, mesh.target, fragment.depth))
             pixel += 1
           if overflow then Left(SurfaceRasterError.FragmentCapacityExceeded(fragmentCapacity))
           else Right(new SurfaceDecoratedRasterResult(RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels), surface, hits))

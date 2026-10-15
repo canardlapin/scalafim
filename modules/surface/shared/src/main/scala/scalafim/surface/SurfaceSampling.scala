@@ -2,6 +2,10 @@ package scalafim.surface
 
 import scalafim.image.SampleSpaces.*
 
+import image4s.{BoundaryPolicy, Continuous, ImageError, SampleSpace, Sampled}
+import image4s.geometry.{D3, Frame, Point}
+import reframe4s.resample.{Interpolation, SampledInterpolator}
+import ravel.Rank
 import scalafim.image.*
 import scala.util.control.NonFatal
 
@@ -35,7 +39,7 @@ enum SurfaceSamplingPath:
   *
   *  - `Nearest`: the first finite sample in the path's declared order (the
   *    order of `fractions` or `offsets`, as given). Each sample has already
-  *    taken its nearest voxel, rounding half up on every axis. Samples are
+  *    used the plan's voxel interpolation (nearest by default). Samples are
   *    totally ordered, so no further tie rule is needed.
   *  - `Average`: the arithmetic mean of the finite samples.
   *  - `Mode`: the most frequent finite value. Ties go to the smallest value.
@@ -43,10 +47,18 @@ enum SurfaceSamplingPath:
 enum SurfaceSampleAggregation:
   case Nearest, Average, Mode
 
+/** The voxel interpolation kernel used for each requested surface point. */
+enum SurfaceVoxelInterpolation:
+  /** One voxel, selected by absolute half-up rounding. */
+  case Nearest
+  /** Provider-owned trilinear interpolation over the positive-weight stencil. */
+  case Linear
+
 final case class VolumeSurfaceSamplingPlan(
   surfaces: SurfaceGeometryPair,
   path: SurfaceSamplingPath = SurfaceSamplingPath.Midpoint,
-  aggregation: SurfaceSampleAggregation = SurfaceSampleAggregation.Nearest
+  aggregation: SurfaceSampleAggregation = SurfaceSampleAggregation.Nearest,
+  interpolation: SurfaceVoxelInterpolation = SurfaceVoxelInterpolation.Nearest
 ):
   SurfaceSamplingPath.validate(path)
 
@@ -97,7 +109,13 @@ final case class SurfaceSampleResult(
 enum SurfaceSampleOutcome:
   case OutsideVolume
   case Masked(voxel: VoxelCoord)
+  case NonFinite(voxel: VoxelCoord, value: Double)
   case Included(voxel: VoxelCoord, value: Double)
+  case Interpolated(contributors: Vector[SurfaceVoxelContributor], value: Double)
+
+/** One positive-weight source voxel used by a linear sample. */
+final case class SurfaceVoxelContributor(voxel: VoxelCoord, weight: Double):
+  require(weight.isFinite && weight > 0.0 && weight <= 1.0, "voxel contribution must have finite positive weight at most one")
 
 final case class SurfacePointSample(world: WorldPoint, outcome: SurfaceSampleOutcome)
 
@@ -115,6 +133,7 @@ final case class SurfaceVertexSample private[surface] (
   def acceptedSampleIndices: Vector[Int] = samples.indices.filter: index =>
     samples(index).outcome match
       case SurfaceSampleOutcome.Included(_, value) => value.isFinite
+      case SurfaceSampleOutcome.Interpolated(_, value) => value.isFinite
       case _ => false
   .toVector
 
@@ -126,7 +145,9 @@ final case class SurfaceVertexSample private[surface] (
 
   def hasNonFiniteSamples: Boolean = samples.exists: sample =>
     sample.outcome match
+      case SurfaceSampleOutcome.NonFinite(_, _) => true
       case SurfaceSampleOutcome.Included(_, value) => !value.isFinite
+      case SurfaceSampleOutcome.Interpolated(_, value) => !value.isFinite
       case _ => false
 
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
@@ -215,21 +236,56 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     val out = Vector.newBuilder[Double]
     points.foreach { point =>
       tally.requested += 1L
-      nearestGrid(volume, point) match
-        case None =>
-          tally.outsideVolume += 1L
-          observe.foreach(_(SurfacePointSample(WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.OutsideVolume)))
-        case Some(grid) =>
-          val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-          val voxel = volume.indexToVoxel(lin)
-          if !mask.forall(_.valueAtCanonicalOrdinal(lin)) then
-            tally.masked += 1L
-            observe.foreach(_(SurfacePointSample(WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.Masked(voxel))))
-          else
-            val value = volume.valueAtCanonicalOrdinal(lin)
-            if value.isFinite then tally.accepted += 1L else tally.nonFinite += 1L
-            out += value
-            observe.foreach(_(SurfacePointSample(WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.Included(voxel, value))))
+      lazy val world = WorldPoint(point(0), point(1), point(2))
+      plan.interpolation match
+        case SurfaceVoxelInterpolation.Nearest =>
+          nearestGrid(volume, point) match
+            case None =>
+              tally.outsideVolume += 1L
+              observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.OutsideVolume)))
+            case Some(grid) =>
+              val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
+              val voxel = volume.indexToVoxel(lin)
+              if !mask.forall(_.valueAtCanonicalOrdinal(lin)) then
+                tally.masked += 1L
+                observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.Masked(voxel))))
+              else
+                val value = volume.valueAtCanonicalOrdinal(lin)
+                if value.isFinite then
+                  tally.accepted += 1L
+                  out += value
+                  observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.Included(voxel, value))))
+                else
+                  tally.nonFinite += 1L
+                  out += value
+                  // Preserve the established nearest-voxel inspection shape.
+                  observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.Included(voxel, value))))
+        case SurfaceVoxelInterpolation.Linear =>
+          linearStencil(volume, point) match
+            case None =>
+              tally.outsideVolume += 1L
+              observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.OutsideVolume)))
+            case Some(stencil) =>
+              stencil.collectFirst { case (lin, _, _) if !mask.forall(_.valueAtCanonicalOrdinal(lin)) => lin } match
+                case Some(lin) =>
+                  tally.masked += 1L
+                  observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.Masked(volume.indexToVoxel(lin)))))
+                case None =>
+                  stencil.collectFirst { case (lin, _, value) if !value.isFinite => lin -> value } match
+                    case Some((lin, value)) =>
+                      tally.nonFinite += 1L
+                      out += value
+                      observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.NonFinite(volume.indexToVoxel(lin), value))))
+                    case None =>
+                      providerLinear(volume, point) match
+                        case Left(error) =>
+                          throw new IllegalStateException(s"linear provider rejected an admitted source point: $error")
+                        case Right(value) =>
+                          // The provider owns interpolation arithmetic; the local stencil is only a typed receipt.
+                          if value.isFinite then tally.accepted += 1L else tally.nonFinite += 1L
+                          out += value
+                          val contributors = stencil.map((lin, weight, _) => SurfaceVoxelContributor(volume.indexToVoxel(lin), weight))
+                          observe.foreach(_(SurfacePointSample(world, SurfaceSampleOutcome.Interpolated(contributors, value))))
     }
     out.result()
 
@@ -251,6 +307,67 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     if rounded.indices.forall(i => index(i).isFinite && rounded(i) >= 0L && rounded(i) < dims(i).toLong) then
       Some(rounded.map(_.toInt))
     else None
+
+  /** Positive-weight trilinear stencil after enforcing the closed voxel-centre hull.
+    * The provider performs the value interpolation; this function supplies only
+    * domain validation, mask/non-finite admission, and receipt provenance.
+    */
+  private def linearStencil(volume: SomeScalarVolume[Double], point: Vector[Double]): Option[Vector[(Int, Double, Double)]] =
+    // Use the provider's affine evaluation order for admission and receipts,
+    // too: roundoff at a sheared boundary can change the contributing stencil.
+    val index = providerContinuousIndex(volume, point) match
+      case Left(_) => return None
+      case Right(value) => value
+    val dims = volume.space.spatialDims
+    if !index.indices.forall(axis => index(axis).isFinite && index(axis) >= 0.0 && index(axis) <= dims(axis).toDouble - 1.0) then None
+    else
+      val lower = index.map(math.floor(_).toInt)
+      val fraction = index.indices.map(axis => index(axis) - lower(axis)).toVector
+      val stencil = Vector.newBuilder[(Int, Double, Double)]
+      var corner = 0
+      while corner < 8 do
+        var weight = 1.0
+        var axis = 0
+        while axis < 3 do
+          weight *= (if ((corner >> axis & 1) == 1) fraction(axis) else 1.0 - fraction(axis))
+          axis += 1
+        if weight > 0.0 then
+          val grid = Vector.tabulate(3)(axis => lower(axis) + ((corner >> axis) & 1))
+          val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
+          stencil += ((lin, weight, volume.valueAtCanonicalOrdinal(lin)))
+        corner += 1
+      Some(stencil.result())
+
+  private def providerContinuousIndex(volume: SomeScalarVolume[Double], point: Vector[Double]): Either[ImageError, Vector[Double]] =
+    val image = volume.sampled
+    Point.fromVector[D3](image.frame, point).flatMap: sourcePoint =>
+      Frame.alignOwners[D3, image.frame.type, image.sampleSpace.F](image.frame, image.frame).flatMap: alignment =>
+        alignment.pointToRight(sourcePoint).flatMap(image.grid.continuousIndexOf)
+    .left.map(ImageError.Geometry.apply).map(_.values)
+
+  private def providerLinear(
+    volume: SomeScalarVolume[Double],
+    point: Vector[Double]
+  ): Either[ImageError, Double] =
+    val source = volume.sampled
+    val space = source.sampleSpace
+    // Re-admit the same array with its retained singleton sample-space owner.
+    // This checks the space/data contract without copying voxel storage.
+    Sampled.create[Double, Continuous, Rank[3]](space, source.data, source.metadata).flatMap: sampled =>
+      Point.fromVector[D3](sampled.frame, point).left.map(ImageError.Geometry.apply).flatMap: providerPoint =>
+        providerLinearAt[space.F, sampled.frame.type, space.type](sampled, providerPoint)
+
+  private def providerLinearAt[
+    IF <: Frame[D3],
+    PF <: Frame[D3],
+    S <: SampleSpace[IF, D3]
+  ](
+    image: Sampled[S, Double, Continuous, Rank[3]],
+    point: Point[PF, D3]
+  ): Either[ImageError, Double] =
+    Frame.alignOwners[D3, IF, PF](image.frame, point.frame).left.map(ImageError.Geometry.apply).flatMap: alignment =>
+      alignment.pointToLeft(point).left.map(ImageError.Geometry.apply).flatMap: imagePoint =>
+        SampledInterpolator.at(image, imagePoint, Vector.empty, Interpolation.Linear, BoundaryPolicy.Reject).map(_.value)
 
   /** Reduces the finite samples only; NaN when there are none. */
   private def aggregate(samples: Vector[Double]): Double =
@@ -291,9 +408,10 @@ object VolumeSurfaceSampler:
     surfaces: SurfaceGeometryPair,
     path: SurfaceSamplingPath = SurfaceSamplingPath.Midpoint,
     aggregation: SurfaceSampleAggregation = SurfaceSampleAggregation.Nearest,
-    mask: Option[SomeMaskVolume] = None
+    mask: Option[SomeMaskVolume] = None,
+    interpolation: SurfaceVoxelInterpolation = SurfaceVoxelInterpolation.Nearest
   ): SurfaceSampleResult =
-    VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(surfaces, path, aggregation)).sample(volume, mask)
+    VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(surfaces, path, aggregation, interpolation)).sample(volume, mask)
 
 object SurfaceSamplingPath:
 

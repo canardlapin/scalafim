@@ -12,6 +12,27 @@ class SurfaceDecorationsSuite extends munit.FunSuite:
   private def vertex(value: Int): SurfaceDecorationAnchor = SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(surface, VertexId(value)))
   private val size = ok(SurfaceDecorationSize.pixels(2.0))
 
+  test("signed contour offsets follow current source normals without moving scientific anchors"):
+    val original = ok(SurfaceCompositionPlan.fromLegacy(SurfaceFaceFixture.plan))
+    val contour = SurfaceContourDecoration(id("raised"), surface, Vector(1, 2, 2, 2),
+      SurfaceContourPolicy.Transitions, SurfaceContourStyle(size, black))
+    val baseline = ok(SurfaceDecorationCompiler.compile(Vector(contour), original)).contours
+    for amount <- Vector(-.2, .2) do
+      val raised = ok(SurfaceDecorationCompiler.compile(Vector(contour.copy(offset = ok(SurfaceContourOffset.make(amount)))), original)).contours
+      assertEquals(raised.map(_.sourceEdge), baseline.map(_.sourceEdge))
+      for (before, after) <- baseline.zip(raised) do
+        assertEquals(before.id, after.id)
+        assertEqualsDouble(after.start.x, before.start.x, 1e-6)
+        assertEqualsDouble(after.start.y, before.start.y, 1e-6)
+        assertEqualsDouble(after.start.z - before.start.z, amount, 1e-6)
+    assert(SurfaceContourOffset.make(Double.NaN).isLeft)
+    assert(SurfaceContourOffset.make(Double.PositiveInfinity).isLeft)
+
+    val mesh = original.resources.meshes.values.head
+    val zero = mesh.copy(normals = new FloatBufferView(Array.fill(mesh.normals.length)(0f)), sampleNormals = None)
+    val invalid = ok(SurfaceCompositionPlan.make(original.views, original.resources.copy(meshes = Map(mesh.resourceKey -> zero))))
+    assert(SurfaceDecorationCompiler.compile(Vector(contour.copy(offset = ok(SurfaceContourOffset.make(.2)))), invalid).isLeft)
+
   test("transition contours assign independent stable edge ids and ROI exterior omits internal parcel borders"):
     val composition = ok(SurfaceCompositionPlan.fromLegacy(SurfaceFaceFixture.plan))
     val labels = Vector(1, 2, 2, 2)

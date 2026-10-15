@@ -66,6 +66,37 @@ class SurfaceDecorationGeometrySuite extends munit.FunSuite:
   private def distance(left: (Double, Double), right: (Double, Double)): Double =
     math.hypot(left._1 - right._1, left._2 - right._2)
 
+  test("asymmetric orthographic decoration projection and picking include frustum translation"):
+    val shifted = orthographic.clone()
+    shifted(3) = -.5f
+    shifted(7) = .25f
+    val plan = planFor(camera(shifted))
+    val centre = SurfaceDecorationWorldPoint(0, 0, 0)
+    val marker = pixelPacket(plan, centre)
+    val geometry = ok(SurfaceDecorationGeometry.lower(
+      SurfaceDecorationPackets(Vector(marker), Vector.empty, Vector.empty, SurfaceDecorationBinding.key(plan, 1, 1)), plan, 400, 200))
+    // Independent NDC: (-.5,+.25) -> pixel (100,75), not canvas centre.
+    val projected = SurfaceDecorationPicking.project(plan, plan.views.head.id, centre, 400, 200).get
+    assertEqualsDouble(projected.x, 100.0, 1e-6)
+    assertEqualsDouble(projected.y, 75.0, 1e-6)
+    assertEquals(SurfaceDecorationPicking.pick(geometry, plan, 100, 75, None).map(_.id), Some(marker.id))
+    assertEquals(SurfaceDecorationPicking.pick(geometry, plan, 200, 100, None), None)
+
+  test("overlay picking follows declared mesh order regardless of world depth"):
+    val plan = planFor(camera(orthographic))
+    val near = pixelPacket(plan, SurfaceDecorationWorldPoint(0, 0, 1)).copy(
+      depthPolicy = SurfaceDecorationDepthPolicy.Overlay)
+    val far = near.copy(id = SurfaceDecorationElementId(ok(SurfaceDecorationId.make("far-overlay")), "glyph"),
+      point = SurfaceDecorationWorldPoint(0, 0, -1))
+    val geometry = ok(SurfaceDecorationGeometry.lower(
+      SurfaceDecorationPackets(Vector(near, far), Vector.empty, Vector.empty, SurfaceDecorationBinding.key(plan, 1, 1)), plan, 400, 200))
+    assertEquals(SurfaceDecorationPicking.pick(geometry, plan, 200, 100, Some(0.0)).map(_.id), Some(far.id))
+    assertEquals(SurfaceDecorationPicking.pick(geometry.copy(meshes = geometry.meshes.reverse), plan,
+      200, 100, Some(0.0)).map(_.id), Some(near.id))
+    val depthTested = geometry.copy(meshes = geometry.meshes.map(_.copy(depthPolicy = SurfaceDecorationDepthPolicy.DepthTest)))
+    assertEquals(SurfaceDecorationPicking.pick(depthTested, plan, 200, 100, None).map(_.id), Some(near.id))
+    assertEquals(SurfaceDecorationPicking.pick(depthTested, plan, 200, 100, Some(0.0)), None)
+
   test("world marker radius, stable origin, and scientific mesh buffers remain separate"):
     val plan = ok(SurfaceCompositionPlan.fromLegacy(SurfaceFaceFixture.plan))
     val marker = SurfaceMarkerDecoration(markerId, anchor, SurfaceMarkerShape.Disk, ok(SurfaceDecorationSize.world(2)), black)
@@ -165,6 +196,36 @@ class SurfaceDecorationGeometrySuite extends munit.FunSuite:
     assert(SurfaceDecorationSize.pixels(0.0).isLeft)
     assert(compileErrors("""scalafim.surface.view.SurfaceDecorationSize.pixels(1).toOption.get.copy(value = 0.0)""").nonEmpty)
     assert(compileErrors("""scalafim.surface.view.SurfaceFaceAnchor.make(scalafim.surface.view.SurfaceFaceFixture.Surface, scalafim.surface.FaceId(0), 1, 0, 0).toOption.get.copy(a = .6)""").nonEmpty)
+
+  test("sphere marker retains radius, outward winding and nondegenerate pole faces"):
+    val plan = planFor(camera(orthographic))
+    val marker = pixelPacket(plan, SurfaceDecorationWorldPoint(0, 0, 0))
+      .copy(shape = SurfaceMarkerShape.Sphere, size = ok(SurfaceDecorationSize.world(2)))
+    val mesh = ok(SurfaceDecorationGeometry.lower(SurfaceDecorationPackets(Vector(marker), Vector.empty,
+      Vector.empty, SurfaceDecorationBinding.key(plan, 1, 1)), plan, 200, 200)).meshes.head
+    assertEquals(mesh.id, marker.id)
+    for vertex <- 0 until mesh.positions.length / 3 do
+      val p = point(mesh, vertex)
+      assertEqualsDouble(math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z), 2, 1e-6)
+    for axis <- 0 until 3 do
+      val values = (0 until mesh.positions.length / 3).map(v => mesh.positions(v * 3 + axis).toDouble)
+      assertEqualsDouble(values.min, -2, 1e-6)
+      assertEqualsDouble(values.max, 2, 1e-6)
+    for face <- 0 until mesh.indices.length / 3 do
+      val a = point(mesh, mesh.indices(face * 3))
+      val b = point(mesh, mesh.indices(face * 3 + 1))
+      val c = point(mesh, mesh.indices(face * 3 + 2))
+      val ux = b.x - a.x
+      val uy = b.y - a.y
+      val uz = b.z - a.z
+      val vx = c.x - a.x
+      val vy = c.y - a.y
+      val vz = c.z - a.z
+      val nx = uy * vz - uz * vy
+      val ny = uz * vx - ux * vz
+      val nz = ux * vy - uy * vx
+      assert(nx * nx + ny * ny + nz * nz > 1e-12, s"degenerate sphere face $face")
+      assert(nx * a.x + ny * a.y + nz * a.z > 0, s"inward sphere face $face")
 
   test("packets compiled before placement changes cannot be rebound to the new plan"):
     val plan = planFor(camera(orthographic))

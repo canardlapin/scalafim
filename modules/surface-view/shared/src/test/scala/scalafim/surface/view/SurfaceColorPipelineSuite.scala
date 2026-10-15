@@ -42,3 +42,18 @@ class SurfaceColorPipelineSuite extends munit.FunSuite:
     val resources = SurfaceCompositionPlan.fromLegacy(legacy).toOption.get
     val view = resources.views.head.copy(colorPipeline = SurfaceColorPipeline.DisplaySrgbLinearLight)
     assert(SurfaceCompositionPlan.make(Vector(view), resources.resources).isLeft)
+
+  test("whole-surface vertex stacks match direct evaluation without leaking restricted coverage"):
+    val under = layer(Vector(black, white, Rgba32.unsafe(80, 160, 240, 120)), .7)
+    for mode <- Vector(DisplayBlendMode.Normal, DisplayBlendMode.Additive, DisplayBlendMode.Multiply,
+        DisplayBlendMode.Screen, DisplayBlendMode.PlusLighter) do
+      val over = layer(Vector(Rgba32.unsafe(255, 0, 0, 80), black, white), .3).copy(blendMode = mode)
+      val complete = new SurfaceFragmentEvaluator(mesh, Vector(under, over), SurfaceLighting.Unlit, black,
+        colorPipeline = SurfaceColorPipeline.DisplaySrgbLinearLight)
+      val restricted = new SurfaceFragmentEvaluator(mesh, Vector(under, over.copy(coverage = SurfaceLayerCoverage.Faces(0, 1))),
+        SurfaceLighting.Unlit, black, colorPipeline = SurfaceColorPipeline.DisplaySrgbLinearLight)
+      val onlyUnder = new SurfaceFragmentEvaluator(mesh, Vector(under), SurfaceLighting.Unlit, black,
+        colorPipeline = SurfaceColorPipeline.DisplaySrgbLinearLight)
+      for (a, b, c) <- Vector((1.0, 0.0, 0.0), (.2, .3, .5), (0.0, .5, .5), (-.1, .4, .7)) do
+        assertEquals(complete.color(0, 0, 1, 2, a, b, c), restricted.color(0, 0, 1, 2, a, b, c))
+        assertEquals(onlyUnder.color(1, 0, 1, 2, a, b, c), restricted.color(1, 0, 1, 2, a, b, c))

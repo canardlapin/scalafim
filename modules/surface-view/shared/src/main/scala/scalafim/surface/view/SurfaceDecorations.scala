@@ -24,6 +24,8 @@ enum SurfaceDecorationError:
   case AnisotropicPixelSphere
   case EmptyText
   case LabelCount(surface: SurfaceId, expected: Int, actual: Int)
+  case InvalidContourOffset(value: Double)
+  case InvalidContourNormal(surface: SurfaceId, vertex: VertexId)
 
 final case class SurfaceVertexAnchor private (surface: SurfaceId, vertex: VertexId)
 object SurfaceVertexAnchor:
@@ -111,12 +113,21 @@ object SurfaceLabelDecoration:
     if text.trim.isEmpty then Left(SurfaceDecorationError.EmptyText)
     else Right(SurfaceLabelDecoration(id, anchor, text, size, color, depthPolicy))
 
+/** Signed world-space displacement along the current source vertex normal. */
+opaque type SurfaceContourOffset = Double
+object SurfaceContourOffset:
+  val Zero: SurfaceContourOffset = 0.0
+  def make(value: Double): Either[SurfaceDecorationError, SurfaceContourOffset] =
+    if value.isFinite then Right(value) else Left(SurfaceDecorationError.InvalidContourOffset(value))
+  extension (value: SurfaceContourOffset) def worldUnits: Double = value
+
 final case class SurfaceContourDecoration(
   id: SurfaceDecorationId,
   surface: SurfaceId,
   vertexLabels: Vector[Int],
   policy: SurfaceContourPolicy,
-  style: SurfaceContourStyle
+  style: SurfaceContourStyle,
+  offset: SurfaceContourOffset = SurfaceContourOffset.Zero
 ) extends SurfaceDecoration
 
 final case class SurfaceDecorationWorldPoint(x: Double, y: Double, z: Double):
@@ -221,7 +232,7 @@ object SurfaceDecorationCompiler:
                     var edge = 0
                     while edge < edges.length && error.isEmpty do
                       val (a, b) = edges(edge)
-                      (vertexPoint(mesh, contour.surface, a), vertexPoint(mesh, contour.surface, b)) match
+                      (contourPoint(mesh, contour, a), contourPoint(mesh, contour, b)) match
                         case (Right(start), Right(end)) => contours += SurfaceContourPacket(
                           SurfaceDecorationElementId(contour.id, s"edge-${a.index}-${b.index}"),
                           SurfaceDisplayOrigin(view.id, instance.id), contour.surface, a -> b,
@@ -289,6 +300,26 @@ object SurfaceDecorationCompiler:
         render match
           case None => Left(SurfaceDecorationError.VertexOutOfRange(surface, vertex))
           case Some(index) => Right(SurfaceDecorationWorldPoint(mesh.positions(index * 3), mesh.positions(index * 3 + 1), mesh.positions(index * 3 + 2)))
+
+  private def contourPoint(mesh: SurfaceMeshPacket, contour: SurfaceContourDecoration,
+      vertex: VertexId): Either[SurfaceDecorationError, SurfaceDecorationWorldPoint] =
+    vertexPoint(mesh, contour.surface, vertex).flatMap: point =>
+      if contour.offset.worldUnits == 0.0 then Right(point)
+      else
+        val sourceNormal = mesh.sampleNormals.filter(_ => mesh.sourceVertices.nonEmpty)
+          .filter(_.length > vertex.index * 3 + 2).map(_ -> vertex.index)
+        val normal = sourceNormal.orElse(sourceRenderVertex(mesh, vertex).map(mesh.normals -> _))
+        normal.toRight(SurfaceDecorationError.InvalidContourNormal(contour.surface, vertex)).flatMap: (values, index) =>
+          val x = values(index * 3).toDouble
+          val y = values(index * 3 + 1).toDouble
+          val z = values(index * 3 + 2).toDouble
+          val length = math.sqrt(x * x + y * y + z * z)
+          if !length.isFinite || length == 0.0 then Left(SurfaceDecorationError.InvalidContourNormal(contour.surface, vertex))
+          else
+            val scale = contour.offset.worldUnits / length
+            val shifted = Vector(point.x + x * scale, point.y + y * scale, point.z + z * scale)
+            if shifted.forall(_.isFinite) then Right(SurfaceDecorationWorldPoint(shifted(0), shifted(1), shifted(2)))
+            else Left(SurfaceDecorationError.InvalidContourOffset(contour.offset.worldUnits))
 
   /** Nearest-partition output contains generated points attributed to a source
     * vertex. Prefer its exact corner, never the first generated subtriangle

@@ -219,19 +219,24 @@ object SurfaceDecorationGeometry:
       Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7), packet.color, packet.depthPolicy)
 
   private def sphere(packet: SurfaceMarkerPacket, radius: Double): SurfaceDecorationMesh =
-    val latitude = 8
+    // A Y-polar 12-by-12 sphere matches the public reference marker primitive.
+    // Omit the degenerate pole triangles, keeping winding outward throughout.
+    val latitude = 12
     val longitude = 12
     val positions = new Array[Float]((latitude + 1) * (longitude + 1) * 3)
     val normals = new Array[Float](positions.length)
-    val indices = new Array[Int](latitude * longitude * 6)
+    val indices = new Array[Int]((latitude - 1) * longitude * 6)
     var lat = 0
     while lat <= latitude do
       var lon = 0
       while lon <= longitude do
-        val normal = P(math.sin(math.Pi * lat / latitude) * math.cos(2.0 * math.Pi * lon / longitude),
-          math.sin(math.Pi * lat / latitude) * math.sin(2.0 * math.Pi * lon / longitude), math.cos(math.Pi * lat / latitude))
+        val theta = lat.toDouble / latitude * math.Pi
+        val phi = lon.toDouble / longitude * (2.0 * math.Pi)
+        val ring = radius * math.sin(theta)
+        val offset = P(-ring * math.cos(phi), radius * math.cos(theta), ring * math.sin(phi))
+        val normal = P(-math.sin(theta) * math.cos(phi), math.cos(theta), math.sin(theta) * math.sin(phi))
         val vertex = lat * (longitude + 1) + lon
-        put(positions, vertex, add(packet.point, scale(normal, radius)))
+        put(positions, vertex, add(packet.point, offset))
         put(normals, vertex, normal)
         lon += 1
       lat += 1
@@ -241,13 +246,16 @@ object SurfaceDecorationGeometry:
       var lon = 0
       while lon < longitude do
         val vertex = lat * (longitude + 1) + lon
-        indices(offset) = vertex
-        indices(offset + 1) = vertex + longitude + 1
-        indices(offset + 2) = vertex + 1
-        indices(offset + 3) = vertex + 1
-        indices(offset + 4) = vertex + longitude + 1
-        indices(offset + 5) = vertex + longitude + 2
-        offset += 6
+        if lat > 0 then
+          indices(offset) = vertex + 1
+          indices(offset + 1) = vertex
+          indices(offset + 2) = vertex + longitude + 2
+          offset += 3
+        if lat < latitude - 1 then
+          indices(offset) = vertex
+          indices(offset + 1) = vertex + longitude + 1
+          indices(offset + 2) = vertex + longitude + 2
+          offset += 3
         lon += 1
       lat += 1
     make(packet.id, packet.origin, SurfaceDecorationTarget.Anchor(packet.anchor), positions, normals, indices, packet.color, packet.depthPolicy)

@@ -28,6 +28,16 @@ class JavaFxSurfaceCompositionSuite extends munit.FunSuite:
     assertEquals(proxy.meshes.map(_.resourceKey).distinct.length, 1)
     assertEquals(proxy.layers.map(_.resourceKey).distinct.length, 1)
 
+  test("explicit asymmetric orthographic packets require the raster host before native mutation"):
+    val plan = base
+    val view = plan.views.head
+    val camera = view.camera.copy(projectionMatrix = new FloatBufferView(Array(
+      .5f, 0f, 0f, .25f, 0f, .5f, 0f, -.25f,
+      0f, 0f, -.2f, -1.02f, 0f, 0f, 0f, 1f)))
+    val composed = ok(SurfaceCompositionPlan.make(Vector(view.copy(camera = camera)), plan.resources))
+    assert(JavaFxSurfaceComposition.resourcePlan(composed).isLeft)
+    assert(JavaFxSurfaceBackend.validateCapabilities(SurfaceFaceFixture.plan.copy(camera = camera)).isLeft)
+
 
   test("shared atlas refuses per-view lighting disagreement"):
     val plan = base
