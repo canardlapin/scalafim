@@ -45,6 +45,9 @@ jobs:
           node-version: "24"
           package-manager-cache: false
 
+      - name: Check surface display qualification contracts and comparator controls
+        run: node --test tools/surface-view/parity/*.test.mjs
+
       - name: Prepare exact pinned provider artifacts
         env:
           COURSIER_CACHE: ${{ runner.temp }}/scalafim-full-repository-sbt/coursier

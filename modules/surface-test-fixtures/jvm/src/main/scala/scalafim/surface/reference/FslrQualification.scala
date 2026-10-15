@@ -223,6 +223,8 @@ object FslrQualification:
           evidence.samples.headOption.foreach: sample =>
             val (kind, v) = sample.contribution match
               case Contribution.Included(v, _, _) => (0, Some(v))
+              case Contribution.Interpolated(_, _, _) =>
+                throw new IllegalStateException("nearest fsLR qualification received an interpolated contribution")
               case Contribution.OutsideGrid => (1, None)
               case Contribution.OutsideSupport(v) => (2, Some(v))
               case Contribution.NonFinite(v, _) => (3, Some(v))
@@ -287,6 +289,8 @@ object FslrQualification:
             "samples" -> ujson.Arr.from(e.samples.map { s =>
               val (kind, voxel, value) = s.contribution match
                 case Contribution.Included(c, x, _) => ("Included", Some(c), Some(x))
+                case Contribution.Interpolated(_, _, _) =>
+                  throw new IllegalStateException("nearest fsLR qualification received an interpolated contribution")
                 case Contribution.OutsideGrid => ("OutsideGrid", None, None)
                 case Contribution.OutsideSupport(c) => ("OutsideSupport", Some(c), None)
                 case Contribution.NonFinite(c, x) => ("NonFinite", Some(c), Some(x))

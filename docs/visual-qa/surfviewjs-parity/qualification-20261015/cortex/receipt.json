@@ -1,0 +1,441 @@
+{
+  "id": "C01-BR-views/initial/c6d268daab449626",
+  "parent": {
+    "rowId": "C01-BR-views",
+    "checkpoint": "initial"
+  },
+  "requirement": "required",
+  "status": "fail",
+  "artifacts": {
+    "reference.png": "0b0f64e5c942ccb3003aafa6f619903b4e450ab597bff5fc1333c1303c9568a0",
+    "native.png": "a42c67a804b1400a338b35c0072cfff5db21a1ee0abc937234bb7a9ae4b6fb13",
+    "raster.png": "f0f118786ce84914b370a104a03aee94c77348c8f4ec59ce0d01eda1cdc21096",
+    "side-by-side.png": "d2de0acc5c71916c9e0db0d2ecbc60c75ef27bc07ab39af1431fc06cf19a728c"
+  },
+  "inputSha256": "eb010acc035dadeb2eae529c2168c659795e3c6cf8e81be3d6fac481a781da24",
+  "comparisons": {
+    "native": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 600,
+        "height": 450,
+        "referenceForeground": 64013,
+        "candidateForeground": 64013,
+        "foregroundIntersection": 64013,
+        "foregroundIoU": 1,
+        "maximumChannelError": 2,
+        "meanMaximumChannelError": 0.05422222222222222
+      },
+      "elements": []
+    },
+    "raster": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9949853935919266,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 132,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 600,
+        "height": 450,
+        "referenceForeground": 64013,
+        "candidateForeground": 63692,
+        "foregroundIntersection": 63692,
+        "foregroundIoU": 0.9949853935919266,
+        "maximumChannelError": 132,
+        "meanMaximumChannelError": 0.21577037037037036
+      },
+      "elements": []
+    }
+  },
+  "camera": {
+    "viewMaxDifference": 0,
+    "projectionMaxDifference": 1.1593683124644372e-8
+  },
+  "runtimeErrors": [],
+  "candidate": {
+    "native": {
+      "status": "captured",
+      "coldNanos": 13100000,
+      "warmNanos": 300000,
+      "coldSnapshotNanos": 175400000,
+      "warmSnapshotNanos": 5100000,
+      "timingBoundary": "render and synchronous PNG readback; submission times reported separately",
+      "coldGeometryUploads": 2,
+      "warmGeometryUploads": 0,
+      "warmColorUploads": 0,
+      "drawCalls": 1,
+      "depthPolicy": "preserved",
+      "projections": [
+        {
+          "view": "qualification",
+          "columnMajorProjection": [
+            0.006818181835114956,
+            0,
+            0,
+            0,
+            0,
+            0.00909090880304575,
+            0,
+            0,
+            0,
+            0,
+            -0.001000049989670515,
+            0,
+            0,
+            0,
+            -1.000100016593933,
+            1
+          ],
+          "viewport": [
+            0,
+            0,
+            600,
+            450
+          ]
+        }
+      ]
+    },
+    "raster": {
+      "status": "captured",
+      "provider": "Canvas2D/reference-raster",
+      "coldNanos": 116700000,
+      "warmNanos": 104400001
+    },
+    "viewMatrix": [
+      0,
+      -1,
+      0,
+      -20,
+      0,
+      0,
+      1,
+      -20,
+      -1,
+      0,
+      0,
+      -290,
+      0,
+      0,
+      0,
+      1
+    ],
+    "projectionMatrix": [
+      0.006818181835114956,
+      0,
+      0,
+      0,
+      0,
+      0.00909090880304575,
+      0,
+      0,
+      0,
+      0,
+      -0.001000049989670515,
+      -1.000100016593933,
+      0,
+      0,
+      0,
+      1
+    ],
+    "matrixOrder": "row-major",
+    "picks": [
+      {
+        "x": 100,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 200,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 300,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 400,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 150,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 200,
+        "y": 150,
+        "raster": {
+          "surface": "left",
+          "vertex": 2141,
+          "face": 3873
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 2141,
+          "face": 3873,
+          "world": [
+            -10.72169457373451,
+            28.888888767472018,
+            56.66666782771552
+          ]
+        }
+      },
+      {
+        "x": 300,
+        "y": 150,
+        "raster": {
+          "surface": "left",
+          "vertex": 1814,
+          "face": 15947
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 1814,
+          "face": 15947,
+          "world": [
+            -52.41822403647629,
+            -20,
+            56.66666782771552
+          ]
+        }
+      },
+      {
+        "x": 400,
+        "y": 150,
+        "raster": {
+          "surface": "left",
+          "vertex": 2591,
+          "face": 18295
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 9512,
+          "face": 18295,
+          "world": [
+            -17.927476026864156,
+            -68.888888767472,
+            56.66666782771552
+          ]
+        }
+      },
+      {
+        "x": 500,
+        "y": 150,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 225,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 200,
+        "y": 225,
+        "raster": {
+          "surface": "left",
+          "vertex": 4907,
+          "face": 17411
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 4907,
+          "face": 17411,
+          "world": [
+            -43.754171869163315,
+            28.888888767472018,
+            20
+          ]
+        }
+      },
+      {
+        "x": 300,
+        "y": 225,
+        "raster": {
+          "surface": "left",
+          "vertex": 4165,
+          "face": 9930
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 6244,
+          "face": 9930,
+          "world": [
+            -57.73571596160059,
+            -20,
+            20
+          ]
+        }
+      },
+      {
+        "x": 400,
+        "y": 225,
+        "raster": {
+          "surface": "left",
+          "vertex": 765,
+          "face": 9412
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 765,
+          "face": 9412,
+          "world": [
+            -46.572630859048985,
+            -68.888888767472,
+            20
+          ]
+        }
+      },
+      {
+        "x": 500,
+        "y": 225,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 300,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 200,
+        "y": 300,
+        "raster": {
+          "surface": "left",
+          "vertex": 3047,
+          "face": 5703
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 3047,
+          "face": 5703,
+          "world": [
+            -46.58998987758957,
+            28.888888767472018,
+            -16.666667827715507
+          ]
+        }
+      },
+      {
+        "x": 300,
+        "y": 300,
+        "raster": {
+          "surface": "left",
+          "vertex": 974,
+          "face": 10159
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 974,
+          "face": 10162,
+          "world": [
+            -67.37483204903842,
+            -20,
+            -16.666667827715507
+          ]
+        }
+      },
+      {
+        "x": 400,
+        "y": 300,
+        "raster": {
+          "surface": "left",
+          "vertex": 10024,
+          "face": 19828
+        },
+        "native": {
+          "surface": "left",
+          "vertex": 10024,
+          "face": 19827,
+          "world": [
+            -44.67871205276873,
+            -68.888888767472,
+            -16.666667827715507
+          ]
+        }
+      },
+      {
+        "x": 500,
+        "y": 300,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 375,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 200,
+        "y": 375,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 300,
+        "y": 375,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 400,
+        "y": 375,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 375,
+        "raster": null,
+        "native": null
+      }
+    ],
+    "sourceSummaries": [
+      {
+        "surface": "left",
+        "vertices": 10242,
+        "faces": 20480
+      },
+      {
+        "surface": "right",
+        "vertices": 10242,
+        "faces": 20480
+      }
+    ],
+    "beforeHeap": 121241176,
+    "afterHeap": 210394644
+  },
+  "endpointStatus": "fail",
+  "remaining": [
+    "independent per-element masks and scientific pick oracle",
+    "actual input-event replay",
+    "native appearance review",
+    "full family accounting"
+  ]
+}

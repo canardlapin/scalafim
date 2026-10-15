@@ -121,6 +121,12 @@ try {
       const expected = capture.name === 'label-over-opaque' ? [128,127,0] : [128,64,63];
       checks[capture.name] = [125,375].every(cx => pixel(img,cx-10,125).slice(0,3).every((c,i) => Math.abs(c-expected[i]) <= 1));
     }
+    if (['overlay-near-first', 'overlay-far-first'].includes(capture.name)) {
+      const last = capture.name === 'overlay-near-first' ? 'far-overlay' : 'near-overlay';
+      const expected = last === 'far-overlay' ? [0,255,0,255] : [255,0,0,255];
+      checks[`${capture.name}Pixels`] = [115,365].every(x => JSON.stringify(pixel(img,x,125)) === JSON.stringify(expected));
+      checks[`${capture.name}Picks`] = capture.overlayPicks.length === 2 && capture.overlayPicks.every(p => p.id === last);
+    }
     if (capture.name === 'gray') checks.displayGray = [125,375].every(cx => pixel(img,cx,125).slice(0,3).every(c => Math.abs(c-128) <= 1));
     if (capture.name === 'overlay-text') {
       checks.overlayAfterText = [125,375].every(cx => {

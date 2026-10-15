@@ -1,0 +1,21 @@
+{
+  "schema": "actual-jvm-comparison-summary.v1",
+  "qualification": "not-qualified",
+  "capturedActualHostCases": 54,
+  "referenceComparisons": 53,
+  "runtimeBoundComparisons": 53,
+  "strictPixelPasses": 0,
+  "missingReference": [
+    {
+      "id": "C06-JVM-annotations/crosshair-label/ae2323c3e552ab1f",
+      "failure": "Error: page.evaluate: Error: reference crosshair text label adapter is not implemented\n    at mountReferenceView (http://127.0.0.1:62732/@fs//private/tmp/scalafim-surface-qualification-20261015/tools/surface-view/parity/reference-view.mjs:248:41)\n    at eval (eval at evaluate (:311:30), <anonymous>:4:22)\n    at async <anonymous>:337:30"
+    }
+  ],
+  "comparisonRoots": [
+    "/private/tmp/surface-jvm-reference-comparison-06a",
+    "/private/tmp/surface-jvm-reference-comparison-06b",
+    "/private/tmp/surface-jvm-reference-comparison-06c"
+  ],
+  "sourceCaptureRoot": "/private/tmp/surface-jvm-decorated-captured-06",
+  "note": "All 54 actual host captures pass snapshot-to-published-pixel equality, resize-back, stable warm images and frame release. 53 comparable receipts also bind the loaded JVM runtime hashes. Native JavaFX explicitly refuses these controlled profiles."
+}

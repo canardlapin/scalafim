@@ -1,0 +1,26 @@
+{
+  "base": "dc101ea05a327e06641b9fc7064f822c4a9608e3",
+  "head": "37df543fc821a28e1fdad861a0fead6ceeaf08eb",
+  "reviewer": "independent lean_expert /root/linear_sampling_review",
+  "verdict": "accepted for bounded production correctness; no full parity qualification",
+  "method": "Integrated source review plus inspection of accumulated candidate tests and actual-browser proof receipts; reviewer did not rerun tests",
+  "covered": [
+    "linear sampling provider boundary and nearest default",
+    "camera Float projection validity and native refusal",
+    "opaque/decorated raster allocation and compositing",
+    "overlay rendering/picking order",
+    "network depth defaults and validation",
+    "sphere and contour geometry"
+  ],
+  "retainedLimitations": [
+    "full frozen matrix and masks/replay unfinished",
+    "C05 halo semantics differ",
+    "C10 viewer keys absent from pinned public reference",
+    "realistic fallback latency exceeds target in several families"
+  ],
+  "additionalConsumerReview": {
+    "file": "modules/surface-test-fixtures/jvm/src/main/scala/scalafim/surface/reference/FslrQualification.scala",
+    "sha256": "6ea8021b1a9ede96ed7e3d33e667b46b1e7d292c205cc69bdc87827fa05282a1",
+    "verdict": "accepted explicit unexpected-interpolation rejection; scalafimCompileAll passed with no compiler warnings; fixture tests JVM21/JS7 passed"
+  }
+}

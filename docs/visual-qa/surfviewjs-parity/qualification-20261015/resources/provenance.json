@@ -1,0 +1,26 @@
+{
+  "schema": "surface-resource-cycles.v1",
+  "startedAt": "2026-10-15T16:14:58.606Z",
+  "moduleSha256": "ee699f8e8f360e82ad6ac21411d7082dcb7d1e4889c1f0318d9b59acdaa54716",
+  "inputSha256": "eb010acc035dadeb2eae529c2168c659795e3c6cf8e81be3d6fac481a781da24",
+  "referenceBundleSha256": "7a2e51871275b03be0951cbfae0dc8d201201b5cce586ed48e36a4c1a8d316f9",
+  "runnerSha256": "6ccbd6614d113872fbc0e9dfc66e8c201d94f4eac53447568fde28df46aa2028",
+  "adapterSha256": "a74445c6df27ef200e879df353079466b211e538d33ba5447ee906fbfb857989",
+  "resourceContractsSha256": "2e0b8d815e1e293fcec33e3204bafe1afb43ff74acecdf8698042deefa30d704",
+  "threeSha256": "bbf5ed13fe4373f5bd38b14ea8e62e9f157327da5638edc6d3863e08b167c9c7",
+  "auditBefore": {
+    "exitCode": 0,
+    "stdout": "No automated top-level browser processes found.\n",
+    "stderr": ""
+  },
+  "browserProfile": "lean-browser-playwright",
+  "requestedGpu": "ANGLE Metal",
+  "browserVersion": "151.0.7922.34",
+  "auditAfter": {
+    "exitCode": 0,
+    "stdout": "No automated top-level browser processes found.\n",
+    "stderr": ""
+  },
+  "finishedAt": "2026-10-15T16:16:22.736Z",
+  "cleanupFailures": []
+}

@@ -479,3 +479,140 @@ Local landing completed by fast-forwarding main from `53feab62` to
 paired evidence and publication receipts. Existing immutable Mote operations
 were preserved byte-for-byte. ScalaFIM has not been pushed; the parity epic
 remains open for the P6 work listed above.
+
+## Qualification execution checkpoint, 2026-10-15
+
+The user authorized the remaining five workstreams, including final ScalaFIM
+publication. The isolated candidate reconciles local `606b49b3` with upstream
+`1616c630` at merge `dc101ea0`, retaining the published Intaglio pin. The scene
+codec accepts canonical two-sided thresholds and the legacy V8 representation,
+rejects mixed representations, and retains strict unknown-field validation.
+
+The new `tools/surface-view/parity/run-qualification.mjs` is an endpoint capture
+runner, not a passing qualification gate. Its contract loader checks the frozen
+source hashes and all 151 parent checkpoints, expands declared view/projection
+and profile combinations, and records input ambiguities in
+`tools/surface-view/parity/qualification-errata.md`. Unsupported actual-host
+routes and missing replay/mask evidence remain failures. The original frozen
+inputs are unchanged.
+
+The first twelve controlled-unlit C01 browser captures use both external
+fsaverage5 hemispheres (20,484 vertices and 40,960 triangles). Camera matrices
+agree with the public reference within Float rounding. All native silhouettes
+have IoU 1; seven native images retain strict channel-error failures at isolated
+fold/depth boundary pixels. Raster images retain antialiasing failures. These
+observations do not qualify the full C01 family, other profiles, interactions,
+or JavaFX native rendering.
+
+The opaque compositor now avoids collecting and sorting hidden fragments while
+preserving exact scientific picks, clipped/partitioned samples, same-instance
+duplicate tolerance, complete coplanar tie ordering, and transparent-background
+behavior. Translucency, nonempty decorations and explicit capacity checks keep
+their checked collection path. Independent source review accepted the bounded
+change. Focused gates pass on both JVM and Scala.js, including ten new raster
+regressions; actual JavaFX tests and example linking also pass.
+
+The twelve repeated cortex captures are byte-identical to the previous raster
+images. Warm render time decreased from 591–873 ms to 169–295 ms in the retained
+fast-optimized browser build; this remains above the proposed 100 ms fallback
+target. Browser heap deltas are diagnostic allocation observations, not retained
+memory or leak qualification. The next check isolates repeated vertex-color
+composition. Resource budgets and native GPU-completion latency still require
+qualification. No P6 family is marked complete, and this candidate has not yet
+been pushed.
+
+## Expanded qualification checkpoint, 2026-10-15
+
+The frozen matrix expands to 636 variants across 151 parent checkpoints. This
+checkpoint adds evidence; it does not declare full-family completion. The
+reference runs from a clean isolated fb60f370 checkout because the user's
+original SurfViewJS checkout has unrelated edits. Its external fsaverage5
+hemispheres remain local, checksum-bound inputs.
+
+Production improvements include checked explicit perspective/orthographic
+frusta and up vectors, an explicit Three depth-precision policy, linear affine
+volume sampling, normal-directed contour offsets, matching 12-by-12 marker
+sphere geometry, network node visibility/depth policy, and consistent declared
+overlay order in rendering and picking. Opaque raster work now avoids hidden
+fragment collections, repeated eligible vertex-color composition, and redundant
+compositing at undecorated pixels. Translucency, transparent backgrounds,
+explicit capacity limits and scientific provenance retain checked paths.
+
+Six native volume endpoints are byte-identical to the public reference, with
+independent affine-field readouts. Six actual multi-panel browser endpoints
+pass ray-derived surface/view identity, resize-back and disposal checks; strict
+fold/edge pixels remain failures. Revised sphere geometry brings the multiple,
+hover and selected annotation cases to maximum channel error 3 (strict limit
+2), while geometry-change differences remain under investigation.
+
+The latest actual JavaFX batch captured 54/54 cases. Every fallback ImageView
+snapshot equals its published raster, five warm images agree, resize-back is
+exact and disposal releases the presented frame. The actual loaded JVM
+artifacts are hashed in runtime.json. Native JavaFX refuses these controlled
+profiles explicitly; fallback success does not imply native admission. Warm
+raster medians span 69-93 ms for volumes, 512-840 ms for multi-panel cortex,
+104-505 ms for contours, 109-160 ms for annotations, 58-79 ms for dynamics and
+116-190 ms for networks. The 100 ms fallback target therefore remains unmet
+for several realistic workloads.
+
+A browser batch was interrupted by ENOSPC. Its 23 completed raster images are
+byte-identical before/after the sparse-decoration optimization. Seventeen
+completed contour cases improved from 384-914 ms to 223-689 ms warm medians.
+The incomplete capture and its failure log are retained; it is not counted as
+a completed batch. The runner now supports bounded offset/limit batches and
+retains exact runner source beside hashes.
+
+A separate realistic-cortex lifecycle probe completed 20 same-page
+create/render/resize/dispose cycles. All owned WebGL contexts and host resources
+were released, warm uploads were zero and warm resource counts were stable.
+Retained JS heap grew 482,512 bytes against a fixed 8 MiB budget after warmup;
+reference calibration had to stay within an independently fixed 2 MiB range.
+This measures JS heap and explicit lifecycle release, not detached backing
+stores, GPU memory, native RSS, warmup retention or long-run leak freedom.
+
+Independent review identified two material contract conflicts. C05's reference
+halo is a full-width translucent stroke over its core, while ScalaFIM's
+documented halo uses separate side bands. C10's custom ticks, separate key
+dimensions and categorical/bivariate viewer keys exceed the pinned public
+reference route. Exact failures are preserved in qualification-errata.md;
+these cannot be repaired through broader pixel tolerances. Supported public
+exports and additional ScalaFIM capabilities need separate evidence.
+
+Remaining qualification includes independent per-element masks and mutation
+controls, calibrated edge envelopes, full actual-action replay, the uncaptured
+variants, publication/key routes, remaining visual discrepancies and resource
+budgets. Source improvements may be reviewed independently, but the P6 clean
+Pass and full display-for-display parity claim remain open.
+
+The follow-up C06/C08 anchor probe now distinguishes geometry from pixels:
+all eleven captured ScalaFIM sphere centers match the independent morphed
+source-vertex oracle within 1e-4 world units. Three actual SurfViewJS marker
+transforms remain at base vertices, producing up to 4.24/8.47 world-unit error
+at midpoint/full expansion. Original failures remain retained.
+
+
+## Reviewed evidence closeout, 2026-10-15
+
+Production `37df543f` received independent bounded source review. Final
+`scalafimCompileAll` passes warning-clean after the documented exact pinned
+provider preparation. The nearest-only fsLR qualification consumer now explicitly
+rejects an unexpected interpolated contribution; fixture tests pass on JVM and JS.
+Affected display gates and all 48 Node qualification tests pass; exact commands,
+counts, retained failures and source identities are in the
+[qualification gallery](../visual-qa/surfviewjs-parity/qualification-20261015/README.md).
+
+The explicit public-client morph update passes all eleven measured anchor checks
+and reduces the geometry-change native maximum channel error from 168 to 3.
+The original stale-marker reference behavior remains retained. All 54 current
+JVM fallback captures pass their own host lifecycle/presentation checks; 53 have
+runtime-bound reference comparisons and all retain strict pixel differences.
+The missing crosshair-label adapter is reported separately. Six browser flat-map
+endpoints are exact; six JVM static semantic checks pass but their strict pixel
+comparisons fail. Independent review corrected an overbroad C11 status: complete
+qualification remains incomplete, including reference calibration, linked-marker
+anchor parity, physical event replay and per-element masks.
+
+The ledger accounts for all 636 expanded variants with 162 distinct paired
+endpoints across historical/current builds. This is coverage accounting, not
+162 qualified variants. No P6 family is marked complete. The candidate may be
+published as a draft for review; the full-matrix merge gate remains unsatisfied.

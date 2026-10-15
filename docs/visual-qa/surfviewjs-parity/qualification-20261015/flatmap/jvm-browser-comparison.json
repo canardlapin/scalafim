@@ -1,0 +1,292 @@
+{
+  "schema": "surface-flatmap-jvm-browser-comparison.v1",
+  "status": "fail",
+  "jvmDir": "/private/tmp/c11-flatmap-jvm-qualification-01",
+  "browserReferenceDir": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02",
+  "source": {
+    "browserSha256": "15689427522d8317bf4f08412a06b1f888ac7f589755bb95959b40e431582895",
+    "jvmSha256": "15689427522d8317bf4f08412a06b1f888ac7f589755bb95959b40e431582895",
+    "matches": true
+  },
+  "browserReceiptSha256": "70c81c80bbcf76a0bcc412a6c4d2503abe677b947b470dabaae01cb1fa5734f1",
+  "jvmReceipt": {
+    "path": "/private/tmp/c11-flatmap-jvm-qualification-01/candidate.json",
+    "sha256": "aa54116df06ed48ceaa54b37b1f4f3278eeacbf829e94da7d9cc17733cdecfaf"
+  },
+  "linkedMarkerDisplays": {
+    "browser": {
+      "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/linked-marker-browser-display.png",
+      "width": 600,
+      "height": 450,
+      "firstPixel": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "nonTransparentPixels": 270000,
+      "nonZeroPixels": 270000,
+      "distinctFromFirstPixels": 95318,
+      "nonblank": true,
+      "sha256": "28dfecb8bbe566c146aacc9d677bcfb2c025197fcc4d723527c2cc90c5400f05"
+    },
+    "jvm": {
+      "path": "/private/tmp/c11-flatmap-jvm-qualification-01/linked-marker-display.png",
+      "sha256": "16255bf15d8b6e7638bdd87ae572e18a7b96409ba38ac674fd83674996deaeda",
+      "width": 600,
+      "height": 450,
+      "firstPixel": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "nonTransparentPixels": 270000,
+      "nonZeroPixels": 270000,
+      "distinctFromFirstPixels": 94991,
+      "nonblank": true
+    }
+  },
+  "rows": [
+    {
+      "checkpoint": "hover",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 93,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 600,
+          "height": 450,
+          "referenceForeground": 169837,
+          "candidateForeground": 169839,
+          "foregroundIntersection": 169835,
+          "foregroundIoU": 0.999964672841069,
+          "maximumChannelError": 93,
+          "meanMaximumChannelError": 0.22481481481481483
+        },
+        "elements": []
+      },
+      "reference": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/hover-reference.png",
+        "sha256": "d6298fa61d45271af4b8c913452248df37eea9f1dcee5b8864afea04626d23ec",
+        "width": 600,
+        "height": 450
+      },
+      "jvm": {
+        "path": "/private/tmp/c11-flatmap-jvm-qualification-01/hover.png",
+        "sha256": "ee61a4322a9bc73c7a34ea4fae4f37d2235e0456f6e9bcc117511227dd6c7f07",
+        "width": 600,
+        "height": 450
+      },
+      "sideBySide": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/hover-jvm-reference-side-by-side.png",
+        "sha256": "e84edfba21c151763f98abecffbb52253cf4e5b90e4f17154f45b0e6add67fef"
+      }
+    },
+    {
+      "checkpoint": "pick",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 93,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 600,
+          "height": 450,
+          "referenceForeground": 169837,
+          "candidateForeground": 169839,
+          "foregroundIntersection": 169835,
+          "foregroundIoU": 0.999964672841069,
+          "maximumChannelError": 93,
+          "meanMaximumChannelError": 0.22481481481481483
+        },
+        "elements": []
+      },
+      "reference": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/pick-reference.png",
+        "sha256": "d6298fa61d45271af4b8c913452248df37eea9f1dcee5b8864afea04626d23ec",
+        "width": 600,
+        "height": 450
+      },
+      "jvm": {
+        "path": "/private/tmp/c11-flatmap-jvm-qualification-01/pick.png",
+        "sha256": "ee61a4322a9bc73c7a34ea4fae4f37d2235e0456f6e9bcc117511227dd6c7f07",
+        "width": 600,
+        "height": 450
+      },
+      "sideBySide": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/pick-jvm-reference-side-by-side.png",
+        "sha256": "e84edfba21c151763f98abecffbb52253cf4e5b90e4f17154f45b0e6add67fef"
+      }
+    },
+    {
+      "checkpoint": "polygon",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 93,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 600,
+          "height": 450,
+          "referenceForeground": 169837,
+          "candidateForeground": 169839,
+          "foregroundIntersection": 169835,
+          "foregroundIoU": 0.999964672841069,
+          "maximumChannelError": 93,
+          "meanMaximumChannelError": 0.22481481481481483
+        },
+        "elements": []
+      },
+      "reference": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/polygon-reference.png",
+        "sha256": "d6298fa61d45271af4b8c913452248df37eea9f1dcee5b8864afea04626d23ec",
+        "width": 600,
+        "height": 450
+      },
+      "jvm": {
+        "path": "/private/tmp/c11-flatmap-jvm-qualification-01/polygon.png",
+        "sha256": "ee61a4322a9bc73c7a34ea4fae4f37d2235e0456f6e9bcc117511227dd6c7f07",
+        "width": 600,
+        "height": 450
+      },
+      "sideBySide": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/polygon-jvm-reference-side-by-side.png",
+        "sha256": "e84edfba21c151763f98abecffbb52253cf4e5b90e4f17154f45b0e6add67fef"
+      }
+    },
+    {
+      "checkpoint": "lasso",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 95,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 600,
+          "height": 450,
+          "referenceForeground": 179299,
+          "candidateForeground": 179303,
+          "foregroundIntersection": 179299,
+          "foregroundIoU": 0.9999776913938975,
+          "maximumChannelError": 95,
+          "meanMaximumChannelError": 0.26303333333333334
+        },
+        "elements": []
+      },
+      "reference": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/lasso-reference.png",
+        "sha256": "9a7fb16f97c4cfe0e8182c03ab9c79720c41cd728f32025acc8396841bfecb91",
+        "width": 600,
+        "height": 450
+      },
+      "jvm": {
+        "path": "/private/tmp/c11-flatmap-jvm-qualification-01/lasso.png",
+        "sha256": "869eb5f56ff36e605527bc0455ac4b8ae7510b94e07f601a7a152041ce035e1a",
+        "width": 600,
+        "height": 450
+      },
+      "sideBySide": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/lasso-jvm-reference-side-by-side.png",
+        "sha256": "8ca3f2fa82634a49f1fe6736f5273441b12845c48d79bf348e94bf19243b10ea"
+      }
+    },
+    {
+      "checkpoint": "linked-marker",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 93,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 600,
+          "height": 450,
+          "referenceForeground": 169837,
+          "candidateForeground": 169839,
+          "foregroundIntersection": 169835,
+          "foregroundIoU": 0.999964672841069,
+          "maximumChannelError": 93,
+          "meanMaximumChannelError": 0.22481481481481483
+        },
+        "elements": []
+      },
+      "reference": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/linked-marker-reference.png",
+        "sha256": "d6298fa61d45271af4b8c913452248df37eea9f1dcee5b8864afea04626d23ec",
+        "width": 600,
+        "height": 450
+      },
+      "jvm": {
+        "path": "/private/tmp/c11-flatmap-jvm-qualification-01/linked-marker.png",
+        "sha256": "ee61a4322a9bc73c7a34ea4fae4f37d2235e0456f6e9bcc117511227dd6c7f07",
+        "width": 600,
+        "height": 450
+      },
+      "sideBySide": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/linked-marker-jvm-reference-side-by-side.png",
+        "sha256": "e84edfba21c151763f98abecffbb52253cf4e5b90e4f17154f45b0e6add67fef"
+      }
+    },
+    {
+      "checkpoint": "linked-time",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 93,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 600,
+          "height": 450,
+          "referenceForeground": 169837,
+          "candidateForeground": 169839,
+          "foregroundIntersection": 169835,
+          "foregroundIoU": 0.999964672841069,
+          "maximumChannelError": 93,
+          "meanMaximumChannelError": 0.22481481481481483
+        },
+        "elements": []
+      },
+      "reference": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/linked-time-reference.png",
+        "sha256": "d6298fa61d45271af4b8c913452248df37eea9f1dcee5b8864afea04626d23ec",
+        "width": 600,
+        "height": 450
+      },
+      "jvm": {
+        "path": "/private/tmp/c11-flatmap-jvm-qualification-01/linked-time.png",
+        "sha256": "ee61a4322a9bc73c7a34ea4fae4f37d2235e0456f6e9bcc117511227dd6c7f07",
+        "width": 600,
+        "height": 450
+      },
+      "sideBySide": {
+        "path": "/private/tmp/c11-flatmap-qualification-jvm-comparison-02/linked-time-jvm-reference-side-by-side.png",
+        "sha256": "e84edfba21c151763f98abecffbb52253cf4e5b90e4f17154f45b0e6add67fef"
+      }
+    }
+  ]
+}
