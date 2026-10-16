@@ -76,6 +76,16 @@ class SurfacePairedCameraSuite extends munit.FunSuite:
         plan.viewportFit.resolve(plan.slots, width, height).foreach: slot =>
           val p = plan.cameraFor(slot.surface).projectionMatrix
           assertEqualsDouble(width * slot.viewport.width * p(0), height * slot.viewport.height * p(5), 1e-3)
+          val v = plan.cameraFor(slot.surface).viewMatrix
+          val vertices = plan.meshes.find(_.surface == slot.surface).get.positions
+          for index <- 0 until vertices.length by 3 do
+            val point = Vector(vertices(index).toDouble + slot.worldOffsetX,
+              vertices(index + 1).toDouble + slot.worldOffsetY, vertices(index + 2).toDouble + slot.worldOffsetZ, 1.0)
+            val eye = Vector.tabulate(4)(r => (0 until 4).map(c => v(r * 4 + c) * point(c)).sum)
+            val clip = Vector.tabulate(4)(r => (0 until 4).map(c => p(r * 4 + c) * eye(c)).sum)
+            assert(clip(3) > 0)
+            assert(math.abs(clip(0) / clip(3)) <= 1.00001, s"fit clipped horizontal extent: $clip")
+            assert(math.abs(clip(1) / clip(3)) <= 1.00001, s"fit clipped vertical extent: $clip")
 
   test("camera identity is deterministic and legacy composition keeps effective cameras"):
     val first = compile(paired(lateral))
@@ -84,6 +94,11 @@ class SurfacePairedCameraSuite extends munit.FunSuite:
     assertNotEquals(first.receipt.cameraKey, compile(paired(medial)).receipt.cameraKey)
     val composition = SurfaceCompositionPlan.fromLegacy(first).fold(error => fail(error.toString), identity)
     assertEquals(composition.views.map(_.camera), first.slots.map(slot => first.cameraFor(slot.surface)))
+    assert(SurfaceCompositionPlan.fromLegacy(first.copy(surfaceCameras = Map(SurfaceId.unsafe("absent") -> first.camera))).isLeft)
+    val changedProjection = first.camera.projectionMatrix.unsafeArray.clone()
+    changedProjection(0) *= 0.5f
+    assert(SurfaceCompositionPlan.fromLegacy(first.copy(surfaceCameras = Map(left -> first.camera.copy(
+      projectionMatrix = new FloatBufferView(changedProjection))))).isLeft)
 
   test("an explicit typed pose remains authoritative over a single-surface override"):
     val base = SurfaceViewerState.initial(model)

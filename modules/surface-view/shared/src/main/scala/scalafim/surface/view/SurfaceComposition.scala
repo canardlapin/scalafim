@@ -156,6 +156,8 @@ object SurfaceCompositionPlan:
     }(id => Left(SurfaceCompositionError.DuplicateView(id)))
 
   def fromLegacy(plan: SurfaceRenderPlan): Either[SurfaceCompositionError, SurfaceCompositionPlan] =
+    if !plan.validCameras then
+      return Left(SurfaceCompositionError.InvalidPresentation("legacy plan has an invalid per-surface camera contract"))
     if plan.meshes.map(_.surface).distinct.length != plan.meshes.length then
       return Left(SurfaceCompositionError.InvalidPresentation("legacy plan has duplicate surfaces"))
     if plan.meshes.map(_.resourceKey).distinct.length != plan.meshes.length then

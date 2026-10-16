@@ -79,6 +79,25 @@ class JavaFxPairedCameraSuite extends munit.FunSuite:
     assert(JavaFxSurfaceBackend.validateCapabilities(after.copy(surfaceCameras = Map(left -> after.camera.copy(
       projectionMatrix = new FloatBufferView(mismatchedProjection))))).isLeft)
 
+  test("public camera updates refuse malformed packets before native transforms change"):
+    val before = plan(medial = false, CameraProjection.Perspective(FieldOfViewDegrees.Default))
+    val compiled = JavaFxSurfaceProbe.compile(before).toOption.get
+    def transforms = (Vector(compiled.root) ++ compiled.surfaceGroups.toVector.sortBy(_._1.value).map(_._2))
+      .flatMap: node =>
+        val t = node.getLocalToParentTransform
+        Vector(t.getMxx,t.getMxy,t.getMxz,t.getTx,t.getMyx,t.getMyy,t.getMyz,t.getTy,t.getMzx,t.getMzy,t.getMzz,t.getTz)
+    val original = transforms
+    def unchanged(): Unit = transforms.zip(original).foreach((actual,expected) => assertEqualsDouble(actual,expected,0))
+    val malformed = before.copy(surfaceCameras = Map(left -> before.camera.copy(viewMatrix = new FloatBufferView(Array(1f)))))
+    val nonRigid = before.camera.viewMatrix.unsafeArray.clone()
+    nonRigid(0) = 2f
+    val scaled = before.copy(surfaceCameras = Map(left -> before.camera.copy(viewMatrix = new FloatBufferView(nonRigid))))
+    for invalid <- Vector(malformed,scaled,before.copy(surfaceCameras=Map(SurfaceId.unsafe("missing") -> before.camera))) do
+      assert(compiled.applyCamera(invalid).isLeft)
+      unchanged()
+    assert(compiled.applyCamera(before).isRight)
+    unchanged()
+
 /** Actual JavaFX ray traversal for asymmetric bilateral meshes. This checks the
   * native pick result is decoded through the same current per-surface camera
   * plan used for rendering, rather than only checking affine equations. */

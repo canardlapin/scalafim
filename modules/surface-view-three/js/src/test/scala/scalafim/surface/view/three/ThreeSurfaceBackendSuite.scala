@@ -376,6 +376,8 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     var decorationFailure = false
     var clearFailure = false
     var drawFailure = false
+    var installedComposition: Option[SurfaceCompositionPlan] = None
+    var installedCamera: Option[SurfaceCameraPacket] = None
 
     def contextState: ThreeContextState = state
 
@@ -397,6 +399,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       Right(())
 
     def updateCamera(camera: SurfaceCameraPacket, clipping: SurfaceClipping): Either[ThreeSurfaceError, Unit] =
+      installedCamera = Some(camera)
       calls += "camera"
       Right(())
 
@@ -406,10 +409,12 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       Right(())
 
     override def updateComposition(plan: SurfaceCompositionPlan): Either[ThreeSurfaceError, Unit] =
+      installedComposition = Some(plan)
       calls += s"composition:${plan.receipt.instanceCount}"
       Right(())
 
     override def clearComposition(): Either[ThreeSurfaceError, Unit] =
+      installedComposition = None
       calls += "composition-clear"
       if clearFailure then Left(ThreeSurfaceError.RuntimeFailure("composition clear", "injected")) else Right(())
 
@@ -975,6 +980,12 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
     assertEquals(runtime.fitted, SurfaceViewportFit.Fill)
     backend.dispose().toOption.get
 
+  test("public program compilation refuses per-surface camera overrides"):
+    val (viewer, state) = fixture()
+    val plan = compile(viewer, state)
+    val overridden = plan.copy(surfaceCameras = Map(surfaceId -> plan.camera))
+    assert(ThreeSurfaceProgram.compile(None, overridden, size).left.exists(_.message.contains("composition rendering")))
+
   test("composition rejects conflicting resource bytes without native commands"):
     val (viewer, state) = fixture()
     val before = fourViewComposition(compile(viewer, state))
@@ -988,3 +999,44 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       before.resources.layers.updated(layer.resourceKey, changed))).toOption.get
     assert(backend.render(after, size).isLeft)
     assertEquals(runtime.calls.toVector, Vector.empty)
+
+  test("direct paired plans transition, resize and update same-key cameras without resource uploads"):
+    val left = SurfaceId.unsafe("paired-left")
+    val right = SurfaceId.unsafe("paired-right")
+    def asset(id: SurfaceId,x: Double,h: Hemisphere) = SurfaceAsset.make(id,SurfaceGeometry(
+      TriangleMesh.fromRows(Vector(Vector(x,-2d,-1d),Vector(x,3d,-1d),Vector(x,-1d,4d)),Vector((0,1,2))),h,SurfaceKind.Inflated)).toOption.get
+    val viewer = SurfaceViewerModel.make(Vector(asset(left,-3,Hemisphere.Left),asset(right,3,Hemisphere.Right)),Vector.empty).toOption.get
+    val shared = SurfaceViewerState.initial(viewer).copy(layout=SurfaceLayout.Bilateral(left,right))
+    val lateral = shared.copy(surfaceViewpoints=Map(left -> SurfaceViewpoint.Lateral(CorticalHemisphere.Left),right -> SurfaceViewpoint.Lateral(CorticalHemisphere.Right)))
+    val medial = shared.copy(surfaceViewpoints=Map(left -> SurfaceViewpoint.Medial(CorticalHemisphere.Left),right -> SurfaceViewpoint.Medial(CorticalHemisphere.Right)))
+    val baseline = compile(viewer,shared)
+    val first = compile(viewer,lateral)
+    val changed = compile(viewer,medial).copy(receipt=first.receipt)
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.render(baseline,size).toOption.get
+    backend.render(first,size).toOption.get
+    def installed(plan: SurfaceRenderPlan): Unit =
+      val composition = runtime.installedComposition.get
+      assertEquals(composition.views.size,2)
+      composition.views.zip(plan.slots).foreach: (view,slot) =>
+        assertEquals(view.camera.viewMatrix.unsafeArray.toVector,plan.cameraFor(slot.surface).viewMatrix.unsafeArray.toVector)
+    installed(first)
+    runtime.calls.clear()
+    val update = backend.render(changed,size).toOption.get
+    installed(changed)
+    assertEquals(update.geometryUploads,0)
+    assertEquals(update.geometryUpdates,0)
+    assertEquals(update.colorUploads,0)
+    assert(runtime.calls.contains("composition:2"))
+    runtime.calls.clear()
+    val resized = backend.render(changed,ThreeCanvasSize.unsafe(300,900,1)).toOption.get
+    installed(changed)
+    assertEquals(resized.geometryUploads,0)
+    assertEquals(resized.colorUploads,0)
+    assert(runtime.calls.contains("resize:300x900"))
+    runtime.calls.clear()
+    backend.render(baseline,size).toOption.get
+    assertEquals(runtime.installedComposition,None)
+    assertEquals(runtime.installedCamera.get.viewMatrix.unsafeArray.toVector,baseline.camera.viewMatrix.unsafeArray.toVector)
+    assert(runtime.calls.contains("composition-clear"))

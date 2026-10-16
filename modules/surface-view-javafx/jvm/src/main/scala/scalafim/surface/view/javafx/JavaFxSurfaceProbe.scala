@@ -532,18 +532,19 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("camera update also changed mesh resources"))
     else
-      val started = System.nanoTime()
-      plan = next
-      JavaFxSurfaceProbe.configureCamera(perspectiveCamera, cameraTransform, next)
-      JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
-      configureParallelClipping()
-      configureViewportScenes()
-      Right(JavaFxSurfaceUpdateReceipt(
-        geometryRebuilt = false,
-        atlasesUpdated = 0,
-        dirtyPixels = 0L,
-        updateNanos = System.nanoTime() - started
-      ))
+      JavaFxSurfaceProbe.validatePlan(next, activeMaterialMode, config).map: _ =>
+        val started = System.nanoTime()
+        plan = next
+        JavaFxSurfaceProbe.configureCamera(perspectiveCamera, cameraTransform, next)
+        JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
+        configureParallelClipping()
+        configureViewportScenes()
+        JavaFxSurfaceUpdateReceipt(
+          geometryRebuilt = false,
+          atlasesUpdated = 0,
+          dirtyPixels = 0L,
+          updateNanos = System.nanoTime() - started
+        )
 
 object JavaFxSurfaceProbe:
   private[javafx] def validatePlan(
@@ -551,6 +552,8 @@ object JavaFxSurfaceProbe:
     mode: JavaFxMaterialMode,
     config: JavaFxAtlasConfig
   ): Either[JavaFxSurfaceError, Map[SurfaceId, Array[Int]]] =
+    if !plan.validCameras then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     if plan.meshes.map(_.surface).distinct.length != plan.meshes.length then
       return Left(JavaFxSurfaceError.IncompatiblePlan("duplicate surface mesh identifiers"))
     var meshIndex = 0

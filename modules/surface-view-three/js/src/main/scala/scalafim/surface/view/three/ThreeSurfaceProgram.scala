@@ -170,7 +170,10 @@ object ThreeSurfaceProgram:
     forceDraw: Boolean = false
   ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
     SurfaceThresholdEdgeValidation.validate(next).left.map(ThreeSurfaceError.InvalidPlan.apply).flatMap: _ =>
-      validate(next).flatMap: _ =>
+      if next.surfaceCameras.nonEmpty then
+        Left(ThreeSurfaceError.InvalidPlan("per-surface camera overrides require checked composition rendering"))
+      else if !next.validCameras then Left(ThreeSurfaceError.InvalidPlan("unsupported per-surface camera contract"))
+      else validate(next).flatMap: _ =>
         previous match
           case None => initial(next, size)
           case Some((before, beforeSize)) => incremental(before, beforeSize, next, size, forceDraw)
