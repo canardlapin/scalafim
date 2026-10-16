@@ -129,6 +129,7 @@ object SurfaceRasterizer:
     SurfacePlanRevision.Current,
     Set(
       SurfaceBackendFeature.DeterministicPixels,
+      SurfaceBackendFeature.PerSurfaceCameras,
       SurfaceBackendFeature.FacewiseData,
       SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.ScalarInterpolation,

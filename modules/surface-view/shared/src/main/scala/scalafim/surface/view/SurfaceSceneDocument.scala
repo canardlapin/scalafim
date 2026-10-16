@@ -151,6 +151,7 @@ final case class SurfaceSceneDocument private (
     val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
     val nearest = Option.when(layers.exists(_.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))(SurfaceBackendFeature.NearestVertexSampling)
     val scalar = Option.when(layers.exists(_.scalarInterpolation))(SurfaceBackendFeature.ScalarInterpolation)
+    val perSurfaceCameras = Option.when(surfaceViewpoints.nonEmpty)(SurfaceBackendFeature.PerSurfaceCameras)
     val linearLight = Option.when(colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight)(SurfaceBackendFeature.DisplayLinearLight)
     val translucency = Option.when(surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) || surfaceBase.alpha < 255)(SurfaceBackendFeature.SurfaceTranslucency)
     val thresholdEdges = Option.when(layers.exists(_.thresholdEdges))(SurfaceBackendFeature.ThresholdEdgeOverlay)
@@ -159,7 +160,7 @@ final case class SurfaceSceneDocument private (
       group.exists(_.scalarInterpolation) ||
         (group.exists(layer => layer.association == SurfaceSampleAssociation.Vertex && layer.vertexInterpolation == SurfaceVertexInterpolation.Color) &&
           group.exists(layer => layer.association == SurfaceSampleAssociation.Face || layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))))(SurfaceBackendFeature.FragmentComposition)
-    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ linearLight ++ translucency ++ thresholdEdges ++ surfaceBaseColor ++ fragment)
+    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ perSurfaceCameras ++ linearLight ++ translucency ++ thresholdEdges ++ surfaceBaseColor ++ fragment)
       .filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
     if missing.isEmpty then Right(())
     else Left(SurfaceSceneError.MissingCapabilities(missing))
@@ -572,6 +573,7 @@ enum SurfaceSceneError:
 private[view] object SurfaceSceneNames:
   def feature(value: SurfaceBackendFeature): String =
     value match
+      case SurfaceBackendFeature.PerSurfaceCameras => "per-surface-cameras"
       case SurfaceBackendFeature.DeterministicPixels => "deterministic-pixels"
       case SurfaceBackendFeature.HardwareAcceleration => "hardware-acceleration"
       case SurfaceBackendFeature.DepthBuffer => "depth-buffer"

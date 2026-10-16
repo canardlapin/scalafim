@@ -103,6 +103,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
   private val admittedFeatures =
     val base = Set(
       SurfaceBackendFeature.HardwareAcceleration,
+      SurfaceBackendFeature.PerSurfaceCameras,
       SurfaceBackendFeature.FacewiseData,
       SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.DepthBuffer,

@@ -19,5 +19,5 @@ object FreezeSurfaceScene:
     (model,state,bindings,provenance)
   def main(args: Array[String]): Unit =
     val (model,state,bindings,provenance) = fixture()
-    val json = SurfaceSceneCodec.encode(SurfaceSceneDocument.capture(model,state,bindings,provenance).toOption.get)
+    val json = SurfaceSceneCodec.encode(SurfaceSceneDocument.capture(model,state,bindings,provenance,requiredFeatures=Set(SurfaceBackendFeature.PerSurfaceCameras)).toOption.get)
     Files.writeString(Path.of(args(0)),json+"\n")

@@ -531,20 +531,21 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   def applyCamera(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("camera update also changed mesh resources"))
+    else if !next.validCameras then
+      Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     else
-      JavaFxSurfaceProbe.validatePlan(next, activeMaterialMode, config).map: _ =>
-        val started = System.nanoTime()
-        plan = next
-        JavaFxSurfaceProbe.configureCamera(perspectiveCamera, cameraTransform, next)
-        JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
-        configureParallelClipping()
-        configureViewportScenes()
-        JavaFxSurfaceUpdateReceipt(
-          geometryRebuilt = false,
-          atlasesUpdated = 0,
-          dirtyPixels = 0L,
-          updateNanos = System.nanoTime() - started
-        )
+      val started = System.nanoTime()
+      plan = next
+      JavaFxSurfaceProbe.configureCamera(perspectiveCamera, cameraTransform, next)
+      JavaFxSurfaceProbe.configureLayout(plan, layoutTransforms, viewportWidth, viewportHeight)
+      configureParallelClipping()
+      configureViewportScenes()
+      Right(JavaFxSurfaceUpdateReceipt(
+        geometryRebuilt = false,
+        atlasesUpdated = 0,
+        dirtyPixels = 0L,
+        updateNanos = System.nanoTime() - started
+      ))
 
 object JavaFxSurfaceProbe:
   private[javafx] def validatePlan(

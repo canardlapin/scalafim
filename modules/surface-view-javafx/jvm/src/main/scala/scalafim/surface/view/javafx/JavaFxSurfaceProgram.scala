@@ -132,6 +132,7 @@ final case class JavaFxCapabilityReport(
     val available =
       if scene3d then Set(
         SurfaceBackendFeature.HardwareAcceleration,
+        SurfaceBackendFeature.PerSurfaceCameras,
         SurfaceBackendFeature.FacewiseData,
         SurfaceBackendFeature.NearestVertexSampling,
         SurfaceBackendFeature.DepthBuffer,
