@@ -192,6 +192,25 @@ final class JavaFxSurfaceBackend private (
   private var current: Option[JavaFxSurfaceProbeResult] = None
   private var mountedScene: Option[SubScene] = None
   private var disposed = false
+  private var colorOwner = new JavaFxColorPreparationToken
+
+  def colorPreparationBasis: Either[JavaFxSurfaceError, JavaFxColorPreparationBasis] =
+    requireFxThread().flatMap: _ =>
+      if disposed || approximationConfig.nonEmpty then
+        Left(JavaFxSurfaceError.IncompatiblePlan("worker colour preparation requires a mounted native scene"))
+      else current.toRight(JavaFxSurfaceError.IncompatiblePlan("no surface scene is mounted"))
+        .map(_.colorPreparationBasis(colorOwner))
+
+  def render(plan: SurfaceRenderPlan, colors: JavaFxPreparedColorUpdate): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    requireFxThread().flatMap: _ =>
+      if disposed || approximationConfig.nonEmpty || !(colors.owner eq colorOwner) then
+        Left(JavaFxSurfaceError.IncompatiblePlan("colour preparation is foreign or no longer current; prepare again"))
+      else for
+        probe <- current.toRight(JavaFxSurfaceError.IncompatiblePlan("no surface scene is mounted"))
+        _ <- probe.validatePrepared(colors, plan)
+        _ <- JavaFxSurfaceBackend.validateCapabilities(plan)
+        receipt <- renderPrepared(plan, JavaFxPreparedSurface(plan, None), Some(colors))
+      yield receipt
 
   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val started = System.nanoTime()
@@ -222,7 +241,7 @@ final class JavaFxSurfaceBackend private (
               approximation = cached.approximation.map(_.copy(preparationNanos = 0L, reused = true))))
           case _ => JavaFxSurfaceApproximation.prepare(plan, settings, config)
 
-  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface, colors: Option[JavaFxPreparedColorUpdate] = None): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val plan = prepared.plan
     JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
@@ -272,7 +291,7 @@ final class JavaFxSurfaceBackend private (
                   geometryUpdates += 1
                   geometryBytesUpdated += receipt.bytesUpdated
             case JavaFxSurfaceCommand.UpdateAtlases(next) =>
-              current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)) match
+              colors.fold(current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)))(current.get.updatePreparedColors(_, next)) match
                 case Left(error) => failure = Some(error)
                 case Right(receipt) =>
                   atlasUpdates += receipt.atlasesUpdated
@@ -291,6 +310,8 @@ final class JavaFxSurfaceBackend private (
         failure match
           case Some(error) => Left(error)
           case None =>
+            if program.dirty.geometry || program.dirty.layerData || program.dirty.material then
+              colorOwner = new JavaFxColorPreparationToken
             currentPlan = Some(source)
             currentPrepared = Some(prepared)
             Right(JavaFxInterpretReceipt(
@@ -440,6 +461,8 @@ object JavaFxSurfaceBackend:
     else if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
         plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
       Left(JavaFxSurfaceError.IncompatiblePlan("explicit color pipeline and surface alpha require JavaFxRasterSurfaceHost"))
+    else if plan.layers.exists(_.coverage != SurfaceLayerCoverage.All) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("restricted layer coverage requires the reference raster backend"))
     else if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend"))
     else plan.clipping match

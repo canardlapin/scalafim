@@ -29,14 +29,12 @@ final class SurfaceLayerTransaction private[view] (
       readout.map: (readouts, chrome) =>
         preparedPlan.copy(
           slots = currentPlan.slots,
-          meshes = currentPlan.meshes,
           camera = currentPlan.camera,
           lighting = currentPlan.lighting,
           clipping = currentPlan.clipping,
           chrome = chrome,
           readouts = readouts,
           receipt = preparedPlan.receipt.copy(
-            meshKeys = currentPlan.receipt.meshKeys,
             cameraKey = currentPlan.receipt.cameraKey
           ),
           viewportFit = currentPlan.viewportFit

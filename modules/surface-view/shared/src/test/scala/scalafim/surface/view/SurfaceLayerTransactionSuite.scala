@@ -199,7 +199,8 @@ class SurfaceLayerTransactionSuite extends munit.FunSuite:
     assertEquals(rebased.lighting, live.lighting)
     assertEquals(rebased.clipping, live.clipping)
     assert(rebased.layers eq transaction.preparedPlan.layers)
-    assert(rebased.meshes eq live.meshes)
+    assertEquals(rebased.meshes.map(_.geometryKey), live.meshes.map(_.geometryKey))
+    assertEquals(rebased.meshes.head.positions.unsafeArray.toVector, live.meshes.head.positions.unsafeArray.toVector)
 
 
   test("switching world clipping modes requires new fragment preparation"):

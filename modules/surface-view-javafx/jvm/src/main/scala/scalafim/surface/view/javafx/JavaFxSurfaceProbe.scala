@@ -123,6 +123,12 @@ final class JavaFxFaceAtlas private[javafx] (
     pixels.position(0)
     new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
 
+  private[javafx] def installPrepared(values: Array[Int]): Rectangle2D =
+    pixels.position(0)
+    pixels.put(values)
+    pixels.position(0)
+    new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
+
   def commit(region: Rectangle2D): Unit =
     pixelBuffer.updateBuffer(_ => region)
 
@@ -363,6 +369,66 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     releaseViewportScenes()
     scenes
 
+  private[javafx] def pixelLayouts: Vector[JavaFxAtlasPixelLayout] =
+    chunks.map(c => JavaFxAtlasPixelLayout(c.surface, c.faceStart, c.faceCount,
+      c.atlas.width, c.atlas.height, c.atlas.tileSize))
+
+  private[javafx] def colorPreparationBasis(owner: JavaFxColorPreparationToken): JavaFxColorPreparationBasis =
+    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts, config)
+
+  private def validateColorGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    if next.meshes.length != plan.meshes.length then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("surface count changed"))
+    var index = 0
+    while index < plan.meshes.length do
+      val before = plan.meshes(index)
+      val after = next.meshes(index)
+      if before.surface != after.surface || before.resourceKey != after.resourceKey ||
+          !java.util.Arrays.equals(before.indices.unsafeArray, after.indices.unsafeArray) then
+        return Left(JavaFxSurfaceError.IncompatiblePlan(s"topology changed for ${before.surface.value}"))
+      index += 1
+    Right(())
+
+  private[javafx] def validatePrepared(prepared: JavaFxPreparedColorUpdate, next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    if !prepared.matches(next) || prepared.layouts != pixelLayouts || prepared.atlases.size != chunks.size then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("prepared colour inputs no longer current; prepare again"))
+    validateColorGeometry(next) match
+      case Left(error) => return Left(error)
+      case Right(_) => ()
+    var index = 0
+    while index < chunks.size do
+      val chunk = chunks(index)
+      val update = prepared.atlases(index)
+      if config.encoding != JavaFxAtlasEncoding.LegacyTriangle ||
+          update.pixels.length != chunk.atlas.width * chunk.atlas.height ||
+          update.coordinates.length != chunk.mesh.getTexCoords.size() then
+        return Left(JavaFxSurfaceError.IncompatiblePlan("prepared atlas capacity changed; prepare again"))
+      index += 1
+    Right(())
+
+  private[javafx] def updatePreparedColors(prepared: JavaFxPreparedColorUpdate,
+      next: SurfaceRenderPlan, commit: Boolean = true): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
+    validatePrepared(prepared, next).map: _ =>
+      val started = System.nanoTime()
+      var bytes = 0L
+      var pixels = 0L
+      chunks.zip(prepared.atlases).foreach: (chunk, update) =>
+        var same = true
+        var index = 0
+        while index < update.coordinates.length && same do
+          same = update.coordinates(index) == chunk.mesh.getTexCoords.get(index)
+          index += 1
+        if !same then
+          chunk.mesh.getTexCoords.setAll(update.coordinates, 0, update.coordinates.length)
+          bytes += update.coordinates.length.toLong * 4L
+        val region = chunk.atlas.installPrepared(update.pixels)
+        if commit then chunk.atlas.commit(region)
+        pixels += update.pixels.length
+      plan = next
+      configureMode(JavaFxSurfaceProgram.materialMode(next))
+      JavaFxSurfaceUpdateReceipt(false, chunks.length, pixels, System.nanoTime() - started,
+        textureCoordinateBytesUpdated = bytes)
+
   def updateColors(
     next: SurfaceRenderPlan,
     commit: Boolean = false,
@@ -371,6 +437,9 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
     else
+      validateColorGeometry(next) match
+        case Left(error) => return Left(error)
+        case Right(_) => ()
       val started = System.nanoTime()
       val colorsBySurface = JavaFxSurfaceProbe.validatePlan(next, mode, config) match
         case Left(error) => return Left(error)
