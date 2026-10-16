@@ -100,6 +100,18 @@ class SurfacePairedCameraSuite extends munit.FunSuite:
     assert(SurfaceCompositionPlan.fromLegacy(first.copy(surfaceCameras = Map(left -> first.camera.copy(
       projectionMatrix = new FloatBufferView(changedProjection))))).isLeft)
 
+  test("compiled pairing adapts to portrait panes without changing cameras or scientific resources"):
+    val plan = compile(paired())
+    assertEquals(plan.viewportFit, SurfaceViewportFit.Pack(1.0))
+    val wide = plan.viewportFit.resolve(plan.slots, 1200.0, 400.0)
+    val tall = plan.viewportFit.resolve(plan.slots, 400.0, 800.0)
+    assertEqualsDouble(wide.head.viewport.y, wide.last.viewport.y, 1e-12)
+    assertEqualsDouble(tall.head.viewport.x, tall.last.viewport.x, 1e-12)
+    assertEqualsDouble(tall.head.viewport.width * 400.0, 400.0, 1e-9)
+    assertEqualsDouble(tall.head.viewport.height * 800.0, 400.0, 1e-9)
+    assertEquals(tall.map(_.surface), plan.slots.map(_.surface))
+    assertEquals(compile(paired()).receipt, plan.receipt)
+
   test("an explicit typed pose remains authoritative over a single-surface override"):
     val base = SurfaceViewerState.initial(model)
     val display = SurfaceDisplayFrame.declare(model, left, SurfaceDisplayWorld.frame).toOption.get

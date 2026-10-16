@@ -248,10 +248,11 @@ object SurfaceRasterizer:
     if fragmentCapacity < 1 || dimensions.pixelCount > fragmentCapacity then
       return Left(SurfaceRasterError.FragmentCapacityExceeded(fragmentCapacity))
     val entries = plan.views.flatMap(view => view.instances.map(instance => (view, instance)))
+    val fitted = plan.fittedViewports(dimensions.width.toDouble, dimensions.height.toDouble).toMap
     val slots = entries.map: (view, instance) =>
-      val slot = SurfaceViewSlot(instance.surface, view.viewport,
+      val viewport = fitted(view)
+      SurfaceViewSlot(instance.surface, viewport,
         instance.translationX, instance.translationY, instance.translationZ)
-      view.viewportFit.resolve(Vector(slot), dimensions.width.toDouble, dimensions.height.toDouble).head
     val meshes = entries.map((_, instance) => plan.resources.meshes(instance.mesh))
     val contexts = entries.map: (view, instance) =>
       SlotContext(view.camera, view.lighting, view.clipping,

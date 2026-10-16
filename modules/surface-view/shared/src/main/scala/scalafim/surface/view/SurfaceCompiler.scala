@@ -253,7 +253,8 @@ object SurfaceCompiler:
       profile,
       receipt,
       if state.framing == CameraFraming.LegacyV1 then SurfaceViewportFit.Fill
-      else SurfaceViewportFit.Contain(slots.length.toDouble * state.camera.aspectRatio.value),
+      else if slots.length > 1 then SurfaceViewportFit.Pack(state.camera.aspectRatio.value)
+      else SurfaceViewportFit.Contain(state.camera.aspectRatio.value),
       fragmentSurfaces,
       state.colorPipeline,
       state.surfaceOpacities,

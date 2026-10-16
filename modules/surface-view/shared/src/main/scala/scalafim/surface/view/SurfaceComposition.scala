@@ -82,7 +82,12 @@ final class SurfaceCompositionPlan private (
   val views: Vector[SurfaceCompositionView],
   val resources: SurfaceCompositionResources,
   val receipt: SurfaceCompositionReceipt
-)
+):
+  /** Resolve all views together so packing preserves declaration order even
+    * when more than one view displays the same scientific surface. */
+  def fittedViewports(width: Double, height: Double): Vector[(SurfaceCompositionView, SurfaceViewport)] =
+    val slots = views.map(view => SurfaceViewSlot(view.instances.head.surface, view.viewport))
+    views.zip(views.head.viewportFit.resolve(slots, width, height).map(_.viewport))
 
 object SurfaceCompositionPlan:
   def make(views: Vector[SurfaceCompositionView], resources: SurfaceCompositionResources): Either[SurfaceCompositionError, SurfaceCompositionPlan] =

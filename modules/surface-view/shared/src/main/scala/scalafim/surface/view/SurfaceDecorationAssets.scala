@@ -105,10 +105,10 @@ object SurfaceLabelLayout:
           case Right(asset) =>
             plan.views.find(_.id == label.origin.view) match
               case None => error = Some("label view is absent")
-              case Some(view) => output += quad(label, asset, view, geometry.canvasWidth, geometry.canvasHeight)
+              case Some(view) => output += quad(label, asset, plan, view, geometry.canvasWidth, geometry.canvasHeight)
       error.toLeft(geometry.copy(meshes = geometry.meshes ++ output.result(), labels = Vector.empty))
 
-  private def quad(label: SurfaceLabelPacket, asset: SurfaceLabelAsset,
+  private def quad(label: SurfaceLabelPacket, asset: SurfaceLabelAsset, plan: SurfaceCompositionPlan,
       view: SurfaceCompositionView, width: Int, height: Int): SurfaceDecorationMesh =
     val point = label.point
     val camera = view.camera
@@ -116,8 +116,7 @@ object SurfaceLabelLayout:
     val p = camera.projectionMatrix
     val eyeZ = m(8) * point.x + m(9) * point.y + m(10) * point.z + m(11)
     val w = math.abs(p(14) * eyeZ + p(15))
-    val slot = SurfaceViewSlot(view.instances.head.surface, view.viewport)
-    val box = view.viewportFit.resolve(Vector(slot), width, height).head.viewport
+    val box = plan.fittedViewports(width, height).find(_._1.id == view.id).get._2
     val (sx, sy) = label.size.unit match
       case SurfaceDecorationUnit.World => (label.size.value / asset.fontEm, label.size.value / asset.fontEm)
       case SurfaceDecorationUnit.Pixels =>
