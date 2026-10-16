@@ -189,7 +189,20 @@ object BidsStudyCompiler:
     compiled.foreach(result => issues ++= result._1)
 
     val candidates = compiled.flatMap(_._2)
-    val grouped = candidates.groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
+    val aliasCollisions = candidates.groupBy(run => normalizedUnitKey(run)).toVector
+      .collect { case (key, runs) if runs.size > 1 => key -> runs.sortBy(_.bold.path.value) }
+      .sortBy(_._1.sortKey)
+    aliasCollisions.foreach { case (_, runs) =>
+      val paths = runs.map(_.bold.path.value)
+      issues += CatalogIssue(
+        CatalogIssueCode.DuplicateRun,
+        runs.headOption.map(_.bold.path),
+        s"numeric-equivalent BOLD aliases collide: ${paths.mkString(", ")}"
+      )
+    }
+    val collidingPaths = aliasCollisions.flatMap(_._2.map(_.bold.path)).toSet
+    val grouped = candidates.filterNot(run => collidingPaths.contains(run.bold.path))
+      .groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
     val units = Vector.newBuilder[FirstLevelUnit]
     grouped.foreach { case (key, runs) =>
       compileUnit(recipe, imageHeaders, key, runs.sortBy(run => run.runId.value)) match
@@ -506,6 +519,13 @@ object BidsStudyCompiler:
       run = if grouping == RunGrouping.OneUnitPerRun then Some(run.runId.value) else None
     )
 
+  private def normalizedUnitKey(run: CandidateRun): UnitKey =
+    val key = unitKey(run, RunGrouping.OneUnitPerRun)
+    key.copy(
+      echo = key.echo.map(normalizedDecimalIndex),
+      run = key.run.map(normalizedDecimalIndex)
+    )
+
   private def requiredEntity(
       file: BidsFile,
       key: EntityKey,
@@ -585,10 +605,31 @@ object BidsStudyCompiler:
       requirePipeline: Boolean
   ): Boolean =
     val entitiesMatch = keys.forall { key =>
-      candidate.entities.get(key).forall(value => target.entities.get(key).contains(value))
+      candidate.entities.get(key).forall(value => target.entities.get(key).exists(
+        targetValue => equivalentEntityValue(key, value, targetValue)
+      ))
     }
     val pipelineMatches = !requirePipeline || candidate.pipeline == target.pipeline
     entitiesMatch && pipelineMatches
+
+  /** `run` and `echo` are BIDS index entities. Match their decimal spelling without numeric conversion,
+    * without changing persisted labels or admitting the same rule for BIDS label entities.
+    */
+  private def equivalentEntityValue(key: EntityKey, left: String, right: String): Boolean =
+    if key == EntityKey.Run || key == EntityKey.Echo then
+      (decimalIndex(left), decimalIndex(right)) match
+        case (Some(a), Some(b)) => a == b
+        case _ => left == right
+    else left == right
+
+  private def decimalIndex(value: String): Option[String] =
+    if value.nonEmpty && value.forall(character => character >= '0' && character <= '9') then
+      val withoutLeadingZeros = value.dropWhile(_ == '0')
+      Some(if withoutLeadingZeros.isEmpty then "0" else withoutLeadingZeros)
+    else None
+
+  private def normalizedDecimalIndex(value: String): String =
+    decimalIndex(value).getOrElse(value)
 
   private def artifactRef[A](recipe: DatasetRecipe, file: BidsFile): WorkflowArtifactRef[A] =
     new WorkflowArtifactRef[A](recipe.project.location.resolve(file.path.value))

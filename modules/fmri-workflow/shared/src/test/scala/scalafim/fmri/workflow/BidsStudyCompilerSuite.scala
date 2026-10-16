@@ -58,6 +58,147 @@ class BidsStudyCompilerSuite extends FunSuite:
     assertEquals(unit.runs.head.timing.sliceTimingCorrected, None)
   }
 
+  test("run and echo index padding selects unique event confound and mask companions") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val padded = "0" * 512 + "1"
+    val oldIndex = "run-01_echo-1"
+    val paddedIndex = s"run-$padded" + s"_echo-$padded"
+    val paths = fixture.project.manifest.files.map(_.path.value).map { path =>
+      if path.endsWith("_events.tsv") || path.endsWith("_desc-confounds_timeseries.tsv") || path.endsWith("_mask.nii") then
+        path.replace(oldIndex, paddedIndex)
+      else path
+    }
+    val headers = fixture.headers.headers.map { (path, descriptor) =>
+      val changed = if path.value.endsWith("_mask.nii") then path.value.replace(oldIndex, paddedIndex) else path.value
+      BidsPath(changed) -> descriptor
+    }
+    val project = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(paths, fixture.project.derivatives))
+    val unit = BidsStudyCompiler.compile(project, fixture.recipe, ImageHeaderCatalog(headers)).toOption.get.units.head
+    assertEquals(unit.runs.head.id.value, "01")
+    assert(unit.runs.head.bold.location.value.contains("run-01_echo-1"))
+    assert(unit.runs.head.events.location.value.contains(paddedIndex))
+    assert(unit.runs.head.confounds.exists(_.location.value.contains(paddedIndex)))
+    assertEquals(unit.mask.artifacts.map(_.location.value),
+      paths.filter(_.endsWith("_mask.nii")).map(path => s"file:///study/$path"))
+  }
+
+  test("zero-valued run and echo indices match across padding without rewriting run identity") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val originalIndex = "run-01_echo-1"
+    val targetIndex = "run-00_echo-00"
+    val companionIndex = "run-0_echo-0"
+    val paths = fixture.project.manifest.files.map(_.path.value).map { path =>
+      val target = path.replace(originalIndex, targetIndex)
+      if target.endsWith("_events.tsv") || target.endsWith("_desc-confounds_timeseries.tsv") || target.endsWith("_mask.nii") then
+        target.replace(targetIndex, companionIndex)
+      else target
+    }
+    val headers = fixture.headers.headers.map { (path, descriptor) =>
+      val target = path.value.replace(originalIndex, targetIndex)
+      val changed = if target.endsWith("_mask.nii") then target.replace(targetIndex, companionIndex) else target
+      BidsPath(changed) -> descriptor
+    }
+    val sidecars = fixture.project.sidecars.map { (path, metadata) =>
+      BidsPath(path.value.replace(originalIndex, targetIndex)) -> metadata
+    }
+    val project = fixture.project.copy(
+      manifest = BidsManifest.fromRelativePaths(paths, fixture.project.derivatives),
+      sidecars = sidecars
+    )
+    val unit = BidsStudyCompiler.compile(project, fixture.recipe, ImageHeaderCatalog(headers)).toOption.get.units.head
+    assertEquals(unit.runs.head.id.value, "00")
+    assert(unit.runs.head.bold.location.value.contains(targetIndex))
+    assert(unit.runs.head.events.location.value.contains(companionIndex))
+  }
+
+  test("padded event and confound duplicates remain equally-specific ambiguities") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val event = paths.find(_.endsWith("_events.tsv")).get
+    val confound = paths.find(_.endsWith("_desc-confounds_timeseries.tsv")).get
+    val padded = "run-1_echo-01"
+    val ambiguousEvents = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ event.replace("run-01_echo-1", padded), fixture.project.derivatives))
+    assert(BidsStudyCompiler.compile(ambiguousEvents, fixture.recipe, fixture.headers).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+    val ambiguousConfounds = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ confound.replace("run-01_echo-1", padded), fixture.project.derivatives))
+    assert(BidsStudyCompiler.compile(ambiguousConfounds, fixture.recipe, fixture.headers).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+  }
+
+  test("BIDS labels and malformed index values remain exact matches") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val event = paths.find(_.endsWith("_events.tsv")).get
+    val mask = paths.find(_.endsWith("_mask.nii")).get
+    val subjectMismatch = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(path => if path == event then path.replace("sub-01", "sub-1") else path), fixture.project.derivatives))
+    assert(BidsStudyCompiler.compile(subjectMismatch, fixture.recipe, fixture.headers).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.MissingEvents))
+    val sessionPaths = paths.map(_.replace("sub-01_", "sub-01_ses-01_"))
+      .map(path => if path.endsWith("_events.tsv") then path.replace("ses-01", "ses-1") else path)
+    val sessionHeaders = fixture.headers.headers.map { (path, descriptor) =>
+      BidsPath(path.value.replace("sub-01_", "sub-01_ses-01_")) -> descriptor
+    }
+    val sessionSidecars = fixture.project.sidecars.map { (path, metadata) =>
+      BidsPath(path.value.replace("sub-01_", "sub-01_ses-01_")) -> metadata
+    }
+    val sessionMismatch = fixture.project.copy(
+      manifest = BidsManifest.fromRelativePaths(sessionPaths, fixture.project.derivatives),
+      sidecars = sessionSidecars
+    )
+    assert(BidsStudyCompiler.compile(sessionMismatch, fixture.recipe, ImageHeaderCatalog(sessionHeaders)).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.MissingEvents))
+    val acquisitionMismatch = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(path => if path == event then path.replace("acq-mb", "acq-0mb") else path), fixture.project.derivatives))
+    assert(BidsStudyCompiler.compile(acquisitionMismatch, fixture.recipe, fixture.headers).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.MissingEvents))
+    val resolutionPaths = paths.map(path => if path == mask then path.replace("res-2", "res-02") else path)
+    val resolutionHeaders = fixture.headers.headers.map { (path, descriptor) =>
+      BidsPath(if path.value == mask then path.value.replace("res-2", "res-02") else path.value) -> descriptor
+    }
+    val resolutionMismatch = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(resolutionPaths, fixture.project.derivatives))
+    assert(BidsStudyCompiler.compile(resolutionMismatch, fixture.recipe, ImageHeaderCatalog(resolutionHeaders)).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.MissingMask))
+    val malformedTargetPaths = paths.map(_.replace("run-01", "run-01a"))
+      .map(path => if path.endsWith("_events.tsv") then path.replace("run-01a", "run-1a") else path)
+    val malformedHeaders = fixture.headers.headers.map { (path, descriptor) =>
+      BidsPath(path.value.replace("run-01", "run-01a")) -> descriptor
+    }
+    val malformedSidecars = fixture.project.sidecars.map { (path, metadata) =>
+      BidsPath(path.value.replace("run-01", "run-01a")) -> metadata
+    }
+    val malformed = fixture.project.copy(
+      manifest = BidsManifest.fromRelativePaths(malformedTargetPaths, fixture.project.derivatives),
+      sidecars = malformedSidecars
+    )
+    assert(BidsStudyCompiler.compile(malformed, fixture.recipe, ImageHeaderCatalog(malformedHeaders)).left.toOption.get.issues
+      .exists(_.code == CatalogIssueCode.MissingEvents))
+  }
+
+  test("numeric-equivalent BOLD aliases are refused under both grouping policies") {
+    Vector("run-1_echo-1", "run-01_echo-01").foreach { alias =>
+      Vector(RunGrouping.BySubjectSessionTask, RunGrouping.OneUnitPerRun).foreach { grouping =>
+        val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"), grouping = grouping)
+        val paths = fixture.project.manifest.files.map(_.path.value)
+        val bold = paths.find(_.endsWith("_bold.nii")).get
+        val aliasBold = bold.replace("run-01_echo-1", alias)
+        val sidecar = BidsPath(bold.stripSuffix(".nii") + ".json")
+        val aliasSidecar = BidsPath(aliasBold.stripSuffix(".nii") + ".json")
+        val project = fixture.project.copy(
+          manifest = BidsManifest.fromRelativePaths(paths ++ Vector(aliasBold, aliasSidecar.value), fixture.project.derivatives),
+          sidecars = fixture.project.sidecars.updated(aliasSidecar, fixture.project.sidecars(sidecar))
+        )
+        val headers = fixture.headers.headers.updated(BidsPath(aliasBold), fixture.headers.headers(BidsPath(bold)))
+        val report = BidsStudyCompiler.compile(project, fixture.recipe, ImageHeaderCatalog(headers)).left.toOption.get
+        val collision = report.issues.find(_.code == CatalogIssueCode.DuplicateRun).getOrElse(fail("missing alias collision"))
+        assertEquals(collision.path, Some(BidsPath(Vector(bold, aliasBold).sorted.head)))
+        assert(collision.message.contains(bold) && collision.message.contains(aliasBold))
+      }
+    }
+  }
+
   test("compiler groups exact fMRIPrep entities into deterministic multi-run units") {
     val fixture = studyFixture(subjects = Vector("02", "01"), runs = Vector("02", "01"))
     val catalog = BidsStudyCompiler.compile(fixture.project, fixture.recipe, fixture.headers).toOption.get
