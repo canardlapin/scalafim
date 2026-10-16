@@ -21,6 +21,43 @@ class BidsStudyCompilerSuite extends FunSuite:
 
   private def fixtureSpace(dims: Vector[Int]): image4s.SomeSampleSpace =
     SampleSpaces.inWorld(SampleSpaces(dims), fixtureWorld).fold(error => fail(error.message), identity)
+  test("observed slice-timing metadata preserves true, false and unknown separately") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    Vector(None, Some(false), Some(true)).foreach { status =>
+      val sidecars = fixture.project.sidecars.map { (path, metadata) =>
+        val fields = metadata.fields ++ status.map(value => "SliceTimingCorrected" -> JsonValue.Bool(value))
+        path -> (JsonValue.Obj(fields): JsonValue.Obj)
+      }
+      val project = fixture.project.copy(sidecars = sidecars)
+      val unit = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head
+      assertEquals(unit.runs.head.timing.sliceTimingCorrected, status)
+      // Metadata must not silently select a sampling reference.
+      assertEqualsDouble(SamplingReference.VolumeMidpoint.resolve(unit.runs).toOption.get.runs.head.firstSample.value, 1.0, 0.0)
+    }
+  }
+
+  test("present malformed slice-timing correction declarations are refused") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    Vector(JsonValue.Str("false"), JsonValue.Num(0.0), JsonValue.Null).foreach { value =>
+      val project = fixture.project.copy(sidecars = fixture.project.sidecars.map { (path, metadata) =>
+        path -> (JsonValue.Obj(metadata.fields.updated("SliceTimingCorrected", value)): JsonValue.Obj)
+      })
+      val report = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).left.toOption.get
+      assert(report.issues.exists(issue => issue.code == CatalogIssueCode.InvalidTimingMetadata &&
+        issue.field.contains("SliceTimingCorrected") && issue.path.nonEmpty))
+    }
+  }
+
+  test("raw companion metadata does not assert derivative slice-timing correction") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val raw = "sub-01/func/sub-01_task-demo_acq-mb_run-01_echo-1_bold.json"
+    val project = fixture.project.copy(
+      manifest = BidsManifest.fromRelativePaths(fixture.project.manifest.files.map(_.path.value) :+ raw, fixture.project.derivatives),
+      sidecars = fixture.project.sidecars.updated(BidsPath(raw), JsonValue.Obj(Map("SliceTimingCorrected" -> JsonValue.Bool(true)))))
+    val unit = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head
+    assertEquals(unit.runs.head.timing.sliceTimingCorrected, None)
+  }
+
   test("compiler groups exact fMRIPrep entities into deterministic multi-run units") {
     val fixture = studyFixture(subjects = Vector("02", "01"), runs = Vector("02", "01"))
     val catalog = BidsStudyCompiler.compile(fixture.project, fixture.recipe, fixture.headers).toOption.get
