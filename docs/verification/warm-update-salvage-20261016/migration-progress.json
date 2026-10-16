@@ -1,0 +1,64 @@
+{
+  "providerIssue": "bd-01M52AQ9JQS51XFMB17X4BDQJX",
+  "consumerIssue": "plsneuro:bd-01M52AWZR7FJW4QX66CSFJ0SZT",
+  "mainBaseline": "ac2ec8b706fce08596a943d79f71a140aad05948",
+  "oldBranch": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+  "localCommits": [
+    {
+      "sha": "3a0aebe32498075e2be25d0634a8c7e99a2fe7d2",
+      "behavior": "content-verified bounded cache",
+      "checks": {
+        "JVM": 15,
+        "JS": 62
+      },
+      "log": "cache-gate-03.log"
+    },
+    {
+      "sha": "b77c946ce2d4ee2962cf843610462fbdb66bb336",
+      "behavior": "adaptive/single-plane layout",
+      "checks": {
+        "JVM": 47,
+        "JS": 47
+      },
+      "log": "layout-gate-01.log"
+    },
+    {
+      "sha": "662f88d5bf6cdb067e8cb08917d0f00a2cace854",
+      "behavior": "bounded companion review with cancellation",
+      "checks": {
+        "JVM": 26,
+        "JS": 21,
+        "affectedJvmAfterCancellationFix": 1
+      },
+      "logs": [
+        "companion-gate-01.log",
+        "companion-gate-02.log"
+      ]
+    },
+    {
+      "sha": "302fdca7ab093c0941026d741c224909e9a6bda7",
+      "behavior": "FreeSurfer scalar morphometry",
+      "checks": {
+        "JVM": 14,
+        "JS": 3
+      },
+      "log": "morphometry-gate-01.log"
+    }
+  ],
+  "publishedToMain": false,
+  "consumerRepinned": false,
+  "consumerCompile": {
+    "providerCandidate": "662f88d5bf6cdb067e8cb08917d0f00a2cace854",
+    "result": "110 errors in adapters and glmReviewJavafx; desktop not reached",
+    "log": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/main-compatibility-03.log"
+  },
+  "remaining": [
+    "atlas boundary port in verification",
+    "first-level tables and sampling declarations in verification",
+    "response support and event provenance must integrate current event scaling and derived-row semantics",
+    "typed image/spatial consumer migration",
+    "surface update transactions and geometry scene migration",
+    "full consumer acceptance and touched native lanes",
+    "land provider behavior and repin exact qualified consumer"
+  ]
+}

@@ -1,0 +1,1127 @@
+[
+  {
+    "symbol": "NiftiStagingCache",
+    "retainedPath": "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiStagingCache.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 4,
+        "text": "import scalafim.dataset.io.NiftiStagingCache"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 37,
+        "text": "limits: StudySpatialLimits, staging: Option[NiftiStagingCache] = None): Either[FirstLevelError, StudySpatialReview] ="
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 47,
+        "text": "staging: Option[NiftiStagingCache]): Either[FirstLevelError, StudySpatialReview] ="
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 51,
+        "text": "limits: StudySpatialLimits, staging: Option[NiftiStagingCache]): Either[FirstLevelError, StudySpatialReview] ="
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 8,
+        "text": "import scalafim.dataset.io.NiftiStagingCache"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 379,
+        "text": "staging: Option[NiftiStagingCache] = None): Either[FirstLevelError, StudySpatialReview] ="
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 385,
+        "text": "staging: Option[NiftiStagingCache] = None,"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 396,
+        "text": "staging: Option[NiftiStagingCache] = None,"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RealFirstLevelReview.scala",
+        "line": 6,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RealFirstLevelReview.scala",
+        "line": 43,
+        "text": "val staging = checked(NiftiStagingCache.make(Path.of(args(2)),"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerRealSubjectOracleProbe.scala",
+        "line": 8,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerRealSubjectOracleProbe.scala",
+        "line": 255,
+        "text": "val cache = checked(NiftiStagingCache.make(Path.of(args(2)), NiftiStagingLimits("
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FirstLevelWorkbenchProbe.scala",
+        "line": 6,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FirstLevelWorkbenchProbe.scala",
+        "line": 30,
+        "text": "val staging = checked(NiftiStagingCache.make(Path.of(args(2)),"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+        "line": 4,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+        "line": 24,
+        "text": "private var owned = Option.empty[(Path, StagingSettings, NiftiStagingCache)]"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+        "line": 31,
+        "text": "(work: Option[NiftiStagingCache] => A): A ="
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+        "line": 46,
+        "text": "val cache = NiftiStagingCache.make(directory, limits).fold(e => throw IllegalArgumentException(e.message), identity)"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyPane.scala",
+        "line": 2463,
+        "text": "cache: Option[scalafim.dataset.io.NiftiStagingCache]): StudyCohortReview ="
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealParticipantEstimatesProbe.scala",
+        "line": 7,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealParticipantEstimatesProbe.scala",
+        "line": 37,
+        "text": "val cache = checked(NiftiStagingCache.make(Path.of(args(2)), NiftiStagingLimits("
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeParticipantExplorerProbe.scala",
+        "line": 51,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache,NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeParticipantExplorerProbe.scala",
+        "line": 60,
+        "text": "val cache = ok(NiftiStagingCache.make(staging,NiftiStagingLimits(maxExpandedBytes=2L*1024*1024*1024,minimumFreeBytes=1024L*1024*1024)))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealFirstLevelFit.scala",
+        "line": 7,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealFirstLevelFit.scala",
+        "line": 34,
+        "text": "val cache = checked(NiftiStagingCache.make(Path.of(args(2)), NiftiStagingLimits("
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealCohortFitProbe.scala",
+        "line": 7,
+        "text": "import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealCohortFitProbe.scala",
+        "line": 44,
+        "text": "val cache = checked(NiftiStagingCache.make(Path.of(args(2)), NiftiStagingLimits("
+      }
+    ]
+  },
+  {
+    "symbol": "ReachableResponseBasis",
+    "retainedPath": "modules/design/shared/src/main/scala/scalafim/fmri/design/ReachableResponseBasis.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerNativeAdoptionProbe.scala",
+        "line": 5,
+        "text": "import scalafim.fmri.design.{ReachableBasisError, ReachableResponseBasis}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerNativeAdoptionProbe.scala",
+        "line": 26,
+        "text": "val basis = checked(ReachableResponseBasis.fromFamily(family, samples = 97, maxRank = 18), (_: ReachableBasisError).message)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerNativeAdoptionProbe.scala",
+        "line": 115,
+        "text": "println(s\"PASS: ReachableResponseBasis rank ${basis.rank}, held-out rank-8 residual $rank8\")"
+      }
+    ]
+  },
+  {
+    "symbol": "FirstLevelCompanionReviewJvm",
+    "retainedPath": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelCompanionReviewJvm.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 217,
+        "text": "case Some(reviewed) => FirstLevelCompanionReviewJvm.inspect(catalogSession.root,opened.unit)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 413,
+        "text": "qc = if reviewCompanions then Some(FirstLevelCompanionReviewJvm.inspect(root,unit).left.map(_.message)) else None"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FirstLevelReview.scala",
+        "line": 5,
+        "text": "import scalafim.fmri.workflow.FirstLevelCompanionReviewJvm"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FirstLevelReview.scala",
+        "line": 10,
+        "text": "val qc = prepared.companionReview.getOrElse(FirstLevelCompanionReviewJvm.inspect(root,prepared.opened.unit).left.map(_.message))"
+      }
+    ]
+  },
+  {
+    "symbol": "FirstLevelUnitDataset",
+    "retainedPath": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitDataset.scala",
+    "consumerUses": [
+      {
+        "path": "modules/glm-review-javafx/src/test/scala/glm/review/fx/StandaloneModelEditorProbe.scala",
+        "line": 49,
+        "text": "val opened = get(FirstLevelUnitDataset.open(unit,DatasetId(\"standalone-unit\"),eventColumns=Some(model.eventColumns),responseAccess=FirstLevelResponseAccess.OnFirstRead))"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 420,
+        "text": "opened <- FirstLevelUnitDataset.open(unit, DatasetId(s\"${recipe.datasetId.value}.${unit.id.value}\"),"
+      }
+    ]
+  },
+  {
+    "symbol": "StudySpatialSupportJvm",
+    "retainedPath": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/StudySpatialSupportJvm.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 5,
+        "text": "import scalafim.fmri.workflow.{FirstLevelUnit, StudyCatalog, StudySpatialLimits, StudySpatialSupport, StudySpatialSupportJvm}"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 62,
+        "text": "support <- StudySpatialSupportJvm.compile(catalog, limits, staging).left.map(FirstLevelError.Binding.apply)"
+      }
+    ]
+  },
+  {
+    "symbol": "FirstLevelCompanionReview",
+    "retainedPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/FirstLevelCompanionReview.scala",
+    "consumerUses": [
+      {
+        "path": "modules/glm-review/src/main/scala/glm/review/FirstLevelReview.scala",
+        "line": 4,
+        "text": "import scalafim.fmri.workflow.{FirstLevelCompanionReview,FirstLevelUnitId}"
+      },
+      {
+        "path": "modules/glm-review/src/main/scala/glm/review/FirstLevelReview.scala",
+        "line": 14,
+        "text": "qc: Either[String,FirstLevelCompanionReview])"
+      },
+      {
+        "path": "modules/glm-review-javafx/src/main/scala/glm/review/fx/FirstLevelReviewPane.scala",
+        "line": 563,
+        "text": "private def currentQc: Either[String,scalafim.fmri.workflow.FirstLevelCompanionReview] ="
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 208,
+        "text": "val companionReview: Option[Either[String,Vector[FirstLevelCompanionReview]]] = None"
+      }
+    ]
+  },
+  {
+    "symbol": "SamplingReference",
+    "retainedPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/SamplingReference.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 388,
+        "text": "samplingReference: SamplingReference = SamplingReference.VolumeMidpoint,"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 399,
+        "text": "samplingReference: SamplingReference = SamplingReference.VolumeMidpoint,"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RealFirstLevelReview.scala",
+        "line": 7,
+        "text": "import scalafim.fmri.workflow.{MaskPolicy, FirstLevelUnit, BoundFirstLevelTables, SamplingReference, SamplingFraction}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RealFirstLevelReview.scala",
+        "line": 40,
+        "text": "val reference = SamplingReference.Uniform(fraction)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerRealSubjectOracleProbe.scala",
+        "line": 12,
+        "text": "import scalafim.fmri.workflow.{FirstLevelUnit, MaskPolicy, SamplingFraction, SamplingReference, StudySpatialLimits}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ExplorerRealSubjectOracleProbe.scala",
+        "line": 272,
+        "text": "val sampling = SamplingReference.Uniform(checked(SamplingFraction(0.0)))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FirstLevelWorkbenchProbe.scala",
+        "line": 11,
+        "text": "import scalafim.fmri.workflow.{MaskPolicy, SamplingReference}"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FirstLevelWorkbenchProbe.scala",
+        "line": 54,
+        "text": "excludedScans = exclusions, eventColumns = Some(Vector(\"trial_type\")), samplingReference = SamplingReference.VolumeMidpoint))"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/SamplingReferencePane.scala",
+        "line": 7,
+        "text": "import scalafim.fmri.workflow.{FirstLevelUnit, SamplingFraction, SamplingReference, ResolvedSamplingReference}"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/SamplingReferencePane.scala",
+        "line": 27,
+        "text": "def forUnit(unit: FirstLevelUnit): SamplingReference ="
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/SamplingReferencePane.scala",
+        "line": 31,
+        "text": "SamplingReference.Uniform(SamplingReferenceDraft.fractionValue(fraction))"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/SamplingReferencePane.scala",
+        "line": 32,
+        "text": "else SamplingReference.PerRun(unit.runs.map(run => run.id ->"
+      }
+    ]
+  },
+  {
+    "symbol": "StudySpatialSupport",
+    "retainedPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/StudySpatialSupport.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 5,
+        "text": "import scalafim.fmri.workflow.{FirstLevelUnit, StudyCatalog, StudySpatialLimits, StudySpatialSupport, StudySpatialSupportJvm}"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 13,
+        "text": "val support: StudySpatialSupport,"
+      }
+    ]
+  },
+  {
+    "symbol": "AnalysisResult",
+    "retainedPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/AnalysisResult.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FactorialBootstrapMethod.scala",
+        "line": 15,
+        "text": "extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/TaskContrastMethod.scala",
+        "line": 12,
+        "text": "final case class TaskContrastResult(maps: NamedEffectMaps, configuration: ConfigurationEnvelope) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FactorialIntervalMethod.scala",
+        "line": 12,
+        "text": "final case class FactorialIntervalResult(effects: EffectCollection, assessment: GroupIntervalAssessment) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FactorialSignMethod.scala",
+        "line": 10,
+        "text": "evidence: Vector[SignParticipantEvidence]) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/TaskPlsMethod.scala",
+        "line": 9,
+        "text": "final case class TaskMethodResult(fit: TaskPlsFit) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FactorialTaskMethod.scala",
+        "line": 10,
+        "text": "final case class FactorialTaskResult(effects: EffectCollection) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/TaskSignMethod.scala",
+        "line": 10,
+        "text": "configuration: TaskSignConfiguration) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BehavioralPlsMethod.scala",
+        "line": 11,
+        "text": "final case class BehavioralMethodResult(fit: BehavioralPlsFit) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/AnalysisSpecificationProbe.scala",
+        "line": 22,
+        "text": "private final case class ProbeResult(method: MethodDescriptor) extends AnalysisResult"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyResultArtifact.scala",
+        "line": 4,
+        "text": "import plsneuro.method.{AnalysisResult,ConfigurationEnvelope}"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyResultArtifact.scala",
+        "line": 78,
+        "text": "def capture(result: AnalysisResult, configuration: ConfigurationEnvelope,"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyMethodContribution.scala",
+        "line": 7,
+        "text": "final case class StudyMethodResult(result: AnalysisResult, artifact: ResultArtifact,"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyPane.scala",
+        "line": 889,
+        "text": "private var groupResult: Option[plsneuro.method.AnalysisResult] = None"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyPane.scala",
+        "line": 912,
+        "text": "def analysisResult: Option[plsneuro.method.AnalysisResult] = groupResult"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeMethodInputProbe.scala",
+        "line": 18,
+        "text": "final case class ResultValue(maps: NamedEffectMaps, weights: Vector[Double]) extends AnalysisResult:"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RoutedContributionProbe.scala",
+        "line": 39,
+        "text": "private final case class AuditResult(method: MethodDescriptor) extends AnalysisResult"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/method/AnalysisMethod.scala",
+        "line": 54,
+        "text": "trait AnalysisResult:"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/method/AnalysisMethod.scala",
+        "line": 69,
+        "text": "trait PreparedAnalysis[+R <: AnalysisResult]:"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/method/AnalysisMethod.scala",
+        "line": 77,
+        "text": "type Result <: AnalysisResult"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/method/AnalysisMethod.scala",
+        "line": 93,
+        "text": "def prepare(input: I, envelope: ConfigurationEnvelope): Either[MethodError, PreparedAnalysis[AnalysisResult]] ="
+      }
+    ]
+  },
+  {
+    "symbol": "Binding",
+    "retainedPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Binding.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ContrastEstimates.scala",
+        "line": 53,
+        "text": "expected <- owner.opened.tables.modelSpec(model).left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 29,
+        "text": "selection <- support.selectionFor(unit).left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 42,
+        "text": ".left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/StudySpatialReview.scala",
+        "line": 62,
+        "text": "support <- StudySpatialSupportJvm.compile(catalog, limits, staging).left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 17,
+        "text": "case Binding(cause: WorkflowError)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 31,
+        "text": "case Binding(cause) => cause.message"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 421,
+        "text": "confounds = recipe.confounds, staging = staging, eventColumns = eventColumns, samplingReference = samplingReference, responseAccess = responseAccess).left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 422,
+        "text": "bound <- opened.tables.modelSpec(specification).left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 444,
+        "text": ".left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+        "line": 446,
+        "text": ".left.map(FirstLevelError.Binding.apply)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/CohortTableJoinProbe.scala",
+        "line": 30,
+        "text": "require(table.rows == before,\"Binding mutated provider table data\")"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/AnalysisSpecificationProbe.scala",
+        "line": 114,
+        "text": "compiled.method.configuration == VolumeMethod.envelope(()), \"Binding retained draft placeholders\")"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/AnalysisSpecificationProbe.scala",
+        "line": 116,
+        "text": "\"Binding dropped trial-level observation identity\")"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/PlsNeuroApp.scala",
+        "line": 401,
+        "text": "* Binding once to the empty state here makes the rail's first state the one `reflect` decides. */"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeFactorialProbe.scala",
+        "line": 198,
+        "text": "\"Binding a cohort did not release Label factors\u2026\")"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeFactorialProbe.scala",
+        "line": 199,
+        "text": "require(editorShown && openButton.getText == \"Done\", \"Binding a cohort did not open the factor editor\")"
+      }
+    ]
+  },
+  {
+    "symbol": "Estimand",
+    "retainedPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Estimand.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/FirstLevelResponses.scala",
+        "line": 13,
+        "text": "estimand: Identity.Id[Identity.Estimand],"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResultArtifactFile.scala",
+        "line": 474,
+        "text": "ResponseCoordinate.Scalar(id[Estimand](value(\"estimand\")))"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResultArtifactFile.scala",
+        "line": 477,
+        "text": "ResponseCoordinate.FirBin(id[Estimand](value(\"estimand\")),"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResponseSet.scala",
+        "line": 31,
+        "text": "private[adapters] val responseEstimand: Id[Estimand]"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ParticipantExplorerData.scala",
+        "line": 283,
+        "text": "else if described.map(_.name) != conditions then Left(\"Estimand descriptors must name their conditions, in order.\")"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResponseDeclarationSource.scala",
+        "line": 18,
+        "text": "def axis(roles: Vector[BasisRole], estimand: Id[Estimand], hrf: Hrf)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResponseDeclarationSource.scala",
+        "line": 39,
+        "text": "def fromBasis(hrf: Hrf, cells: Vector[ConditionCell], estimand: Id[Estimand], units: ResponseUnits,"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/CohortAdmissionChecks.scala",
+        "line": 28,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"task-response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/BootstrapArtifactProbe.scala",
+        "line": 29,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialPerformanceProbe.scala",
+        "line": 98,
+        "text": "val coordinates = Vector.tabulate(lags)(t => if lags == 1 then ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialPerformanceProbe.scala",
+        "line": 99,
+        "text": "else ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),ok(ResponseInterval.fromSeconds(t*2.0,(t+1)*2.0))))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialBootstrapMethodProbe.scala",
+        "line": 23,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ResponseSummaryProbe.scala",
+        "line": 32,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RegionSelectionProbe.scala",
+        "line": 35,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RegionSelectionProbe.scala",
+        "line": 121,
+        "text": "Vector(ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))), geometry,"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ParticipantInspectionProbe.scala",
+        "line": 17,
+        "text": "case \"beta\" => Vector(ResponseCoordinate.Scalar(id[Estimand](\"condition-beta\")))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ParticipantInspectionProbe.scala",
+        "line": 18,
+        "text": "case \"fir\" => Vector(-2d,0d,2d).map(t => ResponseCoordinate.FirBin(id[Estimand](\"FIR\"),ok(ResponseInterval.fromSeconds(t,t+2))))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SurfaceReverseLookupProbe.scala",
+        "line": 11,
+        "text": "val coordinate0 = ResponseCoordinate.Scalar(Identity.parse[Identity.Estimand](\"test\").toOption.get)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ConditionPermutationAdmissionProbe.scala",
+        "line": 25,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Identity.Estimand](\"task-response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ParticipantExplorerProbe.scala",
+        "line": 15,
+        "text": "Vector.fill(n)(\"All\"),Vector.tabulate(k)(i => s\"Condition ${i+1}\"),Vector(ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))),geometry,"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ParticipantExplorerProbe.scala",
+        "line": 67,
+        "text": "val firCoordinates = Vector.tabulate(2)(t => ResponseCoordinate.FirBin(id[Identity.Estimand](\"response\"),ok(ResponseInterval.fromSeconds(2*t,2*t+2))))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialBootstrapExecutionChecks.scala",
+        "line": 64,
+        "text": "val coordinate = if v(\"seconds\") == ujson.Null then ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialBootstrapExecutionChecks.scala",
+        "line": 65,
+        "text": "else ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),checked(ResponseInterval.fromSeconds(v(\"seconds\").num,v(\"seconds\").num+1)))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialBootstrapExecutionChecks.scala",
+        "line": 174,
+        "text": "val features = Vector.tabulate(values.head.cols)(i => ResultFeature(ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\")),i))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialInferenceProbe.scala",
+        "line": 33,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialInferenceProbe.scala",
+        "line": 95,
+        "text": "ConditionResponseRequest(TermId.unsafe(\"task\"),Some(PhaseId.unsafe(\"stimulus\")),FactorId.unsafe(\"trial_type\"),id[Identity.Estimand](\"response\"))))))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ResponseSetProbe.scala",
+        "line": 63,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialBootstrapProducerProbe.scala",
+        "line": 18,
+        "text": "val beta = ResponseCoordinate.Scalar(id[Identity.Estimand](\"response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialBootstrapProducerProbe.scala",
+        "line": 19,
+        "text": "val fir = ResponseCoordinate.FirBin(id[Identity.Estimand](\"response\"),ok(ResponseInterval.fromSeconds(-1,1)))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/RequiredConditionSelectionProbe.scala",
+        "line": 34,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/TaskSignAdmissionProbe.scala",
+        "line": 27,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Identity.Estimand](\"task-response\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialBootstrapUncertaintyProbe.scala",
+        "line": 27,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialBootstrapUncertaintyProbe.scala",
+        "line": 28,
+        "text": "val other = ResponseCoordinate.Scalar(id[Identity.Estimand](\"other\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialBootstrapUncertaintyProbe.scala",
+        "line": 57,
+        "text": "val fir = ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),ok(ResponseInterval.fromSeconds(-1,1)))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/SpatialBootstrapUncertaintyProbe.scala",
+        "line": 70,
+        "text": "ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),ok(ResponseInterval.fromSeconds(0,2))))))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ResponseDeclarationProbe.scala",
+        "line": 31,
+        "text": "private val response = id[Estimand](\"response\")"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ResponseDeclarationProbe.scala",
+        "line": 36,
+        "text": "private def bin(from: Double, until: Double, estimand: Id[Estimand] = response): ResponseCoordinate ="
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialFitProbe.scala",
+        "line": 82,
+        "text": "val coordinate = if v(\"seconds\") == ujson.Null then ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialFitProbe.scala",
+        "line": 83,
+        "text": "else ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),checked(ResponseInterval.fromSeconds(v(\"seconds\").num,v(\"seconds\").num+1)))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialFitProbe.scala",
+        "line": 175,
+        "text": "ConditionResponseRequest(TermId.unsafe(\"task\"),Some(PhaseId.unsafe(\"stimulus\")),FactorId.unsafe(\"trial_type\"),id[Identity.Estimand](\"response\"))))))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/FactorialCellsProbe.scala",
+        "line": 19,
+        "text": "FactorId.unsafe(\"stimulus\"), id[Identity.Estimand](\"response\"), Vector(FactorId.unsafe(\"difficulty\")),"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/AnalysisSpecificationProbe.scala",
+        "line": 56,
+        "text": "private val response = id[Estimand](\"response\")"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/AnalysisSpecificationProbe.scala",
+        "line": 82,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ResponseRouteProbe.scala",
+        "line": 31,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/ParticipantSimilarityProbe.scala",
+        "line": 266,
+        "text": "groups, Vector(\"A\", \"B\"), Vector(ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))),"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/BidsWorkflowProbe.scala",
+        "line": 159,
+        "text": "FactorId.unsafe(\"trial_type\"), checked(Identity.parse[Identity.Estimand](\"task-response\")))"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/StudyPane.scala",
+        "line": 2435,
+        "text": "checked(Identity.parse[Identity.Estimand](\"task-response\")))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeSpatialResponseProbe.scala",
+        "line": 50,
+        "text": "val coordinates = bins.map(b => ResponseCoordinate.FirBin(id[Identity.Estimand](\"beta\"), b))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeSpatialResponseProbe.scala",
+        "line": 73,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ParticipantMeasurementsProbe.scala",
+        "line": 66,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeEventSupportProbe.scala",
+        "line": 328,
+        "text": "checked(Identity.parse[Identity.Estimand](\"task-response\")))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeSurfaceLayerTransactionProbe.scala",
+        "line": 76,
+        "text": "val coordinateValue = ResponseCoordinate.Scalar(Identity.parse[Identity.Estimand](\"surface-swap\").toOption.get)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeVoxelCacheLifecycleProbe.scala",
+        "line": 81,
+        "text": "val other = ResponseCoordinate.Scalar(Identity.parse[Identity.Estimand](\"different-estimand\").toOption.get)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeVoxelCacheLifecycleProbe.scala",
+        "line": 83,
+        "text": "ResponseCoordinate.FirBin(Identity.parse[Identity.Estimand](\"different-estimand\").toOption.get,"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/BundleScaleProbe.scala",
+        "line": 35,
+        "text": "val estimand = checked(Identity.parse[Identity.Estimand](\"synthetic-fir\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/VoxelResponseProbe.scala",
+        "line": 98,
+        "text": "val fir = (0 until 4).toVector.map(bin => plsneuro.study.ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/VoxelResponseProbe.scala",
+        "line": 253,
+        "text": "plsneuro.study.ResponseCoordinate.FirBin(id[Identity.Estimand](\"task-response\"),"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeVoxelResponseProbe.scala",
+        "line": 37,
+        "text": "private val estimand = id[Identity.Estimand](\"task-response\")"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeVoxelResponseProbe.scala",
+        "line": 448,
+        "text": "Identity.parse[Identity.Estimand](\"task-response\").toOption.get,"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeParticipantExplorerProbe.scala",
+        "line": 32,
+        "text": "val coords = if fir then Vector.tabulate(4)(t => ResponseCoordinate.FirBin(id[Identity.Estimand](\"response\"),ok(ResponseInterval.fromSeconds(t*2,t*2+2))))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeParticipantExplorerProbe.scala",
+        "line": 33,
+        "text": "else Vector(ResponseCoordinate.Scalar(id[Identity.Estimand](\"response\")))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeParticipantExplorerProbe.scala",
+        "line": 62,
+        "text": "val request = ConditionResponseRequest(TermId.unsafe(\"task\"),None,FactorId.unsafe(state.factor),id[Identity.Estimand](\"task-response\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeSpatialGalleryProbe.scala",
+        "line": 51,
+        "text": "val coordinates = bins.map(b => ResponseCoordinate.FirBin(id[Identity.Estimand](\"beta\"), b))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeSpatialGalleryProbe.scala",
+        "line": 79,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeSamplingReferenceProbe.scala",
+        "line": 118,
+        "text": "scalafim.fmri.design.FactorId.unsafe(\"trial_type\"),plsneuro.study.Identity.parse[plsneuro.study.Identity.Estimand](\"task-response\").toOption.get)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/VoxelReadoutProbe.scala",
+        "line": 14,
+        "text": "val selectedCoordinate = ResponseCoordinate.Scalar(ok(Identity.parse[Identity.Estimand](\"amplitude\")))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ResponseTrellisProbe.scala",
+        "line": 45,
+        "text": "Some(ResponseCoordinate.FirBin(id[Identity.Estimand](\"beta\"), bins(bin))), bin,"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ResponseTrellisProbe.scala",
+        "line": 52,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ResponseTrellisProbe.scala",
+        "line": 73,
+        "text": "val coordinate = ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ResponseTrellisProbe.scala",
+        "line": 89,
+        "text": "Some(if bins == 0 then coordinate else ResponseCoordinate.FirBin(id[Identity.Estimand](\"beta\"), intervals(bin))),"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ResponseTrellisProbe.scala",
+        "line": 196,
+        "text": "// ---- Estimand kind and units ------------------------------------------------------------"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ViewerSceneProbe.scala",
+        "line": 91,
+        "text": "val coordinate = ResponseCoordinate.Scalar(Identity.parse[Identity.Estimand](\"condition\").toOption.get)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/ViewerSceneProbe.scala",
+        "line": 106,
+        "text": "map(Array(1.0, 2.0), coord = ResponseCoordinate.Scalar(Identity.parse[Identity.Estimand](\"other\").toOption.get)))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/GroupIntervalPaneProbe.scala",
+        "line": 31,
+        "text": "val coordinates = Vector.tabulate(3)(i => ResponseCoordinate.FirBin(id[Identity.Estimand](\"response\"),"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RealCohortFitProbe.scala",
+        "line": 79,
+        "text": "checked(Identity.parse[Identity.Estimand](\"task-response\")))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/RoutedContributionProbe.scala",
+        "line": 28,
+        "text": "FactorId.unsafe(\"trial_type\"), id[Estimand](\"response\"), units = ResponseUnits.percentSignalChange)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/adapters/FactorialInspectionFixtures.scala",
+        "line": 32,
+        "text": "val coordinate = if v(\"seconds\") == ujson.Null then ResponseCoordinate.Scalar(id[Identity.Estimand](\"beta\"))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/adapters/FactorialInspectionFixtures.scala",
+        "line": 33,
+        "text": "else ResponseCoordinate.FirBin(id[Identity.Estimand](\"fir\"),ok(ResponseInterval.fromSeconds(v(\"seconds\").num,v(\"seconds\").num+1)))"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/adapters/FactorialInspectionFixtures.scala",
+        "line": 84,
+        "text": "ConditionResponseRequest(TermId.unsafe(\"task\"),Some(PhaseId.unsafe(\"stimulus\")),FactorId.unsafe(\"trial_type\"),id[Identity.Estimand](\"response\"))))))"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/study/ResponseIndex.scala",
+        "line": 11,
+        "text": "sealed trait Estimand"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/study/ResponseIndex.scala",
+        "line": 55,
+        "text": "case Scalar(estimand: Id[Estimand])"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/study/ResponseIndex.scala",
+        "line": 56,
+        "text": "case FirBin(estimand: Id[Estimand], interval: ResponseInterval)"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/study/ResponseDeclaration.scala",
+        "line": 255,
+        "text": "refuse(s\"Estimand names must be unique; ${names.diff(names.distinct).distinct.mkString(\", \")} repeat.\"))"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/study/ResponseDeclaration.scala",
+        "line": 268,
+        "text": "private def firRefusals(bins: Vector[(Id[Estimand], ResponseInterval)]): Vector[String] ="
+      },
+      {
+        "path": "modules/core/src/test/scala/plsneuro/study/ResponseIndexProbe.scala",
+        "line": 15,
+        "text": "ResponseCoordinate.FirBin(id[Estimand](\"response\"), checked(ResponseInterval.fromSeconds(start, end)))"
+      },
+      {
+        "path": "modules/core/src/test/scala/plsneuro/study/ResponseIndexProbe.scala",
+        "line": 35,
+        "text": "val scalar = rows.head.copy(coordinate = ResponseCoordinate.Scalar(id[Estimand](\"response\")))"
+      },
+      {
+        "path": "modules/core/src/test/scala/plsneuro/study/AnalysisSpecificationProbe.scala",
+        "line": 16,
+        "text": "private val response = id[Estimand](\"response\")"
+      },
+      {
+        "path": "modules/core/src/test/scala/plsneuro/study/AnalysisSpecificationProbe.scala",
+        "line": 73,
+        "text": "val stray = ResponseCoordinate.Scalar(id[Estimand](\"different-response\"))"
+      }
+    ]
+  },
+  {
+    "symbol": "Measurement",
+    "retainedPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Measurement.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BehavioralPls.scala",
+        "line": 22,
+        "text": "case Brain, Measurement"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BehavioralPls.scala",
+        "line": 108,
+        "text": "yCell <- process(yRows,cells(index),BehavioralBlock.Measurement,spec)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BehavioralLatentResult.scala",
+        "line": 24,
+        "text": "DesignProjection(d.operator.rows.map(r => ResultDesignRow.Measurement(cell(r.cell),r.measurement)),"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/CohortMeasurements.scala",
+        "line": 17,
+        "text": "Left(\"Measurement observations must have unique participant-condition keys\")"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResultArtifactFile.scala",
+        "line": 26,
+        "text": "case ResultDesignRow.Measurement(c,name) => Obj(\"kind\" -> \"measurement\",\"cell\" -> cell(c),\"name\" -> name)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/ResultArtifactFile.scala",
+        "line": 33,
+        "text": "ResultDesignRow.Measurement(readCell(value(\"cell\")),value(\"name\").str)"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/BehavioralPlsMethod.scala",
+        "line": 72,
+        "text": "case BehavioralBlock.Measurement => s\"Measurement '${input.measurements.columns(column)}'\""
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/BehavioralResultAxisChecks.scala",
+        "line": 34,
+        "text": "ResultDesignRow.Measurement(DesignCell(r.cell.group.value,r.cell.condition),r.measurement)))"
+      },
+      {
+        "path": "modules/adapters/src/test/scala/plsneuro/adapters/BehavioralPlsProbe.scala",
+        "line": 103,
+        "text": "case BehavioralFitError.Degenerate(_,BehavioralBlock.Measurement,0,_,_) => true"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/ResultPresentation.scala",
+        "line": 126,
+        "text": "case ResultDesignRow.Measurement(_,measurement) => s\"${cell(row)} \u00b7 $measurement\""
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeMethodInputProbe.scala",
+        "line": 23,
+        "text": "val descriptor = MethodDescriptor(\"measurement-input-audit\",1,1,1,\"Measurement input audit\","
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeMethodInputProbe.scala",
+        "line": 51,
+        "text": "val title = \"Measurement input audit\""
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeMethodInputProbe.scala",
+        "line": 52,
+        "text": "val cardName = \"Measurement input audit\""
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/NativeMethodInputProbe.scala",
+        "line": 55,
+        "text": "val sectionTitle = \"Measurement audit\""
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/VoxelResponseProbe.scala",
+        "line": 86,
+        "text": "val measured = Vector(ResultDesignRow.Measurement(DesignCell(\"cohort\", id[Identity.Condition](\"cash\")), \"rt\"))"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/method/LatentResult.scala",
+        "line": 31,
+        "text": "final case class Measurement(cell: DesignCell, name: String) extends ResultDesignRow:"
+      },
+      {
+        "path": "modules/core/src/main/scala/plsneuro/method/LatentResult.scala",
+        "line": 97,
+        "text": "val expected = cells.flatMap(c => p.measurements.map(ResultDesignRow.Measurement(c,_))).toSet"
+      }
+    ]
+  },
+  {
+    "symbol": "Categorical",
+    "retainedPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/Categorical.scala",
+    "consumerUses": [
+      {
+        "path": "modules/glm-review/src/main/scala/glm/review/EventTermsDraft.scala",
+        "line": 16,
+        "text": "final case class EventTermsDraft(conditionEncoding: String = \"Categorical\", additionalFactors: String = \"\","
+      },
+      {
+        "path": "modules/glm-review/src/main/scala/glm/review/EventTermsDraft.scala",
+        "line": 26,
+        "text": "check(Set(\"Categorical\",\"Legacy automatic\").contains(conditionEncoding),ModelField.EventTerms,\"Choose categorical conditions or the explicitly retained legacy interpretation.\")"
+      },
+      {
+        "path": "modules/glm-review-javafx/src/main/scala/glm/review/fx/EventTermsEditor.scala",
+        "line": 31,
+        "text": "val conditionEncoding = choice(initial.conditionEncoding,\"condition-encoding\",Vector(\"Categorical\",\"Legacy automatic\"))"
+      }
+    ]
+  },
+  {
+    "symbol": "SurfaceLayerTransaction",
+    "retainedPath": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayerTransaction.scala",
+    "consumerUses": [
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+        "line": 382,
+        "text": "transaction: Option[SurfaceLayerTransaction] = None,"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+        "line": 747,
+        "text": "SurfaceLayerTransaction.prepare(base, baseState, entries.flatMap(_._6)) match"
+      },
+      {
+        "path": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+        "line": 834,
+        "text": "transaction: SurfaceLayerTransaction"
+      }
+    ]
+  },
+  {
+    "symbol": "FreeSurferMorphometryReader",
+    "retainedPath": "modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferMorphometryReader.scala",
+    "consumerUses": [
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceResourceFile.scala",
+        "line": 5,
+        "text": "import scalafim.surface.io.{GiftiSurfaceReader, FreeSurferMorphometryReader}"
+      },
+      {
+        "path": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceResourceFile.scala",
+        "line": 79,
+        "text": "FreeSurferMorphometryReader.readEither(parent.resolve(definition(\"file\").str), sampling.plan.surfaces.white)"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/PrepareMniSurface.scala",
+        "line": 208,
+        "text": "import scalafim.surface.io.{FreeSurferMorphometryReader, FreeSurferSurfaceReader}"
+      },
+      {
+        "path": "modules/desktop/src/test/scala/plsneuro/desktop/PrepareMniSurface.scala",
+        "line": 232,
+        "text": "val field = FreeSurferMorphometryReader.read(target, resource.sampling.plan.surfaces.white)"
+      }
+    ]
+  }
+]
