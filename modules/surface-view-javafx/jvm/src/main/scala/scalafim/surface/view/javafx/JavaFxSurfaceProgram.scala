@@ -64,10 +64,13 @@ object JavaFxSurfaceProgram:
           next.receipt
         )
       case Some(before) =>
-        val topology = before.receipt.meshKeys != next.receipt.meshKeys
-        val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey)
+        val topology = before.receipt.meshKeys != next.receipt.meshKeys ||
+          before.meshes.length != next.meshes.length || !before.meshes.zip(next.meshes).forall((a, b) =>
+            a.surface == b.surface && a.resourceKey == b.resourceKey && sameInts(a.indices, b.indices))
+        val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey) ||
+          !before.meshes.zip(next.meshes).forall((a, b) => sameFloats(a.positions, b.positions) && sameFloats(a.normals, b.normals))
         val material = before.lighting != next.lighting
-        val layerData = layerSignature(before) != layerSignature(next) ||
+        val layerData = !sameLayers(before.layers, next.layers) ||
           (config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert && (material || geometry))
         val camera = before.receipt.cameraKey != next.receipt.cameraKey
         val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
@@ -89,8 +92,18 @@ object JavaFxSurfaceProgram:
           next.receipt
         )
 
-  private def layerSignature(plan: SurfaceRenderPlan): Vector[(SurfaceResourceKey, Double, String)] =
-    plan.layers.map(layer => (layer.resourceKey, layer.opacity.toDouble, layer.blendMode.toString))
+  private def sameInts(a: IntBufferView, b: IntBufferView): Boolean =
+    (a eq b) || java.util.Arrays.equals(a.unsafeArray, b.unsafeArray)
+
+  private def sameFloats(a: FloatBufferView, b: FloatBufferView): Boolean =
+    (a eq b) || java.util.Arrays.equals(a.unsafeArray, b.unsafeArray)
+
+  /** Resource hashes are hints. Public packets can retain keys while changing
+    * data, and hash collisions must never publish a plan without its pixels.
+    */
+  private def sameLayers(a: Vector[SurfaceLayerPacket], b: Vector[SurfaceLayerPacket]): Boolean =
+    a.length == b.length && a.zip(b).forall: (x, y) =>
+      x.copy(colors = y.colors) == y && sameInts(x.colors, y.colors)
 
   private[javafx] def materialMode(plan: SurfaceRenderPlan): JavaFxMaterialMode =
     plan.lighting match

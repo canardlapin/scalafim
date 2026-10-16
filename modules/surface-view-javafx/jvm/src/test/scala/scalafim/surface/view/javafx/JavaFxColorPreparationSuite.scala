@@ -55,6 +55,22 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     assert(basis.prepare(broken).isLeft)
     assert(worker.validatePrepared(prepared, broken).isLeft)
 
+  test("native dirt checks actual buffers when caller-visible resource keys are unchanged"):
+    val viewer = model
+    val before = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
+    val changed = before.copy(layers = before.layers.map(_.copy(colors = new IntBufferView(Array.fill(3)(blue.toPackedInt)))))
+    assert(JavaFxSurfaceProgram.compile(Some(before), changed).dirty.layerData)
+    val moved = before.copy(meshes = before.meshes.map(m => m.copy(
+      positions = new FloatBufferView(m.positions.unsafeArray.map(_ + 1.0f)))))
+    assert(JavaFxSurfaceProgram.compile(Some(before), moved).dirty.geometry)
+    val reordered = before.copy(meshes = before.meshes.map(_.copy(indices = new IntBufferView(Array(0, 2, 1)))))
+    assert(JavaFxSurfaceProgram.compile(Some(before), reordered).commands.exists:
+      case JavaFxSurfaceCommand.RebuildGeometry(_) => true
+      case _ => false
+    )
+    val equivalent = before.copy(layers = before.layers.map(l => l.copy(colors = new IntBufferView(l.colors.unsafeArray.clone()))))
+    assert(JavaFxSurfaceProgram.compile(Some(before), equivalent).dirty.isClean)
+
   test("affine worker preparation retains the native sampler refusal"):
     val viewer = model
     val plan = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
@@ -104,7 +120,21 @@ object JavaFxColorPreparationProbe:
         require(renderer.render(transaction.preparedPlan, prepared).isLeft, "stale no-op preparation accepted")
         renderer.render(original).toOption.get
         require(renderer.render(transaction.preparedPlan, prepared).isLeft, "A-B-A revived preparation")
-        println("PASS: worker preparation; live camera/selection; foreign and stale A-B-A refusal; failed publication preserves controller; no geometry upload")
+        val collision = original.copy(layers = original.layers.map(l =>
+          l.copy(colors = new IntBufferView(Array.fill(3)(blue.toPackedInt)))))
+        val collidingPrepared = renderer.colorPreparationBasis.toOption.get.prepare(collision).toOption.get
+        val substituted = collision.copy(layers = collision.layers.map(l =>
+          l.copy(colors = new IntBufferView(Array.fill(3)(red.toPackedInt)))))
+        val priorPixels = renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1)
+        require(renderer.render(substituted, collidingPrepared).isLeft, "substituted same-key buffers accepted")
+        require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == priorPixels,
+          "rejected substituted buffers changed displayed pixels")
+        val changed = renderer.render(collision, collidingPrepared).toOption.get
+        require(changed.atlasUpdates == 1, "same-key colour change skipped atlas upload")
+        require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == 0xff0000ff,
+          "published same-key plan differs from displayed pixels")
+        require(renderer.render(collision, collidingPrepared).isLeft, "same-key update did not expire preparation")
+        println("PASS: same-key colour upload; worker preparation; live camera/selection; foreign and stale A-B-A refusal; failed publication preserves controller; no geometry upload")
       catch case error: Throwable => failure = Some(error)
       finally
         controller.foreach(_.dispose())
