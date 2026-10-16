@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T15:47:26.697578+00:00",
+  "finished_utc": "2026-10-14T15:49:43.570202+00:00",
+  "duration_seconds": 136.871416,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJVM/test",
+    "surfaceViewJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-candidate-tests-final3.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 2109
+}

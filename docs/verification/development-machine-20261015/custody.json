@@ -1,0 +1,181 @@
+{
+  "schema": "scalafim.development-machine-custody.v1",
+  "base": "ac2ec8b706fc",
+  "qualification": "preservation only; no new scientific admission",
+  "bundles": [
+    {
+      "name": "surface-parity-qualification-20261015",
+      "originalPath": ".agent-work/surface-parity-qualification-20261015/evidence.tar.gz",
+      "sha256": "aa351a33334eb5bddf11bfd06b409a076b207d2d1d9571b522bfd3957b59f141",
+      "bytes": 107996059,
+      "parts": [
+        {
+          "path": "evidence/surface-parity-qualification-20261015/evidence.tar.gz.part00",
+          "sha256": "8651a0cdfb74cfdef5f42dad4fef23358973946da6debe2bca43b04a51823a8f",
+          "bytes": 50331648
+        },
+        {
+          "path": "evidence/surface-parity-qualification-20261015/evidence.tar.gz.part01",
+          "sha256": "d230fcccb91eda7f5fca1931764e99e1a79f01bb184913b64bfbb7e0506f4f9e",
+          "bytes": 50331648
+        },
+        {
+          "path": "evidence/surface-parity-qualification-20261015/evidence.tar.gz.part02",
+          "sha256": "c73a1055c1195407ec90063efbba7592713d5f1a349f9304e5df0d18521c8ba2",
+          "bytes": 7332763
+        }
+      ]
+    },
+    {
+      "name": "surface-rounded-qualification-20261015",
+      "originalPath": ".agent-work/surface-rounded-qualification-20261015/evidence.tar.gz",
+      "sha256": "1f8a3882369a1fc01abe7887e4c362e047734a9f40c2256b5e25ac2aad8b4003",
+      "bytes": 14186972,
+      "parts": [
+        {
+          "path": "evidence/surface-rounded-qualification-20261015/evidence.tar.gz",
+          "sha256": "1f8a3882369a1fc01abe7887e4c362e047734a9f40c2256b5e25ac2aad8b4003",
+          "bytes": 14186972
+        }
+      ]
+    },
+    {
+      "name": "surface-rounded-qualification-20261015-review",
+      "originalPath": ".agent-work/surface-rounded-qualification-20261015-review/evidence.tar.gz",
+      "sha256": "60d42055014c2ec415ec2f1ce204b3d355e8be74343b062c8fd7d084e6ef8d32",
+      "bytes": 14322411,
+      "parts": [
+        {
+          "path": "evidence/surface-rounded-qualification-20261015-review/evidence.tar.gz",
+          "sha256": "60d42055014c2ec415ec2f1ce204b3d355e8be74343b062c8fd7d084e6ef8d32",
+          "bytes": 14322411
+        }
+      ]
+    }
+  ],
+  "worktreeOverlayFiles": [
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/.tmp-camera-framing-baseline-escalated.log.meta.json",
+      "path": "worktree-overlays/surfview-baseline/.tmp-camera-framing-baseline-escalated.log.meta.json",
+      "sha256": "dab7318a26f11a5626aba9937c1aed32705905643eac7286aeffcca514a78b5a",
+      "bytes": 592
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/.tmp-camera-framing-baseline-run2.log.meta.json",
+      "path": "worktree-overlays/surfview-baseline/.tmp-camera-framing-baseline-run2.log.meta.json",
+      "sha256": "52221b057b9f134b7239383631a14b00b4879bd7178f2fc9de1974da6a6a3959",
+      "bytes": 588
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/.tmp-camera-framing-baseline-run3.log.meta.json",
+      "path": "worktree-overlays/surfview-baseline/.tmp-camera-framing-baseline-run3.log.meta.json",
+      "sha256": "8e3c7595a80f71e3879693bb01c44eb3c56cca6e4b9272e8037c97088698f9d3",
+      "bytes": 588
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/.tmp-camera-framing-baseline-run4.log.meta.json",
+      "path": "worktree-overlays/surfview-baseline/.tmp-camera-framing-baseline-run4.log.meta.json",
+      "sha256": "1704d30e19910e20c838a8d2fed0b80957a7243c17d8be0f3204da4b6ac0fb7d",
+      "bytes": 588
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/.tmp-camera-framing-baseline.log.meta.json",
+      "path": "worktree-overlays/surfview-baseline/.tmp-camera-framing-baseline.log.meta.json",
+      "sha256": "bb7ea9465aab65ca4fdcba86489fd63b7c7626e23d02865f6882b24deb452c95",
+      "bytes": 581
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/examples/surface-view/js/src/main/scala/scalafim/examples/surfaceview/SurfaceParityAdapter.scala",
+      "path": "worktree-overlays/surfview-baseline/examples/surface-view/js/src/main/scala/scalafim/examples/surfaceview/SurfaceParityAdapter.scala",
+      "sha256": "3481ca03753f17d8179df381771170bb7f4942eb3288d5b02e79b2e76082dc3f",
+      "bytes": 2522
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/examples/surface-view/jvm/src/test/scala/scalafim/examples/surfaceview/SurfaceParityJvm.scala",
+      "path": "worktree-overlays/surfview-baseline/examples/surface-view/jvm/src/test/scala/scalafim/examples/surfaceview/SurfaceParityJvm.scala",
+      "sha256": "43b6fd66aad57ab4577628037d94cc90ffec457f65c147c7c3b28a9dc1ad5f6c",
+      "bytes": 3318
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/examples/surface-view/shared/src/main/scala/scalafim/examples/surfaceview/SurfaceParityFixture.scala",
+      "path": "worktree-overlays/surfview-baseline/examples/surface-view/shared/src/main/scala/scalafim/examples/surfaceview/SurfaceParityFixture.scala",
+      "sha256": "f4f0832403c59c0d0ce08066b8696a0ef3828a1a79327d3dd42ebe11e42cfa40",
+      "bytes": 4447
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/modules/surface-view/shared/src/test/scala/scalafim/surface/view/CameraFramingBaselineFixture.scala",
+      "path": "worktree-overlays/surfview-baseline/modules/surface-view/shared/src/test/scala/scalafim/surface/view/CameraFramingBaselineFixture.scala",
+      "sha256": "88fd4545871fc7dce1d3bd0bd6283623633cc9674c3a5f0953b022b9cf39df64",
+      "bytes": 3828
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/tools/surface-view/parity/README.md",
+      "path": "worktree-overlays/surfview-baseline/tools/surface-view/parity/README.md",
+      "sha256": "d57ec667efc26ba82904d0856ae7f7893da570befcfa9f6654ccacc3a699e5ca",
+      "bytes": 1513
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/tools/surface-view/parity/index.html",
+      "path": "worktree-overlays/surfview-baseline/tools/surface-view/parity/index.html",
+      "sha256": "6ff3f8e1a87e63479707f662e5b083b96e76cab2732fa5d9d223d3002851c0ef",
+      "bytes": 75
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/tools/surface-view/parity/manifest.json",
+      "path": "worktree-overlays/surfview-baseline/tools/surface-view/parity/manifest.json",
+      "sha256": "92c006857653ccd6db448213231e197692e7174134023e423e141eff3a5db5b2",
+      "bytes": 1813
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-baseline/tools/surface-view/parity/run-parity.mjs",
+      "path": "worktree-overlays/surfview-baseline/tools/surface-view/parity/run-parity.mjs.gz",
+      "sha256": "90b74841a62bb58999c77b53b93c423be0fbf20062c073a27a270342735743a2",
+      "bytes": 5069,
+      "originalSha256": "80645befe1c17a4ad554f660e15638d10d7bbe8769b74137f80c6742e33f852c",
+      "originalBytes": 15028,
+      "compression": "gzip"
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-candidate-tests-final.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-candidate-tests-final.log.meta.json",
+      "sha256": "959f0ba5cb460a0c8b8284f8aea569243670634b21132d9d6b831e5277385bbc",
+      "bytes": 559
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-candidate-tests-final2.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-candidate-tests-final2.log.meta.json",
+      "sha256": "649ee8a37c34c902ccd693c6df681cd50c3e488321d654b9aeee028fd751024f",
+      "bytes": 561
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-candidate-tests-final3.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-candidate-tests-final3.log.meta.json",
+      "sha256": "cba0d9b53fb54d18f7395897f19d3631831b2223ed913012781026b0e1b36c01",
+      "bytes": 561
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-candidate-tests-rerun.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-candidate-tests-rerun.log.meta.json",
+      "sha256": "7609e49b39938835bce4edb983a3dc3d480453a832f06b8e5aed96eb936611ff",
+      "bytes": 559
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-candidate-tests.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-candidate-tests.log.meta.json",
+      "sha256": "3ea67d0c153df8246e8e7194ed66570f6194069132758fb009bfb4962fdc24a8",
+      "bytes": 553
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-focused-final.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-focused-final.log.meta.json",
+      "sha256": "5f2a394dd7f7b8fa7e0e4a10c8bf6a5c1770675543625cae2dcf91b03612d897",
+      "bytes": 659
+    },
+    {
+      "originalPath": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-focused.log.meta.json",
+      "path": "worktree-overlays/surfview-parity/.tmp-camera-framing-focused.log.meta.json",
+      "sha256": "f9862d4a2b6df9dafcb244dc433565ab251b4f605fc4891d375d328bce31b154",
+      "bytes": 654
+    }
+  ]
+}

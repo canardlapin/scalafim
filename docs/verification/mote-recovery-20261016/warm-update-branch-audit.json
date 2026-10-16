@@ -1,0 +1,50 @@
+{
+  "branch": "surface/warm-update-20260921",
+  "tip": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+  "main": "ac2ec8b706fce08596a943d79f71a140aad05948",
+  "mergeBase": "fd992a0c85001eb50ba2e78d29c497693ca494dc",
+  "ancestorOfMain": false,
+  "branchOnlyCommits": 33,
+  "patchEquivalentCommits": 0,
+  "githubPrsForExactHead": [],
+  "preservedBy": [
+    "origin/surface/warm-update-20260921",
+    "origin/migration/20261005/branches/surface/warm-update-20260921",
+    "surface/group-fslr-qualification-20260923"
+  ],
+  "existingRecoveryLedger": {
+    "name": "surface/warm-update-20260921",
+    "sha": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+    "behind": 443,
+    "unique": 33,
+    "disposition": "contained-by-retained",
+    "reason": "Exact tip is reachable from retained branch(es): surface/group-fslr-qualification-20260923",
+    "archive_ref": "refs/heads/migration/20261005/branches/surface/warm-update-20260921",
+    "tip_is_ancestor_of_handoff": false,
+    "mechanical_evidence_baseline": "docs/verification/consolidation-20261005/branch-analysis.json.gz",
+    "historical_path_states": {
+      "different-or-new": 910,
+      "tip-matches-main": 63,
+      "blob-in-main-history": 18
+    },
+    "mote_references": [
+      {
+        "id": "bd-01M24EQFARZKYMZ71BJP91C9XS",
+        "title": "Recover retained-atlas optimization and qualify ordinary native update cost",
+        "relationship": "literal branch or SHA reference in audited open Mote; feature coverage still requires review"
+      }
+    ],
+    "feature_qualification": "remaining feature qualification unresolved; no blanket merge admission",
+    "next_action": "Do not port overlapping branches independently. Find the latest retained lineage, identify the remaining intended feature delta, and link its Mote before porting."
+  },
+  "trackerIssue": "bd-01M24EQFARZKYMZ71BJP91C9XS",
+  "trackerStatus": "open",
+  "currentMainMissing": [
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayerTransaction.scala"
+  ],
+  "historicalAcceptanceLimits": [
+    "2026-09-22: full FX publication p95 6.904 ms exceeded retained 4 ms gate",
+    "2026-10-05: retained v4 dense-palette framebuffer failed unchanged two-channel limit"
+  ],
+  "disposition": "Retained unresolved optimization; assess bounded remaining delta against current APIs and qualify native correctness/performance before landing. No merge or scientific qualification performed."
+}

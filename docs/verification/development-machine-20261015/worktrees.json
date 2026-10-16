@@ -1,0 +1,126 @@
+[
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim",
+    "sha": "ac2ec8b706fce08596a943d79f71a140aad05948",
+    "branch": "refs/heads/handoff/20261015-development-machine",
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/private/tmp/scalafim-surface-baseline-dc101ea0",
+    "sha": "dc101ea05a327e06641b9fc7064f822c4a9608e3",
+    "branch": null,
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/codex/surface-parity-qualification-20261015",
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/private/tmp/scalafim-surface-composition",
+    "sha": "53feab621013d0c148a5b5d2567408a153354218",
+    "branch": "refs/heads/codex/surface-composition-20261014",
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/codex/surface-parity-qualification-20261015",
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/private/tmp/scalafim-surface-qualification-20261015",
+    "sha": "c4c44b76db6274b6edead08cdbe407e3357043e5",
+    "branch": "refs/heads/codex/surface-parity-qualification-20261015",
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/codex/surface-parity-qualification-20261015",
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/private/tmp/scalafim-surface-visibility",
+    "sha": "7ec313d769f9fd494d67618e6bf4109491652eab",
+    "branch": "refs/heads/codex/surface-mapping-visibility-20261014",
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/codex/surface-parity-qualification-20261015",
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/private/tmp/scalafim-surfview-baseline",
+    "sha": "fedfca318bd208719a52854cdbcdf59613982d13",
+    "branch": null,
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/codex/surface-parity-qualification-20261015",
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/private/tmp/scalafim-surfview-parity",
+    "sha": "090c7f5f2661c366186c0a805ad734b6c9e0a974",
+    "branch": "refs/heads/codex/surfview-core-parity-20261014",
+    "mergedIntoMain": true,
+    "remoteRefs": [
+      "origin/codex/surface-parity-qualification-20261015",
+      "origin/main"
+    ]
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim-pr",
+    "sha": "81a0408d91f3a8471e7136c11261eb21a234e493",
+    "branch": "refs/heads/integration/mvpa-on-exact-spatial",
+    "mergedIntoMain": false,
+    "remoteRefs": [
+      "origin/migration/20261005/branches/integration/mvpa-on-exact-spatial"
+    ]
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim-spike-face",
+    "sha": "73775e299a75263a786f80ececd80d8cb3911436",
+    "branch": "refs/heads/spike/face-texel",
+    "mergedIntoMain": false,
+    "remoteRefs": [
+      "origin/migration/20261005/branches/spike/face-texel"
+    ]
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim-spike-lut",
+    "sha": "d7b0293bc461fe2bbe0aed6c40552cb46a2cc33c",
+    "branch": "refs/heads/spike/lut-encoding",
+    "mergedIntoMain": false,
+    "remoteRefs": [
+      "origin/migration/20261005/branches/spike/face-texel",
+      "origin/migration/20261005/branches/spike/lut-encoding"
+    ]
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim-spike-raster",
+    "sha": "a89b2994adeb10293b434bd6680338d7bdc2b4be",
+    "branch": "refs/heads/spike/raster-figures",
+    "mergedIntoMain": false,
+    "remoteRefs": [
+      "origin/migration/20261005/branches/spike/raster-figures"
+    ]
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/.claude/worktrees/agent-a3ebf3564cf9328f3",
+    "sha": "0282f0aa3d1b16e4313fcecdeb2f8a03e66fae9b",
+    "branch": "refs/heads/worktree-agent-a3ebf3564cf9328f3",
+    "mergedIntoMain": false,
+    "remoteRefs": [
+      "origin/migration/20261005/branches/worktree-agent-a3ebf3564cf9328f3"
+    ]
+  },
+  {
+    "path": "/Users/bbuchsbaum/code/scala/scalafim/.claude/worktrees/agent-a6daa1f0970060d9c",
+    "sha": "8be020efd3d49aba1d1ac4a07356781a43f67f8e",
+    "branch": "refs/heads/worktree-agent-a6daa1f0970060d9c",
+    "mergedIntoMain": false,
+    "remoteRefs": [
+      "origin/migration/20261005/branches/worktree-agent-a6daa1f0970060d9c"
+    ]
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "actor": "machine-handoff-recovery-20261016",
+  "issue": "bd-01M52657DNVWDBZC0XKXKPHJG5",
+  "releasedIds": [
+    "rv-01M5265P27AJAS67KN0ZZJVS85",
+    "rv-01M527472APFQGNM7JTYPHTV12"
+  ],
+  "checks": [
+    {
+      "path": "README.md",
+      "liveReservations": []
+    },
+    {
+      "path": "docs/development-machine-handoff.md",
+      "liveReservations": []
+    },
+    {
+      "path": "docs/verification/mote-recovery-20261016",
+      "liveReservations": []
+    },
+    {
+      "path": "docs/plans/ecosystem-unification.md",
+      "liveReservations": []
+    },
+    {
+      "path": "docs/plans/ecosystem-unification-mote.json",
+      "liveReservations": []
+    },
+    {
+      "path": "docs/verification/development-machine-20261015/verify-custody.py",
+      "liveReservations": []
+    }
+  ]
+}

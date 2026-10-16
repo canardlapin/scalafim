@@ -1,0 +1,39 @@
+{
+  "schema": "scalafim.surface-view-parity-manifest.v1",
+  "reference": {
+    "repository": "/Users/bbuchsbaum/code/jscode/surfviewjs",
+    "commit": "fb60f3705d51d2d74e69ddf71df7000ee9eb5b06",
+    "source": "Vite-served source"
+  },
+  "fixture": "analytic-asymmetric-tetrahedron.v1",
+  "requiredAssets": {
+    "analytic": { "status": "available", "purpose": "deterministic adapter smoke input" },
+    "bilateralCortex": {
+      "status": "required-not-captured-by-this-baseline",
+      "license": "must be recorded before qualification",
+      "left": { "file": "fsaverage5-lh-pial.gii", "sha256": "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951" },
+      "right": { "file": "fsaverage5-rh-pial.gii", "sha256": "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9" }
+    }
+  },
+  "requiredCases": [
+    { "id": "C01", "name": "anatomy", "implemented": true },
+    { "id": "C02", "name": "scalar maps", "implemented": true },
+    { "id": "C03", "name": "composition", "implemented": true },
+    { "id": "C04", "name": "layouts", "implemented": false },
+    { "id": "C05", "name": "parcels/ROI", "implemented": false },
+    { "id": "C06", "name": "annotations", "implemented": false },
+    { "id": "C07", "name": "clipping/alpha", "implemented": false },
+    { "id": "C08", "name": "dynamics", "implemented": false },
+    { "id": "C09", "name": "networks", "implemented": false },
+    { "id": "C10", "name": "keys", "implemented": false },
+    { "id": "C11", "name": "flat maps", "implemented": false },
+    { "id": "C12", "name": "publication/restore", "implemented": false }
+  ],
+  "acceptance": {
+    "minimumIoU": 0.995,
+    "maximumChannelError": 2,
+    "maximumLandmarkDisplacementPixels": 1,
+    "missingRequiredArtifactFails": true,
+    "unimplementedCaseFails": true
+  }
+}

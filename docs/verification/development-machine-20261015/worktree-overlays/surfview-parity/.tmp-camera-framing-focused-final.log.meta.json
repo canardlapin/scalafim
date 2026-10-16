@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T15:52:07.900406+00:00",
+  "finished_utc": "2026-10-14T15:53:16.257823+00:00",
+  "duration_seconds": 68.357016,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJVM/testOnly scalafim.surface.view.CameraFramingMigrationSuite",
+    "surfaceViewJS/testOnly scalafim.surface.view.CameraFramingMigrationSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/scalafim-surfview-parity/.tmp-camera-framing-focused-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 1558
+}

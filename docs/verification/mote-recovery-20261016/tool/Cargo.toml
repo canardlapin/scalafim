@@ -1,0 +1,10 @@
+[package]
+name = "scalafim-mote-recovery"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+mote = { git = "https://github.com/bbuchsbaum/mote", rev = "4ae95ba97cfef09efa537c2eb21433d36b4ba7be" }
+serde_json = "1"
+blake3 = "1"

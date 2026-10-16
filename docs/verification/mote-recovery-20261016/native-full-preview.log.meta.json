@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T10:45:01.431019+00:00",
+  "finished_utc": "2026-10-16T11:03:11.990406+00:00",
+  "duration_seconds": 1090.583031,
+  "command": [
+    ".agent-work/mote-recovery-20261016/analyzer/target/release/scalafim-mote-recovery",
+    "preview",
+    ".mote",
+    "/private/tmp/scalafim-mote-native-recovery-20261016",
+    "943"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/mote-recovery-20261016/native-full-preview.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1500.0,
+  "log_bytes": 2209
+}

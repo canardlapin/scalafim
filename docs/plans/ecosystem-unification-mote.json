@@ -1,0 +1,1413 @@
+{
+  "beads": [
+    {
+      "id": "eco-unification",
+      "title": "Unify core providers and extract neuroim4s, neuroatlas4s, mvpa4s and neurosurf4s",
+      "priority": 1,
+      "body": "Outcome: ScalaFIM focuses on functional neuroimaging. Move neuroimaging volume/transform/display policy to ../neuroim4s, atlas semantics/catalogs/realizations to ../neuroatlas4s, MVPA to ../mvpa4s, and neuro-surface semantics/display to ../neurosurf4s over existing ../mesh4s. All four repository extractions are in scope.\n\nDesign: docs/plans/ecosystem-unification.md, baseline 86b3acf1e64d762be99b52ae146fa115b9050356. The plan owns architecture; these tasks define executable cutovers and acceptance.\n\nShared rules and acceptance:\n- Concentrate generic abstractions in locus4s, image4s, spatial4s, mesh4s, reframe4s, Ravel, Gale, graph4s, Multivar, Resample4s, Alder and Intaglio where their contracts fit. Use existing APIs or extend their owner; domain repositories must not become new copies of generic infrastructure.\n- Higher-level types add enforceable domain invariants or policy. Preserve provider representations and ownership; do not wrap/re-export an API merely to rename it.\n- Image and surface cores are siblings. Share a small anatomical-declarations artifact (proposed neuroim4s-spaces, hosted in neuroim4s) without volume/IO/view dependencies. Volume-surface projection, hybrid routing and linked views are optional integrations above the two cores. Atlas core/catalog queries require neither image nor surface runtimes.\n- Migrate known callers and delete replaced implementations at each cutover. Providers/extracted libraries have no ScalaFIM dependency, including test-source dependencies. Keep platform and optional dependencies explicit.\n- Preserve ordering, identity, distinct provenance meanings, persisted schemas/digests, scientific behavior and scoped/allocation contracts. A package move does not rename wire identifiers.\n- Run affected portable tests on JVM and JS; retain platform-native visual checks separately. Record exact revisions/outcomes and preserve existing caveats or adverse evidence.\n\nEpic acceptance: U0-U6 plus I1 and A1 gates satisfied; all four libraries have independent clean consumers; ScalaFIM workflows use coherent immutable pins; old image/surface/atlas/MVPA implementations and duplicate authorities are gone; documentation and CI match the resulting dependency graph. Publication is a separate action.\n\nScheduling follows explicit prerequisites, not milestone numbers. MVPA core does not wait for imaging; atlas semantic core does not wait for either renderer; mesh and volume work can overlap. Leave tasks unassigned until implementation starts.\n\nRelated prior work to reconcile in U0: native image bd-01KYNR99SWCFEW94T4JGD9QPBS; unified MVPA bd-01M2BMGRP4MSM0RRRKNTHM0H4K; spatial transforms bd-01M39Q2YNKRTJTD8PZ4694DS52; mesh integration bd-01KYT2FD73TC4X1SC10HB5NCW3. Tracker status was unavailable while another agent restored authority. Reuse completed evidence. Update the already imported epic in place. Existing U0-U6 issue IDs are retained; I1 and A1 add neuroim4s and neuroatlas4s milestones. The payload describes the complete desired state and is not an idempotent update command.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "epic",
+        "mvpa4s",
+        "neurosurf4s",
+        "core-libraries",
+        "neuroim4s",
+        "neuroatlas4s"
+      ]
+    },
+    {
+      "id": "eco-u0",
+      "title": "U0 milestone: Freeze ownership and deletion decisions for all four libraries",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- Every moved public concept has one provider/domain owner, real consumers, replacement/deletion entry and compatibility decision.\n- Spatial Domain/SpaceRef, compilers, runtimes and IO have explicit destinations; shared anatomical declarations have a minimal artifact with no volume or surface runtime dependency.\n- Provenance packaging and mesh admission are settled; existing baselines/fixtures are assigned; graph is acyclic. This is a bounded contract review, not an extended audit.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u0"
+      ]
+    },
+    {
+      "id": "eco-u1",
+      "title": "U1 milestone: Unify identity and provenance; free MVPA core",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- Response and MVPA consume the same external source-provenance contract.\n- MVPA core uses provider domains/maps and has no response or pipeline dependency.\n- Owner/alignment, coordinate order, unique selection versus repeated draw, persistence and lineage regressions pass on JVM and JS.\n\nClose after its child implementation tasks and their evidence satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u1"
+      ]
+    },
+    {
+      "id": "eco-u2",
+      "title": "U2 milestone: Share coordinate types and lightweight anatomical declarations",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- Volume and mesh use the same spatial4s nominal frame types without competing frame algebra or registry.\n- An independently usable anatomical-declarations artifact serves image/surface/atlas consumers without pulling volume operations, IO, transforms, display or ScalaFIM.\n- Generic directional transforms remain in reframe4s; coherent provider pins pass frame/unit/convention/direction and scanner/tkRAS oracles.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u2"
+      ]
+    },
+    {
+      "id": "eco-neuroim",
+      "title": "I1 milestone: Extract neuroim4s over core image and coordinate providers",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- Volume/series refinements, neuroimaging IO policy, toolkit transforms and volume spatial policy live in neuroim4s; generic helpers live in their core providers.\n- Independent image IO -> typed transform -> slice display works with optional platform backends; core has no surface/atlas/MVPA/ScalaFIM dependency.\n- Native provider representation, value/axis semantics, canonical ordering, affine/scaling and bounded IO survive; replaced ScalaFIM image/transform/view sources are deleted.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "i1"
+      ]
+    },
+    {
+      "id": "eco-u3",
+      "title": "U3 milestone: Make surface geometry native to mesh4s",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- One mesh topology/domain authority supports alternate realizations and fields, with no duplicate ScalaFIM topology.\n- Exact vertex/face order and explicit strict/raw admission are preserved; no silent repair, renumbering or new full-mesh copies.\n- Surface/atlas/spatial scientific fixtures and primitive renderer buffer contracts pass on JVM/JS. Mesh work does not require a volume viewer.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u3"
+      ]
+    },
+    {
+      "id": "eco-u4",
+      "title": "U4 milestone: Extract standalone mvpa4s and migrate functional-analysis callers",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- mvpa4s core/predictive build without ScalaFIM or required image/surface/atlas dependencies; imaging adapters are optional.\n- Fit/dataset/group/artifact integrations remain thin ScalaFIM consumers of the extracted revision.\n- Prediction/RSA, preparation/exposure, resampling, dense/operator, normalization and lifetime evidence survives; replaced core code is deleted. Optional surface/atlas measurement completion follows in U6.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u4"
+      ]
+    },
+    {
+      "id": "eco-u5",
+      "title": "U5 milestone: Extract neurosurf4s with optional volume integration",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- Neuro-surface core, formats and basic display build over mesh4s/locus4s/spatial4s/shared declarations without the neuroim4s volume stack or ScalaFIM.\n- Projection and hybrid routing consume neuroim4s through optional modules; no core-to-integration or reverse volume-core dependency exists.\n- Independent ingestion -> scalar display -> picking/readback and optional volume projection preserve actual CPU/native/browser evidence. Old surface/runtime/display implementations are deleted.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u5"
+      ]
+    },
+    {
+      "id": "eco-neuroatlas",
+      "title": "A1 milestone: Extract neuroatlas4s catalogs, realizations and routes",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- Atlas reference/version metadata, labels, hierarchies and catalog queries work independently of volume/surface runtimes, rendering and ScalaFIM.\n- Optional volume and surface adapters use locus4s assignments/fields and shared world declarations; generic reductions and parcellations have one provider owner.\n- Independent volume/surface query, reduction and routing preserve domain order, unknown/background policy, source assets and publication provenance; old ScalaFIM atlas code is deleted.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "a1"
+      ]
+    },
+    {
+      "id": "eco-u6",
+      "title": "U6 milestone: Admit all four libraries and remove remaining duplication",
+      "priority": 1,
+      "body": "Acceptance (all required):\n- neuroim4s, neurosurf4s, neuroatlas4s and mvpa4s have independent clean consumers on coherent immutable provider pins.\n- All seven plan section 7 workflow families pass with explicit results; optional adapters preserve independent core dependency budgets.\n- ScalaFIM retains functional-analysis policy/composition. Replaced authorities, expired facades and old implementations are deleted; docs/build aliases/bounded CI reflect the delivered graph.\n\nClose after child implementation tasks satisfy these criteria. Shared requirements: eco-unification; architecture: docs/plans/ecosystem-unification.md. The numbered gates do not serialize unrelated tasks.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "milestone",
+        "u6"
+      ]
+    },
+    {
+      "id": "eco-u0-ownership",
+      "title": "U0: Settle provider/domain ownership and the deletion map",
+      "priority": 1,
+      "body": "Scope: Four extraction repositories; ScalaFIM image/transform/spatial/atlas/MVPA/surface; core providers.\n\nDeliverable: Freeze concept ownership and actual consumer boundaries. Reconcile existing completed work; split every mixed spatial public declaration/runtime/IO adapter. Confirm lightweight shared anatomical declarations and source provenance packaging.\n\nAcceptance:\n- Every moved concept has one owner; generic arrays/axes/domains/maps/fields/frames/topology/solvers are assigned to core libraries, not duplicated in domain repos.\n- Anatomical spaces artifact has no volume or surface runtime dependencies; volume, surface and atlas cores can be consumed independently.\n- Spatial partition, strict/raw mesh input policy, private-access changes, external callers and persisted identifier compatibility are explicit in an acyclic deletion map.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u0",
+        "architecture",
+        "neuroim4s",
+        "neuroatlas4s"
+      ]
+    },
+    {
+      "id": "eco-u0-baselines",
+      "title": "U0: Capture existing contracts and composition specimens",
+      "priority": 1,
+      "body": "Scope: Current image/transform/atlas/MVPA/surface/provider tests, fixtures, examples and docs/plans/ecosystem-unification.md.\n\nDeliverable: Map the existing test corpus to destinations and capture the smallest current baseline per boundary. Define three shared-contract composition specimens: domain/duplicate draw, volume plus mesh frame, and response-to-MVPA provenance.\n\nAcceptance:\n- Each moved fixture/tool has one destination; all seven workflow families in plan section 7, external consumers and current failures/caveats are listed.\n- Baseline commands and revisions are recorded with real exit outcomes; no new performance or scientific qualification is implied.\n- Target specimens specify expected results and current provider gaps; provider-only tests cannot import ScalaFIM.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u0",
+        "verification"
+      ]
+    },
+    {
+      "id": "eco-u1-domains",
+      "title": "U1: Use locus4s domains and explicit alignment directly",
+      "priority": 1,
+      "body": "Scope: modules/locus-data, response/MVPA domain adapters; ../locus4s.\n\nDeliverable: Remove facade-owned generic authority and make registry lifetime/alignment policy explicit. Replace equivalent local domain/map/field constructs with provider contracts where semantics match.\n\nAcceptance:\n- Independent restore/alignment, wrong-owner rejection and coordinate-order sensitivity pass on JVM/JS.\n- Unique selections remain distinct from repeated occurrences/resampling draws; map composition preserves ordering.\n- Global registry behavior is replaced or explicitly bounded; migrated callers have no second domain authority.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u1",
+        "locus4s"
+      ]
+    },
+    {
+      "id": "eco-u1-provenance",
+      "title": "U1: Move source provenance to one external contract",
+      "priority": 1,
+      "body": "Scope: modules/response provenance, MVPA source evidence; provider home selected in U0.\n\nDeliverable: Extract the existing source/operation DAG into the minimal selected external module and migrate both response and MVPA to it.\n\nAcceptance:\n- One production implementation owns IDs, roots, parent references and validation; response and MVPA exchange it directly.\n- Missing parents, duplicate IDs/roots, source binding and persistence/digest framing have JVM/JS evidence.\n- Unknown evidence stays unknown; lineage does not stand in for access permission, numerical value identity or statistical independence.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u1",
+        "provenance"
+      ]
+    },
+    {
+      "id": "eco-u1-axes",
+      "title": "U1: Remove response-specific types from MVPA axes",
+      "priority": 1,
+      "body": "Scope: modules/mvpa AxisRef/ReindexingLeg and modules/response adapters.\n\nDeliverable: Express reusable axes and reindexing using locus4s and Resample4s contracts. Translate to response DomainId/OrderedIndices only in the downstream response adapter.\n\nAcceptance:\n- Candidate MVPA axis/reindex APIs expose no response types.\n- Repeated draws preserve occurrence identity and order; unique selection checks still reject forbidden duplicates.\n- Response-to-MVPA specimen preserves source lineage, exact alignment and scoped access on JVM/JS.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u1",
+        "mvpa4s",
+        "locus4s",
+        "resample4s"
+      ]
+    },
+    {
+      "id": "eco-u1-pipeline",
+      "title": "U1: Separate MVPA plans from the pipeline interpreter",
+      "priority": 1,
+      "body": "Scope: modules/mvpa and modules/pipeline integration.\n\nDeliverable: Keep reusable measurement/execution contracts in the candidate MVPA core; move ScalaFIM pipeline interpretation to its optional integration.\n\nAcceptance:\n- Core sources and public API require no pipeline runtime or ScalaFIM dependency.\n- Existing pipeline workflows still execute the same measurement plan and preserve cancellation/resource ownership behavior where supported.\n- No new universal workflow abstraction is introduced; migrated interpreter has focused JVM/JS regression evidence.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u1",
+        "mvpa4s",
+        "pipeline"
+      ]
+    },
+    {
+      "id": "eco-u2-coordinates",
+      "title": "U2: Adopt spatial4s coordinate types in image4s and reframe4s",
+      "priority": 1,
+      "body": "Scope: ../spatial4s, ../image4s geometry/grid APIs, ../reframe4s.\n\nDeliverable: Use spatial4s dimensions, frames, points/vectors, units and conventions as the shared coordinate authority, preserving image-specific grid/axis semantics.\n\nAcceptance:\n- Volume and mesh composition uses identical nominal frame types; redundant frame algebra/conversions are deleted.\n- Wrong-frame and dimension rejection plus unit/convention and mapping tests pass on both platforms.\n- Grid ordering/value semantics and existing image/transform oracles remain unchanged.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u2",
+        "spatial4s",
+        "image4s",
+        "reframe4s"
+      ]
+    },
+    {
+      "id": "eco-u2-world",
+      "title": "U2: Extract shared anatomical declarations without a volume dependency",
+      "priority": 1,
+      "body": "Scope: image/world declarations; minimal independently buildable neuroim4s-spaces module; generic WorldLink capability in reframe4s.\n\nDeliverable: Bootstrap the neuroim4s repository with a small shared declaration module. Extract subject/template/world identity over core frame types; keep acquisition geometry/format evidence in validated adapters. Image and surface cores are siblings consuming this contract.\n\nAcceptance:\n- Declaration artifact has no dependency on image values/volume runtime, neuroim4s transforms/IO/view, mesh/surface runtime, atlas, MVPA or ScalaFIM.\n- Generic coordinates, alignment and directional mapping remain spatial4s/reframe4s-owned; no new frame algebra or global registry is added.\n- Subject/template world versus sampled resolution/atlas-release identities remain distinct; scanner/tkRAS and missing-inverse fixtures pass on JVM/JS.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u2",
+        "image4s",
+        "reframe4s",
+        "spatial4s",
+        "neuroim4s"
+      ]
+    },
+    {
+      "id": "eco-u2-pins",
+      "title": "U2: Integrate one coherent coordinate provider revision set",
+      "priority": 1,
+      "body": "Scope: ScalaFIM and mesh4s dependency pins/overrides; affected provider consumers.\n\nDeliverable: Align the coordinate provider graph and migrate all consumers to the shared types; update the spatial-transform ADR at this accepted cutover.\n\nAcceptance:\n- Transitive resolution contains a single admitted spatial4s/locus4s/Ravel type authority.\n- Provider composition and ScalaFIM transform oracle suites pass against the exact revision set.\n- No stale frame wrappers or implicit conversion path remain; local development overrides are explicit.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u2",
+        "build",
+        "mesh4s"
+      ]
+    },
+    {
+      "id": "eco-neuroim-providers",
+      "title": "I1: Remove generic image and spatial helpers into their core owners",
+      "priority": 1,
+      "body": "Scope: Generic helpers in image, transform and spatial; image4s/locus4s/reframe4s/graph4s/Gale.\n\nDeliverable: For each actual consumer, use an existing provider API or add the missing generic capability upstream. Cover filters, masks, clustering/local statistics, neighborhoods, reductions, graph routing and numerical operators according to their invariants.\n\nAcceptance:\n- Every moved generic helper has one implementation; provider capabilities have direct JVM/JS tests and an actual consumer.\n- No neuro-specific types enter generic provider APIs; anatomical policy stays in domain adapters.\n- Core types are used directly without duplicate axis/domain/map/field/metadata/registry models; ordering and allocation behavior are retained.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "i1",
+        "neuroim4s",
+        "image4s",
+        "locus4s",
+        "gale",
+        "reframe4s",
+        "graph4s"
+      ]
+    },
+    {
+      "id": "eco-neuroim-core",
+      "title": "I1: Move neuroimaging values and IO policy over native image4s",
+      "priority": 1,
+      "body": "Scope: NeuroVolume/NeuroSeries and related neuroimage admission/IO; neuroim4s core and optional IO.\n\nDeliverable: Extend the minimal repository from U2 with neuroimaging volume/series refinements and meaningful scientific policy. Move IO admission around image4s parsing/encoding, without copying generic image or NIfTI machinery.\n\nAcceptance:\n- Independent volume/series consumers compile/test on JVM/JS with no surface/atlas/MVPA/ScalaFIM dependency.\n- Values retain exact image4s/Ravel representation and owner; continuous/categorical/mask roles, time-axis admission, affine/scaling, views and canonical order survive.\n- Provider NIfTI support remains unchanged; bounded reads and allocation checks pass; tests/fixtures and narrow validated public constructors move with the implementation.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "i1",
+        "neuroim4s",
+        "image4s"
+      ]
+    },
+    {
+      "id": "eco-neuroim-transforms",
+      "title": "I1: Extract toolkit transform formats and anatomical interpretation",
+      "priority": 1,
+      "body": "Scope: modules/transform; optional neuroim4s transform and platform IO modules.\n\nDeliverable: Move ITK/ANTs, FSL, AFNI, FreeSurfer and X5 codecs, typed interpretation and conversion over shared world declarations. Generic transform algebra, numerical inverse solvers and resampling remain in reframe4s/Gale.\n\nAcceptance:\n- Toolkit transform fixtures/oracles pass on JVM/JS where portable; JVM HDF5/file IO stays platform-specific.\n- Directionality, unavailable inverse, scanner/tkRAS placement and transforms-applied-once semantics are preserved.\n- No duplicated affine/warp/solver implementation or surface dependency enters neuroim4s; public composition works outside ScalaFIM.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "i1",
+        "neuroim4s",
+        "reframe4s"
+      ]
+    },
+    {
+      "id": "eco-neuroim-routing",
+      "title": "I1: Separate volume spatial policy from mixed surface and latent execution",
+      "priority": 1,
+      "body": "Scope: Volume-related Domain/SpaceRef/SpatialGraph/FieldSource/compiler/runtime pieces in modules/spatial.\n\nDeliverable: Move anatomical volume routing/execution to neuroim4s over core graph/map/operator APIs. Remove surface/hybrid/latent cases from the volume contract and prepare explicit downstream adapter seams.\n\nAcceptance:\n- Volume routing and execution use provider domains/frames/operators without surface or atlas types and without ScalaFIM response/dataset APIs.\n- Wrong-domain/frame and unavailable route checks plus volume sampling/scoped-materialization fixtures pass on JVM/JS.\n- Every remaining mixed-spatial symbol has a named surface/hybrid or functional/latent destination; no universal replacement geometry hierarchy is introduced.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "i1",
+        "neuroim4s",
+        "spatial"
+      ]
+    },
+    {
+      "id": "eco-neuroim-display",
+      "title": "I1: Move optional volume slice scenes and platform hosts",
+      "priority": 1,
+      "body": "Scope: image-view, Canvas/Java2D/JavaFX hosts, associated examples/assets and conformance tests.\n\nDeliverable: Extract neuroimaging slice placement, orientation labels, crosshairs and interaction policy to optional neuroim4s view modules. Reuse Intaglio graphics/backend capabilities.\n\nAcceptance:\n- Pure viewer behavior passes on JVM/JS; applicable Canvas/Java2D/JavaFX render, pick, orientation and cursor checks retain actual platform evidence.\n- Volume core/IO/transforms resolve without display or GUI dependencies; linked surface views are a separate integration.\n- Examples and assets move with behavior; no duplicate raster/color/scene kernel is introduced when Intaglio already owns it.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "i1",
+        "neuroim4s",
+        "display",
+        "intaglio"
+      ]
+    },
+    {
+      "id": "eco-neuroim-integrations",
+      "title": "I1: Cut ScalaFIM image and transform callers over to neuroim4s",
+      "priority": 1,
+      "body": "Scope: Functional dataset/response/motion/threshold/fit/group/archive adapters; current atlas/surface consumers; builds/examples.\n\nDeliverable: Migrate consumers to neuroim4s and delete replaced image/transform/volume-view definitions. Keep functional-analysis policy downstream; retain mixed spatial remnants only until their named later cutover.\n\nAcceptance:\n- Dataset -> fit/contrast/group and archive/image scenarios preserve data/affine/axis semantics on JVM/JS.\n- No implementation copy or permanent compatibility facade remains for extracted image/transform/view APIs.\n- Every retained motion/threshold/latent adapter expresses functional policy; known external callers and build aliases use the new public APIs.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "i1",
+        "neuroim4s",
+        "scalafim"
+      ]
+    },
+    {
+      "id": "eco-u3-topology",
+      "title": "U3: Adopt mesh4s topology, realizations and locus fields",
+      "priority": 1,
+      "body": "Scope: modules/surface geometry/domain/data types; ../mesh4s and ../locus4s.\n\nDeliverable: Replace the parallel TriangleMesh/topology/domain representation with mesh4s-backed neuro-surface composition. Share topology across compatible white/pial/inflated/spherical realizations.\n\nAcceptance:\n- One topology/domain owner preserves vertex/face IDs and exact ordering through field attachment and serialization.\n- Wrong topology/domain attachment is rejected; alternate realizations have explicit identity/alignment tests.\n- Hot renderer/kernel access remains primitive and bounded; no per-element wrappers or mandatory whole-buffer copies.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u3",
+        "mesh4s",
+        "locus4s",
+        "neurosurf4s"
+      ]
+    },
+    {
+      "id": "eco-u3-kernels",
+      "title": "U3: Move reusable mesh kernels and make input admission explicit",
+      "priority": 1,
+      "body": "Scope: Generic surface lookup/geodesic/sphere kernels; ../mesh4s; surface loader admission.\n\nDeliverable: Upstream only required generic mesh capabilities. Keep hemisphere, medial-wall/template routes and format policy downstream. Implement U0 strict/raw admission decisions.\n\nAcceptance:\n- Orientation conflicts, duplicate faces, boundaries, disconnected and non-manifold specimens produce the declared result or typed diagnostic/refusal.\n- No silent reorientation, repair, dropping or renumbering of cells occurs.\n- Generic kernels have one implementation and JVM/JS parity; neuro-specific policies remain outside mesh4s.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u3",
+        "mesh4s",
+        "neurosurf4s"
+      ]
+    },
+    {
+      "id": "eco-u3-consumers",
+      "title": "U3: Cut surface, atlas and spatial callers over to native meshes",
+      "priority": 1,
+      "body": "Scope: modules/surface, atlas, spatial and mesh-dependent test fixtures.\n\nDeliverable: Migrate downstream geometry consumers over mesh4s/locus4s and shared coordinate declarations; delete replaced mesh/domain helpers while preserving their assertions. Volume/transform caller migration is handled separately in I1 and does not block this mesh cutover.\n\nAcceptance:\n- Surface, atlas and spatial portable suites pass on JVM and JS with exact index/field correspondence.\n- GIFTI/FreeSurfer/Workbench projection and transform fixtures preserve their results and existing caveats.\n- Renderer preparation retains buffer/order/allocation contracts; old geometry authorities have no remaining callers.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u3",
+        "atlas",
+        "spatial",
+        "mesh4s"
+      ]
+    },
+    {
+      "id": "eco-u4-core",
+      "title": "U4: Bootstrap mvpa4s and move its scientific core",
+      "priority": 1,
+      "body": "Scope: ../mvpa4s; modules/mvpa core, tests, fixtures and reusable fit-independent pattern/operator code.\n\nDeliverable: Create an independent JVM/JS build and move the identified evidence, relational/pattern analysis and measurement core with its tests and resources. Define narrow validated public boundaries instead of widening unsafe constructors.\n\nAcceptance:\n- Standalone mvpa4s builds/tests on both platforms without ScalaFIM production or test dependencies.\n- Parity/known-truth, RDM normalization/sign, dense/operator and ownership/lifetime tests move with their implementation.\n- Public import/constructor examples compile from an external consumer; no relocated implementation remains active in ScalaFIM.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u4",
+        "mvpa4s"
+      ]
+    },
+    {
+      "id": "eco-u4-predictive",
+      "title": "U4: Extract reusable Alder predictive adapters",
+      "priority": 1,
+      "body": "Scope: modules/mvpa-dataset generic prediction and SoftLda split; ../mvpa4s optional predictive module.\n\nDeliverable: Move generic preparation/fitting/validation/tuning adapters and separate fit-dependent SoftLda composition into ScalaFIM integration.\n\nAcceptance:\n- Predictive module builds without dataset/response/fit types from ScalaFIM.\n- Training-only preparation, split/exposure and held-out prediction behavior preserve existing JVM/JS test evidence.\n- Generic predictive implementation exists once; fit-specific composition uses public adapters downstream.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u4",
+        "mvpa4s",
+        "alder"
+      ]
+    },
+    {
+      "id": "eco-u4-measurements",
+      "title": "U4: Extract optional locus and image measurement adapters",
+      "priority": 1,
+      "body": "Scope: mvpa-spatial reusable region/searchlight/scatter APIs; mvpa4s locus/image and optional neuroim4s integration.\n\nDeliverable: Move reusable region/searchlight measurements over provider domains and image values; keep neuroimaging refinements in an optional adapter. Surface and atlas adapters follow in U6; functional threshold policy stays in ScalaFIM.\n\nAcceptance:\n- Generic locus/image adapters use provider APIs directly; core/predictive have no image or neuroim4s dependency.\n- Volume measurements preserve ordering, masking, wrong-domain rejection and scatter behavior on JVM/JS.\n- No duplicate domain/image wrapper, searchlight model or spatial kernel is introduced.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u4",
+        "mvpa4s",
+        "locus4s",
+        "image4s",
+        "neuroim4s"
+      ]
+    },
+    {
+      "id": "eco-u4-integrations",
+      "title": "U4: Migrate ScalaFIM MVPA integrations and delete replaced core",
+      "priority": 1,
+      "body": "Scope: mvpa-fit, mvpa-dataset readers, mvpa-group, mvpa-artifacts, pipeline integration, examples and build.sbt.\n\nDeliverable: Wire functional readouts, dataset readers, group inference and estimates/archive adapters to mvpa4s. Preserve optional dependency boundaries and migrate known external callers.\n\nAcceptance:\n- Dataset/fit -> identified evidence -> prediction/RSA and group/archive paths pass as scenario results on JVM/JS.\n- ScalaFIM owns fMRI interpretation while reusable MVPA algorithms/types exist only in mvpa4s.\n- Old core definitions, imports and temporary aliases are deleted; persisted scientific tags/digests are unchanged unless explicitly migrated.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u4",
+        "mvpa4s",
+        "scalafim"
+      ]
+    },
+    {
+      "id": "eco-u5-core",
+      "title": "U5: Extract surface semantics and IO independently of volumes",
+      "priority": 1,
+      "body": "Scope: neurosurf4s core/IO; surface anatomy, realizations, reference surfaces and GIFTI/FreeSurfer fixtures.\n\nDeliverable: Create an independent surface build over mesh4s/locus4s/spatial4s and the small shared anatomical declarations. Move surface-specific metadata, formats and intrinsic policies. Move volume projection separately in the optional spatial integration.\n\nAcceptance:\n- Basic surface ingestion/fields/geometry can compile and run with no neuroim4s volume/IO/transform/view modules, atlas, MVPA or ScalaFIM.\n- No duplicate mesh/domain/frame authority remains; vertex order, medial-wall policy, reference identity and format-placement fixtures pass on JVM/JS where portable.\n- Tests/assets move with the code; needed surface test support has no ScalaFIM testkit dependency.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u5",
+        "neurosurf4s",
+        "mesh4s"
+      ]
+    },
+    {
+      "id": "eco-u5-spatial",
+      "title": "U5: Extract optional surface and volume-surface spatial execution",
+      "priority": 1,
+      "body": "Scope: Remaining surface/hybrid projection/resampling, spatial compilers/runtimes and IO adapters; neurosurf4s optional integration modules.\n\nDeliverable: Move surface execution over mesh/core contracts, and volume-to-surface projection/hybrid routing over neuroim4s where neuroimaging policy is required. Keep pure image4s-based sampling direct where sufficient. Atlas routes stay above this layer; functional/latent response composition stays in ScalaFIM.\n\nAcceptance:\n- Surface-only operations do not force a volume runtime; projection/hybrid modules declare their image/transform dependencies explicitly.\n- Shared world/domain identity, projection/backprojection, route direction, field order and scoped/materialization fixtures pass on JVM/JS.\n- No reverse dependency into either image or surface core and no permanent mixed-spatial runtime copy remain; generic kernels stay provider-owned.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u5",
+        "neurosurf4s",
+        "neuroim4s",
+        "spatial"
+      ]
+    },
+    {
+      "id": "eco-u5-display",
+      "title": "U5: Move renderer-neutral surface scenes and CPU raster display",
+      "priority": 1,
+      "body": "Scope: surface-view, surface-view-raster, shared scene/readback/picking contracts and Intaglio adapters.\n\nDeliverable: Move surface scenes, decorations, CPU reference rendering and raster backend to optional neurosurf4s display modules with tests/assets.\n\nAcceptance:\n- Independent scalar surface -> scene -> image/pick/readback examples run with no ScalaFIM or neuroim4s volume-stack dependency.\n- CPU reference images, visibility/picking and persisted scene/profile compatibility checks pass on supported platforms.\n- Existing wire tags remain stable, reusable graphics remain Intaglio-owned and no JVM UI or volume runtime dependency enters shared core; linked volume/surface views are optional.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u5",
+        "neurosurf4s",
+        "display",
+        "intaglio"
+      ]
+    },
+    {
+      "id": "eco-u5-javafx",
+      "title": "U5: Move the optional JavaFX surface backend and native examples",
+      "priority": 1,
+      "body": "Scope: surface-view-javafx, corresponding surface-view example/resources and native conformance tools.\n\nDeliverable: Move the JVM backend as an optional neurosurf4s module, preserving native readback, decoration and lifecycle behavior.\n\nAcceptance:\n- JVM compile/tests and existing pixel/pick conformance checks pass with exact revision evidence.\n- An actual native display smoke is recorded; headless compilation alone is not visual acceptance.\n- JavaFX is absent from shared/JS dependency graphs; native examples and assets use only provider public APIs.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u5",
+        "neurosurf4s",
+        "javafx"
+      ]
+    },
+    {
+      "id": "eco-u5-threejs",
+      "title": "U5: Move the optional Three.js backend and browser parity harness",
+      "priority": 1,
+      "body": "Scope: surface-view-threejs, JS assets, tools/surface-view parity harness and examples.\n\nDeliverable: Move the JS backend and its conformance tooling to neurosurf4s, preserving scene/readback compatibility and resource lifecycle.\n\nAcceptance:\n- JS compile/tests, node parity tooling and the existing browser render/pick conformance checks pass.\n- Browser checks follow repository session ownership rules and record actual visual evidence; skipped real-asset coverage stays explicit.\n- Assets, fixture generators and examples move with the backend; no ScalaFIM dependency is required.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u5",
+        "neurosurf4s",
+        "threejs"
+      ]
+    },
+    {
+      "id": "eco-u5-integrations",
+      "title": "U5: Migrate ScalaFIM surface consumers and remove old modules",
+      "priority": 1,
+      "body": "Scope: atlas, spatial, surface-view-connectivity, surface examples/fixtures and build aggregates.\n\nDeliverable: Use public neurosurf4s APIs for anatomical routing and display; keep only thin ScalaFIM connectivity/fMRI integrations. Keep atlas integration temporary until A1; retain only functional/latent spatial composition in ScalaFIM after the surface cutover. Move shared fixture ownership with the implementation.\n\nAcceptance:\n- Atlas/spatial/connectivity and linked volume/surface cursor workflows compile and pass their applicable JVM/JS scenarios.\n- All four display implementations, neuro-surface core and extracted surface/hybrid spatial implementations are removed from ScalaFIM after caller cutover.\n- No copied fixtures/testkit dependency creates a provider back-edge; known external callers and example entrypoints are migrated.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u5",
+        "neurosurf4s",
+        "scalafim"
+      ]
+    },
+    {
+      "id": "eco-neuroatlas-core",
+      "title": "A1: Extract atlas semantic core and lightweight catalog queries",
+      "priority": 1,
+      "body": "Scope: AtlasRef, region metadata, hierarchy, catalog/query semantics and generic realized-assignment contracts; neuroatlas4s core.\n\nDeliverable: Bootstrap neuroatlas4s with atlas-specific identities, releases, labels and hierarchy policy over locus4s/shared anatomical declarations. Split volume/surface implementations and publication adapters out of mixed core files.\n\nAcceptance:\n- Independent catalog/label/hierarchy queries compile/test on JVM/JS without volume/surface runtime, renderers, MVPA or ScalaFIM.\n- Generic domains, selections, assignments, parcellations, reductions and registry machinery remain provider-owned; typed atlas fields compose with them directly.\n- World identity, sampled resolution and atlas release are distinct; source/citation/license and publication semantics are preserved without a second provenance engine.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "a1",
+        "neuroatlas4s",
+        "locus4s"
+      ]
+    },
+    {
+      "id": "eco-neuroatlas-volume",
+      "title": "A1: Move volume atlas realizations, loaders and mapping policy",
+      "priority": 1,
+      "body": "Scope: VolumeAtlas/realizations, volume catalog assets/loaders, template grids/routes; neuroatlas4s optional volume/IO modules.\n\nDeliverable: Compose atlas metadata and locus assignments with neuroim4s/image4s volume support. Move atlas-specific loading and template route policy; keep image format mechanics and transform kernels upstream.\n\nAcceptance:\n- Volume atlas -> query/region/reduction -> template route scenarios pass on JVM/JS where portable; JVM IO is isolated.\n- Exact support/parcel domain alignment, display order, background/unknown labels, categorical values and reduction results are preserved.\n- Native datatype/affine/scaling and asset hash/license/source fixtures survive; no surface/display dependency is required.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "a1",
+        "neuroatlas4s",
+        "neuroim4s"
+      ]
+    },
+    {
+      "id": "eco-neuroatlas-surface",
+      "title": "A1: Move surface atlas realizations and atlas-specific routes",
+      "priority": 1,
+      "body": "Scope: SurfaceAtlas, standard surface routes, GIFTI atlas loaders and atlas spatial graph adapters; neuroatlas4s optional surface/routing modules.\n\nDeliverable: Use neurosurf4s support and shared world declarations for atlas assignments and routes. Keep atlas catalog/template asset policy here, while surface registration/projection mechanics remain in neurosurf4s/providers.\n\nAcceptance:\n- Surface atlas query/reduction and relevant volume/surface atlas routes preserve vertex/parcel identity, hierarchy and exact ordering on JVM/JS.\n- Route confidence, exact versus approximate mapping, source evidence and template versus sampling identity remain explicit.\n- No atlas dependency flows back into neuroim4s/neurosurf4s; core catalog and surface-only use avoid rendering and unnecessary volume dependencies.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "a1",
+        "neuroatlas4s",
+        "neurosurf4s"
+      ]
+    },
+    {
+      "id": "eco-neuroatlas-integrations",
+      "title": "A1: Migrate atlas callers and delete the ScalaFIM atlas implementation",
+      "priority": 1,
+      "body": "Scope: modules/atlas, atlas examples/workflows/publication adapters and known external consumers.\n\nDeliverable: Cut all atlas consumers over to neuroatlas4s public APIs, move owned assets/fixtures/generators/docs and remove old module sources and aliases. Leave only functional workflow composition in ScalaFIM.\n\nAcceptance:\n- Atlas workflows and independent consumers run against the extracted revision; generic MVPA atlas integration has a defined U6 destination.\n- No duplicate atlas implementation, frame catalog, parcellation engine or asset fixture copy remains.\n- Persisted publication/scene tags and source/license/citation evidence survive; affected JVM/JS tests and example builds pass.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "a1",
+        "neuroatlas4s",
+        "scalafim"
+      ]
+    },
+    {
+      "id": "eco-u6-surface-mvpa",
+      "title": "U6: Compose optional MVPA surface and atlas measurements",
+      "priority": 1,
+      "body": "Scope: mvpa-spatial remnants; optional mvpa4s neurosurf4s/neuroatlas4s integrations.\n\nDeliverable: Finish generic surface/atlas measurement and scatter adapters over the extracted libraries. Keep fMRI threshold/response/fit policy in ScalaFIM. Core MVPA remains independent of all imaging and atlas providers.\n\nAcceptance:\n- Standalone optional adapters preserve region/vertex/parcel identity, ordering, masking and scatter results on JVM/JS.\n- Volume/surface/atlas measurement scenarios share the same MVPA evidence contracts without reimplementing domains or neighborhoods.\n- Neither neuroatlas4s nor neurosurf4s depends on mvpa4s/ScalaFIM; removed adapter copies have no remaining callers.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u6",
+        "mvpa4s",
+        "neurosurf4s",
+        "neuroatlas4s"
+      ]
+    },
+    {
+      "id": "eco-u6-cleanup",
+      "title": "U6: Remove remaining duplicate authorities and expired scaffolding",
+      "priority": 1,
+      "body": "Scope: Old image/transform/atlas/surface/MVPA modules, locus-data and mixed-spatial remnants, mvpa-foundation-spike, compatibility aliases and affected integration modules.\n\nDeliverable: Complete the deletion ledger; retire facades and admission scaffolding after preserving meaningful tests. Combine modules only when optional dependencies and release responsibilities coincide.\n\nAcceptance:\n- All four extractions are complete; every replaced API maps to one live owner and its old implementation is gone.\n- Architecture checks reject forbidden provider back-edges and duplicated axis/image/domain/frame/mesh/atlas-membership/provenance authorities; external compilation checks cover public boundaries.\n- No forced fit/storage/graphics/platform dependency is introduced merely to reduce module count.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u6",
+        "architecture"
+      ]
+    },
+    {
+      "id": "eco-u6-build-docs",
+      "title": "U6: Align pins, bounded CI and documentation with the delivered graph",
+      "priority": 1,
+      "body": "Scope: build.sbt/provider overrides, dependency preparation, CI, README, vision.md, module-relations and affected ADRs across core providers and all four extracted libraries.\n\nDeliverable: Admit one immutable provider revision set, propagate explicit local overrides, update bounded platform checks and direct-composition quickstarts, and retire superseded guidance with links.\n\nAcceptance:\n- Ordinary builds resolve no floating branches, sibling paths or duplicate provider identities; local overrides propagate intentionally.\n- Build aggregates/aliases and bounded JVM/JS CI cover the resulting modules; platform-specific gates remain separate.\n- Examples cover each standalone library and demonstrate direct provider types and optional ScalaFIM integration; architectural docs and deletion ledger match source.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u6",
+        "build",
+        "docs"
+      ]
+    },
+    {
+      "id": "eco-u6-acceptance",
+      "title": "U6: Verify clean independent consumers and end-to-end ScalaFIM workflows",
+      "priority": 1,
+      "body": "Scope: Independent consumer fixtures and clean checkout acceptance for the exact final provider revisions.\n\nDeliverable: Run standalone provider consumers and the functional-analysis, MVPA, atlas/searchlight, surface readback, linked-frame, standalone volume-transform-display and atlas query/route scenarios against immutable pins without sibling overrides or local artifact leakage.\n\nAcceptance:\n- Independent neuroim4s, neuroatlas4s, mvpa4s and neurosurf4s consumers build/test without ScalaFIM or provider test internals; minimal core consumers prove optional volume/surface/display boundaries.\n- ScalaFIM compile-all plus bounded JVM/JS regression batches pass; native and browser evidence is separately recorded.\n- All seven scenario families in plan section 7 return explicit results; known caveats, skipped real assets and adverse evidence are retained. Record exact revisions and raw exit status; do not infer publication or new scientific qualification.\n\nApply the shared migration and verification requirements in eco-unification.",
+      "tags": [
+        "ecosystem-unification",
+        "modularization",
+        "dry",
+        "task",
+        "u6",
+        "verification"
+      ]
+    }
+  ],
+  "deps": [
+    {
+      "child": "eco-unification",
+      "parent": "eco-u0",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-u1",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-u2",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-neuroim",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-u3",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-u4",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-u5",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-neuroatlas",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-unification",
+      "parent": "eco-u6",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u0",
+      "parent": "eco-u0-ownership",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u0",
+      "parent": "eco-u0-baselines",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u0-baselines",
+      "parent": "eco-u0-ownership",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1",
+      "parent": "eco-u1-domains",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1-domains",
+      "parent": "eco-u0",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1",
+      "parent": "eco-u1-provenance",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1-provenance",
+      "parent": "eco-u0",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1",
+      "parent": "eco-u1-axes",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1-axes",
+      "parent": "eco-u1-domains",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1-axes",
+      "parent": "eco-u1-provenance",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1",
+      "parent": "eco-u1-pipeline",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u1-pipeline",
+      "parent": "eco-u0",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u2",
+      "parent": "eco-u2-coordinates",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u2-coordinates",
+      "parent": "eco-u0",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u2",
+      "parent": "eco-u2-world",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u2-world",
+      "parent": "eco-u2-coordinates",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u2",
+      "parent": "eco-u2-pins",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u2-pins",
+      "parent": "eco-u2-world",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-neuroim-providers",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-providers",
+      "parent": "eco-u2",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-providers",
+      "parent": "eco-u1-domains",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-neuroim-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-core",
+      "parent": "eco-neuroim-providers",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-neuroim-transforms",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-transforms",
+      "parent": "eco-neuroim-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-neuroim-routing",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-routing",
+      "parent": "eco-neuroim-transforms",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-neuroim-display",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-display",
+      "parent": "eco-neuroim-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-neuroim-integrations",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-integrations",
+      "parent": "eco-neuroim-routing",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroim-integrations",
+      "parent": "eco-neuroim-display",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3",
+      "parent": "eco-u3-topology",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3-topology",
+      "parent": "eco-u2",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3-topology",
+      "parent": "eco-u1-domains",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3",
+      "parent": "eco-u3-kernels",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3-kernels",
+      "parent": "eco-u3-topology",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3",
+      "parent": "eco-u3-consumers",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u3-consumers",
+      "parent": "eco-u3-kernels",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4",
+      "parent": "eco-u4-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4-core",
+      "parent": "eco-u1",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4",
+      "parent": "eco-u4-predictive",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4-predictive",
+      "parent": "eco-u4-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4",
+      "parent": "eco-u4-measurements",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4-measurements",
+      "parent": "eco-u4-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4-measurements",
+      "parent": "eco-neuroim-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4",
+      "parent": "eco-u4-integrations",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4-integrations",
+      "parent": "eco-u4-predictive",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u4-integrations",
+      "parent": "eco-u4-measurements",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-u5-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-core",
+      "parent": "eco-u3",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-u5-spatial",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-spatial",
+      "parent": "eco-u5-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-spatial",
+      "parent": "eco-neuroim-routing",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-u5-display",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-display",
+      "parent": "eco-u5-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-u5-javafx",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-javafx",
+      "parent": "eco-u5-display",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-u5-threejs",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-threejs",
+      "parent": "eco-u5-display",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-u5-integrations",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-integrations",
+      "parent": "eco-u5-spatial",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-integrations",
+      "parent": "eco-u5-javafx",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u5-integrations",
+      "parent": "eco-u5-threejs",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas",
+      "parent": "eco-neuroatlas-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-core",
+      "parent": "eco-u1-domains",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-core",
+      "parent": "eco-u2-world",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas",
+      "parent": "eco-neuroatlas-volume",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-volume",
+      "parent": "eco-neuroatlas-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-volume",
+      "parent": "eco-neuroim-routing",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas",
+      "parent": "eco-neuroatlas-surface",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-surface",
+      "parent": "eco-neuroatlas-core",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-surface",
+      "parent": "eco-u5-spatial",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas",
+      "parent": "eco-neuroatlas-integrations",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-integrations",
+      "parent": "eco-neuroatlas-volume",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-neuroatlas-integrations",
+      "parent": "eco-neuroatlas-surface",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6",
+      "parent": "eco-u6-surface-mvpa",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-surface-mvpa",
+      "parent": "eco-u4",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-surface-mvpa",
+      "parent": "eco-u5-spatial",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-surface-mvpa",
+      "parent": "eco-neuroatlas",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6",
+      "parent": "eco-u6-cleanup",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-cleanup",
+      "parent": "eco-neuroim",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-cleanup",
+      "parent": "eco-u4",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-cleanup",
+      "parent": "eco-u5",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-cleanup",
+      "parent": "eco-neuroatlas",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-cleanup",
+      "parent": "eco-u6-surface-mvpa",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6",
+      "parent": "eco-u6-build-docs",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-build-docs",
+      "parent": "eco-u6-cleanup",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6",
+      "parent": "eco-u6-acceptance",
+      "kind": "blocks"
+    },
+    {
+      "child": "eco-u6-acceptance",
+      "parent": "eco-u6-build-docs",
+      "kind": "blocks"
+    }
+  ],
+  "relations": [
+    {
+      "child": "eco-u0",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u1",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u2",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u3",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u4",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroatlas",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u6",
+      "parent": "eco-unification",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u0-ownership",
+      "parent": "eco-u0",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u0-baselines",
+      "parent": "eco-u0",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u1-domains",
+      "parent": "eco-u1",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u1-provenance",
+      "parent": "eco-u1",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u1-axes",
+      "parent": "eco-u1",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u1-pipeline",
+      "parent": "eco-u1",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u2-coordinates",
+      "parent": "eco-u2",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u2-world",
+      "parent": "eco-u2",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u2-pins",
+      "parent": "eco-u2",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim-providers",
+      "parent": "eco-neuroim",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim-core",
+      "parent": "eco-neuroim",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim-transforms",
+      "parent": "eco-neuroim",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim-routing",
+      "parent": "eco-neuroim",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim-display",
+      "parent": "eco-neuroim",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroim-integrations",
+      "parent": "eco-neuroim",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u3-topology",
+      "parent": "eco-u3",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u3-kernels",
+      "parent": "eco-u3",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u3-consumers",
+      "parent": "eco-u3",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u4-core",
+      "parent": "eco-u4",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u4-predictive",
+      "parent": "eco-u4",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u4-measurements",
+      "parent": "eco-u4",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u4-integrations",
+      "parent": "eco-u4",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5-core",
+      "parent": "eco-u5",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5-spatial",
+      "parent": "eco-u5",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5-display",
+      "parent": "eco-u5",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5-javafx",
+      "parent": "eco-u5",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5-threejs",
+      "parent": "eco-u5",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u5-integrations",
+      "parent": "eco-u5",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroatlas-core",
+      "parent": "eco-neuroatlas",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroatlas-volume",
+      "parent": "eco-neuroatlas",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroatlas-surface",
+      "parent": "eco-neuroatlas",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-neuroatlas-integrations",
+      "parent": "eco-neuroatlas",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u6-surface-mvpa",
+      "parent": "eco-u6",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u6-cleanup",
+      "parent": "eco-u6",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u6-build-docs",
+      "parent": "eco-u6",
+      "kind": "parent"
+    },
+    {
+      "child": "eco-u6-acceptance",
+      "parent": "eco-u6",
+      "kind": "parent"
+    }
+  ]
+}

@@ -1,8 +1,9 @@
 # Development machine handoff
 
 ScalaFIM's Mote tickets and coordination history are versioned in
-`.mote/FORMAT.json` and `.mote/ops/*.json`. The immutable operations are the
-source of truth. Commit new operations with the related work and fetch/pull
+`.mote/FORMAT.json`, `.mote/ops/*.json`, and `.mote/authority/`. The immutable
+operations and authority journals together are the source of truth. Commit
+new operations and their admission records with related work and fetch/pull
 before continuing on another machine. Use the Mote CLI for changes; never edit,
 reformat or delete operation files to change tracker state.
 
@@ -11,36 +12,95 @@ and unpublished temporary state, and are not needed to reconstruct tickets.
 Historical session PIDs and lease records in the operation log are historical
 evidence, not proof that a worker is running on the new host.
 
+An authority journal is a single writer history, not a distributed merge log.
+Stop writes on the old host, commit the complete store, and fetch it before
+starting writes on the next host. Never run independently writable replicas
+and merge their numbered journals. Journal conflicts or unadmitted operations
+require supported recovery; ordinary Git conflict resolution is insufficient.
+
 ## Start on the new machine
 
+The latest machine-handoff snapshot is `handoff/20261015-development-machine`.
+Use that branch until its handoff changes have landed on `main`. It starts at
+published main `ac2ec8b706fc`; all local branch commits were already remotely
+preserved. See the [2026-10-15 receipt](verification/development-machine-20261015/README.md)
+for retained evidence, worktree dispositions, and initial verification. The
+[2026-10-16 recovery receipt](verification/mote-recovery-20261016/README.md)
+records the restored tracker and modularization epic.
+
+Install Git, JDK 21 (the compiler targets Java 17), sbt 1.11.7, Node.js 22 or
+newer, Python 3.11 or newer, and a compatible current Mote CLI. With Rust/Cargo
+installed, Mote can be installed with
+`cargo install --git https://github.com/bbuchsbaum/mote --rev 4ae95ba97cfef09efa537c2eb21433d36b4ba7be --locked`.
+Scala 3.7.4 and build plugins are resolved by sbt. GitHub source dependencies
+and artifact repositories require network access on the first build.
+
 ```sh
-git clone https://github.com/canardlapin/scalafim.git
+git clone --branch handoff/20261015-development-machine https://github.com/canardlapin/scalafim.git
 cd scalafim
+git config --local user.name canardlapin
+git config --local user.email 307091466+canardlapin@users.noreply.github.com
+git config --local github.account canardlapin
+./tools/prepare-pinned-dependencies.sh
+sbt responseJVM/test responseJS/test
+python3 docs/verification/development-machine-20261015/verify-custody.py
+```
+
+For GitHub API writes, authenticate the isolated `gh-canardlapin` profile on the
+new machine and use `tools/github/gh-repo`. Git transport authentication and API
+authentication are independent. Do not copy credentials or absolute credential
+helper paths from the old machine. Configure any private-repository transport
+under the intended account on the new host.
+
+With GitHub CLI installed, configure that isolated profile independently:
+
+```sh
+env -u GH_TOKEN -u GITHUB_TOKEN -u GH_ENTERPRISE_TOKEN -u GITHUB_ENTERPRISE_TOKEN \
+  GH_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gh-canardlapin" \
+  gh auth login --hostname github.com --web --git-protocol https --skip-ssh-key
+tools/github/gh-repo auth status
+tools/github/gh-repo api user --jq .login
+```
+
+Verify that the API login is `canardlapin`. If HTTPS pushes also need that
+profile, set a helper only in this clone:
+
+```sh
+git config --local credential.helper ''
+git config --local --add credential.helper '!tools/github/gh-repo auth git-credential'
+```
+
+**Mote was recovered on 2026-10-16.** All 24,943 original operation files and
+the existing 75 admission records were preserved. The 943 upstream operations
+outside that journal were re-admitted through Mote's native publisher after
+the frozen prefix. The original genesis binding and authority fence remain
+active. This is a documented recovery admission order, not a claim to have
+found the missing original journals. See the
+[recovery receipt](verification/mote-recovery-20261016/README.md).
+
+The [2026-10-15 receipt](verification/development-machine-20261015/README.md)
+records the earlier blocked state; the recovery receipt supersedes that live
+status. A new clone should work with the complete committed store. Bootstrap
+its local identity and verify it:
+
+```sh
 mote --version
 mkdir -p .mote/local .mote/tmp
 mote actor set development-new-machine
+mote authority status
 mote doctor
+mote fsck
 mote --json ls --all
 mote ready
 ```
 
-If the protected-main publication PR is still pending, use the complete handoff
-branch immediately:
-
-```sh
-git clone --branch migration/20261005/handoff https://github.com/canardlapin/scalafim.git
-```
-
-Then run the same Mote bootstrap commands above. The handoff branch includes
-the portable tracker and source; its presence does not mean the required
-hosted checks have passed or the PR has merged.
-
-The migration was checked with Mote 0.1.0. Install a compatible Mote CLI; its
-schema version must support the committed store. Select your own stable actor
-name rather than inheriting a workstation's identity. Current claims and
-reservations are TTL leases; inspect them before touching claimed paths.
-Git does not carry empty directories, so the `mkdir` step restores the two
-ignored directories needed by Mote's layout check.
+Mote reports version 0.1.0 across multiple revisions; the version string alone
+does not establish authority compatibility. Its schema and authority support
+must match the committed store. Select your own stable actor name rather than
+inheriting a workstation's identity. Current claims and reservations are TTL
+leases; inspect them before touching claimed paths. Git does not carry empty
+directories, so the `mkdir` step restores the ignored layout directories. Do not
+carry `MOTE_STORE` or `MOTE_ACTOR` exports from an old session into the new clone.
 
 Formal candidate records can be bound to the original Git repository identity
 and landing target. Revalidate or rebind them through the Mote candidate
@@ -51,6 +111,13 @@ Follow `AGENTS.md` and `README.md` for toolchain, fixture configuration and
 bounded JVM/Scala.js checks. Keep repo-local authoring and GitHub API routing
 under `canardlapin`, as specified in `AGENTS.md`; credentials are configured on
 the new machine independently and are not part of this handoff.
+
+After the smoke tests, use `sbt scalafimCompileAll` for the portable compile gate
+and run relevant module tests on both platforms. On a memory-limited machine,
+run a few JVM targets per sbt invocation, then a few JS targets in a separate
+invocation; avoid one `scalafimTestAll` run. Native JavaFX checks need a display
+and OpenJFX; R/native-tool and external cortex fixtures need their documented
+separate setup. They are not prerequisites for the portable smoke test.
 
 ## Recover retained development work
 

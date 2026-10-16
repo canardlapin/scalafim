@@ -1,0 +1,1055 @@
+{
+  "nodes": [
+    {
+      "id": "eco-u0",
+      "title": "U0 milestone: Freeze ownership and compatibility decisions",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u0-baselines",
+      "title": "U0: Capture existing contracts and composition specimens",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u0-ownership",
+      "title": "U0: Settle ownership and the deletion map",
+      "status": "open",
+      "priority": 1,
+      "ready": true,
+      "waiting": false,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u1",
+      "title": "U1 milestone: Unify identity and provenance; free MVPA core",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u1-axes",
+      "title": "U1: Remove response-specific types from MVPA axes",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u1-domains",
+      "title": "U1: Use locus4s domains and explicit alignment directly",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u1-pipeline",
+      "title": "U1: Separate MVPA plans from the pipeline interpreter",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u1-provenance",
+      "title": "U1: Move source provenance to one external contract",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u2",
+      "title": "U2 milestone: Share one coordinate and world-frame model",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u2-coordinates",
+      "title": "U2: Adopt spatial4s coordinate types in image4s and reframe4s",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u2-pins",
+      "title": "U2: Integrate one coherent coordinate provider revision set",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u2-world",
+      "title": "U2: Externalize shared neuroimaging declarations and directional links",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u3",
+      "title": "U3 milestone: Make surface geometry native to mesh4s",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u3-consumers",
+      "title": "U3: Cut surface, atlas and spatial callers over to native meshes",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u3-kernels",
+      "title": "U3: Move reusable mesh kernels and make input admission explicit",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u3-topology",
+      "title": "U3: Adopt mesh4s topology, realizations and locus fields",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u4",
+      "title": "U4 milestone: Extract standalone mvpa4s and migrate analysis callers",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u4-core",
+      "title": "U4: Bootstrap mvpa4s and move its scientific core",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u4-integrations",
+      "title": "U4: Migrate ScalaFIM MVPA integrations and delete replaced core",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u4-measurements",
+      "title": "U4: Extract generic locus and image measurement adapters",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u4-predictive",
+      "title": "U4: Extract reusable Alder predictive adapters",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u5",
+      "title": "U5 milestone: Extract neurosurf4s and its display backends",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u5-core",
+      "title": "U5: Extract neuro-surface semantics, IO and projection",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u5-display",
+      "title": "U5: Move renderer-neutral surface scenes and CPU raster display",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u5-integrations",
+      "title": "U5: Migrate ScalaFIM surface consumers and remove old modules",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u5-javafx",
+      "title": "U5: Move the optional JavaFX surface backend and native examples",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u5-threejs",
+      "title": "U5: Move the optional Three.js backend and browser parity harness",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u6",
+      "title": "U6 milestone: Finish cross-library composition and remove duplication",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u6-acceptance",
+      "title": "U6: Verify clean independent consumers and end-to-end ScalaFIM workflows",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u6-build-docs",
+      "title": "U6: Align pins, bounded CI and documentation with the delivered graph",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u6-cleanup",
+      "title": "U6: Remove remaining duplicate authorities and expired scaffolding",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-u6-surface-mvpa",
+      "title": "U6: Compose MVPA surface measurements over neurosurf4s",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    },
+    {
+      "id": "eco-unification",
+      "title": "Unify core providers and extract mvpa4s / neurosurf4s",
+      "status": "open",
+      "priority": 1,
+      "ready": false,
+      "waiting": true,
+      "stranded": false,
+      "claimed_by": null,
+      "context": false
+    }
+  ],
+  "edges": [
+    {
+      "from": "eco-u0-baselines",
+      "to": "eco-u0",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0-ownership",
+      "to": "eco-u0",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u0",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0-ownership",
+      "to": "eco-u0-baselines",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-u0-baselines",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-u0-ownership",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-axes",
+      "to": "eco-u1",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-domains",
+      "to": "eco-u1",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-pipeline",
+      "to": "eco-u1",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-provenance",
+      "to": "eco-u1",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u1",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-domains",
+      "to": "eco-u1-axes",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-provenance",
+      "to": "eco-u1-axes",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1",
+      "to": "eco-u1-axes",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-u1-domains",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1",
+      "to": "eco-u1-domains",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-u1-pipeline",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1",
+      "to": "eco-u1-pipeline",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-u1-provenance",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1",
+      "to": "eco-u1-provenance",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2-coordinates",
+      "to": "eco-u2",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2-pins",
+      "to": "eco-u2",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2-world",
+      "to": "eco-u2",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u2",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-u2-coordinates",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2",
+      "to": "eco-u2-coordinates",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2-world",
+      "to": "eco-u2-pins",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2",
+      "to": "eco-u2-pins",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2-coordinates",
+      "to": "eco-u2-world",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2",
+      "to": "eco-u2-world",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3-consumers",
+      "to": "eco-u3",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3-kernels",
+      "to": "eco-u3",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3-topology",
+      "to": "eco-u3",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u3",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3-kernels",
+      "to": "eco-u3-consumers",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3",
+      "to": "eco-u3-consumers",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3-topology",
+      "to": "eco-u3-kernels",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3",
+      "to": "eco-u3-kernels",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1-domains",
+      "to": "eco-u3-topology",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2",
+      "to": "eco-u3-topology",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3",
+      "to": "eco-u3-topology",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-core",
+      "to": "eco-u4",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-integrations",
+      "to": "eco-u4",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-measurements",
+      "to": "eco-u4",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-predictive",
+      "to": "eco-u4",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u4",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1",
+      "to": "eco-u4-core",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-u4-core",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-measurements",
+      "to": "eco-u4-integrations",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-predictive",
+      "to": "eco-u4-integrations",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-u4-integrations",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2",
+      "to": "eco-u4-measurements",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-core",
+      "to": "eco-u4-measurements",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-u4-measurements",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4-core",
+      "to": "eco-u4-predictive",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-u4-predictive",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-core",
+      "to": "eco-u5",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-display",
+      "to": "eco-u5",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-integrations",
+      "to": "eco-u5",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-javafx",
+      "to": "eco-u5",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-threejs",
+      "to": "eco-u5",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u5",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3",
+      "to": "eco-u5-core",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-u5-core",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-core",
+      "to": "eco-u5-display",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-u5-display",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-core",
+      "to": "eco-u5-integrations",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-display",
+      "to": "eco-u5-integrations",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-javafx",
+      "to": "eco-u5-integrations",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-threejs",
+      "to": "eco-u5-integrations",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-u5-integrations",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-display",
+      "to": "eco-u5-javafx",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-u5-javafx",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-display",
+      "to": "eco-u5-threejs",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-u5-threejs",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-acceptance",
+      "to": "eco-u6",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-build-docs",
+      "to": "eco-u6",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-cleanup",
+      "to": "eco-u6",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-surface-mvpa",
+      "to": "eco-u6",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-unification",
+      "to": "eco-u6",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-build-docs",
+      "to": "eco-u6-acceptance",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6",
+      "to": "eco-u6-acceptance",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-cleanup",
+      "to": "eco-u6-build-docs",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6",
+      "to": "eco-u6-build-docs",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-u6-cleanup",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-u6-cleanup",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6-surface-mvpa",
+      "to": "eco-u6-cleanup",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6",
+      "to": "eco-u6-cleanup",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-u6-surface-mvpa",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5-core",
+      "to": "eco-u6-surface-mvpa",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6",
+      "to": "eco-u6-surface-mvpa",
+      "kind": "parent",
+      "blocking": false,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u0",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u1",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u2",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u3",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u4",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u5",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    },
+    {
+      "from": "eco-u6",
+      "to": "eco-unification",
+      "kind": "blocks",
+      "blocking": true,
+      "satisfied": false
+    }
+  ]
+}
