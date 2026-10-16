@@ -78,9 +78,9 @@ run_batch estimates-js \
   estimatesJS/test estimatesIoJS/test fitEstimatesJS/test
 
 run_batch analysis-jvm \
-  modelJVM/test fitJVM/test firstLevelLawsJVM/test mvpaJVM/test mvpaFitJVM/test
+  modelJVM/test fitJVM/test firstLevelLawsJVM/test mvpaJVM/test mvpaPipelineJVM/test mvpaFitJVM/test
 run_batch analysis-js \
-  modelJS/test fitJS/test firstLevelLawsJS/test mvpaJS/test mvpaFitJS/test
+  modelJS/test fitJS/test firstLevelLawsJS/test mvpaJS/test mvpaPipelineJS/test mvpaFitJS/test
 
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \

@@ -1,0 +1,57 @@
+58815:               }
+58816:               if ((!x207)) {
+58817:                 try {
+58818:                   $n(interpreter);
+58819:                   var $x_2 = $m_Lscalafim_fmri_mvpa_execution_LocalExecution$();
+58820:                   var $x_1 = $m_Lscalafim_fmri_mvpa_execution_WorkAddress$().seed__J__Lscalafim_fmri_mvpa_execution_WorkAddress__J(rootSeed_$_lo, rootSeed_$_hi, $n(unit$1).address__Lscalafim_fmri_mvpa_execution_WorkAddress());
+58821:                   var evaluated = $p_Lscalafim_fmri_mvpa_execution_LocalExecution$__evaluate__Lscalafim_fmri_mvpa_execution_WorkUnit__J__Lscalafim_fmri_mvpa_execution_BeforeCommit__s_util_Either($x_2, unit$1, $x_1.l, $x_1.h, beforeCommit);
+58822:                 } catch (e$3) {
+58823:                   var e$4 = ((e$3 instanceof $c_jl_Throwable) ? e$3 : new $c_sjs_js_JavaScriptException(e$3));
+58824:                   matchResult87: {
+58825:                     var evaluated;
+58826:                     var x173 = $m_s_util_control_NonFatal$().unapply__jl_Throwable__s_Option(e$4);
+58827:                     if ((!$n(x173).isEmpty__Z())) {
+58828:                       var x174 = $as_jl_Throwable($n(x173).get__O());
+58829:                       var detail$1 = $p_Lscalafim_fmri_mvpa_execution_LocalExecution$__detail__jl_Throwable__T($m_Lscalafim_fmri_mvpa_execution_LocalExecution$(), x174);
+58830:                       var value$3 = new $c_Lscalafim_fmri_mvpa_execution_UnitError$Interpreter(detail$1);
+58831:                       var evaluated = new $c_s_util_Left(value$3);
+58832:                       break matchResult87;
+58833:                     }
+58834:                     throw ((e$4 instanceof $c_sjs_js_JavaScriptException) ? e$4.sjs_js_JavaScriptException__f_exception : e$4);
+58835:                   }
+58836:                 }
+58837:                 if ((evaluated instanceof $c_s_util_Left)) {
+58838:                   var x194 = $as_s_util_Left(evaluated);
+
+110770:   Lscalafim_fmri_mvpa_execution_BeforeCommit: 1
+110771: }));
+110772: /** @constructor */
+110773: function $c_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3(evaluations$2) {
+110774:   this.Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3__f_evaluations$1 = null;
+110775:   this.Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3__f_evaluations$1 = evaluations$2;
+110776: }
+110777: $c_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3.prototype = new $h_O();
+110778: $c_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3.prototype.constructor = $c_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3;
+110779: /** @constructor */
+110780: function $h_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3() {
+110781: }
+110782: $h_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3.prototype = $c_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3.prototype;
+110783: var $d_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3 = new $TypeData().initClass($c_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3, "scalafim.fmri.mvpa.analysis.LocalExecutionSuite$$anon$3", ({
+110784:   Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite$$anon$3: 1,
+110785:   Lscalafim_fmri_mvpa_execution_UnitInterpreter: 1
+110786: }));
+
+268878:       var this$230 = $m_sci_Vector$();
+268879:       var elems$29 = $m_sr_ScalaRunTime$().wrapRefArray__AO__sci_ArraySeq(new ($d_Lscalafim_fmri_mvpa_execution_WorkUnit.getArrayOf().constr)([a$5, b$2]));
+268880:       var expected$4$1 = this$230.from__sc_IterableOnce__sci_Vector(elems$29);
+268881:       $m_Lresample4s_core_Random$package$Seed$();
+268882:       var rootSeed$4_$_lo = 5;
+268883:       var rootSeed$4_$_hi = 0;
+268884:       $m_Lscalafim_fmri_mvpa_execution_LocalExecution$();
+268885:       var attempts$4 = $m_s_None$();
+268886:       var cancellationRequested$4 = $m_Lscalafim_fmri_mvpa_execution_LocalExecution$().run$default$5__F0();
+268887:       $m_Lscalafim_fmri_mvpa_execution_LocalExecution$();
+268888:       var beforeCommit$3 = $m_Lscalafim_fmri_mvpa_execution_BeforeCommit$().Lscalafim_fmri_mvpa_execution_BeforeCommit$__f_allow;
+268889:       var x56 = $as_Lscalafim_fmri_mvpa_execution_FamilyState($p_Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite__right__s_util_Either__O(this, $m_Lscalafim_fmri_mvpa_execution_LocalExecution$().run__sci_Vector__J__Lscalafim_fmri_mvpa_execution_Reduction__s_Option__F0__Lscalafim_fmri_mvpa_execution_BeforeCommit__Lscalafim_fmri_mvpa_execution_UnitInterpreter__s_util_Either(expected$4$1, rootSeed$4_$_lo, rootSeed$4_$_hi, this.Lscalafim_fmri_mvpa_analysis_LocalExecutionSuite__f_sum, attempts$4, cancellationRequested$4, beforeCommit$3, failing)));
+268890:       if ((x56 instanceof $c_Lscalafim_fmri_mvpa_execution_FamilyState$Failed)) {
+268891:         var x57 = $as_Lscalafim_fmri_mvpa_execution_FamilyState$Failed(x56);

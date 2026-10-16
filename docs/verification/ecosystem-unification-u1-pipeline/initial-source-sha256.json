@@ -1,0 +1,13 @@
+{
+  "baseline_commit": "1412c16c2",
+  "raw_log_sha256": "9edcd2e4a8e62487fdcac0c49c6de89dafa840254442bb328e55c14afd49574b",
+  "files": {
+    "build.sbt": "665d7abb56ad81d22850dc4b4407d2e3e3b2300283c763b6a77dbe08e3d91346",
+    "modules/mvpa-pipeline/shared/src/main/scala/scalafim/fmri/mvpa/pipeline/PipelineInterpreter.scala": "3a6d3b7428889ee03ace13897a52ed5e609f0ccc29930237e06d4daa2b6bf2fc",
+    "modules/mvpa-pipeline/shared/src/test/scala/external/consumer/PipelineInterpreterSuite.scala": "b75d9a164120a8bcbc5c7db634998f3f5a6c20f1d7cc81fbeb92acc6932b20ad",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/execution/LocalExecution.scala": "9d11933df65eb65e3e972e3fc0a13a315efdd14ffddc58d8538a8d777933b32c",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/execution/UnitInterpreter.scala": "3b69c30425d08b554fd67d60bd3e57ecceafc56fa75b9da8ac1db833f9c9c7d8",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala": "6ac17ec0251806ba0019c54b1615a50d6be57dce22cf81da67831a0407630851",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/execution/LocalExecutionSuite.scala": "5058d195fb59ee803ba9c8fe328e9944ad1108329c4da6544f5e82f5b134a8f9"
+  }
+}

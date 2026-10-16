@@ -169,7 +169,8 @@ final class PreparedVoxelFamily private[pattern] (
   /** The schedule contains replicate ordinals, not new randomization draws.
     * Reordering, omission and retry use the already frozen common action. */
   def run(schedule: Option[Vector[Int]] = None, cancellationRequested: () => Boolean = () => false,
-      beforeCommit: BeforeCommit = BeforeCommit.allow): Either[VoxelFamilyError, VoxelFamilyRun] =
+      beforeCommit: BeforeCommit = BeforeCommit.allow,
+      interpreter: UnitInterpreter = UnitInterpreter.direct): Either[VoxelFamilyError, VoxelFamilyRun] =
     val work = Vector.tabulate(reference.draws): index =>
       new WorkUnit[VoxelReplicateReceipt, Nothing]:
         val address = WorkAddress(reference.executionPlan, SplitCoordinate(0).toOption.get,
@@ -192,7 +193,7 @@ final class PreparedVoxelFamily private[pattern] (
       val reduction = new Reduction[VoxelReplicateReceipt, Vector[VoxelReplicateReceipt]]:
         def empty: Vector[VoxelReplicateReceipt] = Vector.empty
         def add(current: Vector[VoxelReplicateReceipt], value: VoxelReplicateReceipt): Vector[VoxelReplicateReceipt] = current :+ value
-      LocalExecution.run(work, reference.seed, reduction, schedule.map(_.map(work(_))), cancellationRequested, beforeCommit)
+      LocalExecution.run(work, reference.seed, reduction, schedule.map(_.map(work(_))), cancellationRequested, beforeCommit, interpreter)
         .left.map(VoxelFamilyError.Execution.apply).map(state => new VoxelFamilyRun(this, state))
 
 object VoxelFamilyRandomization:

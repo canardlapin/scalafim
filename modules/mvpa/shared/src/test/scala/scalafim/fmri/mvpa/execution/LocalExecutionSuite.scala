@@ -6,6 +6,9 @@ import scalafim.fmri.mvpa.execution.*
 import scalafim.fmri.mvpa.measurement.MeasurementId
 
 class LocalExecutionSuite extends munit.FunSuite:
+  test("MVPA core has no pipeline API on its compile classpath"):
+    assert(scala.compiletime.testing.typeCheckErrors("scalafim.pipeline.RunContext.empty").nonEmpty)
+
   private def right[E, A](value: Either[E, A]): A =
     value.fold(error => fail(error.toString), identity)
 
@@ -179,6 +182,24 @@ class LocalExecutionSuite extends munit.FunSuite:
       case FamilyState.Failed(_,failures) => assertEquals(failures,Vector(a.address -> UnitError.Control("control fault")))
       case other => fail(s"unexpected callback failure: $other")
     assertEquals(acquired,0)
+
+  test("throwing interpreter preserves cleanup and already committed coverage"):
+    var closed = 0
+    var evaluations = 0
+    val a = complete(address(0,0,0,"a",0),"a",1,"a",() => Resource(() => closed += 1))
+    val b = complete(address(0,0,0,"b",1),"b",2,"b",() => Resource(() => closed += 1))
+    val failing = new UnitInterpreter:
+      def evaluate[C, O](evaluation: () => Either[UnitError, UnitEvaluation[C, O]]): Either[UnitError, UnitEvaluation[C, O]] =
+        evaluations += 1
+        val result = evaluation()
+        if evaluations == 2 then throw IllegalStateException("interpreter-fault")
+        result
+    right(LocalExecution.run(Vector(a,b),Seed.fromLong(5L),sum,interpreter = failing)) match
+      case FamilyState.Failed(value, failures) =>
+        assertEquals(value.coverage, Coverage(2,1,Vector(b.address)))
+        assertEquals(failures, Vector(b.address -> UnitError.Interpreter("interpreter-fault")))
+      case other => fail(s"lost interpreter failure: $other")
+    assertEquals(closed,2)
 
   test("reduction faults retain committed coverage including an empty family"):
     val a = complete(address(0,0,0,"a",0),"a",1,"a")

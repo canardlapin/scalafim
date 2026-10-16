@@ -3,7 +3,6 @@ package scalafim.fmri.mvpa.execution
 import resample4s.core.{Seed, StreamDomain, StreamPath}
 import scalafim.fmri.mvpa.analysis.PlanId
 import scalafim.fmri.mvpa.measurement.MeasurementId
-import scalafim.pipeline.{ArtifactKind, LocalPipelineRunner, PipelineBuilder, PipelineError, PipelineStep, RunContext, StepId}
 import scala.util.control.NonFatal
 
 /** A scientific coordinate, supplied by the bound design rather than assigned
@@ -91,7 +90,7 @@ enum UnitError:
   case Close(detail: String)
   case ComputeAndClose(compute: UnitError, close: UnitError)
   case BeforeCommit(detail: String)
-  case Pipeline(detail: String)
+  case Interpreter(detail: String)
   case Control(detail: String)
 
 /** A contribution fingerprint is supplied by the numerical program.  It is
@@ -109,7 +108,7 @@ enum UnitEvaluation[+C, +O]:
   case Partial(reason: String)
 
 /** The program owns compute; the execution layer owns its resource lifetime,
-  * seed derivation, pipeline invocation, and commit boundary. */
+  * seed derivation and commit boundary. */
 trait WorkUnit[C, O]:
   val address: WorkAddress
   def acquire(): Either[UnitError, ExecutionResource]
@@ -158,43 +157,37 @@ object LocalExecution:
   val resumeRefusal: ResumeRefusal =
     ResumeRefusal.InMemoryOnly("local execution retains no durable committed-unit checkpoint")
 
-  private final case class PipelineWork[C, O](unit: WorkUnit[C, O], seed: Seed, beforeCommit: BeforeCommit)
-
-  private final class ComputeStep[C, O] extends PipelineStep[PipelineWork[C, O], Either[UnitError, UnitEvaluation[C, O]]]:
-    val id: StepId = StepId.unsafe("compute")
-    val outputKind: ArtifactKind[Either[UnitError, UnitEvaluation[C, O]]] =
-      ArtifactKind.unsafe("mvpa-unit-evaluation")
-
-    def run(input: PipelineWork[C, O], context: RunContext): Either[PipelineError, Either[UnitError, UnitEvaluation[C, O]]] =
-      Right(evaluate(input))
-
-    private def evaluate(input: PipelineWork[C, O]): Either[UnitError, UnitEvaluation[C, O]] =
-      val acquisition =
-        try input.unit.acquire()
-        catch case NonFatal(error) => Left(UnitError.Acquire(detail(error)))
-      acquisition match
-        case Left(error) => Left(error)
-        case Right(resource) =>
-          var computed = Option.empty[Either[UnitError, UnitEvaluation[C, O]]]
-          var closeFailure = Option.empty[UnitError]
-          try computed = Some(input.unit.compute(resource, input.seed))
-          catch case NonFatal(error) => computed = Some(Left(UnitError.Compute(detail(error))) )
-          try resource.close()
-          catch case NonFatal(error) => closeFailure = Some(UnitError.Close(detail(error)))
-          (computed, closeFailure) match
-            case (Some(Left(compute)), Some(close)) => Left(UnitError.ComputeAndClose(compute, close))
-            case (_, Some(close)) => Left(close)
-            case (Some(Left(error)), None) => Left(error)
-            case (Some(Right(value @ UnitEvaluation.Complete(_))), None) =>
-              try input.beforeCommit.check(input.unit.address).map(_ => value)
-              catch case NonFatal(error) => Left(UnitError.BeforeCommit(detail(error)))
-            case (Some(Right(value @ UnitEvaluation.Partial(_))), None) => Right(value)
-            case (None, None) => Left(UnitError.Compute("compute returned no result"))
+  private def evaluate[C, O](
+      unit: WorkUnit[C, O],
+      seed: Seed,
+      beforeCommit: BeforeCommit
+  ): Either[UnitError, UnitEvaluation[C, O]] =
+    val acquisition =
+      try unit.acquire()
+      catch case NonFatal(error) => Left(UnitError.Acquire(detail(error)))
+    acquisition match
+      case Left(error) => Left(error)
+      case Right(resource) =>
+        var computed = Option.empty[Either[UnitError, UnitEvaluation[C, O]]]
+        var closeFailure = Option.empty[UnitError]
+        try computed = Some(unit.compute(resource, seed))
+        catch case NonFatal(error) => computed = Some(Left(UnitError.Compute(detail(error))))
+        try resource.close()
+        catch case NonFatal(error) => closeFailure = Some(UnitError.Close(detail(error)))
+        (computed, closeFailure) match
+          case (Some(Left(compute)), Some(close)) => Left(UnitError.ComputeAndClose(compute, close))
+          case (_, Some(close)) => Left(close)
+          case (Some(Left(error)), None) => Left(error)
+          case (Some(Right(value @ UnitEvaluation.Complete(_))), None) =>
+            try beforeCommit.check(unit.address).map(_ => value)
+            catch case NonFatal(error) => Left(UnitError.BeforeCommit(detail(error)))
+          case (Some(Right(value @ UnitEvaluation.Partial(_))), None) => Right(value)
+          case (None, None) => Left(UnitError.Compute("compute returned no result"))
 
   private def detail(error: Throwable): String =
     Option(error.getMessage).filter(_.nonEmpty).getOrElse(error.getClass.getName)
 
-  /** Runs a finite family through the existing local pipeline runner.  The
+  /** Runs a finite family through the selected synchronous interpreter. The
     * reducer is reconstructed in canonical address order after each committed
     * boundary, which makes reductions and OOF rows independent of scheduling.
     */
@@ -204,7 +197,8 @@ object LocalExecution:
       reduction: Reduction[C, R],
       attempts: Option[Vector[WorkUnit[C, O]]] = None,
       cancellationRequested: () => Boolean = () => false,
-      beforeCommit: BeforeCommit = BeforeCommit.allow
+      beforeCommit: BeforeCommit = BeforeCommit.allow,
+      interpreter: UnitInterpreter = UnitInterpreter.direct
   ): Either[AddressError, FamilyState[C, O, R]] =
     validate(expected).flatMap: family =>
       val attempted = attempts.getOrElse(family)
@@ -230,7 +224,11 @@ object LocalExecution:
               fatalFailures = fatalFailures :+ (unit.address -> error)
               index = schedule.length
             case Right(true) => cancelled = true
-            case Right(false) => evaluateThroughPipeline(unit, WorkAddress.seed(rootSeed, unit.address), beforeCommit) match
+            case Right(false) =>
+              val evaluated =
+                try interpreter.evaluate(() => evaluate(unit, WorkAddress.seed(rootSeed, unit.address), beforeCommit))
+                catch case NonFatal(error) => Left(UnitError.Interpreter(detail(error)))
+              evaluated match
                 case Left(error @ (UnitError.Close(_) | UnitError.ComputeAndClose(_, _))) =>
                   fatalFailures = fatalFailures :+ (unit.address -> error)
                 case Left(error) => failures = failures :+ (unit.address -> error)
@@ -278,24 +276,3 @@ object LocalExecution:
             units.groupBy(_.address).collectFirst { case (address, values) if values.length > 1 => address } match
               case Some(address) => Left(AddressError.DuplicateAddress(address))
               case None => Right(units.sortBy(_.address))
-
-  private def evaluateThroughPipeline[C, O](
-      unit: WorkUnit[C, O],
-      seed: Seed,
-      beforeCommit: BeforeCommit
-  ): Either[UnitError, UnitEvaluation[C, O]] =
-    val inputKind = ArtifactKind.unsafe[PipelineWork[C, O]]("mvpa-unit-work")
-    val step = new ComputeStep[C, O]
-    val built =
-      for
-        builder <- PipelineBuilder("mvpa.execution")
-        input <- builder.input("work", inputKind)
-        output <- input.builder.step("compute", step, input.ref)
-      yield (output.builder.build, input.ref, output.ref)
-    built match
-      case Left(error) => Left(UnitError.Pipeline(error.message))
-      case Right((graph, input, output)) =>
-        val run = LocalPipelineRunner.run(graph, RunContext.empty.withInput(input, PipelineWork(unit, seed, beforeCommit)))
-        run.error match
-          case Some(error) => Left(UnitError.Pipeline(error.message))
-          case None => run.get(output).fold(error => Left(UnitError.Pipeline(error.message)), identity)
