@@ -1,0 +1,134 @@
+[[0minfo[0m] server was not detected. starting an instance
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-pls-main-20261016-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-pls-main-20261016/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/70113493d2034afa26c1/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/3affa4797661edd945b9/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b51ea69c1c3a30e37df3/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/8022bdf7e1aa5920ac9e/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/6c77ef03ad5f6b5be136/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (370120 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-pls-main-20261016/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] sbt server started at local:///Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/server/3ebdec96ee60d4af1aef/sock
+[info] started sbt server
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + observed slice-timing metadata preserves true, false and unknown separately 0.199s
+  + present malformed slice-timing correction declarations are refused 0.007s
+  + raw companion metadata does not assert derivative slice-timing correction 0.003s
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.run and echo index padding selects unique event confound and mask companions  0.011s munit.FailException: modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerSuite.scala:80 assertion failed
+79:    assert(unit.runs.head.events.location.value.contains(paddedIndex))
+80:    assert(unit.runs.head.confounds.exists(_.location.value.contains(paddedIndex)))
+81:    unit.mask match
+    at munit.FunSuite.assert(FunSuite.scala:13)
+    at scalafim.fmri.workflow.BidsStudyCompilerSuite.$init$$$anonfun$6(BidsStudyCompilerSuite.scala:80)
+  + zero-valued run and echo indices match across padding without rewriting run identity 0.003s
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.padded event and confound duplicates remain equally-specific ambiguities  0.002s java.util.NoSuchElementException: None.get
+    at scala.None$.get(Option.scala:627)
+    at scala.None$.get(Option.scala:626)
+    at scalafim.fmri.workflow.BidsStudyCompilerSuite.$init$$$anonfun$8(BidsStudyCompilerSuite.scala:119)
+  + BIDS labels and malformed index values remain exact matches 0.008s
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.006s
+  + compiler accumulates missing header, metadata, and companion failures 0.002s
+  + one-unit-per-run grouping preserves the run in unit identity 0.003s
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.006s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.001s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.003s
+  + participant-table coverage reports missing and duplicate subjects 0.006s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.023s
+[error] Failed: Total 17, Failed 2, Errors 0, Passed 15
+[error] Failed tests:
+[error] 	scalafim.fmri.workflow.BidsStudyCompilerSuite
+[error] (fmriWorkflowJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[[31merror[0m] elapsed: 10 s
+[0J[sbt-warm] fmriWorkflowJVM/testOnly scalafim.fmri.workflow.BidsStudyCompilerSuite: exit 1 in 40.9s

@@ -1,0 +1,84 @@
+{
+  "sourceCommit": "0c1205e12c26ce25e61f5c3faa85728304205af9",
+  "files": [
+    {
+      "file": "packing-recovery-01.log.gz",
+      "rawSha256": "4d28f63722f0529e9057f4521e2dc7b807d137e75435183425f5ed4250dbaf4c",
+      "gzipSha256": "ac9705853ea5e94ea89640ba57dcb744d39df79fcdbaffb0b336f3181bcbe338",
+      "rawBytes": 720
+    },
+    {
+      "file": "packing-recovery-01.log.meta.json.gz",
+      "rawSha256": "c776157bb664099fdc9ae71978829c5793709d7e8688b18986998b18118c95a5",
+      "gzipSha256": "cd4768091b9f1d7057fe91e4bc26c17b12ae8c61dff4bf64015b223119db5930",
+      "rawBytes": 616
+    },
+    {
+      "file": "packing-recovery-02.log.gz",
+      "rawSha256": "1668510a8341cd90687b39ebb24afb74863f2b0cf367313ad2fed621cf9da43d",
+      "gzipSha256": "b8a8cf2ca9ab09843874e08d16e3436500fdbb94e9e92d4b64f00267e99ca9ae",
+      "rawBytes": 70073
+    },
+    {
+      "file": "packing-recovery-02.log.meta.json.gz",
+      "rawSha256": "7fcafa6d3d56134a12e23ee813706cc5e1692b695c6e8c5df2680666b4eb8876",
+      "gzipSha256": "84498145252e72db5aa102ad710c42b0adf64ba952d0a38391ef2b59c7f9199a",
+      "rawBytes": 619
+    },
+    {
+      "file": "packing-recovery-03.log.gz",
+      "rawSha256": "bd0da220f83b9cd0fbafda802c007580b3cb142ca41269f5e43b20e255fff230",
+      "gzipSha256": "b94bced4caa5d51eab7148652f6c49ab62aebcbc6ac3b6d36e3457957e98d9c3",
+      "rawBytes": 69414
+    },
+    {
+      "file": "packing-recovery-03.log.meta.json.gz",
+      "rawSha256": "542c2957588278030385f307e4efc6d382cc5e173f80ef94d86970b40336d820",
+      "gzipSha256": "dfb2d58603f3b6b4497d977058b574b7210928ecddbe04869ad95c9595ebcc79",
+      "rawBytes": 660
+    },
+    {
+      "file": "packing-recovery-04-three.log.gz",
+      "rawSha256": "41ee0a9d31781defea9f745d2b1583efa80b488e2ff8e4421a683964799919e9",
+      "gzipSha256": "d512597b8ca0addaa351c99f36de9efe8229ab66e7207e53c705bb0babc3ea70",
+      "rawBytes": 6239
+    },
+    {
+      "file": "packing-recovery-04-three.log.meta.json.gz",
+      "rawSha256": "d10a461f8126a7466b9009d44616fa8c5b78fb896a01c9f31307ec352364f66a",
+      "gzipSha256": "23282f05b5a4d375e8c2f3ab392ff0f7744fc08ea1c93b0decab584f9a945d37",
+      "rawBytes": 537
+    },
+    {
+      "file": "packing-recovery-05-native.log.gz",
+      "rawSha256": "ee7c18437f7b2b734de60d77b610a4981528ca4eebc8c6975e262e095b021fe2",
+      "gzipSha256": "cbc9988f10969031312e4f386d938c290ba4789db8d627584c385106beddad12",
+      "rawBytes": 1894
+    },
+    {
+      "file": "packing-recovery-05-native.log.meta.json.gz",
+      "rawSha256": "2bb7db7d0d064c52cbae38a3bcb7f16691c919bf3791f548cd4cda558209f483",
+      "gzipSha256": "eb64649f8b2eaed9727e37d93a6bfaaedd5bc46b5ffe6987162b655e06e2af17",
+      "rawBytes": 692
+    },
+    {
+      "file": "packing-recovery-06-javafx-suite.log.gz",
+      "rawSha256": "b652469c7b53e15fe7c4f28cae92db4e5ef6764f7afe58c9f9d5ce651d691642",
+      "gzipSha256": "55064fc04229038d15723c1f66acb10f2a6c112d1e5a3c8aca0a00d1e46cbc37",
+      "rawBytes": 7424
+    },
+    {
+      "file": "packing-recovery-06-javafx-suite.log.meta.json.gz",
+      "rawSha256": "530c3ba1ef89af5d8c193e6be7d00d46088df7ad516f67c31e38921c479bcb1c",
+      "gzipSha256": "6b4f5a0714d23eb560fbf5de7c01ed59ac4ac57762258fe1871fb943c728cd79",
+      "rawBytes": 545
+    },
+    {
+      "file": "packing-recovery-composition-metrics.json.gz",
+      "rawSha256": "29cfa5d9b2ff3317eb020b8097770527d943c45c0f19c940a3f3fe6328016902",
+      "gzipSha256": "2d27786e38a745005919ce4b98cb5e8e012fd390dd535fdb7bb3cc17f6c044da",
+      "rawBytes": 634
+    }
+  ],
+  "limits": "Includes the initial sandbox permission failure; final gates and native probe passed. No consumer performance or anatomical registration admission."
+}

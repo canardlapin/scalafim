@@ -1,0 +1,102 @@
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.FirstLevelUnitSourceSuite:
+  + unit source opens run references lazily and applies the exact mask intersection 0.256s
+  + unit source preserves provider geometry failure beyond the admitted tolerance 0.005s
+scalafim.fmri.workflow.FirstLevelTablesSuite:
+  + binding preserves selected run order, leading zeros, repeated trials and nuisance names 0.103s
+  + binding refuses missing or duplicate runs and conflicting run labels 0.002s
+  + binding refuses missing confounds and scan count mismatch 0.001s
+  + binding refuses unresolved event missingness and nonfinite confounds 0.0s
+  + explicit event selection ignores unused missing cells and preserves original companions 0.006s
+  + event selection cannot hide invalid timing or conflicting source run identity 0.001s
+scalafim.fmri.workflow.BidsStudyCompilerJvmSuite:
+  + JVM compiler reads headers only for a multi-subject multi-run fMRIPrep project 0.105s
+scalafim.fmri.workflow.FirstLevelCompanionReviewSuite:
+  + QC binding preserves original samples and missing values without a nuisance request 0.002s
+  + QC row mismatch cannot shift scan identity 0.0s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.041s
+  + preflight accumulates independent structural errors without reading payloads 0.006s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.001s
+  + empty catalogs fail preflight before job construction 0.001s
+scalafim.fmri.workflow.FirstLevelCompanionReviewJvmSuite:
+  + optional QC uses source units and rows, independently of nuisance or readable BOLD 0.035s
+scalafim.fmri.workflow.SamplingReferenceSuite:
+  + reference fractions accept endpoints and refuse nonfinite or out-of-range values 0.002s
+  + TR2 boundary grids have explicit first and last samples without changing run duration 0.011s
+  + per-run fractions preserve exact labels and selection order with varying TR 0.002s
+  + empty, duplicate, missing and foreign run declarations are rejected 0.002s
+  + invalid precision and unrepresentable sampling domains return errors 0.005s
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.006s
+  + compiler accumulates missing header, metadata, and companion failures 0.002s
+  + one-unit-per-run grouping preserves the run in unit identity 0.002s
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.004s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.002s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.003s
+  + participant-table coverage reports missing and duplicate subjects 0.001s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.024s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.006s
+  + catalog construction rejects invalid run layout and duplicate units 0.001s
+  + group workflow validates terms and output formats stay open 0.001s
+scalafim.fmri.workflow.WorkflowIngestAcceptanceSuite:
+  + header-first catalog opens mixed-byte multi-run BOLD lazily with compressed staging 0.02s
+[info] Passed: Total 37, Failed 0, Errors 0, Passed 37
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-3g8vs09b/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] fmriWorkflowJVM/test: exit 0 in 7.0s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/scalafim-fmri-workflow-test-fastopt
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.027s
+  + compiler accumulates missing header, metadata, and companion failures 0.001s
+  + one-unit-per-run grouping preserves the run in unit identity 0.005s
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.008s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.001s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.002s
+  + participant-table coverage reports missing and duplicate subjects 0.002s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.007s
+scalafim.fmri.workflow.SamplingReferenceSuite:
+  + reference fractions accept endpoints and refuse nonfinite or out-of-range values 0.002s
+  + TR2 boundary grids have explicit first and last samples without changing run duration 0.003s
+  + per-run fractions preserve exact labels and selection order with varying TR 0.001s
+  + empty, duplicate, missing and foreign run declarations are rejected 0.001s
+  + invalid precision and unrepresentable sampling domains return errors 0.001s
+scalafim.fmri.workflow.FirstLevelCompanionReviewSuite:
+  + QC binding preserves original samples and missing values without a nuisance request 0.000s
+  + QC row mismatch cannot shift scan identity 0.000s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.001s
+  + catalog construction rejects invalid run layout and duplicate units 0.003s
+  + group workflow validates terms and output formats stay open 0.001s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.003s
+  + preflight accumulates independent structural errors without reading payloads 0.001s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.000s
+  + empty catalogs fail preflight before job construction 0.000s
+scalafim.fmri.workflow.FirstLevelTablesSuite:
+  + binding preserves selected run order, leading zeros, repeated trials and nuisance names 0.005s
+  + binding refuses missing or duplicate runs and conflicting run labels 0.001s
+  + binding refuses missing confounds and scan count mismatch 0.001s
+  + binding refuses unresolved event missingness and nonfinite confounds 0.001s
+  + explicit event selection ignores unused missing cells and preserves original companions 0.001s
+  + event selection cannot hide invalid timing or conflicting source run identity 0.001s
+[info] Passed: Total 32, Failed 0, Errors 0, Passed 32
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-7l6gy9g3/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] fmriWorkflowJS/test: exit 0 in 7.1s

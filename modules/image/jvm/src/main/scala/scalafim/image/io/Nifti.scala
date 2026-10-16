@@ -197,6 +197,19 @@ object Nifti:
   ): Either[NiftiImageReadError, DecodedNifti[SomeScalarVolume[Double]]] =
     readVolumeIn(path, evidence, options)
 
+  /** Decode one volume for standalone inspection without claiming anatomical registration.
+    * Each read receives a fresh unresolved world, so equal numeric coordinates in separately
+    * opened files do not establish alignment. Header, selected affine, scaling and read limits
+    * are retained. Use readVolume with evidence before combining this image with another world.
+    */
+  def readUnresolvedVolume(
+      path: Path,
+      options: NiftiReadOptions = NiftiReadOptions.default
+  ): Either[NiftiImageReadError, DecodedNifti[SomeScalarVolume[Double]]] =
+    decodeVolume(path, options).flatMap: decoded =>
+      placeIn(decoded.image.sampled, WorldSpace.freshUnresolved()).map: placed =>
+        DecodedNifti(SomeNeuroVolume.unsafeFromSampled(placed), decoded.header, decoded.affineSelection)
+
   private def decodeVolume(
       path: Path,
       options: NiftiReadOptions

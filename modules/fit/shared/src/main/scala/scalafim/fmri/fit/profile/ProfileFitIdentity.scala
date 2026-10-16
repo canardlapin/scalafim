@@ -46,15 +46,16 @@ private[profile] object ProfileFitIdentity:
         strings(modulators.map(_.value)), option(mainEffect.map(_.toString)))
 
   def term(value: EventTerm): String =
-    val EventTerm(events, _, _, _, tag, phase, provenance) = value
+    val EventTerm(events, _, _, _, tag, phase, provenance, sourceRows) = value
     val rows = provenance.map: row =>
       val scalafim.fmri.design.EventRowProvenance(parent, phase, source, block, onset, duration) = row
       record("source_row", parent.value, option(phase.map(_.value)), source.toString,
         block.toString, number(onset.value), number(duration.value))
     val design = value.designMatrix(dropEmpty = false)
-    record("term", schedule(value.schedule), record("events", events.map(event)*),
+    val parts = Vector(schedule(value.schedule), record("events", events.map(event)*),
       option(tag), option(phase.map(_.value)), record("source_rows", rows*),
       strings(design.conditionTags), mat(design.data))
+    record("term", (parts ++ Option.when(sourceRows.nonEmpty)(record("table_rows", ints(sourceRows))))*)
 
   def whitening(value: WhiteningPlan): String =
     val WhiteningPlan(scope, covered, initial, method) = value

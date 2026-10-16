@@ -152,7 +152,9 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
       assert(cache.stage(compressed).isLeft)
 
       val files = Files.list(cache.root)
-      try assertEquals(files.iterator().asScala.toVector, Vector.empty)
+      // A persistent coordination lock is intentional; no staged data,
+      // digest receipt or partial publication may survive a failed decode.
+      try assertEquals(files.iterator().asScala.map(_.getFileName.toString).toVector, Vector(".staging.lock"))
       finally files.close()
     }
   }

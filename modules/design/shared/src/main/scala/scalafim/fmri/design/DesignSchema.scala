@@ -402,6 +402,25 @@ final case class EventRowProvenance(
   def canonical: String =
     s"parent=${parent.value}|phase=${phase.fold("")(_.value)}|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
 
+/** A retained event's original table row, without assuming a parent trial.
+  * Both indices are zero-based: eventIndex addresses the lowered term schedule;
+  * sourceRow addresses the input event table before formula filtering.
+  */
+final case class SourceEventRow(
+    term: TermId,
+    eventIndex: Int,
+    sourceRow: Int,
+    blockId: Int,
+    onset: Seconds,
+    duration: Seconds
+):
+  require(eventIndex >= 0 && sourceRow >= 0 && blockId >= 0, "event source indices must be non-negative")
+  require(onset.value.isFinite, "source event onset must be finite")
+  require(duration.value.isFinite && duration.value >= 0.0, "source event duration must be finite and non-negative")
+
+  def canonical: String =
+    s"term=${term.value}|event=$eventIndex|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
+
 /** Policy for non-finite continuous event/modulator values.
   *
   * This is deliberately separate from fit-time response missingness: it is a
@@ -792,7 +811,9 @@ final case class DesignAudit(
     diagnostics: Vector[DesignDiagnostic] = Vector.empty,
     eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty,
     /** Rows retained and dropped by derived-column declarations, when the build had any. */
-    derivedRows: Vector[DerivedRowsReceipt] = Vector.empty
+    derivedRows: Vector[DerivedRowsReceipt] = Vector.empty,
+    sourceEvents: Vector[SourceEventRow] = Vector.empty,
+    responseSupport: Vector[EventSupportReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -842,7 +863,9 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags"
+    val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
+    val support = if responseSupport.isEmpty then "" else responseSupport.map(_.canonical).mkString(";response-support=", "|", "")
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags" + sources + support
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -1353,6 +1376,8 @@ object DesignSchema:
       factorLevels = (left.factorLevels ++ right.factorLevels).distinct,
       missingValues = left.missingValues ++ right.missingValues,
       eventProvenance = left.eventProvenance ++ right.eventProvenance,
+      sourceEvents = left.sourceEvents ++ right.sourceEvents,
+      responseSupport = left.responseSupport ++ right.responseSupport,
       centeringReceipts = left.centeringReceipts ++ right.centeringReceipts,
       degenerateModulatorReceipts = left.degenerateModulatorReceipts ++ right.degenerateModulatorReceipts,
       orthogonalizationReceipts = left.orthogonalizationReceipts ++ right.orthogonalizationReceipts,

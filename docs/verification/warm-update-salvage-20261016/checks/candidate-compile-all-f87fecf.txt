@@ -1,0 +1,3 @@
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-b9htojtl/completed
+[[32msuccess[0m] elapsed: 261 s (0:04:21.0)
+[0J[sbt-warm] scalafimCompileAll: exit 0 in 261.5s

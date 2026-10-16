@@ -1,0 +1,930 @@
+{
+  "status": "diagnostic-and-development-gates-not-consumer-admission",
+  "baseline_source": "0c1205e12c26ce25e61f5c3faa85728304205af9",
+  "records": [
+    {
+      "source": "/private/tmp/claude-javafx-public-20261016/question.txt",
+      "artifact": "raw/consultation/question.txt.gz",
+      "bytes": 2136,
+      "sha256": "3e81cb9428379ac994e6f0cd454edcf7acc7ef3cc5b8937dae867b264a4b6b23",
+      "gzip_sha256": "4010040a003f473c9b5d49b51aea81d8508e87e577e3591134a253a39d5df503"
+    },
+    {
+      "source": "/private/tmp/claude-javafx-public-20261016/response.json",
+      "artifact": "raw/consultation/response.json.gz",
+      "bytes": 8733,
+      "sha256": "7b0620289c26ed3ceb9149452252db16d6869165eec6b37db824bd7062858986",
+      "gzip_sha256": "40acc1acbc8f364c1c8231f987882528b93417ad5c5465f90f9109ce89c683c3"
+    },
+    {
+      "source": "/private/tmp/claude-javafx-public-20261016/stderr.log",
+      "artifact": "raw/consultation/stderr.log.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/.lock",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/.lock.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/libglass.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/libglass.dylib.gz",
+      "bytes": 424608,
+      "sha256": "f8f86bcf79741c5e5d77c44e8598c0b577fd0636615d5cc9a3a7351685347ceb",
+      "gzip_sha256": "71553662f0c6c22cceb7ef7be44af1b8966d4f829b4abbaea24f56b2bfa51c61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/libjavafx_font.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/libjavafx_font.dylib.gz",
+      "bytes": 101056,
+      "sha256": "42dde477edca07f85c3e2e1208e52ccd606fd62a0a6de3b0ff940c0366ed883e",
+      "gzip_sha256": "060a3e0139b661df677d50526f389774cd023756adbc6711780672885f3b8fda"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/libprism_es2.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/javafx-cache/libprism_es2.dylib.gz",
+      "bytes": 97344,
+      "sha256": "c1d39ea69e9290f0631ff21241773b221cce53b1748e688f9798474efdbc0cf1",
+      "gzip_sha256": "28da88f95e21aa0a19918f1f73983a6b1c23ccbda97721d40891bc1f263bfb31"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/planar-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/planar-initial.png.gz",
+      "bytes": 2303,
+      "sha256": "6b831aef0a5bddbe10bf7e0c6b82d35e245aa9e257ffb75cd21e1cb23b3ae0d3",
+      "gzip_sha256": "6c697ec38e51d697cfd7d10206badcabc7ff7e53c5b6e84788d1975e0d0c1e41"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/planar-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/planar-initial.txt.gz",
+      "bytes": 356,
+      "sha256": "c2ce78b3c35fc5ccb322157609ccb72f80ee5a9864a50e851d55e6c38f1b3c68",
+      "gzip_sha256": "a14230464714bc002432a2ca359f3fb5abdac963cd64729e5f867f9a965dfc61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-planar-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-planar-20261016/runtime.txt.gz",
+      "bytes": 990,
+      "sha256": "fa1db391e8c03fe4b10e4ec88bd2fa1b3a2dab9b6af7f41b3d933385bdc0897d",
+      "gzip_sha256": "780185e80674c94f9b4a50c954d39ed5eadd994fe8cb06c39695778ee7b294a3"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/.lock",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/.lock.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/libglass.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/libglass.dylib.gz",
+      "bytes": 424608,
+      "sha256": "f8f86bcf79741c5e5d77c44e8598c0b577fd0636615d5cc9a3a7351685347ceb",
+      "gzip_sha256": "71553662f0c6c22cceb7ef7be44af1b8966d4f829b4abbaea24f56b2bfa51c61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/libjavafx_font.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/libjavafx_font.dylib.gz",
+      "bytes": 101056,
+      "sha256": "42dde477edca07f85c3e2e1208e52ccd606fd62a0a6de3b0ff940c0366ed883e",
+      "gzip_sha256": "060a3e0139b661df677d50526f389774cd023756adbc6711780672885f3b8fda"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/libprism_es2.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/javafx-cache/libprism_es2.dylib.gz",
+      "bytes": 97344,
+      "sha256": "c1d39ea69e9290f0631ff21241773b221cce53b1748e688f9798474efdbc0cf1",
+      "gzip_sha256": "28da88f95e21aa0a19918f1f73983a6b1c23ccbda97721d40891bc1f263bfb31"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/runtime.txt.gz",
+      "bytes": 989,
+      "sha256": "77f1cdbf26010de16787bf45bc1036dfdc1451a26a0a27ebd6f5fd7ad776a986",
+      "gzip_sha256": "3e7c1c8530050e7256c94db6bbae0ee219f72ec552f2a1dedd907f8b7a332fd2"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/tetra-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/tetra-initial.png.gz",
+      "bytes": 4225,
+      "sha256": "d8cef73777d0bb5a8612ce8ec441fae679b427ab1cc07c8213566f47a2df97d6",
+      "gzip_sha256": "10b9982fbe6e46c925ece6168db5376fb4fd24d4a39747df1864f292c14aa3c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-false-tetra-20261016/tetra-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-false-tetra-20261016/tetra-initial.txt.gz",
+      "bytes": 352,
+      "sha256": "2724ae54a22cc006a80ec14e868c3d26fb3554bba373d47568d2eb1c35eec280",
+      "gzip_sha256": "f0262cf20728e726c4f508d3e0192db8018d8baa66a2ee96a4e17720d5914f9b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/.lock",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/.lock.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/libglass.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/libglass.dylib.gz",
+      "bytes": 424608,
+      "sha256": "f8f86bcf79741c5e5d77c44e8598c0b577fd0636615d5cc9a3a7351685347ceb",
+      "gzip_sha256": "71553662f0c6c22cceb7ef7be44af1b8966d4f829b4abbaea24f56b2bfa51c61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/libjavafx_font.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/libjavafx_font.dylib.gz",
+      "bytes": 101056,
+      "sha256": "42dde477edca07f85c3e2e1208e52ccd606fd62a0a6de3b0ff940c0366ed883e",
+      "gzip_sha256": "060a3e0139b661df677d50526f389774cd023756adbc6711780672885f3b8fda"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/libprism_es2.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/javafx-cache/libprism_es2.dylib.gz",
+      "bytes": 97344,
+      "sha256": "c1d39ea69e9290f0631ff21241773b221cce53b1748e688f9798474efdbc0cf1",
+      "gzip_sha256": "28da88f95e21aa0a19918f1f73983a6b1c23ccbda97721d40891bc1f263bfb31"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/planar-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/planar-initial.png.gz",
+      "bytes": 2303,
+      "sha256": "6b831aef0a5bddbe10bf7e0c6b82d35e245aa9e257ffb75cd21e1cb23b3ae0d3",
+      "gzip_sha256": "6c697ec38e51d697cfd7d10206badcabc7ff7e53c5b6e84788d1975e0d0c1e41"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/planar-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/planar-initial.txt.gz",
+      "bytes": 356,
+      "sha256": "c2ce78b3c35fc5ccb322157609ccb72f80ee5a9864a50e851d55e6c38f1b3c68",
+      "gzip_sha256": "a14230464714bc002432a2ca359f3fb5abdac963cd64729e5f867f9a965dfc61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-planar-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-planar-20261016/runtime.txt.gz",
+      "bytes": 987,
+      "sha256": "aaec61467d395966db8484c4937ed0bc1ff914c247b059d5f4b88c5f425b7b7c",
+      "gzip_sha256": "d49f910d693f8bd973e169e14d268e5434c1d82822d2b3fbd53483c12e16037e"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/.lock",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/.lock.gz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/libglass.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/libglass.dylib.gz",
+      "bytes": 424608,
+      "sha256": "f8f86bcf79741c5e5d77c44e8598c0b577fd0636615d5cc9a3a7351685347ceb",
+      "gzip_sha256": "71553662f0c6c22cceb7ef7be44af1b8966d4f829b4abbaea24f56b2bfa51c61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/libjavafx_font.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/libjavafx_font.dylib.gz",
+      "bytes": 101056,
+      "sha256": "42dde477edca07f85c3e2e1208e52ccd606fd62a0a6de3b0ff940c0366ed883e",
+      "gzip_sha256": "060a3e0139b661df677d50526f389774cd023756adbc6711780672885f3b8fda"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/libprism_es2.dylib",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/javafx-cache/libprism_es2.dylib.gz",
+      "bytes": 97344,
+      "sha256": "c1d39ea69e9290f0631ff21241773b221cce53b1748e688f9798474efdbc0cf1",
+      "gzip_sha256": "28da88f95e21aa0a19918f1f73983a6b1c23ccbda97721d40891bc1f263bfb31"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/runtime.txt.gz",
+      "bytes": 986,
+      "sha256": "989fb5687c634074126967d5ba08318a5088d3af5c7241cfd2e8afd15b6f7dcb",
+      "gzip_sha256": "420ee98632a77a8f8c7f52dea8503e38d3ab7064819abb15e3ceebdb24a7f22b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/tetra-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/tetra-initial.png.gz",
+      "bytes": 4225,
+      "sha256": "d8cef73777d0bb5a8612ce8ec441fae679b427ab1cc07c8213566f47a2df97d6",
+      "gzip_sha256": "10b9982fbe6e46c925ece6168db5376fb4fd24d4a39747df1864f292c14aa3c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-jfx24-true-tetra-20261016/tetra-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-jfx24-true-tetra-20261016/tetra-initial.txt.gz",
+      "bytes": 352,
+      "sha256": "2724ae54a22cc006a80ec14e868c3d26fb3554bba373d47568d2eb1c35eec280",
+      "gzip_sha256": "f0262cf20728e726c4f508d3e0192db8018d8baa66a2ee96a4e17720d5914f9b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-camera.png.gz",
+      "bytes": 204531,
+      "sha256": "9e2936832f99a61de6ce4cf16df8be6f31ac09100f576cc453bc0a157fdf128f",
+      "gzip_sha256": "30212f97a504c758cec9c58479640cddffa96d3fb18116ee5e0866a4f86681dc"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-initial.png.gz",
+      "bytes": 202237,
+      "sha256": "bc20aac3f39a5caa568df190ac25ac83d7e43aabfd0a6801603062728a8ea16d",
+      "gzip_sha256": "8b1f06cf20b8b48dae7a587488f1727c55cb4924941cf3b48916b2484db06c30"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-initial.txt.gz",
+      "bytes": 649,
+      "sha256": "347a4f104e2cdbcf6851a04a0103181fb5aa1c25e65acb31915751b7ff4c7da2",
+      "gzip_sha256": "37d1cb6638e855481004670b964a60da6160295438fc0d44d3cca6882d871003"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-material-restored.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-material-restored.png.gz",
+      "bytes": 204531,
+      "sha256": "9e2936832f99a61de6ce4cf16df8be6f31ac09100f576cc453bc0a157fdf128f",
+      "gzip_sha256": "30212f97a504c758cec9c58479640cddffa96d3fb18116ee5e0866a4f86681dc"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-material-restored.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-material-restored.txt.gz",
+      "bytes": 649,
+      "sha256": "7eaf23fa7175c142015f5be17fc1b03f61efd6bfa2c98597baa83167a3ad3f75",
+      "gzip_sha256": "b93ae99d0abebd6606990e5cff72be3dad37679242ca2adcdf7d66eda0fde8e9"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-updated.png.gz",
+      "bytes": 204558,
+      "sha256": "8f358230923e5f1b41e05668ecf37468577affacab2bccf6de59296843b7b0f1",
+      "gzip_sha256": "3cf1facf9a7f4f8f34fc7934ab7e7d680bebbea40de9c657b686236fd7677a41"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/planar-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/planar-updated.txt.gz",
+      "bytes": 649,
+      "sha256": "dd34b3411b336a3b648439e98d391e91a7771d011818c45f04c724ce5b523daa",
+      "gzip_sha256": "00e0aff32393d501979d36bbda0e2d333ae58c0698dfdf775bd443e6bd304e40"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-camera.png.gz",
+      "bytes": 66710,
+      "sha256": "50793e8fbc9fd83e2f4c5d209673caab9280b02bd06efeaa49aafdd81682d317",
+      "gzip_sha256": "6994305c31f687fedcf5113302e8a87f28570d646b543100d94dfdd251003c13"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-camera.png.gz",
+      "bytes": 61620,
+      "sha256": "383daa28161e2bf33ddcea6ec2212b8848d073ae7ccc45d9278f33e6f2750582",
+      "gzip_sha256": "986861ad5d23cade5184ad286486db1dad2ceafb77191020c61a8231c2d67934"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-initial.png.gz",
+      "bytes": 87131,
+      "sha256": "5a11f2e2caa1cfd0029370efb044525d2211fa3f685de3fb268d1865b9d82ff5",
+      "gzip_sha256": "9955d119d5e1fa8107a1b68ba906185f55701dcd8083c43d975944d610f5e560"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-initial.txt.gz",
+      "bytes": 645,
+      "sha256": "928cd31691888f8e0009187cd4f43cf6913f737fc78e4451af63206dcef1167b",
+      "gzip_sha256": "f0cd8c2fcf0cdeb927b72c6b450d0b2e4bc06c591faa7d32b6ffaf2ada538f56"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-material-restored.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-material-restored.png.gz",
+      "bytes": 61620,
+      "sha256": "383daa28161e2bf33ddcea6ec2212b8848d073ae7ccc45d9278f33e6f2750582",
+      "gzip_sha256": "986861ad5d23cade5184ad286486db1dad2ceafb77191020c61a8231c2d67934"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-material-restored.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-material-restored.txt.gz",
+      "bytes": 646,
+      "sha256": "0637dae696c07c6afaf6d00bb0e5f4ad8831d7a2bb646541d57f09c1f7f8f77d",
+      "gzip_sha256": "4dfc0bfae8d03d5f0977dc0aa3980e612eec7c9eaf5de812404736c4ef288877"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-updated.png.gz",
+      "bytes": 61686,
+      "sha256": "2389e7bbfd85062143bbb85422ddeb8b820b0f7ee56f1ef35d79c3b7e899cd41",
+      "gzip_sha256": "f46a5e53daf1421fa5f3478542f10c30c3cc81c8ba7dc568a311c0de27c5422b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-dorsal-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-dorsal-updated.txt.gz",
+      "bytes": 645,
+      "sha256": "21a9eb7f41a7028e5a1cdec5c9eba87f2cdce90b3061424e4fef768bb3cb655e",
+      "gzip_sha256": "66e7feee85900375ead266805e367fd96803d04c0f7562c1e2ec4744455b5343"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-initial.png.gz",
+      "bytes": 84964,
+      "sha256": "b3a8efe20876ec921bcef1cd27ff62bc538d65977a71315c52049771587dc0f9",
+      "gzip_sha256": "fa31ed93dc9fb6c3349ee84d92178dd31f3648bd36c32a62865d07268e26f8bb"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-initial.txt.gz",
+      "bytes": 646,
+      "sha256": "e729b05562b4d3a2c50bf8d2fcbd5bfb7552e0b60a18015100eb61d0fa0f846b",
+      "gzip_sha256": "750ca9d6c4d5bf8d153b7c1c3b93e0c7fd16e94a79ccc1d6439bfbf63d1496c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-material-restored.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-material-restored.png.gz",
+      "bytes": 66710,
+      "sha256": "50793e8fbc9fd83e2f4c5d209673caab9280b02bd06efeaa49aafdd81682d317",
+      "gzip_sha256": "6994305c31f687fedcf5113302e8a87f28570d646b543100d94dfdd251003c13"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-material-restored.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-material-restored.txt.gz",
+      "bytes": 647,
+      "sha256": "eb125fb8a648d02ebc00c365cb0a758a6178e741cf162508054bc4c8440aa51b",
+      "gzip_sha256": "ab002a4966f6e89b289fa2d9ace2fd566c1a275752400c253891270b142993ec"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-updated.png.gz",
+      "bytes": 66641,
+      "sha256": "9ecb6d54f7d48b1cdfa67bc5aa202a128bc0b314ca569a6d2478a1daaa78b4cc",
+      "gzip_sha256": "51979c59fb0ae2fa94959e78f039e242fb029b08fb943d3f1c3d123455bd9730"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-restoration-native-20261016/tetra-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-restoration-native-20261016/tetra-updated.txt.gz",
+      "bytes": 646,
+      "sha256": "f93d872b51a6ae75945823569ebf72029ee6212c9a6c230f6d5487698bb0450f",
+      "gzip_sha256": "edaf61de3e4cb55f5665f1de3361ed294e92992a17ad71f5125da0b44e972482"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-20261016/tetra-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-20261016/tetra-initial.png.gz",
+      "bytes": 4225,
+      "sha256": "d8cef73777d0bb5a8612ce8ec441fae679b427ab1cc07c8213566f47a2df97d6",
+      "gzip_sha256": "10b9982fbe6e46c925ece6168db5376fb4fd24d4a39747df1864f292c14aa3c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-20261016/tetra-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-20261016/tetra-initial.txt.gz",
+      "bytes": 217,
+      "sha256": "789c870be476efc0e94dcbc0cf25506e3864f889032da6d036307c1f86120898",
+      "gzip_sha256": "dd88cc46e6fc5c9a31354a015fab55459ae7b3b2ac1bee16ac9b74b3295412ea"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-planar-dorsal-20261016/planar-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-planar-dorsal-20261016/planar-camera.png.gz",
+      "bytes": 204531,
+      "sha256": "9e2936832f99a61de6ce4cf16df8be6f31ac09100f576cc453bc0a157fdf128f",
+      "gzip_sha256": "30212f97a504c758cec9c58479640cddffa96d3fb18116ee5e0866a4f86681dc"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-planar-dorsal-20261016/planar-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-planar-dorsal-20261016/planar-initial.png.gz",
+      "bytes": 202237,
+      "sha256": "bc20aac3f39a5caa568df190ac25ac83d7e43aabfd0a6801603062728a8ea16d",
+      "gzip_sha256": "8b1f06cf20b8b48dae7a587488f1727c55cb4924941cf3b48916b2484db06c30"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-planar-dorsal-20261016/planar-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-planar-dorsal-20261016/planar-initial.txt.gz",
+      "bytes": 356,
+      "sha256": "c2ce78b3c35fc5ccb322157609ccb72f80ee5a9864a50e851d55e6c38f1b3c68",
+      "gzip_sha256": "a14230464714bc002432a2ca359f3fb5abdac963cd64729e5f867f9a965dfc61"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-planar-dorsal-20261016/planar-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-planar-dorsal-20261016/planar-updated.png.gz",
+      "bytes": 204558,
+      "sha256": "8f358230923e5f1b41e05668ecf37468577affacab2bccf6de59296843b7b0f1",
+      "gzip_sha256": "3cf1facf9a7f4f8f34fc7934ab7e7d680bebbea40de9c657b686236fd7677a41"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-planar-dorsal-20261016/planar-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-planar-dorsal-20261016/planar-updated.txt.gz",
+      "bytes": 356,
+      "sha256": "c4a44d0abb2378cc0fa65e8593edd5a70c3d8062e7b1d0f420beba899750335e",
+      "gzip_sha256": "a584e4e52475a930d2584ef119c6cee391c7d82f765186a890636c623760b6dd"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-planar-dorsal-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-planar-dorsal-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-ambient-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-ambient-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-ambient-20261016/tetra-ambient-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-ambient-20261016/tetra-ambient-initial.png.gz",
+      "bytes": 4225,
+      "sha256": "d8cef73777d0bb5a8612ce8ec441fae679b427ab1cc07c8213566f47a2df97d6",
+      "gzip_sha256": "10b9982fbe6e46c925ece6168db5376fb4fd24d4a39747df1864f292c14aa3c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-ambient-20261016/tetra-ambient-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-ambient-20261016/tetra-ambient-initial.txt.gz",
+      "bytes": 646,
+      "sha256": "e729b05562b4d3a2c50bf8d2fcbd5bfb7552e0b60a18015100eb61d0fa0f846b",
+      "gzip_sha256": "750ca9d6c4d5bf8d153b7c1c3b93e0c7fd16e94a79ccc1d6439bfbf63d1496c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-dorsal-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-dorsal-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-camera.png.gz",
+      "bytes": 61620,
+      "sha256": "383daa28161e2bf33ddcea6ec2212b8848d073ae7ccc45d9278f33e6f2750582",
+      "gzip_sha256": "986861ad5d23cade5184ad286486db1dad2ceafb77191020c61a8231c2d67934"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-initial.png.gz",
+      "bytes": 87131,
+      "sha256": "5a11f2e2caa1cfd0029370efb044525d2211fa3f685de3fb268d1865b9d82ff5",
+      "gzip_sha256": "9955d119d5e1fa8107a1b68ba906185f55701dcd8083c43d975944d610f5e560"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-initial.txt.gz",
+      "bytes": 645,
+      "sha256": "928cd31691888f8e0009187cd4f43cf6913f737fc78e4451af63206dcef1167b",
+      "gzip_sha256": "f0cd8c2fcf0cdeb927b72c6b450d0b2e4bc06c591faa7d32b6ffaf2ada538f56"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-updated.png.gz",
+      "bytes": 61686,
+      "sha256": "2389e7bbfd85062143bbb85422ddeb8b820b0f7ee56f1ef35d79c3b7e899cd41",
+      "gzip_sha256": "f46a5e53daf1421fa5f3478542f10c30c3cc81c8ba7dc568a311c0de27c5422b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-dorsal-20261016/tetra-dorsal-updated.txt.gz",
+      "bytes": 645,
+      "sha256": "21a9eb7f41a7028e5a1cdec5c9eba87f2cdce90b3061424e4fef768bb3cb655e",
+      "gzip_sha256": "66e7feee85900375ead266805e367fd96803d04c0f7562c1e2ec4744455b5343"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-inner-ambient-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-inner-ambient-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-camera.png.gz",
+      "bytes": 66710,
+      "sha256": "50793e8fbc9fd83e2f4c5d209673caab9280b02bd06efeaa49aafdd81682d317",
+      "gzip_sha256": "6994305c31f687fedcf5113302e8a87f28570d646b543100d94dfdd251003c13"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-initial.png.gz",
+      "bytes": 84964,
+      "sha256": "b3a8efe20876ec921bcef1cd27ff62bc538d65977a71315c52049771587dc0f9",
+      "gzip_sha256": "fa31ed93dc9fb6c3349ee84d92178dd31f3648bd36c32a62865d07268e26f8bb"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-initial.txt.gz",
+      "bytes": 646,
+      "sha256": "e729b05562b4d3a2c50bf8d2fcbd5bfb7552e0b60a18015100eb61d0fa0f846b",
+      "gzip_sha256": "750ca9d6c4d5bf8d153b7c1c3b93e0c7fd16e94a79ccc1d6439bfbf63d1496c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-updated.png.gz",
+      "bytes": 66641,
+      "sha256": "9ecb6d54f7d48b1cdfa67bc5aa202a128bc0b314ca569a6d2478a1daaa78b4cc",
+      "gzip_sha256": "51979c59fb0ae2fa94959e78f039e242fb029b08fb943d3f1c3d123455bd9730"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-inner-ambient-20261016/tetra-inner-ambient-updated.txt.gz",
+      "bytes": 646,
+      "sha256": "f93d872b51a6ae75945823569ebf72029ee6212c9a6c230f6d5487698bb0450f",
+      "gzip_sha256": "edaf61de3e4cb55f5665f1de3361ed294e92992a17ad71f5125da0b44e972482"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-lateral-receipt-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-lateral-receipt-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-lateral-receipt-20261016/tetra-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-lateral-receipt-20261016/tetra-initial.png.gz",
+      "bytes": 4225,
+      "sha256": "d8cef73777d0bb5a8612ce8ec441fae679b427ab1cc07c8213566f47a2df97d6",
+      "gzip_sha256": "10b9982fbe6e46c925ece6168db5376fb4fd24d4a39747df1864f292c14aa3c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-lateral-receipt-20261016/tetra-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-lateral-receipt-20261016/tetra-initial.txt.gz",
+      "bytes": 646,
+      "sha256": "e729b05562b4d3a2c50bf8d2fcbd5bfb7552e0b60a18015100eb61d0fa0f846b",
+      "gzip_sha256": "750ca9d6c4d5bf8d153b7c1c3b93e0c7fd16e94a79ccc1d6439bfbf63d1496c4"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-uniform-normals-20261016/runtime.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-uniform-normals-20261016/runtime.txt.gz",
+      "bytes": 29,
+      "sha256": "7d4c8411a84c2cd02bc8ed39827669e1c86c65910f526b5892e4f25ae5892e6f",
+      "gzip_sha256": "d19783f08bf667cebb0b758ad3c611038c5758e8160187a33e139827de59367b"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-camera.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-camera.png.gz",
+      "bytes": 66710,
+      "sha256": "50793e8fbc9fd83e2f4c5d209673caab9280b02bd06efeaa49aafdd81682d317",
+      "gzip_sha256": "6994305c31f687fedcf5113302e8a87f28570d646b543100d94dfdd251003c13"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-initial.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-initial.png.gz",
+      "bytes": 84964,
+      "sha256": "b3a8efe20876ec921bcef1cd27ff62bc538d65977a71315c52049771587dc0f9",
+      "gzip_sha256": "fa31ed93dc9fb6c3349ee84d92178dd31f3648bd36c32a62865d07268e26f8bb"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-initial.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-initial.txt.gz",
+      "bytes": 706,
+      "sha256": "b2fd5f698178d0974b4e7140d894ed77c46a7d15c29ad3e2de566df69134de73",
+      "gzip_sha256": "62bddc4b2229d2382f13f4ad9c01c09db3f724faec2c07fca5ff519ebed005d9"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-updated.png",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-updated.png.gz",
+      "bytes": 66641,
+      "sha256": "9ecb6d54f7d48b1cdfa67bc5aa202a128bc0b314ca569a6d2478a1daaa78b4cc",
+      "gzip_sha256": "51979c59fb0ae2fa94959e78f039e242fb029b08fb943d3f1c3d123455bd9730"
+    },
+    {
+      "source": "/private/tmp/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-updated.txt",
+      "artifact": "raw/diagnostics/scalafim-four-face-stock-tetra-uniform-normals-20261016/tetra-uniform-normals-updated.txt.gz",
+      "bytes": 706,
+      "sha256": "72bbe308d451a14b68e475467c85685d12948d1d5c4512781e61088bee57d4a9",
+      "gzip_sha256": "e0dad894e5ff1736155df2b6e17eedb822a0ddf0d930af28e1819efa1d6abf06"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-jfx24-false-planar.log",
+      "artifact": "raw/logs/javafx-four-face-jfx24-false-planar.log.gz",
+      "bytes": 10747,
+      "sha256": "62590851ab15d9ae282b53e0919c5af1317252a6d2cbc7e1861b158d62d5a5fe",
+      "gzip_sha256": "889c847a8ad1b5285689e251cdb6e81681b164befb6de941a951fb9610756e5d"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-jfx24-false-tetra.log",
+      "artifact": "raw/logs/javafx-four-face-jfx24-false-tetra.log.gz",
+      "bytes": 10743,
+      "sha256": "95acd31afa35f521190cdda01f9190abebde74b46875da888d984e46dd0d7ec5",
+      "gzip_sha256": "9107f7d7fb33b90bdbc4bcaba98550b50f43bc4026ef60db5167303e7b5272f0"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-jfx24-true-planar.log",
+      "artifact": "raw/logs/javafx-four-face-jfx24-true-planar.log.gz",
+      "bytes": 10744,
+      "sha256": "745eefefdffce90e714946ea7913b9055fa34d78f108a3eb9938aed5aa95e4b5",
+      "gzip_sha256": "a9a04819327f80dce433b0bd67f36d7d4c25fdbca36f3e6a5e7402d66d724e49"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-jfx24-true-tetra.log",
+      "artifact": "raw/logs/javafx-four-face-jfx24-true-tetra.log.gz",
+      "bytes": 10740,
+      "sha256": "320eb3d09da0ca262fef4be5996a7a6863ba5952c645d7b0a0641d8abf73cf5f",
+      "gzip_sha256": "621a978f9a2427ced9ef3e4aeead3ba929c2748b2ae6ced852fa82dc90e6a949"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-probe-compile.log",
+      "artifact": "raw/logs/javafx-four-face-probe-compile.log.gz",
+      "bytes": 396,
+      "sha256": "623d36e6014ce8c3d667fd4e3b29c8452080e4f7f66ba189785a864fcf0134df",
+      "gzip_sha256": "c7480848df7b75c45687855b1f0d2d67da8ad78b8138219d4dcb323ec7e1d20a"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-restoration-compile.log",
+      "artifact": "raw/logs/javafx-four-face-restoration-compile.log.gz",
+      "bytes": 396,
+      "sha256": "bf1752166dbdbb4d03310c666dd335ec5352660ef8c1184992bd8f7216955122",
+      "gzip_sha256": "acc20ca2e256f213e925eb9288e62555407a345d8e8eeea08b83f094d4dbe58b"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-restoration-native.log",
+      "artifact": "raw/logs/javafx-four-face-restoration-native.log.gz",
+      "bytes": 1798,
+      "sha256": "9433a5bfcd36abbd960660df79b792aaffce967e340189d1e835962606c0cf27",
+      "gzip_sha256": "123bc690d3895a4ed5f812b3ec239ae6675eea0e326dc4689241d4693a7991b6"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-restoration-native.log.meta.json",
+      "artifact": "raw/logs/javafx-four-face-restoration-native.log.meta.json.gz",
+      "bytes": 670,
+      "sha256": "5a533634e60d8c4c4ee1e694030baabf04d0110a898a3ffd39a9b71c7a96a578",
+      "gzip_sha256": "898e6fc4e91a944e06dbb025bfe275dda7b535ac140b330bcc1227b3c2b71c4b"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-absolute.log",
+      "artifact": "raw/logs/javafx-four-face-stock-absolute.log.gz",
+      "bytes": 3075,
+      "sha256": "23843cc86daf294598818d4cb739d21e9963119d0989f15bec8bf3e7a7b57278",
+      "gzip_sha256": "58c5d7033eb7e1a2671cee66e7f90a21c65eb2af05f8739ec5c35c47cf464eba"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-planar-dorsal.log",
+      "artifact": "raw/logs/javafx-four-face-stock-planar-dorsal.log.gz",
+      "bytes": 1793,
+      "sha256": "56c2c12796adaaa8b425d39b7ab7870f7c14451c21166211d51fff141e8f9390",
+      "gzip_sha256": "d5ee2797ebda79fe24af21b5aa4f2db444926b6b2fa6bd67a59e67ec96caa598"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-tetra-ambient.log",
+      "artifact": "raw/logs/javafx-four-face-stock-tetra-ambient.log.gz",
+      "bytes": 3140,
+      "sha256": "ac2632716b76ea2cda8f2d9e22ff87b80d3808a18cbbfca4660a9b34adfec0e1",
+      "gzip_sha256": "c13b42b799d5e08c759c274f5d08d60f7228107ed751d06ba0a9abcea9918297"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-tetra-dorsal.log",
+      "artifact": "raw/logs/javafx-four-face-stock-tetra-dorsal.log.gz",
+      "bytes": 1803,
+      "sha256": "571848fad2f2b48bb37458fba0593864ae0b624b91a8cbd5d461c093aea969b6",
+      "gzip_sha256": "f9d17c23820812c1e6f2f4505318a231e62224a42383393320b79afe83fed13a"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-tetra-inner-ambient.log",
+      "artifact": "raw/logs/javafx-four-face-stock-tetra-inner-ambient.log.gz",
+      "bytes": 1831,
+      "sha256": "1fdfb3555e16061ecfdfd97f8a654589f4dc8553a7494d7dcc3c248da5b16f4b",
+      "gzip_sha256": "fbaac7cfedadc17c139795d6a76062e826422e1ef1b4b045b51d115b3b1385ff"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-tetra-lateral-receipt.log",
+      "artifact": "raw/logs/javafx-four-face-stock-tetra-lateral-receipt.log.gz",
+      "bytes": 3132,
+      "sha256": "45e5c11116d11bf0378024e7f122b114711f957c2bb9e4e45ac701612f5af23c",
+      "gzip_sha256": "a3f439fe374bca8980be935374255bbd499130674f25138722f66bce925f980c"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock-tetra-uniform-normals.log",
+      "artifact": "raw/logs/javafx-four-face-stock-tetra-uniform-normals.log.gz",
+      "bytes": 1839,
+      "sha256": "e6bddda20fdf9414e7862bb9bd22e531bf7490b45ab5a3ccbd1714084e734034",
+      "gzip_sha256": "6fe9e1fb112bc08919f9c9aeef9fc726ee1f102e4f9bf0679621fec73dc87f0c"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-four-face-stock.log",
+      "artifact": "raw/logs/javafx-four-face-stock.log.gz",
+      "bytes": 3069,
+      "sha256": "8d4925882f0874244853404e708b76aa37b873e2389da62605fa128ef41c8bcb",
+      "gzip_sha256": "2ff6cd7fd1f96c9784237a186c47c1827b18b3b8e3da3531d6fdd3028c91b0b1"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-surface-composition-after-unlit-light.log",
+      "artifact": "raw/logs/javafx-surface-composition-after-unlit-light.log.gz",
+      "bytes": 1858,
+      "sha256": "a40b38d5b2643a3f01469c151b69cc99d2eab0c46e9f338df4c2b819d03ed6bf",
+      "gzip_sha256": "49e77ce3f642fac6862294a6be691900ca006da42147ca28a16cc12f8715a11a"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-surface-composition-after-unlit-light.log.meta.json",
+      "artifact": "raw/logs/javafx-surface-composition-after-unlit-light.log.meta.json.gz",
+      "bytes": 692,
+      "sha256": "bcf23a0f2ae5601ef609e9b24f5372baee7a0fe2fb1162b3fc936d2f90051938",
+      "gzip_sha256": "dd8c6b6fe0a887cc4ebc14b3dbe8670fe2df34e5ead37f2402d748d72fdf1454"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-surface-correctness-after-unlit-light.log",
+      "artifact": "raw/logs/javafx-surface-correctness-after-unlit-light.log.gz",
+      "bytes": 1741,
+      "sha256": "7cebbb8842bd3bd8ec5944d934859d1ffa392d15c354198f08b1181ee8389ef3",
+      "gzip_sha256": "276a7a59f758589b9075c2807e9a08565b63bb6ddfc2a3c429f40ba4662e62ab"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-surface-correctness-after-unlit-light.log.meta.json",
+      "artifact": "raw/logs/javafx-surface-correctness-after-unlit-light.log.meta.json.gz",
+      "bytes": 624,
+      "sha256": "17845ecda6a911d2a8b58b1b2d40a7c40a335672aaff2ade516991c2fa03a121",
+      "gzip_sha256": "dca7805f5288b07945dd93806fc08828ab166d3c9e63460f760e2005a3771295"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/javafx-tangent-finite.log",
+      "artifact": "raw/logs/javafx-tangent-finite.log.gz",
+      "bytes": 905,
+      "sha256": "31f1a6eb9b2b16207a6d6ce801cf3c45e43779b395fd4facec4136ba446ab248",
+      "gzip_sha256": "789035c5a077d5362f70ded33beaa01a1e1ceaec2f3d223ff5d117a665674828"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/unlit-native-light-unit-platforms-01.log",
+      "artifact": "raw/logs/unlit-native-light-unit-platforms-01.log.gz",
+      "bytes": 8743,
+      "sha256": "26a9d541c47251b12dd97e4c29ec1e7b9f8faf5e394ff54ace89d8097fa8c4b6",
+      "gzip_sha256": "7edbe4e59afd4793230f6ce2d638ecdf888f3a32ac914e47227a4719ef2d4c77"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/unlit-native-light-unit-platforms-01.log.meta.json",
+      "artifact": "raw/logs/unlit-native-light-unit-platforms-01.log.meta.json.gz",
+      "bytes": 604,
+      "sha256": "fa2f6b6ac9581908dd1570f852808fc401a41a0db43fa9e2aa6c6ff8298375e8",
+      "gzip_sha256": "fd4cb2dd8527180e46369fb76b83b0aa966b0c04a7589622ab55af3d3a17b1b3"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/unlit-native-light-unit-platforms-02.log",
+      "artifact": "raw/logs/unlit-native-light-unit-platforms-02.log.gz",
+      "bytes": 61480,
+      "sha256": "1996246265e2670418e2fff8f960131ffd695fe833241418066afb9b70b48aa9",
+      "gzip_sha256": "6c617c99948856173c13bc983dc97d52dd9096e2b35603cb659849ad12e9994c"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/unlit-native-light-unit-platforms-02.log.meta.json",
+      "artifact": "raw/logs/unlit-native-light-unit-platforms-02.log.meta.json.gz",
+      "bytes": 605,
+      "sha256": "79b49f4b43f66423f6e59a2e5fb6412b10c67c4e94fe3c0c454ae173aa4ec0a4",
+      "gzip_sha256": "f6ad29132869443e63336c4245c2aa6c71ebc406ec68f16d5c407fb1da6e6fe8"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/after-rejected-resource-javafx.png",
+      "artifact": "raw/native-composition/after-rejected-resource-javafx.png.gz",
+      "bytes": 2252,
+      "sha256": "c8631f391d8cf2d5854000978d75349c3d3353c886e8473561b05843876ed79a",
+      "gzip_sha256": "1d5fa63dc6cc394bc0118b7de2acc2eec38b1cfe0dbe5fb1df3193d710622773"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/after-rejected-resource-raster.png",
+      "artifact": "raw/native-composition/after-rejected-resource-raster.png.gz",
+      "bytes": 2252,
+      "sha256": "a6f32bc51811a2e313aa25ec3c3f16935a2c580e64075ee430f318b899c83367",
+      "gzip_sha256": "39e570004108695b8d91f7fc0b58471a5fd64c0f54ad975e254908a14dcf5376"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/composition-metrics.json",
+      "artifact": "raw/native-composition/composition-metrics.json.gz",
+      "bytes": 634,
+      "sha256": "29cfa5d9b2ff3317eb020b8097770527d943c45c0f19c940a3f3fe6328016902",
+      "gzip_sha256": "2d27786e38a745005919ce4b98cb5e8e012fd390dd535fdb7bb3cc17f6c044da"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/crossing-javafx.png",
+      "artifact": "raw/native-composition/crossing-javafx.png.gz",
+      "bytes": 2056,
+      "sha256": "342732d2bc5dfdfd68b8fb1ba14303ddde63feb99265edbe56bcb0837595bdb0",
+      "gzip_sha256": "af84df2439067e6663f386f33e610e8768e0f032a94c264f8cc5171ad54872bc"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/crossing-raster.png",
+      "artifact": "raw/native-composition/crossing-raster.png.gz",
+      "bytes": 2056,
+      "sha256": "342732d2bc5dfdfd68b8fb1ba14303ddde63feb99265edbe56bcb0837595bdb0",
+      "gzip_sha256": "af84df2439067e6663f386f33e610e8768e0f032a94c264f8cc5171ad54872bc"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/independent-camera-javafx.png",
+      "artifact": "raw/native-composition/independent-camera-javafx.png.gz",
+      "bytes": 2375,
+      "sha256": "03aeeb44aa0d5d88a12b2daf3730f7208f4c3d1c9e3e5ffe47c1bbb0b4245730",
+      "gzip_sha256": "2b204fef27df2c1935be1f65e2764f57bc9b00bcda066029b29eb6f724073cba"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/independent-camera-raster.png",
+      "artifact": "raw/native-composition/independent-camera-raster.png.gz",
+      "bytes": 2375,
+      "sha256": "03aeeb44aa0d5d88a12b2daf3730f7208f4c3d1c9e3e5ffe47c1bbb0b4245730",
+      "gzip_sha256": "2b204fef27df2c1935be1f65e2764f57bc9b00bcda066029b29eb6f724073cba"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/panels-javafx.png",
+      "artifact": "raw/native-composition/panels-javafx.png.gz",
+      "bytes": 2214,
+      "sha256": "42b085ea25f22d71fca222b654409e6d634fd78e25c5069bc9f9e325d3a49205",
+      "gzip_sha256": "4d9c4da1b0a5f8bc9c94c69c8fd159f545b4cff71100c49f4bdca0ed0df8630d"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/panels-raster.png",
+      "artifact": "raw/native-composition/panels-raster.png.gz",
+      "bytes": 2214,
+      "sha256": "42b085ea25f22d71fca222b654409e6d634fd78e25c5069bc9f9e325d3a49205",
+      "gzip_sha256": "4d9c4da1b0a5f8bc9c94c69c8fd159f545b4cff71100c49f4bdca0ed0df8630d"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/perspective-javafx.png",
+      "artifact": "raw/native-composition/perspective-javafx.png.gz",
+      "bytes": 2252,
+      "sha256": "c8631f391d8cf2d5854000978d75349c3d3353c886e8473561b05843876ed79a",
+      "gzip_sha256": "1d5fa63dc6cc394bc0118b7de2acc2eec38b1cfe0dbe5fb1df3193d710622773"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/perspective-raster.png",
+      "artifact": "raw/native-composition/perspective-raster.png.gz",
+      "bytes": 2252,
+      "sha256": "a6f32bc51811a2e313aa25ec3c3f16935a2c580e64075ee430f318b899c83367",
+      "gzip_sha256": "39e570004108695b8d91f7fc0b58471a5fd64c0f54ad975e254908a14dcf5376"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/portrait-packed-javafx.png",
+      "artifact": "raw/native-composition/portrait-packed-javafx.png.gz",
+      "bytes": 4312,
+      "sha256": "279454308c6eac94a175c858472e1c6a5a3d58adda09aa9826114416c168a74a",
+      "gzip_sha256": "26fa9bdfa1b119111a8d60fa25206604dc18c8301119653faf944200871c34f3"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/portrait-packed-raster.png",
+      "artifact": "raw/native-composition/portrait-packed-raster.png.gz",
+      "bytes": 4312,
+      "sha256": "279454308c6eac94a175c858472e1c6a5a3d58adda09aa9826114416c168a74a",
+      "gzip_sha256": "26fa9bdfa1b119111a8d60fa25206604dc18c8301119653faf944200871c34f3"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/resized-javafx.png",
+      "artifact": "raw/native-composition/resized-javafx.png.gz",
+      "bytes": 3000,
+      "sha256": "f7d39f506f43923cf415e254164b7fc1ff9315eb8f303ce25559d0b84c8b42f6",
+      "gzip_sha256": "a97f2ed3877b7187fdfb69db6a28f1961b1836bb16b357acc9e9849b77e1e0ef"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/resized-raster.png",
+      "artifact": "raw/native-composition/resized-raster.png.gz",
+      "bytes": 2205,
+      "sha256": "7f3b99bc49b8456920306ca2f2e5388e12cae03fcccb1322d58d860ac823a0bb",
+      "gzip_sha256": "204579e6ddc5f401d5c67bcbdd140996eb205816c8791adf2749886751279a4a"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/reversed-javafx.png",
+      "artifact": "raw/native-composition/reversed-javafx.png.gz",
+      "bytes": 2056,
+      "sha256": "342732d2bc5dfdfd68b8fb1ba14303ddde63feb99265edbe56bcb0837595bdb0",
+      "gzip_sha256": "af84df2439067e6663f386f33e610e8768e0f032a94c264f8cc5171ad54872bc"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/reversed-raster.png",
+      "artifact": "raw/native-composition/reversed-raster.png.gz",
+      "bytes": 2056,
+      "sha256": "342732d2bc5dfdfd68b8fb1ba14303ddde63feb99265edbe56bcb0837595bdb0",
+      "gzip_sha256": "af84df2439067e6663f386f33e610e8768e0f032a94c264f8cc5171ad54872bc"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/translated-javafx.png",
+      "artifact": "raw/native-composition/translated-javafx.png.gz",
+      "bytes": 2134,
+      "sha256": "817d672a32dd04e055acab531ea4479c3f326cef4a373701d03d822379f6d84f",
+      "gzip_sha256": "6a917047ceccfea1fc8bde475791982963b250e97eb6bbaf392e46cc79d09f30"
+    },
+    {
+      "source": "/private/tmp/scalafim-javafx-composition-after-unlit-light-20261016/translated-raster.png",
+      "artifact": "raw/native-composition/translated-raster.png.gz",
+      "bytes": 2134,
+      "sha256": "817d672a32dd04e055acab531ea4479c3f326cef4a373701d03d822379f6d84f",
+      "gzip_sha256": "6a917047ceccfea1fc8bde475791982963b250e97eb6bbaf392e46cc79d09f30"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/JavaFxFourFaceColorProbe-diagnostic-20261016.scala",
+      "artifact": "raw/sources/JavaFxFourFaceColorProbe-diagnostic-20261016.scala.gz",
+      "bytes": 15524,
+      "sha256": "1d79cce57161f86abdfaf73eae0d194caab06920975157c02fff9e02d99a4799",
+      "gzip_sha256": "50e42e9fd3cf90bac095d9f220ecf8cc392fea84b392e78f6369f5a76a0ccc87"
+    },
+    {
+      "source": "/private/tmp/scalafim-pls-main-20261016/.agent-work/JavaFxTangentFiniteProbe.java",
+      "artifact": "raw/sources/JavaFxTangentFiniteProbe.java.gz",
+      "bytes": 1581,
+      "sha256": "9367b9abf92da04614924d4b005cc9511fd88fafbf1b47c1add287bca8286f44",
+      "gzip_sha256": "528d5e169e0d35298d07dda5a0aee318eca9d5364b2ac44a8bf66163b44c32ec"
+    }
+  ]
+}

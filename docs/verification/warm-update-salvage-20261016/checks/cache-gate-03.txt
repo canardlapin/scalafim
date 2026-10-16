@@ -1,0 +1,149 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/dataset/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.dataset.io.NiftiStagingCacheSuite:
+  + same path size and modification time cannot reuse different compressed content 0.016s
+  + corrupt staged payload is repaired even when its size and header still match 0.004s
+  + expansion and free-space limits refuse publication and remove owned partials 0.009s
+  + cancelled staging preserves interruption and publishes nothing 0.008s
+  + truncated compressed input cannot publish an apparently valid header 0.004s
+  + concurrent cache instances share one verified content revision 0.006s
+  + distinct concurrent images cannot exceed a shared aggregate quota 0.006s
+  + multi-window staging preserves exact bytes and tight publication limits 0.032s
+scalafim.dataset.io.NiftiResponseBlockSourceSuite:
+  + uncompressed NIfTI source reads only the requested ordered block 0.206s
+  + response-kernel adapter preserves uncompressed NIfTI values and order 0.195s
+  + compressed NIfTI requires explicit reusable staging 0.006s
+  + failed compressed staging leaves no partial finalized artifact 0.002s
+  + raw byte fixtures cover every supported NIfTI scalar decoder 0.011s
+  + big-endian payloads apply slope and intercept while zero slope means identity 0.004s
+  + truncated payloads and unsupported datatype contracts fail explicitly 0.006s
+[info] Passed: Total 15, Failed 0, Errors 0, Passed 15
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-vqoqujji/completed
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] datasetJVM/testOnly scalafim.dataset.io.NiftiStagingCacheSuite scalafim.dataset.io.NiftiResponseBlockSourceSuite: exit 0 in 5.8s
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes ...
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes ...
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 46 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] compiling 86 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/3affa4797661edd945b9/gale/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/locus-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/response-laws/js/target/scala-3.7.4/classes ...
+[info] compiling 14 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-lie/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-ops-core/js/target/scala-3.7.4/classes ...
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-resample/js/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-locus/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-filter/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-field/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 50 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/dataset/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/dataset/js/target/scala-3.7.4/scalafim-dataset-test-fastopt
+scalafim.dataset.DatasetCongruenceBindingSuite:
+  + matching provider congruence admits its exact mask endpoint 0.006s
+  + a congruence cannot be substituted, reversed, or paired with swapped operands 0.001s
+  + approximate congruence admits aligned persistent owners and rejects ephemeral substitutes 0.001s
+scalafim.dataset.SegmentedFmriSeriesSuite:
+  + indexed reads preserve ordered run origins, partitions, and provenance 0.013s
+  + groupBy reorganizes, blockConcatenate relayouts with boundaries, and reduceBy changes values once per group 0.004s
+  + block concatenation rejects incompatible voxel grids and empty queries stay typed 0.002s
+scalafim.dataset.DatasetTimeAxisSuite:
+  + dataset time axis maps global timepoints to run-local positions 0.000s
+  + dataset time axis partitions censored selections by run 0.000s
+  + dataset time axis rejects duplicate and out-of-bounds selected timepoints 0.000s
+  + FmriDataset derives a time axis and exposes dataset-backed partitions 0.004s
+  + FmriDataset accepts explicit typed run ids when block lengths align 0.001s
+scalafim.dataset.DatasetIndexSuite:
+  + dataset keys have safe string constructors 0.000s
+  + dataset index enumerates and resolves typed run keys 0.001s
+  + dataset index rejects duplicate keys and ambiguous one-run queries 0.001s
+  + single-run compatibility wraps an existing FmriDataset 0.000s
+  + DatasetRun rejects mismatched keys and multi-run datasets expand as zero-copy views 0.001s
+  + cross-run coordinate reads require exact grids 0.001s
+scalafim.dataset.DatasetAcquisitionDomainSuite:
+  + semantic acquisition identity includes dataset and exact grid geometry 0.001s
+  + active-to-full injection and checked reverse preserve global voxel identity 0.001s
+  + All and AllSpatial retain availability policy while explicit order survives 0.001s
+  + matching semantic acquisitions share one live owner 0.001s
+  + acquisitions differing only in run length get distinct time domains 0.001s
+  + image selection adapter preserves requested order and checks exact volume grid 0.001s
+  + compatibility constructor rejects duplicate resolved order 0.000s
+scalafim.dataset.DatasetSuite:
+  + opaque identifiers reject blank values 0.000s
+  + dataset shape validates sampling frame alignment 0.000s
+  + checked dataset construction reports temporal incompatibility 0.001s
+  + pure dataset descriptions require an explicit synchronous reader 0.001s
+  + dataset shape rejects 4D spaces as spatial-only shapes 0.001s
+  + selection reads timepoints x voxels in canonical orientation 0.001s
+  + dense dataset default read uses the full spatial voxel domain 0.001s
+  + selection reports duplicate and out-of-bounds indices as DatasetError 0.001s
+  + safe series read agrees with the throwing convenience method 0.000s
+  + FmriSeries safe constructor validates matrix and typed index shape 0.000s
+scalafim.dataset.OpenedDatasetSuite:
+  + checked attachment plans run-local selections and preserves read evidence 0.011s
+  + multi-acquisition bridge preserves direct reads and segmentation 0.002s
+  + attachment accumulates timing, geometry, ordering, and signal failures 0.001s
+  + explicit bijective sample alignment authorizes reordering without resampling 0.001s
+  + surface adapter reports topology drift as a typed attachment issue 0.001s
+  + a read plan cannot execute against another attachment 0.001s
+scalafim.dataset.ResponseBlockSourceSuite:
+  + composite source preserves requested global time and voxel order 0.002s
+  + composite source rejects incompatible geometry and voxel domains 0.001s
+  + source validates selections before invoking storage 0.000s
+  + dataset backend rejects a mask from incompatible geometry during construction 0.000s
+scalafim.dataset.DatasetEventsSuite:
+  + fromRows parses reserved event fields into typed accessors 0.002s
+  + fromRows reports invalid event fields as typed row errors 0.000s
+  + fromRows rejects ragged event tables at construction 0.000s
+  + fromColumns preserves typed values including missing numeric markers 0.001s
+  + fromColumns rejects duplicate, empty, and ragged columns 0.000s
+  + validateAgainst checks typed run labels against the dataset time axis 0.000s
+scalafim.dataset.ResponseKernelAdaptersSuite:
+  + dataset adapter preserves selected values, order, shape, and receipt truth 0.009s
+  + dataset adapter preserves current public duplicate rejection 0.001s
+  + sampling-frame adapter preserves regular timing raw bits 0.000s
+  + backend attachment reports incompatible response cardinality precisely 0.000s
+  + backend attachment rejects equal-sized foreign sample references 0.001s
+scalafim.dataset.scenarios.DatasetHierarchyWorkflowScenarioSuite:
+  + cross-session coordinate window remains segmented until explicitly concatenated 0.005s
+scalafim.dataset.DatasetMultiRunFixtureSuite:
+  + typed index resolves multi-subject session run datasets into selected series views 0.003s
+  + multi-run FmriDataset aligns events and partitions selected rows by run 0.001s
+scalafim.dataset.DataSelectionSuite:
+  + mask domains reject equal-shaped spaces with different affines 0.000s
+  + voxel coordinate selections resolve through exact dataset geometry and mask membership 0.001s
+  + timepoint windows are checked, ordered, and may overlap 0.000s
+  + excluded timepoints are an explicit ordered censor selection 0.001s
+[info] Passed: Total 62, Failed 0, Errors 0, Passed 62
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-etp4v0fn/completed
+[[32msuccess[0m] elapsed: 27 s
+[0J[sbt-warm] datasetJS/test: exit 0 in 27.4s

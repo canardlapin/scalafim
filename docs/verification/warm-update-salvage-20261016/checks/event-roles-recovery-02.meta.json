@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T16:35:29.784085+00:00",
+  "finished_utc": "2026-10-16T16:35:33.769026+00:00",
+  "duration_seconds": 3.98478,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "designJVM/testOnly scalafim.fmri.design.EventRolesSuite",
+    "designJS/testOnly scalafim.fmri.design.EventRolesSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/event-roles-recovery-02.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 2369
+}

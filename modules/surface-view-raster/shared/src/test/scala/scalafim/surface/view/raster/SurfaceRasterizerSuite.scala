@@ -341,3 +341,31 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assertEquals(rendered.pick(380,80).toOption.flatten.map(_.surface), Some(ids(1)))
     assertEquals(rendered.pick(150,80).toOption.flatten, None)
     assertEquals(rendered.pick(450,80).toOption.flatten, None)
+
+  test("paired cameras render and pick identically through opaque and composition entry points"):
+    val left = SurfaceId.unsafe("paired-left")
+    val right = SurfaceId.unsafe("paired-right")
+    def asset(id: SurfaceId, x: Double, hemisphere: Hemisphere) = SurfaceAsset.make(id,
+      geometry(Vector(Vector(x,-2d,-1d),Vector(x,3d,-1d),Vector(x,-1d,4d)),Vector((0,1,2)),hemisphere)).toOption.get
+    val model = SurfaceViewerModel.make(Vector(asset(left,-3,Hemisphere.Left),asset(right,3,Hemisphere.Right)),Vector.empty).toOption.get
+    val initial = SurfaceViewerState.initial(model).copy(layout=SurfaceLayout.Bilateral(left,right),lighting=SurfaceLighting.Unlit)
+    val paired = initial.copy(surfaceViewpoints=Map(left -> SurfaceViewpoint.Lateral(CorticalHemisphere.Left),
+      right -> SurfaceViewpoint.Lateral(CorticalHemisphere.Right)))
+    val size = RasterDimensions.unsafe(128,80)
+    val style = SurfaceRasterStyle(culling=TriangleCulling.None)
+    for pipeline <- Vector(SurfaceColorPipeline.LegacyDisplayBytes,SurfaceColorPipeline.DisplaySrgbLinearLight) do
+      val plan = SurfaceCompiler.compile(model,paired.copy(colorPipeline=pipeline)).toOption.get
+      val direct = SurfaceRasterizer.render(plan,size,style).toOption.get
+      val composed = SurfaceRasterizer.render(SurfaceCompositionPlan.fromLegacy(plan).toOption.get,size,style).toOption.get
+      assertEquals(direct.image,composed.image)
+      var hits = Set.empty[SurfaceId]
+      for y <- 0 until size.height; x <- 0 until size.width do
+        val a = direct.pick(x,y).toOption.flatten
+        val b = composed.pick(x,y).toOption.flatten
+        assertEquals(a.map(_.copy(origin=None)),b.map(_.copy(origin=None)))
+        a.foreach(p => hits += p.surface)
+      assertEquals(hits,Set(left,right))
+      val shared = SurfaceRasterizer.render(plan.copy(surfaceCameras=Map.empty),size,style).toOption.get
+      assertNotEquals(hash(direct.image),hash(shared.image),"asymmetric fixture must distinguish the effective cameras")
+      val bad = plan.copy(surfaceCameras=Map(left -> plan.camera.copy(viewMatrix=new FloatBufferView(Array(1f)))))
+      assert(SurfaceRasterizer.render(bad,size,style).isLeft)

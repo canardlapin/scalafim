@@ -118,7 +118,9 @@ class ModelBuilderSuite extends munit.FunSuite:
     val manual = FmriModelBuilder.buildModelEither(dataset(manualEvents), ModelBuildSpec("onset ~ hrf(level)")).fold(error => fail(error.message), identity)
     assertEquals(model.columnNames, manual.columnNames)
     assertEquals(model.eventModel.designMatrix.data.toVector, manual.eventModel.designMatrix.data.toVector)
-    assertEquals(model.eventModel.designSchema.audit.copy(derivedRows = Vector.empty), manual.eventModel.designSchema.audit)
+    val originalSources = manual.eventModel.designSchema.audit.sourceEvents.map(row => row.copy(sourceRow = receipt.retainedRows(row.sourceRow)))
+    assertEquals(model.eventModel.designSchema.audit.copy(derivedRows = Vector.empty),
+      manual.eventModel.designSchema.audit.copy(sourceEvents = originalSources))
   }
 
   test("buildModel propagates declared factor levels through the public model path") {

@@ -20,7 +20,7 @@ object SurfaceDecorationPicking:
       val w = p(14) * z + p(15)
       if w <= 0 || !w.isFinite then None
       else
-        val box = view.viewportFit.resolve(Vector(SurfaceViewSlot(view.instances.head.surface, view.viewport)), width, height).head.viewport
+        val box = plan.fittedViewports(width, height).find(_._1.id == view.id).get._2
         Some(Projected((box.x + ((p(0) * x + p(3)) / w + 1) * box.width / 2) * width,
           (box.y + (1 - (p(5) * y + p(7)) / w) * box.height / 2) * height, ((p(10) * z + p(11)) / w + 1) / 2))
 
@@ -29,10 +29,10 @@ object SurfaceDecorationPicking:
     val width = geometry.canvasWidth
     val height = geometry.canvasHeight
     val selected = plan.views.find: view =>
-      val box = view.viewportFit.resolve(Vector(SurfaceViewSlot(view.instances.head.surface, view.viewport)), width, height).head.viewport
+      val box = plan.fittedViewports(width, height).find(_._1.id == view.id).get._2
       x >= box.x * width && x < (box.x + box.width) * width && y >= box.y * height && y < (box.y + box.height) * height
     selected.flatMap: view =>
-      val box = view.viewportFit.resolve(Vector(SurfaceViewSlot(view.instances.head.surface, view.viewport)), width, height).head.viewport
+      val box = plan.fittedViewports(width, height).find(_._1.id == view.id).get._2
       val nx = 2 * (x / width - box.x) / box.width - 1
       val ny = 1 - 2 * (y / height - box.y) / box.height
       val m = view.camera.viewMatrix

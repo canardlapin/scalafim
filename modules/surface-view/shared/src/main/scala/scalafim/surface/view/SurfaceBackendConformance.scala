@@ -34,6 +34,7 @@ object SurfaceBackendId:
     def value: String = id
 
 enum SurfaceBackendFeature:
+  case PerSurfaceCameras
   case DeterministicPixels
   case HardwareAcceleration
   case DepthBuffer

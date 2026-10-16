@@ -91,7 +91,7 @@ object SurfaceDecorationGeometry:
       val (right, up, normal) = basis(target.camera)
       val radii = packet.size.unit match
         case SurfaceDecorationUnit.World => Right((packet.size.value, packet.size.value))
-        case SurfaceDecorationUnit.Pixels => pixelAxes(packet.point, target, width, height).map: axes =>
+        case SurfaceDecorationUnit.Pixels => pixelAxes(packet.point, plan, target, width, height).map: axes =>
           (packet.size.value * axes._1, packet.size.value * axes._2)
       radii.flatMap: values =>
         if packet.shape == SurfaceMarkerShape.Sphere && packet.size.unit == SurfaceDecorationUnit.Pixels &&
@@ -106,14 +106,14 @@ object SurfaceDecorationGeometry:
     view(packet.origin, plan).flatMap: target =>
       if packet.style.mode == SurfaceContourMode.RoundedStrokes then
         for
-          core <- capsule(packet, target, width, height, packet.id, packet.style.width.value, packet.style.color, binding)
+          core <- capsule(packet, plan, target, width, height, packet.id, packet.style.width.value, packet.style.color, binding)
           halo <- packet.style.halo match
             case None => Right(Vector.empty)
-            case Some(value) => capsule(packet, target, width, height,
+            case Some(value) => capsule(packet, plan, target, width, height,
               SurfaceDecorationElementId(packet.id.decoration, s"${packet.id.suffix}-halo"),
               packet.style.width.value + value.width.value, value.color, binding).map(Vector(_))
         yield Vector(core) ++ halo
-      else contourOffsets(packet, target, width, height).map: offsets =>
+      else contourOffsets(packet, plan, target, width, height).map: offsets =>
         val edge = SurfaceDecorationTarget.Edge(packet.surface, packet.sourceEdge._1, packet.sourceEdge._2)
         val core = ribbon(packet.id, packet.origin, edge, offsets.coreLeftStart, offsets.coreLeftEnd,
           offsets.coreRightStart, offsets.coreRightEnd, packet.style.color, packet.style.depthPolicy)
@@ -132,14 +132,14 @@ object SurfaceDecorationGeometry:
 
   /** The body and both semicircles share one mesh, so one edge contributes
     * once per pixel while separate edges retain their overlapping alpha. */
-  private def capsule(packet: SurfaceContourPacket, view: SurfaceCompositionView, width: Int, height: Int,
+  private def capsule(packet: SurfaceContourPacket, plan: SurfaceCompositionPlan, view: SurfaceCompositionView, width: Int, height: Int,
       id: SurfaceDecorationElementId, strokeWidth: Double, color: Rgba32, binding: String): Either[SurfaceDecorationError, SurfaceDecorationMesh] =
     for
       _ <- roundedProjection(packet.start, packet.end, view.camera)
-      start <- project(packet.start, view, width, height)
-      end <- project(packet.end, view, width, height)
-      startAxes <- pixelAxes(packet.start, view, width, height)
-      endAxes <- pixelAxes(packet.end, view, width, height)
+      start <- project(packet.start, plan, view, width, height)
+      end <- project(packet.end, plan, view, width, height)
+      startAxes <- pixelAxes(packet.start, plan, view, width, height)
+      endAxes <- pixelAxes(packet.end, plan, view, width, height)
     yield
       val (right, up, normal) = basis(view.camera)
       val dx = end._1 - start._1
@@ -202,17 +202,17 @@ object SurfaceDecorationGeometry:
 
   /** Pixel ribbons are perpendicular in projected pixel space at both endpoints.
     * World ribbons are camera-facing and use their declared world-unit width. */
-  private def contourOffsets(packet: SurfaceContourPacket, view: SurfaceCompositionView,
+  private def contourOffsets(packet: SurfaceContourPacket, plan: SurfaceCompositionPlan, view: SurfaceCompositionView,
       width: Int, height: Int): Either[SurfaceDecorationError, ContourOffsets] =
     val haloWidth = packet.style.halo.fold(0.0)(_.width.value / 2.0)
     packet.style.width.unit match
       case SurfaceDecorationUnit.Pixels =>
         for
-          perpendicular <- projectedPerpendicular(packet.start, packet.end, view, width, height)
-          startCore <- screenOffset(packet.start, perpendicular, packet.style.width.value / 2.0, view, width, height)
-          endCore <- screenOffset(packet.end, perpendicular, packet.style.width.value / 2.0, view, width, height)
-          startOuter <- screenOffset(packet.start, perpendicular, packet.style.width.value / 2.0 + haloWidth, view, width, height)
-          endOuter <- screenOffset(packet.end, perpendicular, packet.style.width.value / 2.0 + haloWidth, view, width, height)
+          perpendicular <- projectedPerpendicular(packet.start, packet.end, plan, view, width, height)
+          startCore <- screenOffset(packet.start, perpendicular, packet.style.width.value / 2.0, plan, view, width, height)
+          endCore <- screenOffset(packet.end, perpendicular, packet.style.width.value / 2.0, plan, view, width, height)
+          startOuter <- screenOffset(packet.start, perpendicular, packet.style.width.value / 2.0 + haloWidth, plan, view, width, height)
+          endOuter <- screenOffset(packet.end, perpendicular, packet.style.width.value / 2.0 + haloWidth, plan, view, width, height)
         yield offsets(packet.start, packet.end, startCore, endCore, startOuter, endOuter)
       case SurfaceDecorationUnit.World =>
         val (_, _, cameraNormal) = basis(view.camera)
@@ -227,11 +227,11 @@ object SurfaceDecorationGeometry:
     ContourOffsets(add(start, startCore), add(end, endCore), sub(start, startCore), sub(end, endCore),
       add(start, startOuter), add(end, endOuter), sub(start, startOuter), sub(end, endOuter))
 
-  private def projectedPerpendicular(start: P, end: P, view: SurfaceCompositionView,
+  private def projectedPerpendicular(start: P, end: P, plan: SurfaceCompositionPlan, view: SurfaceCompositionView,
       width: Int, height: Int): Either[SurfaceDecorationError, (Double, Double)] =
     for
-      a <- project(start, view, width, height)
-      b <- project(end, view, width, height)
+      a <- project(start, plan, view, width, height)
+      b <- project(end, plan, view, width, height)
     yield
       val dx = b._1 - a._1
       val dy = b._2 - a._2
@@ -239,8 +239,8 @@ object SurfaceDecorationGeometry:
       if length <= 1e-9 then (0.0, 1.0) else (-dy / length, dx / length)
 
   private def screenOffset(point: P, direction: (Double, Double), pixels: Double,
-      view: SurfaceCompositionView, width: Int, height: Int): Either[SurfaceDecorationError, P] =
-    pixelAxes(point, view, width, height).map: axes =>
+      plan: SurfaceCompositionPlan, view: SurfaceCompositionView, width: Int, height: Int): Either[SurfaceDecorationError, P] =
+    pixelAxes(point, plan, view, width, height).map: axes =>
       val (right, up, _) = basis(view.camera)
       add(scale(right, direction._1 * pixels * axes._1), scale(up, direction._2 * pixels * axes._2))
 
@@ -249,31 +249,31 @@ object SurfaceDecorationGeometry:
       case Some(value) => Right(value)
       case None => Left(SurfaceDecorationError.UnknownDisplay(origin))
 
-  private def pixelAxes(point: P, view: SurfaceCompositionView, width: Int,
+  private def pixelAxes(point: P, plan: SurfaceCompositionPlan, view: SurfaceCompositionView, width: Int,
       height: Int): Either[SurfaceDecorationError, (Double, Double)] =
     val eye = mul(view.camera.viewMatrix, point, 1.0)
     val projection = view.camera.projectionMatrix
     val clipW = projection(12) * eye._1 + projection(13) * eye._2 + projection(14) * eye._3 + projection(15) * eye._4
-    val viewport = fittedViewport(view, width, height)
+    val viewport = fittedViewport(plan, view, width, height)
     val horizontal = math.abs(projection(0).toDouble) * viewport.width * width
     val vertical = math.abs(projection(5).toDouble) * viewport.height * height
     if !clipW.isFinite || math.abs(clipW) <= 1e-12 || !horizontal.isFinite || !vertical.isFinite ||
         horizontal <= 1e-12 || vertical <= 1e-12 then Left(SurfaceDecorationError.InvalidProjection)
     else Right((2.0 * math.abs(clipW) / horizontal, 2.0 * math.abs(clipW) / vertical))
 
-  private def project(point: P, view: SurfaceCompositionView, width: Int,
+  private def project(point: P, plan: SurfaceCompositionPlan, view: SurfaceCompositionView, width: Int,
       height: Int): Either[SurfaceDecorationError, (Double, Double)] =
     val eye = mul(view.camera.viewMatrix, point, 1.0)
     val clip = mul(view.camera.projectionMatrix, P(eye._1, eye._2, eye._3), eye._4)
-    val viewport = fittedViewport(view, width, height)
+    val viewport = fittedViewport(plan, view, width, height)
     if !clip._4.isFinite || math.abs(clip._4) <= 1e-12 then Left(SurfaceDecorationError.InvalidProjection)
     else
       val x = (viewport.x + (clip._1 / clip._4 + 1.0) * viewport.width / 2.0) * width
       val y = (viewport.y + (clip._2 / clip._4 + 1.0) * viewport.height / 2.0) * height
       if x.isFinite && y.isFinite then Right((x, y)) else Left(SurfaceDecorationError.InvalidProjection)
 
-  private def fittedViewport(view: SurfaceCompositionView, width: Int, height: Int): SurfaceViewport =
-    view.viewportFit.resolve(Vector(SurfaceViewSlot(view.instances.head.surface, view.viewport)), width, height).head.viewport
+  private def fittedViewport(plan: SurfaceCompositionPlan, view: SurfaceCompositionView, width: Int, height: Int): SurfaceViewport =
+    plan.fittedViewports(width, height).find(_._1.id == view.id).get._2
 
   private def disk(packet: SurfaceMarkerPacket, radiusX: Double, radiusY: Double, right: P, up: P,
       normal: P): SurfaceDecorationMesh =

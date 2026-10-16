@@ -1,0 +1,33 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.view.SurfaceLayerTransactionSuite:
+  + compatible scalar and packed-RGBA replacements share assets and own admitted arrays 0.081s
+  + provider permits a unilateral compatible transaction and rejects malformed groups 0.004s
+  + apply rebases live camera and selection but rejects stale layer presentation 0.028s
+  + render-equivalent and hidden replacements remain native-layer clean 0.002s
+  + prepared transactions reject superseded models and changed colour contracts 0.003s
+  + rebasing preserves current framing, lighting and clipping without losing scalar receipts 0.002s
+  + switching world clipping modes requires new fragment preparation 0.004s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-khf7ta5t/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJVM/testOnly *SurfaceLayerTransactionSuite: exit 0 in 7.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/surface-view/js/target/scala-3.7.4/scalafim-surface-view-test-fastopt
+scalafim.surface.view.SurfaceLayerTransactionSuite:
+  + compatible scalar and packed-RGBA replacements share assets and own admitted arrays 0.011s
+  + provider permits a unilateral compatible transaction and rejects malformed groups 0.003s
+  + apply rebases live camera and selection but rejects stale layer presentation 0.004s
+  + render-equivalent and hidden replacements remain native-layer clean 0.002s
+  + prepared transactions reject superseded models and changed colour contracts 0.003s
+  + rebasing preserves current framing, lighting and clipping without losing scalar receipts 0.001s
+  + switching world clipping modes requires new fragment preparation 0.002s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-1lb214x3/completed
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewJS/testOnly *SurfaceLayerTransactionSuite: exit 0 in 6.7s

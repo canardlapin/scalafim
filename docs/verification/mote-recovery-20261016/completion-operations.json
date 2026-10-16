@@ -1,0 +1,49 @@
+[
+  {
+    "path": ".mote/ops/20261016T113113.896467Z-p55409-c0000-re12c-h7e30a5.json",
+    "operation": {
+      "actor": "machine-handoff-recovery-20261016",
+      "entity": "bd-01M52657DNVWDBZC0XKXKPHJG5",
+      "expect": {
+        "status": "20261016T110456.562808Z-p32902-c0002-r23a5-hd9921c"
+      },
+      "kind": "close",
+      "op": "20261016T113113.896467Z-p55409-c0000-re12c-h7e30a5",
+      "ts": "2026-10-16T11:31:13.896467Z",
+      "v": 1
+    }
+  },
+  {
+    "path": ".mote/ops/20261016T113120.292561Z-p55409-c0002-r105d-h2f6f7e.json",
+    "operation": {
+      "actor": "machine-handoff-recovery-20261016",
+      "kind": "reserve_close",
+      "op": "20261016T113120.292561Z-p55409-c0002-r105d-h2f6f7e",
+      "reservation_id": "rv-01M5265P27AJAS67KN0ZZJVS85",
+      "ts": "2026-10-16T11:31:20.292561Z",
+      "v": 1
+    }
+  },
+  {
+    "path": ".mote/ops/20261016T113124.212571Z-p55409-c0003-r4972-h5b5e9f.json",
+    "operation": {
+      "actor": "machine-handoff-recovery-20261016",
+      "kind": "reserve_close",
+      "op": "20261016T113124.212571Z-p55409-c0003-r4972-h5b5e9f",
+      "reservation_id": "rv-01M527472APFQGNM7JTYPHTV12",
+      "ts": "2026-10-16T11:31:24.212571Z",
+      "v": 1
+    }
+  },
+  {
+    "path": ".mote/ops/20261016T113131.270710Z-p55409-c0004-r8354-hdca638.json",
+    "operation": {
+      "actor": "machine-handoff-recovery-20261016",
+      "entity": "bd-01M52657DNVWDBZC0XKXKPHJG5",
+      "kind": "release",
+      "op": "20261016T113131.270710Z-p55409-c0004-r8354-hdca638",
+      "ts": "2026-10-16T11:31:31.270710Z",
+      "v": 1
+    }
+  }
+]

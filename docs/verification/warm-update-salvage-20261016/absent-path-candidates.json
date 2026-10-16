@@ -1,0 +1,330 @@
+[
+  {
+    "oldPath": "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/SelectedFirstLevelBenchmark.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/SelectedFirstLevelFileBenchmark.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "benchmarks/mvpa-jvm/src/main/scala/scalafim/fmri/mvpa/benchmark/MvpaConformanceBenchmark.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "benchmarks/mvpa-jvm/src/main/scala/scalafim/fmri/mvpa/benchmark/MvpaExecutionBenchmark.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "examples/surface-view/js/src/main/scala/scalafim/examples/surfaceview/ThreeCorticalMapProbe.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "examples/surface-view/shared/src/main/scala/scalafim/examples/surfaceview/CorticalMapSemantics.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "examples/surface-view/shared/src/main/scala/scalafim/examples/surfaceview/SurfaceMapBenchmarkFixture.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasQuotient.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/atlas/shared/src/main/scala/scalafim/atlas/BoundaryQuery.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiStagingCache.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/dataset/shared/src/main/scala/scalafim/dataset/DeferredResponseBlockSource.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/design/shared/src/main/scala/scalafim/fmri/design/EventResponseSupport.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/design/shared/src/main/scala/scalafim/fmri/design/ReachableResponseBasis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/ConvolutionSupport.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelCompanionReviewJvm.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitDataset.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/StudySpatialSupportJvm.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/FirstLevelCompanionReview.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/FirstLevelTables.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/SamplingReference.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/StudySpatialSupport.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/group/shared/src/main/scala/scalafim/fmri/group/FirstLevel.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupContrastDiagnostics.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/group/shared/src/main/scala/scalafim/fmri/group/GroupSignFlip.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/SampledEventSupport.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/image/shared/src/main/scala/scalafim/image/VolumeSearchlight.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/locus-data/shared/src/main/scala/scalafim/locus/Aggregation.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/AnalysisExecution.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/AnalysisResult.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/AxisIdentity.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Binding.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/BoundSchedule.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/CanonicalAnalysis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/CanonicalEffectMvpa.scala",
+    "sameNameCurrentPaths": [
+      "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalEffectMvpa.scala"
+    ]
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/DatasetEvidence.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/DistanceEstimands.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Estimand.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceTable.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ExecutionPlan.scala",
+    "sameNameCurrentPaths": [
+      "modules/pipeline/shared/src/main/scala/scalafim/pipeline/ExecutionPlan.scala"
+    ]
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ExecutionReceipt.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/FirstOrderAnalysis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/FmriEvidenceError.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/GlobalDecomposition.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ManovaMvpa.scala",
+    "sameNameCurrentPaths": [
+      "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/ManovaMvpa.scala"
+    ]
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Measurement.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Mvpa.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ObservationFitDesign.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/PartitionReductionDesign.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/PlanInspection.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/PredictiveDesign.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Relation.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationValidationDesign.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationalAnalysis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationalCompiler.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationalDesign.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationalFit.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationalQuery.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RelationalRsa.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RunwiseCanonicalRelations.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RunwiseObservations.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RunwiseRelations.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ScientificIdentity.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ScientificSpecification.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/SoftLda.scala",
+    "sameNameCurrentPaths": [
+      "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/SoftLda.scala"
+    ]
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/SoftLdaAnalysis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/SpatialFrames.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/SpatialResultScatter.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/AlderData.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/Categorical.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/CategoricalClassifier.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/ClassificationCompiler.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/CrossDomainClassification.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/OperatorRidgeAnalysis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/OutOfFoldClassification.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/predictive/PredictiveAnalysis.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreePairedNativeProbe.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayerTransaction.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneGeometry.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferMorphometryReader.scala",
+    "sameNameCurrentPaths": []
+  },
+  {
+    "oldPath": "modules/surface/shared/src/main/scala/scalafim/surface/freesurfer/FreeSurferMorphometryCodec.scala",
+    "sameNameCurrentPaths": []
+  }
+]

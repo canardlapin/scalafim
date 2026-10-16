@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T01:09:34.860237+00:00",
+  "finished_utc": "2026-10-16T01:09:40.841629+00:00",
+  "duration_seconds": 5.981263,
+  "command": [
+    "python3",
+    "docs/verification/development-machine-20261015/verify-custody.py"
+  ],
+  "cwd": "/private/tmp/scalafim-github-handoff-20261015",
+  "log": "/private/tmp/scalafim-github-handoff-custody.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 180.0,
+  "log_bytes": 372
+}

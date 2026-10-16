@@ -21,6 +21,7 @@ final case class ImageHeaderCatalog(
 
 enum CatalogIssueCode:
   case BidsValidation(code: BidsIssueCode)
+  case InvalidTimingMetadata
   case NoBoldFiles
   case MissingEntity
   case InvalidIdentity
@@ -98,6 +99,7 @@ private final case class CandidateRun(
     runId: RunId,
     header: ImageHeaderDescriptor,
     repetitionTime: RepetitionTime,
+    timing: RunTimingMetadata,
     events: BidsFile,
     confounds: Option[BidsFile],
     mask: Option[BidsFile]
@@ -157,6 +159,17 @@ object BidsStudyCompiler:
       EntityKey.Resolution
     )
 
+  /** Inspect an optional companion without enabling nuisance regressors or compiling image data.
+    * Uses the same pipeline/entity specificity and ambiguity rules as requested confound binding.
+    */
+  def confoundCompanion(project: BidsProject, boldPath: BidsPath): Either[CatalogIssue, Option[BidsFile]] =
+    project.manifest.files.find(_.path == boldPath) match
+      case Some(bold) if isBoldImage(bold) =>
+        selectOptionalCompanion("confounds", bold, project.manifest.files.filter(isConfoundFile),
+          ConfoundMatchKeys, requirePipeline = true)
+      case _ => Left(CatalogIssue(CatalogIssueCode.NoBoldFiles, Some(boldPath),
+        "optional confound lookup requires a BOLD image path in the project manifest"))
+
   def compile(
       project: BidsProject,
       recipe: DatasetRecipe,
@@ -176,7 +189,20 @@ object BidsStudyCompiler:
     compiled.foreach(result => issues ++= result._1)
 
     val candidates = compiled.flatMap(_._2)
-    val grouped = candidates.groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
+    val aliasCollisions = candidates.groupBy(run => normalizedUnitKey(run)).toVector
+      .collect { case (key, runs) if runs.size > 1 => key -> runs.sortBy(_.bold.path.value) }
+      .sortBy(_._1.sortKey)
+    aliasCollisions.foreach { case (_, runs) =>
+      val paths = runs.map(_.bold.path.value)
+      issues += CatalogIssue(
+        CatalogIssueCode.DuplicateRun,
+        runs.headOption.map(_.bold.path),
+        s"numeric-equivalent BOLD aliases collide: ${paths.mkString(", ")}"
+      )
+    }
+    val collidingPaths = aliasCollisions.flatMap(_._2.map(_.bold.path)).toSet
+    val grouped = candidates.filterNot(run => collidingPaths.contains(run.bold.path))
+      .groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
     val units = Vector.newBuilder[FirstLevelUnit]
     grouped.foreach { case (key, runs) =>
       compileUnit(recipe, imageHeaders, key, runs.sortBy(run => run.runId.value)) match
@@ -251,6 +277,11 @@ object BidsStudyCompiler:
       issues += CatalogIssue(CatalogIssueCode.MissingRepetitionTime, Some(bold.path), "BOLD metadata has no positive repetition time")
       None
     }
+    val timing = timingMetadataFor(project, bold) match
+      case Right(value) => Some(value)
+      case Left(issue) =>
+        issues += issue
+        None
     val events = selectCompanion("events", bold, eventFiles, EventMatchKeys, requirePipeline = false) match
       case Right(file) => Some(file)
       case Left(issue) =>
@@ -286,6 +317,7 @@ object BidsStudyCompiler:
         typedRun <- runId
         headerValue <- header
         tr <- repetitionTime
+        timingValue <- timing
         eventFile <- events
         _ <-
           if recipe.confounds.isEmpty || confounds.nonEmpty then Some(())
@@ -307,6 +339,7 @@ object BidsStudyCompiler:
         runId = typedRun,
         header = headerValue,
         repetitionTime = tr,
+        timing = timingValue,
         events = eventFile,
         confounds = confounds,
         mask = mask
@@ -380,6 +413,7 @@ object BidsStudyCompiler:
             RunInput.unsafe(
               id = run.runId,
               repetitionTime = run.repetitionTime,
+              timing = run.timing,
               timepoints = run.header.shape.timepoints,
               bold = artifactRef[BoldImageResource](recipe, run.bold),
               events = artifactRef[EventsTableResource](recipe, run.events),
@@ -485,6 +519,13 @@ object BidsStudyCompiler:
       run = if grouping == RunGrouping.OneUnitPerRun then Some(run.runId.value) else None
     )
 
+  private def normalizedUnitKey(run: CandidateRun): UnitKey =
+    val key = unitKey(run, RunGrouping.OneUnitPerRun)
+    key.copy(
+      echo = key.echo.map(normalizedDecimalIndex),
+      run = key.run.map(normalizedDecimalIndex)
+    )
+
   private def requiredEntity(
       file: BidsFile,
       key: EntityKey,
@@ -494,6 +535,17 @@ object BidsStudyCompiler:
       issues += CatalogIssue(CatalogIssueCode.MissingEntity, Some(file.path), s"BOLD file is missing required '${key.short}' entity")
       None
     }
+
+  private def timingMetadataFor(project: BidsProject, bold: BidsFile): Either[CatalogIssue, RunTimingMetadata] =
+    project.metadata(bold.path)
+      .left.map(error => CatalogIssue(CatalogIssueCode.InvalidTimingMetadata, Some(bold.path), error.message))
+      .flatMap { metadata =>
+        metadata.fields.get("SliceTimingCorrected") match
+          case None => Right(RunTimingMetadata())
+          case Some(JsonValue.Bool(value)) => Right(RunTimingMetadata(Some(value)))
+          case Some(_) => Left(CatalogIssue(CatalogIssueCode.InvalidTimingMetadata, Some(bold.path),
+            "SliceTimingCorrected must be a boolean when present", field = Some("SliceTimingCorrected")))
+      }
 
   private def repetitionTimeFor(project: BidsProject, bold: BidsFile): Option[Double] =
     val direct = project.metadata(bold.path).toOption.flatMap(metadata => BidsMetadataRecord(bold, metadata).repetitionTime.map(_.value))
@@ -553,10 +605,31 @@ object BidsStudyCompiler:
       requirePipeline: Boolean
   ): Boolean =
     val entitiesMatch = keys.forall { key =>
-      candidate.entities.get(key).forall(value => target.entities.get(key).contains(value))
+      candidate.entities.get(key).forall(value => target.entities.get(key).exists(
+        targetValue => equivalentEntityValue(key, value, targetValue)
+      ))
     }
     val pipelineMatches = !requirePipeline || candidate.pipeline == target.pipeline
     entitiesMatch && pipelineMatches
+
+  /** `run` and `echo` are BIDS index entities. Match their decimal spelling without numeric conversion,
+    * without changing persisted labels or admitting the same rule for BIDS label entities.
+    */
+  private def equivalentEntityValue(key: EntityKey, left: String, right: String): Boolean =
+    if key == EntityKey.Run || key == EntityKey.Echo then
+      (decimalIndex(left), decimalIndex(right)) match
+        case (Some(a), Some(b)) => a == b
+        case _ => left == right
+    else left == right
+
+  private def decimalIndex(value: String): Option[String] =
+    if value.nonEmpty && value.forall(character => character >= '0' && character <= '9') then
+      val withoutLeadingZeros = value.dropWhile(_ == '0')
+      Some(if withoutLeadingZeros.isEmpty then "0" else withoutLeadingZeros)
+    else None
+
+  private def normalizedDecimalIndex(value: String): String =
+    decimalIndex(value).getOrElse(value)
 
   private def artifactRef[A](recipe: DatasetRecipe, file: BidsFile): WorkflowArtifactRef[A] =
     new WorkflowArtifactRef[A](recipe.project.location.resolve(file.path.value))

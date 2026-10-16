@@ -90,6 +90,67 @@ class SurfaceOpaqueCompositionSuite extends munit.FunSuite:
       val result = equivalent(plan)
       assert(result.receipt.shadedPixels > 0, name)
 
+  test("packed duplicate-surface views retain ordered raster and pick identities"):
+    val base = ok(SurfaceCompositionPlan.fromLegacy(planes("packed", Vector(0))))
+    val source = base.views.head
+    val first = source.copy(id = ok(SurfaceViewId.make("upper")), viewport = SurfaceViewport(0, 0, .5, 1),
+      viewportFit = SurfaceViewportFit.Pack(1), instances = Vector(source.instances.head.copy(id = ok(SurfaceInstanceId.make("upper-instance")))))
+    val second = source.copy(id = ok(SurfaceViewId.make("lower")), viewport = SurfaceViewport(.5, 0, .5, 1),
+      viewportFit = SurfaceViewportFit.Pack(1), instances = Vector(source.instances.head.copy(id = ok(SurfaceInstanceId.make("lower-instance")))))
+    val plan = ok(SurfaceCompositionPlan.make(Vector(first, second), base.resources))
+    val dimensions = RasterDimensions.unsafe(80, 160)
+    val raster = ok(SurfaceRasterizer.render(plan, dimensions, opaqueStyle))
+    val byOrigin = (for
+      y <- 0 until dimensions.height
+      x <- 0 until dimensions.width
+      pick <- ok(raster.pick(x, y)).toVector
+      origin <- pick.origin
+    yield origin -> y).groupMap(_._1)(_._2)
+    assertEquals(byOrigin.keySet, Set(SurfaceDisplayOrigin(first.id, first.instances.head.id),
+      SurfaceDisplayOrigin(second.id, second.instances.head.id)))
+    assert(byOrigin(SurfaceDisplayOrigin(first.id, first.instances.head.id)).max <
+      byOrigin(SurfaceDisplayOrigin(second.id, second.instances.head.id)).min)
+
+  test("packed portrait and wide views keep pixel decorations sized and identified per view"):
+    val base = ok(SurfaceCompositionPlan.fromLegacy(planes("decoration-pack", Vector(0))))
+    val source = base.views.head
+    val first = source.copy(id = ok(SurfaceViewId.make("first")), viewport = SurfaceViewport(0, 0, .2, 1),
+      viewportFit = SurfaceViewportFit.Pack(1), instances = Vector(source.instances.head.copy(id = ok(SurfaceInstanceId.make("first-instance")))))
+    val second = source.copy(id = ok(SurfaceViewId.make("second")), viewport = SurfaceViewport(.8, 0, .2, 1),
+      viewportFit = SurfaceViewportFit.Pack(1), instances = Vector(source.instances.head.copy(id = ok(SurfaceInstanceId.make("second-instance")))))
+    val plan = ok(SurfaceCompositionPlan.make(Vector(first, second), base.resources))
+    val anchor = SurfaceDecorationAnchor.Vertex(SurfaceVertexAnchor.make(source.instances.head.surface, VertexId(0)))
+    val marker = SurfaceMarkerDecoration(ok(SurfaceDecorationId.make("packed-marker")), anchor, SurfaceMarkerShape.Disk,
+      ok(SurfaceDecorationSize.pixels(10)), Rgba32.unsafe(255, 0, 0), SurfaceDecorationDepthPolicy.Overlay)
+    val label = ok(SurfaceLabelDecoration.make(ok(SurfaceDecorationId.make("packed-label")), anchor, "L",
+      ok(SurfaceDecorationSize.pixels(10)), Rgba32.unsafe(0, 255, 0)))
+    val point = SurfaceDecorationWorldPoint(0, 0, 0)
+    val compiled = ok(SurfaceDecorationCompiler.compile(Vector(marker, label), plan))
+    val packets = compiled.copy(markers = compiled.markers.map(_.copy(point = point)), labels = compiled.labels.map(_.copy(point = point)))
+    val rasterizer = new SurfaceLabelRasterizer:
+      def rasterize(text: String, color: Rgba32): Either[String, SurfaceLabelAsset] =
+        Right(SurfaceLabelAsset(RasterImage.unsafeFromOwnedPackedArray(RasterDimensions.unsafe(1, 1), Array(color.toPackedInt)), 1, .5, .5))
+    def check(width: Int, height: Int, centers: Map[SurfaceViewId, (Double, Double)]): Unit =
+      val geometry = ok(SurfaceDecorationGeometry.lower(packets, plan, width, height))
+      val labels = ok(SurfaceLabelLayout.resolve(geometry, plan, rasterizer))
+      assertEquals(geometry.meshes.map(_.origin.view), Vector(first.id, second.id))
+      geometry.meshes.zipWithIndex.foreach: (mesh, index) =>
+        val origin = mesh.origin
+        val projected = SurfaceDecorationPicking.project(plan, origin.view, point, width, height).get
+        val expected = centers(origin.view)
+        assertEqualsDouble(projected.x, expected._1, 1e-6)
+        assertEqualsDouble(projected.y, expected._2, 1e-6)
+        assertEquals(SurfaceDecorationPicking.pick(geometry, plan, expected._1, expected._2, None).map(_.origin), Some(origin))
+        val labelMesh = labels.meshes.find(mesh => mesh.origin == origin && mesh.texture.nonEmpty).get
+        val left = SurfaceDecorationPicking.project(plan, origin.view,
+          SurfaceDecorationWorldPoint(labelMesh.positions(0), labelMesh.positions(1), labelMesh.positions(2)), width, height).get
+        val right = SurfaceDecorationPicking.project(plan, origin.view,
+          SurfaceDecorationWorldPoint(labelMesh.positions(3), labelMesh.positions(4), labelMesh.positions(5)), width, height).get
+        assertEqualsDouble(math.abs(right.x - left.x), 10.0, 1e-6)
+        assertEqualsDouble(math.abs(mesh.positions(3) - packets.markers(index).point.x), .05, 1e-6)
+    check(400, 800, Map(first.id -> (200.0, 200.0), second.id -> (200.0, 600.0)))
+    check(800, 400, Map(first.id -> (200.0, 200.0), second.id -> (600.0, 200.0)))
+
   test("opaque scientific winners feed decorated depth and overlay resolution exactly once per pixel"):
     val plan = composition(Vector(planes("opaque-a", Vector(0, 1e-14, -.15)), planes("opaque-z", Vector(0))))
     val fast = equivalentDecorated(plan, markers(plan, SurfaceId.unsafe("opaque-a")))

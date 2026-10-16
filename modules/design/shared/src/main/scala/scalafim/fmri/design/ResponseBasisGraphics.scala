@@ -48,6 +48,10 @@ object ResponseBasisGraphics:
       val labels = selected.map(_.label) ++ Option.when(markers.nonEmpty)(boundary)
       val colors = selected.map(c => DesignGraphics.defaultColors((c.element.index-1)%DesignGraphics.defaultColors.size)) ++
         Option.when(markers.nonEmpty)(Rgba.unsafe(145,151,147))
+      val description = s"Native response basis ${review.descriptor.canonicalId}; fixed full-basis axes; no display normalization; model components, not fitted responses. " +
+        s"Showing ${ids.size}/${review.curves.size} coordinates. Sample times (seconds): ${review.times.map(_.value).mkString(",")}. " +
+        selected.map(c => s"id=${c.element.id.value}; role=${c.element.role.stableLabel}; values=${c.values.mkString(",")}; geometry=${c.geometry match { case BasisPreviewGeometry.FirStep(from,until,height) => s"FirStep(${from.value},${until.value},$height)"; case _: BasisPreviewGeometry.Sampled => "Sampled" }}").mkString("\n") +
+        review.readout.fold("")(r => s"\nReadout=${r.functional}; units=${r.units}; weight axis=${review.basisIds.map(_.value).mkString(",")}; exact basis weights=${r.weights.mkString(",")}; discretization=${r.discretization}. Display samples and curve selection do not determine these weights.")
       for
         time <- ContinuousScale.fixed("Response time",review.times.map(_.value),Palette.numeric)
         value <- ContinuousScale.fixed("Basis value",Vector(bottom,top),Palette.numeric)
@@ -57,7 +61,7 @@ object ResponseBasisGraphics:
           .encode(Aesthetic.X,_.time,time).encode(Aesthetic.Y,_.value,value)
           .encode(Aesthetic.Color,_.label,color).geomLine(params=Some(GraphicParams.unsafe(lineWidth=1.3)))
           .axisTitles("Response time (s)","Basis value").build
-        trained <- PlotCompiler.resolve(program.plot,PlotCompilerOptions(
+        trained <- PlotCompiler.resolve(program.plot.withDescription(description),PlotCompilerOptions(
           policy=Some(LayoutPolicy(referenceDevice=DeviceContext.unsafe(width,height),outerMarginPt=6,
             axisFontPt=8,axisTitleFontPt=8,legendFontPt=8,legendTitleFontPt=8,legendKeyPt=3)),theme=theme,guides=GuidePolicy.Derived()))
       yield trained

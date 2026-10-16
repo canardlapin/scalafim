@@ -168,3 +168,29 @@ class ModelBuildSpecJsonCodecSuite extends munit.FunSuite:
       initialization = Some(ArInitialization.Stationary), fgls = policy).isLeft)
     assert(AutocorrelationConfig(order = 2, voxelwise = true, biasCorrection = correction,
       initialization = Some(ArInitialization.ExactAr1), fgls = policy).isRight)
+
+  test("response support is preserved in version 3 and cannot be stripped or assigned an older version"):
+    val request = ResponseSupportRequest(Vector(1, 3, 4).map(ScanIndex.unsafeOneBased),
+      EventSupportPolicy.ExcludeUnobservedAllowPartial, 1e-8)
+    val spec = ModelBuildSpec("onset ~ hrf(condition)", responseSupport = Some(request))
+    val encoded = ModelBuildSpecJsonCodec.encode(spec).fold(error => fail(error.message), identity)
+    assertEquals(ModelBuildSpecJsonCodec.decode(encoded), Right(spec))
+    assertEqualsDouble(ujson.read(encoded)("version").num, 3.0, 0.0)
+    assert(encoded.contains("\"responseSupport\":{\"retainedScans\":[1,3,4],\"policy\":\"ExcludeUnobservedAllowPartial\",\"absoluteTolerance\":1e-8}"))
+    val missing = ujson.read(encoded)
+    missing.obj.remove("responseSupport")
+    assert(ModelBuildSpecJsonCodec.decode(ujson.write(missing)).isLeft)
+    val old = ujson.read(encoded)
+    old("version") = ujson.Num(2)
+    assert(ModelBuildSpecJsonCodec.decode(ujson.write(old)).isLeft)
+    for invalid <- Vector(Vector(1, 1), Vector(2, 1), Vector(0, 1)) do
+      val changed = ujson.read(encoded)
+      changed("responseSupport")("retainedScans") = ujson.Arr.from(invalid)
+      assert(ModelBuildSpecJsonCodec.decode(ujson.write(changed)).left.exists(_.path.contains("retainedScans")))
+    for tolerance <- Vector(-1.0); policy <- Vector("Unknown") do
+      val changed = ujson.read(encoded)
+      changed("responseSupport")("absoluteTolerance") = ujson.Num(tolerance)
+      assert(ModelBuildSpecJsonCodec.decode(ujson.write(changed)).left.exists(_.path.endsWith("absoluteTolerance")))
+      changed("responseSupport")("absoluteTolerance") = ujson.Num(0.0)
+      changed("responseSupport")("policy") = ujson.Str(policy)
+      assert(ModelBuildSpecJsonCodec.decode(ujson.write(changed)).left.exists(_.path.endsWith("policy")))

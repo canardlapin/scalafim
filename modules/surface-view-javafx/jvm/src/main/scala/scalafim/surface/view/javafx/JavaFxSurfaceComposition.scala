@@ -297,8 +297,7 @@ final class JavaFxSurfaceComposition private (private val backend: JavaFxSurface
     root.getChildren.setAll(nextViews.map(_.scene)*)
 
   private def layout(plan: SurfaceCompositionPlan, dimensions: JavaFxSnapshotConfig): Unit =
-    val slots = plan.views.map(view => SurfaceViewSlot(view.instances.head.surface, view.viewport))
-    val boxes = plan.views.head.viewportFit.resolve(slots, dimensions.width, dimensions.height).map(_.viewport)
+    val boxes = plan.fittedViewports(dimensions.width, dimensions.height).map(_._2)
     plan.views.zip(views).zip(boxes).foreach: (entry, box) =>
       val (view, mounted) = entry
       val width = dimensions.width * box.width

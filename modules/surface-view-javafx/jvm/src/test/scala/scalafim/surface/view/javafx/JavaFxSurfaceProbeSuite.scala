@@ -1,6 +1,6 @@
 package scalafim.surface.view.javafx
 
-import javafx.scene.{ParallelCamera, PerspectiveCamera}
+import javafx.scene.{AmbientLight, ParallelCamera, PerspectiveCamera}
 import javafx.scene.shape.VertexFormat
 
 import intaglio.*
@@ -221,6 +221,54 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(lit.material.getDiffuseMap eq lit.atlas.image)
     assertEquals(lit.material.getSelfIlluminationMap, null)
     assert(unlit.material.getSelfIlluminationMap eq unlit.atlas.image)
+
+  test("unlit lighting follows mesh groups and native-Phong mode transitions preserve geometry"):
+    val result = JavaFxSurfaceProbe.compile(plan(geometry())).toOption.get
+    val mesh = result.chunks.head.mesh
+    val atlas = result.chunks.head.atlas
+    val normals = mesh.getNormals.toArray(null)
+    val coordinates = mesh.getTexCoords.toArray(null)
+    def ambientLights: Int =
+      result.surfaceGroups.valuesIterator.map: group =>
+        group.getChildren.toArray.count(_.isInstanceOf[AmbientLight])
+      .sum
+    assertEquals(ambientLights, 1)
+    result.setMaterialMode(JavaFxMaterialMode.Lit).toOption.get
+    assertEquals(ambientLights, 0)
+    result.setMaterialMode(JavaFxMaterialMode.Unlit).toOption.get
+    result.setMaterialMode(JavaFxMaterialMode.Unlit).toOption.get
+    assertEquals(ambientLights, 1)
+    assert(result.chunks.head.mesh eq mesh)
+    assert(result.chunks.head.atlas eq atlas)
+    assertEquals(mesh.getNormals.toArray(null).toVector, normals.toVector)
+    assertEquals(mesh.getTexCoords.toArray(null).toVector, coordinates.toVector)
+
+  test("each surface keeps its own unlit light beside its mesh views"):
+    val left = geometry()
+    val rightId = SurfaceId.unsafe("right")
+    val right = SurfaceGeometry(left.mesh, Hemisphere.Right, SurfaceKind.Inflated)
+    val assets = Vector(
+      SurfaceAsset.make(surfaceId, left).toOption.get,
+      SurfaceAsset.make(rightId, right).toOption.get
+    )
+    val model = SurfaceViewerModel.make(assets, Vector.empty).toOption.get
+    val bilateral = SurfaceViewer.reduce(model, SurfaceViewerState.initial(model),
+      SurfaceViewerAction.SetLayout(SurfaceLayout.Bilateral(surfaceId, rightId))).toOption.get
+    val renderPlan = SurfaceCompiler.compile(model, bilateral).toOption.get
+    val result = JavaFxSurfaceProbe.compile(renderPlan).toOption.get
+    assertEquals(result.surfaceGroups.keySet, Set(surfaceId, rightId))
+    result.surfaceGroups.valuesIterator.foreach: group =>
+      assertEquals(group.getChildren.toArray.count(_.isInstanceOf[AmbientLight]), 1)
+
+  test("world-vertex Lambert keeps native lighting unlit across material modes"):
+    val config = JavaFxAtlasConfig.make(lightingPolicy = JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+    val result = JavaFxSurfaceProbe.compile(plan(geometry()), JavaFxMaterialMode.Lit, config).toOption.get
+    def ambientLights: Int =
+      result.surfaceGroups(surfaceId).getChildren.toArray.count(_.isInstanceOf[AmbientLight])
+    assertEquals(ambientLights, 1)
+    // No toolkit is needed for this construction-only transition.
+    result.updateColors(plan(geometry()), commit = false, mode = JavaFxMaterialMode.Unlit).toOption.get
+    assertEquals(ambientLights, 1)
 
   test("style and data updates touch atlases without rebuilding geometry"):
     val mesh = geometry()

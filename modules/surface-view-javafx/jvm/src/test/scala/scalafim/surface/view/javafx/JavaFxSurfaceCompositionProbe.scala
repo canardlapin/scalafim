@@ -70,8 +70,7 @@ object JavaFxSurfaceCompositionProbe:
             (c.alpha << 24) | (c.red << 16) | (c.green << 8) | c.blue
           write(actual, width, height, output.resolve(s"$name-javafx.png"))
           write(expected, width, height, output.resolve(s"$name-raster.png"))
-          val slots = plan.views.map(v => SurfaceViewSlot(v.instances.head.surface, v.viewport))
-          val boxes = plan.views.head.viewportFit.resolve(slots, width, height).map(_.viewport)
+          val boxes = plan.fittedViewports(width, height).map(_._2)
           var picks = 0
           var empty = 0
           for y <- 5 until height - 5 by 11; x <- 5 until width - 5 by 11 do
@@ -136,6 +135,14 @@ object JavaFxSurfaceCompositionProbe:
         val newMeshes = native.subScenes.values.toVector.flatMap(scene =>
           scene.getRoot.lookupAll("MeshView").toArray.toVector.collect { case node: _root_.javafx.scene.shape.MeshView => node.getMesh })
         require(oldMeshes.size == 4 && oldMeshes.toSet == newMeshes.toSet && newMeshes.toSet.size == 2, "native meshes were not shared/retained")
+        val packed = panels.take(2).map(_.copy(viewportFit = SurfaceViewportFit.Pack(1.0)))
+        plan = ok(SurfaceCompositionPlan.make(packed, resources))
+        dimensions = ok(JavaFxSnapshotConfig.make(320, 640, SceneAntialiasing.DISABLED))
+        val packedBoxes = plan.fittedViewports(dimensions.width, dimensions.height).map(_._2)
+        require(packedBoxes.map(box => (box.x, box.y, box.width, box.height)) == Vector((0.0, 0.0, 1.0, 0.5), (0.0, 0.5, 1.0, 0.5)),
+          "portrait composition did not pack views vertically")
+        ok(native.render(plan, dimensions))
+        verify("portrait-packed")
         dimensions = ok(JavaFxSnapshotConfig.make(507, 211, SceneAntialiasing.DISABLED))
         ok(native.resize(dimensions))
         verify("resized")

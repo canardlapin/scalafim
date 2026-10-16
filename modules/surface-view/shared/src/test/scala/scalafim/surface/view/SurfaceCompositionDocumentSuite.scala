@@ -65,3 +65,10 @@ class SurfaceCompositionDocumentSuite extends munit.FunSuite:
       .replace("\"revision\":2", "\"revision\":1")
     val decoded = ok(SurfaceCompositionCodec.decode(legacy))
     assert(decoded.views.flatMap(_.instances).forall(_.opacity == intaglio.DisplayOpacity.Opaque))
+
+  test("revision 9 scene geometry cannot conflict with composition geometry"):
+    val document = ok(SurfaceCompositionDocument.capture(model, state, navigation, bindings, provenance))
+    val json = SurfaceCompositionCodec.encode(document)
+    assert(json.contains("\"revision\":9"))
+    val conflicting = json.replaceFirst("\"from\":\"[^\"]+\"", "\"from\":\"white\"")
+    assert(SurfaceCompositionCodec.decode(conflicting).isLeft)

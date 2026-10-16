@@ -1,0 +1,22 @@
+package scalafim.surface.view
+import java.nio.file.{Files,Path}
+import scalafim.surface.*
+object FreezeCanonicalScene:
+  def fixture(): (SurfaceViewerModel,SurfaceViewerState,SurfaceSceneBindings,SurfaceProvenance) =
+    val id = SurfaceId.unsafe("frozen-left")
+    def geometry(kind: SurfaceKind, dx: Double) = SurfaceGeometry(TriangleMesh.fromRows(
+      Vector(Vector(-3d+dx,-2d,1d),Vector(-3d+dx,4d,1d),Vector(-3d+dx,-1d,5d)),Vector((0,1,2))),Hemisphere.Left,kind)
+    val family = SurfaceSet.of(SurfaceKind.White,geometry(SurfaceKind.White,0),SurfaceKind.Inflated -> geometry(SurfaceKind.Inflated,8))
+    val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(id,family).toOption.get),Vector.empty).toOption.get
+    val actions = Vector(SurfaceViewerAction.SetAspectRatio(CameraAspectRatio.unsafe(2)),SurfaceViewerAction.BeginGeometryMorph(id,SurfaceKind.Inflated),
+      SurfaceViewerAction.SetGeometryMorphFraction(id,SurfaceMorphFraction.unsafe(0.25)))
+    val state = actions.foldLeft(SurfaceViewerState.initial(model))((s,a) => SurfaceViewer.reduce(model,s,a).toOption.get)
+    def ref(uri: String,c: Char) = SurfaceExternalReference(SurfaceAssetUri.unsafe(uri),SurfaceContentDigest.unsafe(c.toString*64))
+    val white = ref("asset://frozen/white",'a'); val inflated = ref("asset://frozen/inflated",'b')
+    val bindings = SurfaceSceneBindings(Map(id -> white),Map.empty)
+    val provenance = SurfaceProvenance.make("frozen-writer","1","2026-09-21T00:00:00Z",Vector.empty).toOption.get
+    (model,state,bindings,provenance)
+  def main(args: Array[String]): Unit =
+    val (model,state,bindings,provenance) = fixture()
+    val json = SurfaceSceneCodec.encode(SurfaceSceneDocument.capture(model,state,bindings,provenance).toOption.get)
+    Files.writeString(Path.of(args(0)),json+"\n")

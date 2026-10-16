@@ -1,0 +1,5 @@
+{
+  "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala": "464d03aeac84e4386545799a68a00d0e6adb6c5a6669e712329f1d9affc78c05",
+  "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbeSuite.scala": "22e71f7a2a8958294cc2fcf8be19ca1d940a9deafff57f8af7228af8f8be1e94",
+  "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxFourFaceColorProbe.scala": "9919c3d4d923aa6f6f8f21a86c1f21c981db3cbff3619c330ebbc23645efada6"
+}

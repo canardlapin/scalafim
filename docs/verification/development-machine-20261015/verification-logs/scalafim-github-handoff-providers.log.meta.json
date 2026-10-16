@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T01:06:59.211912+00:00",
+  "finished_utc": "2026-10-16T01:08:44.937626+00:00",
+  "duration_seconds": 105.724978,
+  "command": [
+    "./tools/prepare-pinned-dependencies.sh"
+  ],
+  "cwd": "/private/tmp/scalafim-github-handoff-20261015",
+  "log": "/private/tmp/scalafim-github-handoff-providers.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 44251
+}

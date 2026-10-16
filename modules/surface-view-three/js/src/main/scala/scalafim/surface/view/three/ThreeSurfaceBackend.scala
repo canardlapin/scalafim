@@ -103,6 +103,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
   private val admittedFeatures =
     val base = Set(
       SurfaceBackendFeature.HardwareAcceleration,
+      SurfaceBackendFeature.PerSurfaceCameras,
       SurfaceBackendFeature.FacewiseData,
       SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.DepthBuffer,
@@ -144,6 +145,9 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     forceDraw: Boolean = false
   ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
     if disposed then Left(ThreeSurfaceError.BackendDisposed)
+    else if plan.surfaceCameras.nonEmpty then
+      SurfaceCompositionPlan.fromLegacy(plan).left.map(error => ThreeSurfaceError.InvalidPlan(error.toString))
+        .flatMap(render(_, size, forceDraw))
     else if plan.fragmentSurfaces.nonEmpty && !runtime.supportsFragmentLayers then
       Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
     else

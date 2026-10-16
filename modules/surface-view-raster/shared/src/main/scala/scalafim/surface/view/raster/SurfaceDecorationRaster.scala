@@ -57,8 +57,8 @@ object SurfaceDecorationRaster:
           val touched = scala.collection.mutable.ArrayBuffer.empty[Int]
           geometry.meshes.zipWithIndex.foreach: (mesh, index) =>
             val view = plan.views.find(_.id == mesh.origin.view).get
-            val box = view.viewportFit.resolve(Vector(SurfaceViewSlot(view.instances.head.surface, view.viewport)),
-              dimensions.width, dimensions.height).head.viewport
+            val box = plan.fittedViewports(dimensions.width, dimensions.height)
+              .find(_._1.id == view.id).get._2
             // One frontmost contribution per mesh and pixel prevents a shared
             // triangle edge from blending the same glyph texel twice.
             val sampler = mesh.texture.map(t => new SurfaceTextureSampler(t.image))

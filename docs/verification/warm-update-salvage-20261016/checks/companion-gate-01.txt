@@ -1,0 +1,108 @@
+[info] compiling 7 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/archive/jvm/target/scala-3.7.4/classes ...
+[info] compiling 21 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/77e7bdc71bddb8077fcd/bids4s/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] compiling 15 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/ar/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 63 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] compiling 16 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/model/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 84 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.FirstLevelCompanionReviewSuite:
+  + QC binding preserves original samples and missing values without a nuisance request 0.009s
+  + QC row mismatch cannot shift scan identity 0.001s
+scalafim.fmri.workflow.BidsStudyCompilerJvmSuite:
+  + JVM compiler reads headers only for a multi-subject multi-run fMRIPrep project 0.272s
+scalafim.fmri.workflow.FirstLevelCompanionReviewJvmSuite:
+  + optional QC uses source units and rows, independently of nuisance or readable BOLD 0.041s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.01s
+  + catalog construction rejects invalid run layout and duplicate units 0.001s
+  + group workflow validates terms and output formats stay open 0.011s
+scalafim.fmri.workflow.WorkflowIngestAcceptanceSuite:
+  + header-first catalog opens mixed-byte multi-run BOLD lazily with compressed staging 0.093s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.027s
+  + preflight accumulates independent structural errors without reading payloads 0.003s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.001s
+  + empty catalogs fail preflight before job construction 0.001s
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.008s
+  + compiler accumulates missing header, metadata, and companion failures 0.002s
+  + one-unit-per-run grouping preserves the run in unit identity 0.003s
+  + confound-free recipes ignore ambiguous confound tables 0.002s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.006s
+  + compiler reports incompatible geometry and duplicate run identities 0.007s
+  + compiler preserves provider frame failures for mask geometry 0.002s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.002s
+  + participant-table coverage reports missing and duplicate subjects 0.002s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.026s
+scalafim.fmri.workflow.FirstLevelUnitSourceSuite:
+  + unit source opens run references lazily and applies the exact mask intersection 0.011s
+  + unit source preserves provider geometry failure beyond the admitted tolerance 0.004s
+[info] Passed: Total 26, Failed 0, Errors 0, Passed 26
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-_ywz3raj/completed
+[[32msuccess[0m] elapsed: 20 s
+[0J[sbt-warm] fmriWorkflowJVM/test: exit 0 in 20.3s
+[info] compiling 18 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/77e7bdc71bddb8077fcd/bids4s/modules/core/js/target/scala-3.3.8/classes ...
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/archive/js/target/scala-3.7.4/classes ...
+[info] compiling 15 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/ar/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 63 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/model/js/target/scala-3.7.4/classes ...
+[info] compiling 17 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 81 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/scalafim-fmri-workflow-test-fastopt
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.026s
+  + compiler accumulates missing header, metadata, and companion failures 0.002s
+  + one-unit-per-run grouping preserves the run in unit identity 0.005s
+  + confound-free recipes ignore ambiguous confound tables 0.004s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.009s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.002s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.002s
+  + participant-table coverage reports missing and duplicate subjects 0.002s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.006s
+scalafim.fmri.workflow.FirstLevelCompanionReviewSuite:
+  + QC binding preserves original samples and missing values without a nuisance request 0.002s
+  + QC row mismatch cannot shift scan identity 0.000s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.003s
+  + preflight accumulates independent structural errors without reading payloads 0.001s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.000s
+  + empty catalogs fail preflight before job construction 0.000s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.001s
+  + catalog construction rejects invalid run layout and duplicate units 0.003s
+  + group workflow validates terms and output formats stay open 0.001s
+[info] Passed: Total 21, Failed 0, Errors 0, Passed 21
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-6oo46h8n/completed
+[[32msuccess[0m] elapsed: 22 s
+[0J[sbt-warm] fmriWorkflowJS/test: exit 0 in 21.9s

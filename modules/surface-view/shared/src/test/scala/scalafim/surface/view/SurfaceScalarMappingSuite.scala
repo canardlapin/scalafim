@@ -4,6 +4,7 @@ import intaglio.*
 import scalafim.surface.*
 
 class SurfaceScalarMappingSuite extends munit.FunSuite:
+  private def preV9(json: String): String = json.replaceAll(",\"surfaceViewpoints\":\\[\\],\"geometryStates\":.*}$", "}")
   private val surface = SurfaceFaceFixture.Surface
   private val layerId = SurfaceLayerId.unsafe("mapped")
   private val blue = Rgba32.unsafe(0, 0, 200)
@@ -76,16 +77,16 @@ class SurfaceScalarMappingSuite extends munit.FunSuite:
     val doc = SurfaceSceneDocument.capture(viewer, SurfaceFaceFixture.state(viewer), bindings, provenance).toOption.get
     val json = SurfaceSceneCodec.encode(doc)
     val decoded = SurfaceSceneCodec.decode(json).toOption.get
-    assertEquals(decoded.revision, SurfaceDocumentRevision.V8)
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V9)
     assertEquals(decoded.layers.head.scalarMappingKey, Some(mapping.canonicalKey))
     assert(decoded.restore(viewer, bindings).isRight)
     assert(decoded.restore(model(mapping.copy(invalid = red).colorizer), bindings).isLeft)
-    val old = SurfaceSceneCodec.decode(json.replace(",\"legends\":[]", "").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":3")
+    val old = SurfaceSceneCodec.decode(preV9(json).replace(",\"legends\":[]", "").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":9", "\"revision\":3")
       .replace(",\"scalarInterpolation\":false", "")
       .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")).toOption.get
     assertEquals(old.revision, SurfaceDocumentRevision.V3)
     assert(old.restore(viewer, bindings).isRight)
-    val v4 = SurfaceSceneCodec.decode(json.replace(",\"legends\":[]", "").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":4")
+    val v4 = SurfaceSceneCodec.decode(preV9(json).replace(",\"legends\":[]", "").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":9", "\"revision\":4")
       .replace(",\"scalarInterpolation\":false", "")).toOption.get
     assertEquals(v4.revision, SurfaceDocumentRevision.V4)
     assert(v4.restore(viewer, bindings).isRight)

@@ -1,7 +1,16 @@
 #!/bin/sh
 set -eu
 
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+account=$(git -C "$repo_root" config --local --get github.account || true)
+if [ "$account" != canardlapin ]; then
+  echo 'gh-repo: set repo-local github.account to canardlapin before using GitHub API commands' >&2
+  exit 2
+fi
+
+unset GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN
 config_base=${XDG_CONFIG_HOME:-"$HOME/.config"}
 export GH_CONFIG_DIR="$config_base/gh-canardlapin"
 
+cd "$repo_root"
 exec gh "$@"

@@ -307,6 +307,29 @@ object ModelBuildSpecJsonCodec:
           "nuisance duplicate threshold must be finite and in [0, 1]")
       yield Some(NuisanceRegressors(matrices, names, check, naAction, tol, duplicateThreshold))
 
+  private def support(value: ResponseSupportRequest, path: String): Result[Value] =
+    number(value.absoluteTolerance, s"$path.absoluteTolerance").map(tolerance => Obj(
+      "retainedScans" -> Arr.from(value.retainedScans.map(scan => Num(scan.oneBased))),
+      "policy" -> Str(value.policy.toString), "absoluteTolerance" -> tolerance))
+
+  private def readSupport(value: Cursor): Result[ResponseSupportRequest] =
+    for
+      _ <- value.fields(Set("retainedScans", "policy", "absoluteTolerance"))
+      items <- value.field("retainedScans").flatMap(_.arr)
+      scans <- traverse(items)(item => item.integer.flatMap(n => admit(ScanIndex.fromOneBased(n), item.path)(_.message)))
+      _ <- ensure(scans.map(_.oneBased).sliding(2).forall(pair => pair.length < 2 || pair(0) < pair(1)),
+        s"${value.path}.retainedScans", "retained scans must be strictly increasing")
+      policy <- value.field("policy").flatMap(enumCase(_, "event support policy", EventSupportPolicy.values))
+      tolerance <- value.field("absoluteTolerance").flatMap(_.finite)
+      _ <- ensure(tolerance >= 0.0, s"${value.path}.absoluteTolerance", "support tolerance must be non-negative")
+    yield ResponseSupportRequest(scans, policy, tolerance)
+
+  private[model] def versionFor(spec: ModelBuildSpec): Int =
+    if spec.responseSupport.nonEmpty then 3 else if spec.strategy.config.autocorrelation.fgls.nonEmpty then 2 else 1
+
+  private[model] def fieldsForVersion(version: Int): Set[String] =
+    bodyFields ++ Option.when(version >= 3)("responseSupport")
+
   // ------------------------------------------------------------------- public
 
   def encode(spec: ModelBuildSpec): Either[ModelJsonError, String] =
@@ -314,7 +337,7 @@ object ModelBuildSpecJsonCodec:
       _ <- ensure(spec.derived.isEmpty, "$.derived", "derived declarations require the scalafim.model-document envelope")
       formula <- formulaValue(spec, "$.formula")
       body <- encodeBody(spec, "$", strategy)
-      text <- PortableJson.render(Obj.from(Vector("schema" -> Str("scalafim.model-build"), "version" -> Num(if spec.strategy.config.autocorrelation.fgls.nonEmpty then 2 else 1), "formula" -> formula) ++ body))
+      text <- PortableJson.render(Obj.from(Vector("schema" -> Str("scalafim.model-build"), "version" -> Num(versionFor(spec)), "formula" -> formula) ++ body))
     yield text
 
   private[model] def formulaValue(spec: ModelBuildSpec, path: String): Result[Value] =
@@ -341,6 +364,9 @@ object ModelBuildSpecJsonCodec:
       nuisanceValue <- nuisance(spec.nuisance, s"$root.nuisance")
       missingValue <- missing(spec.missingValuePolicy, s"$root.missingValuePolicy")
       orthogonalizationValue <- orthogonalization(spec.orthogonalization, s"$root.orthogonalization")
+      supportValue <- spec.responseSupport match
+        case None => Right(Vector.empty[(String, Value)])
+        case Some(request) => support(request, s"$root.responseSupport").map(value => Vector("responseSupport" -> value))
     yield Vector(
       "blockColumn" -> opt(spec.blockColumn), "durationColumn" -> opt(spec.durationColumn),
       "baseline" -> baselineValue, "baselineDegree" -> Num(spec.baselineDegree),
@@ -352,7 +378,7 @@ object ModelBuildSpecJsonCodec:
       "factorLevels" -> Arr.from(spec.factorLevels.sets.map(s => Obj("factor" -> Str(s.factor.value), "levels" -> Arr.from(s.values)))),
       "emptyCellPolicy" -> Str(spec.emptyCellPolicy.toString), "missingValuePolicy" -> missingValue,
       "degenerateModulatorPolicy" -> Str(spec.degenerateModulatorPolicy.toString), "orthogonalization" -> orthogonalizationValue
-    )
+    ) ++ supportValue
 
   private[model] val bodyFields = Set("blockColumn", "durationColumn", "baseline", "baselineDegree",
     "intercept", "strategy", "defaultHrf", "precision", "dropEmpty", "summate", "strict", "contrastSets", "nuisance",
@@ -367,11 +393,11 @@ object ModelBuildSpecJsonCodec:
   def decode(input: String): Either[ModelJsonError, ModelBuildSpec] =
     for
       v <- PortableJson.parse(input)
-      _ <- v.fields(bodyFields ++ Set("schema", "version", "formula"))
       schema <- str(v, "schema")
       _ <- ensure(schema == "scalafim.model-build", "$.schema", "unsupported model-build schema")
       version <- v.field("version").flatMap(_.integer)
-      _ <- ensure(version == 1 || version == 2, "$.version", "unsupported model-build version")
+      _ <- ensure(version >= 1 && version <= 3, "$.version", "unsupported model-build version")
+      _ <- v.fields(fieldsForVersion(version) ++ Set("schema", "version", "formula"))
       formula <- v.field("formula").flatMap(readFormula)
       spec <- readBody(v, formula, readStrategy)
       _ <- ensure(version >= 2 || spec.strategy.config.autocorrelation.fgls.isEmpty, "$.version", "voxelwise FGLS requires model-build version 2")
@@ -418,10 +444,13 @@ object ModelBuildSpecJsonCodec:
       missingValuePolicy <- v.field("missingValuePolicy").flatMap(readMissing)
       degenerate <- v.field("degenerateModulatorPolicy").flatMap(enumCase(_, "degenerate modulator policy", DegenerateModulatorPolicy.values))
       orthogonalizationPlan <- v.field("orthogonalization").flatMap(readOrthogonalization)
+      responseSupport <- v.obj.flatMap(fields =>
+        if fields.contains("responseSupport") then v.field("responseSupport").flatMap(readSupport).map(Some(_))
+        else Right(None))
     yield ModelBuildSpec(formula, blockColumn, durationColumn, baselineBasis,
       baselineDegree, intercept, fitStrategy, Hrfs.SPMG1, precision,
       dropEmpty, summate, strict, contrasts.toMap, nuisance,
       registry, emptyCellPolicy,
       missingValuePolicy = missingValuePolicy,
       degenerateModulatorPolicy = degenerate,
-      orthogonalization = orthogonalizationPlan)
+      orthogonalization = orthogonalizationPlan, responseSupport = responseSupport)

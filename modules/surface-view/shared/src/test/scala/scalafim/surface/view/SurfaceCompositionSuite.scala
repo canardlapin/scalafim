@@ -54,6 +54,18 @@ class SurfaceCompositionSuite extends munit.FunSuite:
     assertEquals(view.viewportFit, SurfaceViewportFit.Contain(1.0))
     assertEquals(view.fragmentSurfaces, Set(SurfaceFaceFixture.Surface))
 
+  test("packed composition resolves duplicate scientific surfaces in view declaration order"):
+    val base = ok(SurfaceCompositionPlan.fromLegacy(SurfaceFaceFixture.plan))
+    val source = base.views.head
+    val first = source.copy(id = ok(SurfaceViewId.make("first")), viewport = SurfaceViewport(0, 0, .5, 1),
+      viewportFit = SurfaceViewportFit.Pack(1.0), instances = Vector(source.instances.head.copy(id = ok(SurfaceInstanceId.make("first-instance")))))
+    val second = source.copy(id = ok(SurfaceViewId.make("second")), viewport = SurfaceViewport(.5, 0, .5, 1),
+      viewportFit = SurfaceViewportFit.Pack(1.0), instances = Vector(source.instances.head.copy(id = ok(SurfaceInstanceId.make("second-instance")))))
+    val packed = ok(SurfaceCompositionPlan.make(Vector(first, second), base.resources))
+    val resolved = packed.fittedViewports(400, 800)
+    assertEquals(resolved.map(_._1.id), Vector(first.id, second.id))
+    assertEquals(resolved.map(_._2), Vector(SurfaceViewport(0, 0, 1, .5), SurfaceViewport(0, .5, 1, .5)))
+
   test("composition plan rejects missing resources, invalid transforms, and empty input"):
     val old = SurfaceFaceFixture.plan
     val valid = ok(SurfaceCompositionPlan.fromLegacy(old))

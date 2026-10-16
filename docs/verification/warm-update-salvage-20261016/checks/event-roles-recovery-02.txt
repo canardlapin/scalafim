@@ -1,0 +1,29 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.design.EventRolesSuite:
+  + numeric condition codes remain distinct categorical cells with original identities 0.151s
+  + continuous amplitudes preserve raw values and FIR convolution without scaling 0.005s
+  + explicit categories respect declared level order and canonical numeric labels 0.007s
+  + roles reject wrong types, malformed arity and nonfinite numeric categories 0.005s
+  + continuous roles compose with additive modulators and preserve scientific ids 0.004s
+  + continuous roles preserve configured missing-value handling and source rows 0.015s
+  + continuous roles retain or reject degenerate inputs under the existing policy 0.01s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-9imfknfe/completed
+[[32msuccess[0m] elapsed: 1 s
+[0J[sbt-warm] designJVM/testOnly scalafim.fmri.design.EventRolesSuite: exit 0 in 1.4s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/scalafim-fmri-design-test-fastopt
+scalafim.fmri.design.EventRolesSuite:
+  + numeric condition codes remain distinct categorical cells with original identities 0.022s
+  + continuous amplitudes preserve raw values and FIR convolution without scaling 0.003s
+  + explicit categories respect declared level order and canonical numeric labels 0.003s
+  + roles reject wrong types, malformed arity and nonfinite numeric categories 0.002s
+  + continuous roles compose with additive modulators and preserve scientific ids 0.002s
+  + continuous roles preserve configured missing-value handling and source rows 0.008s
+  + continuous roles retain or reject degenerate inputs under the existing policy 0.004s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-ky7pz72j/completed
+[[32msuccess[0m] elapsed: 2 s
+[0J[sbt-warm] designJS/testOnly scalafim.fmri.design.EventRolesSuite: exit 0 in 2.4s

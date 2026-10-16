@@ -129,6 +129,7 @@ object SurfaceRasterizer:
     SurfacePlanRevision.Current,
     Set(
       SurfaceBackendFeature.DeterministicPixels,
+      SurfaceBackendFeature.PerSurfaceCameras,
       SurfaceBackendFeature.FacewiseData,
       SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.ScalarInterpolation,
@@ -247,10 +248,11 @@ object SurfaceRasterizer:
     if fragmentCapacity < 1 || dimensions.pixelCount > fragmentCapacity then
       return Left(SurfaceRasterError.FragmentCapacityExceeded(fragmentCapacity))
     val entries = plan.views.flatMap(view => view.instances.map(instance => (view, instance)))
+    val fitted = plan.fittedViewports(dimensions.width.toDouble, dimensions.height.toDouble).toMap
     val slots = entries.map: (view, instance) =>
-      val slot = SurfaceViewSlot(instance.surface, view.viewport,
+      val viewport = fitted(view)
+      SurfaceViewSlot(instance.surface, viewport,
         instance.translationX, instance.translationY, instance.translationZ)
-      view.viewportFit.resolve(Vector(slot), dimensions.width.toDouble, dimensions.height.toDouble).head
     val meshes = entries.map((_, instance) => plan.resources.meshes(instance.mesh))
     val contexts = entries.map: (view, instance) =>
       SlotContext(view.camera, view.lighting, view.clipping,
@@ -319,7 +321,9 @@ object SurfaceRasterizer:
 
   private def validatePlan(plan: SurfaceRenderPlan): Either[SurfaceRasterError, Unit] =
     SurfaceThresholdEdgeValidation.validate(plan).left.map(SurfaceRasterError.InvalidPlan.apply).flatMap: _ =>
-      if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
+      if !plan.validCameraBuffers then
+        Left(SurfaceRasterError.InvalidPlan("invalid surface camera packets"))
+      else if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
         Left(SurfaceRasterError.InvalidPlan("scalar policy and payload disagree"))
       else if plan.layers.exists(layer => layer.scalarField.nonEmpty && !plan.fragmentSurfaces(layer.surface)) then
         Left(SurfaceRasterError.InvalidPlan("scalar interpolation requires fragment composition"))
@@ -536,7 +540,7 @@ object SurfaceRasterizer:
     val baryB = new Array[Float](pixelCount)
     val baryC = new Array[Float](pixelCount)
     val composedColors = plan.meshes.zipWithIndex.map: (mesh, slot) =>
-      val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
+      val context = contexts.lift(slot).getOrElse(SlotContext(plan.cameraFor(mesh.surface), plan.lighting, plan.clipping,
         plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface), surfaceBase = plan.surfaceBase))
       val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.toPackedInt)
       var layerIndex = 0
@@ -565,7 +569,7 @@ object SurfaceRasterizer:
     var slot = 0
     while slot < plan.meshes.length do
       val mesh = plan.meshes(slot)
-      val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
+      val context = contexts.lift(slot).getOrElse(SlotContext(plan.cameraFor(mesh.surface), plan.lighting, plan.clipping,
         plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface), surfaceBase = plan.surfaceBase))
       val viewport = fittedSlots(slot).viewport
       val colors = composedColors(slot)

@@ -1,0 +1,155 @@
+{
+  "schema": "scalafim.mote-clone-verification.v1",
+  "source": "fresh GitHub clone, no shared local store or inherited MOTE_STORE/MOTE_ACTOR",
+  "head": "5cb67982f299e597b27e103f0849ce424cfc72ca",
+  "checks": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 0.015
+    },
+    {
+      "command": [
+        "mote",
+        "actor",
+        "set",
+        "development-clone-verification-20261016"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 0.008
+    },
+    {
+      "command": [
+        "mote",
+        "authority",
+        "status"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 0.854
+    },
+    {
+      "command": [
+        "mote",
+        "doctor"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 4.687
+    },
+    {
+      "command": [
+        "mote",
+        "fsck"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 1.744
+    },
+    {
+      "command": [
+        "mote",
+        "ready"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 1.771
+    },
+    {
+      "command": [
+        "mote",
+        "ls"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 1.55
+    },
+    {
+      "command": [
+        "mote",
+        "--json",
+        "ls",
+        "--all",
+        "--tag",
+        "ecosystem-unification"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 1.557
+    },
+    {
+      "command": [
+        "mote",
+        "--json",
+        "ls",
+        "--tag",
+        "ecosystem-unification",
+        "--tag",
+        "task",
+        "--ready"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 2.096
+    },
+    {
+      "command": [
+        "mote",
+        "--json",
+        "graph",
+        "eco-unification"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 2.033
+    },
+    {
+      "command": [
+        "python3",
+        "docs/verification/development-machine-20261015/verify-custody.py"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 2.652
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 0.259
+    }
+  ],
+  "authority": {
+    "authority_version": 1,
+    "capabilities": [
+      "stable_claim_order",
+      "holder_checked_handoff",
+      "checked_landing_results"
+    ],
+    "enabled": true,
+    "genesis_digest": "9ebf7f67a5d8c220f1791233c3e381b2f106b9ed5500827fb624716f50fc8c25",
+    "schema": "mote.authority-status.v1",
+    "store_id": "st-01KWVQ9J2F963172SFP311M9M1"
+  },
+  "epic": {
+    "items": 46,
+    "milestones": 9,
+    "tasks": 36,
+    "readyTaskIds": [
+      "eco-neuroatlas-core",
+      "eco-neuroatlas-integrations",
+      "eco-neuroatlas-surface",
+      "eco-neuroatlas-volume",
+      "eco-neuroim-core",
+      "eco-neuroim-display",
+      "eco-neuroim-integrations",
+      "eco-neuroim-providers",
+      "eco-neuroim-routing",
+      "eco-neuroim-transforms",
+      "eco-u0-ownership",
+      "eco-u5-spatial"
+    ]
+  },
+  "gitStatusClean": true,
+  "operationFiles": 25409,
+  "authorityFiles": 1484,
+  "planningRevisionInProgress": true
+}

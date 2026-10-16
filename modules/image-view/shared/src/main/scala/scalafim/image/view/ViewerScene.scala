@@ -125,62 +125,122 @@ object PanelRect:
     new PanelRect(left, bottom, width, height)
 
 enum OrthogonalArrangement:
-  case LShape, SingleRow, SingleColumn
+  case LShape, SingleRow, SingleColumn, Automatic
+  case SinglePlane(plane: AnatomicalPlane)
+
+/** Units for the outer margin and the gap between layout cells. */
+enum OrthogonalLayoutUnits:
+  case Normalized, LogicalPixels
 
 final case class OrthogonalLayout private (
   margin: Double,
   gap: Double,
-  arrangement: OrthogonalArrangement
+  arrangement: OrthogonalArrangement,
+  units: OrthogonalLayoutUnits = OrthogonalLayoutUnits.Normalized
 ):
-  private[view] def cells: PanelReceipts[PanelRect] =
+  def shows(plane: AnatomicalPlane): Boolean =
     arrangement match
+      case OrthogonalArrangement.SinglePlane(selected) => plane == selected
+      case _ => true
+
+  private[view] def cells(grids: OrthogonalSliceGrids, device: DeviceContext): PanelReceipts[PanelRect] =
+    // At very small sizes, reduce pixel insets together rather than producing negative cells.
+    val (mx, my, gx, gy) = units match
+      case OrthogonalLayoutUnits.Normalized => (margin, margin, gap, gap)
+      case OrthogonalLayoutUnits.LogicalPixels =>
+        val scale = math.min(1.0, math.min(device.width, device.height) / (2.0 * margin + 2.0 * gap + 3.0))
+        (margin * scale / device.width, margin * scale / device.height,
+          gap * scale / device.width, gap * scale / device.height)
+    def arranged(kind: OrthogonalArrangement): PanelReceipts[PanelRect] = kind match
       case OrthogonalArrangement.LShape =>
-        val extent = (1.0 - 2.0 * margin - gap) / 2.0
-        val low = margin
-        val high = margin + extent + gap
+        val width = (1.0 - 2.0 * mx - gx) / 2.0
+        val height = (1.0 - 2.0 * my - gy) / 2.0
         PanelReceipts(
-          sagittal = PanelRect.unsafe(high, high, extent, extent),
-          coronal = PanelRect.unsafe(low, low, extent, extent),
-          axial = PanelRect.unsafe(low, high, extent, extent)
+          sagittal = PanelRect.unsafe(mx + width + gx, my + height + gy, width, height),
+          coronal = PanelRect.unsafe(mx, my, width, height),
+          axial = PanelRect.unsafe(mx, my + height + gy, width, height)
         )
       case OrthogonalArrangement.SingleRow =>
-        val width = (1.0 - 2.0 * margin - 2.0 * gap) / 3.0
-        val height = 1.0 - 2.0 * margin
+        val width = (1.0 - 2.0 * mx - 2.0 * gx) / 3.0
+        val height = 1.0 - 2.0 * my
         PanelReceipts(
-          sagittal = PanelRect.unsafe(margin, margin, width, height),
-          coronal = PanelRect.unsafe(margin + width + gap, margin, width, height),
-          axial = PanelRect.unsafe(margin + 2.0 * (width + gap), margin, width, height)
+          sagittal = PanelRect.unsafe(mx, my, width, height),
+          coronal = PanelRect.unsafe(mx + width + gx, my, width, height),
+          axial = PanelRect.unsafe(mx + 2.0 * (width + gx), my, width, height)
         )
       case OrthogonalArrangement.SingleColumn =>
-        val width = 1.0 - 2.0 * margin
-        val height = (1.0 - 2.0 * margin - 2.0 * gap) / 3.0
+        val width = 1.0 - 2.0 * mx
+        val height = (1.0 - 2.0 * my - 2.0 * gy) / 3.0
         PanelReceipts(
-          sagittal = PanelRect.unsafe(margin, margin + 2.0 * (height + gap), width, height),
-          coronal = PanelRect.unsafe(margin, margin + height + gap, width, height),
-          axial = PanelRect.unsafe(margin, margin, width, height)
+          sagittal = PanelRect.unsafe(mx, my + 2.0 * (height + gy), width, height),
+          coronal = PanelRect.unsafe(mx, my + height + gy, width, height),
+          axial = PanelRect.unsafe(mx, my, width, height)
         )
+      case OrthogonalArrangement.SinglePlane(_) =>
+        PanelReceipts.fill(PanelRect.unsafe(mx, my, 1.0 - 2.0 * mx, 1.0 - 2.0 * my))
+      case OrthogonalArrangement.Automatic =>
+        // Stable ties prefer the familiar L; resize decisions use geometry, never image values.
+        val candidates = Vector(OrthogonalArrangement.LShape, OrthogonalArrangement.SingleRow,
+          OrthogonalArrangement.SingleColumn).map(arranged)
+        def area(cells: PanelReceipts[PanelRect]): Double =
+          val fitted = Vector(
+            OrthogonalLayout.fit(grids.sagittal, cells.sagittal, device),
+            OrthogonalLayout.fit(grids.coronal, cells.coronal, device),
+            OrthogonalLayout.fit(grids.axial, cells.axial, device)
+          )
+          fitted.map(rect => rect.width * rect.height).sum
+        candidates.tail.foldLeft(candidates.head) { (best, candidate) =>
+          if area(candidate) > area(best) then candidate else best
+        }
+    arranged(arrangement)
 
 object OrthogonalLayout:
   val Default: OrthogonalLayout =
     new OrthogonalLayout(margin = 0.02, gap = 0.02, OrthogonalArrangement.LShape)
 
+  /** Adaptive fitting preserves slice aspect and chooses the greatest occupied image area among
+    * row, column and L arrangements. Logical-pixel insets remain constant on resize, except when
+    * the viewport is too small to contain them, when all insets shrink proportionally.
+    */
+  def adaptive(marginPixels: Double = 12.0, gapPixels: Double = 12.0): Either[ImageViewError, OrthogonalLayout] =
+    make(marginPixels, gapPixels, OrthogonalArrangement.Automatic, OrthogonalLayoutUnits.LogicalPixels)
+
   def make(
     margin: Double,
     gap: Double,
-    arrangement: OrthogonalArrangement = OrthogonalArrangement.LShape
+    arrangement: OrthogonalArrangement = OrthogonalArrangement.LShape,
+    units: OrthogonalLayoutUnits = OrthogonalLayoutUnits.Normalized
   ): Either[ImageViewError, OrthogonalLayout] =
-    val gapCount = if arrangement == OrthogonalArrangement.LShape then 1.0 else 2.0
+    val gapCount = arrangement match
+      case OrthogonalArrangement.LShape => 1.0
+      case OrthogonalArrangement.SinglePlane(_) => 0.0
+      case _ => 2.0
     val valid =
       margin.isFinite && gap.isFinite && margin >= 0.0 && gap >= 0.0 &&
-        2.0 * margin + gapCount * gap < 1.0
-    if valid then Right(new OrthogonalLayout(margin, gap, arrangement))
+        (units == OrthogonalLayoutUnits.LogicalPixels || 2.0 * margin + gapCount * gap < 1.0)
+    if valid then Right(new OrthogonalLayout(margin, gap, arrangement, units))
     else Left(ImageViewError.InvalidOrthogonalLayout(margin, gap))
+
+  private[view] def fit(grid: SliceGrid, cell: PanelRect, device: DeviceContext): PanelRect =
+    val physicalWidth = grid.dimensions.width * grid.spacing.horizontal
+    val physicalHeight = grid.dimensions.height * grid.spacing.vertical
+    val contentAspect = physicalWidth / physicalHeight
+    val cellWidthPixels = cell.width * device.width
+    val cellHeightPixels = cell.height * device.height
+    val cellAspect = cellWidthPixels / cellHeightPixels
+    if contentAspect >= cellAspect then
+      val height = cellWidthPixels / contentAspect / device.height
+      PanelRect.unsafe(cell.left, cell.bottom + (cell.height - height) / 2.0, cell.width, height)
+    else
+      val width = cellHeightPixels * contentAspect / device.width
+      PanelRect.unsafe(cell.left + (cell.width - width) / 2.0, cell.bottom, width, cell.height)
 
 final case class PanelReceipt(
   anatomicalPlane: AnatomicalPlane,
   rect: PanelRect,
   grid: SliceGrid,
-  view: PanelView
+  view: PanelView,
+  visible: Boolean = true
 ):
   def cursorRootNpc(cursor: WorldPoint): (Double, Double) =
     val projected = grid.project(cursor).pixel
@@ -191,7 +251,7 @@ final case class PanelReceipt(
     rect.left + viewedX * rect.width -> (rect.bottom + viewedY * rect.height)
 
   def worldAtRootNpc(rootX: Double, rootY: Double): Option[WorldPoint] =
-    if !rect.contains(rootX, rootY) then None
+    if !visible || !rect.contains(rootX, rootY) then None
     else
       val viewedX = (rootX - rect.left) / rect.width
       val viewedY = (rootY - rect.bottom) / rect.height
@@ -244,7 +304,12 @@ final case class ViewerFrame(
   readouts: PanelReceipts[PanelReadout],
   state: ViewerState,
   device: DeviceContext
-)
+):
+  /** Hidden planes retain named geometry and view state without sampling. */
+  def visiblePanels: Vector[PanelReceipt] = panels.all.filter(_.visible)
+
+  def visibleReadouts: Vector[PanelReadout] =
+    visiblePanels.map(panel => readouts(panel.anatomicalPlane))
 
 object ViewerCompiler:
   def compile(
@@ -289,13 +354,21 @@ object ViewerCompiler:
       var index = 0
       val allPanels = panelReceipts.all
       while index < allPanels.length && error.isEmpty do
-        panelGrob(model, state, allPanels(index), theme, currentCache, frameResolver) match
-          case Left(value) => error = Some(value)
-          case Right(compiled) =>
-            grobs += compiled.grob
-            readouts += compiled.readout
-            currentCache = compiled.cache
-            profile = profile + compiled.profile
+        val panel = allPanels(index)
+        if panel.visible then
+          panelGrob(model, state, panel, theme, currentCache, frameResolver) match
+            case Left(value) => error = Some(value)
+            case Right(compiled) =>
+              grobs += compiled.grob
+              readouts += compiled.readout
+              currentCache = compiled.cache
+              profile = profile + compiled.profile
+        else
+          model.referenceSpace.worldToVoxel(state.cursor.toWorldPoint) match
+            case Left(value) => error = Some(ImageViewError.GeometryFailure(value))
+            case Right(referenceVoxel) =>
+              readouts += PanelReadout(panel.anatomicalPlane, state.cursor.toWorldPoint,
+                referenceVoxel, Vector.empty)
         index += 1
       error match
         case Some(value) => Left(value)
@@ -322,11 +395,11 @@ object ViewerCompiler:
       state.pixelSpacing,
       state.convention
     )
-    val cells = layout.cells
+    val cells = layout.cells(grids, device)
     PanelReceipts(
-      sagittal = receipt(AnatomicalPlane.Sagittal, grids.sagittal, cells.sagittal, state.panelViews.sagittal, device),
-      coronal = receipt(AnatomicalPlane.Coronal, grids.coronal, cells.coronal, state.panelViews.coronal, device),
-      axial = receipt(AnatomicalPlane.Axial, grids.axial, cells.axial, state.panelViews.axial, device)
+      sagittal = receipt(AnatomicalPlane.Sagittal, grids.sagittal, cells.sagittal, state.panelViews.sagittal, device).copy(visible = layout.shows(AnatomicalPlane.Sagittal)),
+      coronal = receipt(AnatomicalPlane.Coronal, grids.coronal, cells.coronal, state.panelViews.coronal, device).copy(visible = layout.shows(AnatomicalPlane.Coronal)),
+      axial = receipt(AnatomicalPlane.Axial, grids.axial, cells.axial, state.panelViews.axial, device).copy(visible = layout.shows(AnatomicalPlane.Axial))
     )
 
   private def receipt(
@@ -336,20 +409,7 @@ object ViewerCompiler:
     view: PanelView,
     device: DeviceContext
   ): PanelReceipt =
-    val physicalWidth = grid.dimensions.width * grid.spacing.horizontal
-    val physicalHeight = grid.dimensions.height * grid.spacing.vertical
-    val contentAspect = physicalWidth / physicalHeight
-    val cellWidthPixels = cell.width * device.width
-    val cellHeightPixels = cell.height * device.height
-    val cellAspect = cellWidthPixels / cellHeightPixels
-    val fitted =
-      if contentAspect >= cellAspect then
-        val height = cellWidthPixels / contentAspect / device.height
-        PanelRect.unsafe(cell.left, cell.bottom + (cell.height - height) / 2.0, cell.width, height)
-      else
-        val width = cellHeightPixels * contentAspect / device.width
-        PanelRect.unsafe(cell.left + (cell.width - width) / 2.0, cell.bottom, width, cell.height)
-    PanelReceipt(anatomicalPlane, fitted, grid, view)
+    PanelReceipt(anatomicalPlane, OrthogonalLayout.fit(grid, cell, device), grid, view)
 
   private def panelGrob(
     model: ViewerModel,

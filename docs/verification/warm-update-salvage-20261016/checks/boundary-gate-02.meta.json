@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T12:44:35.419351+00:00",
+  "finished_utc": "2026-10-16T12:47:18.099273+00:00",
+  "duration_seconds": 162.678311,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "atlasJVM/test",
+    "atlasJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/boundary-gate-02.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 24603
+}

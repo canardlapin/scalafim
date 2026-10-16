@@ -3,7 +3,7 @@ package scalafim.surface.view.javafx
 import java.nio.{ByteBuffer, ByteOrder, IntBuffer}
 import javafx.geometry.Rectangle2D
 import javafx.beans.InvalidationListener
-import javafx.scene.{Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
+import javafx.scene.{AmbientLight, Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
 import javafx.scene.image.{PixelBuffer, PixelFormat, WritableImage}
 import javafx.scene.paint.{Color, PhongMaterial}
 import javafx.scene.shape.{CullFace, MeshView, Rectangle, TriangleMesh, VertexFormat}
@@ -123,6 +123,12 @@ final class JavaFxFaceAtlas private[javafx] (
     pixels.position(0)
     new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
 
+  private[javafx] def installPrepared(values: Array[Int]): Rectangle2D =
+    pixels.position(0)
+    pixels.put(values)
+    pixels.position(0)
+    new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
+
   def commit(region: Rectangle2D): Unit =
     pixelBuffer.updateBuffer(_ => region)
 
@@ -207,6 +213,9 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   private var viewportAntialiasing: Option[SceneAntialiasing] = None
   private var viewportWidth = 1.0
   private var viewportHeight = 1.0
+  private val unlitLights = surfaceGroups.map: (surface, _) =>
+    surface -> new AmbientLight(Color.WHITE)
+  configureNativeLighting()
 
   def camera: Camera =
     viewportCameras.headOption.getOrElse:
@@ -236,6 +245,20 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       chunks.foreach: chunk =>
         JavaFxSurfaceProbe.configureMaterial(chunk.material, chunk.atlas.image, mode, config.lightingPolicy)
       activeMaterialMode = mode
+      configureNativeLighting()
+
+  private def configureNativeLighting(): Unit =
+    val selfIlluminated = activeMaterialMode == JavaFxMaterialMode.Unlit ||
+      config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert
+    surfaceGroups.foreach: (surface, group) =>
+      val light = unlitLights(surface)
+      // An explicit ambient light suppresses JavaFX's automatic point light.
+      // Otherwise a degenerate native tangent frame can contaminate even black
+      // diffuse/specular terms with NaN before self-illumination is added. Keep
+      // the light with its mesh group: lights do not cross SubScene boundaries.
+      if selfIlluminated then
+        if !group.getChildren.contains(light) then group.getChildren.add(light)
+      else group.getChildren.remove(light)
 
   def setLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill): Unit =
     plan = plan.copy(slots = slots, viewportFit = fit)
@@ -363,6 +386,66 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     releaseViewportScenes()
     scenes
 
+  private[javafx] def pixelLayouts: Vector[JavaFxAtlasPixelLayout] =
+    chunks.map(c => JavaFxAtlasPixelLayout(c.surface, c.faceStart, c.faceCount,
+      c.atlas.width, c.atlas.height, c.atlas.tileSize))
+
+  private[javafx] def colorPreparationBasis(owner: JavaFxColorPreparationToken): JavaFxColorPreparationBasis =
+    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts, config)
+
+  private def validateColorGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    if next.meshes.length != plan.meshes.length then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("surface count changed"))
+    var index = 0
+    while index < plan.meshes.length do
+      val before = plan.meshes(index)
+      val after = next.meshes(index)
+      if before.surface != after.surface || before.resourceKey != after.resourceKey ||
+          !java.util.Arrays.equals(before.indices.unsafeArray, after.indices.unsafeArray) then
+        return Left(JavaFxSurfaceError.IncompatiblePlan(s"topology changed for ${before.surface.value}"))
+      index += 1
+    Right(())
+
+  private[javafx] def validatePrepared(prepared: JavaFxPreparedColorUpdate, next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    if !prepared.matches(next) || prepared.layouts != pixelLayouts || prepared.atlases.size != chunks.size then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("prepared colour inputs no longer current; prepare again"))
+    validateColorGeometry(next) match
+      case Left(error) => return Left(error)
+      case Right(_) => ()
+    var index = 0
+    while index < chunks.size do
+      val chunk = chunks(index)
+      val update = prepared.atlases(index)
+      if config.encoding != JavaFxAtlasEncoding.LegacyTriangle ||
+          update.pixels.length != chunk.atlas.width * chunk.atlas.height ||
+          update.coordinates.length != chunk.mesh.getTexCoords.size() then
+        return Left(JavaFxSurfaceError.IncompatiblePlan("prepared atlas capacity changed; prepare again"))
+      index += 1
+    Right(())
+
+  private[javafx] def updatePreparedColors(prepared: JavaFxPreparedColorUpdate,
+      next: SurfaceRenderPlan, commit: Boolean = true): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
+    validatePrepared(prepared, next).map: _ =>
+      val started = System.nanoTime()
+      var bytes = 0L
+      var pixels = 0L
+      chunks.zip(prepared.atlases).foreach: (chunk, update) =>
+        var same = true
+        var index = 0
+        while index < update.coordinates.length && same do
+          same = update.coordinates(index) == chunk.mesh.getTexCoords.get(index)
+          index += 1
+        if !same then
+          chunk.mesh.getTexCoords.setAll(update.coordinates, 0, update.coordinates.length)
+          bytes += update.coordinates.length.toLong * 4L
+        val region = chunk.atlas.installPrepared(update.pixels)
+        if commit then chunk.atlas.commit(region)
+        pixels += update.pixels.length
+      plan = next
+      configureMode(JavaFxSurfaceProgram.materialMode(next))
+      JavaFxSurfaceUpdateReceipt(false, chunks.length, pixels, System.nanoTime() - started,
+        textureCoordinateBytesUpdated = bytes)
+
   def updateColors(
     next: SurfaceRenderPlan,
     commit: Boolean = false,
@@ -371,6 +454,9 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
     else
+      validateColorGeometry(next) match
+        case Left(error) => return Left(error)
+        case Right(_) => ()
       val started = System.nanoTime()
       val colorsBySurface = JavaFxSurfaceProbe.validatePlan(next, mode, config) match
         case Left(error) => return Left(error)
@@ -462,6 +548,8 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   def applyCamera(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("camera update also changed mesh resources"))
+    else if !next.validCameras then
+      Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     else
       val started = System.nanoTime()
       plan = next
@@ -482,6 +570,8 @@ object JavaFxSurfaceProbe:
     mode: JavaFxMaterialMode,
     config: JavaFxAtlasConfig
   ): Either[JavaFxSurfaceError, Map[SurfaceId, Array[Int]]] =
+    if !plan.validCameras then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     if plan.meshes.map(_.surface).distinct.length != plan.meshes.length then
       return Left(JavaFxSurfaceError.IncompatiblePlan("duplicate surface mesh identifiers"))
     var meshIndex = 0
@@ -532,6 +622,8 @@ object JavaFxSurfaceProbe:
     materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,
     config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default
   ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+    if !plan.validCameras then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires a dedicated lookup-texture lowering"))
     val meshStarted = System.nanoTime()
@@ -645,7 +737,7 @@ object JavaFxSurfaceProbe:
     fitted.foreach: slot =>
       transforms.get(slot.surface).foreach: transform =>
         val layout = viewLayout(plan, slot.viewport, viewportWidth, viewportHeight)
-        val world = conjugateViewLayout(plan.camera, layout._1, layout._2)
+        val world = conjugateViewLayout(plan.camera, plan.cameraFor(slot.surface), layout._1, layout._2)
         val translated = Array(
           world._2(0) + world._1(0) * slot.worldOffsetX + world._1(1) * slot.worldOffsetY + world._1(2) * slot.worldOffsetZ,
           world._2(1) + world._1(3) * slot.worldOffsetX + world._1(4) * slot.worldOffsetY + world._1(5) * slot.worldOffsetZ,
@@ -702,6 +794,7 @@ object JavaFxSurfaceProbe:
 
   private def conjugateViewLayout(
     packet: SurfaceCameraPacket,
+    surfaceCamera: SurfaceCameraPacket,
     layout: Array[Double],
     offset: Array[Double]
   ): (Array[Double], Array[Double]) =
@@ -712,6 +805,16 @@ object JavaFxSurfaceProbe:
       -view(8).toDouble, -view(9).toDouble, -view(10).toDouble
     )
     val translation = Array(view(3).toDouble, -view(7).toDouble, -view(11).toDouble)
+    val source = surfaceCamera.viewMatrix
+    val sourceRotation = Array(
+      source(0).toDouble, source(1).toDouble, source(2).toDouble,
+      -source(4).toDouble, -source(5).toDouble, -source(6).toDouble,
+      -source(8).toDouble, -source(9).toDouble, -source(10).toDouble
+    )
+    val sourceTranslation = Array(source(3).toDouble, -source(7).toDouble, -source(11).toDouble)
+    // The shared camera transform G precedes each surface group. Its display
+    // transform is G^-1 L S: viewport layout L applied to that surface's camera S.
+    // Scientific positions and world-space lighting normals remain unchanged.
     val product = new Array[Double](9)
     var row = 0
     while row < 3 do
@@ -722,7 +825,7 @@ object JavaFxSurfaceProbe:
         while inner < 3 do
           var second = 0
           while second < 3 do
-            value += rotation(inner * 3 + row) * layout(inner * 3 + second) * rotation(second * 3 + column)
+            value += rotation(inner * 3 + row) * layout(inner * 3 + second) * sourceRotation(second * 3 + column)
             second += 1
           inner += 1
         product(row * 3 + column) = value
@@ -734,7 +837,7 @@ object JavaFxSurfaceProbe:
       var viewOffset = offset(row) - translation(row)
       var column = 0
       while column < 3 do
-        viewOffset += layout(row * 3 + column) * translation(column)
+        viewOffset += layout(row * 3 + column) * sourceTranslation(column)
         column += 1
       column = 0
       while column < 3 do

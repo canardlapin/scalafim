@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T01:09:10.301265+00:00",
+  "finished_utc": "2026-10-16T01:10:30.905828+00:00",
+  "duration_seconds": 80.603962,
+  "command": [
+    "sbt",
+    "responseJVM/test",
+    "responseJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-github-handoff-20261015",
+  "log": "/private/tmp/scalafim-github-handoff-smoke.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 14386
+}

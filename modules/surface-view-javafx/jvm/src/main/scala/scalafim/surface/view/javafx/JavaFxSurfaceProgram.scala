@@ -64,12 +64,15 @@ object JavaFxSurfaceProgram:
           next.receipt
         )
       case Some(before) =>
-        val topology = before.receipt.meshKeys != next.receipt.meshKeys
-        val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey)
+        val topology = before.receipt.meshKeys != next.receipt.meshKeys ||
+          before.meshes.length != next.meshes.length || !before.meshes.zip(next.meshes).forall((a, b) =>
+            a.surface == b.surface && a.resourceKey == b.resourceKey && sameInts(a.indices, b.indices))
+        val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey) ||
+          !before.meshes.zip(next.meshes).forall((a, b) => sameFloats(a.positions, b.positions) && sameFloats(a.normals, b.normals))
         val material = before.lighting != next.lighting
-        val layerData = layerSignature(before) != layerSignature(next) ||
+        val layerData = !sameLayers(before.layers, next.layers) ||
           (config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert && (material || geometry))
-        val camera = before.receipt.cameraKey != next.receipt.cameraKey
+        val camera = before.receipt.cameraKey != next.receipt.cameraKey || !sameCameras(before, next)
         val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
         val clipping = before.clipping != next.clipping
         val nextKeys = (next.receipt.meshKeys ++ next.receipt.layerKeys).toSet
@@ -89,8 +92,28 @@ object JavaFxSurfaceProgram:
           next.receipt
         )
 
-  private def layerSignature(plan: SurfaceRenderPlan): Vector[(SurfaceResourceKey, Double, String)] =
-    plan.layers.map(layer => (layer.resourceKey, layer.opacity.toDouble, layer.blendMode.toString))
+  private def sameInts(a: IntBufferView, b: IntBufferView): Boolean =
+    (a eq b) || java.util.Arrays.equals(a.unsafeArray, b.unsafeArray)
+
+  private def sameFloats(a: FloatBufferView, b: FloatBufferView): Boolean =
+    (a eq b) || java.util.Arrays.equals(a.unsafeArray, b.unsafeArray)
+
+  private def sameCameras(before: SurfaceRenderPlan, next: SurfaceRenderPlan): Boolean =
+    sameCamera(before.camera, next.camera) && before.surfaceCameras.keySet == next.surfaceCameras.keySet &&
+      before.surfaceCameras.keys.forall(id => sameCamera(before.surfaceCameras(id), next.surfaceCameras(id)))
+
+  /** Camera resource keys are deliberately value-stable, so native dirt must
+    * compare matrix contents rather than packet or array identity. */
+  private def sameCamera(a: SurfaceCameraPacket, b: SurfaceCameraPacket): Boolean =
+    sameFloats(a.viewMatrix, b.viewMatrix) && sameFloats(a.projectionMatrix, b.projectionMatrix) &&
+      a.directionX == b.directionX && a.directionY == b.directionY && a.directionZ == b.directionZ
+
+  /** Resource hashes are hints. Public packets can retain keys while changing
+    * data, and hash collisions must never publish a plan without its pixels.
+    */
+  private def sameLayers(a: Vector[SurfaceLayerPacket], b: Vector[SurfaceLayerPacket]): Boolean =
+    a.length == b.length && a.zip(b).forall: (x, y) =>
+      x.copy(colors = y.colors) == y && sameInts(x.colors, y.colors)
 
   private[javafx] def materialMode(plan: SurfaceRenderPlan): JavaFxMaterialMode =
     plan.lighting match
@@ -109,6 +132,7 @@ final case class JavaFxCapabilityReport(
     val available =
       if scene3d then Set(
         SurfaceBackendFeature.HardwareAcceleration,
+        SurfaceBackendFeature.PerSurfaceCameras,
         SurfaceBackendFeature.FacewiseData,
         SurfaceBackendFeature.NearestVertexSampling,
         SurfaceBackendFeature.DepthBuffer,
@@ -192,6 +216,25 @@ final class JavaFxSurfaceBackend private (
   private var current: Option[JavaFxSurfaceProbeResult] = None
   private var mountedScene: Option[SubScene] = None
   private var disposed = false
+  private var colorOwner = new JavaFxColorPreparationToken
+
+  def colorPreparationBasis: Either[JavaFxSurfaceError, JavaFxColorPreparationBasis] =
+    requireFxThread().flatMap: _ =>
+      if disposed || approximationConfig.nonEmpty then
+        Left(JavaFxSurfaceError.IncompatiblePlan("worker colour preparation requires a mounted native scene"))
+      else current.toRight(JavaFxSurfaceError.IncompatiblePlan("no surface scene is mounted"))
+        .map(_.colorPreparationBasis(colorOwner))
+
+  def render(plan: SurfaceRenderPlan, colors: JavaFxPreparedColorUpdate): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    requireFxThread().flatMap: _ =>
+      if disposed || approximationConfig.nonEmpty || !(colors.owner eq colorOwner) then
+        Left(JavaFxSurfaceError.IncompatiblePlan("colour preparation is foreign or no longer current; prepare again"))
+      else for
+        probe <- current.toRight(JavaFxSurfaceError.IncompatiblePlan("no surface scene is mounted"))
+        _ <- probe.validatePrepared(colors, plan)
+        _ <- JavaFxSurfaceBackend.validateCapabilities(plan)
+        receipt <- renderPrepared(plan, JavaFxPreparedSurface(plan, None), Some(colors))
+      yield receipt
 
   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val started = System.nanoTime()
@@ -216,15 +259,17 @@ final class JavaFxSurfaceBackend private (
           case (Some(before), Some(cached)) if signature(before) == signature(plan) &&
               before.meshes.zip(plan.meshes).forall((a, b) => java.util.Arrays.equals(
                 a.sampleNormals.getOrElse(a.normals).unsafeArray, b.sampleNormals.getOrElse(b.normals).unsafeArray)) =>
-            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, clipping = plan.clipping,
+            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, surfaceCameras = plan.surfaceCameras, clipping = plan.clipping,
               chrome = plan.chrome, readouts = plan.readouts, viewportFit = plan.viewportFit,
               receipt = cached.plan.receipt.copy(cameraKey = plan.receipt.cameraKey, timepoint = plan.receipt.timepoint)),
               approximation = cached.approximation.map(_.copy(preparationNanos = 0L, reused = true))))
           case _ => JavaFxSurfaceApproximation.prepare(plan, settings, config)
 
-  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface, colors: Option[JavaFxPreparedColorUpdate] = None): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val plan = prepared.plan
-    JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
+    if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
+      "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
+    else JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
@@ -235,8 +280,19 @@ final class JavaFxSurfaceBackend private (
         val updatesBuffers = incremental.commands.exists:
           case JavaFxSurfaceCommand.UpdateAtlases(_) | JavaFxSurfaceCommand.UpdateGeometry(_) => true
           case _ => false
+        /* Worker-prepared legacy pixels already passed native capability, content,
+         * layout, and capacity validation before this publication. A rebased plan
+         * may carry a new camera, which preparation deliberately does not bind.
+         * Do not recomposite those pixels merely to ask the adaptive-layout
+         * question: legacy triangles have no adaptive layout to rebuild. */
+        val preparedLegacyColorOnly = colors.nonEmpty &&
+          config.encoding == JavaFxAtlasEncoding.LegacyTriangle &&
+          incremental.dirty.layerData && !incremental.dirty.geometry &&
+          !incremental.dirty.material && !incremental.dirty.layout &&
+          !incremental.dirty.clipping && !rebuildsGeometry
         val needsReplacement =
-          if updatesBuffers && !rebuildsGeometry then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan))
+          if preparedLegacyColorOnly then Right(false)
+          else if updatesBuffers && !rebuildsGeometry then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan))
           else Right(false)
         val program = needsReplacement match
           case Left(error) => scala.util.boundary.break(Left(error))
@@ -272,7 +328,7 @@ final class JavaFxSurfaceBackend private (
                   geometryUpdates += 1
                   geometryBytesUpdated += receipt.bytesUpdated
             case JavaFxSurfaceCommand.UpdateAtlases(next) =>
-              current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)) match
+              colors.fold(current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)))(current.get.updatePreparedColors(_, next)) match
                 case Left(error) => failure = Some(error)
                 case Right(receipt) =>
                   atlasUpdates += receipt.atlasesUpdated
@@ -291,6 +347,8 @@ final class JavaFxSurfaceBackend private (
         failure match
           case Some(error) => Left(error)
           case None =>
+            if program.dirty.geometry || program.dirty.layerData || program.dirty.material then
+              colorOwner = new JavaFxColorPreparationToken
             currentPlan = Some(source)
             currentPrepared = Some(prepared)
             Right(JavaFxInterpretReceipt(
@@ -435,11 +493,15 @@ final class JavaFxSurfaceBackend private (
 
 object JavaFxSurfaceBackend:
   private[javafx] def validateCapabilities(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
-    if plan.camera.projectionMatrix(3) != 0f || plan.camera.projectionMatrix(7) != 0f then
+    if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
+      "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
+    else if plan.camera.projectionMatrix(3) != 0f || plan.camera.projectionMatrix(7) != 0f then
       Left(JavaFxSurfaceError.IncompatiblePlan("asymmetric orthographic frusta require JavaFxRasterSurfaceHost"))
     else if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
         plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
       Left(JavaFxSurfaceError.IncompatiblePlan("explicit color pipeline and surface alpha require JavaFxRasterSurfaceHost"))
+    else if plan.layers.exists(_.coverage != SurfaceLayerCoverage.All) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("restricted layer coverage requires the reference raster backend"))
     else if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend"))
     else plan.clipping match

@@ -44,7 +44,7 @@ class RegressorSuite extends munit.FunSuite:
 
   test("invalid inputs are rejected") {
     intercept[IllegalArgumentException] {
-      Regressor(Seq(-1.0, 1.0), box)
+      Regressor(Seq(Double.NegativeInfinity, 1.0), box)
     }
     intercept[IllegalArgumentException] {
       Regressor(Seq(1.0), box, duration = Seq(-2.0))

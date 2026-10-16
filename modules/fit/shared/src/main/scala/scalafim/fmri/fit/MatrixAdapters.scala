@@ -75,7 +75,11 @@ object MatrixAdapters:
       out.result()
 
   def designMatrix(model: FmriModel, timepoints: IndexedSeq[Int]): Either[FitError, DesignMatrix] =
-    DesignMatrix.fromMatrix(model.designBlock.matrixValues.gatherRows(timepoints))
+    if timepoints.exists(i => i < 0 || i >= model.designBlock.matrixValues.rows) then
+      Left(FitError.InvalidFitAxis("event response support", "fit scan selection is outside the model rows"))
+    else model.eventModel.validateResponseSupportSelection(timepoints.map(i => scalafim.fmri.design.ScanIndex.unsafeOneBased(i + 1)).toVector)
+      .left.map(error => FitError.InvalidFitAxis("event response support", error.message))
+      .flatMap(_ => DesignMatrix.fromMatrix(model.designBlock.matrixValues.gatherRows(timepoints)))
 
   /** Select from the same immutable compiled matrix used by ordinary fitting.
     * In particular, LSS must not read mutable event/baseline compatibility data.

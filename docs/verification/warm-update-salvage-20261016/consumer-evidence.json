@@ -1,0 +1,24 @@
+{
+  "repository": "canardlapin/plsneuro",
+  "examinedLocalHead": "2e0aac8e90300fd5a87d5b0d79d3bb9b78ecd1bf",
+  "scope": "Committed local consumer source; no claim about deployed or released product",
+  "files": [
+    {
+      "path": "docs/provider-contract.json",
+      "sha256": "b2a9316a8c224693625e22ddf0bbec511b00f73389bc0a1b1356c5c25f7a1c60"
+    },
+    {
+      "path": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "sha256": "835c86853ce13d049263f8562e092be6ba05dc817eca7f184ef44cfe2986a7c8"
+    },
+    {
+      "path": "modules/desktop/src/test/scala/plsneuro/desktop/RuntimeProvenanceProbe.scala",
+      "sha256": "f57f8cd838cdc6befaf52edc6ca86359d078de707868a94c73aba9146c2205ef"
+    },
+    {
+      "path": "project/Providers.scala",
+      "sha256": "a679290726a35065764a61f7282fd1c25bf7923b0a8e93c2aff7f23e054cbe36"
+    }
+  ],
+  "scalafimPin": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4"
+}

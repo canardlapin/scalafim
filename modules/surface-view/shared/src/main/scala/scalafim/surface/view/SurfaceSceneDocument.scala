@@ -36,7 +36,8 @@ final case class SurfaceExternalReference(uri: SurfaceAssetUri, sha256: SurfaceC
 
 final case class SurfaceSceneBindings(
   surfaces: Map[SurfaceId, SurfaceExternalReference],
-  layers: Map[SurfaceLayerId, SurfaceExternalReference]
+  layers: Map[SurfaceLayerId, SurfaceExternalReference],
+  geometries: Map[SurfaceId, Map[SurfaceKind, SurfaceExternalReference]] = Map.empty
 )
 
 final case class SurfaceSceneAsset(
@@ -104,7 +105,7 @@ object SurfaceProvenance:
     else Right(new SurfaceProvenance(normalizedProducer, normalizedVersion, normalizedCreatedAt, normalizedEntries))
 
 enum SurfaceDocumentRevision:
-  case V1, V2, V3, V4, V5, V6, V7, V8
+  case V1, V2, V3, V4, V5, V6, V7, V8, V9
 
   def value: Int =
     this match
@@ -116,6 +117,7 @@ enum SurfaceDocumentRevision:
       case V6 => 6
       case V7 => 7
       case V8 => 8
+      case V9 => 9
 
 enum SurfaceUnknownFieldPolicy:
   case Reject, Ignore
@@ -141,12 +143,15 @@ final case class SurfaceSceneDocument private (
   legends: Vector[SurfaceSceneLegend] = Vector.empty,
   colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
   surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
-  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase,
+  surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty,
+  geometryStates: Vector[SurfaceSceneGeometry] = Vector.empty
 ):
   def admit(capabilities: SurfaceBackendCapabilities): Either[SurfaceSceneError, Unit] =
     val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
     val nearest = Option.when(layers.exists(_.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))(SurfaceBackendFeature.NearestVertexSampling)
     val scalar = Option.when(layers.exists(_.scalarInterpolation))(SurfaceBackendFeature.ScalarInterpolation)
+    val perSurfaceCameras = Option.when(surfaceViewpoints.nonEmpty)(SurfaceBackendFeature.PerSurfaceCameras)
     val linearLight = Option.when(colorPipeline == SurfaceColorPipeline.DisplaySrgbLinearLight)(SurfaceBackendFeature.DisplayLinearLight)
     val translucency = Option.when(surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) || surfaceBase.alpha < 255)(SurfaceBackendFeature.SurfaceTranslucency)
     val thresholdEdges = Option.when(layers.exists(_.thresholdEdges))(SurfaceBackendFeature.ThresholdEdgeOverlay)
@@ -155,7 +160,7 @@ final case class SurfaceSceneDocument private (
       group.exists(_.scalarInterpolation) ||
         (group.exists(layer => layer.association == SurfaceSampleAssociation.Vertex && layer.vertexInterpolation == SurfaceVertexInterpolation.Color) &&
           group.exists(layer => layer.association == SurfaceSampleAssociation.Face || layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))))(SurfaceBackendFeature.FragmentComposition)
-    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ linearLight ++ translucency ++ thresholdEdges ++ surfaceBaseColor ++ fragment)
+    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ perSurfaceCameras ++ linearLight ++ translucency ++ thresholdEdges ++ surfaceBaseColor ++ fragment)
       .filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
     if missing.isEmpty then Right(())
     else Left(SurfaceSceneError.MissingCapabilities(missing))
@@ -167,12 +172,15 @@ final case class SurfaceSceneDocument private (
     for
       _ <- SurfaceSceneDocument.validateBindings(this, resolved)
       _ <- SurfaceSceneDocument.validateModel(this, model)
+      _ <- if revision == SurfaceDocumentRevision.V9 then
+        SurfaceSceneGeometry.validateResolved(geometryStates, model, resolved)
+        else Right(())
       restored <- SurfaceSceneDocument.restoreState(this, model)
       _ <- SurfaceSceneDocument.validateLegends(legends, model, restored)
     yield restored
 
 object SurfaceSceneDocument:
-  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V8
+  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V9
 
   def capture(
     model: SurfaceViewerModel,
@@ -223,6 +231,7 @@ object SurfaceSceneDocument:
             value.window,
             value.threshold
           ))
+      geometryStates <- SurfaceSceneGeometry.capture(model, state, bindings)
       legends <- traverse(legendRequests): request =>
         SurfaceLegend.bind(request, model, state).left.map(error => SurfaceSceneError.InvalidDocument(error.message))
           .map(legend => SurfaceSceneLegend(legend.request, legend.canonicalKey))
@@ -243,7 +252,9 @@ object SurfaceSceneDocument:
         state.framing,
         state.colorPipeline,
         state.surfaceOpacities,
-        state.surfaceBase
+        state.surfaceBase,
+        state.surfaceViewpoints,
+        geometryStates
       )
     yield result
 
@@ -264,7 +275,9 @@ object SurfaceSceneDocument:
     framing: CameraFraming = CameraFraming.BoundsFit,
     colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
     surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
-    surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
+    surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase,
+    surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty,
+    geometryStates: Vector[SurfaceSceneGeometry] = Vector.empty
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
     if revision == SurfaceDocumentRevision.V1 && framing != CameraFraming.LegacyV1 then
       Left(SurfaceSceneError.InvalidDocument("revision 1 requires legacy camera framing"))
@@ -278,6 +291,8 @@ object SurfaceSceneDocument:
       Left(SurfaceSceneError.InvalidDocument("surface opacities require revision 8"))
     else if revision.value < 8 && surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase then
       Left(SurfaceSceneError.InvalidDocument("non-legacy surface base requires revision 8"))
+    else if revision.value < 9 && (surfaceViewpoints.nonEmpty || geometryStates.nonEmpty) then
+      Left(SurfaceSceneError.InvalidDocument("surface viewpoints and geometry states require revision 9"))
     else if legends.nonEmpty && revision.value < 6 then
       Left(SurfaceSceneError.InvalidDocument("legend requests and identities require revision 6"))
     else if legends.exists(_.canonicalKey.trim.isEmpty) then
@@ -317,6 +332,15 @@ object SurfaceSceneDocument:
       Left(SurfaceSceneError.InvalidDocument("every layer must reference a declared surface"))
     else if !surfaceOpacities.keySet.subsetOf(assets.map(_.id).toSet) then
       Left(SurfaceSceneError.InvalidDocument("surface opacities must reference declared surfaces"))
+    else if !surfaceViewpoints.keySet.subsetOf(assets.map(_.id).toSet) then
+      Left(SurfaceSceneError.InvalidDocument("surface viewpoints must reference declared surfaces"))
+    else if geometryStates.map(_.surface).distinct.length != geometryStates.length then
+      Left(SurfaceSceneError.InvalidDocument("geometry surface ids must be unique"))
+    else if revision == SurfaceDocumentRevision.V9 && geometryStates.map(_.surface).toSet != assets.map(_.id).toSet then
+      Left(SurfaceSceneError.InvalidDocument("revision 9 requires exactly one geometry state per surface"))
+    else if geometryStates.exists(state => !assets.find(_.id == state.surface).exists: asset =>
+      state.variants.keySet.contains(asset.kind) && state.variants(asset.kind) == asset.reference && state.valid) then
+      Left(SurfaceSceneError.InvalidDocument("geometry variants must include the asset default reference and valid presentation"))
     else
       val frameCounts = layers.iterator.map(_.frameCount).filter(_ > 1).toVector.distinct
       val frameCount = frameCounts.headOption.getOrElse(1)
@@ -354,7 +378,9 @@ object SurfaceSceneDocument:
       legends,
       colorPipeline,
       surfaceOpacities,
-      surfaceBase
+      surfaceBase,
+      surfaceViewpoints,
+      geometryStates
       ))
 
   private def validateLegends(legends: Vector[SurfaceSceneLegend], model: SurfaceViewerModel,
@@ -374,8 +400,10 @@ object SurfaceSceneDocument:
     val layerIds = model.layers.map(_.id).toSet
     val extraSurfaces = bindings.surfaces.keySet -- surfaceIds
     val extraLayers = bindings.layers.keySet -- layerIds
+    val extraGeometry = bindings.geometries.keySet -- surfaceIds
     if extraSurfaces.nonEmpty then Left(SurfaceSceneError.UnexpectedSurfaceBinding(extraSurfaces.toVector.sortBy(_.value).head))
     else if extraLayers.nonEmpty then Left(SurfaceSceneError.UnexpectedLayerBinding(extraLayers.toVector.sortBy(_.value).head))
+    else if extraGeometry.nonEmpty then Left(SurfaceSceneError.UnexpectedSurfaceBinding(extraGeometry.toVector.sortBy(_.value).head))
     else Right(())
 
   private def validateBindings(
@@ -386,8 +414,10 @@ object SurfaceSceneDocument:
     val expectedLayers = document.layers.map(_.id).toSet
     val extraSurfaces = resolved.surfaces.keySet -- expectedSurfaces
     val extraLayers = resolved.layers.keySet -- expectedLayers
+    val extraGeometry = resolved.geometries.keySet -- expectedSurfaces
     if extraSurfaces.nonEmpty then return Left(SurfaceSceneError.UnexpectedSurfaceBinding(extraSurfaces.toVector.sortBy(_.value).head))
     if extraLayers.nonEmpty then return Left(SurfaceSceneError.UnexpectedLayerBinding(extraLayers.toVector.sortBy(_.value).head))
+    if extraGeometry.nonEmpty then return Left(SurfaceSceneError.UnexpectedSurfaceBinding(extraGeometry.toVector.sortBy(_.value).head))
     var index = 0
     while index < document.assets.length do
       val expected = document.assets(index)
@@ -464,6 +494,7 @@ object SurfaceSceneDocument:
     actions += SurfaceViewerAction.SetCameraFraming(document.framing)
     actions += SurfaceViewerAction.SetZoom(document.camera.zoom)
     actions += SurfaceViewerAction.SetAspectRatio(document.camera.aspectRatio)
+    actions += SurfaceViewerAction.SetSurfaceViewpoints(document.surfaceViewpoints)
     actions += SurfaceViewerAction.SetPan(document.camera.panX, document.camera.panY)
     actions += SurfaceViewerAction.SetOrbit(document.camera.orbit)
     actions += SurfaceViewerAction.SetLighting(document.lighting)
@@ -472,6 +503,7 @@ object SurfaceSceneDocument:
     document.surfaceOpacities.foreach: (surface, opacity) =>
       actions += SurfaceViewerAction.SetSurfaceOpacity(surface, opacity)
     actions += SurfaceViewerAction.SetSurfaceBase(document.surfaceBase)
+    document.geometryStates.foreach(state => actions ++= state.actions)
     actions += SurfaceViewerAction.SetTimepoint(document.timepoint)
     document.selection.foreach: selection =>
       actions += selection.face.fold[SurfaceViewerAction](SurfaceViewerAction.Select(selection.surface, selection.vertex)):
@@ -541,6 +573,7 @@ enum SurfaceSceneError:
 private[view] object SurfaceSceneNames:
   def feature(value: SurfaceBackendFeature): String =
     value match
+      case SurfaceBackendFeature.PerSurfaceCameras => "per-surface-cameras"
       case SurfaceBackendFeature.DeterministicPixels => "deterministic-pixels"
       case SurfaceBackendFeature.HardwareAcceleration => "hardware-acceleration"
       case SurfaceBackendFeature.DepthBuffer => "depth-buffer"

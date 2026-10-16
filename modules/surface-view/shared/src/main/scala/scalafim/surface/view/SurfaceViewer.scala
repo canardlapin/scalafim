@@ -95,6 +95,13 @@ final case class SurfaceViewerModel private (
   def surface(id: SurfaceId): Option[SurfaceAsset] = surfacesById.get(id)
   def layer(id: SurfaceLayerId): Option[SurfaceLayer] = layersById.get(id)
 
+  /** Replace data-bearing layers without rebuilding surfaces or changing their order.
+    * Replacement constructors already take ownership of caller arrays. This boundary
+    * additionally preserves every presentation-relevant layer contract.
+    */
+  def replaceCompatibleLayers(replacements: Vector[SurfaceLayer]): Either[SurfaceViewError, SurfaceViewerModel] =
+    SurfaceViewerModel.replaceCompatibleLayers(this, replacements)
+
 object SurfaceViewerModel:
   def make(surfaces: Vector[SurfaceAsset], layers: Vector[SurfaceLayer]): Either[SurfaceViewError, SurfaceViewerModel] =
     if surfaces.isEmpty then Left(SurfaceViewError.EmptySurfaces)
@@ -123,6 +130,51 @@ object SurfaceViewerModel:
     val seen = scala.collection.mutable.HashSet.empty[A]
     values.find(value => !seen.add(value))
 
+  private def replaceCompatibleLayers(
+    model: SurfaceViewerModel,
+    replacements: Vector[SurfaceLayer]
+  ): Either[SurfaceViewError, SurfaceViewerModel] =
+    firstDuplicate(replacements.map(_.id)) match
+      case Some(id) => Left(SurfaceViewError.DuplicateLayerId(id))
+      case None =>
+        val replacementById = replacements.map(layer => layer.id -> layer).toMap
+        var index = 0
+        while index < replacements.length do
+          val next = replacements(index)
+          model.layer(next.id) match
+            case None => return Left(SurfaceViewError.UnknownLayer(next.id))
+            case Some(previous) =>
+              compatibleReplacement(previous, next) match
+                case Left(error) => return Left(error)
+                case Right(_) => ()
+          index += 1
+        make(model.surfaces, model.layers.map(layer => replacementById.getOrElse(layer.id, layer)))
+
+  private def compatibleReplacement(
+    previous: SurfaceLayer,
+    next: SurfaceLayer
+  ): Either[SurfaceViewError, Unit] =
+    def reject(reason: String): Either[SurfaceViewError, Unit] =
+      Left(SurfaceViewError.IncompatibleLayerReplacement(previous.id, reason))
+
+    if previous.surfaceId != next.surfaceId then reject("surface id changed")
+    else if !previous.geometry.hasSameMeshDomain(next.geometry) then reject("ordered mesh domain changed")
+    else if previous.kind != next.kind then reject("layer kind changed")
+    else if previous.kind != SurfaceLayerKind.Scalar && previous.kind != SurfaceLayerKind.PackedRgba then
+      reject("only scalar and packed-RGBA data layers are replaceable")
+    else if previous.association != next.association then reject("sample association changed")
+    else if previous.interpolation != next.interpolation then reject("interpolation policy changed")
+    else if previous.thresholdEdges != next.thresholdEdges then reject("threshold-edge policy changed")
+    else if previous.scalarMapping.isDefined != next.scalarMapping.isDefined ||
+        previous.bivariateMapping.isDefined != next.bivariateMapping.isDefined then reject("mapping family changed")
+    else if previous.frameCount != next.frameCount then reject("frame count changed")
+    else if previous.sampleCount != next.sampleCount then reject("sample count changed")
+    else if previous.opacity != next.opacity then reject("default opacity changed")
+    else if previous.blendMode != next.blendMode then reject("blend mode changed")
+    else if previous.supportsWindow != next.supportsWindow || previous.supportsThreshold != next.supportsThreshold then
+      reject("presentation capabilities changed")
+    else Right(())
+
 final case class SurfaceLayerPresentation(
   id: SurfaceLayerId,
   visible: Boolean,
@@ -145,8 +197,14 @@ final case class SurfaceViewerState private[view] (
   colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
   /** Omitted surfaces are opaque. */
   surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
-  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
-)
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase,
+  /** Anatomical viewpoints share projection, zoom, pan, orbit and framing.
+    * Overrides survive layout/focus changes and ResetCamera. SetViewpoint clears them.
+    */
+  surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty
+):
+  def cameraFor(surface: SurfaceId): SurfaceCamera =
+    surfaceViewpoints.get(surface).fold(camera)(viewpoint => camera.copy(viewpoint = viewpoint))
 
 object SurfaceViewerState:
   def initial(model: SurfaceViewerModel): SurfaceViewerState =
@@ -174,7 +232,10 @@ object SurfaceViewerState:
 
 enum SurfaceViewerAction:
   case SetLayout(layout: SurfaceLayout)
+  /** Set one viewpoint for every surface, clearing per-surface overrides. */
   case SetViewpoint(viewpoint: SurfaceViewpoint)
+  /** Atomically replace anatomical viewpoints; unmentioned surfaces inherit the shared camera. */
+  case SetSurfaceViewpoints(viewpoints: Map[SurfaceId, SurfaceViewpoint])
   case SetProjection(projection: CameraProjection)
   case SetZoom(zoom: CameraZoom)
   case SetAspectRatio(ratio: CameraAspectRatio)
@@ -213,6 +274,14 @@ enum SurfaceViewerAction:
   case MoveLayer(layer: SurfaceLayerId, index: Int)
 
 object SurfaceViewer:
+  private[view] def validateViewpoints(
+    model: SurfaceViewerModel,
+    viewpoints: Map[SurfaceId, SurfaceViewpoint]
+  ): Either[SurfaceViewError, Unit] =
+    viewpoints.keys.toVector.sortBy(_.value).find(id => model.surface(id).isEmpty) match
+      case Some(id) => Left(SurfaceViewError.UnknownSurface(id))
+      case None => Right(())
+
   def reduce(
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
@@ -221,7 +290,9 @@ object SurfaceViewer:
     action match
       case SurfaceViewerAction.SetLayout(layout) => validateLayout(model, layout).map(_ => state.copy(layout = layout))
       case SurfaceViewerAction.SetViewpoint(viewpoint) =>
-        Right(state.copy(camera = state.camera.copy(viewpoint = viewpoint)))
+        Right(state.copy(camera = state.camera.copy(viewpoint = viewpoint), surfaceViewpoints = Map.empty))
+      case SurfaceViewerAction.SetSurfaceViewpoints(viewpoints) =>
+        validateViewpoints(model, viewpoints).map(_ => state.copy(surfaceViewpoints = viewpoints))
       case SurfaceViewerAction.SetProjection(projection) =>
         Right(state.copy(camera = state.camera.copy(projection = projection)))
       case SurfaceViewerAction.FitCamera => SurfaceCompiler.fitCamera(model, state).map(camera => state.copy(camera = camera, framing = CameraFraming.BoundsFit))
