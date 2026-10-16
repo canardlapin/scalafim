@@ -180,7 +180,7 @@ final class JavaFxFaceAtlas private[javafx] (
   * A retained snapshot is scratch space only: callers can mutate the public TriangleMesh, so
   * every comparison must refresh it and must never infer equality from a previous upload.
   */
-private[javafx] final class JavaFxTextureCoordinates(values: javafx.collections.ObservableFloatArray):
+private[javafx] final class JavaFxTextureCoordinates(values: _root_.javafx.collections.ObservableFloatArray):
   private var snapshot = Array.emptyFloatArray
 
   def install(next: Array[Float]): Long =
