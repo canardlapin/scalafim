@@ -168,6 +168,9 @@ serialization, performance gates, and the cross-platform example.
 
 ## Common Commands
 
+For a new development machine, follow the [clone and handoff guide](docs/development-machine-handoff.md),
+including the current Mote authority recovery limitation and retained-work map.
+
 Use a JDK 21 installation for local development and an sbt launcher;
 `project/build.properties` selects sbt 1.11.7 for this build. CI checks the
 JDK 17 API baseline, and Scala.js tests require Node.js (CI uses Node 24).

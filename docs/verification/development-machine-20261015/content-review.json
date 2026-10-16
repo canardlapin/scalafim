@@ -1,0 +1,38 @@
+{
+  "schema": "scalafim.handoff-content-review.v1",
+  "limitations": "Pattern scanning does not establish absence of all sensitive data. Bundles are source-bound rendering evidence; external coordinate files are excluded by the original manifests. No runtime credentials are intentionally retained.",
+  "bundles": [
+    {
+      "name": "surface-parity-qualification-20261015",
+      "sha256": "aa351a33334eb5bddf11bfd06b409a076b207d2d1d9571b522bfd3957b59f141",
+      "files": 1949,
+      "bytes": 318747491,
+      "utf8Objects": 1435,
+      "pngObjects": 513,
+      "findings": [],
+      "externalInputJsonExcluded": true
+    },
+    {
+      "name": "surface-rounded-qualification-20261015",
+      "sha256": "1f8a3882369a1fc01abe7887e4c362e047734a9f40c2256b5e25ac2aad8b4003",
+      "files": 275,
+      "bytes": 48583976,
+      "utf8Objects": 174,
+      "pngObjects": 100,
+      "findings": [],
+      "externalInputJsonExcluded": true
+    },
+    {
+      "name": "surface-rounded-qualification-20261015-review",
+      "sha256": "60d42055014c2ec415ec2f1ce204b3d355e8be74343b062c8fd7d084e6ef8d32",
+      "files": 285,
+      "bytes": 50330122,
+      "utf8Objects": 182,
+      "pngObjects": 102,
+      "findings": [],
+      "externalInputJsonExcluded": true
+    }
+  ],
+  "findings": [],
+  "additionalTextFilesReviewed": 97
+}

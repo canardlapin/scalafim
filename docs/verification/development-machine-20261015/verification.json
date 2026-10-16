@@ -1,0 +1,10 @@
+{
+  "schema": "scalafim.development-machine-verification.v1",
+  "base": "ac2ec8b706fc",
+  "freshClone": "pending",
+  "moteReplay": {
+    "status": "blocked",
+    "reason": "943 operations lack matching admission records; retained journal preserved without modification"
+  },
+  "fullRepositoryTests": "not run; no production Scala changes in this handoff"
+}

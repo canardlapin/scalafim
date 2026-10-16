@@ -17,6 +17,9 @@
 !.mote/ops/
 .mote/ops/*
 !.mote/ops/*.json
+!.mote/authority/
+# Portable evidence is retained under docs/verification; runtime scratch stays local.
+.agent-work/
 graphify-out/
 vendor/
 target/

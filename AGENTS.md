@@ -107,7 +107,8 @@ construction points, but the core model should express its invariants in types.
 
 ## GitHub identity and publication
 
-- Mote history is versioned in `.mote/FORMAT.json` and `.mote/ops/*.json` for
+- Mote history is versioned in `.mote/FORMAT.json`, `.mote/ops/*.json`, and
+  `.mote/authority/` for
   development across machines. Commit new immutable operations with related
   work; leave `.mote/local/` and `.mote/tmp/` ignored. See
   [`docs/development-machine-handoff.md`](docs/development-machine-handoff.md).
