@@ -50,7 +50,8 @@ final class SurfaceLayerTransaction private[view] (
       before.presentations == after.presentations &&
       before.colorPipeline == after.colorPipeline &&
       before.surfaceOpacities == after.surfaceOpacities &&
-      before.surfaceBase == after.surfaceBase
+      before.surfaceBase == after.surfaceBase &&
+      before.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] == after.clipping.isInstanceOf[SurfaceClipping.WorldPlanes]
 
 object SurfaceLayerTransaction:
   def prepare(

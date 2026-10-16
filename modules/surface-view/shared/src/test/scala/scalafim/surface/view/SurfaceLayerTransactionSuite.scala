@@ -200,3 +200,16 @@ class SurfaceLayerTransactionSuite extends munit.FunSuite:
     assertEquals(rebased.clipping, live.clipping)
     assert(rebased.layers eq transaction.preparedPlan.layers)
     assert(rebased.meshes eq live.meshes)
+
+
+  test("switching world clipping modes requires new fragment preparation"):
+    val viewer = model
+    val initial = bilateral(viewer)
+    val clipped = initial.copy(clipping = SurfaceClipping.WorldPlanes(
+      Vector(WorldClipPlane.unsafe(1.0, 0.0, 0.0, 0.0, ClipKeepSide.Positive))))
+    Vector(initial -> clipped, clipped -> initial).foreach: (before, after) =>
+      val transaction = SurfaceLayerTransaction.prepare(viewer, before,
+        Vector(scalar(leftScalarId, leftId, left, Array(0.25, 0.5, 0.75)))).toOption.get
+      val live = SurfaceCompiler.compile(viewer, after).toOption.get
+      assertNotEquals(transaction.preparedPlan.fragmentSurfaces, live.fragmentSurfaces)
+      assert(transaction.rebase(viewer, after, live).isLeft)
