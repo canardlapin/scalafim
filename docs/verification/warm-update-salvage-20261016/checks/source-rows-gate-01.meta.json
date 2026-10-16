@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T12:54:45.875216+00:00",
+  "finished_utc": "2026-10-16T12:55:17.794691+00:00",
+  "duration_seconds": 31.919078,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "designJVM/test",
+    "designJS/test",
+    "fmriWorkflowJVM/test",
+    "fmriWorkflowJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/source-rows-gate-01.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 59222
+}

@@ -1,0 +1,310 @@
+[info] compiling 26 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/atlas/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.atlas.io.AtlasIoSuite:
+  + FileAtlasStore resolves cached downloads and validates minBytes 0.01s
+  + FileAtlasStore validates SHA-256 on downloaded assets 0.003s
+  + FileAtlasStore refreshes stale cached assets and replaces cache on refresh 0.003s
+  + AtlasAsset validates metadata fields 0.001s
+  + AtlasLabelMaps converts finite integer-valued volumes 0.072s
+  + AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback 0.001s
+  + AtlasLabelMaps reads signed INT8 NIfTI labels and rejects negative region ids 0.17s
+  + SchaeferLoader parses CBIG LUT rows into typed regions 0.017s
+  + SchaeferLoader load resolves assets through supplied store without downloads 0.009s
+  + GlasserLoader parses node labels with hemisphere metadata 0.004s
+  + GlasserLoader descriptors cover all volume asset variants and unknown hemispheres 0.001s
+  + AsegLoader load resolves default asset through supplied store without downloads 0.008s
+  + GlasserLoader load resolves assets through supplied store without downloads 0.006s
+  + AtlasProvenanceFiles attaches local paths and digests by artifact role 0.003s
+  + AtlasLabelMaps builds VolumeAtlas from label volume and regions 0.002s
+  + SchaeferLoader loadFromPaths reads a synthetic NIfTI fixture and filters absent LUT rows 0.008s
+  + GlasserLoader loadFromPaths reads a synthetic NIfTI fixture and keeps present labels only 0.003s
+scalafim.atlas.GraphDifferentialSuite:
+  + region contact counts match an independent full-neighborhood oracle 0.012s
+  + region adjacency lowers to canonical graph topology without changing the atlas API 0.146s
+  + optimized contacts have exactly the relational quotient adjacency 0.011s
+scalafim.atlas.AtlasBoundaryQuerySuite:
+  + one 2mm cube has a unique off-centre boundary witness 0.012s
+  + edge and corner distances use closed-form Euclidean box oracle 0.002s
+  + adjacent equal labels remove internal faces; distinct labels retain both zero-distance ties 0.002s
+  + rotation translation and anisotropic scale retain world-mm metric 0.001s
+  + shear uses distance to the oblique plane and complete inverse-affine search bounds 0.001s
+  + no labels, outside radius, huge finite points and invalid requests are explicit 0.009s
+  + budget and cancellation refuse partial answers 0.001s
+  + nearly collapsed affine faces are refused rather than inaccurately measured 0.001s
+  + inclusive non-binary affine radius exposes its arithmetic envelope 0.002s
+  + residual bound encloses a correct inverse and refuses an inaccurate one 0.001s
+  + scale-aware envelope includes the independent 77-ulp plane-distance counterexample 0.011s
+  + normal image geometry has negligible envelopes; unrepresentable placement refuses 0.004s
+  + inverse-dot cancellation cannot drop a translated exact-interface candidate 0.001s
+  + rounded corner-edge distance ambiguity refuses a false coordinate guarantee 0.002s
+  + exact symmetric nearest-face ambiguity is explicitly refused 0.0s
+  + typed boundary queries require exact atlas frame ownership 0.007s
+scalafim.atlas.io.AsegLoaderSuite:
+  + FreeSurferAseg descriptor exposes canonical atlas reference 0.001s
+  + AsegLoader built-in label rows match neuroatlas ASEG metadata 0.0s
+  + AsegLoader parses FreeSurfer color LUT rows 0.001s
+  + AsegLoader loadFromPaths reads NIfTI labels and filters absent rows 0.005s
+scalafim.atlas.StandardSurfaceRoutesSuite:
+  + the lock binds the point map to the admitted 6Asym -> 2009c composite 0.001s
+  + the anatomy frame is the publisher's methods tier: affine, 69-subject Conte69 average in MNI152NLin6Asym 0.002s
+  + the frozen policy is the reframe4s default that passed P1-P6; an override is explicit and reasoned 0.008s
+  + identity is the SHA-256 of its canonical text and changes with any line 0.002s
+  + refusals say what failed and never imply a download 0.008s
+scalafim.atlas.AtlasRealizationSuite:
+  + volume realization retains one direct partial surjection 0.02s
+  + equal-size reordered and foreign parcel identities fail exact alignment 0.003s
+  + retargeting a reordered parcel owner requires a certified bijection 0.002s
+  + a volume realization rejects an image from a different live grid owner 0.001s
+  + volume and bilateral surface share exact parcel identity 0.021s
+scalafim.atlas.MniTemplateBridgeSuite:
+  + only the inspected TemplateFlow composite is admitted, by the SHA-256 of its bytes 0.007s
+  + the admitted digest must still hold an affine and a field on the 2009c res-01 lattice 0.005s
+  + the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01 0.001s
+  + stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids 0.003s
+  + a dense warp without a forward map is pullback-executable only 0.115s
+  + a supplied inverse makes the warp push points and admits routing through its inverse 0.024s
+  + the standard manifest names the real TemplateFlow file and why the reverse step is planned 0.001s
+scalafim.atlas.io.BrainnetomeLoaderSuite:
+  + Brainnetome246 descriptor exposes canonical atlas reference 0.002s
+  + BrainnetomeLoader parses LUT and Yeo network metadata 0.006s
+  + BrainnetomeLoader parses LUT without network table and tolerates unknown networks 0.003s
+  + BrainnetomeLoader load resolves all assets through supplied store without downloads 0.005s
+  + BrainnetomeLoader loadFromPaths reads NIfTI labels and filters absent rows 0.005s
+scalafim.atlas.io.SurfaceGiftiAtlasLoaderSuite:
+  + loadFromPathsEither builds a bilateral SurfaceAtlas from GIFTI label payloads 0.105s
+  + loadFromPathsEither supports sparse NODE_INDEX label payloads 0.007s
+  + loadFromPathsEither rejects payload labels missing from the GIFTI LabelTable 0.004s
+scalafim.atlas.SpaceTransformGraphSuite:
+  + the standard manifest populates one spatial graph over unsampled template domains 0.002s
+  + the internal affine route matches FreeSurfer mni152.register.dat 0.001s
+  + TemplateFlow warps stay planned and typed non-executable until an asset implements them 0.004s
+  + assets on frames outside the catalog are rejected when the graph is built 0.002s
+  + routes fall back to exact inverses only when no forward route exists 0.002s
+  + available steps without provider maps are planned but not executable 0.0s
+  + grid pullbacks come from fused affine routes, including inverse steps 0.006s
+  + grid pullbacks reject grids outside the route's endpoint worlds 0.002s
+  + an identity route over an uncatalogued space plans, but has no world for grid pullbacks 0.0s
+scalafim.atlas.AtlasParityCorpusSuite:
+  + parity fixture preserves non-contiguous atlas ids and metadata 0.004s
+  + query and parcel reduction match neuroatlas parity fixture 0.009s
+  + parcel-series reduction keeps non-contiguous ids in parcel order 0.016s
+  + parcel-series reduction writes NaN when the mask misses the atlas 0.001s
+  + overlap corpus matches Dice and Jaccard golden values 0.008s
+  + fixture rejects duplicate metadata ids and unknown payload labels 0.003s
+[pointwise-receipt] {"check":"P1-P5-L","route":"scalafim-route:sha256:68fc557306abb1b15dc02007d80f2a067d2190a3c1c421f3e339d8877350be6a","vertices":32492,"converged":32492,"unplaced":{},"worstResidualMm":9.999883238462373E-9,"worstIterations":30,"placementVsOracleMaxMm":1.5020796086550972E-8,"voxelDisagreements":{"res-01":0,"res-02":0},"cortical":29696,"medialWall":2796}
+[pointwise-receipt] {"check":"P1-P5-R","route":"scalafim-route:sha256:68fc557306abb1b15dc02007d80f2a067d2190a3c1c421f3e339d8877350be6a","vertices":32492,"converged":32492,"unplaced":{},"worstResidualMm":9.999700566531676E-9,"worstIterations":20,"placementVsOracleMaxMm":1.5311129897981346E-8,"voxelDisagreements":{"res-01":0,"res-02":0},"cortical":29716,"medialWall":2776}
+[pointwise-receipt] {"check":"P6-JVM","admitPlaceAndMapBothHemispheresSeconds":6.532779541}
+scalafim.atlas.reference.Fslr32kRouteBudgetSuite:
+  + P1-P3, P5, P6 (timing asserted with SCALAFIM_TIMING_BUDGETS=1): the public route matches the oracle at every vertex and maps GM within budget 11.095s
+  + the public route is the qualified wiring: same locked anatomy, publisher basis and bridge as the reference fixtures 3.402s
+  + an override is disclosed, changes the identity, and is held to the placement gate 4.222s
+scalafim.atlas.SurfaceAtlasSuite:
+  + SurfaceAtlas wraps bilateral labeled surfaces with typed region lookup 0.002s
+  + SurfaceAtlas validates geometry hemispheres 0.0s
+  + SurfaceAtlas requires non-zero payload labels and region ids to match 0.001s
+  + SurfaceAtlas rejects unused label-table ids 0.001s
+  + SurfaceAtlas requires lateral hemisphere access and exposes label metadata 0.0s
+  + SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere 0.024s
+scalafim.atlas.AtlasQuotientSuite:
+  + volume atlases expose exact fibers, parcel metadata, and display order 0.001s
+  + metadata changes do not change extensional region identity 0.001s
+  + network regions are fibers of the composed realization 0.002s
+  + partial network annotations do not claim a total surjection 0.001s
+  + surface atlases expose the same bilateral realization operations 0.0s
+  + overlap requires exact grids unless alignment is explicitly requested 0.004s
+  + one-pass standard reducers retain NaN and non-contiguous id semantics 0.001s
+scalafim.atlas.io.StandardSurfaceRouteFilesSuite:
+  + an empty cache is refused with every locked path listed; nothing is downloaded 0.002s
+  + zero-byte TemplateFlow skeleton placeholders count as missing 0.003s
+  + bytes that differ from the lock are refused by digest before decoding 0.003s
+  + a point map from another transform is not the locked route input 0.011s
+  + the public lock is exactly the one the reference fixtures and the inverse oracle were qualified on 0.0s
+  + the consumer example maps locked GM through the public route and discloses its identity 6.016s
+scalafim.atlas.AtlasCoreSuite:
+  + Point3D is an atlas alias for image SpatialPoint 0.0s
+  + registry resolves standard atlas aliases 0.005s
+  + space transform plans include direct, identity, two-hop, and planned routes 0.007s
+  + executable affine routes follow provider andThen order 0.001s
+  + VolumeAtlas validates region ids and supports metadata subset 0.003s
+  + query exact and radius lookups return atlas metadata 0.003s
+  + reduceVolume and reduceVec summarize parcel data 0.002s
+  + reduceVec preserves all parcels and writes NaN for parcels outside mask 0.001s
+  + overlap and adjacency compute region relationships 0.001s
+scalafim.atlas.AtlasProvenanceSuite:
+  + AtlasRef converts to typed provenance with source artifacts, support, labels, and citations 0.001s
+  + standard atlas provenance infers release metadata and readable summaries 0.002s
+  + descriptor-only provenance is explicit and validation reports audit gaps 0.003s
+  + loaded provenance records label filtering decisions 0.001s
+  + license and voxel-size helpers round-trip legacy metadata 0.001s
+  + source artifacts preserve restricted licenses and SHA digests in legacy export 0.001s
+  + strict provenance validation flags missing source accounting 0.0s
+scalafim.atlas.AtlasPublicationSuite:
+  + Schaefer variants define exact ordered parcel identity 0.003s
+  + volume support identity includes the exact grid 0.002s
+  + surface support identity includes ordered topology but not coordinates 0.003s
+  + bilateral publication retains one quotient and explicit empty fibers 0.0s
+  + foreign-producer v1 fixture matches fixed domain and assignment bytes 0.003s
+  + publication admission recomputes fingerprints and identity preimages 0.001s
+  + publication admission rejects malformed support and assignments 0.001s
+  + checked constructors preserve typed invalid-payload failures 0.004s
+scalafim.atlas.AtlasCoverageSuite:
+  + registry normalizes aliases and reports unknown ids with available atlases 0.002s
+  + region index normalizes labels, filters hemispheres, and rejects duplicate ids 0.004s
+  + volume atlas construction rejects unknown and absent payload labels 0.002s
+  + space transforms expose no-route and non-affine execution limits 0.002s
+  + parcel data preserves atlas order and rejects invalid record contracts 0.003s
+  + reducers define NaN handling and volume reductions match grouped oracle sums 0.001s
+  + vector reduction syntax overloads respect custom reducers and masks 0.001s
+  + overlap is symmetric by atlas order and self-overlap is identity 0.003s
+  + adjacency connectivity is monotone from faces to corners 0.001s
+  + query contracts cover exact lookup, invalid radii, and transform failures 0.001s
+  + atlas error messages and provenance helper aliases remain explicit 0.002s
+scalafim.atlas.TemplateSampledCatalogSuite:
+  + all published template surface densities normalize as surface spaces while catalog domains remain unsampled 0.001s
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+numerical inverse on MNI152NLin6Asym res-01: 108.0 s; ItkHdf5 /Users/bbuchsbaum/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5 then materialized on a 193x229x193 lattice (8530021 covered) then numerical inverse on a 182x218x182 lattice (coverage 1.0000, max residual forward 1.00e-08 mm, reverse 0.139 mm)
+forward map vs ITK fixed-point inverse: max 1.04e-02 mm; round trip max 1.02e-02 mm
+scalafim.atlas.io.MniTemplateBridgeFilesSuite:
+  + the committed oracle matches its manifest and pins the inspected composites 0.04s
+  + the image evidence backs each composite's measured direction 0.006s
+  + the composite pulls MNI152NLin2009cAsym points to MNI152NLin6Asym exactly as ITK TransformPoint does 5.304s
+  + resampling 6Asym data onto a 2009c grid samples it through the composite 0.153s
+  + installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing 0.078s
+  + TemplateFlow's reverse composite is refused with its measured direction 0.241s
+  + in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back 0.004s
+  + a qualified numerical inverse gives the forward map and an executable reverse route 108.1s
+[info] Passed: Total 146, Failed 0, Errors 0, Passed 146
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-5lgkm7a2/completed
+[[32msuccess[0m] elapsed: 147 s (0:02:27.0)
+[0J[sbt-warm] atlasJVM/test: exit 0 in 147.3s
+[info] compiling 25 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 22 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/atlas/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/atlas/js/target/scala-3.7.4/scalafim-atlas-test-fastopt
+scalafim.atlas.AtlasCoreSuite:
+  + Point3D is an atlas alias for image SpatialPoint 0.001s
+  + registry resolves standard atlas aliases 0.003s
+  + space transform plans include direct, identity, two-hop, and planned routes 0.011s
+  + executable affine routes follow provider andThen order 0.001s
+  + VolumeAtlas validates region ids and supports metadata subset 0.010s
+  + query exact and radius lookups return atlas metadata 0.005s
+  + reduceVolume and reduceVec summarize parcel data 0.005s
+  + reduceVec preserves all parcels and writes NaN for parcels outside mask 0.002s
+  + overlap and adjacency compute region relationships 0.003s
+scalafim.atlas.GraphDifferentialSuite:
+  + region contact counts match an independent full-neighborhood oracle 0.005s
+  + region adjacency lowers to canonical graph topology without changing the atlas API 0.002s
+  + optimized contacts have exactly the relational quotient adjacency 0.005s
+scalafim.atlas.AtlasPublicationSuite:
+  + Schaefer variants define exact ordered parcel identity 0.005s
+  + volume support identity includes the exact grid 0.005s
+  + surface support identity includes ordered topology but not coordinates 0.005s
+  + bilateral publication retains one quotient and explicit empty fibers 0.001s
+  + foreign-producer v1 fixture matches fixed domain and assignment bytes 0.003s
+  + publication admission recomputes fingerprints and identity preimages 0.002s
+  + publication admission rejects malformed support and assignments 0.003s
+  + checked constructors preserve typed invalid-payload failures 0.002s
+scalafim.atlas.AtlasRealizationSuite:
+  + volume realization retains one direct partial surjection 0.005s
+  + equal-size reordered and foreign parcel identities fail exact alignment 0.004s
+  + retargeting a reordered parcel owner requires a certified bijection 0.002s
+  + a volume realization rejects an image from a different live grid owner 0.001s
+  + volume and bilateral surface share exact parcel identity 0.004s
+scalafim.atlas.AtlasCoverageSuite:
+  + registry normalizes aliases and reports unknown ids with available atlases 0.001s
+  + region index normalizes labels, filters hemispheres, and rejects duplicate ids 0.001s
+  + volume atlas construction rejects unknown and absent payload labels 0.001s
+  + space transforms expose no-route and non-affine execution limits 0.001s
+  + parcel data preserves atlas order and rejects invalid record contracts 0.001s
+  + reducers define NaN handling and volume reductions match grouped oracle sums 0.001s
+  + vector reduction syntax overloads respect custom reducers and masks 0.001s
+  + overlap is symmetric by atlas order and self-overlap is identity 0.003s
+  + adjacency connectivity is monotone from faces to corners 0.001s
+  + query contracts cover exact lookup, invalid radii, and transform failures 0.002s
+  + atlas error messages and provenance helper aliases remain explicit 0.001s
+scalafim.atlas.AtlasQuotientSuite:
+  + volume atlases expose exact fibers, parcel metadata, and display order 0.002s
+  + metadata changes do not change extensional region identity 0.002s
+  + network regions are fibers of the composed realization 0.001s
+  + partial network annotations do not claim a total surjection 0.001s
+  + surface atlases expose the same bilateral realization operations 0.001s
+  + overlap requires exact grids unless alignment is explicitly requested 0.003s
+  + one-pass standard reducers retain NaN and non-contiguous id semantics 0.002s
+scalafim.atlas.AtlasProvenanceSuite:
+  + AtlasRef converts to typed provenance with source artifacts, support, labels, and citations 0.001s
+  + standard atlas provenance infers release metadata and readable summaries 0.000s
+  + descriptor-only provenance is explicit and validation reports audit gaps 0.000s
+  + loaded provenance records label filtering decisions 0.000s
+  + license and voxel-size helpers round-trip legacy metadata 0.000s
+  + source artifacts preserve restricted licenses and SHA digests in legacy export 0.000s
+  + strict provenance validation flags missing source accounting 0.000s
+scalafim.atlas.AtlasParityCorpusSuite:
+  + parity fixture preserves non-contiguous atlas ids and metadata 0.002s
+  + query and parcel reduction match neuroatlas parity fixture 0.002s
+  + parcel-series reduction keeps non-contiguous ids in parcel order 0.003s
+  + parcel-series reduction writes NaN when the mask misses the atlas 0.002s
+  + overlap corpus matches Dice and Jaccard golden values 0.002s
+  + fixture rejects duplicate metadata ids and unknown payload labels 0.002s
+scalafim.atlas.TemplateSampledCatalogSuite:
+  + all published template surface densities normalize as surface spaces while catalog domains remain unsampled 0.000s
+scalafim.atlas.StandardSurfaceRoutesSuite:
+  + the lock binds the point map to the admitted 6Asym -> 2009c composite 0.000s
+  + the anatomy frame is the publisher's methods tier: affine, 69-subject Conte69 average in MNI152NLin6Asym 0.000s
+  + the frozen policy is the reframe4s default that passed P1-P6; an override is explicit and reasoned 0.000s
+  + identity is the SHA-256 of its canonical text and changes with any line 0.001s
+  + refusals say what failed and never imply a download 0.000s
+scalafim.atlas.MniTemplateBridgeSuite:
+  + only the inspected TemplateFlow composite is admitted, by the SHA-256 of its bytes 0.001s
+  + the admitted digest must still hold an affine and a field on the 2009c res-01 lattice 0.001s
+  + the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01 0.001s
+  + stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids 0.000s
+  + a dense warp without a forward map is pullback-executable only 0.020s
+  + a supplied inverse makes the warp push points and admits routing through its inverse 0.011s
+  + the standard manifest names the real TemplateFlow file and why the reverse step is planned 0.000s
+scalafim.atlas.SurfaceAtlasSuite:
+  + SurfaceAtlas wraps bilateral labeled surfaces with typed region lookup 0.002s
+  + SurfaceAtlas validates geometry hemispheres 0.000s
+  + SurfaceAtlas requires non-zero payload labels and region ids to match 0.000s
+  + SurfaceAtlas rejects unused label-table ids 0.001s
+  + SurfaceAtlas requires lateral hemisphere access and exposes label metadata 0.001s
+  + SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere 0.004s
+scalafim.atlas.SpaceTransformGraphSuite:
+  + the standard manifest populates one spatial graph over unsampled template domains 0.001s
+  + the internal affine route matches FreeSurfer mni152.register.dat 0.000s
+  + TemplateFlow warps stay planned and typed non-executable until an asset implements them 0.002s
+  + assets on frames outside the catalog are rejected when the graph is built 0.000s
+  + routes fall back to exact inverses only when no forward route exists 0.001s
+  + available steps without provider maps are planned but not executable 0.000s
+  + grid pullbacks come from fused affine routes, including inverse steps 0.001s
+  + grid pullbacks reject grids outside the route's endpoint worlds 0.001s
+  + an identity route over an uncatalogued space plans, but has no world for grid pullbacks 0.000s
+scalafim.atlas.AtlasBoundaryQuerySuite:
+  + one 2mm cube has a unique off-centre boundary witness 0.003s
+  + edge and corner distances use closed-form Euclidean box oracle 0.001s
+  + adjacent equal labels remove internal faces; distinct labels retain both zero-distance ties 0.001s
+  + rotation translation and anisotropic scale retain world-mm metric 0.001s
+  + shear uses distance to the oblique plane and complete inverse-affine search bounds 0.001s
+  + no labels, outside radius, huge finite points and invalid requests are explicit 0.003s
+  + budget and cancellation refuse partial answers 0.001s
+  + nearly collapsed affine faces are refused rather than inaccurately measured 0.001s
+  + inclusive non-binary affine radius exposes its arithmetic envelope 0.001s
+  + residual bound encloses a correct inverse and refuses an inaccurate one 0.000s
+  + scale-aware envelope includes the independent 77-ulp plane-distance counterexample 0.008s
+  + normal image geometry has negligible envelopes; unrepresentable placement refuses 0.004s
+  + inverse-dot cancellation cannot drop a translated exact-interface candidate 0.001s
+  + rounded corner-edge distance ambiguity refuses a false coordinate guarantee 0.001s
+  + exact symmetric nearest-face ambiguity is explicitly refused 0.001s
+  + typed boundary queries require exact atlas frame ownership 0.001s
+[info] Passed: Total 100, Failed 0, Errors 0, Passed 100
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-iu9667rk/completed
+[[32msuccess[0m] elapsed: 15 s
+[0J[sbt-warm] atlasJS/test: exit 0 in 15.2s

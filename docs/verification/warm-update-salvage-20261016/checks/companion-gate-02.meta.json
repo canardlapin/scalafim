@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T12:35:31.225400+00:00",
+  "finished_utc": "2026-10-16T12:35:37.514321+00:00",
+  "duration_seconds": 6.288778,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fmriWorkflowJVM/testOnly scalafim.fmri.workflow.FirstLevelCompanionReviewJvmSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/companion-gate-02.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 797
+}

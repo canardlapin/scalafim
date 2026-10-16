@@ -1,0 +1,131 @@
+[info] compiling 58 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.184s
+  + lazy frame sources preserve exact provider grid failures 0.003s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.024s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.02s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.042s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.004s
+  + linked view policies synchronize only declared state 0.003s
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.004s
+  + panel fitting preserves physical slice aspect on a non-square device 0.002s
+  + orthogonal layouts support checked row and column arrangements 0.001s
+  + heterogeneous layers sample in world space and retain draw order 0.002s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.002s
+  + crosshairs and orientation labels are explicit removable decorations 0.003s
+  + left-right convention changes labels and raster orientation together 0.003s
+  + viewer models reject empty and duplicate layer sets 0.001s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.005s
+  + a world-aligned layer in another world is rejected 0.002s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.008s
+  + a pullback layer must map the reference frame to its own frame 0.004s
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.001s
+  + threshold bands hide only their strict interior and disable explicitly 0.001s
+  + ramps interpolate every RGBA channel 0.0s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.002s
+  + label and mask colorizers keep missing data transparent by default 0.001s
+  + layer identifiers and opacities reject invalid states 0.001s
+scalafim.image.view.ViewerModelUpdateSuite:
+  + partial reorder preserves unmentioned layers and rejects unknown/duplicate ids 0.002s
+  + reorder changes compositing sequence while every unchanged raster stays cached 0.004s
+  + typed replacement changes pixels without stale color-bound sample reuse 0.003s
+  + session validation refuses unsupported presentation rather than silently dropping it 0.001s
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.0s
+  + panel picking is an exact root-npc to world-space roundtrip 0.004s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.0s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.004s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.006s
+  + timepoint actions drive temporal layers while static overlays persist 0.003s
+  + models reject temporal layers with incompatible frame counts 0.001s
+  + resize changes only device layout and reduction is deterministic 0.003s
+scalafim.image.view.AdaptiveLayoutSuite:
+  + adaptive resize maximizes physical image area among admitted arrangements with fixed pixel margins 0.014s
+  + adaptive portrait and wide docks improve on the former L fallback 0.001s
+  + every focused plane fits the whole inset viewport without stretching on resize 0.003s
+  + focus renders and samples only the selected plane and pointer actions cannot target hidden planes 0.007s
+  + tiny viewports remain finite while invalid spacing is rejected 0.002s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.002s
+  + a typed point sets the cursor only when its frame is the reference frame 0.001s
+  + a point in another world reaches the cursor through a typed link 0.006s
+  + cursor actions and states cannot replay into an equally shaped different world 0.001s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.001s
+[info] Passed: Total 47, Failed 0, Errors 0, Passed 47
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-qjsx4t38/completed
+[[32msuccess[0m] elapsed: 21 s
+[0J[sbt-warm] imageViewJVM/test: exit 0 in 21.0s
+[info] compiling 58 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/image-view/js/target/scala-3.7.4/scalafim-image-view-test-fastopt
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.001s
+  + threshold bands hide only their strict interior and disable explicitly 0.000s
+  + ramps interpolate every RGBA channel 0.000s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.001s
+  + label and mask colorizers keep missing data transparent by default 0.000s
+  + layer identifiers and opacities reject invalid states 0.000s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.005s
+  + a world-aligned layer in another world is rejected 0.001s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.003s
+  + a pullback layer must map the reference frame to its own frame 0.001s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.000s
+  + a typed point sets the cursor only when its frame is the reference frame 0.000s
+  + a point in another world reaches the cursor through a typed link 0.001s
+  + cursor actions and states cannot replay into an equally shaped different world 0.002s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.002s
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.009s
+  + panel fitting preserves physical slice aspect on a non-square device 0.002s
+  + orthogonal layouts support checked row and column arrangements 0.001s
+  + heterogeneous layers sample in world space and retain draw order 0.002s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.002s
+  + crosshairs and orientation labels are explicit removable decorations 0.002s
+  + left-right convention changes labels and raster orientation together 0.002s
+  + viewer models reject empty and duplicate layer sets 0.000s
+scalafim.image.view.AdaptiveLayoutSuite:
+  + adaptive resize maximizes physical image area among admitted arrangements with fixed pixel margins 0.004s
+  + adaptive portrait and wide docks improve on the former L fallback 0.002s
+  + every focused plane fits the whole inset viewport without stretching on resize 0.003s
+  + focus renders and samples only the selected plane and pointer actions cannot target hidden planes 0.013s
+  + tiny viewports remain finite while invalid spacing is rejected 0.000s
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.000s
+  + panel picking is an exact root-npc to world-space roundtrip 0.002s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.000s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.001s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.003s
+  + timepoint actions drive temporal layers while static overlays persist 0.003s
+  + models reject temporal layers with incompatible frame counts 0.001s
+  + resize changes only device layout and reduction is deterministic 0.002s
+scalafim.image.view.ViewerModelUpdateSuite:
+  + partial reorder preserves unmentioned layers and rejects unknown/duplicate ids 0.001s
+  + reorder changes compositing sequence while every unchanged raster stays cached 0.004s
+  + typed replacement changes pixels without stale color-bound sample reuse 0.003s
+  + session validation refuses unsupported presentation rather than silently dropping it 0.000s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.003s
+  + lazy frame sources preserve exact provider grid failures 0.001s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.001s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.007s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.004s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.002s
+  + linked view policies synchronize only declared state 0.001s
+[info] Passed: Total 47, Failed 0, Errors 0, Passed 47
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-13fdz47k/completed
+[[32msuccess[0m] elapsed: 20 s
+[0J[sbt-warm] imageViewJS/test: exit 0 in 20.0s

@@ -1,0 +1,77 @@
+[
+  {
+    "path": "boundary-gate-01.txt",
+    "bytes": 1094,
+    "sha256": "a9da68e6834a3ffe0ab79ef63d42ea32befd0180835def4bd84a50c9dd9efaad"
+  },
+  {
+    "path": "boundary-gate-02.txt",
+    "bytes": 24603,
+    "sha256": "81a59dec424ca092d0fc583eec0f4e9d1080050c09116a78ddecc1b8c822c7cd"
+  },
+  {
+    "path": "cache-gate-01.txt",
+    "bytes": 720,
+    "sha256": "4d28f63722f0529e9057f4521e2dc7b807d137e75435183425f5ed4250dbaf4c"
+  },
+  {
+    "path": "cache-gate-02.txt",
+    "bytes": 17324,
+    "sha256": "5f42d793b7d7be58bfc0a16ba843445fc1b24358a9ec4a745d0aca995651bf16"
+  },
+  {
+    "path": "cache-gate-03.txt",
+    "bytes": 11948,
+    "sha256": "f3e5ff939450b33cc5fcccab27a15e3a4d8b8dd64ddede8362659895d682576f"
+  },
+  {
+    "path": "companion-gate-01.txt",
+    "bytes": 8101,
+    "sha256": "7851127afb8875c0ed95c3ecf0ece91b7651e02d158bcec2b2c49fa0cd98d310"
+  },
+  {
+    "path": "companion-gate-02.txt",
+    "bytes": 797,
+    "sha256": "dbd5aebccad35fd7ef1030864529ad9743ff312bbaf8ecd87f34177e202e7ab8"
+  },
+  {
+    "path": "deferred-gate-01.txt",
+    "bytes": 7324,
+    "sha256": "5b3907ad09cc6ef6628d88726576313d3732a3589245840e0f084876a2bca349"
+  },
+  {
+    "path": "deferred-gate-02.txt",
+    "bytes": 9761,
+    "sha256": "5438952cca3ba48d96595431432ef9605f5081f6e222eeeb10883571233de446"
+  },
+  {
+    "path": "layout-gate-01.txt",
+    "bytes": 10038,
+    "sha256": "1e064231cf7626d4c35d825104ce4f4699e2097e20a95ee1591b8c8d0f3728e1"
+  },
+  {
+    "path": "morphometry-gate-01.txt",
+    "bytes": 5527,
+    "sha256": "33f71342a4bca495cbda9eb0e5f314ab32c9a9ff3d14515f5b68cb6f71923f2f"
+  },
+  {
+    "path": "recovery-compile-01.txt",
+    "bytes": 16473,
+    "sha256": "52d2f303d9a37981692ab14b5749963d27ea5657b86274338b25698c7d9209ca"
+  },
+  {
+    "path": "source-rows-gate-01.txt",
+    "bytes": 59222,
+    "sha256": "37d03fb5706685feeb9e0f967073c7f3a460265ca0271934ee7c5b227cb3a314"
+  },
+  {
+    "path": "source-rows-gate-02.txt",
+    "bytes": 153510,
+    "sha256": "2629dafbe7330f71e3395cab1af30338ac03f82be6f5d1f12d527394ab89d3a6"
+  },
+  {
+    "path": "tables-sampling-gate-01.txt",
+    "bytes": 7708,
+    "sha256": "93b2208b2c52036cfc3f4bd4aab28980e5261e794f8ef43853f62ebaa27d7fb9"
+  }
+]

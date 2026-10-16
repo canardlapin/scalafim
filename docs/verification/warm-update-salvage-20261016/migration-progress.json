@@ -43,6 +43,57 @@
         "JS": 3
       },
       "log": "morphometry-gate-01.log"
+    },
+    {
+      "sha": "40086dc1f1a579ad961f6aff1859363610eac583",
+      "behavior": "bounded atlas boundary queries retaining typed grid ownership",
+      "checks": {
+        "JVM": 146,
+        "JS": 100
+      },
+      "logs": [
+        "boundary-gate-02.log"
+      ]
+    },
+    {
+      "sha": "b664cc576cc1a842e1342de25b02b01f43e402f5",
+      "behavior": "explicit run sampling and selected companion table binding",
+      "checks": {
+        "JVM": 37,
+        "JS": 32
+      },
+      "logs": [
+        "tables-sampling-gate-01.log"
+      ]
+    },
+    {
+      "sha": "23c135d0c6812eeb2b1a8aa612f51478a444533d",
+      "behavior": "event source provenance, run-scoped trial identity, signed-onset responses",
+      "checks": {
+        "hrfJVM": 402,
+        "hrfJS": 402,
+        "designJVM": 563,
+        "designJS": 562,
+        "profileIdentityJVM": 8,
+        "profileIdentityJS": 8
+      },
+      "logs": [
+        "source-rows-gate-02.log",
+        "recovery-compile-01.log"
+      ]
+    },
+    {
+      "sha": "af7679d3095ac150d1386c7cc4fc337f6073dd34",
+      "behavior": "deferred response access with checked grid identity and first-level dataset preview",
+      "checks": {
+        "workflowJVM": 39,
+        "workflowJS": 32,
+        "deferredSourceJVM": 4,
+        "deferredSourceJS": 4
+      },
+      "logs": [
+        "deferred-gate-02.log"
+      ]
     }
   ],
   "publishedToMain": false,
@@ -53,12 +104,24 @@
     "log": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/main-compatibility-03.log"
   },
   "remaining": [
-    "atlas boundary port in verification",
-    "first-level tables and sampling declarations in verification",
-    "response support and event provenance must integrate current event scaling and derived-row semantics",
-    "typed image/spatial consumer migration",
+    "response-support policy integrating current event scaling and derived-row semantics",
+    "study spatial-support validation and timing metadata",
+    "typed image/spatial consumer migration including persisted voxel index ordering",
     "surface update transactions and geometry scene migration",
     "full consumer acceptance and touched native lanes",
-    "land provider behavior and repin exact qualified consumer"
-  ]
+    "land provider behavior on main and repin exact qualified consumer"
+  ],
+  "validatedSourceHead": "af7679d3095ac150d1386c7cc4fc337f6073dd34",
+  "compileAll": {
+    "result": "pass",
+    "platforms": [
+      "JVM",
+      "Scala.js"
+    ],
+    "warnings": 0,
+    "log": "checks/recovery-compile-01.txt",
+    "scope": "portable aggregate; native JavaFX excluded by build"
+  },
+  "checkpointBranch": "recovery/plsneuro-main-20261016",
+  "evidenceCaution": "Logs bind to the listed source changes. source-rows-gate-02 completed HRF/design tests then hit a downstream pattern-arity compilation error; recovery-compile-01 verifies that subsequent repair and all portable compilation. Failed attempts are retained."
 }

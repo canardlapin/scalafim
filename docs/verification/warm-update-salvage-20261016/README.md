@@ -6,6 +6,10 @@ calls APIs absent from current main. The right destination is a set of reviewed
 behavioral ports onto main, followed by a verified consumer repin. A whole-branch
 merge would restore obsolete architecture alongside useful missing behavior.
 
+Implementation is in progress on `recovery/plsneuro-main-20261016`. See
+[migration-progress.json](migration-progress.json) for local commits and current
+verification. The source comparisons below remain tied to the pinned baseline.
+
 ## Examined revisions and scope
 
 | Input | Exact revision |
@@ -65,6 +69,26 @@ behavioral compatibility. The final gate must compile and exercise the actual
 consumer with one exact provider graph, remove patches already integrated
 upstream, retain unresolved patch provenance, and update the provider contract
 and runtime expectation together.
+
+## Voxel ordering is a consumer migration boundary
+
+The old branch uses first-axis-fastest voxel ordinals (`x + dx*y + dx*dy*z`).
+Main uses canonical last-axis-fastest ordinals (`(x*dy + y)*dz + z`), introduced
+by `50f3f14eb` on August 23. NIfTI storage remains first-axis-fastest; current
+`NiftiResponseBlockSource` translates through `NiftiReadPlan.fromCanonicalVoxels`.
+For a 2 by 3 by 4 image, ordinal 1 denotes `(1,0,0)` in the old API and `(0,0,1)`
+in the current API. These are different physical voxels.
+
+PLS Neuro `FirstLevelFeatures` currently emits `grid-v1` identities containing
+space, dimensions and affine, without an ordinal-order discriminator. Its saved
+result and participant-inspection readers reconstruct geometry from those fields.
+Replacing old image class names while retaining these ordinals could silently
+move values. Consumer adoption therefore needs an explicit index/format migration,
+asymmetric multidimensional fixtures, and reopening of existing saved results.
+No such migration has yet been admitted.
+
+This predates the October 16 ecosystem-unification branch. Current unification
+changes eventual module ownership; it did not cause the pinned-main failures.
 
 ## Recommended recovery sequence
 
