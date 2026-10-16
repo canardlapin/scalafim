@@ -3,6 +3,7 @@ package scalafim.surface.view.javafx
 import java.nio.{ByteBuffer, ByteOrder, IntBuffer}
 import javafx.geometry.Rectangle2D
 import javafx.beans.InvalidationListener
+import javafx.collections.ArrayChangeListener
 import javafx.scene.{AmbientLight, Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
 import javafx.scene.image.{PixelBuffer, PixelFormat, WritableImage}
 import javafx.scene.paint.{Color, PhongMaterial}
@@ -176,27 +177,60 @@ final class JavaFxFaceAtlas private[javafx] (
     val blue = (channel(8) * alpha + 127) / 255
     (alpha << 24) | (red << 16) | (green << 8) | blue
 
-/** Read the actual native coordinates in one bulk transfer before comparing primitive values.
-  * A retained snapshot is scratch space only: callers can mutate the public TriangleMesh, so
-  * every comparison must refresh it and must never infer equality from a previous upload.
+/** Tracks every observable native mutation. A preparation captures an owned CPU snapshot on
+  * the FX thread; publication may trust that snapshot only while this exact revision survives.
   */
 private[javafx] final class JavaFxTextureCoordinates(values: _root_.javafx.collections.ObservableFloatArray):
-  private var snapshot = Array.emptyFloatArray
+  private val token = new JavaFxCoordinateToken
+  private var revision = 0L
+  private var cached: Option[JavaFxCoordinateSnapshot] = None
+  private var scratch = Array.emptyFloatArray
+  private val changes: ArrayChangeListener[_root_.javafx.collections.ObservableFloatArray] =
+    new ArrayChangeListener[_root_.javafx.collections.ObservableFloatArray]:
+      override def onChanged(array: _root_.javafx.collections.ObservableFloatArray,
+          sizeChanged: Boolean, from: Int, to: Int): Unit =
+        revision += 1
+        cached = None
+  values.addListener(changes)
 
+  /** Copies once per observable revision. The resulting snapshot has no native references and is
+    * safe to retain on a worker while the listener invalidates any later FX-side mutation.
+    */
+  def capture(): JavaFxCoordinateSnapshot = cached.getOrElse:
+    val count = values.size()
+    val copied = new Array[Float](count)
+    values.toArray(copied)
+    val next = new JavaFxCoordinateSnapshot(token, revision, copied)
+    cached = Some(next)
+    next
+
+  /** Fall back to an actual native bulk read whenever preparation no longer proves freshness. */
   def install(next: Array[Float]): Long =
     val count = values.size()
     var same = count == next.length
     if same then
-      if snapshot.length != count then snapshot = new Array[Float](count)
-      values.toArray(snapshot)
+      if scratch.length != count then scratch = new Array[Float](count)
+      values.toArray(scratch)
       var index = 0
       while index < count && same do
-        same = snapshot(index) == next(index)
+        same = scratch(index) == next(index)
         index += 1
     if same then 0L
     else
       values.setAll(next, 0, next.length)
       next.length.toLong * 4L
+
+  /** The prepared payload owns its coordinates. Only its exact payload identity, chunk token and
+    * unchanged native revision admit the worker's primitive comparison; all stale inputs bulk-read.
+    */
+  def installPrepared(next: Array[Float], prepared: JavaFxPreparedCoordinateUpdate): Long =
+    if prepared.isExactPayload(next) && (prepared.snapshot.token eq token) &&
+        prepared.snapshot.revision == revision then
+      if prepared.sameAtCapture then 0L
+      else
+        values.setAll(next, 0, next.length)
+        next.length.toLong * 4L
+    else install(next)
 
 final case class JavaFxSurfaceChunk(
   surface: SurfaceId,
@@ -415,7 +449,8 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       c.atlas.width, c.atlas.height, c.atlas.tileSize))
 
   private[javafx] def colorPreparationBasis(owner: JavaFxColorPreparationToken): JavaFxColorPreparationBasis =
-    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts, config)
+    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts,
+      chunks.map(_.textureCoordinates.capture()), config)
 
   private def validateColorGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
     if next.meshes.length != plan.meshes.length then
@@ -454,7 +489,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       var bytes = 0L
       var pixels = 0L
       chunks.zip(prepared.atlases).foreach: (chunk, update) =>
-        bytes += chunk.textureCoordinates.install(update.coordinates)
+        bytes += chunk.textureCoordinates.installPrepared(update.coordinates, update.coordinateUpdate)
         val region = chunk.atlas.installPrepared(update.pixels)
         if commit then chunk.atlas.commit(region)
         pixels += update.pixels.length

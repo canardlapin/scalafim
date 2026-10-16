@@ -7,7 +7,46 @@ private[javafx] final case class JavaFxAtlasPixelLayout(
   surface: SurfaceId, faceStart: Int, faceCount: Int, width: Int, height: Int, tileSize: Int
 )
 private[javafx] final class JavaFxColorPreparationToken
-private[javafx] final case class JavaFxPreparedAtlasUpdate(pixels: Array[Int], coordinates: Array[Float])
+
+/** Pure capability for one chunk's native coordinate buffer; it carries no JavaFX owner. */
+private[javafx] final class JavaFxCoordinateToken
+
+/** Immutable, CPU-only image of one native coordinate buffer at a mutation revision. */
+private[javafx] final class JavaFxCoordinateSnapshot private[javafx] (
+  val token: JavaFxCoordinateToken,
+  val revision: Long,
+  private val copied: Array[Float]
+):
+  def samePrimitiveValues(next: Array[Float]): Boolean =
+    if copied.length != next.length then false
+    else
+      var index = 0
+      while index < copied.length do
+        if copied(index) != next(index) then return false
+        index += 1
+      true
+
+/** Coordinates are copied into this payload before crossing to the worker. The private payload
+  * identity binds publication to the exact worker result without another FX-thread scan.
+  */
+private[javafx] final class JavaFxPreparedCoordinateUpdate private[javafx] (
+  val snapshot: JavaFxCoordinateSnapshot,
+  private val payload: Array[Float],
+  val sameAtCapture: Boolean
+):
+  def coordinates: Array[Float] = payload
+  def isExactPayload(next: Array[Float]): Boolean = next.eq(payload)
+
+private[javafx] object JavaFxPreparedCoordinateUpdate:
+  def owned(snapshot: JavaFxCoordinateSnapshot, workerCoordinates: Array[Float]): JavaFxPreparedCoordinateUpdate =
+    val payload = workerCoordinates.clone()
+    new JavaFxPreparedCoordinateUpdate(snapshot, payload, snapshot.samePrimitiveValues(payload))
+
+private[javafx] final class JavaFxPreparedAtlasUpdate private[javafx] (
+  val pixels: Array[Int],
+  val coordinateUpdate: JavaFxPreparedCoordinateUpdate
+):
+  def coordinates: Array[Float] = coordinateUpdate.coordinates
 
 /** Private arrays are owned by this result and never changed after preparation. */
 final class JavaFxPreparedColorUpdate private[javafx] (
@@ -27,6 +66,7 @@ final class JavaFxColorPreparationBasis private[javafx] (
   private val owner: JavaFxColorPreparationToken,
   private val meshes: Vector[SurfaceMeshPacket],
   private val layouts: Vector[JavaFxAtlasPixelLayout],
+  private val coordinateSnapshots: Vector[JavaFxCoordinateSnapshot],
   private val config: JavaFxAtlasConfig
 ):
   def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
@@ -41,10 +81,13 @@ final class JavaFxColorPreparationBasis private[javafx] (
           java.util.Arrays.equals(a.positions.unsafeArray, b.positions.unsafeArray) &&
           java.util.Arrays.equals(a.normals.unsafeArray, b.normals.unsafeArray)) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("geometry changed; prepare again from the mounted scene"))
+    if coordinateSnapshots.length != layouts.length then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("native coordinate snapshots no longer match atlas chunks"))
     JavaFxSurfaceProbe.validatePlan(plan, JavaFxSurfaceProgram.materialMode(plan), config).map: colors =>
-      val prepared = layouts.map: layout =>
+      val prepared = layouts.zip(coordinateSnapshots).map: (layout, snapshot) =>
         val mesh = plan.meshes.find(_.surface == layout.surface).get
-        JavaFxAtlasPixels.prepare(layout, mesh.indices, colors(layout.surface))
+        val raw = JavaFxAtlasPixels.prepare(layout, mesh.indices, colors(layout.surface))
+        new JavaFxPreparedAtlasUpdate(raw.pixels, JavaFxPreparedCoordinateUpdate.owned(snapshot, raw.coordinates))
       new JavaFxPreparedColorUpdate(owner, plan, layouts, prepared)
 
 private[javafx] object JavaFxColorPreparationBasis:
@@ -57,8 +100,10 @@ private[javafx] object JavaFxColorPreparationBasis:
       a.fragmentSurfaces == b.fragmentSurfaces && a.colorPipeline == b.colorPipeline &&
       a.surfaceOpacities == b.surfaceOpacities && a.surfaceBase == b.surfaceBase
 
+private[javafx] final case class JavaFxAtlasPixels(pixels: Array[Int], coordinates: Array[Float])
+
 private[javafx] object JavaFxAtlasPixels:
-  def prepare(layout: JavaFxAtlasPixelLayout, indices: IntBufferView, colors: Array[Int]): JavaFxPreparedAtlasUpdate =
+  def prepare(layout: JavaFxAtlasPixelLayout, indices: IntBufferView, colors: Array[Int]): JavaFxAtlasPixels =
     val pixels = new Array[Int](layout.width * layout.height)
     val coordinates = new Array[Float](layout.faceCount * 6)
     val columns = layout.width / layout.tileSize
@@ -98,7 +143,7 @@ private[javafx] object JavaFxAtlasPixels:
         coordinates(offset + 2) = right; coordinates(offset + 3) = bottom
         coordinates(offset + 4) = left; coordinates(offset + 5) = top
       face += 1
-    JavaFxPreparedAtlasUpdate(pixels, coordinates)
+    JavaFxAtlasPixels(pixels, coordinates)
 
   private def interpolate(a: Int, b: Int, c: Int, wa: Double, wb: Double, wc: Double): Int =
     def channel(shift: Int): Int =
