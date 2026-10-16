@@ -44,7 +44,13 @@
     "sourceTitlesTagsPrioritiesAndBodiesMatch": true,
     "readyTaskIds": [
       "eco-u0-ownership"
-    ]
+    ],
+    "scope": "Initial frozen import; later planning reconciliation is separate"
   },
-  "freshGithubClone": "pending publication"
+  "freshGithubClone": {
+    "receipt": "fresh-github-clone.json",
+    "head": "5cb67982f299e597b27e103f0849ce424cfc72ca",
+    "allChecksPassed": true,
+    "gitStatusClean": true
+  }
 }

@@ -31,7 +31,7 @@ records the restored tracker and modularization epic.
 Install Git, JDK 21 (the compiler targets Java 17), sbt 1.11.7, Node.js 22 or
 newer, Python 3.11 or newer, and a compatible current Mote CLI. With Rust/Cargo
 installed, Mote can be installed with
-`cargo install --git https://github.com/bbuchsbaum/mote --locked`.
+`cargo install --git https://github.com/bbuchsbaum/mote --rev 4ae95ba97cfef09efa537c2eb21433d36b4ba7be --locked`.
 Scala 3.7.4 and build plugins are resolved by sbt. GitHub source dependencies
 and artifact repositories require network access on the first build.
 

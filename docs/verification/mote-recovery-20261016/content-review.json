@@ -1,6 +1,6 @@
 {
-  "scope": "new untracked operations, native-generated journals, plans and recovery evidence at review time",
-  "fileCount": 1893,
+  "scope": "all recovery changes since 86b3acf1e, including concurrent planning operations at final staging cutoff",
+  "fileCount": 2036,
   "patterns": [
     "private-key",
     "github-token",
@@ -10,6 +10,10 @@
   ],
   "findings": [],
   "files": {
+    "docs/development-machine-handoff.md": {
+      "bytes": 9384,
+      "sha256": "a8fa4b027cbbae120fa3a02e4c4acbfc71a31584fad4971ccdb04e1df7b1d869"
+    },
     "docs/plans/ecosystem-unification-mote.json": {
       "bytes": 67775,
       "sha256": "87ee1150888631f6ab41d7f0becdbd9ab51cf29cba5e92e237606713bd3b76a1"
@@ -18,9 +22,13 @@
       "bytes": 40944,
       "sha256": "e714a197ca83e78c2f7d13c5f691afee445c12fcb5f16707d000b162121546a8"
     },
+    "docs/verification/development-machine-20261015/verify-custody.py": {
+      "bytes": 3323,
+      "sha256": "9c17629ee41401e37714be65edaa99526ec683ad91eeb6a80f4a5e3b5d8c36f0"
+    },
     "docs/verification/mote-recovery-20261016/README.md": {
-      "bytes": 7717,
-      "sha256": "cb288c2b3bff27d4a82e53fed7ff31a3a1dcd6fa008c493fa6c44232da7737bd"
+      "bytes": 8597,
+      "sha256": "9350e366e4113315ac6ba5e4f84419587705459ab9bb7a24713ac72f7dfeab56"
     },
     "docs/verification/mote-recovery-20261016/canonical-epic-import.log.meta.json": {
       "bytes": 642,
@@ -30,6 +38,10 @@
       "bytes": 83958,
       "sha256": "f6f27e106a167043c8f93ec6c59d9e906820a4b30352a5cfe0777587ed74732b"
     },
+    "docs/verification/mote-recovery-20261016/completion-operations.json": {
+      "bytes": 1579,
+      "sha256": "5fb11a73dd15ac8eb84cd145ac48e0063e55617c0c12702224d86e6dbe2988b9"
+    },
     "docs/verification/mote-recovery-20261016/epic-graph.json": {
       "bytes": 23474,
       "sha256": "f4f74ab2256011d014db9982d2382d82c48f34e72db41a3aa5897b639172c25f"
@@ -37,6 +49,10 @@
     "docs/verification/mote-recovery-20261016/epic-plan-input-sha256.json": {
       "bytes": 156,
       "sha256": "71d3fca17645611ff7ae32a36ea3635e2bded48425eb47b126562f3a14fc6d1c"
+    },
+    "docs/verification/mote-recovery-20261016/fresh-github-clone.json": {
+      "bytes": 3086,
+      "sha256": "c57ae606fa2293177f21c7e018277ee781cb40544132f4fdbd89c2ab0105e273"
     },
     "docs/verification/mote-recovery-20261016/import-input.json": {
       "bytes": 44663,
@@ -78,6 +94,10 @@
       "bytes": 3244,
       "sha256": "0a45985ec138929a3a1dafb266a1afe35386fee44ffe338ebd5502747c92f311"
     },
+    "docs/verification/mote-recovery-20261016/reservation-release.json": {
+      "bytes": 795,
+      "sha256": "454ec3116651b19814225556765d588084fea3b02a459edf2b86c2e23e4454ce"
+    },
     "docs/verification/mote-recovery-20261016/restore-receipt.json": {
       "bytes": 132127,
       "sha256": "15f3267354707a3b59badd3b69c48eb63f92abc67746aab7483957c00a0ef61e"
@@ -99,8 +119,8 @@
       "sha256": "cf29ef1b06707c6ce508f6897e596a055b663e04d1ce8b25d566149dca237cbb"
     },
     "docs/verification/mote-recovery-20261016/verification.json": {
-      "bytes": 1049,
-      "sha256": "f77208385ac8563e0ae3684d767bfbbf53745b8a5b009a22df06f4d310a8e90d"
+      "bytes": 1268,
+      "sha256": "12e28ee623f770a6bae538b3e20efb3eeb3de29ce2d45c3b8354bae50cab4718"
     },
     "docs/verification/mote-recovery-20261016/warm-update-branch-audit.json": {
       "bytes": 2436,

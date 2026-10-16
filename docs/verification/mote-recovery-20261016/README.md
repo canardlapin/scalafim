@@ -134,3 +134,19 @@ main lacks its `SurfaceLayerTransaction` API. The existing recovery ledger calls
 for a bounded current-base port and native correctness/performance qualification,
 not a blanket merge of its older dependency and API tree. See
 `warm-update-branch-audit.json`. No implementation or fresh native test is claimed.
+
+## GitHub clone and completion
+
+A new independent GitHub clone of `5cb67982f299e597b27e103f0849ce424cfc72ca`
+passed authority validation, doctor, fsck, ready, ls, epic/graph reads and the
+historical byte-custody verifier. No inherited `MOTE_STORE` or `MOTE_ACTOR` was
+used; the clone stayed clean after setting only its ignored local identity.
+See `fresh-github-clone.json`. Its 46-item epic reflects concurrent planning;
+dependency reconciliation was still in progress, so that snapshot's ready list
+is not a final plan-acceptance result.
+
+The recovery issue was completed through `mote done`, and both recovery
+reservations were released: `rv-01M5265P27AJAS67KN0ZZJVS85` and
+`rv-01M527472APFQGNM7JTYPHTV12`. All six reserved paths were checked for remaining
+leases by this actor; see `reservation-release.json`. The final publication also
+includes these completion operations.
