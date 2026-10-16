@@ -533,5 +533,25 @@
     "path": "unresolved-volume-gate-02.txt",
     "bytes": 1954,
     "sha256": "1a6a981b2265aa362c62f47d4a1224dba66303dc7cc4f0ad9156b07e62d504bb"
+  },
+  {
+    "path": "plot-semantic-recovery-01.meta.json",
+    "bytes": 749,
+    "sha256": "7698b9a9392b8c078af73e709e1adaabc0dd5064b6baa7a8bc22929ea558e26c"
+  },
+  {
+    "path": "plot-semantic-recovery-01.txt.gz",
+    "bytes": 2042,
+    "sha256": "b2b7158420175a1b2ed23b291243fe918b8773b909ff0c26a61306a2077642b5"
+  },
+  {
+    "path": "plot-semantic-recovery-02.meta.json",
+    "bytes": 747,
+    "sha256": "43dbfa2d80ebcef2f5bbd18a922d5a68ad643a1daa742b5e92c7f32090d737ed"
+  },
+  {
+    "path": "plot-semantic-recovery-02.txt",
+    "bytes": 2181,
+    "sha256": "bb59ce9103b4843c1b2c8f73101b0072a00098e2d1792d3b8bca3c6a361cc074"
   }
 ]

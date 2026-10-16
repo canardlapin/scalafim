@@ -10,6 +10,10 @@ Implementation is in progress through [PR #62](https://github.com/canardlapin/sc
 
 PLSNeuro fresh-checkout `sbt check` passed at `17cbea4e`; strict native acceptance stopped at a stale schema assertion and remains unqualified. A separate headless diagnostic passed 83/89 cases; its six failures are being addressed without weakening acceptance. Follow-up canonical/legacy storage, eleven-provider/one-Gale runtime provenance, spatial support and participant measurement checks pass. The two real legacy result archives were authenticated and converted separately to v9 with unchanged numerical payloads and source artifacts. Full native surface/brain-view acceptance and the final canonical-main pin remain pending. See [migration-progress.json](migration-progress.json) and [continuation.md]; source comparisons below remain tied to the original pinned baseline.
 
+Latest source `5a7c4566c61a361dfa3363f03822cfa3051f2c58` restores full design-column identities, raw values, original scan rows, event provenance and response-basis/readout semantics in plot descriptions. The metadata comes from the same immutable page or selected curves used for rendering. Five dedicated tests pass on each platform; independent review found no further issue. The failed initial JavaScript expectation assumed JVM numeric string formatting and is retained. Native consumer SVG export remains a separate gate.
+
+Committed PLSNeuro `20c7f533` passed fresh `sbt check`; strict native stopped at the missing design metadata after 166 passes. Independent continuation passed 23 of 29 remaining cases. Its six failures comprise a second provider metadata loss, three synthetic geometry/ordinal fixture mismatches and two unavailable OS focus checks. The repairs do not relax production legacy-world refusal or native focus assertions.
+
 ## Examined revisions and scope
 
 | Input | Exact revision |

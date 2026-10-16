@@ -259,6 +259,18 @@
         "checks/numeric-companion-recovery-03.txt"
       ],
       "review": "Independent review found duplicate-acquisition edge; final guard closes it under both grouping policies. Test fixture corrections and failed attempts retained."
+    },
+    {
+      "sha": "5a7c4566c61a361dfa3363f03822cfa3051f2c58",
+      "behavior": "Snapshot-bound full design/trace/event and response-basis metadata restored without changing rendered page, fixed axes, or validation guards",
+      "checks": {
+        "JVM": 5,
+        "JS": 5
+      },
+      "logs": [
+        "checks/plot-semantic-recovery-02.txt"
+      ],
+      "review": "Independent review found no material issue in either provider diff. Initial JavaScript fixture numeric-string mismatch retained; expected formatting corrected. Native SVG consumer acceptance remains required."
     }
   ],
   "publishedToMain": false,
@@ -292,23 +304,28 @@
   },
   "checkpointBranch": "recovery/plsneuro-main-20261016",
   "evidenceCaution": "Required hosted gates remain pending. Local tests are engineering evidence, not GPU interpolation, scientific admission or release qualification.",
-  "lastPublishedCheckpoint": "dca597f8d740ab05e266da38e9622a2957688ebd",
+  "lastPublishedCheckpoint": "4840db93c7fa37e1686111f370c1681387873b52",
   "pullRequest": "https://github.com/canardlapin/scalafim/pull/62",
   "dependencyDirection": "PLSNeuro depends on ScalaFIM; ScalaFIM has no PLSNeuro source or build dependency. Recovery branch is temporary; final consumer pin must be on canonical main.",
   "withheld": [
     "Stock native affine interpolation and dense-colour refinement remain unqualified; application default uses legacy renderer",
     "Historical ReachableResponseBasis probe family assertions are archived and withheld; no production caller depends on that API. Current Gale-backed HRF family capability is a different contract."
   ],
-  "latestSourceHead": "9bc3510a3eb8f651dc54590dbc852b671089c07e",
+  "latestSourceHead": "5a7c4566c61a361dfa3363f03822cfa3051f2c58",
   "consumerCheckpoint": {
-    "commit": "17cbea4e647204967a8eb076b6ab1107ec75a64b",
-    "freshCheck": "pass",
-    "strictNative": "failed at stale schema-v5 expectation; receipt retained",
-    "diagnosticHeadless": {
-      "pass": 83,
-      "fail": 6,
+    "commit": "20c7f533c693e33ba1d6f1f67854905b98b7a7f2",
+    "freshCheck": "pass in85 seconds",
+    "strictNative": {
+      "passed": 166,
+      "failed": 1,
+      "blocked": 29,
+      "failure": "StandaloneReviewProbe missing provider SVG metadata"
+    },
+    "diagnosticRemaining": {
+      "passed": 23,
+      "failed": 6,
       "acceptance": false
     },
-    "followup": "Storage/runtime provenance, study spatial support and participant measurement checks pass. Catalog consumer check on numeric companion recovery is running. Full strict lanes and final main pin remain required."
+    "followup": "Provider design/basis metadata repaired and tested. Synthetic geometry and canonical selection test corrections reviewed. Two unchanged native focus probes failed again because OS focus was unavailable; strict lanes and final main pin remain required."
   }
 }

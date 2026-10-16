@@ -1,0 +1,27 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.design.DesignReviewGraphicsSuite:
+  + matrix semantics retain complete identities and values only for the rendered page 0.179s
+  + trace semantics retain missing samples and original source rows 0.009s
+  + event timeline semantics retain canonical current provenance 0.003s
+scalafim.fmri.design.ResponseBasisGraphicsSuite:
+  + selected basis semantics bind only selected curves while retaining full-axis readout receipts 0.07s
+  + full basis semantics enumerate every current coordinate 0.006s
+[info] Passed: Total 5, Failed 0, Errors 0, Passed 5
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-zcpn1b1r/completed
+[[32msuccess[0m] elapsed: 1 s
+[0J[sbt-warm] designJVM/testOnly scalafim.fmri.design.DesignReviewGraphicsSuite scalafim.fmri.design.ResponseBasisGraphicsSuite: exit 0 in 1.8s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/scalafim-fmri-design-test-fastopt
+scalafim.fmri.design.DesignReviewGraphicsSuite:
+  + matrix semantics retain complete identities and values only for the rendered page 0.015s
+  + trace semantics retain missing samples and original source rows 0.002s
+  + event timeline semantics retain canonical current provenance 0.001s
+scalafim.fmri.design.ResponseBasisGraphicsSuite:
+  + selected basis semantics bind only selected curves while retaining full-axis readout receipts 0.027s
+  + full basis semantics enumerate every current coordinate 0.003s
+[info] Passed: Total 5, Failed 0, Errors 0, Passed 5
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-7ojshnre/completed
+[[32msuccess[0m] elapsed: 3 s
+[0J[sbt-warm] designJS/testOnly scalafim.fmri.design.DesignReviewGraphicsSuite scalafim.fmri.design.ResponseBasisGraphicsSuite: exit 0 in 3.4s
