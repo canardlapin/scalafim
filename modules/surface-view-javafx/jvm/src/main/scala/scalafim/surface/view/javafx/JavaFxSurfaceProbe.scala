@@ -3,7 +3,7 @@ package scalafim.surface.view.javafx
 import java.nio.{ByteBuffer, ByteOrder, IntBuffer}
 import javafx.geometry.Rectangle2D
 import javafx.beans.InvalidationListener
-import javafx.scene.{Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
+import javafx.scene.{AmbientLight, Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
 import javafx.scene.image.{PixelBuffer, PixelFormat, WritableImage}
 import javafx.scene.paint.{Color, PhongMaterial}
 import javafx.scene.shape.{CullFace, MeshView, Rectangle, TriangleMesh, VertexFormat}
@@ -213,6 +213,9 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   private var viewportAntialiasing: Option[SceneAntialiasing] = None
   private var viewportWidth = 1.0
   private var viewportHeight = 1.0
+  private val unlitLights = surfaceGroups.map: (surface, _) =>
+    surface -> new AmbientLight(Color.WHITE)
+  configureNativeLighting()
 
   def camera: Camera =
     viewportCameras.headOption.getOrElse:
@@ -242,6 +245,20 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       chunks.foreach: chunk =>
         JavaFxSurfaceProbe.configureMaterial(chunk.material, chunk.atlas.image, mode, config.lightingPolicy)
       activeMaterialMode = mode
+      configureNativeLighting()
+
+  private def configureNativeLighting(): Unit =
+    val selfIlluminated = activeMaterialMode == JavaFxMaterialMode.Unlit ||
+      config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert
+    surfaceGroups.foreach: (surface, group) =>
+      val light = unlitLights(surface)
+      // An explicit ambient light suppresses JavaFX's automatic point light.
+      // Otherwise a degenerate native tangent frame can contaminate even black
+      // diffuse/specular terms with NaN before self-illumination is added. Keep
+      // the light with its mesh group: lights do not cross SubScene boundaries.
+      if selfIlluminated then
+        if !group.getChildren.contains(light) then group.getChildren.add(light)
+      else group.getChildren.remove(light)
 
   def setLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill): Unit =
     plan = plan.copy(slots = slots, viewportFit = fit)

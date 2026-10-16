@@ -14,6 +14,16 @@ Latest source `5a7c4566c61a361dfa3363f03822cfa3051f2c58` restores full design-co
 
 Committed PLSNeuro `20c7f533` passed fresh `sbt check`; strict native stopped at the missing design metadata after 166 passes. Independent continuation passed 23 of 29 remaining cases. Its six failures comprise a second provider metadata loss, three synthetic geometry/ordinal fixture mismatches and two unavailable OS focus checks. The repairs do not relax production legacy-world refusal or native focus assertions.
 
+The subsequent native color investigation found a stock JavaFX tangent-frame
+singularity exposed by valid tetrahedron vertex normals. The adapter now
+suppresses JavaFX's automatic point light only for self-illuminated mesh groups,
+with no changes to scientific geometry, normals, UVs or lighting semantics.
+JavaFX 66 tests, shared surface 279 JVM/279 JS, three native color/retention/mode
+regressions, the native image oracle and 4,144 composition picks pass. See the
+[diagnosis, controls and raw evidence](unlit-native-light/README.md).
+Consumer revalidation against this repair and canonical-main landing remain
+pending; prior PLSNeuro timing and transaction failures are retained.
+
 ## Examined revisions and scope
 
 | Input | Exact revision |
