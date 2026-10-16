@@ -54,7 +54,9 @@ final class SurfaceCompositionDocument private[view] (
         yield SurfaceCompositionInputView(saved.id, saved.viewport, saved.camera, pose, occurrences, saved.lighting, saved.clipping,
           scene.colorPipeline)
       navigation <- SurfaceCompositionState.make(inputs, cameraLinks).left.map(compositionError)
-      presentation = SurfaceCompositionPresentation.fromViewerState(state).copy(geometryPresentations = geometry)
+      presentation = if scene.revision == SurfaceDocumentRevision.V9 then
+        SurfaceCompositionPresentation.fromViewerState(state)
+      else SurfaceCompositionPresentation.fromViewerState(state).copy(geometryPresentations = geometry)
       _ <- SurfaceCompositionCompiler.compile(model, presentation, inputs).left.map(compositionError)
     yield SurfaceCompositionRestored(presentation, navigation)
 
@@ -143,6 +145,10 @@ object SurfaceCompositionCodec:
       _ <- check(views.flatMap(_.instances.map(_.id)).distinct.length == views.map(_.instances.length).sum, "duplicate instance id")
       _ <- check(links.forall(group => group.size >= 2 && group.forall(id => views.exists(_.id == id))) &&
         links.flatten.distinct.length == links.map(_.size).sum, "invalid or overlapping camera links")
+      _ <- if scene.revision == SurfaceDocumentRevision.V9 then
+        check(geometry.toMap == scene.geometryStates.map(state => state.surface -> state.presentation).toMap,
+          "outer composition geometry must equal the embedded revision 9 scene geometry")
+        else Right(())
     yield new SurfaceCompositionDocument(scene, views, links, geometry.toMap)
 
   private def vector(obj: SceneJson.Obj, key: String, length: Int): Either[SurfaceSceneError, Vector[Double]] =

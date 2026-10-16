@@ -3,6 +3,8 @@ package scalafim.surface.view
 import scalafim.surface.*
 
 class SurfaceSceneVeryInflatedSuite extends munit.FunSuite:
+  private def canonicalV8(json: String): String =
+    json.replaceAll(",\"surfaceViewpoints\":\\[\\],\"geometryStates\":.*}$", "}").replace("\"revision\":9", "\"revision\":8")
   private val leftId = SurfaceId.unsafe("left")
   private val rightId = SurfaceId.unsafe("right")
   private val canonicalKind = "\"kind\":\"veryinflated\""
@@ -14,7 +16,7 @@ class SurfaceSceneVeryInflatedSuite extends munit.FunSuite:
     val decoded = SurfaceSceneCodec.decode(encoded).toOption.get
 
     assertEquals(document.assets.map(_.kind), Vector(SurfaceKind.VeryInflated, SurfaceKind.VeryInflated))
-    assertEquals(encoded.sliding(canonicalKind.length).count(_ == canonicalKind), 2)
+    assertEquals(encoded.sliding(canonicalKind.length).count(_ == canonicalKind), 4)
     assertEquals(decoded.assets.map(_.kind), document.assets.map(_.kind))
     assertEquals(SurfaceSceneCodec.encode(decoded), encoded)
     assertEquals(decoded.restore(model, bindings).toOption, Some(state))
@@ -24,12 +26,13 @@ class SurfaceSceneVeryInflatedSuite extends munit.FunSuite:
     val encoded = SurfaceSceneCodec.encode(
       SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
     )
+    val v8 = canonicalV8(encoded)
     Vector("very_inflated", "VeryInflated", "very-inflated").foreach: spelling =>
-      val legacy = encoded.replace(canonicalKind, s"\"kind\":\"$spelling\"")
+      val legacy = v8.replace(canonicalKind, s"\"kind\":\"$spelling\"")
       assertNotEquals(legacy, encoded)
       val decoded = SurfaceSceneCodec.decode(legacy).toOption.get
       assertEquals(decoded.assets.map(_.kind), Vector(SurfaceKind.VeryInflated, SurfaceKind.VeryInflated), spelling)
-      assertEquals(SurfaceSceneCodec.encode(decoded), encoded, spelling)
+      assertEquals(SurfaceSceneCodec.encode(decoded), v8, spelling)
       assertEquals(decoded.restore(model, bindings).toOption, Some(state), spelling)
 
   test("the display kind is part of the saved surface identity: inflated and very-inflated do not substitute"):

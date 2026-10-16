@@ -12,7 +12,7 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
   test("revision 1 documents retain vertex association and their original JSON shape"):
     val (model, state, bindings, provenance) = fixture()
     val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
-    val json = SurfaceSceneCodec.encode(current).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":1").replace(",\"legends\":[]", "")
+    val json = SurfaceSceneCodec.encode(current).replaceAll(",\"surfaceViewpoints\":\\[\\],\"geometryStates\":.*}$", "}").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":9", "\"revision\":1").replace(",\"legends\":[]", "")
       .replace(",\"scalarInterpolation\":false", "")
       .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")
       .replace(",\"vertexInterpolation\":\"color\"", "")
@@ -83,11 +83,23 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
 
-    val future = encoded.replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":9")
+    val future = encoded.replace("\"revision\":9", "\"revision\":10")
     assertEquals(
       SurfaceSceneCodec.decode(future).left.toOption,
-      Some(SurfaceSceneError.UnsupportedRevision(9))
+      Some(SurfaceSceneError.UnsupportedRevision(10))
     )
+
+  test("canonical and historical revision 8 discriminators remain distinct"):
+    val (model, state, bindings, provenance) = fixture()
+    val v9 = SurfaceSceneCodec.encode(SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get)
+    val canonical = v9.replaceAll(",\"surfaceViewpoints\":\\[\\],\"geometryStates\":.*}$", "}").replace("\"revision\":9", "\"revision\":8")
+    assertEquals(SurfaceSceneCodec.decode(canonical).toOption.get.revision, SurfaceDocumentRevision.V8)
+    val historical = v9.replace("\"revision\":9", "\"revision\":8").replace(",\"framing\":\"bounds-fit\"", "")
+    val recovered = SurfaceSceneCodec.decode(historical).toOption.get
+    assertEquals(recovered.revision, SurfaceDocumentRevision.V9)
+    val hybrid = historical.dropRight(1) + ",\"colorPipeline\":\"legacy-display-bytes\"}"
+    assert(SurfaceSceneCodec.decode(hybrid).isLeft)
+    assert(SurfaceSceneCodec.decode(hybrid, SurfaceSceneReadPolicy(SurfaceUnknownFieldPolicy.Ignore)).isLeft)
 
   test("external digests and exact mesh identities are checked before state restoration"):
     val (model, state, bindings, provenance) = fixture()
@@ -254,6 +266,91 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     assert(SurfaceSceneCodec.decode(mixed).isLeft)
     assert(SurfaceSceneCodec.decode(mixed, SurfaceSceneReadPolicy(SurfaceUnknownFieldPolicy.Ignore)).isLeft)
 
+  test("actual September writer restores nondefault viewpoints and morph coordinates"):
+    val (model, expected, bindings, _) = frozenGeometryFixture()
+    val document = SurfaceSceneCodec.decode(frozenHistoricalV8).toOption.get
+    assertEquals(document.revision, SurfaceDocumentRevision.V9)
+    assertEquals(document.framing, CameraFraming.BoundsFit)
+    assertEquals(document.restore(model,bindings).toOption.get,expected)
+    val plan = SurfaceCompiler.compile(model,document.restore(model,bindings).toOption.get).toOption.get
+    assertEquals(plan.meshes.head.positions.unsafeArray.toVector, Vector(-1f,-2f,1f,-1f,4f,1f,-1f,-1f,5f))
+    assertEquals(document.surfaceViewpoints,Map(SurfaceId.unsafe("frozen-left") -> SurfaceViewpoint.Medial(CorticalHemisphere.Left)))
+    val canonical = SurfaceSceneCodec.decode(frozenCanonicalV8).toOption.get
+    assertEquals(canonical.revision,SurfaceDocumentRevision.V8)
+    val canonicalEncoded = SurfaceSceneCodec.encode(canonical)
+    assertEquals(SurfaceSceneCodec.decode(canonicalEncoded).toOption.get,canonical)
+    assert(!canonicalEncoded.contains("geometryStates") && !canonicalEncoded.contains("surfaceViewpoints"))
+
+  test("revision 9 preserves complete geometry, appearance and per-surface camera state"):
+    val (model, initial, bindings, provenance) = frozenGeometryFixture()
+    val id = model.surfaces.head.id
+    val rich = Vector(SurfaceViewerAction.SetColorPipeline(SurfaceColorPipeline.DisplaySrgbLinearLight),
+      SurfaceViewerAction.SetSurfaceOpacity(id,DisplayOpacity.unsafe(0.4)),
+      SurfaceViewerAction.SetSurfaceBase(Rgba32.unsafe(10,20,30,100)))
+      .foldLeft(initial)((s,a) => SurfaceViewer.reduce(model,s,a).toOption.get)
+    for state <- Vector(rich,SurfaceViewer.reduce(model,rich,SurfaceViewerAction.SetGeometryState(id,SurfaceKind.Inflated)).toOption.get) do
+      val saved = SurfaceSceneDocument.capture(model,state,bindings,provenance).toOption.get
+      val decoded = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(saved)).toOption.get
+      assertEquals(decoded.restore(model,bindings).toOption.get,state)
+      assertEquals(decoded.geometryStates.size,1)
+      assertEquals(decoded.geometryStates.head.variants.keySet,Set(SurfaceKind.White,SurfaceKind.Inflated))
+
+  test("geometry duplicates, missing evidence, bad endpoints and changed content are refused"):
+    val (model,state,bindings,provenance) = frozenGeometryFixture()
+    val saved = SurfaceSceneDocument.capture(model,state,bindings,provenance).toOption.get
+    val geometry = saved.geometryStates.head
+    val root = SceneJsonParser.parse(SurfaceSceneCodec.encode(saved)).toOption.get.asInstanceOf[SceneJson.Obj]
+    def rejected(states: Vector[SurfaceSceneGeometry]): Unit =
+      val next = SceneJson.Obj(root.fields.map:
+        case ("geometryStates",_) => "geometryStates" -> SceneJson.Arr(states.map(SurfaceSceneGeometryCodec.encode))
+        case entry => entry)
+      assert(SurfaceSceneCodec.decode(next.render).isLeft)
+    rejected(Vector.empty)
+    rejected(Vector(geometry,geometry))
+    rejected(Vector(geometry.copy(surface=SurfaceId.unsafe("absent"))))
+    rejected(Vector(geometry.copy(variants=geometry.variants - SurfaceKind.Inflated)))
+    val endpoint = SurfaceGeometryPresentation.Morphing(SurfaceKind.White,SurfaceKind.Inflated,SurfaceMorphFraction.unsafe(1.0))
+    rejected(Vector(geometry.copy(presentation=endpoint)))
+    val changed = geometry.variants.updated(SurfaceKind.Inflated,reference("asset://changed",'c'))
+    assert(saved.restore(model,bindings.copy(geometries=Map(geometry.surface -> changed))).isLeft)
+    assert(SurfaceSceneDocument.capture(model,state,bindings.copy(geometries=Map.empty),provenance).isLeft)
+    val extra = geometry.variants.updated(SurfaceKind.Pial,reference("asset://extra",'d'))
+    assert(saved.restore(model,bindings.copy(geometries=Map(geometry.surface -> extra))).isLeft)
+    val badDefault = geometry.variants.updated(SurfaceKind.White,reference("asset://changed-default",'e'))
+    assert(SurfaceSceneDocument.capture(model,state,bindings.copy(geometries=Map(geometry.surface -> badDefault)),provenance).isLeft)
+
+  test("historical revision 8 rejects contradictory recognized fields under both unknown-field policies"):
+    val root = SceneJsonParser.parse(frozenHistoricalV8).toOption.get.asInstanceOf[SceneJson.Obj]
+    def altered(change: SceneJson.Obj => SceneJson.Obj): String = change(root).render
+    val bad = Vector(
+      altered(r => SceneJson.Obj(r.fields.filterNot(_._1 == "geometryStates"))),
+      altered(r => SceneJson.Obj(r.fields.filterNot(_._1 == "surfaceViewpoints"))),
+      altered(r => SceneJson.Obj(r.fields :+ ("colorPipeline" -> SceneJson.Str("legacy-display-bytes")))),
+      altered(r => SceneJson.Obj(r.fields :+ ("surfaceOpacities" -> SceneJson.Arr(Vector.empty)))),
+      altered(r => SceneJson.Obj(r.fields.map:
+        case ("camera",c: SceneJson.Obj) => "camera" -> SceneJson.Obj(c.fields :+ ("framing" -> SceneJson.Str("bounds-fit")))
+        case entry => entry)),
+      frozenHistoricalV8.replace("\"revision\":8","\"revision\":7")
+    )
+    for json <- bad; policy <- Vector(SurfaceUnknownFieldPolicy.Reject,SurfaceUnknownFieldPolicy.Ignore) do
+      assert(SurfaceSceneCodec.decode(json,SurfaceSceneReadPolicy(policy)).isLeft,json)
+
+  private def frozenGeometryFixture(): (SurfaceViewerModel,SurfaceViewerState,SurfaceSceneBindings,SurfaceProvenance) =
+    val id = SurfaceId.unsafe("frozen-left")
+    def geometry(kind: SurfaceKind, dx: Double) = SurfaceGeometry(TriangleMesh.fromRows(
+      Vector(Vector(-3d+dx,-2d,1d),Vector(-3d+dx,4d,1d),Vector(-3d+dx,-1d,5d)),Vector((0,1,2))),Hemisphere.Left,kind)
+    val family = SurfaceSet.of(SurfaceKind.White,geometry(SurfaceKind.White,0),SurfaceKind.Inflated -> geometry(SurfaceKind.Inflated,8))
+    val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(id,family).toOption.get),Vector.empty).toOption.get
+    val actions = Vector(SurfaceViewerAction.SetSurfaceViewpoints(Map(id -> SurfaceViewpoint.Medial(CorticalHemisphere.Left))),
+      SurfaceViewerAction.SetAspectRatio(CameraAspectRatio.unsafe(2)),SurfaceViewerAction.BeginGeometryMorph(id,SurfaceKind.Inflated),
+      SurfaceViewerAction.SetGeometryMorphFraction(id,SurfaceMorphFraction.unsafe(0.25)))
+    val state = actions.foldLeft(SurfaceViewerState.initial(model))((s,a) => SurfaceViewer.reduce(model,s,a).toOption.get)
+    def ref(uri: String,c: Char) = SurfaceExternalReference(SurfaceAssetUri.unsafe(uri),SurfaceContentDigest.unsafe(c.toString*64))
+    val white = ref("asset://frozen/white",'a'); val inflated = ref("asset://frozen/inflated",'b')
+    val bindings = SurfaceSceneBindings(Map(id -> white),Map.empty,Map(id -> Map(SurfaceKind.White -> white,SurfaceKind.Inflated -> inflated)))
+    val provenance = SurfaceProvenance.make("frozen-writer","1","2026-09-21T00:00:00Z",Vector.empty).toOption.get
+    (model,state,bindings,provenance)
+
   private def fixture(): (SurfaceViewerModel, SurfaceViewerState, SurfaceSceneBindings, SurfaceProvenance) =
     val left = geometry(Hemisphere.Left, SurfaceKind.Inflated, -1.0)
     val right = geometry(Hemisphere.Right, SurfaceKind.Inflated, 1.0)
@@ -353,3 +450,9 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
       hemisphere,
       kind
     )
+
+  // Frozen output from the actual writer at 7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4; never regenerated by the codec under test.
+  private def frozenHistoricalV8: String = """{"schema":"scalafim.surface-scene","revision":8,"assets":[{"id":"frozen-left","uri":"asset://frozen/white","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","hemisphere":"left","kind":"white","vertexCount":3,"faceCount":1,"topologyIdentity":"2b8fbfed481ceb14"}],"layers":[],"layout":{"kind":"single","surface":"frozen-left"},"camera":{"viewpoint":"lateral-left","projection":{"kind":"perspective","value":35.0},"zoom":1.0,"pan":[0.0,0.0],"orbit":[0.0,0.0],"aspectRatio":2.0},"lighting":{"kind":"directional","ambient":0.35,"diffuse":0.65,"direction":[-0.4,-0.5,0.7681145747868608]},"clipping":{"kind":"disabled"},"timepoint":0,"selection":null,"layerStates":[],"requiredFeatures":[],"provenance":{"producer":"frozen-writer","softwareVersion":"1","createdAt":"2026-09-21T00:00:00Z","entries":{}},"legends":[],"surfaceViewpoints":[{"surface":"frozen-left","viewpoint":"medial-left"}],"geometryStates":[{"surface":"frozen-left","presentation":{"kind":"morphing","from":"white","to":"inflated","fraction":0.25},"variants":[{"kind":"inflated","uri":"asset://frozen/inflated","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},{"kind":"white","uri":"asset://frozen/white","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]}]}"""
+
+  // Frozen output from the actual writer at 56d0cbcbfa55c7edb8651d19153b9e8c7897d88d; never regenerated by the codec under test.
+  private def frozenCanonicalV8: String = """{"schema":"scalafim.surface-scene","revision":8,"assets":[{"id":"frozen-left","uri":"asset://frozen/white","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","hemisphere":"left","kind":"white","vertexCount":3,"faceCount":1,"topologyIdentity":"2b8fbfed481ceb14"}],"layers":[],"layout":{"kind":"single","surface":"frozen-left"},"camera":{"viewpoint":"lateral-left","projection":{"kind":"perspective","value":35.0},"zoom":1.0,"pan":[0.0,0.0],"orbit":[0.0,0.0],"aspectRatio":2.0,"framing":"bounds-fit"},"lighting":{"kind":"directional","ambient":0.35,"diffuse":0.65,"direction":[-0.4,-0.5,0.7681145747868608]},"clipping":{"kind":"disabled"},"timepoint":0,"selection":null,"layerStates":[],"requiredFeatures":[],"provenance":{"producer":"frozen-writer","softwareVersion":"1","createdAt":"2026-09-21T00:00:00Z","entries":{}},"legends":[]}"""

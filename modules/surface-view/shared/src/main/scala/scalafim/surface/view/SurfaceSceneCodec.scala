@@ -28,6 +28,7 @@ object SurfaceSceneCodec:
         else if revisionValue == 6 then Right(SurfaceDocumentRevision.V6)
         else if revisionValue == 7 then Right(SurfaceDocumentRevision.V7)
         else if revisionValue == 8 then Right(SurfaceDocumentRevision.V8)
+        else if revisionValue == 9 then Right(SurfaceDocumentRevision.V9)
         else Left(SurfaceSceneError.UnsupportedRevision(revisionValue))
       _ <-
         if revision.value < 8 && root.fields.exists((name, _) => name == "colorPipeline" || name == "surfaceOpacities" || name == "surfaceBase") then
@@ -40,6 +41,7 @@ object SurfaceSceneCodec:
       layoutJson <- SceneJsonRead.value(root, "layout", "$.layout")
       layout <- parseLayout(layoutJson, policy)
       cameraJson <- SceneJsonRead.value(root, "camera", "$.camera")
+      legacyV8 <- validateV8Discriminator(root, cameraJson, revision)
       camera <- parseCamera(cameraJson, policy, revision)
       framing <- parseFraming(cameraJson, policy, revision)
       lightingJson <- SceneJsonRead.value(root, "lighting", "$.lighting")
@@ -74,8 +76,13 @@ object SurfaceSceneCodec:
       surfaceBase <- if revision.value >= 8 && root.fields.exists(_._1 == "surfaceBase") then
         parseColor(SceneJsonRead.value(root, "surfaceBase", "$.surfaceBase"))
       else Right(SurfaceDisplayDefaults.LegacySurfaceBase)
+      surfaceViewpoints <- if revision == SurfaceDocumentRevision.V9 || legacyV8 then parseSurfaceViewpoints(root, policy) else Right(Map.empty[SurfaceId, SurfaceViewpoint])
+      geometryStates <- if revision == SurfaceDocumentRevision.V9 || legacyV8 then
+        SceneJsonRead.array(root, "geometryStates", "$.geometryStates").flatMap(values => traverseIndexed(values)((value, index) => SurfaceSceneGeometryCodec.decode(value, index, policy)))
+        else Right(Vector.empty[SurfaceSceneGeometry])
+      effectiveRevision = if legacyV8 then SurfaceDocumentRevision.V9 else revision
       document <- SurfaceSceneDocument.make(
-        revision,
+        effectiveRevision,
         assets,
         layers,
         layout,
@@ -88,18 +95,63 @@ object SurfaceSceneCodec:
         requirements.toSet,
         provenance,
         legends,
-        framing,
+        if legacyV8 then CameraFraming.BoundsFit else framing,
         colorPipeline,
         surfaceOpacities,
-        surfaceBase
+        surfaceBase,
+        surfaceViewpoints,
+        geometryStates
       )
     yield document
 
   private val RootFields = Set(
     "schema", "revision", "assets", "layers", "layout", "camera", "lighting",
     "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends",
-    "colorPipeline", "surfaceOpacities", "surfaceBase"
+    "colorPipeline", "surfaceOpacities", "surfaceBase", "surfaceViewpoints", "geometryStates"
   )
+
+  private def validateV8Discriminator(root: SceneJson.Obj, camera: SceneJson,
+    revision: SurfaceDocumentRevision): Either[SurfaceSceneError, Boolean] =
+    if revision.value < 8 && root.fields.exists((name, _) => name == "geometryStates" || name == "surfaceViewpoints") then
+      Left(SurfaceSceneError.InvalidJson("$", "geometry and viewpoint evidence requires revision 9 or the complete historical revision 8 family"))
+    else if revision != SurfaceDocumentRevision.V8 then Right(false)
+    else
+      val names = root.fields.map(_._1).toSet
+      val historical = Set("surfaceViewpoints", "geometryStates")
+      val historicalPresent = historical.exists(names.contains)
+      val cameraNames = camera match
+        case SceneJson.Obj(fields) => fields.map(_._1).toSet
+        case _ => Set.empty[String]
+      val modernRoot = Set("colorPipeline", "surfaceOpacities", "surfaceBase").exists(names.contains)
+      val modernLayer = root.fields.collectFirst:
+        case ("layers", SceneJson.Arr(items)) => items.exists:
+          case SceneJson.Obj(fields) => fields.exists((name, _) => name == "bivariateMappingKey" || name == "thresholdEdges")
+          case _ => false
+      .getOrElse(false)
+      if historicalPresent then
+        if names.intersect(historical) != historical || modernRoot || modernLayer ||
+            !cameraNames.contains("aspectRatio") || cameraNames.contains("framing") then
+          Left(SurfaceSceneError.InvalidJson("$", "hybrid or incomplete historical revision 8 document"))
+        else Right(true)
+      else if cameraNames.contains("framing") then Right(false)
+      else Left(SurfaceSceneError.InvalidJson("$.camera", "canonical revision 8 requires framing"))
+
+  private def parseSurfaceViewpoints(root: SceneJson.Obj, policy: SurfaceSceneReadPolicy)
+      : Either[SurfaceSceneError, Map[SurfaceId, SurfaceViewpoint]] =
+    val path = "$.surfaceViewpoints"
+    for
+      values <- SceneJsonRead.array(root, "surfaceViewpoints", path)
+      entries <- traverseIndexed(values): (value, index) =>
+        val entryPath = s"$path[$index]"
+        for
+          obj <- SceneJsonRead.obj(value, entryPath, Set("surface", "viewpoint"), policy)
+          idRaw <- SceneJsonRead.string(obj, "surface", s"$entryPath.surface")
+          id <- SurfaceId.make(idRaw).left.map(SurfaceSceneError.InvalidState.apply)
+          viewpointRaw <- SceneJsonRead.string(obj, "viewpoint", s"$entryPath.viewpoint")
+          viewpoint <- parseViewpoint(viewpointRaw, s"$entryPath.viewpoint")
+        yield id -> viewpoint
+      _ <- Either.cond(entries.map(_._1).distinct.length == entries.length, (), SurfaceSceneError.InvalidJson(path, "surface viewpoints must be unique"))
+    yield entries.toMap
 
   private def documentJson(document: SurfaceSceneDocument): SceneJson =
     val fields = Vector(
@@ -126,7 +178,12 @@ object SurfaceSceneCodec:
         document.surfaceOpacities.toVector.sortBy(_._1.value).map: (surface, opacity) =>
           SceneJson.obj("surface" -> SceneJson.Str(surface.value), "opacity" -> number(opacity.toDouble)))) ++
       Option.when(document.revision.value >= 8 && document.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase)(
-        "surfaceBase" -> colorJson(document.surfaceBase)))
+        "surfaceBase" -> colorJson(document.surfaceBase)) ++
+      Option.when(document.revision == SurfaceDocumentRevision.V9)("surfaceViewpoints" -> SceneJson.Arr(
+        document.surfaceViewpoints.toVector.sortBy(_._1.value).map: (surface, viewpoint) =>
+          SceneJson.obj("surface" -> SceneJson.Str(surface.value), "viewpoint" -> SceneJson.Str(viewpointName(viewpoint))))) ++
+      Option.when(document.revision == SurfaceDocumentRevision.V9)("geometryStates" -> SceneJson.Arr(
+        document.geometryStates.sortBy(_.surface.value).map(SurfaceSceneGeometryCodec.encode))))
 
   private def assetJson(asset: SurfaceSceneAsset): SceneJson =
     SceneJson.obj(
@@ -431,14 +488,18 @@ object SurfaceSceneCodec:
     if revision == SurfaceDocumentRevision.V1 then Right(CameraFraming.LegacyV1)
     else if revision.value <= 6 then Right(CameraFraming.BoundsFit)
     else
-      for
-        obj <- SceneJsonRead.obj(value, "$.camera", Set("viewpoint", "projection", "zoom", "pan", "orbit", "aspectRatio", "framing"), policy)
-        name <- SceneJsonRead.string(obj, "framing", "$.camera.framing")
-        framing <- name match
-          case "legacy-v1" => Right(CameraFraming.LegacyV1)
-          case "bounds-fit" => Right(CameraFraming.BoundsFit)
-          case other => Left(SurfaceSceneError.InvalidJson("$.camera.framing", s"unknown framing '$other'"))
-      yield framing
+      value match
+        case obj: SceneJson.Obj if revision == SurfaceDocumentRevision.V8 && !obj.fields.exists(_._1 == "framing") =>
+          Right(CameraFraming.BoundsFit)
+        case _ =>
+          for
+            obj <- SceneJsonRead.obj(value, "$.camera", Set("viewpoint", "projection", "zoom", "pan", "orbit", "aspectRatio", "framing"), policy)
+            name <- SceneJsonRead.string(obj, "framing", "$.camera.framing")
+            framing <- name match
+              case "legacy-v1" => Right(CameraFraming.LegacyV1)
+              case "bounds-fit" => Right(CameraFraming.BoundsFit)
+              case other => Left(SurfaceSceneError.InvalidJson("$.camera.framing", s"unknown framing '$other'"))
+          yield framing
 
   private def parseProjection(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, CameraProjection] =
     val path = "$.camera.projection"
