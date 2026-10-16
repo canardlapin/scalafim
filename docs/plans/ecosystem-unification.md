@@ -1,6 +1,7 @@
 # Ecosystem unification and ScalaFIM modularization
 
-Status: proposed implementation program; planning only.
+Status: implementation started; U0 ownership decisions recorded in
+[the deletion map](ecosystem-ownership.md).
 
 Date: 2026-10-16.
 
@@ -107,7 +108,7 @@ actions from implementation and verification.
 | General multivariate semantic algebra and numerical methods | Multivar | MVPA-specific evidence designs and interpretations live in mvpa4s. |
 | Ordinal resampling designs, draws, permutations, deterministic random streams | Resample4s | Scientific axis binding remains with the consumer. |
 | Predictive fitting, preparation, validation, tuning, fitted artifacts | Alder | mvpa4s supplies domain models and evidence adapters. |
-| Source/operation provenance | One small external contract, decided in U0 | Shared by response and mvpa4s; no numerical or storage dependencies. |
+| Source/operation provenance | Optional locus4s-provenance | Shared by response and mvpa4s; no numerical or storage dependencies. |
 | Shared anatomical world declarations and subject/template identities | Independently usable `neuroim4s-spaces` module | Hosted in neuroim4s; no volume/image runtime, surface, atlas or ScalaFIM dependency. Generic frame/identity machinery stays in core providers. |
 | Neuroimaging volume/series refinements, toolkit interpretation, volume policy and display | neuroim4s | Consumes core providers and shared anatomical declarations; no dependency on neurosurf4s, neuroatlas4s, mvpa4s, or ScalaFIM. |
 | Neuro-surface semantics, anatomical metadata, IO, projection, display | neurosurf4s | Core consumes mesh4s/locus4s/spatial4s and shared declarations; optional volume adapters consume neuroim4s. No mandatory volume stack. |
@@ -210,12 +211,11 @@ source IDs, operation IDs, parent nodes, roots, and domain/external references.
 This is a real shared requirement: both response reads and MVPA evidence use it.
 Its identity and serialization behavior must survive extraction.
 
-Recommended initial packaging: an optional `locus4s-provenance` artifact in
+U0 decision: an optional `locus4s-provenance` artifact in
 the locus4s repository, with no reverse dependency from locus4s core/data and
 no image, mesh, fitting, Cats Effect, or physical-storage dependency. This is a
-proposed extension, not an existing provider capability. U0 must confirm that
-it fits the provider's remit; if it does not, use a tiny standalone provenance
-provider with the same contract. Resolve this once before changing consumers.
+new provider capability. Its identity/evidence scope and deletion boundaries
+are fixed in the [ownership map](ecosystem-ownership.md).
 Do not duplicate the implementation in mvpa4s and ScalaFIM.
 
 Keep Multivar's `ValueIdentity` and semantic events, MVPA preparation/exposure
@@ -240,15 +240,15 @@ belongs with reframe4s. Anatomy-specific `WorldSpace`, `FrameCatalog`, subject
 acquisition identity, and template declarations need one shared home outside
 ScalaFIM because both volumetric and surface consumers need them.
 
-The proposed packaging is an independently usable `neuroim4s-spaces` module,
+The selected packaging is an independently usable `neuroim4s-spaces` module,
 hosted in neuroim4s, replacing the earlier tentative image4s neuroimaging module.
 It owns only anatomical declarations and their admission over provider frame
 types; it cannot depend on neuroim4s volume/IO/transform/view modules or on
 surface/atlas/MVPA/ScalaFIM. Image, surface and atlas cores consume this small
 contract where they need the same anatomical identity. Basic geometry consumes
-the core frame types directly. U0 verifies this dependency budget and may adjust
-the artifact name/location without duplicating declarations or adding a new
-repository merely for them.
+the core frame types directly. The U0 ownership map fixes this dependency
+budget and separates acquisition evidence records from format-specific
+admission adapters.
 
 Dataset/BIDS assembly remains in consuming adapters. Shared scanner/tkRAS world
 identity belongs in the declarations module; acquisition geometry and NIfTI
@@ -550,23 +550,17 @@ Existing planning relationships to reconcile in Mote:
 - Spatial transforms: `bd-01M39Q2YNKRTJTD8PZ4694DS52`.
 - Prior mesh4s integration reference: `bd-01KYT2FD73TC4X1SC10HB5NCW3`.
 
-The live Mote store could not be replayed during planning. At the last check it reported
-`unadmitted operation 20261005T230702.111489Z-p61826-c0000-rfe31-h4498b4.json;
-fenced stores require the shared Mote publisher`. No ticket was created,
-claimed, or closed. Existing issue status and reservations are unverified;
-this draft does not assert tracker ownership. Another agent is restoring the
-store. Leave that repair to its owner; do not bypass fencing or edit immutable
-operations. Once it is usable, reconcile existing work and import the revised
-[Mote payload](ecosystem-unification-mote.json): one epic, nine milestone gates,
-and 36 implementation tasks tagged `ecosystem-unification`, `modularization`,
-and `dry`, plus library-specific tags. Each task includes acceptance criteria
-and explicit prerequisites. Parent relations organize work without blocking it.
+Mote recovery is complete at `3a2fda43c`; the recovery reservations are
+released. The live `eco-unification` graph has been reconciled in place to
+46 issues (one epic, nine milestones, 36 tasks), 99 blocking edges and 45
+parent relations. The [Mote payload](ecosystem-unification-mote.json) is a
+creation/structure reference, not an idempotent update script. Do not reimport
+it into the live store. Mote owns current status and evidence.
 
-The earlier two-library epic is already present as `eco-unification`. Apply
-this revision in place: retain its U0-U6 IDs and add I1/A1 tasks without creating
-a second epic. The JSON records the complete desired state; `mote import` is
-not an idempotent updater. Validate structural changes in a disposable store,
-then apply only missing issues and changed fields/edges through the Mote CLI.
+The [ownership/deletion map](ecosystem-ownership.md) settles shared contracts,
+all 30 spatial source files, mesh admission and maintained downstream callers.
+`plsneuro` is the maintained external consumer. `neuropublish` and `eidolon`
+are experiments and do not gate cutover (user clarification, 2026-10-16).
 
 The first implementation packet is U0: confirm the ownership decisions and
 compatibility ledger, reconcile the existing Mote work, and establish current
