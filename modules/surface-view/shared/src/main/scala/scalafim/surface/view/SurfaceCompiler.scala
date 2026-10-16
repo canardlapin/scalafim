@@ -34,7 +34,7 @@ object SurfaceCompiler:
   ): Either[SurfaceCameraError, SurfaceCameraPose[F]] =
     for
       asset <- displayedAsset(model, state, display)
-      pose = viewpointPose(state.camera, familyFrame(Vector(asset)), state.framing == CameraFraming.LegacyV1)
+      pose = viewpointPose(state.cameraFor(display.surfaceId), familyFrame(Vector(asset)), state.framing == CameraFraming.LegacyV1)
       target <- SurfaceCameraPose.pointIn(display.frame, Vector(pose.targetX, pose.targetY, pose.targetZ))
       eye <- SurfaceCameraPose.pointIn(display.frame, Vector(pose.eyeX, pose.eyeY, pose.eyeZ))
       typed <- SurfaceCameraPose.make(target, eye)
@@ -66,6 +66,7 @@ object SurfaceCompiler:
   ): Either[SurfaceViewError, SurfaceRenderPlan] =
     for
       _ <- SurfaceViewer.validateLayout(model, state.layout)
+      _ <- SurfaceViewer.validateViewpoints(model, state.surfaceViewpoints)
       _ <-
         if state.timepoint >= 0 && state.timepoint < model.frameCount then Right(())
         else Left(SurfaceViewError.TimepointOutOfBounds(state.timepoint, model.frameCount))
@@ -203,12 +204,26 @@ object SurfaceCompiler:
       case _ => state.clipping
     val camera = posePacket(framingCamera, pose.getOrElse(viewpointPose(framingCamera, frame, state.framing == CameraFraming.LegacyV1)), cameraClipping,
       Option.when(pose.isEmpty && state.framing == CameraFraming.BoundsFit)(frame))
+    // An explicitly typed pose remains the sole camera authority. Ordinary
+    // compilation emits overrides only for visible overridden surfaces.
+    val surfaceCameras = if pose.nonEmpty then Map.empty[SurfaceId, SurfaceCameraPacket] else slots.flatMap: slot =>
+      state.surfaceViewpoints.get(slot.surface).map: _ =>
+        slot.surface -> posePacket(
+          framingCamera.copy(viewpoint = state.cameraFor(slot.surface).viewpoint),
+          viewpointPose(state.cameraFor(slot.surface), frame, state.framing == CameraFraming.LegacyV1),
+          cameraClipping,
+          Option.when(state.framing == CameraFraming.BoundsFit)(frame)
+        )
+    .toMap
+    val viewpointsKey = slots.filter(slot => surfaceCameras.contains(slot.surface)).map: slot =>
+      s"${slot.surface.value.length}:${slot.surface.value}:${cameraKey(state.cameraFor(slot.surface), frame)}"
+    .mkString("|", "|", "")
     val readouts = compileReadout(model, state, frames)
     val chrome = compileChrome(readouts)
     val vertices = meshes.iterator.map(_.positions.length / 3).sum
     val faces = meshes.iterator.map(_.indices.length / 3).sum
     val primitiveBytes =
-      vertices.toLong * 3L * 4L * 2L + faces.toLong * 3L * 4L + colorValuesWritten.toLong * 4L + 32L * 4L +
+      vertices.toLong * 3L * 4L * 2L + faces.toLong * 3L * 4L + colorValuesWritten.toLong * 4L + (1L + surfaceCameras.size) * 32L * 4L +
         meshes.iterator.flatMap(_.sourceVertices).map(_.length.toLong * 4L).sum +
         meshes.iterator.flatMap(_.nearestPartition).map(_.originalIndices.length.toLong * 4L).sum +
         layers.iterator.flatMap(_.scalarField).map(_.samples.length.toLong * 8L).sum + sampleColorBytes +
@@ -219,7 +234,7 @@ object SurfaceCompiler:
     val receipt = SurfaceRenderReceipt(
       meshes.map(_.resourceKey),
       layers.map(_.resourceKey),
-      pose.fold(cameraKey(framingCamera, frame))(poseKey(framingCamera, _)) + s":framing:${state.framing}" + (state.clipping match
+      pose.fold(cameraKey(framingCamera, frame))(poseKey(framingCamera, _)) + viewpointsKey + s":framing:${state.framing}" + (state.clipping match
         case SurfaceClipping.NearFar(near, far) => s":depth:$near:$far"
         case _ => ""),
       drawPasses.length,
@@ -242,7 +257,8 @@ object SurfaceCompiler:
       fragmentSurfaces,
       state.colorPipeline,
       state.surfaceOpacities,
-      state.surfaceBase
+      state.surfaceBase,
+      surfaceCameras
     )
 
   /** Display-only corner expansion. Original face order and normals survive;
@@ -278,15 +294,17 @@ object SurfaceCompiler:
 
   /** Explicit fitting uses displayed bounds around the canonical anchor; ordinary morph/orbit/zoom never refits. */
   private[view] def fitCamera(model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceViewError, SurfaceCamera] =
-    SurfaceViewer.validateLayout(model, state.layout).flatMap: _ =>
+    SurfaceViewer.validateLayout(model, state.layout)
+      .flatMap(_ => SurfaceViewer.validateViewpoints(model, state.surfaceViewpoints)).flatMap: _ =>
       resolveFrames(model, state).flatMap: frames =>
         val originalSlots = compileSlots(state.layout)
         val assets = originalSlots.map(slot => model.surface(slot.surface).get)
         val frame = layoutFrame(state.layout, assets)
         val slots = centerBilateralSlots(state.layout, originalSlots, assets, frame)
         val centered = state.camera.copy(zoom = CameraZoom.Default, panX = 0.0, panY = 0.0)
-        val view = posePacket(centered, viewpointPose(centered, frame), SurfaceClipping.Disabled, Some(frame)).viewMatrix
         val points = slots.zip(assets).flatMap: (slot, asset) =>
+          val camera = centered.copy(viewpoint = state.cameraFor(slot.surface).viewpoint)
+          val view = posePacket(camera, viewpointPose(camera, frame), SurfaceClipping.Disabled, Some(frame)).viewMatrix
           for
             bounds <- displayedBounds(asset, frames(asset.id)).toVector
             x <- Vector(bounds.min.x, bounds.max.x)

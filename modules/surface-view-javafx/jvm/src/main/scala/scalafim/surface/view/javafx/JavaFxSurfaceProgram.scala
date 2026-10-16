@@ -72,7 +72,7 @@ object JavaFxSurfaceProgram:
         val material = before.lighting != next.lighting
         val layerData = !sameLayers(before.layers, next.layers) ||
           (config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert && (material || geometry))
-        val camera = before.receipt.cameraKey != next.receipt.cameraKey
+        val camera = before.receipt.cameraKey != next.receipt.cameraKey || !sameCameras(before, next)
         val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
         val clipping = before.clipping != next.clipping
         val nextKeys = (next.receipt.meshKeys ++ next.receipt.layerKeys).toSet
@@ -97,6 +97,16 @@ object JavaFxSurfaceProgram:
 
   private def sameFloats(a: FloatBufferView, b: FloatBufferView): Boolean =
     (a eq b) || java.util.Arrays.equals(a.unsafeArray, b.unsafeArray)
+
+  private def sameCameras(before: SurfaceRenderPlan, next: SurfaceRenderPlan): Boolean =
+    sameCamera(before.camera, next.camera) && before.surfaceCameras.keySet == next.surfaceCameras.keySet &&
+      before.surfaceCameras.keys.forall(id => sameCamera(before.surfaceCameras(id), next.surfaceCameras(id)))
+
+  /** Camera resource keys are deliberately value-stable, so native dirt must
+    * compare matrix contents rather than packet or array identity. */
+  private def sameCamera(a: SurfaceCameraPacket, b: SurfaceCameraPacket): Boolean =
+    sameFloats(a.viewMatrix, b.viewMatrix) && sameFloats(a.projectionMatrix, b.projectionMatrix) &&
+      a.directionX == b.directionX && a.directionY == b.directionY && a.directionZ == b.directionZ
 
   /** Resource hashes are hints. Public packets can retain keys while changing
     * data, and hash collisions must never publish a plan without its pixels.
@@ -248,7 +258,7 @@ final class JavaFxSurfaceBackend private (
           case (Some(before), Some(cached)) if signature(before) == signature(plan) &&
               before.meshes.zip(plan.meshes).forall((a, b) => java.util.Arrays.equals(
                 a.sampleNormals.getOrElse(a.normals).unsafeArray, b.sampleNormals.getOrElse(b.normals).unsafeArray)) =>
-            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, clipping = plan.clipping,
+            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, surfaceCameras = plan.surfaceCameras, clipping = plan.clipping,
               chrome = plan.chrome, readouts = plan.readouts, viewportFit = plan.viewportFit,
               receipt = cached.plan.receipt.copy(cameraKey = plan.receipt.cameraKey, timepoint = plan.receipt.timepoint)),
               approximation = cached.approximation.map(_.copy(preparationNanos = 0L, reused = true))))
@@ -469,7 +479,9 @@ final class JavaFxSurfaceBackend private (
 
 object JavaFxSurfaceBackend:
   private[javafx] def validateCapabilities(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
-    if plan.camera.projectionMatrix(3) != 0f || plan.camera.projectionMatrix(7) != 0f then
+    if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
+      "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
+    else if plan.camera.projectionMatrix(3) != 0f || plan.camera.projectionMatrix(7) != 0f then
       Left(JavaFxSurfaceError.IncompatiblePlan("asymmetric orthographic frusta require JavaFxRasterSurfaceHost"))
     else if plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase ||
         plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then

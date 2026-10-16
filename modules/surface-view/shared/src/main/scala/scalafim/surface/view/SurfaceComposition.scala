@@ -177,7 +177,7 @@ object SurfaceCompositionPlan:
             layersBySurface.getOrElse(slot.surface, Vector.empty), slot.worldOffsetX, slot.worldOffsetY, slot.worldOffsetZ,
             plan.surfaceOpacities.getOrElse(slot.surface, DisplayOpacity.Opaque))
           views += SurfaceCompositionView(SurfaceViewId.make(s"legacy-$index").toOption.get, slot.viewport,
-            plan.camera, Vector(instance), plan.lighting, plan.clipping, plan.chrome, plan.readouts,
+            plan.cameraFor(slot.surface), Vector(instance), plan.lighting, plan.clipping, plan.chrome, plan.readouts,
             plan.viewportFit, plan.fragmentSurfaces, plan.colorPipeline, plan.surfaceBase)
       index += 1
     make(views.result(), SurfaceCompositionResources(meshTable, layerTable))
@@ -258,7 +258,7 @@ object SurfaceCompositionPlan:
   private def validViewport(box: SurfaceViewport): Boolean =
     box.x.isFinite && box.y.isFinite && box.width.isFinite && box.height.isFinite &&
       box.x >= 0 && box.y >= 0 && box.width > 0 && box.height > 0 && box.x + box.width <= 1 && box.y + box.height <= 1
-  private def validCamera(camera: SurfaceCameraPacket): Boolean =
+  private[view] def validCamera(camera: SurfaceCameraPacket): Boolean =
     val v = camera.viewMatrix
     val p = camera.projectionMatrix
     if v.length != 16 || p.length != 16 || !(0 until 16).forall(i => v(i).isFinite && p(i).isFinite) then false

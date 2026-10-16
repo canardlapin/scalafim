@@ -225,5 +225,14 @@ final case class SurfaceRenderPlan(
   fragmentSurfaces: Set[SurfaceId] = Set.empty,
   colorPipeline: SurfaceColorPipeline = SurfaceColorPipeline.LegacyDisplayBytes,
   surfaceOpacities: Map[SurfaceId, DisplayOpacity] = Map.empty,
-  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase
-)
+  surfaceBase: Rgba32 = SurfaceDisplayDefaults.LegacySurfaceBase,
+  surfaceCameras: Map[SurfaceId, SurfaceCameraPacket] = Map.empty
+):
+  /** The same effective camera must be used by draw, fit and picking paths. */
+  def cameraFor(surface: SurfaceId): SurfaceCameraPacket = surfaceCameras.getOrElse(surface, camera)
+
+  private[view] def validCameras: Boolean =
+    val packets = camera +: surfaceCameras.values.toVector
+    surfaceCameras.keys.forall(id => slots.exists(_.surface == id)) && packets.forall(SurfaceCompositionPlan.validCamera) &&
+      surfaceCameras.values.forall(packet =>
+        (0 until 16).forall(index => packet.projectionMatrix(index) == camera.projectionMatrix(index)))

@@ -601,6 +601,8 @@ object JavaFxSurfaceProbe:
     materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,
     config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default
   ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+    if !plan.validCameras then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires a dedicated lookup-texture lowering"))
     val meshStarted = System.nanoTime()
@@ -714,7 +716,7 @@ object JavaFxSurfaceProbe:
     fitted.foreach: slot =>
       transforms.get(slot.surface).foreach: transform =>
         val layout = viewLayout(plan, slot.viewport, viewportWidth, viewportHeight)
-        val world = conjugateViewLayout(plan.camera, layout._1, layout._2)
+        val world = conjugateViewLayout(plan.camera, plan.cameraFor(slot.surface), layout._1, layout._2)
         val translated = Array(
           world._2(0) + world._1(0) * slot.worldOffsetX + world._1(1) * slot.worldOffsetY + world._1(2) * slot.worldOffsetZ,
           world._2(1) + world._1(3) * slot.worldOffsetX + world._1(4) * slot.worldOffsetY + world._1(5) * slot.worldOffsetZ,
@@ -771,6 +773,7 @@ object JavaFxSurfaceProbe:
 
   private def conjugateViewLayout(
     packet: SurfaceCameraPacket,
+    surfaceCamera: SurfaceCameraPacket,
     layout: Array[Double],
     offset: Array[Double]
   ): (Array[Double], Array[Double]) =
@@ -781,6 +784,16 @@ object JavaFxSurfaceProbe:
       -view(8).toDouble, -view(9).toDouble, -view(10).toDouble
     )
     val translation = Array(view(3).toDouble, -view(7).toDouble, -view(11).toDouble)
+    val source = surfaceCamera.viewMatrix
+    val sourceRotation = Array(
+      source(0).toDouble, source(1).toDouble, source(2).toDouble,
+      -source(4).toDouble, -source(5).toDouble, -source(6).toDouble,
+      -source(8).toDouble, -source(9).toDouble, -source(10).toDouble
+    )
+    val sourceTranslation = Array(source(3).toDouble, -source(7).toDouble, -source(11).toDouble)
+    // The shared camera transform G precedes each surface group. Its display
+    // transform is G^-1 L S: viewport layout L applied to that surface's camera S.
+    // Scientific positions and world-space lighting normals remain unchanged.
     val product = new Array[Double](9)
     var row = 0
     while row < 3 do
@@ -791,7 +804,7 @@ object JavaFxSurfaceProbe:
         while inner < 3 do
           var second = 0
           while second < 3 do
-            value += rotation(inner * 3 + row) * layout(inner * 3 + second) * rotation(second * 3 + column)
+            value += rotation(inner * 3 + row) * layout(inner * 3 + second) * sourceRotation(second * 3 + column)
             second += 1
           inner += 1
         product(row * 3 + column) = value
@@ -803,7 +816,7 @@ object JavaFxSurfaceProbe:
       var viewOffset = offset(row) - translation(row)
       var column = 0
       while column < 3 do
-        viewOffset += layout(row * 3 + column) * translation(column)
+        viewOffset += layout(row * 3 + column) * sourceTranslation(column)
         column += 1
       column = 0
       while column < 3 do

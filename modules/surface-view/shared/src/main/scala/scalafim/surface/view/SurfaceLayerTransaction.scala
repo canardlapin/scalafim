@@ -30,6 +30,7 @@ final class SurfaceLayerTransaction private[view] (
         preparedPlan.copy(
           slots = currentPlan.slots,
           camera = currentPlan.camera,
+          surfaceCameras = currentPlan.surfaceCameras,
           lighting = currentPlan.lighting,
           clipping = currentPlan.clipping,
           chrome = chrome,

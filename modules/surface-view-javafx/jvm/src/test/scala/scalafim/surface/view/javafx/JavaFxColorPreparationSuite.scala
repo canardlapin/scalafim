@@ -71,6 +71,18 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     val equivalent = before.copy(layers = before.layers.map(l => l.copy(colors = new IntBufferView(l.colors.unsafeArray.clone()))))
     assert(JavaFxSurfaceProgram.compile(Some(before), equivalent).dirty.isClean)
 
+  test("prepared colours remain compatible with a camera-only packet update"):
+    val viewer = model
+    val before = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
+    val worker = JavaFxSurfaceProbe.compile(before).toOption.get
+    val prepared = worker.colorPreparationBasis(new JavaFxColorPreparationToken).prepare(before).toOption.get
+    val movedView = before.camera.viewMatrix.unsafeArray.clone()
+    movedView(3) = movedView(3) + 0.25f
+    val moved = before.copy(surfaceCameras = Map(surface -> before.camera.copy(
+      viewMatrix = new FloatBufferView(movedView))))
+    assert(JavaFxSurfaceProgram.compile(Some(before), moved).dirty.camera)
+    assert(worker.validatePrepared(prepared, moved).isRight)
+
   test("affine worker preparation retains the native sampler refusal"):
     val viewer = model
     val plan = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
@@ -102,6 +114,9 @@ object JavaFxColorPreparationProbe:
         val basis = renderer.colorPreparationBasis.toOption.get
         val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() => basis.prepare(transaction.preparedPlan)).get().toOption.get
         active.dispatch(SurfaceViewerAction.SetPan(0.1, 0.2)).toOption.get
+        active.dispatch(SurfaceViewerAction.SetSurfaceViewpoints(Map(
+          surface -> SurfaceViewpoint.Medial(CorticalHemisphere.Left)
+        ))).toOption.get
         active.dispatch(SurfaceViewerAction.Select(surface, VertexId(1))).toOption.get
         val moved = active.state
         val other = JavaFxSurfaceBackend.create().toOption.get
@@ -115,6 +130,7 @@ object JavaFxColorPreparationProbe:
         require(active.state == moved, "failed publication changed controller state")
         val receipt = active.applyLayerTransaction(transaction, prepared).toOption.get
         require(!receipt.dirty.geometry && receipt.atlasUpdates == 1, "warm update uploaded geometry or missed atlas")
+        require(active.plan.surfaceCameras.keySet == Set(surface), "warm update lost the live per-surface camera")
         require(active.state == moved && active.plan.readouts.head.vertex == 1, "live camera/selection lost")
         require(active.applyLayerTransaction(transaction, prepared).isLeft, "superseded source model accepted")
         require(renderer.render(transaction.preparedPlan, prepared).isLeft, "stale no-op preparation accepted")
