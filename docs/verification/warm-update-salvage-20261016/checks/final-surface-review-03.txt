@@ -1,0 +1,26 @@
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E173] Reference Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:282:28 
+[error] 282 |    val inferred = document.copy(requiredFeatures = Set.empty)
+[error]     |                   ^^^^^^^^^^^^^
+[error]     |method copy cannot be accessed as a member of (document : scalafim.surface.view.SurfaceSceneDocument) from class SurfaceSceneDocumentSuite.
+[error]     |  private method copy can only be accessed from class SurfaceSceneDocument in package scalafim.surface.view.
+[error] -- [E171] Type Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:283:16 
+[error] 283 |    assertEquals(inferred.admit(none), document.admit(none))
+[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]     |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]     |    munit.diff.DiffOptions): Unit
+[error] -- [E171] Type Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:284:16 
+[error] 284 |    assertEquals(inferred.admit(paired), Right(()))
+[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any)
+[error]     |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions:
+[error]     |    munit.diff.DiffOptions): Unit
+[error] three errors found
+[error] (surfaceViewJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJVM/test: exit 1 in 7.4s

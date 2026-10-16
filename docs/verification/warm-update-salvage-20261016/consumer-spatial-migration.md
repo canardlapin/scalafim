@@ -22,4 +22,4 @@ Freeze a legacy artifact on a 2×3×4 grid with a nontrivial affine and ordered 
 
 Check unchanged legacy payload digests, grid identity, inspection fingerprint, selections and values; retain corruption/mismatch refusals. Reserialization does not promise a byte-identical ZIP archive. New world/grid records must roundtrip across JVM processes; changing frame identity or layout must fail alignment. NIfTI tests need independently specified disk values to detect accidental double permutation.
 
-This document specifies pending consumer work. It does not admit a new provider pin or establish consumer qualification.
+Implementation checkpoint: PLSNeuro `48e9eebb58d58d062f0b2727e9b602ea5c2a021c` implements the adapter foundation; `76f0f745b13e3a66dac22bab9e3011dd33580678` migrates desktop production callers. The frozen original-writer 2×3×4 fixture and geometry probe passed diagnostically; adapter test compilation now passes. Desktop fixtures, independent review and fresh-checkout acceptance remain pending. This does not admit a new provider pin or establish consumer qualification.

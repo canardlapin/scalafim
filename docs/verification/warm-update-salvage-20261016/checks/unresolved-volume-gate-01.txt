@@ -1,0 +1,43 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 68 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-pls-main-20261016/modules/image/jvm/src/test/scala/scalafim/image/NiftiUnresolvedDisplaySuite.scala:34:68 
+[error] 34 |      assert(Grid.exactCongruence(a.image.space.grid, b.image.space.grid).isLeft)
+[error]    |                                                      ^^^^^^^^^^^^^^^^^^
+[error]    |Found:    (scalafim.image.SomeSampleSpace#grid : image4s.geometry.Grid[?1.F, ?1.D])
+[error]    |Required: image4s.geometry.Grid[RF, ?2.D]
+[error]    |
+[error]    |where:    ?1 is an unknown value of type scalafim.image.SomeSampleSpace
+[error]    |          ?2 is an unknown value of type scalafim.image.SomeSampleSpace
+[error]    |          RF is a type variable with constraint <: image4s.geometry.Frame[?2.D]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E134] Type Error: /private/tmp/scalafim-pls-main-20261016/modules/image/jvm/src/test/scala/scalafim/image/NiftiUnresolvedDisplaySuite.scala:37:37 
+[error] 37 |      val point = a.image.space.grid.pointAt(ContinuousIndex.fromVector[D3](Vector(1.0, 2.0, 3.0)).toOption.get)
+[error]    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |None of the overloaded alternatives of method pointAt in class Grid with types
+[error]    | (continuousIndex: image4s.geometry.ContinuousIndex[?3.D])
+[error]    |  (using dimension: image4s.geometry.Dimension[?3.D]):
+[error]    |    Either[image4s.geometry.GeometryError, image4s.geometry.Point[?3.F, ?3.D]]
+[error]    | (index:
+[error]    |  image4s.geometry.GridIndex[
+[error]    |    (?4 :
+[error]    |      (scalafim.image.SomeSampleSpace#grid : image4s.geometry.Grid[?1.F, ?1.D]))
+[error]    |      ,
+[error]    |  ?3.D]
+[error]    |)
+[error]    |  (using dimension: image4s.geometry.Dimension[?3.D]):
+[error]    |    Either[image4s.geometry.GeometryError, image4s.geometry.Point[?3.F, ?3.D]]
+[error]    | (index: image4s.geometry.LatticeIndex[?3.D])
+[error]    |  (using dimension: image4s.geometry.Dimension[?3.D]):
+[error]    |    Either[image4s.geometry.GeometryError, image4s.geometry.Point[?3.F, ?3.D]]
+[error]    |match arguments ((Option[image4s.geometry.ContinuousIndex[image4s.geometry.D3]]#get :
+[error]    |  => image4s.geometry.ContinuousIndex[image4s.geometry.D3]))
+[error]    |
+[error]    |where:    ?1 is an unknown value of type scalafim.image.SomeSampleSpace
+[error]    |          ?3 is an unknown value of type scalafim.image.SomeSampleSpace
+[error]    |          ?4 is an unknown value of type image4s.geometry.Grid[?1.F, ?1.D]
+[error] two errors found
+[error] (imageJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 11 s
+[0J[sbt-warm] imageJVM/testOnly scalafim.image.NiftiUnresolvedDisplaySuite scalafim.image.io.NiftiSpaceEvidenceSuite: exit 1 in 11.1s

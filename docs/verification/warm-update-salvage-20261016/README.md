@@ -6,9 +6,7 @@ calls APIs absent from current main. The right destination is a set of reviewed
 behavioral ports onto main, followed by a verified consumer repin. A whole-branch
 merge would restore obsolete architecture alongside useful missing behavior.
 
-Implementation is in progress on `recovery/plsneuro-main-20261016`. See
-[migration-progress.json](migration-progress.json) for local commits and current
-verification. The source comparisons below remain tied to the pinned baseline.
+Implementation is in progress through [PR #62](https://github.com/canardlapin/scalafim/pull/62). Provider source `f87fecf7a` has passing affected JVM/Scala.js and native tests; full compilation passed at `f87fecf7a`. Scene compatibility and paired cameras are recovered. PLSNeuro adapter test compilation passes and desktop migration is underway. Required hosted checks and final consumer qualification remain pending. See [migration-progress.json](migration-progress.json) and [continuation.md](continuation.md) for current evidence. The source comparisons below remain tied to the original pinned baseline.
 
 ## Examined revisions and scope
 

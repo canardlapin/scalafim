@@ -178,35 +178,103 @@
       "logs": [
         "selected-policy-gate-01.log"
       ]
+    },
+    {
+      "sha": "56d0cbcbfa55c7edb8651d19153b9e8c7897d88d",
+      "behavior": "Explicit unresolved-world NIfTI volume inspection without label-based alignment",
+      "checks": {
+        "imageJVM": 13,
+        "imageJSCompile": "pass"
+      },
+      "logs": [
+        "checks/unresolved-volume-gate-02.txt"
+      ]
+    },
+    {
+      "sha": "89e139faca6fd2796273d9864338a2bd28532684",
+      "behavior": "Paired anatomical viewpoints with shared navigation and native transform/picking support",
+      "checks": {
+        "actualFxRayHits": 2
+      },
+      "logs": [
+        "checks/paired-native-pick.txt"
+      ]
+    },
+    {
+      "sha": "f0eb44afa7bd047c79d5998ad18b785c5ec7b6ed",
+      "behavior": "Revision 9 complete geometry-family provenance with discriminated historical revision 8 recovery",
+      "checks": {},
+      "logs": [
+        "checks/final-surface-recovery-02.txt"
+      ]
+    },
+    {
+      "sha": "fa188b9283d2864a30aac4cb7b85f701038860d2",
+      "behavior": "Paired cameras across CPU fallback and Three composition; native malformed-camera refusal",
+      "checks": {
+        "surfaceViewJVM": 272,
+        "surfaceViewJS": 272,
+        "rasterJVM": 70,
+        "rasterJS": 70,
+        "javafxJVM": 63,
+        "threeJS": 57
+      },
+      "logs": [
+        "checks/final-surface-recovery-02.txt"
+      ]
+    },
+    {
+      "sha": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
+      "behavior": "Historical per-surface-cameras capability and inferred admission; camera-only update avoids colour recomputation",
+      "checks": {
+        "surfaceViewJVM": 272,
+        "surfaceViewJS": 272,
+        "rasterJVM": 70,
+        "rasterJS": 70,
+        "javafxJVM": 63,
+        "threeJS": 57
+      },
+      "logs": [
+        "checks/final-surface-review-04.txt"
+      ]
     }
   ],
   "publishedToMain": false,
   "consumerRepinned": false,
   "consumerCompile": {
-    "providerCandidate": "229a65f3e403f043a363ead4625e98248d9dcda4",
-    "result": "72 adapter errors; desktop not reached; diagnostic migration in progress",
-    "log": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/main-compatibility-04.log"
+    "providerCandidate": "fa188b9283d2864a30aac4cb7b85f701038860d2",
+    "consumerCommittedProduction": "76f0f745b13e3a66dac22bab9e3011dd33580678",
+    "result": "Adapter test compilation and narrowed ContrastReprojection probe pass; desktop test fixture migration in progress. Diagnostic closure only, not an admitted provider pin.",
+    "logs": [
+      "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/adapter-fixture-compile-10.log",
+      "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/explorer-reprojection-10.log"
+    ]
   },
   "remaining": [
-    "typed image/spatial consumer migration including persisted voxel index ordering",
-    "surface scene migration and remaining scientific consumer contracts",
-    "full consumer acceptance and touched native lanes",
-    "land provider behavior on canonical main and repin exact qualified consumer"
+    "required hosted provider checks and landing on canonical main",
+    "complete desktop test fixture migration and independent consumer review",
+    "fresh committed consumer checkout with declared closure: sbt check, headless and touched native acceptance",
+    "exact canonical-main provider pin and portable consumer publication"
   ],
-  "validatedSourceHead": "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15",
+  "validatedSourceHead": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
   "compileAll": {
     "result": "pass",
+    "sourceHead": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
     "platforms": [
       "JVM",
       "Scala.js"
     ],
     "warnings": 0,
-    "log": "checks/recovery-final-compile-01.txt",
-    "scope": "all compilation targets in scalafimCompileAll; run began at 8c705253a and included in-progress native dirt fix later committed as 140e4ab0a; native affected tests rerun after final test edits"
+    "log": "checks/candidate-compile-all-f87fecf.txt",
+    "scope": "All targets in scalafimCompileAll, both platforms; final committed production source unchanged throughout run."
   },
   "checkpointBranch": "recovery/plsneuro-main-20261016",
   "evidenceCaution": "Required hosted gates remain pending. Local tests are engineering evidence, not GPU interpolation, scientific admission or release qualification.",
-  "lastPublishedCheckpoint": "4e0d7dfb859b60b6c80b94c8b09d5097173710f4",
+  "lastPublishedCheckpoint": "dca597f8d740ab05e266da38e9622a2957688ebd",
   "pullRequest": "https://github.com/canardlapin/scalafim/pull/62",
-  "dependencyDirection": "PLSNeuro depends on ScalaFIM; ScalaFIM has no PLSNeuro source or build dependency. Recovery branch is temporary; final consumer pin must be on canonical main."
+  "dependencyDirection": "PLSNeuro depends on ScalaFIM; ScalaFIM has no PLSNeuro source or build dependency. Recovery branch is temporary; final consumer pin must be on canonical main.",
+  "withheld": [
+    "Stock native affine interpolation and dense-colour refinement remain unqualified; application default uses legacy renderer",
+    "Historical ReachableResponseBasis probe family assertions are archived and withheld; no production caller depends on that API. Current Gale-backed HRF family capability is a different contract."
+  ]
 }

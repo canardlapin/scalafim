@@ -1,0 +1,15 @@
+[info] running (fork) scalafim.surface.view.javafx.JavaFxPairedNativePickProbe /private/tmp/scalafim-javafx-paired-native-picks.json
+[error] Oct 16, 2026 10:57:47 A.M. com.sun.javafx.application.PlatformImpl startup
+[error] WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @153f5a29'
+[error] WARNING: A restricted method in java.lang.System has been called
+[error] WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/private/tmp/scalafim-pls-main-20261016/target/bg-jobs/sbt_7ad7cb6e/target/fc4494fe/d2189dfd/javafx-graphics-21.0.5-mac-aarch64.jar)
+[error] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[error] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/private/tmp/scalafim-pls-main-20261016/target/bg-jobs/sbt_7ad7cb6e/target/16f4dc48/adca020a/scala3-library_3-3.7.4.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] PASS paired-native-picks hits=2 receipt=/private/tmp/scalafim-javafx-paired-native-picks.json
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-lrxk88e_/completed
+[[32msuccess[0m] elapsed: 10 s
+[0J[sbt-warm] surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxPairedNativePickProbe /private/tmp/scalafim-javafx-paired-native-picks.json: exit 0 in 10.6s

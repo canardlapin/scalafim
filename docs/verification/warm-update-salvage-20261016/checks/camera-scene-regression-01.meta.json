@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T15:13:34.872005+00:00",
+  "finished_utc": "2026-10-16T15:14:10.903789+00:00",
+  "duration_seconds": 36.031452,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite scalafim.surface.view.SurfacePairedCameraSuite",
+    "surfaceViewJS/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite scalafim.surface.view.SurfacePairedCameraSuite",
+    "surfaceViewRasterJVM/testOnly scalafim.surface.view.raster.SurfaceRasterizerSuite",
+    "surfaceViewRasterJS/testOnly scalafim.surface.view.raster.SurfaceRasterizerSuite",
+    "surfaceViewJavafxJVM/testOnly scalafim.surface.view.javafx.JavaFxPairedCameraSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/camera-scene-regression-01.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": null,
+  "log_bytes": 11985
+}

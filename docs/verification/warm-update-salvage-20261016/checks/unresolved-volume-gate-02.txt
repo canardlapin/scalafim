@@ -1,0 +1,24 @@
+[info] compiling 68 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.image.NiftiUnresolvedDisplaySuite:
+  + standalone reads preserve samples and affine but never imply registration 0.137s
+scalafim.image.io.NiftiSpaceEvidenceSuite:
+  + evidence follows the affine the policy selects, not the other xform 0.001s
+  + the mirrored selection agrees with the affine image4s actually selected 0.006s
+  + the mirrored selection matches image4s-nifti's selectAffine on every qform/sform/scaling case 0.022s
+  + without a native context the evidence resolves to the unresolved space 0.0s
+  + readVolumeIn places a template file in its template world, keeping geometry and data 0.004s
+  + semantic volume and header placement both reject missing, ambiguous, and contradictory evidence 0.003s
+  + header placement enforces the same affine agreement gate as a full read 0.003s
+  + readVolumeIn refuses unresolved, ambiguous and contradictory evidence 0.003s
+  + an unknown header code is no evidence, so a supplied code is admitted 0.001s
+  + two subjects' native volumes get different worlds and no longer align 0.008s
+  + readSeriesIn places a 4D series in its world, keeping its time axis 0.021s
+  + header and full reads refuse metre, micrometre and incompatible unknown-unit fallback geometry 0.006s
+[info] Passed: Total 13, Failed 0, Errors 0, Passed 13
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-2rgvdtll/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] imageJVM/testOnly scalafim.image.NiftiUnresolvedDisplaySuite scalafim.image.io.NiftiSpaceEvidenceSuite: exit 0 in 9.4s
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-8cobl_sa/completed
+[[32msuccess[0m] elapsed: 3 s
+[0J[sbt-warm] imageJS/compile: exit 0 in 3.5s
