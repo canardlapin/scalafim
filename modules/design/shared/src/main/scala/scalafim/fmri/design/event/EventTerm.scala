@@ -30,7 +30,8 @@ final case class ConvolvedTerm(
     /** Per-column event-level divisors (empty when events carry no event
       * normalization). A response readout can transport a column back to
       * kernel units only when its contributing events share one divisor. */
-    columnEventScales: Vector[ColumnEventScale] = Vector.empty
+    columnEventScales: Vector[ColumnEventScale] = Vector.empty,
+    convolutionRecipe: Option[ConvolutionRecipe] = None
 ) extends EventModelTerm:
   requireColumnMetadata()
   require(
@@ -81,6 +82,23 @@ final case class ConvolvedTerm(
   def scaleForColumn(localColumn: Int): HrfColumnScale =
     require(localColumn >= 0 && localColumn < data.cols, "local column is out of bounds")
     columnScales.lift(localColumn).getOrElse(HrfColumnScale.identity)
+
+  /** Per-event contributions on retained acquired scans, before final column scaling.
+    * A transformed or mutated term must supply a fresh recipe; this method does
+    * not infer a kernel from labels or return stale pre-transform support.
+    */
+  def sampledSupport(
+      retainedScans: Vector[scalafim.fmri.design.ScanIndex],
+      absoluteTolerance: Double = 0.0
+  ): Either[ConvolutionSupportError, ConvolvedSupport] =
+    convolutionRecipe.toRight(ConvolutionSupportError.MissingRecipe)
+      .flatMap(_.inspect(this, retainedScans, absoluteTolerance))
+
+  private[design] def remapSourceRows(rows: Vector[Int]): ConvolvedTerm =
+    val updated = copy(term = term.copy(
+      eventProvenance = term.eventProvenance.map(value => value.copy(sourceRow = rows(value.sourceRow))),
+      sourceRows = term.sourceRows.map(rows)))
+    updated.copy(convolutionRecipe = convolutionRecipe.flatMap(_.remapSources(this, updated)).orElse(convolutionRecipe))
 
   /** Distinct basis cardinalities represented by this term's realized columns.
     *
@@ -348,9 +366,12 @@ final case class EventTerm(
 
     val out = new Array[Double](outputCells)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+    val channels = Vector.newBuilder[ConvolutionChannel]
+    def recorded(value: ConvolvedTerm): ConvolvedTerm =
+      value.copy(convolutionRecipe = Some(new ConvolutionRecipe(value, samplingFrame, precision, channels.result())))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
-      return ConvolvedTerm(
+      return recorded(ConvolvedTerm(
         this,
         hrf,
         Mat.unsafe(totalRows, totalCols, out),
@@ -360,7 +381,7 @@ final case class EventTerm(
         columnCells = finalCells,
         columnModulators = finalModulators,
         columnScales = emptyScales
-      )
+      ))
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -388,11 +409,16 @@ final case class EventTerm(
       var cond = 0
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
-        if ampB.exists(_ != 0.0) then
+        // Capture zero-amplitude events too, without evaluating their kernel.
+        val baseReg = sharedRegressor(onsB, hrf, durB, ampB, summate)
+        if eventDivisors.isEmpty then
+          channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)).toVector, eIdx,
+            Vector.tabulate(nb)(basis => basis * nConds + cond), baseReg, Vector.tabulate(nb)(identity))
+        if ampB.exists(_ != 0.0) || eventDivisors.nonEmpty then
           // Store basis-major: [b01: all conds] [b02: all conds] ...
           eventDivisors match
             case None =>
-              val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
+              val reg = baseReg
               val ev = preparedKernel.evaluate(reg, grid)
               var basis = 0
               while basis < nb do
@@ -410,7 +436,9 @@ final case class EventTerm(
               while basis < nb do
                 val scaledB = eIdx.indices.map(k => ampB(k) / divisors(eIdx(k))(basis))
                 val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = scaledB, summate = summate)
-                val ev = preparedKernel.evaluate(reg, grid)
+                channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)).toVector, eIdx,
+                  Vector(basis * nConds + cond), reg, Vector(basis))
+                val ev = if scaledB.exists(_ != 0.0) then preparedKernel.evaluate(reg, grid) else Mat.zeros(blockLen, nb)
                 val outCol = basis * nConds + cond
                 var r = 0
                 while r < blockLen do
@@ -423,7 +451,7 @@ final case class EventTerm(
       b += 1
 
     val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
-    ConvolvedTerm(
+    recorded(ConvolvedTerm(
       this,
       hrf,
       Mat.unsafe(totalRows, totalCols, out),
@@ -433,7 +461,7 @@ final case class EventTerm(
       columnCells = finalCells,
       columnModulators = finalModulators,
       columnScales = columnScales
-    )
+    ))
 
   /** Convolve one HRF per realized condition cell.  Unlike
     * [[convolvePerEvent]], this path permits different basis cardinalities:
@@ -478,9 +506,12 @@ final case class EventTerm(
     val finalHrfs = hrfs0.flatMap(conditionHrf => Vector.fill(conditionHrf.nbasis)(conditionHrf))
     val out = new Array[Double](outputCells)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+    val channels = Vector.newBuilder[ConvolutionChannel]
+    def recorded(value: ConvolvedTerm): ConvolvedTerm =
+      value.copy(convolutionRecipe = Some(new ConvolutionRecipe(value, samplingFrame, precision, channels.result())))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
-      return ConvolvedTerm(
+      return recorded(ConvolvedTerm(
         this,
         representative,
         Mat.unsafe(totalRows, totalCols, out),
@@ -491,7 +522,7 @@ final case class EventTerm(
         columnModulators = finalModulators,
         columnHrfs = finalHrfs,
         columnScales = emptyScales
-      )
+      ))
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -518,6 +549,8 @@ final case class EventTerm(
           amplitude = ampB,
           summate = summate
         )
+        channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)).toVector, eIdx,
+          Vector.tabulate(conditionHrf.nbasis)(columnOffset + _), reg, Vector.tabulate(conditionHrf.nbasis)(identity))
         val ev = Regressor.evaluate(reg, grid, precision = precision.value)
         var basis = 0
         while basis < conditionHrf.nbasis do
@@ -534,7 +567,7 @@ final case class EventTerm(
       b += 1
 
     val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
-    ConvolvedTerm(
+    recorded(ConvolvedTerm(
       this,
       representative,
       Mat.unsafe(totalRows, totalCols, out),
@@ -545,7 +578,7 @@ final case class EventTerm(
       columnModulators = finalModulators,
       columnHrfs = finalHrfs,
       columnScales = columnScales
-    )
+    ))
 
   def convolvePerEvent(
       hrfs: Seq[Hrf],
@@ -584,9 +617,12 @@ final case class EventTerm(
 
     val out = new Array[Double](outputCells)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+    val channels = Vector.newBuilder[ConvolutionChannel]
+    def recorded(value: ConvolvedTerm): ConvolvedTerm =
+      value.copy(convolutionRecipe = Some(new ConvolutionRecipe(value, samplingFrame, precision, channels.result())))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 || n == 0 then
-      return ConvolvedTerm(
+      return recorded(ConvolvedTerm(
         this,
         rep,
         Mat.unsafe(totalRows, totalCols, out),
@@ -597,7 +633,7 @@ final case class EventTerm(
         columnModulators = finalModulators,
         columnScales = emptyScales,
         eventHrfs = recordedEventHrfs
-      )
+      ))
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -618,6 +654,8 @@ final case class EventTerm(
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
         val reg = perEventRegressor(onsets = onsB, hrfs = hrfB, duration = durB, amplitude = ampB, summate = summate)
+        channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)).toVector, eIdx,
+          Vector.tabulate(nb)(basis => basis * nConds + cond), reg, Vector.tabulate(nb)(identity))
         val ev = Regressor.evaluate(reg, grid, precision = precision.value)
         var basis = 0
         while basis < nb do
@@ -633,7 +671,7 @@ final case class EventTerm(
       b += 1
 
     val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
-    ConvolvedTerm(
+    recorded(ConvolvedTerm(
       this,
       rep,
       Mat.unsafe(totalRows, totalCols, out),
@@ -644,7 +682,7 @@ final case class EventTerm(
       columnModulators = finalModulators,
       columnScales = columnScales,
       eventHrfs = recordedEventHrfs
-    )
+    ))
 
   private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =
     if conditionTags.isEmpty || nbasis <= 0 then Vector.empty

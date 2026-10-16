@@ -59,6 +59,22 @@ final case class EventModel(
       case Some(schema) => schema.validate
       case None         => Right(())
 
+  def validateResponseSupportSelection(scans: Vector[ScanIndex]): Either[DesignError, Unit] =
+    if designSchema.audit.responseSupport.forall(_.request.retainedScans == scans) then Right(())
+    else Left(DesignError.InvalidSchedule("Fit scan selection differs from event support policy; rebuild the model for the intended scans"))
+
+  def withResponseSupportEvidence(receipts: Vector[EventSupportReceipt]): Either[DesignError, EventModel] =
+    val schema = designSchema
+    val exclusions = receipts.flatMap(receipt => receipt.decisions.collect {
+      case row if row.disposition == EventSupportDisposition.Excluded =>
+        EventExclusion(row.sourceRow, "response-support-unobserved", receipt.term.map(TermId.unsafe))
+    })
+    val audit = schema.audit.copy(eventsSeen = schema.audit.eventsSeen + exclusions.length,
+      excludedEvents = schema.audit.excludedEvents ++ exclusions,
+      responseSupport = schema.audit.responseSupport ++ receipts)
+    DesignSchema.validated(schema.matrix, schema.rows, schema.columns, audit)
+      .map(value => copy(compiledSchema = Some(value)))
+
   /** Compatibility wrapper over [[withDiagnosticsEither]]. Compiler paths use
     * the total method so schema-validation failures retain their typed cause.
     */
@@ -91,7 +107,9 @@ final case class EventModel(
     val outside = (terms.flatMap(_._2 match
       case ct: ConvolvedTerm => ct.term.sourceRowIndices
       case _ => Vector.empty
-    ) ++ designSchema.audit.sourceEvents.map(_.sourceRow) ++
+    ) ++ designSchema.audit.responseSupport.flatMap(_.decisions.map(_.sourceRow)) ++
+      designSchema.audit.excludedEvents.filter(_.reason == "response-support-unobserved").map(_.eventIndex) ++
+      designSchema.audit.sourceEvents.map(_.sourceRow) ++
       designSchema.audit.eventProvenance.map(_.sourceRow) ++ degenerateModulatorReceipts.flatMap(_.sourceRows) ++
       orthogonalizationReceipts.flatMap(_.steps.flatMap(_.groups.flatMap(_.sourceRows)))).find(row => row < 0 || row >= rows.length)
     outside match
@@ -104,13 +122,16 @@ final case class EventModel(
         def orthogonalized(value: OrthogonalizationReceipt): OrthogonalizationReceipt =
           value.copy(steps = value.steps.map(step => step.copy(groups = step.groups.map(group => group.copy(sourceRows = group.sourceRows.map(rows))))))
         val terms1 = terms.map:
-          case (key, ct: ConvolvedTerm) => key -> ct.copy(term = ct.term.copy(
-            eventProvenance = ct.term.eventProvenance.map(provenance), sourceRows = ct.term.sourceRows.map(rows)))
+          case (key, ct: ConvolvedTerm) => key -> ct.remapSourceRows(rows)
           case other => other
         val schema0 = designSchema
         val audit0 = schema0.audit.copy(
           eventProvenance = schema0.audit.eventProvenance.map(provenance),
           sourceEvents = schema0.audit.sourceEvents.map(event => event.copy(sourceRow = rows(event.sourceRow))),
+          responseSupport = schema0.audit.responseSupport.map(receipt => receipt.copy(
+            decisions = receipt.decisions.map(row => row.copy(sourceRow = rows(row.sourceRow))))),
+          excludedEvents = schema0.audit.excludedEvents.map(event =>
+            if event.reason == "response-support-unobserved" then event.copy(eventIndex = rows(event.eventIndex)) else event),
           missingValues = schema0.audit.missingValues.map(missing),
           degenerateModulatorReceipts = schema0.audit.degenerateModulatorReceipts.map(degenerate),
           orthogonalizationReceipts = schema0.audit.orthogonalizationReceipts.map(orthogonalized),
@@ -396,7 +417,11 @@ object EventModel:
       eventsUsed = seen,
       sourceEvents = sources,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
-      policyReceipts = policies,
+      policyReceipts = policies ++ terms.flatMap {
+        case (key, ct: ConvolvedTerm) => ct.convolutionRecipe.map(recipe =>
+          PolicyReceipt("convolution", s"term=$key;${recipe.canonical}"))
+        case _ => None
+      },
       diagnostics = diagnostics.map(toDesignDiagnostic),
       eventResponseScales = eventResponseScales(terms)
     )

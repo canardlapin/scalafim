@@ -13,6 +13,10 @@ class DesignIdentitySuite extends munit.FunSuite:
     ).foreach { case (name, schema) =>
       assertEquals(schema.columnIds.map(_.value), columnIdGoldens(name))
       exactFingerprintGoldens.get(name).foreach(expected => assertEquals(schema.fingerprint.value, expected))
+      if name == "fir" then
+        val previousAudit = schema.audit.copy(policyReceipts = schema.audit.policyReceipts.filterNot(_.name == "convolution"))
+        assertEquals(DesignFingerprint.from(schema.matrix, schema.rows, schema.columns, previousAudit).value,
+          "design-schema/v2:8f2ee67682098523")
     }
   }
 
@@ -77,7 +81,11 @@ class DesignIdentitySuite extends munit.FunSuite:
     )
     val fixedAudit = compiled.audit.copy(rankPreview = Some(RankPreview.Available(rank)))
     val snapshot = DesignFingerprint.from(matrix, compiled.rows, compiled.columns, fixedAudit)
-    assertEquals(snapshot.value, "design-schema/v2:b27079652d98235d")
+    assertEquals(snapshot.value, "design-schema/v2:67677aa049219866")
+    // The recovered recipe is the only identity change; preserve the old golden too.
+    val previousAudit = fixedAudit.copy(policyReceipts = fixedAudit.policyReceipts.filterNot(_.name == "convolution"))
+    assertEquals(DesignFingerprint.from(matrix, compiled.rows, compiled.columns, previousAudit).value,
+      "design-schema/v2:b27079652d98235d")
   }
 
   /** SPMG columns are sums of samples of exp/pow terms. java.lang.Math may return a different result within
@@ -116,7 +124,7 @@ class DesignIdentitySuite extends munit.FunSuite:
     * is pinned from fixed bits in "realistic SPMG structural identity is distinct from its numerical content".
     */
   private val exactFingerprintGoldens = Map(
-    "fir" -> "design-schema/v2:8f2ee67682098523"
+    "fir" -> "design-schema/v2:ed9b845071fa9cb5"
   )
 
   // Literal wire-format outputs; independently FNV-checked.

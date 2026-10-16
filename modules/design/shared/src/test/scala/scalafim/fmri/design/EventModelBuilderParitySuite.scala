@@ -787,7 +787,7 @@ class EventModelBuilderParitySuite extends munit.FunSuite:
     assertNotEquals(first.designSchema.fingerprint, permuted.designSchema.fingerprint)
     def numericalAudit(model: EventModel): String =
       val audit = model.designSchema.audit
-      audit.copy(sourceEvents = Vector.empty).canonical
+      audit.copy(sourceEvents = Vector.empty, policyReceipts = audit.policyReceipts.filterNot(_.name == "convolution")).canonical
     assertEquals(numericalAudit(first), numericalAudit(permuted))
     assertEquals(first.designSchema.audit.sourceEvents.map(row => (row.sourceRow, row.onset.value)),
       Vector((0, 1.0), (1, 3.0)))

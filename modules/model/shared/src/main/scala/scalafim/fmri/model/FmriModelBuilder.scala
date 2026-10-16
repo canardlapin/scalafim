@@ -1,5 +1,7 @@
 package scalafim.fmri.model
 
+import scalafim.fmri.design.ResponseSupportRequest
+
 import scalafim.dataset.{DatasetEvents, DatasetValue, FmriDataset}
 import scalafim.fmri.design.{ColumnId, DegenerateModulatorPolicy, EmptyCellPolicy, FactorLevelRegistry, FactorSchemaBinding, HrfByCell, HrfByPhase, MissingValuePolicy, ModulatorOrthogonalizationPlan}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NaAction, NuisanceCheck}
@@ -160,7 +162,8 @@ final case class ModelBuildSpec(
     degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
     orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None,
     /** Derived event columns, evaluated against the dataset events before the formula is compiled. */
-    derived: DerivedEventPlan = DerivedEventPlan.empty
+    derived: DerivedEventPlan = DerivedEventPlan.empty,
+    responseSupport: Option[ResponseSupportRequest] = None
 ):
   require(formula.trim.nonEmpty, "model formula must be non-empty")
   require(baselineDegree >= 1, "baseline degree must be at least 1")
@@ -213,7 +216,8 @@ object FmriModelBuilder:
           hrfByPhase = spec.hrfByPhase,
           missingValuePolicy = spec.missingValuePolicy,
           degenerateModulatorPolicy = spec.degenerateModulatorPolicy,
-          orthogonalization = spec.orthogonalization
+          orthogonalization = spec.orthogonalization,
+          responseSupport = spec.responseSupport
         ),
         extensions = EventModelBuilder.DesignExtensionEnv(
           contrastSets = spec.contrastSets

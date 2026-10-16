@@ -65,7 +65,7 @@ enum EventResponseConvolutionError:
   *
   * Both conventions use the same numerical path as [[EventTerm.convolve]]:
   * the shared kernel is sampled at `precision`, truncated at `hrf.span`, and
-  * events with negative global onset are excluded. `PreservePulseScale` is
+  * finite signed onsets are retained on their run clock. `PreservePulseScale` is
   * therefore numerically identical to plain convolution and records no
   * per-event scales. `UnitPeak` divides each event's response, per basis
   * column, by the peak absolute value of that event's pulse response, measured

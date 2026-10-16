@@ -812,7 +812,8 @@ final case class DesignAudit(
     eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty,
     /** Rows retained and dropped by derived-column declarations, when the build had any. */
     derivedRows: Vector[DerivedRowsReceipt] = Vector.empty,
-    sourceEvents: Vector[SourceEventRow] = Vector.empty
+    sourceEvents: Vector[SourceEventRow] = Vector.empty,
+    responseSupport: Vector[EventSupportReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -863,7 +864,8 @@ final case class DesignAudit(
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
     val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags" + sources
+    val support = if responseSupport.isEmpty then "" else responseSupport.map(_.canonical).mkString(";response-support=", "|", "")
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse$derived;policies=$policies;rank=$rank;diagnostics=$diags" + sources + support
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -1375,6 +1377,7 @@ object DesignSchema:
       missingValues = left.missingValues ++ right.missingValues,
       eventProvenance = left.eventProvenance ++ right.eventProvenance,
       sourceEvents = left.sourceEvents ++ right.sourceEvents,
+      responseSupport = left.responseSupport ++ right.responseSupport,
       centeringReceipts = left.centeringReceipts ++ right.centeringReceipts,
       degenerateModulatorReceipts = left.degenerateModulatorReceipts ++ right.degenerateModulatorReceipts,
       orthogonalizationReceipts = left.orthogonalizationReceipts ++ right.orthogonalizationReceipts,

@@ -152,3 +152,21 @@ class ModelDocumentJsonCodecSuite extends munit.FunSuite:
     assertEquals(ModelJsonCodec.decodeDerivedColumns(columns).map(_.map(_.text)), Right(Vector("reward: number = (gain - loss)")))
     val confounds = """{"version":1,"motion":"Raw6","acompcorComponents":0,"includeWhiteMatter":false,"includeCsf":false,"includeGlobalSignal":false,"censor":null}"""
     assertEquals(ConfoundSpecJsonCodec.decode(confounds), Right(ConfoundSpec()))
+
+  test("coverage policy survives the document envelope and text editing"):
+    val coverage = scalafim.fmri.design.ResponseSupportRequest(Vector(1, 3).map(scalafim.fmri.design.ScanIndex.unsafeOneBased),
+      scalafim.fmri.design.EventSupportPolicy.RequireFullWindow)
+    val document = full.copy(build = full.build.copy(responseSupport = Some(coverage)))
+    val json = encoded(document)
+    assertEqualsDouble(ujson.read(json)("version").num, 3.0, 0.0)
+    assertEquals(decoded(json), document)
+    assertEquals(encoded(decoded(json)), json)
+    val lines = ModelDocumentText.render(document).fold(error => fail(error.message), identity)
+    assertEquals(ModelDocumentText.parse(lines, document), Right(document))
+    assert(ModelDocumentText.parse(lines, full).isLeft)
+    val malformed = ujson.read(json)
+    malformed("build").obj.remove("responseSupport")
+    assert(ModelDocumentJsonCodec.decode(ujson.write(malformed)).isLeft)
+    val oldVersion = ujson.read(json)
+    oldVersion("version") = ujson.Num(2)
+    assert(ModelDocumentJsonCodec.decode(ujson.write(oldVersion)).isLeft)
