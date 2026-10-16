@@ -120,6 +120,26 @@
     "sha256": "5438952cca3ba48d96595431432ef9605f5081f6e222eeeb10883571233de446"
   },
   {
+    "path": "event-roles-recovery-01.meta.json",
+    "bytes": 631,
+    "sha256": "3d314925b20560c5d5485830f11828c192a9897e53967b7ad344b75fda2cff9f"
+  },
+  {
+    "path": "event-roles-recovery-01.txt",
+    "bytes": 10624,
+    "sha256": "3185e2b851e0376cdf749c433254dcf35d5f56c253f7334eb90ff75c49029ca6"
+  },
+  {
+    "path": "event-roles-recovery-02.meta.json",
+    "bytes": 628,
+    "sha256": "16925563ef386739f852a274d4bfb6ae45fd1ba5796bf68bfe35e6e2bd29805c"
+  },
+  {
+    "path": "event-roles-recovery-02.txt",
+    "bytes": 2369,
+    "sha256": "4eb8aae576ddf1cf4bb2d5a76f3192e639de978a3f085484ec6d747130887f04"
+  },
+  {
     "path": "final-surface-recovery-01.meta.json",
     "bytes": 657,
     "sha256": "b10256d55f62185e59ac602063ee987fa56278eea6e484d64dbcd0101344e522"
@@ -318,6 +338,11 @@
     "path": "selected-policy-gate-01.txt",
     "bytes": 1897,
     "sha256": "1fbbc7a8c34fa8e47b8a73fc90fa94cf2930eef11d8368ea5a5636822cac866c"
+  },
+  {
+    "path": "sha256.txt",
+    "bytes": 9287,
+    "sha256": "f3e43341c74aa657c365c5fa9d343f173277c4ff077c70320834b5c11df61204"
   },
   {
     "path": "source-rows-gate-01.meta.json",

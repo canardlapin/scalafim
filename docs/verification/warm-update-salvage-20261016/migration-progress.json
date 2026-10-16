@@ -237,6 +237,16 @@
       "logs": [
         "checks/final-surface-review-04.txt"
       ]
+    },
+    {
+      "sha": "5d2a86db6598a9358a65189e674607e5d3939000",
+      "behavior": "explicit categorical/continuous event roles preserving current missing and degenerate policies",
+      "checks": {
+        "JVM": 7,
+        "JS": 7
+      },
+      "log": "event-roles-recovery-02.txt",
+      "review": "independent exact-commit review: no bounded findings"
     }
   ],
   "publishedToMain": false,
