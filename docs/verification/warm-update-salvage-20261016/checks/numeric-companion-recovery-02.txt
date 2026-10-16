@@ -1,0 +1,36 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + observed slice-timing metadata preserves true, false and unknown separately 0.188s
+  + present malformed slice-timing correction declarations are refused 0.005s
+  + raw companion metadata does not assert derivative slice-timing correction 0.002s
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.run and echo index padding selects unique event confound and mask companions  0.005s munit.FailException: modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerSuite.scala:83 expected run-specific mask, got Single(WorkflowArtifactRef(file:///study/derivatives/fmriprep/sub-01/func/sub-01_task-demo_acq-mb_run-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001_echo-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001_space-MNI_res-2_desc-brain_mask.nii))
+82:      case masks: UnitMask.Intersection => assert(masks.runMasks.head._2.location.value.contains(paddedIndex))
+83:      case other => fail(s"expected run-specific mask, got $other")
+84:  }
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.fmri.workflow.BidsStudyCompilerSuite.$init$$$anonfun$6(BidsStudyCompilerSuite.scala:83)
+  + zero-valued run and echo indices match across padding without rewriting run identity 0.002s
+  + padded event and confound duplicates remain equally-specific ambiguities 0.002s
+  + BIDS labels and malformed index values remain exact matches 0.006s
+  + numeric-equivalent BOLD aliases are refused under both grouping policies 0.005s
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.005s
+  + compiler accumulates missing header, metadata, and companion failures 0.002s
+  + one-unit-per-run grouping preserves the run in unit identity 0.002s
+  + confound-free recipes ignore ambiguous confound tables 0.002s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.004s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.002s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.003s
+  + participant-table coverage reports missing and duplicate subjects 0.005s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.022s
+[error] Failed: Total 18, Failed 1, Errors 0, Passed 17
+[error] Failed tests:
+[error] 	scalafim.fmri.workflow.BidsStudyCompilerSuite
+[error] (fmriWorkflowJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[[31merror[0m] elapsed: 6 s
+[0J[sbt-warm] fmriWorkflowJVM/testOnly scalafim.fmri.workflow.BidsStudyCompilerSuite: exit 1 in 6.7s

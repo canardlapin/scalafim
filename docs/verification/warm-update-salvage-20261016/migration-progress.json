@@ -247,6 +247,18 @@
       },
       "log": "event-roles-recovery-02.txt",
       "review": "independent exact-commit review: no bounded findings"
+    },
+    {
+      "sha": "9bc3510a3eb8f651dc54590dbc852b671089c07e",
+      "behavior": "Numeric Run/Echo companion equivalence with refusal of selected-BOLD aliases; original labels and label-entity equality preserved",
+      "checks": {
+        "JVM": 18,
+        "JS": 18
+      },
+      "logs": [
+        "checks/numeric-companion-recovery-03.txt"
+      ],
+      "review": "Independent review found duplicate-acquisition edge; final guard closes it under both grouping policies. Test fixture corrections and failed attempts retained."
     }
   ],
   "publishedToMain": false,
@@ -262,9 +274,9 @@
   },
   "remaining": [
     "required hosted provider checks and landing on canonical main",
-    "complete desktop test fixture migration and independent consumer review",
-    "fresh committed consumer checkout with declared closure: sbt check, headless and touched native acceptance",
-    "exact canonical-main provider pin and portable consumer publication"
+    "fresh committed consumer checkout with declared closure: sbt check, strict native/headless and touched surface/brain-view acceptance",
+    "exact canonical-main provider pin and portable consumer publication",
+    "release task reservations and publish portable Mote authority checkpoint"
   ],
   "validatedSourceHead": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
   "compileAll": {
@@ -286,5 +298,17 @@
   "withheld": [
     "Stock native affine interpolation and dense-colour refinement remain unqualified; application default uses legacy renderer",
     "Historical ReachableResponseBasis probe family assertions are archived and withheld; no production caller depends on that API. Current Gale-backed HRF family capability is a different contract."
-  ]
+  ],
+  "latestSourceHead": "9bc3510a3eb8f651dc54590dbc852b671089c07e",
+  "consumerCheckpoint": {
+    "commit": "17cbea4e647204967a8eb076b6ab1107ec75a64b",
+    "freshCheck": "pass",
+    "strictNative": "failed at stale schema-v5 expectation; receipt retained",
+    "diagnosticHeadless": {
+      "pass": 83,
+      "fail": 6,
+      "acceptance": false
+    },
+    "followup": "Storage/runtime provenance, study spatial support and participant measurement checks pass. Catalog consumer check on numeric companion recovery is running. Full strict lanes and final main pin remain required."
+  }
 }

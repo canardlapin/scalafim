@@ -9,7 +9,7 @@
     "sha": "702ecd9a65674c6c74e49eb032dd82ab05baf777",
     "subject": "feat(first-level): add selected estimates and inspectable workflow support",
     "disposition": "partial integration; salvage seams",
-    "reason": "Selected estimation exists, but bounded/content-verified staging, observed event support, companion tables, and study-mask support require separate recovery. PLS consumer compilation is the acceptance boundary."
+    "reason": "Selected estimation exists, but bounded/content-verified staging, observed event support, companion tables, and study-mask support require separate recovery. PLS consumer compilation is the acceptance boundary. Numeric Run/Echo companion equivalence was also recovered in 9bc3510a3, with explicit duplicate-acquisition refusal and JVM/JS tests."
   },
   {
     "sha": "c14b36ac624c3d38e767af7bdbd62addd2c1cd47",

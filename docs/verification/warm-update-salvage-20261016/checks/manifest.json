@@ -270,6 +270,36 @@
     "sha256": "b5055714c24bef4626f2480fef4c40f82dc9a1a46a5ff1c8e3f523224eed5bb2"
   },
   {
+    "path": "numeric-companion-recovery-01.meta.json",
+    "bytes": 667,
+    "sha256": "db648d63deba81b56d8f73836e1fba732c3ae4bb82970a0a70ab2472f09bb096"
+  },
+  {
+    "path": "numeric-companion-recovery-01.txt",
+    "bytes": 11215,
+    "sha256": "bf0015770e5339ebc4e177dad66fe3c09d1edb68c6ae45976b32c734ba215c22"
+  },
+  {
+    "path": "numeric-companion-recovery-02.meta.json",
+    "bytes": 665,
+    "sha256": "b75a59f1cb1218772943eaba434fa8ed63c025401a301ea771089b6b4182880a"
+  },
+  {
+    "path": "numeric-companion-recovery-02.txt",
+    "bytes": 4003,
+    "sha256": "f465afb0034e549446cb56735fce03f72fd5e0084a2ff10d440bcd5fdb8d589a"
+  },
+  {
+    "path": "numeric-companion-recovery-03.meta.json",
+    "bytes": 666,
+    "sha256": "950c90ef7012eee323a7f0a2e0de157901a130df6a06543cd760497bb06c8363"
+  },
+  {
+    "path": "numeric-companion-recovery-03.txt",
+    "bytes": 4293,
+    "sha256": "7223dcdc36b5d87ab345f646461895364b0a08e17909afa78125b313823adefe"
+  },
+  {
     "path": "paired-native-pick-receipt.json",
     "bytes": 63,
     "sha256": "075e9634784e52ede31d90f0167eb422c610d9c70019eac5f1802865963945d3"
