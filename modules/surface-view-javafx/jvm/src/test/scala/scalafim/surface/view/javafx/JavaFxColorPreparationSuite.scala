@@ -145,12 +145,22 @@ object JavaFxColorPreparationProbe:
         require(renderer.render(substituted, collidingPrepared).isLeft, "substituted same-key buffers accepted")
         require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == priorPixels,
           "rejected substituted buffers changed displayed pixels")
+        val invalidView = collision.camera.viewMatrix.unsafeArray.clone()
+        invalidView(0) = Float.NaN
+        val invalidCamera = collision.copy(camera = collision.camera.copy(
+          viewMatrix = new FloatBufferView(invalidView)))
+        require(renderer.render(invalidCamera, collidingPrepared).isLeft,
+          "prepared colours accepted invalid rebased camera")
+        require(renderer.pickingPlan.contains(original),
+          "invalid rebased camera replaced the painted plan")
+        require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == priorPixels,
+          "invalid rebased camera changed displayed pixels")
         val changed = renderer.render(collision, collidingPrepared).toOption.get
         require(changed.atlasUpdates == 1, "same-key colour change skipped atlas upload")
         require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == 0xff0000ff,
           "published same-key plan differs from displayed pixels")
         require(renderer.render(collision, collidingPrepared).isLeft, "same-key update did not expire preparation")
-        println("PASS: same-key colour upload; worker preparation; live camera/selection; foreign and stale A-B-A refusal; failed publication preserves controller; no geometry upload")
+        println("PASS: same-key colour upload; worker preparation; live camera/selection; foreign and stale A-B-A refusal; invalid camera refusal preserves token, pixels and plan; failed publication preserves controller; no geometry upload")
       catch case error: Throwable => failure = Some(error)
       finally
         controller.foreach(_.dispose())

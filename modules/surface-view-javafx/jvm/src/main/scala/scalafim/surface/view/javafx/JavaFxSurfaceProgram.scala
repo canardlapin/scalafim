@@ -267,7 +267,9 @@ final class JavaFxSurfaceBackend private (
 
   private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface, colors: Option[JavaFxPreparedColorUpdate] = None): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val plan = prepared.plan
-    JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
+    if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
+      "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
+    else JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
@@ -278,8 +280,19 @@ final class JavaFxSurfaceBackend private (
         val updatesBuffers = incremental.commands.exists:
           case JavaFxSurfaceCommand.UpdateAtlases(_) | JavaFxSurfaceCommand.UpdateGeometry(_) => true
           case _ => false
+        /* Worker-prepared legacy pixels already passed native capability, content,
+         * layout, and capacity validation before this publication. A rebased plan
+         * may carry a new camera, which preparation deliberately does not bind.
+         * Do not recomposite those pixels merely to ask the adaptive-layout
+         * question: legacy triangles have no adaptive layout to rebuild. */
+        val preparedLegacyColorOnly = colors.nonEmpty &&
+          config.encoding == JavaFxAtlasEncoding.LegacyTriangle &&
+          incremental.dirty.layerData && !incremental.dirty.geometry &&
+          !incremental.dirty.material && !incremental.dirty.layout &&
+          !incremental.dirty.clipping && !rebuildsGeometry
         val needsReplacement =
-          if updatesBuffers && !rebuildsGeometry then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan))
+          if preparedLegacyColorOnly then Right(false)
+          else if updatesBuffers && !rebuildsGeometry then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan))
           else Right(false)
         val program = needsReplacement match
           case Left(error) => scala.util.boundary.break(Left(error))
