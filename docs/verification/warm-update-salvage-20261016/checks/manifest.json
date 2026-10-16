@@ -55,9 +55,29 @@
     "sha256": "33f71342a4bca495cbda9eb0e5f314ab32c9a9ff3d14515f5b68cb6f71923f2f"
   },
   {
+    "path": "native-preparation-compile-01.txt",
+    "bytes": 702,
+    "sha256": "c76e91292cfa1ed5cdd70f1011200509fae7278f9e8c1d28f55d50b398b64408"
+  },
+  {
+    "path": "native-preparation-gate-01.txt",
+    "bytes": 1228,
+    "sha256": "699c4ee0cf5359fbd46dd15ec59a77170ceaae14725683ae662da27c8b4c7921"
+  },
+  {
+    "path": "native-preparation-gate-02.txt",
+    "bytes": 11388,
+    "sha256": "839251c66e06fd6f132dbbaf17deca27575147f4c0bf3d0edb4cba5c573fd381"
+  },
+  {
     "path": "recovery-compile-01.txt",
     "bytes": 16473,
     "sha256": "52d2f303d9a37981692ab14b5749963d27ea5657b86274338b25698c7d9209ca"
+  },
+  {
+    "path": "recovery-compile-02.txt",
+    "bytes": 701,
+    "sha256": "10543f01b65c3b9e49da49c0561d08aa263854f1d8a40f68baafc2a9f88440e4"
   },
   {
     "path": "source-rows-gate-01.txt",
@@ -68,6 +88,56 @@
     "path": "source-rows-gate-02.txt",
     "bytes": 153510,
     "sha256": "2629dafbe7330f71e3395cab1af30338ac03f82be6f5d1f12d527394ab89d3a6"
+  },
+  {
+    "path": "study-spatial-gate-01.txt",
+    "bytes": 1349,
+    "sha256": "79dae78edb7555ed7421113914f5cfbccbd662d5068f2aa1aa31647128dd702f"
+  },
+  {
+    "path": "study-spatial-gate-02.txt",
+    "bytes": 7960,
+    "sha256": "e07e2ab015ed2579050b30ae1dbb9cdd1a33a42e13e4d574007448c3f56fc62d"
+  },
+  {
+    "path": "study-spatial-gate-03.txt",
+    "bytes": 732,
+    "sha256": "8269252b5c5f7fe438c2f1747f628725712ebd827ad2b55cf38a0937b753f43d"
+  },
+  {
+    "path": "study-spatial-gate-04.txt",
+    "bytes": 10677,
+    "sha256": "2d11c2a4055707de4cc048c77663696a00a10fc3f794c3c136182cf4e33ddb74"
+  },
+  {
+    "path": "support-kernel-gate-01.txt",
+    "bytes": 5917,
+    "sha256": "d503293de5ddbda348fb42391d69706bb27aea3fe6a0af88aef37c77ac916d9c"
+  },
+  {
+    "path": "support-policy-gate-01.txt",
+    "bytes": 62762,
+    "sha256": "e1a58f30420d7ae8706bb36d2f1f141498eee0a8525b7ecda87726eb14f22a05"
+  },
+  {
+    "path": "support-policy-gate-02.txt",
+    "bytes": 109831,
+    "sha256": "ee53982eebf5df1c40518757c0851af936a59142673fbd2e0a8e9fbf2a3ef155"
+  },
+  {
+    "path": "support-policy-gate-03.txt",
+    "bytes": 32724,
+    "sha256": "c164e2bebfb3060c86a05990145e94daf10aa4156deed462624c41996a250852"
+  },
+  {
+    "path": "surface-transaction-gate-01.txt",
+    "bytes": 51231,
+    "sha256": "e237ed76234a897ebec52a4229a26965bd13868ecba3eeffde1e1fecf494a205"
+  },
+  {
+    "path": "surface-transaction-gate-02.txt",
+    "bytes": 2708,
+    "sha256": "c1c049aa1ea0ce6ca755bec4a0a07b36bca1c5dcddd1764df1fc1e45c602e9e4"
   },
   {
     "path": "tables-sampling-gate-01.txt",

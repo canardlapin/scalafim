@@ -1,0 +1,9 @@
+[info] compiling 16 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:78:36 
+[error] 78 |          .fold(error => fail(error.message), identity)
+[error]    |                              ^^^^^^^^^^^^^
+[error]    |value message is not a member of image4s.nifti.NiftiError | scalafim.image.io.NiftiImageReadError
+[error] one error found
+[error] (fmriWorkflowJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 8 s
+[0J[sbt-warm] fmriWorkflowJVM/test: exit 1 in 8.5s

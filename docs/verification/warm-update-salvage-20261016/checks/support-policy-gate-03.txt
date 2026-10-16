@@ -1,0 +1,419 @@
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+12-term build median_ms incremental=4.625208 full=8.167667
+scalafim.fmri.design.IncrementalDesignSuite:
+  + one-term edit recompiles exactly one term and matches full compilation including identity 0.232s
+  + exposed legacy matrix buffers cannot corrupt a later cache hit 0.009s
+  + unchanged context avoids repeated convolution and retains bounded cache 0.006s
+  + incremental and full build performance compare equivalent twelve-term designs 0.199s
+  + trialwise, covariate and subset terms recompile incrementally exactly as a full build 0.04s
+  + a TermCall repeated within one formula matches full compilation 0.006s
+  + changing the onset column rebuilds every term and equals full recompilation 0.006s
+scalafim.fmri.design.EventResponseSupportSuite:
+  + excluding a late event precedes centering and retains original source rows 0.032s
+  + rejection returns an inspectable source-addressable receipt 0.001s
+  + partial FIR windows require an explicit accepting policy 0.004s
+  + zero modulators remain eligible in their actual factor cell 0.004s
+  + formula subsets and policy exclusions retain distinct original row identities 0.002s
+  + retained scan selection controls support and trialwise terms obey the same policy 0.003s
+  + data-fitted scaling is refitted on retained source rows 0.009s
+  + derived-row exclusions and refusals refer to original input rows 0.029s
+  + support exclusion precedes observed centering and products with original component rows 0.02s
+  + post-convolution basis transforms keep coverage policy but refuse stale per-column support 0.033s
+  + shared slopes preserve distinct main and slope column contributions under coverage policy 0.009s
+scalafim.fmri.design.ConvolutionSupportSuite:
+  + resolved FIR support retains source and original scan identities after censoring 0.003s
+  + per-event assignments retain zero modulation separately from temporal potential 0.005s
+  + per-cell mixed basis widths map to their actual design columns 0.004s
+  + duration averaging and final column scaling are retained exactly 0.002s
+  + a completely censored run retains unsupported event records without borrowing another run 0.001s
+  + missing recipes, replaced matrices and invalid selections fail explicitly 0.002s
+  + resolved recipes distinguish timing potential even when zero amplitudes hide it in the matrix 0.002s
+  + in-place matrix or event-amplitude mutations invalidate a captured recipe 0.0s
+  + per-basis event divisors retain the actual basis and amplitude before column scaling 0.002s
+  + source-row remapping preserves numeric support and detects arbitrary copied provenance 0.0s
+  + zero shared amplitudes keep potential support without sampling until inspection 0.006s
+[info] Passed: Total 29, Failed 0, Errors 0, Passed 29
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-eblgo3fi/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] designJVM/testOnly *ConvolutionSupportSuite *EventResponseSupportSuite *IncrementalDesignSuite: exit 0 in 7.2s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/scalafim-fmri-design-test-fastopt
+scalafim.fmri.design.IncrementalDesignSuite:
+  + one-term edit recompiles exactly one term and matches full compilation including identity 0.047s
+  + exposed legacy matrix buffers cannot corrupt a later cache hit 0.010s
+  + unchanged context avoids repeated convolution and retains bounded cache 0.007s
+12-term build median_ms incremental=5.886542 full=8.482542
+  + incremental and full build performance compare equivalent twelve-term designs 0.221s
+  + trialwise, covariate and subset terms recompile incrementally exactly as a full build 0.019s
+  + a TermCall repeated within one formula matches full compilation 0.006s
+  + changing the onset column rebuilds every term and equals full recompilation 0.007s
+scalafim.fmri.design.EventResponseSupportSuite:
+  + excluding a late event precedes centering and retains original source rows 0.036s
+  + rejection returns an inspectable source-addressable receipt 0.002s
+  + partial FIR windows require an explicit accepting policy 0.007s
+  + zero modulators remain eligible in their actual factor cell 0.004s
+  + formula subsets and policy exclusions retain distinct original row identities 0.006s
+  + retained scan selection controls support and trialwise terms obey the same policy 0.006s
+  + data-fitted scaling is refitted on retained source rows 0.005s
+  + derived-row exclusions and refusals refer to original input rows 0.013s
+  + support exclusion precedes observed centering and products with original component rows 0.012s
+  + post-convolution basis transforms keep coverage policy but refuse stale per-column support 0.015s
+  + shared slopes preserve distinct main and slope column contributions under coverage policy 0.007s
+scalafim.fmri.design.ConvolutionSupportSuite:
+  + resolved FIR support retains source and original scan identities after censoring 0.002s
+  + per-event assignments retain zero modulation separately from temporal potential 0.001s
+  + per-cell mixed basis widths map to their actual design columns 0.001s
+  + duration averaging and final column scaling are retained exactly 0.001s
+  + a completely censored run retains unsupported event records without borrowing another run 0.000s
+  + missing recipes, replaced matrices and invalid selections fail explicitly 0.000s
+  + resolved recipes distinguish timing potential even when zero amplitudes hide it in the matrix 0.002s
+  + in-place matrix or event-amplitude mutations invalidate a captured recipe 0.001s
+  + per-basis event divisors retain the actual basis and amplitude before column scaling 0.001s
+  + source-row remapping preserves numeric support and detects arbitrary copied provenance 0.000s
+  + zero shared amplitudes keep potential support without sampling until inspection 0.000s
+[info] Passed: Total 29, Failed 0, Errors 0, Passed 29
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-_g1vabhd/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] designJS/testOnly *ConvolutionSupportSuite *EventResponseSupportSuite *IncrementalDesignSuite: exit 0 in 7.3s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/model/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/model/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.model.ModelDocumentJsonCodecSuite:
+  + every portable piece round trips and re-encodes byte for byte 0.113s
+  + canonical text is pinned, so the JVM and Scala.js render identical bytes 0.003s
+  + exponents, negatives and integral values render with pinned, platform-stable bytes 0.004s
+  + nuisance matrices compare by value bits, copy their input, and stay reflexive with NaN 0.001s
+  + unknown and missing fields fail with the JSON path of the offending value 0.017s
+  + strategies and HRFs without a portable form are refused at their path 0.008s
+  + existing model-build and model-spec v1 documents still decode 0.007s
+  + coverage policy survives the document envelope and text editing 0.046s
+scalafim.fmri.model.ConfoundDesignSuite:
+  + motion derivatives and powers are scan-local and stable across runs 0.011s
+  + RawAndDerivative12 yields raw motion then first differences only 0.0s
+  + FD neighbour union creates one deduplicated spike per censored scan 0.002s
+  + short retained segments and run exclusion are explicit receipts 0.002s
+  + runs with no retained scans or fewer retained scans than nuisance columns always fail 0.002s
+  + aCompCor input is optional exactly when no components are requested 0.001s
+  + missing selected inputs and malformed source matrices fail without padding 0.001s
+  + derived confounds and FD neighbourhood bounds fail or saturate explicitly 0.0s
+  + multi-run confounds become globally unique nuisance columns in a built model 0.272s
+scalafim.fmri.model.ModelBuilderSuite:
+  + eventsTable infers typed columns from dataset event rows 0.003s
+  + eventsTable preserves explicitly typed text values 0.001s
+  + buildModel constructs an inspectable model from dataset-resident events 0.005s
+  + buildModel evaluates derived declarations and records the rows its policy drops 0.037s
+  + buildModel propagates declared factor levels through the public model path 0.013s
+  + buildModel carries heterogeneous HRF assignments through the public model path 0.01s
+  + buildModel carries exhaustive phase and cell HRF assignments through the public model path 0.015s
+  + eventsTable rejects ragged event rows before model construction 0.008s
+  + buildModel rejects missing block and duration columns explicitly 0.001s
+  + buildModelEither preserves structured design failures 0.002s
+  + public model specs retain ordered modulator policy and typed degeneracy failures 0.015s
+  + buildModelEither preserves structured baseline failures 0.002s
+  + buildModel attaches nuisance regressors and exposes diagnostics 0.005s
+  + sampled nuisance columns validate shape and retain semantic identities 0.004s
+scalafim.fmri.model.ArBiasCorrectionSuite:
+  + OLS correction has a checked positive ceiling and survives typed/legacy round trips 0.0s
+  + OLS correction refuses non-OLS estimation recipes before execution 0.001s
+  + portable GLS recipes retain correction policy and reject invalid serialized ceilings 0.002s
+  + robust AR refuses GLS-only initialization and censor policies 0.001s
+scalafim.fmri.model.ModelSuite:
+  + FmriModel validates row alignment and combines design matrices 0.003s
+  + model and fit plan retain the canonical structural coefficient axis 0.003s
+  + compatibility label changes do not change structural identity 0.001s
+  + FmriModel.make reports design row mismatch before fitting 0.001s
+  + FitConfig validates algebraic options 0.001s
+  + FitPlan summarizes model and fitting policy 0.004s
+  + FitPlan can describe a LeastSquaresSeparate engine 0.001s
+  + FitPlan exposes separate-runs-then-fixed-effects as an executable scope 0.001s
+  + FitPlan validates strategy-dependent dimensions at construction 0.002s
+  + volume weighting has typed estimator parameters and fails unsupported engines during planning 0.001s
+  + Low-rank strategies validate component requests before execution 0.016s
+  + AutocorrelationConfig rejects impossible GLS strategy states 0.0s
+  + FitStrategy rejects illegal legacy engine/config pairings 0.001s
+  + RobustLeastSquares represents AR re-estimation as a typed policy 0.003s
+  + LSS strategy validates selected trial term against model terms 0.001s
+scalafim.fmri.model.ModelBuildSpecJsonCodecSuite:
+  + portable build fields round trip without omission 0.005s
+  + runtime-only fields and unknown JSON fields fail explicitly 0.001s
+  + portable AR(1) and AR(2) GLS strategies preserve every declared parameter 0.004s
+  + portable LSA formula with OLS and typed LSS configuration round trip 0.001s
+  + nuisance, imputation, within-cell scope, polynomial and spline baselines round trip 0.011s
+  + LSS without a trial term round trips 0.001s
+  + decode errors report the real JSON path 0.007s
+  + nested contrast-set errors keep their document path 0.003s
+  + voxelwise FGLS has a versioned golden policy and refuses downgrade or ambiguous censoring 0.006s
+  + voxelwise FGLS restart initialization cannot silently claim a stationary factor 0.0s
+  + response support is preserved in version 3 and cannot be stripped or assigned an older version 0.005s
+scalafim.fmri.model.RebuildIdentityCorpusSuite:
+  + block: every second view rebuilds the identical design 0.066s
+  + mixed-gambles: every second view rebuilds the identical design 0.063s
+  + mixed-gambles-derived: every second view rebuilds the identical design 0.024s
+  + delayed-match-to-sample: every second view rebuilds the identical design 0.056s
+  + stop-signal-fir: every second view rebuilds the identical design 0.063s
+  + factorial-3x4-spmg3: every second view rebuilds the identical design 0.163s
+  + lsa: every second view rebuilds the identical design 0.038s
+  + lss: every second view rebuilds the identical design 0.04s
+  + spec-missing-reject: every second view rebuilds the identical design 0.013s
+  + spec-missing-zero: every second view rebuilds the identical design 0.015s
+  + spec-missing-drop: every second view rebuilds the identical design 0.015s
+  + spec-missing-impute: every second view rebuilds the identical design 0.014s
+  + formula-missing-reject: every second view rebuilds the identical design 0.024s
+  + formula-missing-drop_from_term: every second view rebuilds the identical design 0.015s
+  + formula-missing-zero: every second view rebuilds the identical design 0.013s
+  + the missing-value policies are not vacuous: each repairs the same events differently 0.01s
+  + the reject policy refuses missing modulator values identically on every view 0.012s
+  + basis orthogonalization refuses per-event peak scales with a pinned message on every view 0.047s
+scalafim.fmri.model.ModelDocumentTextSuite:
+  + canonical lines are pinned and re-parse to the same envelope 0.003s
+  + every portable strategy and the empty pieces round trip through text 0.005s
+  + malformed lines fail with their line number 0.003s
+  + text cannot be combined with a base that differs in fields without a text form 0.003s
+  + formula text with surrounding whitespace is rejected rather than trimmed 0.001s
+scalafim.fmri.model.ProfileHrfPlanSuite:
+  + trial plan retains exact ordered labels and alpha zero stays condition-only 0.047s
+  + positive alpha retains the trial declaration without lowering a trial design 0.002s
+  + trial ML intent is retained as a declaration for the future executor 0.0s
+  + invalid trial identities, geometry, alpha, and noise are typed refusals 0.005s
+  + fixed condition compatibility is structural and cannot request trials 0.01s
+scalafim.fmri.model.ArInitializationSuite:
+  + typed initialization survives legacy and portable JSON round trips 0.002s
+  + inconsistent compatibility flags are refused and stationary identity is distinct 0.0s
+  + tail correction and estimation-only continuity survive complete recipe round trips 0.003s
+scalafim.fmri.model.ConfoundSpecJsonCodecSuite:
+  + strict versioned confound specification round trips every option 0.002s
+  + confound JSON rejects unknown and malformed fields 0.0s
+  + every motion expansion, including RawAndDerivative12, round trips 0.001s
+scalafim.fmri.model.ModelBuildSpecHrfKindSuite:
+  + formula-only HRF kinds round trip through portable build JSON 0 0.002s
+  + formula-only HRF kinds round trip through portable build JSON 1 0.003s
+  + formula-only HRF kinds round trip through portable build JSON 2 0.0s
+  + formula-only HRF kinds round trip through portable build JSON 3 0.0s
+  + formula-only HRF kinds round trip through portable build JSON 4 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 5 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 6 0.0s
+  + an unknown HRF kind is refused at the formula path 0.002s
+[info] Passed: Total 103, Failed 0, Errors 0, Passed 103
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-zsp5q0vf/completed
+[[32msuccess[0m] elapsed: 8 s
+[0J[sbt-warm] modelJVM/test: exit 0 in 8.7s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/model/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/model/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/model/js/target/scala-3.7.4/scalafim-fmri-model-test-fastopt
+scalafim.fmri.model.ProfileHrfPlanSuite:
+  + trial plan retains exact ordered labels and alpha zero stays condition-only 0.025s
+  + positive alpha retains the trial declaration without lowering a trial design 0.000s
+  + trial ML intent is retained as a declaration for the future executor 0.000s
+  + invalid trial identities, geometry, alpha, and noise are typed refusals 0.001s
+  + fixed condition compatibility is structural and cannot request trials 0.011s
+scalafim.fmri.model.ConfoundSpecJsonCodecSuite:
+  + strict versioned confound specification round trips every option 0.004s
+  + confound JSON rejects unknown and malformed fields 0.001s
+  + every motion expansion, including RawAndDerivative12, round trips 0.001s
+scalafim.fmri.model.ModelDocumentJsonCodecSuite:
+  + every portable piece round trips and re-encodes byte for byte 0.031s
+  + canonical text is pinned, so the JVM and Scala.js render identical bytes 0.001s
+  + exponents, negatives and integral values render with pinned, platform-stable bytes 0.002s
+  + nuisance matrices compare by value bits, copy their input, and stay reflexive with NaN 0.000s
+  + unknown and missing fields fail with the JSON path of the offending value 0.016s
+  + strategies and HRFs without a portable form are refused at their path 0.001s
+  + existing model-build and model-spec v1 documents still decode 0.002s
+  + coverage policy survives the document envelope and text editing 0.019s
+scalafim.fmri.model.ArInitializationSuite:
+  + typed initialization survives legacy and portable JSON round trips 0.016s
+  + inconsistent compatibility flags are refused and stationary identity is distinct 0.001s
+  + tail correction and estimation-only continuity survive complete recipe round trips 0.012s
+scalafim.fmri.model.ModelBuilderSuite:
+  + eventsTable infers typed columns from dataset event rows 0.002s
+  + eventsTable preserves explicitly typed text values 0.000s
+  + buildModel constructs an inspectable model from dataset-resident events 0.006s
+  + buildModel evaluates derived declarations and records the rows its policy drops 0.020s
+  + buildModel propagates declared factor levels through the public model path 0.005s
+  + buildModel carries heterogeneous HRF assignments through the public model path 0.006s
+  + buildModel carries exhaustive phase and cell HRF assignments through the public model path 0.008s
+  + eventsTable rejects ragged event rows before model construction 0.000s
+  + buildModel rejects missing block and duration columns explicitly 0.001s
+  + buildModelEither preserves structured design failures 0.001s
+  + public model specs retain ordered modulator policy and typed degeneracy failures 0.006s
+  + buildModelEither preserves structured baseline failures 0.001s
+  + buildModel attaches nuisance regressors and exposes diagnostics 0.003s
+  + sampled nuisance columns validate shape and retain semantic identities 0.001s
+scalafim.fmri.model.ConfoundDesignSuite:
+  + motion derivatives and powers are scan-local and stable across runs 0.004s
+  + RawAndDerivative12 yields raw motion then first differences only 0.000s
+  + FD neighbour union creates one deduplicated spike per censored scan 0.001s
+  + short retained segments and run exclusion are explicit receipts 0.001s
+  + runs with no retained scans or fewer retained scans than nuisance columns always fail 0.001s
+  + aCompCor input is optional exactly when no components are requested 0.000s
+  + missing selected inputs and malformed source matrices fail without padding 0.000s
+  + derived confounds and FD neighbourhood bounds fail or saturate explicitly 0.000s
+  + multi-run confounds become globally unique nuisance columns in a built model 0.032s
+scalafim.fmri.model.ArBiasCorrectionSuite:
+  + OLS correction has a checked positive ceiling and survives typed/legacy round trips 0.000s
+  + OLS correction refuses non-OLS estimation recipes before execution 0.000s
+  + portable GLS recipes retain correction policy and reject invalid serialized ceilings 0.001s
+  + robust AR refuses GLS-only initialization and censor policies 0.000s
+scalafim.fmri.model.ModelDocumentTextSuite:
+  + canonical lines are pinned and re-parse to the same envelope 0.010s
+  + every portable strategy and the empty pieces round trip through text 0.012s
+  + malformed lines fail with their line number 0.005s
+  + text cannot be combined with a base that differs in fields without a text form 0.018s
+  + formula text with surrounding whitespace is rejected rather than trimmed 0.000s
+scalafim.fmri.model.ModelSuite:
+  + FmriModel validates row alignment and combines design matrices 0.001s
+  + model and fit plan retain the canonical structural coefficient axis 0.001s
+  + compatibility label changes do not change structural identity 0.001s
+  + FmriModel.make reports design row mismatch before fitting 0.000s
+  + FitConfig validates algebraic options 0.000s
+  + FitPlan summarizes model and fitting policy 0.001s
+  + FitPlan can describe a LeastSquaresSeparate engine 0.001s
+  + FitPlan exposes separate-runs-then-fixed-effects as an executable scope 0.001s
+  + FitPlan validates strategy-dependent dimensions at construction 0.001s
+  + volume weighting has typed estimator parameters and fails unsupported engines during planning 0.001s
+  + Low-rank strategies validate component requests before execution 0.001s
+  + AutocorrelationConfig rejects impossible GLS strategy states 0.000s
+  + FitStrategy rejects illegal legacy engine/config pairings 0.000s
+  + RobustLeastSquares represents AR re-estimation as a typed policy 0.001s
+  + LSS strategy validates selected trial term against model terms 0.001s
+scalafim.fmri.model.RebuildIdentityCorpusSuite:
+  + block: every second view rebuilds the identical design 0.067s
+  + mixed-gambles: every second view rebuilds the identical design 0.069s
+  + mixed-gambles-derived: every second view rebuilds the identical design 0.038s
+  + delayed-match-to-sample: every second view rebuilds the identical design 0.078s
+  + stop-signal-fir: every second view rebuilds the identical design 0.099s
+  + factorial-3x4-spmg3: every second view rebuilds the identical design 0.242s
+  + lsa: every second view rebuilds the identical design 0.066s
+  + lss: every second view rebuilds the identical design 0.070s
+  + spec-missing-reject: every second view rebuilds the identical design 0.021s
+  + spec-missing-zero: every second view rebuilds the identical design 0.023s
+  + spec-missing-drop: every second view rebuilds the identical design 0.022s
+  + spec-missing-impute: every second view rebuilds the identical design 0.022s
+  + formula-missing-reject: every second view rebuilds the identical design 0.026s
+  + formula-missing-drop_from_term: every second view rebuilds the identical design 0.024s
+  + formula-missing-zero: every second view rebuilds the identical design 0.022s
+  + the missing-value policies are not vacuous: each repairs the same events differently 0.014s
+  + the reject policy refuses missing modulator values identically on every view 0.010s
+  + basis orthogonalization refuses per-event peak scales with a pinned message on every view 0.034s
+scalafim.fmri.model.ModelBuildSpecJsonCodecSuite:
+  + portable build fields round trip without omission 0.002s
+  + runtime-only fields and unknown JSON fields fail explicitly 0.001s
+  + portable AR(1) and AR(2) GLS strategies preserve every declared parameter 0.003s
+  + portable LSA formula with OLS and typed LSS configuration round trip 0.001s
+  + nuisance, imputation, within-cell scope, polynomial and spline baselines round trip 0.007s
+  + LSS without a trial term round trips 0.001s
+  + decode errors report the real JSON path 0.005s
+  + nested contrast-set errors keep their document path 0.001s
+  + voxelwise FGLS has a versioned golden policy and refuses downgrade or ambiguous censoring 0.003s
+  + voxelwise FGLS restart initialization cannot silently claim a stationary factor 0.000s
+  + response support is preserved in version 3 and cannot be stripped or assigned an older version 0.003s
+scalafim.fmri.model.ModelBuildSpecHrfKindSuite:
+  + formula-only HRF kinds round trip through portable build JSON 0 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 1 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 2 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 3 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 4 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 5 0.001s
+  + formula-only HRF kinds round trip through portable build JSON 6 0.000s
+  + an unknown HRF kind is refused at the formula path 0.000s
+[info] Passed: Total 103, Failed 0, Errors 0, Passed 103
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-exmrdbfs/completed
+[[32msuccess[0m] elapsed: 10 s
+[0J[sbt-warm] modelJS/test: exit 0 in 10.6s
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.278s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.025s
+  + missing-data propagation reports an all-excluded selection explicitly 0.003s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.03s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.003s
+  + row omission preserves an explicitly reordered OLS time selection 0.005s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.009s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.059s
+  + row omission subsets selected-row weights by original observation position 0.012s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.003s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.003s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.003s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.03s
+  + fitDense rejects engines with a different result shape 0.011s
+  + public fit failures name aliased structural columns 0.003s
+  + GLS retains structural rank evidence and explains preview differences 0.003s
+  + every supported dense engine preserves the same structural coefficient axis 0.057s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 0.298s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.002s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.002s
+  + FitInterpreters exposes executable built-ins 0.001s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.005s
+  + LatentSketch principal components recovers rank-one response coefficients 0.008s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.009s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.002s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.004s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.018s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.011s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.193s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.007s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.007s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.006s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.0s
+  + fitting requires the scan selection recorded by the coverage policy 0.051s
+[info] Passed: Total 34, Failed 0, Errors 0, Passed 34
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-3pslnoty/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] fitJVM/testOnly *MatrixAdaptersSuite *FitPlanExecutorSuite: exit 0 in 7.7s
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fit/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/fit/js/target/scala-3.7.4/scalafim-fmri-fit-test-fastopt
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.024s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.010s
+  + missing-data propagation reports an all-excluded selection explicitly 0.002s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.008s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.002s
+  + row omission preserves an explicitly reordered OLS time selection 0.004s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.003s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.010s
+  + row omission subsets selected-row weights by original observation position 0.004s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.002s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.002s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.004s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.007s
+  + fitDense rejects engines with a different result shape 0.002s
+  + public fit failures name aliased structural columns 0.002s
+  + GLS retains structural rank evidence and explains preview differences 0.002s
+  + every supported dense engine preserves the same structural coefficient axis 0.011s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 0.010s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.001s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.001s
+  + FitInterpreters exposes executable built-ins 0.000s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.003s
+  + LatentSketch principal components recovers rank-one response coefficients 0.004s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.006s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.001s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.003s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.015s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.005s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.026s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.009s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.007s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.005s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.001s
+  + fitting requires the scan selection recorded by the coverage policy 0.035s
+[info] Passed: Total 34, Failed 0, Errors 0, Passed 34
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-movtlaap/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] fitJS/testOnly *MatrixAdaptersSuite *FitPlanExecutorSuite: exit 0 in 9.1s

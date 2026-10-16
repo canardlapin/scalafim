@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T13:21:24.878769+00:00",
+  "finished_utc": "2026-10-16T13:23:13.531465+00:00",
+  "duration_seconds": 108.651419,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "designJVM/test",
+    "designJS/test",
+    "fitJVM/testOnly *MatrixAdaptersSuite *ProfileFitIdentitySuite",
+    "fitJS/testOnly *MatrixAdaptersSuite *ProfileFitIdentitySuite",
+    "modelJVM/test",
+    "modelJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/support-policy-gate-02.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 109831
+}

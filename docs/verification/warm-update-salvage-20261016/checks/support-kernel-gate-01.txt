@@ -1,0 +1,74 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/hrf/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.hrf.SampledEventSupportSuite:
+  + signed and late events retain event identity and independent FIR bin support 0.057s
+  + retained irregular sample indices are not replaced by nominal acquisition bounds 0.001s
+  + opposing events have support even when the aggregate cancels; zero amplitude stays unsupported 0.003s
+  + sustained box overlap follows its analytic response, including threshold units 0.005s
+  + per-event HRFs retain assignment after unsupported earlier events 0.003s
+  + clock translation preserves support and sample identity 0.003s
+  + invalid grids and numeric policies fail rather than reorder or hide samples 0.004s
+  + FFT support has an explicit roundoff tolerance and agrees on analytic FIR bins 0.004s
+  + non-finite responses and overflowing envelopes cannot masquerade as no support 0.006s
+[info] Passed: Total 9, Failed 0, Errors 0, Passed 9
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-u6jgunh9/completed
+[[32msuccess[0m] elapsed: 4 s
+[0J[sbt-warm] hrfJVM/testOnly *SampledEventSupportSuite: exit 0 in 5.4s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/hrf/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/hrf/js/target/scala-3.7.4/scalafim-fmri-hrf-test-fastopt
+scalafim.fmri.hrf.SampledEventSupportSuite:
+  + signed and late events retain event identity and independent FIR bin support 0.005s
+  + retained irregular sample indices are not replaced by nominal acquisition bounds 0.001s
+  + opposing events have support even when the aggregate cancels; zero amplitude stays unsupported 0.001s
+  + sustained box overlap follows its analytic response, including threshold units 0.001s
+  + per-event HRFs retain assignment after unsupported earlier events 0.000s
+  + clock translation preserves support and sample identity 0.001s
+  + invalid grids and numeric policies fail rather than reorder or hide samples 0.000s
+  + FFT support has an explicit roundoff tolerance and agrees on analytic FIR bins 0.003s
+  + non-finite responses and overflowing envelopes cannot masquerade as no support 0.000s
+[info] Passed: Total 9, Failed 0, Errors 0, Passed 9
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-x03657pa/completed
+[[32msuccess[0m] elapsed: 3 s
+[0J[sbt-warm] hrfJS/testOnly *SampledEventSupportSuite: exit 0 in 3.5s
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 29 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.design.ConvolutionSupportSuite:
+  + resolved FIR support retains source and original scan identities after censoring 0.402s
+  + per-event assignments retain zero modulation separately from temporal potential 0.021s
+  + per-cell mixed basis widths map to their actual design columns 0.016s
+  + duration averaging and final column scaling are retained exactly 0.009s
+  + a completely censored run retains unsupported event records without borrowing another run 0.005s
+  + missing recipes, replaced matrices and invalid selections fail explicitly 0.005s
+  + resolved recipes distinguish timing potential even when zero amplitudes hide it in the matrix 0.133s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-k3sywnud/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] designJVM/testOnly *ConvolutionSupportSuite: exit 0 in 8.3s
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 29 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/design/js/target/scala-3.7.4/scalafim-fmri-design-test-fastopt
+scalafim.fmri.design.ConvolutionSupportSuite:
+  + resolved FIR support retains source and original scan identities after censoring 0.014s
+  + per-event assignments retain zero modulation separately from temporal potential 0.002s
+  + per-cell mixed basis widths map to their actual design columns 0.011s
+  + duration averaging and final column scaling are retained exactly 0.001s
+  + a completely censored run retains unsupported event records without borrowing another run 0.001s
+  + missing recipes, replaced matrices and invalid selections fail explicitly 0.001s
+  + resolved recipes distinguish timing potential even when zero amplitudes hide it in the matrix 0.009s
+[info] Passed: Total 7, Failed 0, Errors 0, Passed 7
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-73yyyfm5/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] designJS/testOnly *ConvolutionSupportSuite: exit 0 in 9.7s

@@ -1,0 +1,15 @@
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 33 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala:71:11 
+[error] 71 |    javafx.application.Platform.startup: () =>
+[error]    |    ^^^^^^^^^^^^^^^^^^
+[error]    |    value application is not a member of scalafim.surface.view.javafx
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala:115:11 
+[error] 115 |    javafx.application.Platform.exit()
+[error]     |    ^^^^^^^^^^^^^^^^^^
+[error]     |    value application is not a member of scalafim.surface.view.javafx
+[error] two errors found
+[error] (surfaceViewJavafxJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 1 in 8.1s

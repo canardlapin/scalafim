@@ -94,6 +94,67 @@
       "logs": [
         "deferred-gate-02.log"
       ]
+    },
+    {
+      "sha": "14cbaf01f5e0975329673502ed5cae775f8325f7",
+      "behavior": "sampled response support with original event provenance, current event scaling and versioned saved model policy",
+      "checks": {
+        "designJVM": 584,
+        "designJS": 583,
+        "modelJVM": 103,
+        "modelJS": 103,
+        "fitJVM": 34,
+        "fitJS": 34,
+        "supportKernelJVM": 10,
+        "supportKernelJS": 10
+      },
+      "logs": [
+        "support-policy-gate-02.log",
+        "support-policy-gate-03.log"
+      ]
+    },
+    {
+      "sha": "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15",
+      "behavior": "bounded strict study mask intersection with typed domain ownership, explicit world evidence and observed timing metadata",
+      "checks": {
+        "workflowJVM": 54,
+        "workflowJS": 42
+      },
+      "logs": [
+        "study-spatial-gate-04.log"
+      ]
+    },
+    {
+      "sha": "bf202d75b83f94297083947db47518b18480c320",
+      "behavior": "renderer-neutral compatible layer transactions preserving current display contracts and fragment-mode checks",
+      "checks": {
+        "surfaceJVM": 260,
+        "surfaceJS": 260,
+        "affectedAfterWorldClippingGuardJVM": 7,
+        "affectedAfterWorldClippingGuardJS": 7
+      },
+      "logs": [
+        "surface-transaction-gate-01.log",
+        "surface-transaction-gate-02.log"
+      ]
+    },
+    {
+      "sha": "229a65f3e403f043a363ead4625e98248d9dcda4",
+      "behavior": "CPU-only legacy-atlas worker preparation and transactional JavaFX publication with opaque ownership and stale/foreign rejection",
+      "checks": {
+        "javafxJVM": 58,
+        "affectedSharedJVM": 7,
+        "affectedSharedJS": 7,
+        "actualFxThreadProbe": "pass"
+      },
+      "logs": [
+        "native-preparation-gate-02.log"
+      ],
+      "limitations": [
+        "Affine sampler and retained/refined affine optimization remain unqualified",
+        "Native probe verifies transactions, not framebuffer interpolation or publication performance",
+        "JavaFX21/JDK25 emit upstream native-access/Unsafe/module warnings"
+      ]
     }
   ],
   "publishedToMain": false,
@@ -104,14 +165,12 @@
     "log": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/main-compatibility-03.log"
   },
   "remaining": [
-    "response-support policy integrating current event scaling and derived-row semantics",
-    "study spatial-support validation and timing metadata",
     "typed image/spatial consumer migration including persisted voxel index ordering",
     "surface update transactions and geometry scene migration",
     "full consumer acceptance and touched native lanes",
     "land provider behavior on main and repin exact qualified consumer"
   ],
-  "validatedSourceHead": "af7679d3095ac150d1386c7cc4fc337f6073dd34",
+  "validatedSourceHead": "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15",
   "compileAll": {
     "result": "pass",
     "platforms": [
@@ -119,9 +178,10 @@
       "Scala.js"
     ],
     "warnings": 0,
-    "log": "checks/recovery-compile-01.txt",
-    "scope": "portable aggregate; native JavaFX excluded by build"
+    "log": "checks/recovery-compile-02.txt",
+    "scope": "all compilation targets in scalafimCompileAll, including JavaFX adapter compilation; no native visual/runtime admission implied"
   },
   "checkpointBranch": "recovery/plsneuro-main-20261016",
-  "evidenceCaution": "Logs bind to the listed source changes. source-rows-gate-02 completed HRF/design tests then hit a downstream pattern-arity compilation error; recovery-compile-01 verifies that subsequent repair and all portable compilation. Failed attempts are retained."
+  "evidenceCaution": "Logs bind to the listed source changes. Successful affected gates supersede retained failed attempts. The compile aggregate began at 6f758ff6c; later surface edits were separately compiled and tested on JVM/JS. Current aggregate includes JavaFX compilation, contrary to the earlier checkpoint wording; native runtime/visual qualification is separate.",
+  "lastPublishedCheckpoint": "072ac7c0f037753d3cf50e123a9a2077025c8e53"
 }

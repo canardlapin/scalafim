@@ -1,0 +1,81 @@
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:8:73 
+[error] 8 |import scalafim.image.{SampleSpaces, SomeScalarVolume, SomeScalarSeries, ProviderAxes}
+[error]   |                                                                         ^^^^^^^^^^^^
+[error]   |                      value ProviderAxes is not a member of scalafim.image
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:11:33 
+[error] 11 |import scalafim.image.io.{Nifti, NiftiWriteOptions, NiftiCoordinateSystem, NiftiSpatialUnits}
+[error]    |                                 ^^^^^^^^^^^^^^^^^
+[error]    |            value NiftiWriteOptions is not a member of scalafim.image.io
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:11:52 
+[error] 11 |import scalafim.image.io.{Nifti, NiftiWriteOptions, NiftiCoordinateSystem, NiftiSpatialUnits}
+[error]    |                                                    ^^^^^^^^^^^^^^^^^^^^^
+[error]    |        value NiftiCoordinateSystem is not a member of scalafim.image.io
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:11:75 
+[error] 11 |import scalafim.image.io.{Nifti, NiftiWriteOptions, NiftiCoordinateSystem, NiftiSpatialUnits}
+[error]    |                                                                           ^^^^^^^^^^^^^^^^^
+[error]    |            value NiftiSpatialUnits is not a member of scalafim.image.io
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:24:20 
+[error] 24 |      val options = NiftiWriteOptions(NiftiCoordinateSystem.Mni152, NiftiSpatialUnits.Millimeters)
+[error]    |                    ^^^^^^^^^^^^^^^^^
+[error]    |                    Not found: NiftiWriteOptions
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:24:38 
+[error] 24 |      val options = NiftiWriteOptions(NiftiCoordinateSystem.Mni152, NiftiSpatialUnits.Millimeters)
+[error]    |                                      ^^^^^^^^^^^^^^^^^^^^^
+[error]    |                                      Not found: NiftiCoordinateSystem
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelSamplingReferenceSuite.scala:24:68 
+[error] 24 |      val options = NiftiWriteOptions(NiftiCoordinateSystem.Mni152, NiftiSpatialUnits.Millimeters)
+[error]    |                                                                    ^^^^^^^^^^^^^^^^^
+[error]    |                                            Not found: NiftiSpatialUnits
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:9:90 
+[error] 9 |import scalafim.image.{SampleSpaces, SomeSampleSpace, SomeScalarVolume, SomeScalarSeries, ProviderAxes}
+[error]   |                                                                                          ^^^^^^^^^^^^
+[error]   |                      value ProviderAxes is not a member of scalafim.image
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:12:33 
+[error] 12 |import scalafim.image.io.{Nifti, NiftiWriteOptions, NiftiCoordinateSystem, NiftiSpatialUnits}
+[error]    |                                 ^^^^^^^^^^^^^^^^^
+[error]    |            value NiftiWriteOptions is not a member of scalafim.image.io
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:12:52 
+[error] 12 |import scalafim.image.io.{Nifti, NiftiWriteOptions, NiftiCoordinateSystem, NiftiSpatialUnits}
+[error]    |                                                    ^^^^^^^^^^^^^^^^^^^^^
+[error]    |        value NiftiCoordinateSystem is not a member of scalafim.image.io
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:12:75 
+[error] 12 |import scalafim.image.io.{Nifti, NiftiWriteOptions, NiftiCoordinateSystem, NiftiSpatialUnits}
+[error]    |                                                                           ^^^^^^^^^^^^^^^^^
+[error]    |            value NiftiSpatialUnits is not a member of scalafim.image.io
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:22:24 
+[error] 22 |  private val options = NiftiWriteOptions(NiftiCoordinateSystem.Mni152, NiftiSpatialUnits.Millimeters)
+[error]    |                        ^^^^^^^^^^^^^^^^^
+[error]    |                        Not found: NiftiWriteOptions
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:22:42 
+[error] 22 |  private val options = NiftiWriteOptions(NiftiCoordinateSystem.Mni152, NiftiSpatialUnits.Millimeters)
+[error]    |                                          ^^^^^^^^^^^^^^^^^^^^^
+[error]    |                                        Not found: NiftiCoordinateSystem
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:22:72 
+[error] 22 |  private val options = NiftiWriteOptions(NiftiCoordinateSystem.Mni152, NiftiSpatialUnits.Millimeters)
+[error]    |                                                                        ^^^^^^^^^^^^^^^^^
+[error]    |                                            Not found: NiftiSpatialUnits
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/StudySpatialSupportJvmSuite.scala:76:44 
+[error] 76 |        assertEquals(Nifti.readHeader(path).space, space)
+[error]    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |value space is not a member of Either[image4s.nifti.NiftiError, scalafim.image.io.NiftiHeader]
+[error] 15 errors found
+[error] (fmriWorkflowJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 9 s
+[0J[sbt-warm] fmriWorkflowJVM/test: exit 1 in 9.9s

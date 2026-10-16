@@ -1,0 +1,18 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/StudySpatialSupportJvm.scala:33:105 
+[error] 33 |            _ <- if !isVolume || Grid.exactCongruence(placed.spatialSpace.grid, catalog.units.head.shape.grid).isLeft then
+[error]    |                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |Found:    image4s.geometry.Grid[? <: image4s.geometry.Frame[image4s.geometry.D3],
+[error]    |  image4s.geometry.D3]
+[error]    |Required: image4s.geometry.Grid[RF, ?1.D]
+[error]    |
+[error]    |where:    ?1 is an unknown value of type image4s.SomeSampleSpace
+[error]    |          RF is a type variable with constraint <: image4s.geometry.Frame[?1.D]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] one error found
+[error] (fmriWorkflowJVM / Compile / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 8 s
+[0J[sbt-warm] fmriWorkflowJVM/test: exit 1 in 8.5s
