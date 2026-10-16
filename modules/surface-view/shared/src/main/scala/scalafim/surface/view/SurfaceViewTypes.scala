@@ -12,6 +12,8 @@ enum SurfaceViewError:
   case DuplicateLayerId(id: SurfaceLayerId)
   case UnknownSurface(id: SurfaceId)
   case UnknownLayer(id: SurfaceLayerId)
+  case InvalidLayerTransaction(reason: String)
+  case IncompatibleLayerReplacement(layer: SurfaceLayerId, reason: String)
   case IncompatibleLayerDomain(layer: SurfaceLayerId, surface: SurfaceId)
   case InvalidScalarMapping(layer: SurfaceLayerId, cause: ScalarMappingError)
   case InvalidFrameCount(value: Int)
@@ -68,6 +70,8 @@ enum SurfaceViewError:
       case DuplicateLayerId(id) => s"surface layer id '${id.value}' is duplicated"
       case UnknownSurface(id) => s"surface '${id.value}' does not exist"
       case UnknownLayer(id) => s"surface layer '${id.value}' does not exist"
+      case InvalidLayerTransaction(reason) => s"invalid surface layer transaction: $reason"
+      case IncompatibleLayerReplacement(layer, reason) => s"incompatible replacement for layer '${layer.value}': $reason"
       case IncompatibleLayerDomain(layer, surface) =>
         s"layer '${layer.value}' does not have the exact mesh domain of surface '${surface.value}'"
       case InvalidScalarMapping(layer, cause) => s"invalid mapping for layer '${layer.value}': ${cause.message}"
