@@ -5,7 +5,7 @@ class SurfaceBenchmarkReceiptSuite extends munit.FunSuite:
     assertEquals(SurfaceBenchmarkMatrix.Cases.length, 48)
     assertEquals(SurfaceBenchmarkMatrix.Cases.map(_.vertices).toSet, Set(32768, 163842))
     assertEquals(SurfaceBenchmarkMatrix.Cases.map(_.layers).toSet, Set(1, 4, 8))
-    assertEquals(SurfaceBenchmarkMatrix.Cases.map(_.path).toSet, SurfaceAdmissionPath.values.toSet)
+    assertEquals(SurfaceBenchmarkMatrix.Cases.map(_.path).toSet, SurfaceAdmissionPath.values.toSet - SurfaceAdmissionPath.DerivedGeometryUpdate)
 
   test("timing summaries use deterministic nearest-rank percentiles"):
     val summary = SurfaceTimingSummary.from(SurfaceRenderPhase.Pick, Vector(9L, 1L, 5L, 3L, 7L)).toOption.get

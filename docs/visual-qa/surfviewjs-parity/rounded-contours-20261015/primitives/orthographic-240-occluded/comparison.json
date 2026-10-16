@@ -1,0 +1,151 @@
+{
+  "id": "orthographic-240-occluded",
+  "repeatExact": true,
+  "errors": [],
+  "reference": {
+    "core": {
+      "pixels": 358,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "halo-flank": {
+      "pixels": 204,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "endpoint-cap": {
+      "pixels": 26,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "overlap": {
+      "pixels": 562,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    },
+    "occlusion": {
+      "pixels": 311,
+      "maximumError": 0,
+      "failedPixels": 0,
+      "pass": true
+    }
+  },
+  "routes": {
+    "native": {
+      "oracle": {
+        "core": {
+          "pixels": 358,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "halo-flank": {
+          "pixels": 204,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "endpoint-cap": {
+          "pixels": 26,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "overlap": {
+          "pixels": 562,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "occlusion": {
+          "pixels": 311,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        }
+      },
+      "fullFrame": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 107,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 240,
+          "height": 240,
+          "referenceForeground": 57600,
+          "candidateForeground": 57600,
+          "foregroundIntersection": 57600,
+          "foregroundIoU": 1,
+          "maximumChannelError": 107,
+          "meanMaximumChannelError": 0.03642361111111111
+        },
+        "elements": []
+      }
+    },
+    "raster": {
+      "oracle": {
+        "core": {
+          "pixels": 358,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "halo-flank": {
+          "pixels": 204,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "endpoint-cap": {
+          "pixels": 26,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "overlap": {
+          "pixels": 562,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        },
+        "occlusion": {
+          "pixels": 311,
+          "maximumError": 0,
+          "failedPixels": 0,
+          "pass": true
+        }
+      },
+      "fullFrame": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 107,
+            "maximum": 2
+          }
+        ],
+        "metrics": {
+          "width": 240,
+          "height": 240,
+          "referenceForeground": 57600,
+          "candidateForeground": 57600,
+          "foregroundIntersection": 57600,
+          "foregroundIoU": 1,
+          "maximumChannelError": 107,
+          "meanMaximumChannelError": 0.12565972222222221
+        },
+        "elements": []
+      }
+    }
+  },
+  "primitivePass": true,
+  "fullFramePass": false
+}

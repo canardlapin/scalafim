@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T20:57:09.704359+00:00",
+  "finished_utc": "2026-10-14T20:57:13.139560+00:00",
+  "duration_seconds": 3.436467,
+  "command": [
+    "node",
+    "tools/surface-view/parity/run-linked-proof.mjs",
+    "--candidate-root",
+    "/private/tmp/scalafim-surface-visibility",
+    "--scalafim-module",
+    "/private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js",
+    "--reference-bundle",
+    "/private/tmp/scalafim-visibility-proof-20/reference-source-build/reference.mjs",
+    "--out",
+    "/private/tmp/scalafim-linked-proof-34"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-visibility",
+  "log": "/private/tmp/surfview-parity-logs/linked-browser-34.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 300.0,
+  "log_bytes": 15933
+}

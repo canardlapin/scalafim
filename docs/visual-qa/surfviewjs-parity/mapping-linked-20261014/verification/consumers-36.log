@@ -1,0 +1,15 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/scenario-testkit/jvm/target/scala-3.7.4/classes ...
+[info] compiling 7 Scala sources to /private/tmp/intaglio-surface-display/modules/svg/jvm/target/scala-3.3.8/classes ...
+[info] compiling 41 Scala sources to /private/tmp/scalafim-surface-visibility/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 61 Scala sources to /private/tmp/scalafim-surface-visibility/modules/design/jvm/target/scala-3.7.4/classes ...
+[error] -- Error: /private/tmp/scalafim-surface-visibility/modules/design/shared/src/main/scala/scalafim/fmri/design/DesignGraphics.scala:59:74 
+[error] 59 |  private def regressorDomain(data: EventPlotData): Either[GraphicsError, DiscreteDomain] =
+[error]    |                                                                          ^^^^^^^^^^^^^^
+[error]    |Type argument intaglio.DiscreteDomain does not have the same kind as its bound 
+[error] one error found
+[[31merror[0m] elapsed: 6 s
+[error] (designJVM / Compile / compileIncremental) Compilation failed
+[0J[sbt-warm] designJVM/test: exit 1 in 6.5s

@@ -1,0 +1,38 @@
+{
+  "id": "C05-BR-parcels--halo--1b8160a35bd97ccd",
+  "group": "cortex",
+  "hostPass": true,
+  "inputSha256": "27ac0481ca7508873c4d250ee312ba8c58763b06f0e8ae873e83bad60a44190d",
+  "native": {
+    "status": "refused",
+    "reason": "JavaFX surface plan is incompatible with the existing scene: ordered depth testing without depth writes requires the raster fallback"
+  },
+  "masks": null,
+  "primitivePass": null,
+  "browserRasterPixelsEqual": true,
+  "fullFrame": {
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 134,
+        "maximum": 2
+      },
+      {
+        "code": "uncalibrated-color-policy"
+      }
+    ],
+    "metrics": {
+      "width": 600,
+      "height": 450,
+      "referenceForeground": 157064,
+      "candidateForeground": 156555,
+      "foregroundIntersection": 156553,
+      "foregroundIoU": 0.9967338571046567,
+      "maximumChannelError": 134,
+      "meanMaximumChannelError": 0.8291962962962963
+    },
+    "elements": []
+  },
+  "warmSnapshotMedianMs": 437.228917
+}

@@ -1,0 +1,93 @@
+{
+  "case": "C01",
+  "status": "fail",
+  "artifacts": [],
+  "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete",
+  "capture": "complete",
+  "comparison": {
+    "pass": false,
+    "failures": [
+      {
+        "code": "global-channel-error-exceeded",
+        "actual": 110,
+        "maximum": 2
+      },
+      {
+        "code": "uncalibrated-color-policy"
+      }
+    ],
+    "metrics": {
+      "width": 512,
+      "height": 512,
+      "referenceForeground": 42813,
+      "candidateForeground": 42813,
+      "foregroundIntersection": 42813,
+      "foregroundIoU": 1,
+      "maximumChannelError": 110,
+      "meanMaximumChannelError": 6.943988800048828
+    },
+    "elements": []
+  },
+  "otherComparisons": [
+    {
+      "renderer": "scalafim-javafx",
+      "pass": false,
+      "failures": [
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 173,
+          "maximum": 2
+        },
+        {
+          "code": "uncalibrated-color-policy"
+        }
+      ],
+      "metrics": {
+        "width": 512,
+        "height": 512,
+        "referenceForeground": 42813,
+        "candidateForeground": 42839,
+        "foregroundIntersection": 42792,
+        "foregroundIoU": 0.9984134391040598,
+        "maximumChannelError": 173,
+        "meanMaximumChannelError": 16.92551040649414
+      },
+      "elements": []
+    },
+    {
+      "renderer": "scalafim-raster",
+      "pass": false,
+      "failures": [
+        {
+          "code": "foreground-iou-below-minimum",
+          "actual": 0.9926424216943451,
+          "minimum": 0.995
+        },
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 154,
+          "maximum": 2
+        },
+        {
+          "code": "uncalibrated-color-policy"
+        }
+      ],
+      "metrics": {
+        "width": 512,
+        "height": 512,
+        "referenceForeground": 42813,
+        "candidateForeground": 42498,
+        "foregroundIntersection": 42498,
+        "foregroundIoU": 0.9926424216943451,
+        "maximumChannelError": 154,
+        "meanMaximumChannelError": 8.256637573242188
+      },
+      "elements": []
+    }
+  ],
+  "pageErrors": [],
+  "cameraAgreement": {
+    "maximumViewDifference": 9.536743128535363e-8,
+    "maximumProjectionDifference": 5.580634310220489e-8
+  }
+}

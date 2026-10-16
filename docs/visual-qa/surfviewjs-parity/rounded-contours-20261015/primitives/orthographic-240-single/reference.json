@@ -1,0 +1,308 @@
+[
+  {
+    "receipt": {
+      "camera": {
+        "position": [
+          0,
+          0,
+          3
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "viewMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -3,
+        1
+      ],
+      "projectionMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        -0.20020020020020018,
+        0,
+        0,
+        0,
+        -1.002002002002002,
+        1
+      ],
+      "matrixOrder": "column-major",
+      "width": 240,
+      "height": 240,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "background",
+        "contour"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "background",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        },
+        {
+          "id": "contour",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    }
+  },
+  {
+    "receipt": {
+      "camera": {
+        "position": [
+          0,
+          0,
+          3
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "viewMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -3,
+        1
+      ],
+      "projectionMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        -0.20020020020020018,
+        0,
+        0,
+        0,
+        -1.002002002002002,
+        1
+      ],
+      "matrixOrder": "column-major",
+      "width": 240,
+      "height": 240,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "background",
+        "contour"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "background",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        },
+        {
+          "id": "contour",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    }
+  },
+  {
+    "receipt": {
+      "camera": {
+        "position": [
+          0,
+          0,
+          3
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "viewMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        -3,
+        1
+      ],
+      "projectionMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        -0.20020020020020018,
+        0,
+        0,
+        0,
+        -1.002002002002002,
+        1
+      ],
+      "matrixOrder": "column-major",
+      "width": 240,
+      "height": 240,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "background",
+        "contour"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "background",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        },
+        {
+          "id": "contour",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    }
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "verdict": "accepted for evidence admission and owned cleanup; no full C11 qualification",
+  "reviewer": "independent lean_expert /root/linear_sampling_review",
+  "method": "source and retained receipt review; reviewer did not execute probes",
+  "files": {
+    "tools/surface-view/parity/run-flatmap-qualification.mjs": "cd7ded2535d294b30bcb99952de5e97103b0cc3a2d096f91c43731658c9500e1",
+    "tools/surface-view/parity/run-qualification.mjs": "4f6d18c87c85f454b6855d0aeaa07bcb9359139f04a4414ac787a169e383c46c"
+  },
+  "verifiedByParent": {
+    "C11": "reviewed-03 exit1; 6 exact browser endpoints, 6 static JVM semantic checks pass, 6 JVM pixel comparisons fail; missing qualification checks explicit",
+    "generic": "final-runner-gate-08 --require-qualified exit1; native volume byte-exact, raster fails; cleanup failures empty"
+  }
+}

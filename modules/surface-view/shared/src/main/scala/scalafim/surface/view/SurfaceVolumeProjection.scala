@@ -74,7 +74,8 @@ final case class SurfaceProjectionReceipt(
   materializedBytes: Long,
   elapsedNanos: Long,
   path: SurfaceSamplingPath,
-  reducer: SurfaceSampleAggregation
+  reducer: SurfaceSampleAggregation,
+  interpolation: SurfaceVoxelInterpolation = SurfaceVoxelInterpolation.Nearest
 ):
   def vertices: Int =
     vertexTally.vertices
@@ -154,7 +155,8 @@ object SurfaceVolumeProjection:
         vertexCount.toLong * (8L + 4L + 4L + 1L),
         System.nanoTime() - started,
         morphism.plan.path,
-        morphism.plan.aggregation
+        morphism.plan.aggregation,
+        morphism.plan.interpolation
       )
     )
 

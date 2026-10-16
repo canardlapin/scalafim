@@ -1,0 +1,60 @@
+Sourcemap for "/private/tmp/scalafim-surfview-parity/examples/surface-view/js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js" points to missing source files
+{
+  "output": "/private/tmp/surfview-parity-candidate-metal-04",
+  "captured": [
+    "C01",
+    "C02",
+    "C03"
+  ],
+  "failures": [
+    {
+      "case": "C01",
+      "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete"
+    },
+    {
+      "case": "C02",
+      "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete"
+    },
+    {
+      "case": "C03",
+      "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete"
+    },
+    {
+      "case": "C04",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C05",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C06",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C07",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C08",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C09",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C10",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C11",
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C12",
+      "reason": "full required family adapter is not implemented"
+    }
+  ],
+  "qualification": false
+}

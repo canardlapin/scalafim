@@ -1,0 +1,738 @@
+{
+  "schema": "scalafim.surface-view-parity-manifest.v1",
+  "reference": {
+    "repository": "/Users/bbuchsbaum/code/jscode/surfviewjs",
+    "commit": "fb60f3705d51d2d74e69ddf71df7000ee9eb5b06",
+    "source": "Fresh Vite library build from pinned source; bundle hash recorded"
+  },
+  "fixture": "analytic-asymmetric-tetrahedron.v1",
+  "requiredAssets": {
+    "analytic": {
+      "status": "available",
+      "purpose": "deterministic adapter smoke input"
+    },
+    "bilateralCortex": {
+      "status": "verified-external-local-corpus; not vendored",
+      "localRoot": "/Users/bbuchsbaum/code/jscode/surfviewjs/tests/data",
+      "provenance": "SurfViewJS test corpus at pinned reference commit; ScalaFIM cortical acceptance receipt records the same corpus",
+      "licenseStatus": "GIFTI metadata and local corpus do not establish data-specific redistribution terms; do not vendor or redistribute until a documented decision exists",
+      "left": {
+        "file": "fsaverage5-lh-pial.gii",
+        "sha256": "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951"
+      },
+      "right": {
+        "file": "fsaverage5-rh-pial.gii",
+        "sha256": "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9"
+      }
+    }
+  },
+  "requiredCases": [
+    {
+      "id": "C01",
+      "name": "anatomy",
+      "smokeAdapter": true,
+      "implemented": false
+    },
+    {
+      "id": "C02",
+      "name": "scalar maps",
+      "smokeAdapter": true,
+      "implemented": false
+    },
+    {
+      "id": "C03",
+      "name": "composition",
+      "smokeAdapter": true,
+      "implemented": false
+    },
+    {
+      "id": "C04",
+      "name": "layouts",
+      "implemented": false
+    },
+    {
+      "id": "C05",
+      "name": "parcels/ROI",
+      "implemented": false
+    },
+    {
+      "id": "C06",
+      "name": "annotations",
+      "implemented": false
+    },
+    {
+      "id": "C07",
+      "name": "clipping/alpha",
+      "implemented": false
+    },
+    {
+      "id": "C08",
+      "name": "dynamics",
+      "implemented": false
+    },
+    {
+      "id": "C09",
+      "name": "networks",
+      "implemented": false
+    },
+    {
+      "id": "C10",
+      "name": "keys",
+      "implemented": false
+    },
+    {
+      "id": "C11",
+      "name": "flat maps",
+      "implemented": false
+    },
+    {
+      "id": "C12",
+      "name": "publication/restore",
+      "implemented": false
+    }
+  ],
+  "acceptance": {
+    "minimumIoU": 0.995,
+    "maximumChannelError": 2,
+    "maximumLandmarkDisplacementPixels": 1,
+    "missingRequiredArtifactFails": true,
+    "unimplementedCaseFails": true
+  },
+  "matrixStatus": "prospective-required; no full family row is implemented or passed by the C01-C03 smoke runner",
+  "matrixContract": {
+    "uniqueReceipt": "Every row must produce exactly one receipt for every named checkpoint and product route; absent, duplicate, stale, or backend-substituted receipts fail.",
+    "capture": "Each checkpoint requires source/reference/candidate/raster artifacts when that route is required, plus same-scale side-by-side, error heatmap, semantic receipt, resource receipt, and retained failed artifacts.",
+    "calibration": "pixel tolerances are proposed until frozen from reference repeatability on the named environment. An uncalibrated row is required but cannot pass formal visual parity.",
+    "independence": "semantic values, landmark projections, expected element masks, and mapped colours come from fixture inputs or frozen reference artifacts, never the candidate compiler, mapping, or surviving candidate foreground."
+  },
+  "requiredMatrix": [
+    {
+      "id": "C01-BR-views",
+      "family": "C01",
+      "fixture": "fsaverage5-bilateral-pial-curvature.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js; raster",
+      "cameraMaterial": "left/right lateral+medial,dorsal,ventral; orthographic/perspective; observed-default and controlled-unlit",
+      "viewport": "600x450 square/wide/tall",
+      "checkpoints": [
+        "initial",
+        "orbit",
+        "pan",
+        "zoom",
+        "resize"
+      ],
+      "oracles": [
+        "bilateral landmark projections",
+        "hemisphere masks",
+        "curvature orientation"
+      ],
+      "calibration": "pending reference repeatability"
+    },
+    {
+      "id": "C01-JVM-views",
+      "family": "C01",
+      "fixture": "fsaverage5-bilateral-pial-curvature.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM JavaFX; raster",
+      "cameraMaterial": "same views; production JavaFX material profile declared",
+      "viewport": "960x540",
+      "checkpoints": [
+        "cold",
+        "camera-only",
+        "resize"
+      ],
+      "oracles": [
+        "identity/pick",
+        "landmarks",
+        "upload counts"
+      ],
+      "calibration": "pending native repeatability"
+    },
+    {
+      "id": "C02-BR-scalar",
+      "family": "C02",
+      "fixture": "analytic-asymmetric-scalar-boundaries.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js; raster",
+      "cameraMaterial": "fixed square perspective; controlled-unlit LUT",
+      "viewport": "512x512",
+      "checkpoints": [
+        "sequential",
+        "signed",
+        "threshold-equality",
+        "zero-width",
+        "NaN-mask",
+        "sharp-edge"
+      ],
+      "oracles": [
+        "scalar samples",
+        "endpoint/neighbor colours",
+        "threshold-island masks"
+      ],
+      "calibration": "pending controlled-unlit repeatability"
+    },
+    {
+      "id": "C02-BR-volume",
+      "family": "C02",
+      "fixture": "analytic-volume-to-surface-sampling.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js; raster",
+      "cameraMaterial": "fixed perspective; declared production material",
+      "viewport": "600x450",
+      "checkpoints": [
+        "nearest",
+        "linear",
+        "frame-change"
+      ],
+      "oracles": [
+        "independent affine/sample/reducer values",
+        "map masks",
+        "readouts"
+      ],
+      "calibration": "pending browser repeatability"
+    },
+    {
+      "id": "C02-JVM-scalar",
+      "family": "C02",
+      "fixture": "analytic-asymmetric-scalar-boundaries.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "512x512",
+      "checkpoints": [
+        "sequential",
+        "signed",
+        "threshold-equality",
+        "zero-width",
+        "NaN-mask",
+        "sharp-edge"
+      ],
+      "oracles": [
+        "scalar samples",
+        "endpoint/neighbor colours",
+        "threshold-island masks"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C02-JVM-volume",
+      "family": "C02",
+      "fixture": "analytic-volume-to-surface-sampling.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM JavaFX; raster",
+      "cameraMaterial": "fixed perspective; declared production material",
+      "viewport": "600x450",
+      "checkpoints": [
+        "nearest",
+        "linear",
+        "frame-change"
+      ],
+      "oracles": [
+        "independent affine/sample/reducer values",
+        "map masks",
+        "readouts"
+      ],
+      "calibration": "pending native repeatability"
+    },
+    {
+      "id": "C03-BR-compose",
+      "family": "C03",
+      "fixture": "analytic-asymmetric-curvature-two-maps.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js; raster",
+      "cameraMaterial": "controlled-unlit and observed-default-lit separately",
+      "viewport": "512x512",
+      "checkpoints": [
+        "normal",
+        "additive",
+        "multiply",
+        "opacity",
+        "visibility",
+        "reorder",
+        "time-style"
+      ],
+      "oracles": [
+        "layer order",
+        "per-layer masks",
+        "independent RGBA composition"
+      ],
+      "calibration": "pending per-profile repeatability"
+    },
+    {
+      "id": "C03-JVM-compose",
+      "family": "C03",
+      "fixture": "analytic-asymmetric-curvature-two-maps.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM JavaFX; raster",
+      "cameraMaterial": "declared JavaFX material/depth profile",
+      "viewport": "600x450",
+      "checkpoints": [
+        "normal",
+        "opacity",
+        "reorder",
+        "time-style"
+      ],
+      "oracles": [
+        "layer order",
+        "RGBA samples",
+        "resource updates"
+      ],
+      "calibration": "pending native repeatability"
+    },
+    {
+      "id": "C04-BR-layout",
+      "family": "C04",
+      "fixture": "fsaverage5-bilateral-instances.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js",
+      "cameraMaterial": "four/six views; controlled-unlit",
+      "viewport": "1200x900",
+      "checkpoints": [
+        "bilateral",
+        "split",
+        "four-view",
+        "six-view",
+        "linked-camera",
+        "independent-camera"
+      ],
+      "oracles": [
+        "instance IDs",
+        "world-coordinate invariance",
+        "per-view picks"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C04-JVM-layout",
+      "family": "C04",
+      "fixture": "fsaverage5-bilateral-instances.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "1200x900",
+      "checkpoints": [
+        "bilateral",
+        "split",
+        "four-view",
+        "six-view",
+        "linked-camera",
+        "independent-camera"
+      ],
+      "oracles": [
+        "instance IDs",
+        "world-coordinate invariance",
+        "per-view picks"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C04-PUB-layout",
+      "family": "C04",
+      "fixture": "fsaverage5-bilateral-instances.v1",
+      "route": "publication export",
+      "renderer": "ScalaFIM publication; reference figure",
+      "cameraMaterial": "four-panel declared camera profile",
+      "viewport": "1200x900 and 2400x1800",
+      "checkpoints": [
+        "screen",
+        "export-1x",
+        "export-2x"
+      ],
+      "oracles": [
+        "panel order",
+        "camera matrices",
+        "shared scientific IDs"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C05-BR-parcels",
+      "family": "C05",
+      "fixture": "fsaverage5-label-roi-boundaries.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js",
+      "cameraMaterial": "controlled-unlit zoom series",
+      "viewport": "600x450",
+      "checkpoints": [
+        "categorical",
+        "continuous-parcel",
+        "exterior-roi",
+        "halo",
+        "medial-wall",
+        "selected-pick"
+      ],
+      "oracles": [
+        "parcel IDs",
+        "independent boundary segments",
+        "contour/halo masks"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C05-JVM-parcels",
+      "family": "C05",
+      "fixture": "fsaverage5-label-roi-boundaries.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "600x450",
+      "checkpoints": [
+        "categorical",
+        "continuous-parcel",
+        "exterior-roi",
+        "halo",
+        "medial-wall",
+        "selected-pick"
+      ],
+      "oracles": [
+        "parcel IDs",
+        "independent boundary segments",
+        "contour/halo masks"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C06-BR-annotations",
+      "family": "C06",
+      "fixture": "fsaverage5-markers-crosshair.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js",
+      "cameraMaterial": "controlled-unlit foreground/occluded poses",
+      "viewport": "600x450",
+      "checkpoints": [
+        "multiple",
+        "selected",
+        "hover",
+        "crosshair-label",
+        "orbit",
+        "geometry-change"
+      ],
+      "oracles": [
+        "stable annotation IDs",
+        "projected glyph/label masks",
+        "occlusion state"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C06-JVM-annotations",
+      "family": "C06",
+      "fixture": "fsaverage5-markers-crosshair.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "600x450",
+      "checkpoints": [
+        "multiple",
+        "selected",
+        "hover",
+        "crosshair-label",
+        "orbit",
+        "geometry-change"
+      ],
+      "oracles": [
+        "stable annotation IDs",
+        "projected glyph/label masks",
+        "occlusion state"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C07-BR-clipping-alpha",
+      "family": "C07",
+      "fixture": "analytic-overlap-clipping-alpha.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js; raster",
+      "cameraMaterial": "declared alpha/depth-write/culling profile",
+      "viewport": "512x512",
+      "checkpoints": [
+        "axis-plane",
+        "oblique-plane",
+        "flipped-side",
+        "hidden-pick",
+        "translucent-overlap",
+        "zero-alpha",
+        "empty-stack"
+      ],
+      "oracles": [
+        "plane signed distance",
+        "pick rejection",
+        "alpha/occlusion masks"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C07-JVM-clipping-alpha",
+      "family": "C07",
+      "fixture": "analytic-overlap-clipping-alpha.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM JavaFX or explicitly admitted production fallback; raster",
+      "cameraMaterial": "actual backend identity and alpha profile",
+      "viewport": "600x450",
+      "checkpoints": [
+        "axis-plane",
+        "flipped-side",
+        "translucent-overlap",
+        "hidden-pick"
+      ],
+      "oracles": [
+        "plane signed distance",
+        "alpha masks",
+        "backend capability receipt"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C08-BR-dynamics",
+      "family": "C08",
+      "fixture": "fsaverage5-time-morph.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js",
+      "cameraMaterial": "controlled-unlit",
+      "viewport": "600x450",
+      "checkpoints": [
+        "frame-0",
+        "interpolated",
+        "pause-resume",
+        "pial",
+        "midpoint",
+        "inflated"
+      ],
+      "oracles": [
+        "time interpolation",
+        "topology identity",
+        "persistent pick/annotation IDs"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C08-JVM-dynamics",
+      "family": "C08",
+      "fixture": "fsaverage5-time-morph.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "600x450",
+      "checkpoints": [
+        "frame-0",
+        "interpolated",
+        "pause-resume",
+        "pial",
+        "midpoint",
+        "inflated"
+      ],
+      "oracles": [
+        "time interpolation",
+        "topology identity",
+        "persistent pick/annotation IDs"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C09-BR-network",
+      "family": "C09",
+      "fixture": "fsaverage5-signed-network.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js",
+      "cameraMaterial": "controlled-unlit bilateral composition",
+      "viewport": "960x540",
+      "checkpoints": [
+        "signed",
+        "weighted-width",
+        "node-glyph",
+        "threshold",
+        "top-n",
+        "bilateral"
+      ],
+      "oracles": [
+        "edge/node IDs",
+        "independent threshold/top-n",
+        "glyph/edge masks"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C09-JVM-network",
+      "family": "C09",
+      "fixture": "fsaverage5-signed-network.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "960x540",
+      "checkpoints": [
+        "signed",
+        "weighted-width",
+        "node-glyph",
+        "threshold",
+        "top-n",
+        "bilateral"
+      ],
+      "oracles": [
+        "edge/node IDs",
+        "independent threshold/top-n",
+        "glyph/edge masks"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C10-BR-keys",
+      "family": "C10",
+      "fixture": "analytic-mapping-key.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js; raster",
+      "cameraMaterial": "controlled-unlit mapping profile",
+      "viewport": "800x600",
+      "checkpoints": [
+        "continuous",
+        "diverging",
+        "categorical",
+        "effect-confidence",
+        "window-change",
+        "threshold-change",
+        "palette-change"
+      ],
+      "oracles": [
+        "independent LUT/key samples",
+        "map-key synchronization",
+        "legend masks"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C10-JVM-keys",
+      "family": "C10",
+      "fixture": "analytic-mapping-key.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "800x600",
+      "checkpoints": [
+        "continuous",
+        "diverging",
+        "categorical",
+        "effect-confidence",
+        "window-change",
+        "threshold-change",
+        "palette-change"
+      ],
+      "oracles": [
+        "independent LUT/key samples",
+        "map-key synchronization",
+        "legend masks"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C11-BR-flatmap",
+      "family": "C11",
+      "fixture": "flatmap-linked-selection.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM flat-map host",
+      "cameraMaterial": "2D equal-scale plus linked 3D camera",
+      "viewport": "960x540",
+      "checkpoints": [
+        "hover",
+        "pick",
+        "polygon",
+        "lasso",
+        "linked-marker",
+        "linked-time"
+      ],
+      "oracles": [
+        "2D coordinates",
+        "ROI membership",
+        "linked selection/time IDs"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C11-JVM-flatmap",
+      "family": "C11",
+      "fixture": "flatmap-linked-selection.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM production JVM viewer; actual renderer required in receipt; portable raster comparison",
+      "cameraMaterial": "Same geometric and mapping contract; separately declared JVM material and rasterization profile",
+      "viewport": "960x540",
+      "checkpoints": [
+        "hover",
+        "pick",
+        "polygon",
+        "lasso",
+        "linked-marker",
+        "linked-time"
+      ],
+      "oracles": [
+        "2D coordinates",
+        "ROI membership",
+        "linked selection/time IDs"
+      ],
+      "calibration": "pending JVM repeatability and interaction/resource qualification"
+    },
+    {
+      "id": "C12-BR-restore",
+      "family": "C12",
+      "fixture": "fsaverage5-publication-state.v1",
+      "route": "browser viewer",
+      "renderer": "SurfViewJS reference; ScalaFIM Three.js",
+      "cameraMaterial": "restored actual backend profile",
+      "viewport": "960x540",
+      "checkpoints": [
+        "restore",
+        "selection",
+        "time",
+        "camera",
+        "layers"
+      ],
+      "oracles": [
+        "scene codec identity",
+        "picks/readouts",
+        "backend identity"
+      ],
+      "calibration": "pending browser repeatability"
+    },
+    {
+      "id": "C12-JVM-restore",
+      "family": "C12",
+      "fixture": "fsaverage5-publication-state.v1",
+      "route": "JVM viewer",
+      "renderer": "ScalaFIM JavaFX or explicitly admitted production fallback",
+      "cameraMaterial": "restored actual backend profile",
+      "viewport": "960x540",
+      "checkpoints": [
+        "restore",
+        "selection",
+        "time",
+        "camera",
+        "layers"
+      ],
+      "oracles": [
+        "scene codec identity",
+        "picks/readouts",
+        "backend identity"
+      ],
+      "calibration": "pending"
+    },
+    {
+      "id": "C12-PUB-restore",
+      "family": "C12",
+      "fixture": "fsaverage5-publication-state.v1",
+      "route": "publication export",
+      "renderer": "ScalaFIM publication; reference figure",
+      "cameraMaterial": "four-panel cameras, shared legend, transparent background",
+      "viewport": "1200x900 and 2400x1800",
+      "checkpoints": [
+        "live",
+        "export-1x",
+        "export-2x",
+        "restore"
+      ],
+      "oracles": [
+        "scene codec state",
+        "panel/title/orientation masks",
+        "legend/readout values",
+        "transparent-alpha mask"
+      ],
+      "calibration": "pending"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T18:14:48.508235+00:00",
+  "finished_utc": "2026-10-14T18:14:51.087856+00:00",
+  "duration_seconds": 2.579415,
+  "command": [
+    "node",
+    "tools/surface-view/parity/run-decoration-proof.mjs",
+    "--candidate-root",
+    "/private/tmp/scalafim-surface-composition",
+    "--scalafim-module",
+    "/private/tmp/scalafim-surface-composition/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js",
+    "--out",
+    "/private/tmp/scalafim-three-decorations-03"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-composition",
+  "log": "/private/tmp/surfview-parity-logs/decorations-browser-03.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 120.0,
+  "log_bytes": 822
+}

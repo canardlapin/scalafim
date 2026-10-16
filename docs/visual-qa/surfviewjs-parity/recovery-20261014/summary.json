@@ -1,0 +1,5782 @@
+{
+  "status": "fail",
+  "qualification": false,
+  "rows": [
+    {
+      "case": "C01",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete",
+      "capture": "complete",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 110,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 512,
+          "height": 512,
+          "referenceForeground": 42824,
+          "candidateForeground": 42824,
+          "foregroundIntersection": 42824,
+          "foregroundIoU": 1,
+          "maximumChannelError": 110,
+          "meanMaximumChannelError": 6.95849609375
+        },
+        "elements": []
+      },
+      "otherComparisons": [
+        {
+          "renderer": "scalafim-javafx",
+          "pass": false,
+          "failures": [
+            {
+              "code": "global-channel-error-exceeded",
+              "actual": 173,
+              "maximum": 2
+            },
+            {
+              "code": "uncalibrated-color-policy"
+            }
+          ],
+          "metrics": {
+            "width": 512,
+            "height": 512,
+            "referenceForeground": 42824,
+            "candidateForeground": 42839,
+            "foregroundIntersection": 42795,
+            "foregroundIoU": 0.9982970980684893,
+            "maximumChannelError": 173,
+            "meanMaximumChannelError": 16.934940338134766
+          },
+          "elements": []
+        },
+        {
+          "renderer": "scalafim-raster",
+          "pass": false,
+          "failures": [
+            {
+              "code": "foreground-iou-below-minimum",
+              "actual": 0.992387446291799,
+              "minimum": 0.995
+            },
+            {
+              "code": "global-channel-error-exceeded",
+              "actual": 158,
+              "maximum": 2
+            },
+            {
+              "code": "uncalibrated-color-policy"
+            }
+          ],
+          "metrics": {
+            "width": 512,
+            "height": 512,
+            "referenceForeground": 42824,
+            "candidateForeground": 42498,
+            "foregroundIntersection": 42498,
+            "foregroundIoU": 0.992387446291799,
+            "maximumChannelError": 158,
+            "meanMaximumChannelError": 8.25665283203125
+          },
+          "elements": []
+        }
+      ],
+      "pageErrors": [],
+      "cameraAgreement": {
+        "maximumViewDifference": 9.536743128535363e-8,
+        "maximumProjectionDifference": 5.580634310220489e-8
+      }
+    },
+    {
+      "case": "C02",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete",
+      "capture": "complete",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 173,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 512,
+          "height": 512,
+          "referenceForeground": 42824,
+          "candidateForeground": 42824,
+          "foregroundIntersection": 42824,
+          "foregroundIoU": 1,
+          "maximumChannelError": 173,
+          "meanMaximumChannelError": 19.543636322021484
+        },
+        "elements": []
+      },
+      "otherComparisons": [
+        {
+          "renderer": "scalafim-javafx",
+          "pass": false,
+          "failures": [
+            {
+              "code": "global-channel-error-exceeded",
+              "actual": 255,
+              "maximum": 2
+            },
+            {
+              "code": "uncalibrated-color-policy"
+            }
+          ],
+          "metrics": {
+            "width": 512,
+            "height": 512,
+            "referenceForeground": 42824,
+            "candidateForeground": 42839,
+            "foregroundIntersection": 42795,
+            "foregroundIoU": 0.9982970980684893,
+            "maximumChannelError": 255,
+            "meanMaximumChannelError": 32.818729400634766
+          },
+          "elements": []
+        },
+        {
+          "renderer": "scalafim-raster",
+          "pass": false,
+          "failures": [
+            {
+              "code": "foreground-iou-below-minimum",
+              "actual": 0.992387446291799,
+              "minimum": 0.995
+            },
+            {
+              "code": "global-channel-error-exceeded",
+              "actual": 243,
+              "maximum": 2
+            },
+            {
+              "code": "uncalibrated-color-policy"
+            }
+          ],
+          "metrics": {
+            "width": 512,
+            "height": 512,
+            "referenceForeground": 42824,
+            "candidateForeground": 42498,
+            "foregroundIntersection": 42498,
+            "foregroundIoU": 0.992387446291799,
+            "maximumChannelError": 243,
+            "meanMaximumChannelError": 23.903308868408203
+          },
+          "elements": []
+        }
+      ],
+      "pageErrors": [],
+      "cameraAgreement": {
+        "maximumViewDifference": 9.536743128535363e-8,
+        "maximumProjectionDifference": 5.580634310220489e-8
+      }
+    },
+    {
+      "case": "C03",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "observed-default smoke only; required family coverage and controlled material calibration are incomplete",
+      "capture": "complete",
+      "comparison": {
+        "pass": false,
+        "failures": [
+          {
+            "code": "global-channel-error-exceeded",
+            "actual": 158,
+            "maximum": 2
+          },
+          {
+            "code": "uncalibrated-color-policy"
+          }
+        ],
+        "metrics": {
+          "width": 512,
+          "height": 512,
+          "referenceForeground": 42824,
+          "candidateForeground": 42824,
+          "foregroundIntersection": 42824,
+          "foregroundIoU": 1,
+          "maximumChannelError": 158,
+          "meanMaximumChannelError": 15.70306396484375
+        },
+        "elements": []
+      },
+      "otherComparisons": [
+        {
+          "renderer": "scalafim-javafx",
+          "pass": false,
+          "failures": [
+            {
+              "code": "global-channel-error-exceeded",
+              "actual": 249,
+              "maximum": 2
+            },
+            {
+              "code": "uncalibrated-color-policy"
+            }
+          ],
+          "metrics": {
+            "width": 512,
+            "height": 512,
+            "referenceForeground": 42824,
+            "candidateForeground": 42839,
+            "foregroundIntersection": 42795,
+            "foregroundIoU": 0.9982970980684893,
+            "maximumChannelError": 249,
+            "meanMaximumChannelError": 31.13088607788086
+          },
+          "elements": []
+        },
+        {
+          "renderer": "scalafim-raster",
+          "pass": false,
+          "failures": [
+            {
+              "code": "foreground-iou-below-minimum",
+              "actual": 0.992387446291799,
+              "minimum": 0.995
+            },
+            {
+              "code": "global-channel-error-exceeded",
+              "actual": 206,
+              "maximum": 2
+            },
+            {
+              "code": "uncalibrated-color-policy"
+            }
+          ],
+          "metrics": {
+            "width": 512,
+            "height": 512,
+            "referenceForeground": 42824,
+            "candidateForeground": 42498,
+            "foregroundIntersection": 42498,
+            "foregroundIoU": 0.992387446291799,
+            "maximumChannelError": 206,
+            "meanMaximumChannelError": 18.560897827148438
+          },
+          "elements": []
+        }
+      ],
+      "pageErrors": [],
+      "cameraAgreement": {
+        "maximumViewDifference": 9.536743128535363e-8,
+        "maximumProjectionDifference": 5.580634310220489e-8
+      }
+    },
+    {
+      "case": "C04",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C05",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C06",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C07",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C08",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C09",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C10",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C11",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    },
+    {
+      "case": "C12",
+      "status": "fail",
+      "artifacts": [],
+      "reason": "full required family adapter is not implemented"
+    }
+  ],
+  "matrixValidation": {
+    "ok": false,
+    "errors": [
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-BR-views",
+        "checkpoint": "initial"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-BR-views",
+        "checkpoint": "initial"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-BR-views",
+        "checkpoint": "initial"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-BR-views",
+        "checkpoint": "initial"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-BR-views",
+        "checkpoint": "initial"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-BR-views",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-BR-views",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-BR-views",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-BR-views",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-BR-views",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-BR-views",
+        "checkpoint": "pan"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-BR-views",
+        "checkpoint": "pan"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-BR-views",
+        "checkpoint": "pan"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-BR-views",
+        "checkpoint": "pan"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-BR-views",
+        "checkpoint": "pan"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-BR-views",
+        "checkpoint": "zoom"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-BR-views",
+        "checkpoint": "zoom"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-BR-views",
+        "checkpoint": "zoom"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-BR-views",
+        "checkpoint": "zoom"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-BR-views",
+        "checkpoint": "zoom"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-BR-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-BR-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-BR-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-BR-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-BR-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "cold"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "cold"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "cold"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "cold"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "cold"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "camera-only"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "camera-only"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "camera-only"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "camera-only"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "camera-only"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "resize"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sequential"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "threshold-equality"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "zero-width"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "NaN-mask"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sharp-edge"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "nearest"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "linear"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "frame-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "additive"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "additive"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "additive"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "additive"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "additive"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "multiply"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "multiply"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "multiply"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "multiply"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "multiply"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "visibility"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "visibility"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "visibility"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "visibility"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "visibility"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "normal"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "opacity"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "reorder"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "time-style"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "split"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "four-view"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "six-view"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "linked-camera"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "independent-camera"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "screen"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "screen"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "screen"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "screen"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "screen"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "continuous-parcel"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "exterior-roi"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "halo"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "medial-wall"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "selected-pick"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "multiple"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "selected"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "crosshair-label"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "orbit"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "geometry-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "oblique-plane"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "oblique-plane"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "oblique-plane"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "oblique-plane"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "oblique-plane"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "zero-alpha"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "zero-alpha"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "zero-alpha"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "zero-alpha"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "zero-alpha"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "empty-stack"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "empty-stack"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "empty-stack"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "empty-stack"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "empty-stack"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "axis-plane"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "flipped-side"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "translucent-overlap"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "hidden-pick"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "frame-0"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "interpolated"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pause-resume"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pial"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "midpoint"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "inflated"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-BR-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-BR-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-BR-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-BR-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-BR-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-BR-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-BR-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-BR-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-BR-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-BR-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-BR-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-BR-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-BR-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-BR-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-BR-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-BR-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-BR-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-BR-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-BR-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-BR-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-BR-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-BR-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-BR-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-BR-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-BR-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-BR-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-BR-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-BR-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-BR-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-BR-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "signed"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "weighted-width"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "node-glyph"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "threshold"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "top-n"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "bilateral"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "continuous"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "diverging"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "categorical"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "effect-confidence"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "window-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "threshold-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "palette-change"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "hover"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "pick"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "polygon"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "lasso"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-marker"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-time"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "selection"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "time"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "camera"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "layers"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "live"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "live"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "live"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "live"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "live"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-1x"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-2x"
+      },
+      {
+        "code": "invalid-frozen-source-commit"
+      },
+      {
+        "code": "invalid-frozen-fixture-hash",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-artifact-hashes",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-calibration",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-required-elements",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "invalid-frozen-renderers",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "restore"
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-BR-views",
+        "checkpoint": "initial",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-BR-views",
+        "checkpoint": "orbit",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-BR-views",
+        "checkpoint": "pan",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-BR-views",
+        "checkpoint": "zoom",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-BR-views",
+        "checkpoint": "resize",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "cold",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "camera-only",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C01-JVM-views",
+        "checkpoint": "resize",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sequential",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "signed",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "threshold-equality",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "zero-width",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "NaN-mask",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-scalar",
+        "checkpoint": "sharp-edge",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "nearest",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "linear",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-BR-volume",
+        "checkpoint": "frame-change",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sequential",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "signed",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "threshold-equality",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "zero-width",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "NaN-mask",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-scalar",
+        "checkpoint": "sharp-edge",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "nearest",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "linear",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C02-JVM-volume",
+        "checkpoint": "frame-change",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "normal",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "additive",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "multiply",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "opacity",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "visibility",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "reorder",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-BR-compose",
+        "checkpoint": "time-style",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "normal",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "opacity",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "reorder",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C03-JVM-compose",
+        "checkpoint": "time-style",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "bilateral",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "split",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "four-view",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "six-view",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "linked-camera",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-BR-layout",
+        "checkpoint": "independent-camera",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "bilateral",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "split",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "four-view",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "six-view",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "linked-camera",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-JVM-layout",
+        "checkpoint": "independent-camera",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "screen",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-1x",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C04-PUB-layout",
+        "checkpoint": "export-2x",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "categorical",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "continuous-parcel",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "exterior-roi",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "halo",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "medial-wall",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-BR-parcels",
+        "checkpoint": "selected-pick",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "categorical",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "continuous-parcel",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "exterior-roi",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "halo",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "medial-wall",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C05-JVM-parcels",
+        "checkpoint": "selected-pick",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "multiple",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "selected",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "hover",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "crosshair-label",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "orbit",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-BR-annotations",
+        "checkpoint": "geometry-change",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "multiple",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "selected",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "hover",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "crosshair-label",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "orbit",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C06-JVM-annotations",
+        "checkpoint": "geometry-change",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "axis-plane",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "oblique-plane",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "flipped-side",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "hidden-pick",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "translucent-overlap",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "zero-alpha",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-BR-clipping-alpha",
+        "checkpoint": "empty-stack",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "axis-plane",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "flipped-side",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "translucent-overlap",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C07-JVM-clipping-alpha",
+        "checkpoint": "hidden-pick",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "frame-0",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "interpolated",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pause-resume",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "pial",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "midpoint",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-BR-dynamics",
+        "checkpoint": "inflated",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "frame-0",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "interpolated",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pause-resume",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "pial",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "midpoint",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C08-JVM-dynamics",
+        "checkpoint": "inflated",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-BR-network",
+        "checkpoint": "signed",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-BR-network",
+        "checkpoint": "weighted-width",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-BR-network",
+        "checkpoint": "node-glyph",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-BR-network",
+        "checkpoint": "threshold",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-BR-network",
+        "checkpoint": "top-n",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-BR-network",
+        "checkpoint": "bilateral",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "signed",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "weighted-width",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "node-glyph",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "threshold",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "top-n",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C09-JVM-network",
+        "checkpoint": "bilateral",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "continuous",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "diverging",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "categorical",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "effect-confidence",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "window-change",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "threshold-change",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-BR-keys",
+        "checkpoint": "palette-change",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "continuous",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "diverging",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "categorical",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "effect-confidence",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "window-change",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "threshold-change",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C10-JVM-keys",
+        "checkpoint": "palette-change",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "hover",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "pick",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "polygon",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "lasso",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-marker",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-BR-flatmap",
+        "checkpoint": "linked-time",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "hover",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "pick",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "polygon",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "lasso",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-marker",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C11-JVM-flatmap",
+        "checkpoint": "linked-time",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "restore",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "selection",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "time",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "camera",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-BR-restore",
+        "checkpoint": "layers",
+        "detail": {
+          "productRoute": "browser viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "restore",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "selection",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "time",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "camera",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-JVM-restore",
+        "checkpoint": "layers",
+        "detail": {
+          "productRoute": "JVM viewer"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "live",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-1x",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "export-2x",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      },
+      {
+        "code": "missing-receipt",
+        "rowId": "C12-PUB-restore",
+        "checkpoint": "restore",
+        "detail": {
+          "productRoute": "publication export"
+        }
+      }
+    ],
+    "expected": 151,
+    "received": 0
+  }
+}

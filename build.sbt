@@ -187,7 +187,7 @@ lazy val multivarInferenceJS  = ProjectRef(multivarBuild, "inferenceJS")
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "edcdfd5ffaf010e8205da04a85a7f8b6b2fd0d92"
+lazy val intaglioRevision = "13747a3a8bf75fd788ff68e1c979d6c84f740605"
 lazy val intaglioBuild =
   uri(
     sys.props.getOrElse(
@@ -803,11 +803,13 @@ lazy val surfaceViewJavafx =
   crossProject(JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface-view-javafx"))
-    .dependsOn(surfaceView, surfaceViewRaster % "test->compile")
+    .dependsOn(surfaceView, surfaceViewRaster)
     .jvmConfigure(_.dependsOn(intaglioCoreJVM))
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-javafx",
+      // Native JavaFX libraries cannot be reloaded across warm sbt test classloaders.
+      Test / fork := true,
       Test / run / fork := true,
       libraryDependencies ++= Seq(
         "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
@@ -821,7 +823,7 @@ lazy val surfaceViewThree =
   crossProject(JSPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface-view-three"))
-    .dependsOn(surfaceView)
+    .dependsOn(surfaceView, surfaceViewRaster)
     .jsConfigure(_.dependsOn(intaglioCoreJS))
     .settings(commonSettings)
     .settings(
@@ -847,7 +849,7 @@ lazy val surfaceViewExamples =
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceViewExamplesJS = surfaceViewExamples.js.dependsOn(surfaceViewThreeJS)
-lazy val surfaceViewExamplesJVM = surfaceViewExamples.jvm
+lazy val surfaceViewExamplesJVM = surfaceViewExamples.jvm.dependsOn(intaglioJava2dJVM % "test->compile")
   .dependsOn(surfaceViewJavafxJVM)
   .settings(
     Test / run / fork := true,

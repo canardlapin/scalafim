@@ -1,0 +1,69 @@
+{
+  "schema": "surface-rounded-jvm-negative-controls.v1",
+  "runnerSha256": "d8cd13a4eb5f89b9c6296181ab6719f4cecf7308839850067259a22165c0510b",
+  "cases": [
+    {
+      "mutation": "cortex-byte",
+      "command": [
+        "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+        "tools/surface-view/parity/compare-rounded-jvm.mjs",
+        "--reference-root",
+        "/private/tmp/surfviewjs-frozen-fb60f370-20261015",
+        "--primitive-proof",
+        "/private/tmp/surface-rounded-reference-proof-04",
+        "--cortex-proof",
+        "/private/tmp/surface-rounded-cortex-02",
+        "--primitive-jvm",
+        "/private/tmp/surface-rounded-jvm-primitives-01",
+        "--cortex-jvm",
+        "/private/tmp/surface-rounded-jvm-controls-01/cortex-byte/cortex",
+        "--out",
+        "/private/tmp/surface-rounded-jvm-controls-01/cortex-byte/comparison"
+      ],
+      "exitCode": 1,
+      "pass": true
+    },
+    {
+      "mutation": "oracle-hash",
+      "command": [
+        "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+        "tools/surface-view/parity/compare-rounded-jvm.mjs",
+        "--reference-root",
+        "/private/tmp/surfviewjs-frozen-fb60f370-20261015",
+        "--primitive-proof",
+        "/private/tmp/surface-rounded-jvm-controls-01/oracle-hash/proof",
+        "--cortex-proof",
+        "/private/tmp/surface-rounded-cortex-02",
+        "--primitive-jvm",
+        "/private/tmp/surface-rounded-jvm-primitives-01",
+        "--cortex-jvm",
+        "/private/tmp/surface-rounded-jvm-cortex-01",
+        "--out",
+        "/private/tmp/surface-rounded-jvm-controls-01/oracle-hash/comparison"
+      ],
+      "exitCode": 1,
+      "pass": true
+    },
+    {
+      "mutation": "reference-repeat",
+      "command": [
+        "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+        "tools/surface-view/parity/compare-rounded-jvm.mjs",
+        "--reference-root",
+        "/private/tmp/surfviewjs-frozen-fb60f370-20261015",
+        "--primitive-proof",
+        "/private/tmp/surface-rounded-jvm-controls-01/reference-repeat/proof",
+        "--cortex-proof",
+        "/private/tmp/surface-rounded-cortex-02",
+        "--primitive-jvm",
+        "/private/tmp/surface-rounded-jvm-primitives-01",
+        "--cortex-jvm",
+        "/private/tmp/surface-rounded-jvm-cortex-01",
+        "--out",
+        "/private/tmp/surface-rounded-jvm-controls-01/reference-repeat/comparison"
+      ],
+      "exitCode": 1,
+      "pass": true
+    }
+  ]
+}

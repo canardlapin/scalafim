@@ -1,0 +1,1123 @@
+[[0minfo[0m] server was not detected. starting an instance
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-surface-visibility-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-surface-visibility/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/5a3fe250684692aa42c1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/d79d1afec9bc45383768/image4s/project
+[info] loading settings for project root from build.sbt...
+Cloning into '/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio'...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/project
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/cfabf5f1e5e2fb8fb176/linops4s/build.sbt:82: warning: value lookup of `streams` inside an `if` expression
+
+problem: `streams.value` is inside an `if` expression of a regular task.
+  Regular tasks always evaluate task dependencies (`.value`) regardless of `if` expressions.
+solution:
+  1. Use a conditional task `Def.taskIf(...)` to evaluate it when the `if` predicate is true or false.
+  2. Or turn the task body into a single `if` expression; the task is then auto-converted to a conditional task.
+  3. Or make the static evaluation explicit by declaring `streams.value` outside the `if` expression.
+  4. If you still want to force the static lookup, you may annotate the task lookup with `@sbtUnchecked`, e.g. `(streams.value: @sbtUnchecked)`.
+  5. Add `import sbt.dsl.LinterLevel.Ignore` to your build file to disable all task linting.
+
+      streams.value.log.info(s"$moduleName: module boundaries OK (no effect deps)")
+      ^
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/b3db316401092ccd708e/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (370411 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-surface-visibility/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] sbt server started at local:///Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/server/7c4f759f669d47e4f084/sock
+INTAGLIO_LOCAL_OVERRIDE=None
+[info] ans: Unit = null
+[[32msuccess[0m] elapsed: 0 s
+[0J[sbt-warm] eval println("INTAGLIO_LOCAL_OVERRIDE=" + sys.props.get("scalafim.intaglio.build")): exit 0 in 64.6s
+[info] /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/core/jvm
+[[32msuccess[0m] elapsed: 0 s
+[0J[sbt-warm] show {https://github.com/canardlapin/intaglio.git#13747a3a8bf75fd788ff68e1c979d6c84f740605}coreJVM/baseDirectory: exit 0 in 0.3s
+[info] compiling 58 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+scalafim.surface.view.SurfaceVolumeCursorSuite:
+  + guide: an MNI peak maps to subject voxels and a framed tkRAS surface through a pullback link 0.04s
+  + a tkRAS surface links to an MNI volume through the pullback; the forward direction is a typed error 0.002s
+  + with a forward map the cursor round-trips vertex -> volume -> vertex 0.001s
+  + one world links directly under an explicit alignment 0.014s
+  + the cursor refuses another world's link, another surface's selection, and points beyond the radius 0.002s
+scalafim.surface.view.SurfaceWorldIndexSuite:
+  + prepared picks agree with independent world landmarks under full affine transforms 0.065s
+  + ties choose original lowest id and radius boundaries are inclusive 0.001s
+  + snapshot lifetime is explicit across coordinate mutation and equal-topology replacements 0.002s
+  + repeated coincident points retain deterministic ties 0.002s
+  + malformed transforms are refused at the affine boundary and mutated nonfinite coordinates cannot be indexed 0.002s
+scalafim.surface.view.SurfaceColorPipelineSuite:
+  + black-white midpoint decodes vertices before interpolation 0.016s
+  + half-light gray is 92 and layer opacity composes encoded bytes before interpolation 0.002s
+  + alpha uses coverage interpolation without a color transfer 0.001s
+  + linear composition refuses missing source colors before evaluator access 0.06s
+scalafim.surface.view.SurfaceBivariateLegendSuite:
+  + bivariate binding uses the paired layer mapping and preserves its key pixels 0.016s
+  + bivariate binding refuses hidden sources and mismatched mappings 0.004s
+  + bivariate legends and mapping identity survive v8 documents and reject changed mappings 0.059s
+  + bivariate drawing returns a typed layout failure when long axis labels leave no key width 0.006s
+  + threshold edge opt-in persists through v8 and refuses a model without the policy 0.005s
+scalafim.surface.view.SurfaceVisibilityPolicySuite:
+  + state actions validate identities and compiler carries nondefault display policy 0.002s
+  + revision 8 roundtrips display policy and rejects opacity for an undeclared surface 0.005s
+  + pre-version-8 scene documents restore legacy policy and opaque surfaces 0.002s
+scalafim.surface.view.SurfaceSceneDocumentSuite:
+  + revision 1 documents retain vertex association and their original JSON shape 0.018s
+  + canonical document roundtrip reproduces state, camera, and semantic render resources 0.022s
+  + camera aspect survives document encoding and restoration 0.003s
+  + unknown fields and future revisions obey explicit read policy 0.004s
+  + external digests and exact mesh identities are checked before state restoration 0.003s
+  + backend-neutral requirements admit capabilities without naming an implementation 0.004s
+  + codec rejects duplicate fields, malformed JSON, invalid digests, and invalid document state 0.003s
+scalafim.surface.view.SurfaceAnatomicalDisplaySuite:
+  + curvature is an ordinary scalar field transferable only across exact topology 0.005s
+  + world clip planes normalize normals and retain an explicit side 0.001s
+  + publication decoration records camera and layer identity and composes through Scene 0.011s
+  + sulcal sign convention and contrast affect colors without changing scalar values 0.002s
+scalafim.surface.view.SurfaceFragmentApproximationSuite:
+  + scalar thresholds and ramp knots have a bounded constant-color approximation 0.569s
+  + color intervals enclose every blend mode with varying source alpha 1.293s
+  + normal-cone bounds enclose normalized world lighting, including a terminator 0.042s
+  + resource limits reject instead of returning an approximation outside its promised error 0.003s
+  + adaptive leaves meet along matching edges without hanging vertices 0.273s
+  + incident scientific faces share the same adaptive edge vertices 0.359s
+  + geometric aliases conform duplicated edges without merging discontinuous colors 0.035s
+scalafim.surface.view.SurfacePlaybackDocumentSuite:
+  + fractional playhead and controls roundtrip and reconstruct the independently known interpolated field 0.015s
+  + restore refuses changed source binding, mapping and time axis 0.001s
+  + restore discards cached frames belonging to another source with the same field id 0.001s
+  + malformed or out-of-axis persisted controls are rejected 0.002s
+scalafim.surface.view.SurfaceFlatMapInteractionSuite:
+  + state selection preserves the map scientific domain 0.002s
+scalafim.surface.view.SurfaceDecorationsSuite:
+  + transition contours assign independent stable edge ids and ROI exterior omits internal parcel borders 0.01s
+  + one scientific marker lowers for each repeated display instance with distinct origins 0.003s
+  + malformed face weights and unresolved scientific vertices return typed errors 0.002s
+  + a current geometry update moves anchors without changing their stable id 0.001s
+  + source-domain sample buffers retain isolated label slots and nearest partitions use exact source corners 0.002s
+scalafim.surface.view.SurfaceCompositionNavigationSuite:
+  + independent navigation changes only the selected view and never mesh coordinates 0.008s
+  + linked orbit applies deltas while retaining distinct targets and distances 0.002s
+  + zoom links magnification but a panel resize remains independent 0.001s
+  + invalid links and navigation are typed refusals without partial updates 0.001s
+  + perspective zoom changes the compiled view and halves eye distance 0.001s
+scalafim.surface.view.SurfaceViewerSuite:
+  + opaque ids and camera scalars reject invalid states 0.003s
+  + canonical anatomical viewpoints encode RAS directions explicitly for both hemispheres 0.0s
+  + layers own input buffers and validate frame-major lengths 0.001s
+  + model rejects duplicate ids, unknown surfaces, topology mismatch, and dynamic frame disagreement 0.001s
+  + reducer is total over timepoint, layer capability, ordering, and selection actions 0.002s
+  + bilateral layout validates hemispheres and preserves explicit order 0.001s
+  + compiler applies surfaceToWorld before packing positions and readouts 0.002s
+  + compiler centers the camera on transformed world bounds 0.001s
+  + anatomical camera distance scales beyond millimetre-space geometry 0.001s
+  + threshold boundaries, layer order, receipts, and profile are deterministic 0.001s
+  + camera-only actions preserve every mesh and layer resource key 0.001s
+  + geometry families morph without changing topology, layers, selection, or camera framing 0.003s
+  + geodesic reveal weights have analytic smootherstep values and reject invalid domains 0.026s
+  + direct reveal lens remains an explicit diagnostic correspondence mode 0.01s
+  + natural reveal is translation-invariant, pin-fixed, harmonic, and inversion-free 0.006s
+  + lens quality detects an intermediate collapse even when endpoint winding agrees 0.001s
+  + geometry family actions reject absent variants and invalid transition updates 0.002s
+  + orbit and reset preserve canonical anatomical bases without resource uploads 0.001s
+scalafim.surface.view.SurfaceThresholdEdgesSuite:
+  + visibility signs hide threshold equality and invalid values rather than encoding scalar distances 0.001s
+  + finite extreme windows preserve visible overlay colors 0.001s
+  + edge policy overlays in linear light and retains the underlay alpha 0.003s
+  + helper-lane overlay alpha is clamped before mixing linear colors 0.0s
+  + only the eligible topmost visible layer carries a threshold edge packet 0.004s
+  + direct threshold-edge packets must retain the compiler's fragment stack invariants 0.002s
+scalafim.surface.view.SurfaceSceneVeryInflatedSuite:
+  + a very-inflated scene saves the canonical kind and round trips to the same state 0.01s
+  + legacy and GIFTI spellings of the saved kind decode to VeryInflated and re-encode canonically 0.003s
+  + the display kind is part of the saved surface identity: inflated and very-inflated do not substitute 0.001s
+scalafim.surface.view.SurfaceScalarInterpolationSuite:
+  + interpolation precedes saturation and nonlinear mapping 0.0s
+  + nonfinite contributors invalidate interiors but not exact opposite edges 0.001s
+  + extreme finite samples retain constants and cancellation without overflow 0.0s
+  + permutations and affine unit changes preserve interpolation 0.0s
+  + raw sample ownership, identity, memory, and camera updates are explicit 0.002s
+  + lighting and additional layers compile with stable fragment semantics 0.001s
+  + scene revision 5 preserves scalar policy and infers the backend requirement 0.002s
+scalafim.surface.view.SurfaceScalarMappingSuite:
+  + vertex and face scalar layers expose the effective descriptor and tabulated colors 0.002s
+  + checked window overrides reject centers or tails outside the new domain 0.001s
+  + mapping identity changes even when sampled vertex colors happen to remain equal 0.001s
+  + camera and opacity leave the effective unlit mapping unchanged 0.001s
+  + opaque colorizers get no invented metadata or unsupported adjustment capabilities 0.001s
+  + current scene revision rejects changed mapping metadata; revision 3 still decodes 0.003s
+scalafim.surface.view.SurfaceFaceLayerSuite:
+  + face colors lower to separate render corners with original identity 0.001s
+  + face selection reads the chosen face without inventing a vertex-to-face conversion 0.002s
+  + time and visibility do not change corner topology 0.0s
+  + mixed vertex and face layers preserve source colors and morph correspondence 0.001s
+  + face scalar windows and thresholds act on face observations 0.0s
+  + network attachment preserves the cortical source-id map 0.022s
+  + current revision roundtrips association and face selection; revision 1 remains vertex-only 0.004s
+scalafim.surface.view.SurfaceFigurePublicationSuite:
+  + preparation preserves independently posed composition views and binds its legend to the same state 0.034s
+  + callbacks receive exact scaled raster dimensions and physical layout remains fixed 0.015s
+  + hidden or incompatible mapping requests are refused before rasterization 0.003s
+  + composition-aware legend binding follows composition instances instead of legacy layout 0.002s
+scalafim.surface.view.SurfaceDynamicsSuite:
+  + time axes are strictly increasing and resolve nearest and linear samples 0.001s
+  + SurfaceMatrix temporal fields read columns lazily 0.0s
+  + lazy sources validate frame shape and bounded LRU caches evict deterministically 0.002s
+  + playback reducer clamps, loops, reverses, and produces bounded prefetch requests 0.002s
+  + prefetched temporal materialization distinguishes source reads from layer uploads 0.001s
+  + morphing preserves exact endpoints and rejects topology or transform mismatch 0.001s
+  + linked surface and image selections roundtrip through world coordinates without flips 0.008s
+  + typed annotations and bounded selection histories retain reproducible sequence ids 0.004s
+scalafim.surface.view.SurfaceProjectionNetworkSuite:
+  + CPU ribbon projection is the typed oracle and records exact work 0.016s
+  + projection quality and fill policy preserve rejected samples explicitly 0.004s
+  + receipts count non-finite samples as rejected, not accepted 0.001s
+  + materialized projection is an ordinary layer on topology-compatible display geometry 0.001s
+  + network filters preserve node identity, negative weights, regions, and stable top-N order 0.002s
+  + network tubes attach as ordinary mesh and color resources for every backend 0.001s
+  + fragment layers retain original samples and exclude attached network faces 0.027s
+  + large signed network compilation reports bounded primitive work and memory 0.04s
+scalafim.surface.view.SurfaceNearestSuite:
+  + six subtriangles per face cover equal areas and stay within their sample region 0.008s
+  + sample ties use the smallest original id, independent of winding 0.001s
+  + time, visibility, and opacity updates preserve partition topology 0.001s
+  + scene revision 3 persists nearest sampling, rejects incompatible restoration and capability 0.003s
+  + mixed color interpolation and nearest samples retain original samples for fragment evaluation 0.001s
+  + morphs retain sample ownership, original picks, and layer keys 0.001s
+  + attached network geometry retains cortical partition provenance and accounts for its buffers 0.001s
+scalafim.surface.view.SurfaceCameraPoseSuite:
+  + the viewpoint camera's pose is typed in the display frame and compiles to the same view 0.001s
+  + a volume point linked to the surface focuses the camera on its vertex 0.002s
+  + typed poses need the single-surface layout of their display surface 0.002s
+  + display frames are checked against what the viewer shows 0.002s
+  + a pose needs distinct eye and target points 0.001s
+scalafim.surface.view.SurfaceBivariateLayerSuite:
+  + paired full vertex fields retain frame selection and expose their mapping 0.0s
+  + reference HSV confidence is opaque while alpha confidence remains explicit 0.001s
+  + mismatched source identities and frame counts are refused 0.0s
+scalafim.surface.view.SurfaceFitCameraSuite:
+  + explicit fits contain canonical corners tightly across anatomical views, orbits and projection types 0.03s
+  + fit aspect follows projected anatomy and persists through pan, reset and orbit 0.001s
+  + fitting is invariant to common world translation and bilateral source separation 0.0s
+  + camera aspect and unknown fit surfaces are rejected at public boundaries 0.001s
+  + explicit fit contains expanded translated morphs without automatic camera movement 0.004s
+scalafim.surface.view.CameraFramingMigrationSuite:
+  + baseline V1 documents decode, restore, and reproduce independently recorded single and bilateral matrices 0.003s
+  + legacy framing survives orbit and reset, and framing participates in the camera receipt 0.002s
+  + V1 saved near/far remains historically inactive until explicit framing migration 0.001s
+  + revision policy decodes V1 as legacy, V2 through V6 as bounds-fit, and records V7 framing 0.002s
+scalafim.surface.view.SurfaceSceneLegendSuite:
+  + current revision roundtrips all legend alternatives, metadata, effective identities and interpolation 0.014s
+  + restoration rejects stale legend identity after saved threshold changes or category palette changes 0.005s
+  + fresh capture follows window changes and camera changes preserve saved legend identity 0.002s
+  + legend codec rejects duplicate categories and applies unknown-field policy within requests 0.004s
+  + revision 5 documents without legends remain readable and preserve their JSON shape 0.002s
+scalafim.surface.view.SurfaceCameraFitSuite:
+  + initial perspective camera contains anatomical bounds across field of view and layout 0.008s
+scalafim.surface.view.SurfaceLegendSuite:
+  + continuous calibration uses effective overrides and analytic full-window positions 0.003s
+  + split bar retains asymmetric widths and its own tail calibrations 0.001s
+  + shared legends compare effective mappings, including unsampled invalid and hidden colors 0.0s
+  + different base windows may share only after their effective mappings agree 0.001s
+  + window and threshold changes invalidate snapshots while camera and opacity preserve identity 0.001s
+  + custom ticks are checked again after the effective window changes 0.001s
+  + automatic binding rejects opaque, hidden, missing, and duplicate layer requests 0.002s
+  + categorical vertex and face legends use palette keys, exact colors, and explicit fallback 0.0s
+  + categorical legends reject partial names, opaque callbacks, interpolated categories, and differing fallback colors 0.001s
+  + manual legends are explicit and quantity, units, labels, and colors participate in identity 0.001s
+scalafim.surface.view.SurfaceCompositionDocumentSuite:
+  + four-view document roundtrip preserves camera links, instances, presentation, and compiled identity 0.024s
+  + restoration checks external digests and the caller's frame declaration 0.003s
+  + malformed camera links, coordinates, and schema revisions fail decoding 0.003s
+  + composition view framing cannot silently change during decode 0.002s
+  + version 1 composition documents default saved instance opacity to opaque 0.002s
+scalafim.surface.view.SurfaceBenchmarkReceiptSuite:
+  + pinned matrix spans both mesh scales, every layer count, and every path 0.003s
+  + timing summaries use deterministic nearest-rank percentiles 0.001s
+  + benchmark JSON is deterministic, versioned, escaped, and includes structural counters 0.008s
+scalafim.surface.view.SurfaceBilateralCameraSuite:
+  + bilateral camera distance follows centered extents, independently of inter-mesh translation 0.003s
+scalafim.surface.view.SurfaceMappingPartitionSuite:
+  + cuts cover each original face once and retain the analytic hidden-band area 0.003s
+  + two independent coordinate fields partition every mapping boundary 0.001s
+  + nearest subdivisions retain original provenance after scalar cuts 0.002s
+  + finite extreme domains do not overflow and invalid interiors remain whole 0.001s
+  + budgets reject before unbounded geometry growth 0.001s
+scalafim.surface.view.SurfaceClipRangeSuite:
+  + explicit depth limits map eye-space endpoints to clipping planes in both projections 0.002s
+  + direct and checked clip ranges reject invalid endpoints 0.0s
+scalafim.surface.view.SurfaceViewportFitSuite:
+  + wide bilateral canvas contains two adjacent physical squares at its center 0.0s
+  + narrow bilateral canvas preserves equal scale and centers the row vertically 0.001s
+  + single and bilateral fitting preserve order, square pixel scale and containment across aspect ratios 0.001s
+  + literal viewport coordinates remain available and invalid fitting inputs are refused 0.0s
+scalafim.surface.view.SurfaceCompositionSuite:
+  + typed composition reuses resources for one mesh in four views 0.003s
+  + legacy lowering preserves each slot's camera, offsets, fit, and fragment metadata 0.001s
+  + composition plan rejects missing resources, invalid transforms, and empty input 0.001s
+  + composition rejects a stale display witness 0.001s
+  + malformed packet buffers are rejected at the composition boundary 0.001s
+  + composition compiler rejects out-of-domain scientific selection 0.0s
+  + composition refuses singular, nonrigid, and malformed camera packets 0.001s
+  + immutable resource keys reject conflicting reuse before native interpretation 0.002s
+  + partition source indices are bounded before evaluators can index them 0.001s
+  + compiled geometry revision changes retain topology keys and pass native reuse checks 0.001s
+  + face-sample provenance and infinite-far perspective projections are refused 0.001s
+scalafim.surface.view.SurfaceDecorationGeometrySuite:
+  + world marker radius, stable origin, and scientific mesh buffers remain separate 0.005s
+  + contour segments retain typed source edges and halos are disjoint meshes 0.002s
+  + pixel marker axes follow rectangular Fill and square Contain viewports 0.002s
+  + perspective pixel radius changes with depth while world radius does not 0.001s
+  + pixel axes rotate with camera roll 0.0s
+  + pixel contour is full projected width and halo bands are outside its core 0.003s
+  + degenerate contour remains finite and anisotropic pixel spheres refuse lowering 0.001s
+  + copied size and face anchors retain their construction invariants 0.002s
+  + packets compiled before placement changes cannot be rebound to the new plan 0.001s
+scalafim.surface.view.SurfaceCurvatureDisplaySuite:
+  + reference curvature gray levels and polarity are explicit 0.001s
+  + contrast saturation follows the independent formula across the domain 0.022s
+  + invalid controls fail at construction 0.001s
+scalafim.surface.view.SurfaceBenchmarkFixtureSuite:
+  + pinned fixtures have exact vertex and layer counts 0.065s
+  + admission-path fixtures encode only their expected dirty resource 0.011s
+scalafim.surface.view.SurfaceNetworkDecorationsSuite:
+  + cross-surface edges use mapped translated render vertices and keep scientific buffers unchanged 0.016s
+  + morph positions are refreshed while stable decoration ids survive 0.001s
+  + signed edge colors, absolute-weight radius, and node glyphs are explicit 0.002s
+  + duplicate ordered endpoints are refused until the network has stable edge ids 0.001s
+  + line style lowers to a four-vertex camera-facing ribbon 0.001s
+  + missing or ambiguous instance choices are refused rather than inferred 0.001s
+  + validation refuses a cross-surface target vertex outside the mapped scientific domain 0.003s
+scalafim.surface.view.SurfaceLegendPublicationSuite:
+  + all presets reserve disjoint measured surface and legend regions within the page 0.019s
+  + render callback receives the prepared scene and exact dimensions; pixels remain in the returned image 0.009s
+  + window changes update publication identities and camera changes preserve legend calibration 0.003s
+  + excessive legend stacks and invalid shared requests are rejected before rendering 0.01s
+  + empty legends release the entire column; legacy swatches become an explicit manual card 0.002s
+scalafim.surface.view.SurfaceBackendConformanceSuite:
+  + semantic matrix covers every conformance family 0.004s
+  + cold-load observations expose stable structural counters 0.001s
+  + camera-only and data-only admission paths reject geometry churn 0.001s
+  + invalid resource and revision receipts fail admission explicitly 0.001s
+scalafim.surface.view.SurfaceFlatMapSuite:
+  + contain preserves aspect, flips Y, and unprojects consistently 0.0s
+  + picking is deterministic and polygons include their closed boundary 0.002s
+  + topology and ROI identities stay in the scientific vertex domain 0.001s
+scalafim.surface.view.SurfaceFragmentRegionSuite:
+  + cell evaluation matches the reference inside and uses the correct side at a hidden seam 0.003s
+  + invalid cell interiors stay invalid at finite corners instead of bleeding a rescued value 0.001s
+  + texture padding extrapolates the affine field instead of flattening it at a triangle edge 0.001s
+  + a saturated region remains constant in its texture padding 0.001s
+[info] Passed: Total 230, Failed 0, Errors 0, Passed 230
+[[32msuccess[0m] elapsed: 22 s
+[0J[sbt-warm] surfaceViewJVM/test: exit 0 in 22.6s
+scalafim.surface.view.raster.SurfaceThresholdDerivativeSuite:
+  + perspective visibility derivatives pair rows from the bottom at even and odd heights 0.088s
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.081s
+  + reference backend publishes stable capabilities and explicit caveats 0.001s
+  + unlit asymmetric landmark image and picks are deterministic 0.02s
+  + advertised lighting produces ambient and directional Lambert pixels 0.011s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.008s
+  + world translation preserves framing, pixels, and picks 0.005s
+  + depth buffering keeps the nearer face independent of draw order 0.003s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.003s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.006s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.005s
+  + overlays composite in model order with exact packed source-over semantics 0.002s
+  + bilateral slots keep left and right surface picks distinct 0.003s
+  + raster receipts expose phase timings and exact work counters 0.002s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.008s
+scalafim.surface.view.raster.SurfaceFaceRasterSuite:
+  + adjacent faces retain constant color and original picks across their shared edge 0.034s
+  + a face overlay blends with the surface base without leaking into its neighbor 0.002s
+scalafim.surface.view.raster.SurfaceTextureSamplerSuite:
+  + POT mips and fractional LOD have independently specified color averages 0.001s
+  + mip reduction preserves premultiplied color through transparent checker texels 0.001s
+  + odd dimensions use explicit area averaging without losing the final row 0.0s
+scalafim.surface.view.raster.SurfaceCompositionRasterSuite:
+  + two crossing surfaces share depth and identify the original instance independent of submission order 0.011s
+  + translucent surfaces resolve far to near independent of submission order and retain transparent backgrounds 0.032s
+  + transparent crossing triangles retain distinct-depth ordering in either submission order 0.022s
+  + checked composition refuses fragment collection above its explicit capacity 0.001s
+  + positive instance opacity remains a scientific contribution before final byte packing 0.007s
+  + world clipping uses translated surface coordinates 0.001s
+  + four views reuse one mesh and preserve distinct view and instance picks 0.001s
+  + changing one camera leaves the other panel's pixels unchanged 0.003s
+  + legacy lowering preserves contained viewport pixels and scientific picks on a wide canvas 0.003s
+scalafim.surface.view.raster.SurfaceScalarRasterSuite:
+  + pixels match the analytic coordinate field under clipping and perspective 0.1s
+  + nonlinear mapping differs from legacy vertex color interpolation 0.007s
+  + invalid samples do not renormalize interiors over the remaining vertices 0.012s
+  + split scales and opacity are evaluated at fragments before composition 0.01s
+scalafim.surface.view.raster.SurfaceNearestRasterSuite:
+  + nearest regions match original triangle barycentrics under orthographic and perspective views 0.073s
+  + face and nearest layers blend as constant samples within each region 0.011s
+  + the exact centroid tie uses the smallest scientific id even with permuted face order 0.004s
+scalafim.surface.view.raster.SurfaceFragmentCompositionSuite:
+  + all blend modes compose independently mapped layers at the fragment 0.015s
+  + thresholded scalar overlay reveals the independently interpolated curvature underlay 0.005s
+  + nearest regions do not flatten a coexisting color-interpolated layer 0.015s
+  + lighting uses the normalized interpolated normal after composition 0.001s
+  + face samples compose with scalar fields without face-to-vertex conversion 0.003s
+  + network pixels keep their own color and identity over a scalar and nearest surface 0.015s
+scalafim.surface.view.raster.SurfaceDecorationRasterSuite:
+  + pixel disk draws at its declared size and returns decoration identity without changing scientific buffers 0.064s
+  + default opaque legacy surface occludes a depth-tested marker but explicit overlay remains visible 0.057s
+  + collected-policy coplanar marker is visible and owns the display pick 0.035s
+  + transparent label texels preserve the surface and labels pass through picking 0.028s
+  + stale camera/size geometry and invalid buffers fail before rendering 0.002s
+  + shared annotation ray picking agrees with raster visibility and coplanar tie ownership 0.061s
+scalafim.surface.view.raster.SurfaceThresholdEdgeValidationSuite:
+  + raster entry rejects direct threshold-edge packets before rendering 0.002s
+[info] Passed: Total 49, Failed 0, Errors 0, Passed 49
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewRasterJVM/test: exit 0 in 6.2s
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-graphics/21.0.5/javafx-graphics-21.0.5-mac-aarch64.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+scalafim.surface.view.javafx.JavaFxAdaptiveAtlasSuite:
+  + adaptive attribute counts refuse overflow before allocation 0.023s
+  + combined morph, colour and lighting update agrees with cold final construction 0.466s
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.196s
+  + cyclic anchors avoid needless subdivision without duplicating source vertices 0.016s
+  + saturated RGB uses midpoint fallback and morphs shared source plus synthetic vertices 0.012s
+  + anchor-only colour changes reuse geometry; split changes refuse before mutation 0.016s
+  + resource admission charges actual adaptive faces, including fallback 0.002s
+  + mixed one/four-child layouts preserve winding and source identities across chunk boundaries 0.008s
+scalafim.surface.view.javafx.JavaFxAffineAtlasSuite:
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.11s
+  + independent sampler retains the known legacy diagonal failure as a discriminating control 0.002s
+  + subdivision respects atlas chunks, original face identity, winding and actual resource counts 0.005s
+  + colour and geometry updates retain topology and recompute midpoint data 0.002s
+  + encoding and expanded resource budget are admitted before native allocation 0.001s
+  + opaque gate examines final channels and constant updates keep the same midpoint mesh 0.002s
+scalafim.surface.view.javafx.JavaFxSurfaceScalarSuite:
+  + production JavaFX admission and atlas construction reject scalar fragments before allocation 0.04s
+scalafim.surface.view.javafx.JavaFxSurfaceCompositionSuite:
+  + toolkit-free preflight rejects unsupported fragment and clipping policies before native mutation 0.032s
+  + resource preflight retains declared resource identities for repeated instances 0.01s
+  + shared atlas refuses per-view lighting disagreement 0.002s
+scalafim.surface.view.javafx.JavaFxSurfaceApproximationSuite:
+  + preparation preserves original-face coordinates and reports generated allocation 0.335s
+  + mixed nearest/scalar preparation uses original positions after subdivision 0.267s
+  + small budgets fail before native allocation and plain plans retain the legacy path 0.005s
+  + constant display normals remain perpendicular to vertical faces for native tangent frames 0.108s
+  + normal changes have distinct derived identities even when positions are unchanged 0.163s
+  + native indexing and texture arithmetic reject oversized configurations before allocation 0.001s
+  + derived render faces retain original identity at arbitrary native packet indices 0.073s
+  + lit nearest cells approximate legacy corner shading and retain original provenance 0.034s
+  + varying legacy colors obey byte budgets and constant unlit categories retain their mesh 0.003s
+scalafim.surface.view.javafx.JavaFxSurfaceProbeSuite:
+  + JavaFX consumes CPU-projected fields and network tubes as ordinary resources 0.174s
+  + JavaFX capability mapping is explicit about admission and clipping 0.01s
+  + runtime receipt parses the observed Prism pipeline rather than trusting the request 0.005s
+  + stock Metal admission fails closed on fallback, version drift, and module mutation 0.011s
+  + atlas configuration rejects unsafe sizes 0.002s
+  + production backend refuses affine encodings before JavaFX access 0.0s
+  + default atlas configuration preserves legacy native-Phong semantics 0.001s
+  + explicit world-vertex Lambert uses anatomical normals and remains self-illuminated when lit 0.002s
+  + world-vertex Lambert alone makes pure lighting and morph changes update atlases 0.006s
+  + publication preset configures an exact high-resolution snapshot 0.004s
+  + POINT_NORMAL_TEXCOORD mesh and direct per-face atlas use supported JavaFX APIs 0.004s
+  + lit and unlit material modes bind only the selected JavaFX material map 0.002s
+  + style and data updates touch atlases without rebuilding geometry 0.003s
+  + camera motion updates no mesh and no atlas 0.007s
+  + constant face colors eliminate texture derivatives; varying updates restore interpolation without rebuilding geometry 0.002s
+  + topology-preserving geometry changes mutate points and normals without rebuilding atlases 0.011s
+  + orthographic plans select a parallel camera without rebuilding resources 0.002s
+  + large face sets chunk at the configured safe texture capacity 0.002s
+  + face tuples retain point, normal, and face-local atlas indices 0.0s
+  + toolkit-free programs classify camera, layer, material, and geometry dirt exactly 0.012s
+  + production interpreter rejects non-Application-Thread access 0.002s
+  + world clipping is rejected explicitly before JavaFX interpretation 0.001s
+  + viewport fitting changes invalidate layout without uploading geometry or changing the camera 0.001s
+  + native layout consumes compiled x/y projection independently on rectangular legacy viewports 0.001s
+[info] Passed: Total 51, Failed 0, Errors 0, Passed 51
+[[32msuccess[0m] elapsed: 8 s
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 0 in 8.6s
+[[0minfo[0m] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/java2d/jvm/target/scala-3.3.8/classes ...
+[[0minfo[0m] done compiling
+[[0minfo[0m] Passed: Total 12, Failed 0, Errors 0, Passed 12
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewExamplesJVM/test: exit 0 in 7.4s
+scalafim.surface.view.connectivity.ConnectivitySurfaceNetworkSuite:
+  + EdgeVector adapter preserves ordered NodeId identity and signed weights 0.022s
+  + missing connectivity placements fail before display planning 0.0s
+[info] Passed: Total 2, Failed 0, Errors 0, Passed 2
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] surfaceViewConnectivityJVM/test: exit 0 in 5.4s
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/svg/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+scalafim.fmri.design.FormulaPrinterSuite:
+  + canonical formula round trip 0 0.026s
+  + canonical formula round trip 1 0.003s
+  + canonical formula round trip 2 0.002s
+  + canonical formula round trip 3 0.003s
+  + canonical formula round trip 4 0.009s
+  + printer preserves explicit defaults, signed values and string escapes 0.002s
+  + quoted identifiers preserve punctuation and reserved names 0.0s
+  + source spans address original arguments including nested calls 0.001s
+  + semantic argument errors point to the offending argument 0.002s
+  + nonrepresentable typed formula fails explicitly 0.0s
+  + source spans cover comparison, logical and unary operands 0.001s
+  + numbers print byte-identically on JVM and JS 0.003s
+  + non-finite literals are reported, not thrown, by the safe printers 0.001s
+  + adversarial expressions round trip through print and parse 0.203s
+  + negation follows R precedence: below comparison, above & and | 0.0s
+  + positional and conflict errors point at the offending argument 0.002s
+scalafim.fmri.design.TrialwiseFormulaSuite:
+  + trialwise options parse and print losslessly 0.001s
+  + trialwise uses selected timing and preserves run-qualified phase provenance 0.142s
+  + trialwise identity is local to each run and rejects duplicates within a run 0.004s
+  + trialwise id uniqueness is checked on the rows the subset retains 0.006s
+  + numeric trialwise ids have byte-identical text on every platform 0.003s
+  + binding ignores modulator option names while still binding its source 0.004s
+  + expression printer uses the formula expression grammar 0.001s
+scalafim.fmri.design.DesignGraphicsSuite:
+  + event plot exports build renderer-neutral graphics plots 0.247s
+  + event plot exports compile to panel scene with axes and legend guides 0.061s
+  + the DSL migration preserves the previous event scene exactly 0.02s
+  + event model helper composes design export errors with graphics errors 0.012s
+scalafim.fmri.design.DctDriftSuite:
+  + cutoff counts include the endpoint and exclude the constant 0.002s
+  + invalid periods and excessive finite-grid requests fail explicitly 0.007s
+  + four-scan drift matches independent radical entries and a separate intercept 0.008s
+  + mixed scan counts and TRs have variable run-local column spans and stable identities 0.004s
+  + empty drift bases preserve rows and explicit runwise, global or absent intercepts 0.002s
+  + censoring selects original scan positions and acquisition-time identity 0.008s
+  + supplied cosine confounds use the existing explicit alias policy 0.009s
+  + the documented typed plan builds and legacy names remain unchanged 0.003s
+scalafim.fmri.design.ConvolvedBasisOrthogonalizationSuite:
+  + per-event HRF assignments cannot claim a shared transformed response 0.009s
+  + receipts distinguish original scaling policies with equal divisors 0.023s
+  + global basis transform records scaled serial projection and effective HRFs 0.003s
+  + a collinear basis column is a typed error, not a silently zeroed column 0.002s
+  + a cell whose events all fall outside the scan window is kept with rank 0 and an identity transform 0.003s
+  + FIR and B-spline groups with more than two columns are serially orthogonalized with full rank 0.009s
+  + a broadcast per-event HRF is a shared kernel and can be orthogonalized 0.001s
+  + group-specific effective HRFs are per column; the term HRF stays the source kernel 0.002s
+  + tiny nonzero collinear columns are refused rather than recorded as an exact-zero group 0.001s
+  + tiny and huge non-collinear columns orthogonalize at full rank 0.003s
+  + huge collinear columns are refused rather than accepted through an overflowed norm 0.0s
+  + a genuinely zero basis group keeps rank 0 and the identity transform 0.001s
+  + a tiny earlier reference is not truncated away: the result is orthogonal at full rank 0.001s
+scalafim.fmri.design.PortableNamingSuite:
+  + numeric factor levels name columns identically on every platform 0.006s
+scalafim.fmri.design.FContrastsSuite:
+  + FContrasts.forConvolvedTerm: single factor uses contr.sum 0.008s
+  + FContrasts.forConvolvedTerm: 3x2 ordering matches event cell order 0.003s
+  + FContrasts.forConvolvedTerm: replicates weights across basis 0.001s
+  + FContrasts reports expected generation failures without throwing 0.003s
+  + EventModel.validateAllContrasts validates attached + F-contrasts 0.013s
+scalafim.fmri.design.TypedCoreSuite:
+  + EventSchedule validates typed event records 0.001s
+  + events expose typed ids without changing legacy tokens 0.001s
+  + BoundFormula binds typed column, basis, and contrast refs 0.002s
+  + DataTable typed accessors report missing and mistyped columns as DesignError 0.001s
+  + FormulaParser parseEither and EventDesignRequest build a model without exceptions 0.003s
+  + EventModelBuilder buildEither returns DesignError on bad formula inputs 0.0s
+  + EventModelBuilder buildEither exposes staged typed compiler errors 0.007s
+scalafim.fmri.design.ResidualizeSuite:
+  + Residualize: y=x^2 residualized on (1, x) matches known residuals 0.001s
+  + Residualize: rank-deficient design uses rank, not ncol 0.0s
+  + Residualize: empty design returns data unchanged 0.0s
+  + Residualize: column subset works 0.001s
+scalafim.fmri.design.EventOnsetSelectionSuite:
+  + explicit onset policy counts missing and run-boundary exclusions 0.004s
+  + run boundaries use each run's own TR: onset 0 is retained and the end is exclusive 0.001s
+  + RejectInvalid accepts all-valid input unchanged 0.0s
+  + dropped rows become design-audit exclusions only through the explicit helper 0.001s
+scalafim.fmri.design.BasisSuite:
+  + Scale reports zero variance while legacy fit remains compatible 0.005s
+  + Standardized reports all non-finite values as a typed diagnostic 0.001s
+  + ScaleWithin reports group-scoped repairs 0.002s
+  + RobustScale strict policy rejects repaired fits 0.001s
+scalafim.fmri.design.ContrastSetGeneratorsSuite:
+  + pairwiseContrasts generates all pairs in order 0.002s
+  + oneAgainstAllContrasts weights 1 vs mean(other) 0.001s
+  + slidingWindowContrasts generates disjoint adjacent windows 0.002s
+scalafim.fmri.design.PolySuite:
+  + Poly.fit matches stats::poly for x=0:4, degree=2 (R 4.5.1) 0.005s
+scalafim.fmri.design.ConditionBasisListSuite:
+  + condition_basis_list splits matrix by condition 0.004s
+  + condition_basis_list matrix output matches convolve 0.003s
+  + condition_basis_list handles multi-basis FIR HRF 0.006s
+scalafim.fmri.design.DesignColmapSuite:
+  + designColmap(event) includes HRF basis metadata and covariate modulation 0.011s
+  + EventModelBuilder supports hrf(Scale(rt)) and yields parametric metadata 0.006s
+  + EventModelBuilder supports trialwise() with optional mean column 0.003s
+  + designColmap(baseline) includes drift/intercept roles and run ids 0.005s
+scalafim.fmri.design.ModelJsonCodecSuite:
+  + formula JSON round trip retains all argument types 0.031s
+  + HRF JSON round trip preserves physical parameters and normalization 0.015s
+  + typed contrast JSON preserves selectors and basis weighting 0.011s
+  + difference and mask contrasts round trip 0.005s
+  + callbacks, unknown versions and unknown fields fail explicitly 0.002s
+  + typed derived declarations and run-combination policy round trip 0.005s
+  + encoded numbers are byte-identical across platforms 0.001s
+  + structural JSON errors report the real path 0.004s
+  + nested contrast errors name the nested path 0.001s
+  + ids are never trimmed: non-canonical or empty ids fail on both sides 0.002s
+  + pattern contrasts round trip by pattern source 0.003s
+scalafim.fmri.design.EventPhaseSuite:
+  + phase lowering retains parent rows and structural phase identities 0.005s
+  + multiphase lowering rejects silently misaligned source rows 0.001s
+  + phase schedules reject duplicate source rows 0.0s
+  + phase schedules reject duplicate parent trial identities 0.0s
+scalafim.fmri.design.RParityCorpusSuite:
+  + R parity corpus: event interaction design, metadata, and contrasts 0.007s
+  + R parity corpus: SPMG3 multi-basis HRF design 0.002s
+  + R parity corpus: two-condition SPMG3 uses scalafim basis-major value ordering 0.002s
+  + R parity corpus: fully crossed 2x2 SPMG3 structural design 0.007s
+  + R parity corpus: subset expression drops empty condition columns 0.004s
+  + R parity corpus: trialwise add_sum matrix 0.002s
+  + R parity corpus: hrf_fun weighted per-event HRF design 0.006s
+  + R parity corpus: constant runwise baseline matrix 0.001s
+  + R parity corpus: nuisance drop baseline matrix 0.002s
+scalafim.fmri.design.ContrastWeightsSuite:
+  + pair contrast respects where clause 0.001s
+  + unit contrast allows where subsetting 0.0s
+  + poly contrast respects where clause 0.002s
+  + pair contrast basis filtering keeps only selected bases 0.002s
+  + basis weights reject negative and non-finite values 0.001s
+scalafim.fmri.design.IdRoundTripProbeSuite:
+  + a validated ColumnId round-trips its input 0.001s
+  + the typed lookup path finds what the untyped one finds 0.0s
+  + ColumnId is injective, so distinct columns stay distinct 0.0s
+  + the round-trip law holds for every id type 0.001s
+  + ids do reject the genuinely invalid 0.0s
+  + ids reject what they would otherwise have to rewrite 0.001s
+scalafim.fmri.design.DesignDiagnosticsSuite:
+  + VIF, separate block R2, and joint coefficients match the independent orthonormal fixture 0.014s
+  + duplicate predictors make only the dependent target aliased 0.002s
+  + a finite near-collinear VIF is formed from the projection residual 0.0s
+  + wide selected designs use a minimum-norm, nonunique joint fit 0.002s
+  + blocks and row selections are validated against schema identities 0.002s
+  + a constant column that is not exactly representable is degenerate, not a finite VIF 0.005s
+scalafim.fmri.design.scenarios.MixedTrMultirunScenarioSuite:
+  + mixed-TR multi-run design preserves run-local sampling, baselines, and condition columns 0.013s
+scalafim.fmri.design.SpmInformedDesignColumnSuite:
+  + an impulse realizes the SPM kernel samples at scan times, including the 25-32 s tail 0.021s
+  + a short boxcar realizes the SPM kernel convolved with the drive, including the tail 0.004s
+scalafim.fmri.design.ContrastRegistrySuite:
+  + EventModelBuilder attaches contrasts= and validateAttachedContrasts checks them 0.003s
+scalafim.fmri.design.ResponseBasisReviewSuite:
+  + canonical and derivative curves retain native coordinates and unnormalized values 0.008s
+  + FIR intervals and exact window weights do not depend on the display grid 0.011s
+  + derivative window functionals remain exact when display sampling changes 0.003s
+  + preview boundaries return typed errors for invalid budgets and custom kernels 0.004s
+  + renderer-neutral plots preserve selected identities and full readout receipts 0.132s
+  + current canonical amplitude, time derivative and dispersion retain independent reference values 0.001s
+80x600 raster build median_ms=2.382375 max_ms=2.466958
+scalafim.fmri.design.DesignMatrixRasterSuite:
+  + 80 by 600 matrix is one unpaged nearest-neighbour image with time down 0.048s
+  + raster construction has a reproducible bounded benchmark specimen 0.076s
+  + CSV sidecar contains identified raw values, never display-scaled values 0.002s
+  + CSV sidecar bytes are identical on every platform, including fractions, exponents and censored scans 0.001s
+  + CSV header quotes column ids and rejects ids that collide with sidecar columns 0.001s
+  + negative task values, muted non-task columns and censored scans render explicitly 0.001s
+scalafim.fmri.design.TermCellsSuite:
+  + TermCells shortNames match R cells/shortnames ordering 0.0s
+  + TermCells dropEmpty drops unobserved combinations 0.0s
+scalafim.fmri.design.ModulatorPoliciesSuite:
+  + checked policy refinements hide identifier proof plumbing 0.003s
+  + modulators lower to sibling columns while ordinary arguments remain an interaction 0.012s
+  + whole-term ordered residualization agrees with the checked base-R receipt 0.009s
+  + within-cell residualization is permutation invariant after event identity alignment 0.005s
+  + raw degeneration has typed outcomes, identities, and a total rejection path 0.008s
+  + an empty selected modulator scope has an explicit typed receipt 0.001s
+scalafim.fmri.design.WeightedContrastDiagnosticsSuite:
+  + known unequal run sigmas give inverse-variance weighting for t and F 0.023s
+  + empty task run is reported and never supplies invented information 0.004s
+  + a non-default rank policy is honoured by weighted combinations 0.002s
+scalafim.fmri.design.ValidateSuite:
+  + Validate.validateContrasts: rank-deficient design marks non-estimable contrast 0.001s
+  + Validate.validateContrasts: detects intercept weights and sum-to-zero 0.0s
+  + Validate.validateContrasts: aligns weights by row names 0.001s
+  + Validate.validateContrasts: F contrasts report fullRank 0.0s
+  + Validate.checkCollinearity: flags highly correlated columns 0.002s
+scalafim.fmri.design.FormulaParserSuite:
+  + FormulaParser parses hrf + covariate calls 0.001s
+  + FormulaParser parses parametric basis calls in hrf vars 0.0s
+  + FormulaParser retains an ordered additive modulator family 0.0s
+  + FormulaParser parses trialwise() 0.0s
+  + FormulaParser parses subset= and hrf_fun= in hrf() 0.001s
+  + FormulaParser parses contrasts= in hrf() 0.0s
+  + FormulaParser parses R hrf parity arguments 0.0s
+  + FormulaParser parses phase provenance arguments 0.0s
+  + FormulaParser rejects incomplete phase provenance 0.0s
+  + FormulaParser parses trialwise durations and normalize 0.001s
+  + FormulaParser parses named HRF column scaling and rejects conflicting compatibility syntax 0.0s
+  + FormulaParser validates named arguments through shared term schemas 0.001s
+scalafim.fmri.design.ObservedModulatorSuite:
+  + by-cell centering uses observed values and one pooled within-cell scale (n - k) 0.005s
+  + z-scoring without centering records the global centering it applies 0.0s
+  + a single observed value or constant values make a degenerate partition 0.001s
+  + near-constant cells of non-representable values are degenerate under a relative tolerance 0.001s
+  + drop and zero retain their distinct source-row contracts 0.0s
+  + zero policy needs centering unless z-score supplies global centering 0.001s
+  + reject, unsupported imputation, and degenerate scales are explicit 0.001s
+  + finite inputs that overflow aggregate receipts fail explicitly 0.0s
+  + frozen grid receipts retain their source provenance and expected run summaries 0.001s
+  + all frozen stop-modulator grid states have independently recomputed partition summaries 0.013s
+scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite:
+  + ordered within-cell modulator policy returns one clean scenario result 0.005s
+scalafim.fmri.design.DesignReviewSuite:
+  + review keeps original scan identity, acquisition time and excluded samples 0.002s
+  + source review includes structurally omitted and zero columns 0.0s
+  + review rejects incompatible sampling and repeated row identities 0.0s
+  + renderer-neutral recipes enforce size and missing sample contracts 0.023s
+  + event timeline uses the current audit provenance 0.003s
+  + unequal runs and repeated labels retain distinct columns in a rank-deficient view 0.003s
+scalafim.fmri.design.EventModelBuilderParitySuite:
+  + hrf supports per-term onsets, durations, and prefix 0.003s
+  + phase and parent arguments retain source provenance in one formula 0.001s
+  + phase provenance retains structured parent-column errors 0.001s
+  + phase policy receipts retain the exact source trial identity 0.003s
+  + multiphase formula lowering is permutation stable and permits overlapping responses 0.007s
+  + phase construction rejects duplicate parents and strict invalid timing 0.002s
+  + hrf normalize scales convolved columns to unit maximum absolute value 0.001s
+  + fourier HRF basis is available through formula basis 0.004s
+  + structural HRF-by-cell assignments lower heterogeneous basis widths 0.015s
+  + heterogeneous HRF terms reject homogeneous legacy contrast expansion 0.007s
+  + HRF-by-cell assignments reject missing and extra structural cells 0.002s
+  + HRF-by-cell assignments cover declared empty cells without offsets 0.004s
+  + builder records degenerate continuous modulator diagnostics 0.001s
+  + builder records all-zero and non-finite continuous modulator diagnostics 0.003s
+  + ordered orthogonalization is explicit, ordered, and receipt-backed 0.004s
+  + ordered orthogonalization respects run scopes 0.003s
+  + degenerate modulator policies retain evidence or reject with a typed error 0.003s
+  + centering records an explicit empty-scope outcome 0.002s
+  + builder records the default zero-contribution missing-value policy 0.004s
+  + explicit centering policies retain scope and receipt evidence 0.018s
+  + centering excludes non-finite values from the reference before missing repair 0.003s
+  + centering is scoped after term subsetting and invariant to event-row permutation 0.004s
+  + builder rejects non-finite modulators when policy is Reject 0.001s
+  + builder applies an explicit imputation constant before convolution 0.001s
+  + builder reports a non-finite imputation constant as a typed error 0.001s
+  + builder drops missing events only from the selected term 0.003s
+  + declared factor levels give stable order and retain an explicit zero cell 0.005s
+  + declared factor levels make row permutation semantically invariant 0.002s
+  + declared factor levels reject unknown observations before convolution 0.001s
+  + Reject makes declared empty cells a typed compilation error 0.001s
+  + explicit empty-cell policies apply within each run partition 0.007s
+  + factor registries reject duplicate declared levels 0.0s
+  + Scala enums derive stable declared level order through the validated constructor 0.001s
+  + run factor schema bindings reject incompatible level declarations 0.004s
+  + bound run schemas are retained in multi-run factor audit evidence 0.004s
+  + declared registries can explicitly treat integer columns as factors 0.002s
+  + declared registries use stable text for double-coded factor values 0.001s
+  + builder records parametric basis repairs and strict mode promotes them to errors 0.002s
+  + builder reports all non-finite parametric basis inputs 0.002s
+  + builder records onset-bound diagnostics and strict mode promotes them to errors 0.003s
+  + onset-bound diagnostics respect per-block TR, length, and event duration 0.003s
+  + trialwise supports duration overrides 0.001s
+  + attached and F contrast keys use canonical interaction term key 0.005s
+scalafim.fmri.design.ContrastSpecSuite:
+  + ContrastSpec.ContrastSet evaluates against a ConvolvedTerm 0.003s
+  + ContrastSpec.Mask builds weights from logical masks 0.0s
+  + typed pair selector compiles to the same weights as predicate pair 0.002s
+  + typed selector reports missing factors without throwing 0.001s
+  + ContrastSet.compileEither rejects duplicate names 0.001s
+  + ContrastSpec difference subtracts two contrast specs 0.003s
+  + ContrastSpec set generators build specs without a term 0.001s
+  + translateLegacyPattern matches R helper examples 0.001s
+scalafim.fmri.design.HrfKernelBasisSuite:
+  + compiles a certified basis within the rank budget 1.602s
+  + refuses when the budget cannot meet the tolerance 1.672s
+  + the kernel exposes the basis as a compact multi-column Hrf and ResponseBasis 0.005s
+  + kernel basis provenance has a platform-independent IEEE and string-framed golden 0.0s
+  + matrix identity is dimensions plus a portable FNV-1a digest of the IEEE bits 0.001s
+  + coefficient jets match finite differences and reconstruct within the certificate 0.002s
+  + compilation is deterministic 1.684s
+scalafim.fmri.design.formula.DerivedEventsSuite:
+  + declaration identifiers use the portable formula lexer 0.001s
+  + typed declarations round trip and compose with missing text and logical values 0.015s
+  + declarations reject overwrites, forward references, wrong types and invalid levels 0.002s
+  + type-7 quantiles use observed pooled values and explicit left-closed cuts 0.002s
+  + binned derived factors parse and keep missing values outside every bin 0.002s
+  + derived columns validate printability at construction, so text is total 0.001s
+  + declared types are checked statically, even for entirely missing sources 0.0s
+  + division by zero in a derived column is an error, not a missing value 0.001s
+  + bin breaks print identically on every platform 0.0s
+  + guarded derived declarations evaluate only the selected branch 0.003s
+scalafim.fmri.design.FormulaResponsePolicySuite:
+  + event_normalization = as-convolved is exactly the omitted option, at any precision 0.013s
+  + formula unit-peak honors BuildOptions precision and records per-column event scales in the audit 0.03s
+  + formula orthogonalize = TRUE is SPM-like: per run and cell, against an intercept and earlier modulators 0.007s
+  + formula orthogonalize = TRUE centres and residualizes observed rows only; zero-filled rows stay at the reference 0.004s
+  + an observed modulator with one event in a run yields an explicit degenerate receipt 0.007s
+  + the missing-value receipt reports per-modulator observed policies, not only the default 0.002s
+  + shared slopes produce the numerical main-effect and pooled slope columns 0.005s
+scalafim.fmri.design.ConvolvedContrastWeightsSuite:
+  + column contrast matches regex patterns 0.002s
+  + oneway produces Helmert weights and aligns to convolved columns 0.002s
+  + categorical contrasts align by column metadata before falling back to names 0.001s
+  + interaction 2x2 matches expected +/- pattern 0.001s
+scalafim.fmri.design.HrfGeneratorsSuite:
+  + duration HRF generator preserves zero-duration events and blocks positive durations 0.005s
+  + weighted HRF generator works with list columns 0.001s
+  + weighted HRF generator sees onset/duration/blockid and original list columns 0.002s
+  + hrf_fun generator respects subset= and is not called for empty terms 0.002s
+  + hrf_fun validation catches length mismatch and inconsistent nbasis 0.001s
+scalafim.fmri.design.FormulaGrammarSuite:
+  + all-events constant creates one stream and round-trips 0.003s
+  + kernel normalization preserves relative event counts and differs from column normalization 0.006s
+  + span and normalization validate instead of silently changing custom kernels 0.001s
+  + explicit main plus modulators retains distinct column provenance 0.003s
+  + formula serial orthogonalization is ordered within each run 0.002s
+  + centered product modulators retain component identity and center after row selection 0.004s
+  + shared slopes retain categorical main effects and one slope stream 0.002s
+  + derivative-basis orthogonalization is post-convolution and auditable 0.004s
+  + portable run scaling aliases lower through observed-modulator policy 0.004s
+  + subset negation and inequality do not retain missing numeric rows 0.002s
+  + arithmetic precedence, signed literals, and Unicode operators round-trip 0.001s
+  + per-modulator observed policies apply after subset and to the entire paired term 0.005s
+  + temporal conventions and duration normalization are explicit and portable 0.013s
+scalafim.fmri.design.SubsetBlockHrfFunSuite:
+  + EventModelBuilder parses block=~run and canonicalizes to 0-based ids 0.001s
+  + EventModelBuilder rejects decreasing block ids 0.001s
+  + EventModelBuilder applies subset= mask to realized EventTerm 0.0s
+  + EventModelBuilder supports per-onset HRF via hrf_fun generator 0.002s
+  + EventModelBuilder supports per-onset HRF via HRF list column 0.002s
+scalafim.fmri.design.NamesSuite:
+  + zeroPad matches R tests 0.0s
+  + sanitize matches R tests 0.0s
+  + basisSuffix matches R tests 0.0s
+  + featureSuffix basic 0.0s
+  + makeUniqueTags matches R tests 0.0s
+  + levelToken matches R tests 0.0s
+  + addBasis matches R tests ordering 0.0s
+  + makeColumnNames composes names 0.0s
+scalafim.fmri.design.ContrastDiagnosticsSuite:
+  + frozen gamble design loses eight residual degrees of freedom for eight independent spikes 0.038s
+  + duplicate columns retain estimable sums and reject their difference 0.002s
+  + F worst direction is invariant to rescaling, duplicate rows, reordering, and mixing 0.001s
+  + concatenated task information ignores a wholly nuisance-confounded run 0.001s
+  + preflight rejects a design with no residual degrees of freedom 0.002s
+  + preflight uses numerical rank while the column budget remains an explicit guard 0.001s
+  + high-pass comparison rejects a changed retained column 0.002s
+  + exact m2b raw matrices reproduce the independently recomputed row-orthonormalized F efficiencies 0.101s
+  + exact m2b DMS matrices reproduce fixed-effects probe-minus-sample efficiency 0.018s
+  + exact m3 and m4 raw duplicate matrices retain the documented rank-deficient receipts 0.031s
+  + tiny supported columns and tiny residual task information remain estimable under the rank policy 0.001s
+  + rank preflight validates selected scan identities before matrix access 0.001s
+  + rank policies are values, and separately constructed equal policies combine 0.001s
+  + a non-default rank policy changes rank and estimability decisions 0.001s
+  + a zero column is reported as dropped before aliasing, also across runs 0.001s
+  + fixed effects recomputes each run, so equivalent contrast spellings combine identically 0.0s
+  + an F contrast partly outside the row space is aliased along its worst direction 0.001s
+  + nearly dependent F rows keep their span by default and collapse under a coarse policy 0.001s
+  + concatenated task F matches the independent residualized-information oracle 0.002s
+  + high-pass F variance ratio is pinned to the without-cosines worst direction 0.003s
+  + heterogeneous run sigmas match the independent fixed-effects oracle for t and F 0.007s
+scalafim.fmri.design.BaselineModelSuite:
+  + baseline_model: 1 block, bs degree=5 0.002s
+  + baseline_model: 1 block, ns df=5 0.003s
+  + baseline_model: 1 block, bs degree=5 with nuisance list 0.002s
+  + baseline_model: 2 blocks, bs degree=5 0.0s
+  + baseline_model: 2 blocks, global intercept 0.001s
+  + baseline_model: 2 blocks with nuisance list 0.002s
+  + baseline_model: basis='constant' 0.001s
+  + checkNuisance reports zero-variance, duplicates, and baseline aliasing 0.001s
+  + baseline_model default warning policy records report and keeps nuisance columns 0.001s
+  + baseline_model can error on nuisance rank problems 0.001s
+  + BaselineModel Either APIs expose structured baseline and nuisance errors 0.001s
+  + baseline_model can drop nuisance columns that do not increase rank 0.001s
+  + BaselinePlan builds through typed nuisance policy 0.001s
+  + cleanNuisance returns cleaned matrices and an audit report 0.0s
+  + naAction zero retains a leading missing confound that default drop removes 0.001s
+  + naAction median imputes the column median 0.001s
+  + naAction repair leaves infinite corruption subject to dropping 0.0s
+  + all-missing nuisance columns become zero-variance under naAction zero 0.001s
+  + naAction repairs missing values even when nuisance checks are disabled 0.001s
+scalafim.fmri.design.scenarios.MultiphaseProvenanceScenarioSuite:
+  + multiphase provenance scenario returns a clean public result 0.005s
+scalafim.fmri.design.DesignSchemaSuite:
+  + built event models retain structural cell and basis provenance 0.003s
+  + event provenance records the observed run and multi-run terms remain global 0.001s
+  + combining event and baseline schemas retains event provenance 0.001s
+  + fingerprints are deterministic and respond to semantic, row, and matrix changes 0.0s
+  + validated schemas compute scale-aware structural rank previews 0.001s
+  + schema validation returns typed errors for shape and identity violations 0.0s
+  + coefficient axes select structural columns without changing design identity 0.001s
+  + runwise coefficient axes lower global families to an inspectable run identity 0.001s
+  + legacy axes do not claim a runwise structural identity 0.0s
+  + runwise slices retain an explicit censored-row selection 0.001s
+  + runwise projections exclude zero-support nuisance and empty shared columns 0.002s
+  + built baseline models retain run-scoped structural origins 0.002s
+  + event-response transport divisors are per run, strict across runs, and refuse ambiguous receipts 0.002s
+scalafim.fmri.design.HeterogeneousHrfSuite:
+  + phase assignments are exhaustive and derive cardinality from assigned bases 0.008s
+  + phase assignment coverage reports missing and extra phases together 0.0s
+  + declared empty cells retain their assigned widths 0.004s
+  + cell assignment coverage reports missing and extra declared cells together 0.001s
+  + unscoped cell assignments cannot silently govern several HRF terms 0.001s
+  + canonical informed FIR spline Fourier and custom bases coexist deterministically 0.017s
+  + scan-space scaling is named, exact, and preserved in structural identity 0.005s
+  + unit-maximum scaling remains exact for small nonzero columns 0.0s
+scalafim.fmri.design.event.EventResponseConvolutionSuite:
+  + event unit-peak normalization is per duration and retains duration receipts 0.002s
+  + overlapping events add and events do not leak across runs 0.001s
+  + final column scaling remains separate from event normalization 0.001s
+  + as-convolved is exactly the plain convolution and records no per-event scales 0.004s
+  + unit-peak honors the caller's precision and equals the plain path divided by one shared scale 0.007s
+  + multi-basis unit-peak scales each event and each basis by its own duration peak 0.108s
+  + unbounded-support kernels are truncated at span plus duration exactly as plain convolution 0.001s
+  + onsets before the run start follow the plain path's onset window under unit-peak 0.001s
+  + column event scales are kept per run: durations differing only between runs stay uniform within each run 0.001s
+  + events that reach none of their run's scans do not make a column mixed 0.003s
+  + invalid precision and amplitudes are typed errors rather than exceptions 0.001s
+scalafim.fmri.design.DesignExportsSuite:
+  + designTable and designMap expose matrix rows with metadata 0.007s
+  + correlationMap exports full and half matrix cells 0.002s
+  + eventPlotData groups traces within block and exports block boundaries 0.002s
+  + semantic selectors filter exports without relying on rendered column names 0.005s
+  + semantic selectors can select baseline exports by run 0.002s
+  + baselinePlotData selects first varying term and suppresses structural zero traces 0.002s
+  + contrastPlotData exports attached contrast weights in design-column space 0.005s
+  + Either export APIs report structured user errors 0.004s
+scalafim.fmri.design.EventModelSuite:
+  + basic event model creation works 0.001s
+  + feature and basis suffixes combine in convolve 0.001s
+  + convolve does not evaluate an HRF for an explicit all-zero column 0.0s
+  + convolve prepares one shared HRF kernel across conditions and blocks 0.0s
+  + EventModel rejects term metadata that does not match matrix columns 0.001s
+  + ConvolvedTerm rejects explicit column roles that do not match matrix columns 0.0s
+scalafim.fmri.design.ErrorFidelityProbeSuite:
+  + a missing column reports the MissingColumn case that exists for it 0.0s
+  + column-shape mistakes name the column, what was expected, and what was found 0.0s
+  + an unknown basis call reports the call and what the formula grammar knows 0.001s
+  + the paths that were already structured stay structured 0.002s
+  + no realistic user mistake degrades to the stringly catch-all 0.003s
+scalafim.fmri.design.DesignSchemaOwnershipSuite:
+  + compiled schema owns its input and exported matrix storage 0.0s
+  + relabeling and combining schemas cannot reopen matrix ownership 0.001s
+  + runwise slices retain the matrix bound to their coefficient axis 0.0s
+scalafim.fmri.design.NaturalSplineSuite:
+  + NSpline.fit matches splines::ns for x=1:10, df=4 (R 4.5.1) 0.0s
+  + NSpline.predict reproduces training design matrix 0.001s
+scalafim.fmri.design.PortableNumberSuite:
+  + integral, fractional and exponent forms are identical on every platform 0.001s
+  + formatted text round-trips to the same double 0.001s
+  + non-finite values are rejected 0.0s
+scalafim.fmri.design.EventTrialSummarySuite:
+  + phase summaries retain term, categorical cell, run, duration and explicit parent offsets 0.004s
+  + phased terms refuse absent, duplicate, and missing parent timing 0.001s
+  + ordinary event terms remain useful without invented trial timing 0.001s
+  + unphased provenance is validated but does not demand parent timing 0.0s
+  + inconsistent phase provenance is rejected before aggregation 0.001s
+  + m7b's five synthetic studies retain their generated event ribbons 0.041s
+  + terms sharing a tag are summarized under the model's unique term keys 0.001s
+  + parent timing is keyed by run and measured on each run's own clock 0.002s
+  + a phase earlier than its parent onset is rejected, including global-clock parent timing 0.001s
+scalafim.fmri.design.CovariateSuite:
+  + CovariateSpec.construct validates sampling frame row count 0.0s
+  + EventModel.buildTerms can mix convolved and covariate terms 0.001s
+80x600 raster+SVG export median_ms=4.120292 max_ms=6.99175 bytes=257179
+scalafim.fmri.design.DesignMatrixRasterExportSuite:
+  + 80x600 SVG contains one bounded raster and reports actual warmed export time 0.214s
+scalafim.fmri.design.KernelBasisDesignSuite:
+  + the expanded condition design contracts to the direct family design at a shape 1.502s
+  + precision must match the basis grid 0.0s
+  + trial lowering aggregates to the condition design under one-hot membership 0.01s
+  + membership validation 0.001s
+  + interleaved complete records retain trial columns, membership and reversible event-row identity 0.015s
+  + trial lowering normalizes empty defaults and returns typed malformed-record failures 0.005s
+  + declared trial levels retain numeric input order beyond four-digit labels without a large design 0.013s
+scalafim.fmri.design.ExtensionRegistrySuite:
+  + BasisRegistry exposes built-in basis metadata 0.002s
+  + custom basis metadata is reflected in designColmap 0.002s
+  + formula term tags use basis registry prefixes 0.001s
+  + HrfBasisRegistry labels built-in and custom HRF bases 0.0s
+  + ExternalHrfSpecRegistry supports Scala-native extension introspection 0.002s
+12-term build median_ms incremental=2.235041 full=4.044584
+scalafim.fmri.design.IncrementalDesignSuite:
+  + one-term edit recompiles exactly one term and matches full compilation including identity 0.006s
+  + exposed legacy matrix buffers cannot corrupt a later cache hit 0.001s
+  + unchanged context avoids repeated convolution and retains bounded cache 0.004s
+  + incremental and full build performance compare equivalent twelve-term designs 0.098s
+  + trialwise, covariate and subset terms recompile incrementally exactly as a full build 0.01s
+  + a TermCall repeated within one formula matches full compilation 0.003s
+  + changing the onset column rebuilds every term and equals full recompilation 0.004s
+scalafim.fmri.design.formula.EventExpressionsSuite:
+  + arithmetic and functions propagate missing numeric values 0.003s
+  + Kleene logic and filters retain only explicit true 0.001s
+  + type and level errors identify their expression path 0.001s
+  + comparison and membership require compatible scalar types 0.001s
+  + non-finite arithmetic is a typed error naming the row, never a missing value 0.002s
+  + round is half-to-even, matching R 4.5.1 round(x) 0.0s
+  + in uses Kleene semantics: a match wins over a missing candidate 0.0s
+  + type checking is static: it never depends on which rows are missing 0.001s
+  + ifelse evaluates each branch only on the rows that select it 0.001s
+  + a missing ifelse condition evaluates neither branch 0.001s
+  + & and | ignore errors on rows the left operand decides 0.0s
+  + a missing left operand of & still needs the right one, so its errors surface 0.001s
+  + nested guards: errors are reported only for rows active at the failing node 0.001s
+  + an infinite input is an error only on rows that reach the output 0.0s
+scalafim.fmri.design.DesignIdentitySuite:
+  + single-run, two-run and FIR structural identities have shared literal goldens 0.002s
+  + numeric audit fields retain literal IEEE-754 encodings 0.0s
+  + legacy column identities are incompatible and a one-ULP change retains distinct content identity 0.001s
+  + semantic basis identity ignores display names while legacy references retain theirs 0.001s
+  + realistic SPMG structural identity is distinct from its numerical content 0.002s
+scalafim.fmri.design.scenarios.HeterogeneousHrfScenarioSuite:
+  + phase and cell HRFs agree with one independent continuous-time oracle 0.013s
+[info] Passed: Total 447, Failed 0, Errors 0, Passed 447
+[[32msuccess[0m] elapsed: 11 s
+[0J[sbt-warm] designJVM/test: exit 0 in 11.6s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.058s
+  + a world-aligned layer in another world is rejected 0.003s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.007s
+  + a pullback layer must map the reference frame to its own frame 0.011s
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.078s
+  + panel fitting preserves physical slice aspect on a non-square device 0.002s
+  + orthogonal layouts support checked row and column arrangements 0.001s
+  + heterogeneous layers sample in world space and retain draw order 0.002s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.001s
+  + crosshairs and orientation labels are explicit removable decorations 0.003s
+  + left-right convention changes labels and raster orientation together 0.002s
+  + viewer models reject empty and duplicate layer sets 0.002s
+scalafim.image.view.ViewerModelUpdateSuite:
+  + partial reorder preserves unmentioned layers and rejects unknown/duplicate ids 0.002s
+  + reorder changes compositing sequence while every unchanged raster stays cached 0.004s
+  + typed replacement changes pixels without stale color-bound sample reuse 0.003s
+  + session validation refuses unsupported presentation rather than silently dropping it 0.003s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.004s
+  + lazy frame sources preserve exact provider grid failures 0.002s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.022s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.009s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.026s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.003s
+  + linked view policies synchronize only declared state 0.002s
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.002s
+  + threshold bands hide only their strict interior and disable explicitly 0.001s
+  + ramps interpolate every RGBA channel 0.001s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.001s
+  + label and mask colorizers keep missing data transparent by default 0.001s
+  + layer identifiers and opacities reject invalid states 0.001s
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.0s
+  + panel picking is an exact root-npc to world-space roundtrip 0.003s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.0s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.004s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.004s
+  + timepoint actions drive temporal layers while static overlays persist 0.003s
+  + models reject temporal layers with incompatible frame counts 0.0s
+  + resize changes only device layout and reduction is deterministic 0.003s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.002s
+  + a typed point sets the cursor only when its frame is the reference frame 0.001s
+  + a point in another world reaches the cursor through a typed link 0.005s
+  + cursor actions and states cannot replay into an equally shaped different world 0.001s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.001s
+[info] Passed: Total 42, Failed 0, Errors 0, Passed 42
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] imageViewJVM/test: exit 0 in 5.1s
+[info] compiling 58 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/canvas/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 23 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/interaction/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio/modules/javafx/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 273 s (0:04:33.0)
+[0J[sbt-warm] scalafimCompileAll: exit 0 in 273.7s

@@ -1,0 +1,649 @@
+{
+  "captures": [
+    {
+      "camera": {
+        "position": [
+          -190,
+          -20,
+          20
+        ],
+        "rotation": [
+          1.5707963267948966,
+          -1.5707963267948966,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          -30,
+          -20,
+          20
+        ]
+      },
+      "viewMatrix": [
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -20,
+        -20,
+        -190,
+        1
+      ],
+      "projectionMatrix": [
+        2.3786961017724098,
+        0,
+        0,
+        0,
+        0,
+        3.171594802363213,
+        0,
+        0,
+        0,
+        0,
+        -1.00010000500025,
+        -1,
+        0,
+        0,
+        -0.200010000500025,
+        0
+      ],
+      "matrixOrder": "column-major",
+      "width": 600,
+      "height": 450,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0,
+        "direction": [
+          0,
+          0,
+          1
+        ],
+        "fillIntensity": 0,
+        "specular": 0,
+        "emissive": 0,
+        "emissiveIntensity": 0,
+        "base": 204,
+        "lightFrame": "world",
+        "qualification": "pending"
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "left"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "left",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    },
+    {
+      "camera": {
+        "position": [
+          -190,
+          -20,
+          20
+        ],
+        "rotation": [
+          1.5707963267948966,
+          -1.5707963267948966,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          -30,
+          -20,
+          20
+        ]
+      },
+      "viewMatrix": [
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -20,
+        -20,
+        -190,
+        1
+      ],
+      "projectionMatrix": [
+        2.3786961017724098,
+        0,
+        0,
+        0,
+        0,
+        3.171594802363213,
+        0,
+        0,
+        0,
+        0,
+        -1.00010000500025,
+        -1,
+        0,
+        0,
+        -0.200010000500025,
+        0
+      ],
+      "matrixOrder": "column-major",
+      "width": 600,
+      "height": 450,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0,
+        "direction": [
+          0,
+          0,
+          1
+        ],
+        "fillIntensity": 0,
+        "specular": 0,
+        "emissive": 0,
+        "emissiveIntensity": 0,
+        "base": 204,
+        "lightFrame": "world",
+        "qualification": "pending"
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "left"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "left",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    },
+    {
+      "camera": {
+        "position": [
+          -190,
+          -20,
+          20
+        ],
+        "rotation": [
+          1.5707963267948966,
+          -1.5707963267948966,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          -30,
+          -20,
+          20
+        ]
+      },
+      "viewMatrix": [
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -20,
+        -20,
+        -190,
+        1
+      ],
+      "projectionMatrix": [
+        2.3786961017724098,
+        0,
+        0,
+        0,
+        0,
+        3.171594802363213,
+        0,
+        0,
+        0,
+        0,
+        -1.00010000500025,
+        -1,
+        0,
+        0,
+        -0.200010000500025,
+        0
+      ],
+      "matrixOrder": "column-major",
+      "width": 600,
+      "height": 450,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0,
+        "direction": [
+          0,
+          0,
+          1
+        ],
+        "fillIntensity": 0,
+        "specular": 0,
+        "emissive": 0,
+        "emissiveIntensity": 0,
+        "base": 204,
+        "lightFrame": "world",
+        "qualification": "pending"
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "left"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "left",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    }
+  ],
+  "milliseconds": [
+    25.400000005960464,
+    5.5,
+    5.0999999940395355
+  ],
+  "picks": [
+    {
+      "x": 100,
+      "y": 75,
+      "hit": {
+        "surface": "left",
+        "vertex": 109,
+        "world": [
+          -24.951003685720792,
+          26.25755434985323,
+          54.69316576238993
+        ]
+      }
+    },
+    {
+      "x": 200,
+      "y": 75,
+      "hit": {
+        "surface": "left",
+        "vertex": 8046,
+        "world": [
+          -53.137765361854605,
+          -0.8211125223647961,
+          48.76833121645281
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 75,
+      "hit": {
+        "surface": "left",
+        "vertex": 4508,
+        "world": [
+          -57.99810635851699,
+          -20,
+          47.746691463261776
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 75,
+      "hit": {
+        "surface": "left",
+        "vertex": 6754,
+        "world": [
+          -56.996886991739075,
+          -38.6380979771733,
+          47.95714696575995
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 75,
+      "hit": {
+        "surface": "left",
+        "vertex": 5153,
+        "world": [
+          -19.318251894083318,
+          -67.83622085470589,
+          55.87716564102942
+        ]
+      }
+    },
+    {
+      "x": 100,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 6418,
+        "world": [
+          -46.034832099837246,
+          20.348482737494713,
+          35.13068102656052
+        ]
+      }
+    },
+    {
+      "x": 200,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 212,
+        "world": [
+          -59.81750481900383,
+          -1.7571630827498375,
+          33.68212768793762
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 8746,
+        "world": [
+          -56.954506448893284,
+          -20,
+          33.983027660823744
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 278,
+        "world": [
+          -59.15479460988911,
+          -38.335704351166434,
+          33.751778263374824
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 1485,
+        "world": [
+          -52.36598534921211,
+          -58.57407833595234,
+          34.46527937598213
+        ]
+      }
+    },
+    {
+      "x": 100,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 3071,
+        "world": [
+          -56.628431071740465,
+          17.379461470196247,
+          20
+        ]
+      }
+    },
+    {
+      "x": 200,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 6472,
+        "world": [
+          -60.843293205446315,
+          -1.900909676479369,
+          20
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 6244,
+        "world": [
+          -57.73571596160062,
+          -20,
+          20
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 6777,
+        "world": [
+          -47.125606947755216,
+          -40.02138804053038,
+          20
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 9463,
+        "world": [
+          -41.035741011180164,
+          -61.749555951494116,
+          20
+        ]
+      }
+    },
+    {
+      "x": 100,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 6752,
+        "world": [
+          -31.241534238274454,
+          24.494535092407496,
+          3.314549340347188
+        ]
+      }
+    },
+    {
+      "x": 200,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 2579,
+        "world": [
+          -58.898767614106845,
+          -1.6284178703044674,
+          6.221313402728352
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 4959,
+        "world": [
+          -54.235977030036,
+          -20,
+          5.731255994743721
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 9409,
+        "world": [
+          -67.17675319396359,
+          -37.21156487294595,
+          7.09132634529054
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 5127,
+        "world": [
+          -60.12483069422021,
+          -56.39954096672529,
+          6.350172137478015
+        ]
+      }
+    },
+    {
+      "x": 100,
+      "y": 375,
+      "hit": {
+        "surface": "left",
+        "vertex": 2182,
+        "world": [
+          -38.094181422253854,
+          22.573973885541974,
+          -11.930480414156488
+        ]
+      }
+    },
+    {
+      "x": 200,
+      "y": 375,
+      "hit": {
+        "surface": "left",
+        "vertex": 7916,
+        "world": [
+          -60.938767098534726,
+          -1.914288699972854,
+          -7.128566950040717
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 375,
+      "hit": {
+        "surface": "left",
+        "vertex": 9919,
+        "world": [
+          -52.733872130858686,
+          -20,
+          -8.853229247499094
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 375,
+      "hit": {
+        "surface": "left",
+        "vertex": 6353,
+        "world": [
+          -60.52924545412432,
+          -38.14309871269485,
+          -7.214648069042273
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 375,
+      "hit": {
+        "surface": "left",
+        "vertex": 10029,
+        "world": [
+          -56.3842778532383,
+          -57.447889216058144,
+          -8.085916912043611
+        ]
+      }
+    }
+  ],
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "dpr": 1
+  }
+}

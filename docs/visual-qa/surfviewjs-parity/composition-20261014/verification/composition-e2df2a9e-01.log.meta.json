@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T17:34:02.118710+00:00",
+  "finished_utc": "2026-10-14T17:34:38.487959+00:00",
+  "duration_seconds": 36.368922,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJVM/testOnly *SurfaceComposition*Suite",
+    "surfaceViewJS/testOnly *SurfaceComposition*Suite",
+    "surfaceViewRasterJVM/test",
+    "surfaceViewRasterJS/test",
+    "surfaceViewThreeJS/test",
+    "surfaceViewThreeJS/fastLinkJS",
+    "surfaceViewJavafxJVM/test",
+    "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceCompositionProbe /private/tmp/scalafim-native-composition-e2df2a9e"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/surfview-parity-logs/composition-e2df2a9e-01.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 23288
+}

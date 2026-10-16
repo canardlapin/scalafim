@@ -1,0 +1,17 @@
+Sourcemap for "/private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js" points to missing source files
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: java.lang.IllegalArgumentException: requirement failed
+    at $c_s_Predef$.require__Z__V (http://127.0.0.1:59937/@fs//private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js:63949:48)
+    at $c_Lscalafim_surface_view_three_ThreeLinkedViewProbe$.run__sjs_js_Dynamic__sjs_js_Dynamic__sjs_js_Dynamic__sjs_js_Dynamic (http://127.0.0.1:59937/@fs//private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js:53465:11)
+    at Object.runScalafimLinkedViewProbe (http://127.0.0.1:59937/@fs//private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js:161423:66)
+    at eval (eval at evaluate (:311:30), <anonymous>:4:34)
+    at async <anonymous>:337:30
+    at /private/tmp/scalafim-surface-visibility/tools/surface-view/parity/run-linked-proof.mjs:38:25 {
+  log: [],
+  name: 'Error'
+}
+
+Node.js v26.7.0

@@ -1,0 +1,60 @@
+[info] compiling 58 Scala sources to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 14 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 40 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBivariateLayerSuite.scala:15:61 
+[error] 15 |  private def matrix(values: Vector[Vector[Double]], target: SurfaceGeometry = geometry): SurfaceMatrix[Double] =
+[error]    |                                                             ^^^^^^^^^^^^^^^
+[error]    |                                         Not found: type SurfaceGeometry
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBivariateLayerSuite.scala:15:90 
+[error] 15 |  private def matrix(values: Vector[Vector[Double]], target: SurfaceGeometry = geometry): SurfaceMatrix[Double] =
+[error]    |                                                                                          ^^^^^^^^^^^^^
+[error]    |                                           Not found: type SurfaceMatrix
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBivariateLayerSuite.scala:16:4 
+[error] 16 |    SurfaceMatrix.fromRows(target, Vector.tabulate(target.vertexCount)(VertexId(_)), values)
+[error]    |    ^^^^^^^^^^^^^
+[error]    |    Not found: SurfaceMatrix
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBivariateLayerSuite.scala:27:50 
+[error] 27 |    layer.writeColors(1, SurfaceLayerPresentation.Default, colors)
+[error]    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |value Default is not a member of object scalafim.surface.view.SurfaceLayerPresentation
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBivariateLayerSuite.scala:40:20 
+[error] 40 |    val reordered = SurfaceMatrix.fromRows(geometry, Vector(VertexId(1), VertexId(0), VertexId(2), VertexId(3)), Vector.fill(4)(Vector(0.0)))
+[error]    |                    ^^^^^^^^^^^^^
+[error]    |                    Not found: SurfaceMatrix
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFlatMapSuite.scala:24:127 
+[error] 24 |    assertEquals(map.triangleAt(ok(map.project(VertexId(2), contain)), contain), Some(SurfaceFlatMapPick.Triangle(0, 0, 0, 1)))
+[error]    |                                                                                                                               ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  Option[scalafim.surface.view.SurfaceFlatMapPick.Triangle]
+[error]    |  Second type: Some[scalafim.surface.view.SurfaceFlatMapPick]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[Option[scalafim.surface.view.SurfaceFlatMapPick.Triangle], Some[scalafim.surface.view.SurfaceFlatMapPick]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      Option[scalafim.surface.view.SurfaceFlatMapPick.Triangle],
+[error]    |      Some[scalafim.surface.view.SurfaceFlatMapPick]](
+[error]    |      /* missing */
+[error]    |        summon[Option[scalafim.surface.view.SurfaceFlatMapPick.Triangle] <:<
+[error]    |          Some[scalafim.surface.view.SurfaceFlatMapPick]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type Option[scalafim.surface.view.SurfaceFlatMapPick.Triangle] <:<
+[error]    |  Some[scalafim.surface.view.SurfaceFlatMapPick].
+[error] 6 errors found
+[[31merror[0m] elapsed: 16 s
+[error] (surfaceViewJVM / Test / compileIncremental) Compilation failed
+[0J[sbt-warm] surfaceViewJVM/test: exit 1 in 16.8s

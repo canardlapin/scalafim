@@ -9,6 +9,20 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
   private val activationId = SurfaceLayerId.unsafe("activation")
   private val labelsId = SurfaceLayerId.unsafe("labels")
 
+  test("revision 1 documents retain vertex association and their original JSON shape"):
+    val (model, state, bindings, provenance) = fixture()
+    val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+    val json = SurfaceSceneCodec.encode(current).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":1").replace(",\"legends\":[]", "")
+      .replace(",\"scalarInterpolation\":false", "")
+      .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")
+      .replace(",\"vertexInterpolation\":\"color\"", "")
+      .replace(",\"association\":\"vertex\"", "").replace(",\"face\":null", "")
+    assert(!json.contains("\"association\""))
+    val decoded = SurfaceSceneCodec.decode(json).toOption.get
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V1)
+    assert(decoded.layers.forall(_.association == SurfaceSampleAssociation.Vertex))
+    assertEquals(SurfaceSceneCodec.encode(decoded), json)
+
   test("canonical document roundtrip reproduces state, camera, and semantic render resources"):
     val (model, state, bindings, provenance) = fixture()
     val document = SurfaceSceneDocument.capture(
@@ -44,6 +58,16 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     assertEquals(after.slots, before.slots)
     assertEquals(after.drawPasses, before.drawPasses)
 
+  test("camera aspect survives document encoding and restoration"):
+    val (model, initial, bindings, provenance) = fixture()
+    val state = SurfaceViewer.reduce(model, initial,
+      SurfaceViewerAction.SetAspectRatio(CameraAspectRatio.unsafe(1.75))).toOption.get
+    val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+    val restored = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)).toOption.get
+      .restore(model, bindings).toOption.get
+    assertEqualsDouble(restored.camera.aspectRatio.value, 1.75, 0.0)
+    assertEquals(restored, state)
+
   test("unknown fields and future revisions obey explicit read policy"):
     val (model, state, bindings, provenance) = fixture()
     val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
@@ -59,10 +83,10 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
 
-    val future = encoded.replace("\"revision\":1", "\"revision\":2")
+    val future = encoded.replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":9")
     assertEquals(
       SurfaceSceneCodec.decode(future).left.toOption,
-      Some(SurfaceSceneError.UnsupportedRevision(2))
+      Some(SurfaceSceneError.UnsupportedRevision(9))
     )
 
   test("external digests and exact mesh identities are checked before state restoration"):
@@ -206,6 +230,29 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     assert(SurfaceSceneCodec.decode(scalarOuter).left.exists(_.message.contains("expected null or a two-number array")))
     val missingOuter = twoSided.replace(twoSidedJson, "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4]}")
     assert(SurfaceSceneCodec.decode(missingOuter).left.exists(_.message.contains("missing required field")))
+
+  test("two-sided threshold accepts the legacy V8 form and re-encodes canonically"):
+    val (model, state, bindings, provenance) = fixture()
+    val thresholded = SurfaceViewer.reduce(model, state, SurfaceViewerAction.SetLayerThreshold(
+      activationId, DisplayThreshold.twoSidedMagnitude(0.4, Some(1.5)).toOption.get
+    )).toOption.get
+    val canonical = SurfaceSceneCodec.encode(SurfaceSceneDocument.capture(model, thresholded, bindings, provenance).toOption.get)
+    val canonicalJson = "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"outer\":[-1.5,1.5]}"
+    val legacyJson = "{\"kind\":\"two-sided\",\"lower\":-0.4,\"upper\":0.4,\"outer\":[-1.5,1.5]}"
+    assert(canonical.contains(canonicalJson), clue(canonical))
+    val legacy = canonical.replace(canonicalJson, legacyJson)
+    val decodedCanonical = SurfaceSceneCodec.decode(canonical).toOption.get
+    val decodedLegacy = SurfaceSceneCodec.decode(legacy).toOption.get
+    assertEquals(decodedLegacy.restore(model, bindings).toOption.get, decodedCanonical.restore(model, bindings).toOption.get)
+    assertEquals(SurfaceSceneCodec.encode(decodedLegacy), canonical)
+
+    val malformedLegacy = legacy.replace(legacyJson,
+      "{\"kind\":\"two-sided\",\"lower\":-0.4,\"outer\":null}")
+    assert(SurfaceSceneCodec.decode(malformedLegacy).left.exists(_.message.contains("missing required field")))
+    val mixed = canonical.replace(canonicalJson,
+      "{\"kind\":\"two-sided\",\"inner\":[-0.4,0.4],\"lower\":-0.4,\"outer\":[-1.5,1.5]}")
+    assert(SurfaceSceneCodec.decode(mixed).isLeft)
+    assert(SurfaceSceneCodec.decode(mixed, SurfaceSceneReadPolicy(SurfaceUnknownFieldPolicy.Ignore)).isLeft)
 
   private def fixture(): (SurfaceViewerModel, SurfaceViewerState, SurfaceSceneBindings, SurfaceProvenance) =
     val left = geometry(Hemisphere.Left, SurfaceKind.Inflated, -1.0)

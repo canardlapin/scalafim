@@ -1,0 +1,50 @@
+{
+  "schema": "surface-decoration-cache-comparison.v1",
+  "before": "/private/tmp/surface-rounded-cortex-01",
+  "after": "/private/tmp/surface-rounded-cortex-02",
+  "timingBoundary": "render plus synchronous PNG readback, median of five retained samples; not a sustained interaction benchmark",
+  "rows": [
+    {
+      "id": "C05-BR-parcels/halo/1b8160a35bd97ccd",
+      "sameInput": true,
+      "nativeMedianBeforeMs": 181.3,
+      "nativeMedianAfterMs": 85.8,
+      "rasterMedianAfterMs": 1126.099999,
+      "logicalWarmDrawSubmissionsBefore": 2,
+      "logicalWarmDrawSubmissionsAfter": 1,
+      "pixelsIdentical": {
+        "native": true,
+        "raster": true,
+        "reference": true
+      }
+    },
+    {
+      "id": "C05-BR-parcels/halo/3ef92e6ea86ea94a",
+      "sameInput": true,
+      "nativeMedianBeforeMs": 171.599999,
+      "nativeMedianAfterMs": 89.599999,
+      "rasterMedianAfterMs": 1346.3,
+      "logicalWarmDrawSubmissionsBefore": 2,
+      "logicalWarmDrawSubmissionsAfter": 1,
+      "pixelsIdentical": {
+        "native": true,
+        "raster": true,
+        "reference": true
+      }
+    },
+    {
+      "id": "C05-BR-parcels/halo/4928e19d21468e3e",
+      "sameInput": true,
+      "nativeMedianBeforeMs": 188.2,
+      "nativeMedianAfterMs": 85.6,
+      "rasterMedianAfterMs": 845.6,
+      "logicalWarmDrawSubmissionsBefore": 2,
+      "logicalWarmDrawSubmissionsAfter": 1,
+      "pixelsIdentical": {
+        "native": true,
+        "raster": true,
+        "reference": true
+      }
+    }
+  ]
+}

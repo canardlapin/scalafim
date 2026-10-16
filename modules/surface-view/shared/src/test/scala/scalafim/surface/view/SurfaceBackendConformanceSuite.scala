@@ -49,7 +49,7 @@ class SurfaceBackendConformanceSuite extends munit.FunSuite:
   test("invalid resource and revision receipts fail admission explicitly"):
     val obsolete = SurfaceBackendObservation(
       backend.copy(acceptedRevision = SurfacePlanRevision.Current),
-      SurfacePlanRevision.unsafe(2),
+      SurfacePlanRevision.unsafe(SurfacePlanRevision.Current.value + 1),
       SurfaceAdmissionPath.Resize,
       Vector(
         SurfaceResourceEvent.Resized(0, 100),

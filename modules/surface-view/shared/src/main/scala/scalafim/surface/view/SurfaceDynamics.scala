@@ -188,6 +188,10 @@ final case class SurfaceFrameCache private (
   def cachedFrames(field: SurfaceTemporalFieldId): Vector[Int] =
     recency.collect { case SurfaceFrameCacheKey(`field`, frame) => frame }
 
+  /** Restoring a source binding must not reuse values cached under a reused id. */
+  private[view] def without(field: SurfaceTemporalFieldId): SurfaceFrameCache =
+    copy(entries = entries.filterNot(_._1.field == field), recency = recency.filterNot(_.field == field))
+
   private[view] def load(
     field: SurfaceTemporalField,
     frame: Int

@@ -1,0 +1,37 @@
+[info] compiling 58 Scala sources to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLinkedFixture.scala:65:101 
+[error] 65 |        Vector(SurfaceCompositionInputInstance(ok(SurfaceInstanceId.make(s"plane-$index")), Surface, display)),
+[error]    |                                                                                                     ^^^^^^^
+[error]    |                 Found:    (display :
+[error]    |                   scalafim.surface.view.SurfaceDisplayFrame[
+[error]    |                     (scalafim.surface.view.SurfaceLinkedFixture.Frame :
+[error]    |                       image4s.geometry.Frame[image4s.geometry.D3])
+[error]    |                   ]
+[error]    |                 )
+[error]    |                 Required: scalafim.surface.view.SurfaceDisplayFrame[
+[error]    |                   image4s.geometry.Frame[image4s.geometry.D3]]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLinkedFixture.scala:67:36 
+[error] 67 |    ok(SurfaceCompositionState.make(views))
+[error]    |                                    ^^^^^
+[error]    |                 Found:    (views :
+[error]    |                   Vector[
+[error]    |                     scalafim.surface.view.SurfaceCompositionInputView[
+[error]    |                       image4s.geometry.Frame[image4s.geometry.D3]]
+[error]    |                   ]
+[error]    |                 )
+[error]    |                 Required: Vector[
+[error]    |                   scalafim.surface.view.SurfaceCompositionInputView[
+[error]    |                     (scalafim.surface.view.SurfaceLinkedFixture.Frame :
+[error]    |                       image4s.geometry.Frame[image4s.geometry.D3])
+[error]    |                   ]
+[error]    |                 ]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] two errors found
+[[31merror[0m] elapsed: 15 s
+[error] (surfaceViewJVM / Compile / compileIncremental) Compilation failed
+[0J[sbt-warm] surfaceViewJVM/test: exit 1 in 14.9s

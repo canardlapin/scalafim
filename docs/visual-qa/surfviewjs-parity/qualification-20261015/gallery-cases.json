@@ -1,0 +1,56 @@
+[
+  {
+    "id": "cortex",
+    "source": "/private/tmp/surface-cortex-preserved-01/C01-BR-views--initial--c6d268daab449626",
+    "title": "Real bilateral cortex",
+    "note": "Native silhouette aligns; strict fold pixels and raster antialiasing remain failures."
+  },
+  {
+    "id": "composition",
+    "source": "/private/tmp/surface-composition-qualified-01/C04-BR-layout--four-view--754fdb22e731972d",
+    "title": "Four-view cortex",
+    "note": "All panel/ray identities and actual fallback resize/disposal checks pass; strict pixel differences remain."
+  },
+  {
+    "id": "volume",
+    "source": "/private/tmp/surface-decorated-optimized-04/C02-BR-volume--nearest--10b79be33887314e",
+    "title": "Analytic volume projection",
+    "note": "Native pixels equal the reference; independent sample-value oracle passes. Raster edge antialiasing differs."
+  },
+  {
+    "id": "halo",
+    "source": "/private/tmp/surface-decorated-optimized-04/C05-BR-parcels--halo--4928e19d21468e3e",
+    "title": "Halo mismatch retained",
+    "note": "Reference translucent full-width halo washes over the black core. ScalaFIM uses opaque side bands. This is a semantic mismatch, not just antialiasing."
+  },
+  {
+    "id": "markers",
+    "source": "/private/tmp/surface-decorated-optimized-04/C06-BR-annotations--multiple--15a8d23470473d8a",
+    "title": "Annotation spheres",
+    "note": "Matching sphere tessellation reduces maximum native channel error to 3; strict limit remains 2."
+  },
+  {
+    "id": "network",
+    "source": "/private/tmp/surface-network-order-07/C09-BR-network--signed--ebba1fb92f5be60a",
+    "title": "Signed connectivity",
+    "note": "The explicit public-client route uses signed colors and declared overlay order. Native foreground IoU is 1; tube and edge pixels retain strict failures."
+  },
+  {
+    "id": "morph-baseline",
+    "source": "/private/tmp/surface-marker-anchor-06/C06-BR-annotations--geometry-change--8202c8f9081a4ee1",
+    "title": "Morph anchors: original reference behavior",
+    "note": "The pinned reference leaves the marker at its base vertex. Independent source coordinates identify this discrepancy; the original failure is retained."
+  },
+  {
+    "id": "morph-client",
+    "source": "/private/tmp/surface-marker-follow-client-07/C06-BR-annotations--geometry-change--8202c8f9081a4ee1",
+    "title": "Morph anchors: explicit public-client update",
+    "note": "An explicitly declared client updates the public marker record using the current morphed vertex. All 11 measured anchor cases pass. This image has native maximum channel error 3, still above the strict limit of 2."
+  },
+  {
+    "id": "jvm-composition",
+    "source": "/private/tmp/surface-jvm-reference-comparison-06a/C04-JVM-layout--four-view--f6bb249f56e71337",
+    "title": "Actual JVM fallback: four views",
+    "note": "Left: SurfViewJS. Right: actual JavaFX ImageView snapshot. Runtime artifact hashes are retained; published-pixel equality, resize-back and disposal pass. Strict pixel comparison fails."
+  }
+]

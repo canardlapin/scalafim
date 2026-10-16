@@ -36,6 +36,12 @@ Until those steps are complete, use **unassessed remaining delta** rather than c
 
 ## First recovery seams
 
+The 2026-10-14 [core SurfViewJS parity plan](../plans/surfviewjs-display-parity.md)
+defines a current-main recovery scope for `c14b36ac` scalar/fragment/legend work,
+followed by native side-by-side display qualification. Mote
+`bd-01M4XAQ87FRRSD48EV0CPK05FP` tracks this requested work. The source is retained;
+the new recovery candidate and its qualification are pending.
+
 | Seam | Current known boundary | Authoritative Mote starting point |
 |---|---|---|
 | Typed atlas / historical domain realizations (#27; C1 snapshot) | Current workflow/spatial/examples and identity contracts require a fresh port. | Existing locus-removal and atlas scopes; audit feature coverage before creating new tickets. |

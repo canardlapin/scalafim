@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T18:24:05.873823+00:00",
+  "finished_utc": "2026-10-14T18:24:22.501156+00:00",
+  "duration_seconds": 16.62703,
+  "command": [
+    "env",
+    "SBT_WARM_HEAP=6g",
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceDecorationProbe /private/tmp/scalafim-native-decorations-final",
+    "surfaceViewThreeJS/fastLinkJS"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-composition",
+  "log": "/private/tmp/surfview-parity-logs/decorations-overlap-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 180.0,
+  "log_bytes": 2417
+}

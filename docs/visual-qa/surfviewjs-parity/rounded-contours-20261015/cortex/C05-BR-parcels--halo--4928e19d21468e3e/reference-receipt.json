@@ -1,0 +1,521 @@
+{
+  "captures": [
+    {
+      "camera": {
+        "position": [
+          -350,
+          -20,
+          20
+        ],
+        "rotation": [
+          1.5707963267948966,
+          -1.5707963267948966,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          -30,
+          -20,
+          20
+        ]
+      },
+      "viewMatrix": [
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -20,
+        -20,
+        -350,
+        1
+      ],
+      "projectionMatrix": [
+        2.3786961017724098,
+        0,
+        0,
+        0,
+        0,
+        3.171594802363213,
+        0,
+        0,
+        0,
+        0,
+        -1.00010000500025,
+        -1,
+        0,
+        0,
+        -0.200010000500025,
+        0
+      ],
+      "matrixOrder": "column-major",
+      "width": 600,
+      "height": 450,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0,
+        "direction": [
+          0,
+          0,
+          1
+        ],
+        "fillIntensity": 0,
+        "specular": 0,
+        "emissive": 0,
+        "emissiveIntensity": 0,
+        "base": 204,
+        "lightFrame": "world",
+        "qualification": "pending"
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "left"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "left",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    },
+    {
+      "camera": {
+        "position": [
+          -350,
+          -20,
+          20
+        ],
+        "rotation": [
+          1.5707963267948966,
+          -1.5707963267948966,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          -30,
+          -20,
+          20
+        ]
+      },
+      "viewMatrix": [
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -20,
+        -20,
+        -350,
+        1
+      ],
+      "projectionMatrix": [
+        2.3786961017724098,
+        0,
+        0,
+        0,
+        0,
+        3.171594802363213,
+        0,
+        0,
+        0,
+        0,
+        -1.00010000500025,
+        -1,
+        0,
+        0,
+        -0.200010000500025,
+        0
+      ],
+      "matrixOrder": "column-major",
+      "width": 600,
+      "height": 450,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0,
+        "direction": [
+          0,
+          0,
+          1
+        ],
+        "fillIntensity": 0,
+        "specular": 0,
+        "emissive": 0,
+        "emissiveIntensity": 0,
+        "base": 204,
+        "lightFrame": "world",
+        "qualification": "pending"
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "left"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "left",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    },
+    {
+      "camera": {
+        "position": [
+          -350,
+          -20,
+          20
+        ],
+        "rotation": [
+          1.5707963267948966,
+          -1.5707963267948966,
+          0,
+          "XYZ"
+        ],
+        "target": [
+          -30,
+          -20,
+          20
+        ]
+      },
+      "viewMatrix": [
+        0,
+        0,
+        -1,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -20,
+        -20,
+        -350,
+        1
+      ],
+      "projectionMatrix": [
+        2.3786961017724098,
+        0,
+        0,
+        0,
+        0,
+        3.171594802363213,
+        0,
+        0,
+        0,
+        0,
+        -1.00010000500025,
+        -1,
+        0,
+        0,
+        -0.200010000500025,
+        0
+      ],
+      "matrixOrder": "column-major",
+      "width": 600,
+      "height": 450,
+      "profile": {
+        "name": "controlled-unlit",
+        "ambientIntensity": 3.141592653589793,
+        "directionalIntensity": 0,
+        "direction": [
+          0,
+          0,
+          1
+        ],
+        "fillIntensity": 0,
+        "specular": 0,
+        "emissive": 0,
+        "emissiveIntensity": 0,
+        "base": 204,
+        "lightFrame": "world",
+        "qualification": "pending"
+      },
+      "annotationIds": [],
+      "annotationPolicy": {
+        "followMorph": false,
+        "route": "native annotation anchoring",
+        "limitations": "ordinary noninstanced markers; checkpoint synchronization does not emit annotation:moved or qualify continuous animation",
+        "morphWeights": []
+      },
+      "markerCenters": [],
+      "networks": [],
+      "surfaceIds": [
+        "left"
+      ],
+      "volumeSamples": [],
+      "materials": [
+        {
+          "id": "left",
+          "depthWrite": true,
+          "alphaDiscard": 0.00196078431372549,
+          "transparent": false,
+          "side": 2,
+          "renderOrder": 0
+        }
+      ],
+      "outputColorSpace": "srgb",
+      "toneMapping": 0,
+      "antialias": true,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    }
+  ],
+  "milliseconds": [
+    35.599999994039536,
+    4.299999997019768,
+    4.200000002980232
+  ],
+  "picks": [
+    {
+      "x": 100,
+      "y": 75,
+      "hit": null
+    },
+    {
+      "x": 200,
+      "y": 75,
+      "hit": null
+    },
+    {
+      "x": 300,
+      "y": 75,
+      "hit": null
+    },
+    {
+      "x": 400,
+      "y": 75,
+      "hit": null
+    },
+    {
+      "x": 500,
+      "y": 75,
+      "hit": null
+    },
+    {
+      "x": 100,
+      "y": 150,
+      "hit": null
+    },
+    {
+      "x": 200,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 109,
+        "world": [
+          -25.354926913646523,
+          25.493421493178097,
+          54.120066119883575
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 4507,
+        "world": [
+          -56.74358747515896,
+          -20,
+          50.821130566690954
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 150,
+      "hit": {
+        "surface": "left",
+        "vertex": 9515,
+        "world": [
+          -22.28323366750692,
+          -65.92386645331833,
+          54.44289983998875
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 150,
+      "hit": null
+    },
+    {
+      "x": 100,
+      "y": 225,
+      "hit": null
+    },
+    {
+      "x": 200,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 3070,
+        "world": [
+          -55.91436696517104,
+          21.211041743371403,
+          20
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 6244,
+        "world": [
+          -57.73571596160059,
+          -20,
+          20
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 225,
+      "hit": {
+        "surface": "left",
+        "vertex": 9461,
+        "world": [
+          -42.12398880441043,
+          -63.14352597993619,
+          20
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 225,
+      "hit": null
+    },
+    {
+      "x": 100,
+      "y": 300,
+      "hit": null
+    },
+    {
+      "x": 200,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 6634,
+        "world": [
+          -42.96610940023925,
+          23.025517267067364,
+          -12.269137950300525
+        ]
+      }
+    },
+    {
+      "x": 300,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 9921,
+        "world": [
+          -51.334607202925156,
+          -20,
+          -11.389612209659468
+        ]
+      }
+    },
+    {
+      "x": 400,
+      "y": 300,
+      "hit": {
+        "surface": "left",
+        "vertex": 10033,
+        "world": [
+          -56.058976779251395,
+          -61.19077716593161,
+          -10.893082874448709
+        ]
+      }
+    },
+    {
+      "x": 500,
+      "y": 300,
+      "hit": null
+    },
+    {
+      "x": 100,
+      "y": 375,
+      "hit": null
+    },
+    {
+      "x": 200,
+      "y": 375,
+      "hit": null
+    },
+    {
+      "x": 300,
+      "y": 375,
+      "hit": null
+    },
+    {
+      "x": 400,
+      "y": 375,
+      "hit": null
+    },
+    {
+      "x": 500,
+      "y": 375,
+      "hit": null
+    }
+  ],
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "dpr": 1
+  }
+}

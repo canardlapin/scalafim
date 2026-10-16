@@ -1,0 +1,1343 @@
+[sbt-warm] pins changed for /private/tmp/scalafim-surface-visibility; keeping base /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a (staging is keyed by source revision)
+[info] compiling 61 Scala sources to /private/tmp/scalafim-surface-visibility/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 79 Scala sources to /private/tmp/scalafim-surface-visibility/modules/design/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.design.EventModelSuite:
+  + basic event model creation works 0.103s
+  + feature and basis suffixes combine in convolve 0.002s
+  + convolve does not evaluate an HRF for an explicit all-zero column 0.009s
+  + convolve prepares one shared HRF kernel across conditions and blocks 0.001s
+  + EventModel rejects term metadata that does not match matrix columns 0.001s
+  + ConvolvedTerm rejects explicit column roles that do not match matrix columns 0.0s
+12-term build median_ms incremental=3.008875 full=5.971542
+scalafim.fmri.design.IncrementalDesignSuite:
+  + one-term edit recompiles exactly one term and matches full compilation including identity 0.064s
+  + exposed legacy matrix buffers cannot corrupt a later cache hit 0.005s
+  + unchanged context avoids repeated convolution and retains bounded cache 0.004s
+  + incremental and full build performance compare equivalent twelve-term designs 0.139s
+  + trialwise, covariate and subset terms recompile incrementally exactly as a full build 0.028s
+  + a TermCall repeated within one formula matches full compilation 0.005s
+  + changing the onset column rebuilds every term and equals full recompilation 0.006s
+scalafim.fmri.design.PolySuite:
+  + Poly.fit matches stats::poly for x=0:4, degree=2 (R 4.5.1) 0.004s
+scalafim.fmri.design.ExtensionRegistrySuite:
+  + BasisRegistry exposes built-in basis metadata 0.001s
+  + custom basis metadata is reflected in designColmap 0.008s
+  + formula term tags use basis registry prefixes 0.006s
+  + HrfBasisRegistry labels built-in and custom HRF bases 0.0s
+  + ExternalHrfSpecRegistry supports Scala-native extension introspection 0.002s
+scalafim.fmri.design.DctDriftSuite:
+  + cutoff counts include the endpoint and exclude the constant 0.001s
+  + invalid periods and excessive finite-grid requests fail explicitly 0.007s
+  + four-scan drift matches independent radical entries and a separate intercept 0.008s
+  + mixed scan counts and TRs have variable run-local column spans and stable identities 0.003s
+  + empty drift bases preserve rows and explicit runwise, global or absent intercepts 0.002s
+  + censoring selects original scan positions and acquisition-time identity 0.008s
+  + supplied cosine confounds use the existing explicit alias policy 0.007s
+  + the documented typed plan builds and legacy names remain unchanged 0.002s
+scalafim.fmri.design.ContrastSpecSuite:
+  + ContrastSpec.ContrastSet evaluates against a ConvolvedTerm 0.006s
+  + ContrastSpec.Mask builds weights from logical masks 0.001s
+  + typed pair selector compiles to the same weights as predicate pair 0.009s
+  + typed selector reports missing factors without throwing 0.001s
+  + ContrastSet.compileEither rejects duplicate names 0.001s
+  + ContrastSpec difference subtracts two contrast specs 0.002s
+  + ContrastSpec set generators build specs without a term 0.001s
+  + translateLegacyPattern matches R helper examples 0.0s
+scalafim.fmri.design.PortableNamingSuite:
+  + numeric factor levels name columns identically on every platform 0.004s
+scalafim.fmri.design.ResidualizeSuite:
+  + Residualize: y=x^2 residualized on (1, x) matches known residuals 0.001s
+  + Residualize: rank-deficient design uses rank, not ncol 0.0s
+  + Residualize: empty design returns data unchanged 0.0s
+  + Residualize: column subset works 0.0s
+scalafim.fmri.design.ContrastWeightsSuite:
+  + pair contrast respects where clause 0.001s
+  + unit contrast allows where subsetting 0.0s
+  + poly contrast respects where clause 0.001s
+  + pair contrast basis filtering keeps only selected bases 0.002s
+  + basis weights reject negative and non-finite values 0.001s
+scalafim.fmri.design.DesignDiagnosticsSuite:
+  + VIF, separate block R2, and joint coefficients match the independent orthonormal fixture 0.032s
+  + duplicate predictors make only the dependent target aliased 0.001s
+  + a finite near-collinear VIF is formed from the projection residual 0.0s
+  + wide selected designs use a minimum-norm, nonunique joint fit 0.001s
+  + blocks and row selections are validated against schema identities 0.003s
+  + a constant column that is not exactly representable is degenerate, not a finite VIF 0.005s
+scalafim.fmri.design.ContrastRegistrySuite:
+  + EventModelBuilder attaches contrasts= and validateAttachedContrasts checks them 0.01s
+scalafim.fmri.design.DesignColmapSuite:
+  + designColmap(event) includes HRF basis metadata and covariate modulation 0.005s
+  + EventModelBuilder supports hrf(Scale(rt)) and yields parametric metadata 0.002s
+  + EventModelBuilder supports trialwise() with optional mean column 0.003s
+  + designColmap(baseline) includes drift/intercept roles and run ids 0.003s
+scalafim.fmri.design.ModelJsonCodecSuite:
+  + formula JSON round trip retains all argument types 0.029s
+  + HRF JSON round trip preserves physical parameters and normalization 0.015s
+  + typed contrast JSON preserves selectors and basis weighting 0.006s
+  + difference and mask contrasts round trip 0.003s
+  + callbacks, unknown versions and unknown fields fail explicitly 0.003s
+  + typed derived declarations and run-combination policy round trip 0.041s
+  + encoded numbers are byte-identical across platforms 0.002s
+  + structural JSON errors report the real path 0.002s
+  + nested contrast errors name the nested path 0.002s
+  + ids are never trimmed: non-canonical or empty ids fail on both sides 0.001s
+  + pattern contrasts round trip by pattern source 0.003s
+scalafim.fmri.design.BaselineModelSuite:
+  + baseline_model: 1 block, bs degree=5 0.001s
+  + baseline_model: 1 block, ns df=5 0.003s
+  + baseline_model: 1 block, bs degree=5 with nuisance list 0.002s
+  + baseline_model: 2 blocks, bs degree=5 0.002s
+  + baseline_model: 2 blocks, global intercept 0.001s
+  + baseline_model: 2 blocks with nuisance list 0.002s
+  + baseline_model: basis='constant' 0.001s
+  + checkNuisance reports zero-variance, duplicates, and baseline aliasing 0.001s
+  + baseline_model default warning policy records report and keeps nuisance columns 0.001s
+  + baseline_model can error on nuisance rank problems 0.0s
+  + BaselineModel Either APIs expose structured baseline and nuisance errors 0.002s
+  + baseline_model can drop nuisance columns that do not increase rank 0.002s
+  + BaselinePlan builds through typed nuisance policy 0.001s
+  + cleanNuisance returns cleaned matrices and an audit report 0.0s
+  + naAction zero retains a leading missing confound that default drop removes 0.001s
+  + naAction median imputes the column median 0.0s
+  + naAction repair leaves infinite corruption subject to dropping 0.001s
+  + all-missing nuisance columns become zero-variance under naAction zero 0.0s
+  + naAction repairs missing values even when nuisance checks are disabled 0.002s
+scalafim.fmri.design.PortableNumberSuite:
+  + integral, fractional and exponent forms are identical on every platform 0.001s
+  + formatted text round-trips to the same double 0.0s
+  + non-finite values are rejected 0.001s
+scalafim.fmri.design.ContrastDiagnosticsSuite:
+  + frozen gamble design loses eight residual degrees of freedom for eight independent spikes 0.058s
+  + duplicate columns retain estimable sums and reject their difference 0.005s
+  + F worst direction is invariant to rescaling, duplicate rows, reordering, and mixing 0.003s
+  + concatenated task information ignores a wholly nuisance-confounded run 0.006s
+  + preflight rejects a design with no residual degrees of freedom 0.001s
+  + preflight uses numerical rank while the column budget remains an explicit guard 0.001s
+  + high-pass comparison rejects a changed retained column 0.002s
+  + exact m2b raw matrices reproduce the independently recomputed row-orthonormalized F efficiencies 0.138s
+  + exact m2b DMS matrices reproduce fixed-effects probe-minus-sample efficiency 0.011s
+  + exact m3 and m4 raw duplicate matrices retain the documented rank-deficient receipts 0.025s
+  + tiny supported columns and tiny residual task information remain estimable under the rank policy 0.001s
+  + rank preflight validates selected scan identities before matrix access 0.001s
+  + rank policies are values, and separately constructed equal policies combine 0.003s
+  + a non-default rank policy changes rank and estimability decisions 0.0s
+  + a zero column is reported as dropped before aliasing, also across runs 0.002s
+  + fixed effects recomputes each run, so equivalent contrast spellings combine identically 0.0s
+  + an F contrast partly outside the row space is aliased along its worst direction 0.001s
+  + nearly dependent F rows keep their span by default and collapse under a coarse policy 0.001s
+  + concatenated task F matches the independent residualized-information oracle 0.003s
+  + high-pass F variance ratio is pinned to the without-cosines worst direction 0.002s
+  + heterogeneous run sigmas match the independent fixed-effects oracle for t and F 0.02s
+scalafim.fmri.design.FormulaGrammarSuite:
+  + all-events constant creates one stream and round-trips 0.006s
+  + kernel normalization preserves relative event counts and differs from column normalization 0.009s
+  + span and normalization validate instead of silently changing custom kernels 0.003s
+  + explicit main plus modulators retains distinct column provenance 0.006s
+  + formula serial orthogonalization is ordered within each run 0.016s
+  + centered product modulators retain component identity and center after row selection 0.008s
+  + shared slopes retain categorical main effects and one slope stream 0.006s
+  + derivative-basis orthogonalization is post-convolution and auditable 0.015s
+  + portable run scaling aliases lower through observed-modulator policy 0.012s
+  + subset negation and inequality do not retain missing numeric rows 0.005s
+  + arithmetic precedence, signed literals, and Unicode operators round-trip 0.002s
+  + per-modulator observed policies apply after subset and to the entire paired term 0.01s
+  + temporal conventions and duration normalization are explicit and portable 0.05s
+scalafim.fmri.design.FContrastsSuite:
+  + FContrasts.forConvolvedTerm: single factor uses contr.sum 0.004s
+  + FContrasts.forConvolvedTerm: 3x2 ordering matches event cell order 0.002s
+  + FContrasts.forConvolvedTerm: replicates weights across basis 0.0s
+  + FContrasts reports expected generation failures without throwing 0.001s
+  + EventModel.validateAllContrasts validates attached + F-contrasts 0.003s
+scalafim.fmri.design.TypedCoreSuite:
+  + EventSchedule validates typed event records 0.001s
+  + events expose typed ids without changing legacy tokens 0.001s
+  + BoundFormula binds typed column, basis, and contrast refs 0.004s
+  + DataTable typed accessors report missing and mistyped columns as DesignError 0.001s
+  + FormulaParser parseEither and EventDesignRequest build a model without exceptions 0.001s
+  + EventModelBuilder buildEither returns DesignError on bad formula inputs 0.0s
+  + EventModelBuilder buildEither exposes staged typed compiler errors 0.007s
+scalafim.fmri.design.ObservedModulatorSuite:
+  + by-cell centering uses observed values and one pooled within-cell scale (n - k) 0.001s
+  + z-scoring without centering records the global centering it applies 0.0s
+  + a single observed value or constant values make a degenerate partition 0.0s
+  + near-constant cells of non-representable values are degenerate under a relative tolerance 0.001s
+  + drop and zero retain their distinct source-row contracts 0.001s
+  + zero policy needs centering unless z-score supplies global centering 0.0s
+  + reject, unsupported imputation, and degenerate scales are explicit 0.001s
+  + finite inputs that overflow aggregate receipts fail explicitly 0.0s
+  + frozen grid receipts retain their source provenance and expected run summaries 0.001s
+  + all frozen stop-modulator grid states have independently recomputed partition summaries 0.01s
+scalafim.fmri.design.FormulaParserSuite:
+  + FormulaParser parses hrf + covariate calls 0.001s
+  + FormulaParser parses parametric basis calls in hrf vars 0.0s
+  + FormulaParser retains an ordered additive modulator family 0.001s
+  + FormulaParser parses trialwise() 0.0s
+  + FormulaParser parses subset= and hrf_fun= in hrf() 0.0s
+  + FormulaParser parses contrasts= in hrf() 0.0s
+  + FormulaParser parses R hrf parity arguments 0.0s
+  + FormulaParser parses phase provenance arguments 0.001s
+  + FormulaParser rejects incomplete phase provenance 0.0s
+  + FormulaParser parses trialwise durations and normalize 0.0s
+  + FormulaParser parses named HRF column scaling and rejects conflicting compatibility syntax 0.001s
+  + FormulaParser validates named arguments through shared term schemas 0.001s
+scalafim.fmri.design.formula.DerivedEventsSuite:
+  + declaration identifiers use the portable formula lexer 0.002s
+  + typed declarations round trip and compose with missing text and logical values 0.013s
+  + declarations reject overwrites, forward references, wrong types and invalid levels 0.003s
+  + type-7 quantiles use observed pooled values and explicit left-closed cuts 0.002s
+  + binned derived factors parse and keep missing values outside every bin 0.003s
+  + derived columns validate printability at construction, so text is total 0.001s
+  + declared types are checked statically, even for entirely missing sources 0.0s
+  + division by zero in a derived column is an error, not a missing value 0.001s
+  + bin breaks print identically on every platform 0.0s
+  + guarded derived declarations evaluate only the selected branch 0.004s
+scalafim.fmri.design.FormulaResponsePolicySuite:
+  + event_normalization = as-convolved is exactly the omitted option, at any precision 0.012s
+  + formula unit-peak honors BuildOptions precision and records per-column event scales in the audit 0.014s
+  + formula orthogonalize = TRUE is SPM-like: per run and cell, against an intercept and earlier modulators 0.003s
+  + formula orthogonalize = TRUE centres and residualizes observed rows only; zero-filled rows stay at the reference 0.003s
+  + an observed modulator with one event in a run yields an explicit degenerate receipt 0.003s
+  + the missing-value receipt reports per-modulator observed policies, not only the default 0.002s
+  + shared slopes produce the numerical main-effect and pooled slope columns 0.002s
+scalafim.fmri.design.ErrorFidelityProbeSuite:
+  + a missing column reports the MissingColumn case that exists for it 0.0s
+  + column-shape mistakes name the column, what was expected, and what was found 0.0s
+  + an unknown basis call reports the call and what the formula grammar knows 0.001s
+  + the paths that were already structured stay structured 0.002s
+  + no realistic user mistake degrades to the stringly catch-all 0.002s
+scalafim.fmri.design.NaturalSplineSuite:
+  + NSpline.fit matches splines::ns for x=1:10, df=4 (R 4.5.1) 0.001s
+  + NSpline.predict reproduces training design matrix 0.0s
+scalafim.fmri.design.DesignSchemaSuite:
+  + built event models retain structural cell and basis provenance 0.003s
+  + event provenance records the observed run and multi-run terms remain global 0.001s
+  + combining event and baseline schemas retains event provenance 0.004s
+  + fingerprints are deterministic and respond to semantic, row, and matrix changes 0.001s
+  + validated schemas compute scale-aware structural rank previews 0.0s
+  + schema validation returns typed errors for shape and identity violations 0.001s
+  + coefficient axes select structural columns without changing design identity 0.0s
+  + runwise coefficient axes lower global families to an inspectable run identity 0.001s
+  + legacy axes do not claim a runwise structural identity 0.0s
+  + runwise slices retain an explicit censored-row selection 0.001s
+  + runwise projections exclude zero-support nuisance and empty shared columns 0.001s
+  + built baseline models retain run-scoped structural origins 0.001s
+  + event-response transport divisors are per run, strict across runs, and refuse ambiguous receipts 0.004s
+scalafim.fmri.design.TrialwiseFormulaSuite:
+  + trialwise options parse and print losslessly 0.001s
+  + trialwise uses selected timing and preserves run-qualified phase provenance 0.004s
+  + trialwise identity is local to each run and rejects duplicates within a run 0.001s
+  + trialwise id uniqueness is checked on the rows the subset retains 0.002s
+  + numeric trialwise ids have byte-identical text on every platform 0.001s
+  + binding ignores modulator option names while still binding its source 0.0s
+  + expression printer uses the formula expression grammar 0.001s
+scalafim.fmri.design.NamesSuite:
+  + zeroPad matches R tests 0.001s
+  + sanitize matches R tests 0.001s
+  + basisSuffix matches R tests 0.0s
+  + featureSuffix basic 0.0s
+  + makeUniqueTags matches R tests 0.0s
+  + levelToken matches R tests 0.0s
+  + addBasis matches R tests ordering 0.0s
+  + makeColumnNames composes names 0.0s
+scalafim.fmri.design.WeightedContrastDiagnosticsSuite:
+  + known unequal run sigmas give inverse-variance weighting for t and F 0.004s
+  + empty task run is reported and never supplies invented information 0.001s
+  + a non-default rank policy is honoured by weighted combinations 0.001s
+scalafim.fmri.design.HeterogeneousHrfSuite:
+  + phase assignments are exhaustive and derive cardinality from assigned bases 0.011s
+  + phase assignment coverage reports missing and extra phases together 0.001s
+  + declared empty cells retain their assigned widths 0.006s
+  + cell assignment coverage reports missing and extra declared cells together 0.002s
+  + unscoped cell assignments cannot silently govern several HRF terms 0.001s
+  + canonical informed FIR spline Fourier and custom bases coexist deterministically 0.021s
+  + scan-space scaling is named, exact, and preserved in structural identity 0.005s
+  + unit-maximum scaling remains exact for small nonzero columns 0.0s
+scalafim.fmri.design.KernelBasisDesignSuite:
+  + the expanded condition design contracts to the direct family design at a shape 1.277s
+  + precision must match the basis grid 0.0s
+  + trial lowering aggregates to the condition design under one-hot membership 0.011s
+  + membership validation 0.0s
+  + interleaved complete records retain trial columns, membership and reversible event-row identity 0.016s
+  + trial lowering normalizes empty defaults and returns typed malformed-record failures 0.006s
+  + declared trial levels retain numeric input order beyond four-digit labels without a large design 0.009s
+scalafim.fmri.design.SpmInformedDesignColumnSuite:
+  + an impulse realizes the SPM kernel samples at scan times, including the 25-32 s tail 0.008s
+  + a short boxcar realizes the SPM kernel convolved with the drive, including the tail 0.003s
+scalafim.fmri.design.CovariateSuite:
+  + CovariateSpec.construct validates sampling frame row count 0.001s
+  + EventModel.buildTerms can mix convolved and covariate terms 0.001s
+scalafim.fmri.design.EventTrialSummarySuite:
+  + phase summaries retain term, categorical cell, run, duration and explicit parent offsets 0.004s
+  + phased terms refuse absent, duplicate, and missing parent timing 0.002s
+  + ordinary event terms remain useful without invented trial timing 0.001s
+  + unphased provenance is validated but does not demand parent timing 0.0s
+  + inconsistent phase provenance is rejected before aggregation 0.0s
+  + m7b's five synthetic studies retain their generated event ribbons 0.055s
+  + terms sharing a tag are summarized under the model's unique term keys 0.002s
+  + parent timing is keyed by run and measured on each run's own clock 0.001s
+  + a phase earlier than its parent onset is rejected, including global-clock parent timing 0.001s
+scalafim.fmri.design.RParityCorpusSuite:
+  + R parity corpus: event interaction design, metadata, and contrasts 0.005s
+  + R parity corpus: SPMG3 multi-basis HRF design 0.002s
+  + R parity corpus: two-condition SPMG3 uses scalafim basis-major value ordering 0.001s
+  + R parity corpus: fully crossed 2x2 SPMG3 structural design 0.004s
+  + R parity corpus: subset expression drops empty condition columns 0.002s
+  + R parity corpus: trialwise add_sum matrix 0.001s
+  + R parity corpus: hrf_fun weighted per-event HRF design 0.011s
+  + R parity corpus: constant runwise baseline matrix 0.0s
+  + R parity corpus: nuisance drop baseline matrix 0.001s
+scalafim.fmri.design.FormulaPrinterSuite:
+  + canonical formula round trip 0 0.004s
+  + canonical formula round trip 1 0.001s
+  + canonical formula round trip 2 0.0s
+  + canonical formula round trip 3 0.001s
+  + canonical formula round trip 4 0.001s
+  + printer preserves explicit defaults, signed values and string escapes 0.0s
+  + quoted identifiers preserve punctuation and reserved names 0.0s
+  + source spans address original arguments including nested calls 0.001s
+  + semantic argument errors point to the offending argument 0.001s
+  + nonrepresentable typed formula fails explicitly 0.0s
+  + source spans cover comparison, logical and unary operands 0.0s
+  + numbers print byte-identically on JVM and JS 0.001s
+  + non-finite literals are reported, not thrown, by the safe printers 0.001s
+  + adversarial expressions round trip through print and parse 0.128s
+  + negation follows R precedence: below comparison, above & and | 0.0s
+  + positional and conflict errors point at the offending argument 0.002s
+scalafim.fmri.design.ConvolvedBasisOrthogonalizationSuite:
+  + per-event HRF assignments cannot claim a shared transformed response 0.001s
+  + receipts distinguish original scaling policies with equal divisors 0.002s
+  + global basis transform records scaled serial projection and effective HRFs 0.002s
+  + a collinear basis column is a typed error, not a silently zeroed column 0.002s
+  + a cell whose events all fall outside the scan window is kept with rank 0 and an identity transform 0.002s
+  + FIR and B-spline groups with more than two columns are serially orthogonalized with full rank 0.003s
+  + a broadcast per-event HRF is a shared kernel and can be orthogonalized 0.001s
+  + group-specific effective HRFs are per column; the term HRF stays the source kernel 0.001s
+  + tiny nonzero collinear columns are refused rather than recorded as an exact-zero group 0.001s
+  + tiny and huge non-collinear columns orthogonalize at full rank 0.001s
+  + huge collinear columns are refused rather than accepted through an overflowed norm 0.0s
+  + a genuinely zero basis group keeps rank 0 and the identity transform 0.001s
+  + a tiny earlier reference is not truncated away: the result is orthogonal at full rank 0.001s
+scalafim.fmri.design.scenarios.MixedTrMultirunScenarioSuite:
+  + mixed-TR multi-run design preserves run-local sampling, baselines, and condition columns 0.012s
+scalafim.fmri.design.EventPhaseSuite:
+  + phase lowering retains parent rows and structural phase identities 0.002s
+  + multiphase lowering rejects silently misaligned source rows 0.0s
+  + phase schedules reject duplicate source rows 0.0s
+  + phase schedules reject duplicate parent trial identities 0.001s
+scalafim.fmri.design.DesignReviewSuite:
+  + review keeps original scan identity, acquisition time and excluded samples 0.004s
+  + source review includes structurally omitted and zero columns 0.0s
+  + review rejects incompatible sampling and repeated row identities 0.0s
+  + renderer-neutral recipes enforce size and missing sample contracts 0.251s
+  + event timeline uses the current audit provenance 0.004s
+  + unequal runs and repeated labels retain distinct columns in a rank-deficient view 0.002s
+scalafim.fmri.design.event.EventResponseConvolutionSuite:
+  + event unit-peak normalization is per duration and retains duration receipts 0.001s
+  + overlapping events add and events do not leak across runs 0.001s
+  + final column scaling remains separate from event normalization 0.0s
+  + as-convolved is exactly the plain convolution and records no per-event scales 0.004s
+  + unit-peak honors the caller's precision and equals the plain path divided by one shared scale 0.007s
+  + multi-basis unit-peak scales each event and each basis by its own duration peak 0.093s
+  + unbounded-support kernels are truncated at span plus duration exactly as plain convolution 0.001s
+  + onsets before the run start follow the plain path's onset window under unit-peak 0.002s
+  + column event scales are kept per run: durations differing only between runs stay uniform within each run 0.001s
+  + events that reach none of their run's scans do not make a column mixed 0.003s
+  + invalid precision and amplitudes are typed errors rather than exceptions 0.001s
+scalafim.fmri.design.HrfGeneratorsSuite:
+  + duration HRF generator preserves zero-duration events and blocks positive durations 0.004s
+  + weighted HRF generator works with list columns 0.002s
+  + weighted HRF generator sees onset/duration/blockid and original list columns 0.001s
+  + hrf_fun generator respects subset= and is not called for empty terms 0.002s
+  + hrf_fun validation catches length mismatch and inconsistent nbasis 0.001s
+scalafim.fmri.design.DesignIdentitySuite:
+  + single-run, two-run and FIR structural identities have shared literal goldens 0.002s
+  + numeric audit fields retain literal IEEE-754 encodings 0.002s
+  + legacy column identities are incompatible and a one-ULP change retains distinct content identity 0.001s
+  + semantic basis identity ignores display names while legacy references retain theirs 0.001s
+  + realistic SPMG structural identity is distinct from its numerical content 0.002s
+scalafim.fmri.design.HrfKernelBasisSuite:
+  + compiles a certified basis within the rank budget 1.169s
+  + refuses when the budget cannot meet the tolerance 1.159s
+  + the kernel exposes the basis as a compact multi-column Hrf and ResponseBasis 0.007s
+  + kernel basis provenance has a platform-independent IEEE and string-framed golden 0.001s
+  + matrix identity is dimensions plus a portable FNV-1a digest of the IEEE bits 0.0s
+  + coefficient jets match finite differences and reconstruct within the certificate 0.001s
+  + compilation is deterministic 1.139s
+scalafim.fmri.design.scenarios.HeterogeneousHrfScenarioSuite:
+  + phase and cell HRFs agree with one independent continuous-time oracle 0.014s
+scalafim.fmri.design.ContrastSetGeneratorsSuite:
+  + pairwiseContrasts generates all pairs in order 0.001s
+  + oneAgainstAllContrasts weights 1 vs mean(other) 0.001s
+  + slidingWindowContrasts generates disjoint adjacent windows 0.001s
+scalafim.fmri.design.formula.EventExpressionsSuite:
+  + arithmetic and functions propagate missing numeric values 0.002s
+  + Kleene logic and filters retain only explicit true 0.001s
+  + type and level errors identify their expression path 0.001s
+  + comparison and membership require compatible scalar types 0.0s
+  + non-finite arithmetic is a typed error naming the row, never a missing value 0.002s
+  + round is half-to-even, matching R 4.5.1 round(x) 0.001s
+  + in uses Kleene semantics: a match wins over a missing candidate 0.0s
+  + type checking is static: it never depends on which rows are missing 0.001s
+  + ifelse evaluates each branch only on the rows that select it 0.001s
+  + a missing ifelse condition evaluates neither branch 0.0s
+  + & and | ignore errors on rows the left operand decides 0.001s
+  + a missing left operand of & still needs the right one, so its errors surface 0.0s
+  + nested guards: errors are reported only for rows active at the failing node 0.001s
+  + an infinite input is an error only on rows that reach the output 0.001s
+scalafim.fmri.design.IdRoundTripProbeSuite:
+  + a validated ColumnId round-trips its input 0.0s
+  + the typed lookup path finds what the untyped one finds 0.0s
+  + ColumnId is injective, so distinct columns stay distinct 0.001s
+  + the round-trip law holds for every id type 0.0s
+  + ids do reject the genuinely invalid 0.001s
+  + ids reject what they would otherwise have to rewrite 0.0s
+scalafim.fmri.design.SubsetBlockHrfFunSuite:
+  + EventModelBuilder parses block=~run and canonicalizes to 0-based ids 0.001s
+  + EventModelBuilder rejects decreasing block ids 0.0s
+  + EventModelBuilder applies subset= mask to realized EventTerm 0.002s
+  + EventModelBuilder supports per-onset HRF via hrf_fun generator 0.001s
+  + EventModelBuilder supports per-onset HRF via HRF list column 0.002s
+scalafim.fmri.design.EventOnsetSelectionSuite:
+  + explicit onset policy counts missing and run-boundary exclusions 0.005s
+  + run boundaries use each run's own TR: onset 0 is retained and the end is exclusive 0.0s
+  + RejectInvalid accepts all-valid input unchanged 0.0s
+  + dropped rows become design-audit exclusions only through the explicit helper 0.001s
+scalafim.fmri.design.DesignSchemaOwnershipSuite:
+  + compiled schema owns its input and exported matrix storage 0.0s
+  + relabeling and combining schemas cannot reopen matrix ownership 0.001s
+  + runwise slices retain the matrix bound to their coefficient axis 0.0s
+scalafim.fmri.design.EventModelBuilderParitySuite:
+  + hrf supports per-term onsets, durations, and prefix 0.002s
+  + phase and parent arguments retain source provenance in one formula 0.001s
+  + phase provenance retains structured parent-column errors 0.001s
+  + phase policy receipts retain the exact source trial identity 0.009s
+  + multiphase formula lowering is permutation stable and permits overlapping responses 0.006s
+  + phase construction rejects duplicate parents and strict invalid timing 0.002s
+  + hrf normalize scales convolved columns to unit maximum absolute value 0.002s
+  + fourier HRF basis is available through formula basis 0.001s
+  + structural HRF-by-cell assignments lower heterogeneous basis widths 0.004s
+  + heterogeneous HRF terms reject homogeneous legacy contrast expansion 0.005s
+  + HRF-by-cell assignments reject missing and extra structural cells 0.0s
+  + HRF-by-cell assignments cover declared empty cells without offsets 0.002s
+  + builder records degenerate continuous modulator diagnostics 0.001s
+  + builder records all-zero and non-finite continuous modulator diagnostics 0.001s
+  + ordered orthogonalization is explicit, ordered, and receipt-backed 0.004s
+  + ordered orthogonalization respects run scopes 0.002s
+  + degenerate modulator policies retain evidence or reject with a typed error 0.002s
+  + centering records an explicit empty-scope outcome 0.001s
+  + builder records the default zero-contribution missing-value policy 0.002s
+  + explicit centering policies retain scope and receipt evidence 0.008s
+  + centering excludes non-finite values from the reference before missing repair 0.001s
+  + centering is scoped after term subsetting and invariant to event-row permutation 0.001s
+  + builder rejects non-finite modulators when policy is Reject 0.001s
+  + builder applies an explicit imputation constant before convolution 0.001s
+  + builder reports a non-finite imputation constant as a typed error 0.0s
+  + builder drops missing events only from the selected term 0.001s
+  + declared factor levels give stable order and retain an explicit zero cell 0.003s
+  + declared factor levels make row permutation semantically invariant 0.001s
+  + declared factor levels reject unknown observations before convolution 0.001s
+  + Reject makes declared empty cells a typed compilation error 0.001s
+  + explicit empty-cell policies apply within each run partition 0.004s
+  + factor registries reject duplicate declared levels 0.001s
+  + Scala enums derive stable declared level order through the validated constructor 0.0s
+  + run factor schema bindings reject incompatible level declarations 0.003s
+  + bound run schemas are retained in multi-run factor audit evidence 0.002s
+  + declared registries can explicitly treat integer columns as factors 0.001s
+  + declared registries use stable text for double-coded factor values 0.001s
+  + builder records parametric basis repairs and strict mode promotes them to errors 0.003s
+  + builder reports all non-finite parametric basis inputs 0.002s
+  + builder records onset-bound diagnostics and strict mode promotes them to errors 0.003s
+  + onset-bound diagnostics respect per-block TR, length, and event duration 0.001s
+  + trialwise supports duration overrides 0.001s
+  + attached and F contrast keys use canonical interaction term key 0.001s
+scalafim.fmri.design.BasisSuite:
+  + Scale reports zero variance while legacy fit remains compatible 0.001s
+  + Standardized reports all non-finite values as a typed diagnostic 0.0s
+  + ScaleWithin reports group-scoped repairs 0.002s
+  + RobustScale strict policy rejects repaired fits 0.002s
+scalafim.fmri.design.ValidateSuite:
+  + Validate.validateContrasts: rank-deficient design marks non-estimable contrast 0.001s
+  + Validate.validateContrasts: detects intercept weights and sum-to-zero 0.0s
+  + Validate.validateContrasts: aligns weights by row names 0.001s
+  + Validate.validateContrasts: F contrasts report fullRank 0.0s
+  + Validate.checkCollinearity: flags highly correlated columns 0.002s
+scalafim.fmri.design.scenarios.MultiphaseProvenanceScenarioSuite:
+  + multiphase provenance scenario returns a clean public result 0.004s
+scalafim.fmri.design.ConvolvedContrastWeightsSuite:
+  + column contrast matches regex patterns 0.0s
+  + oneway produces Helmert weights and aligns to convolved columns 0.003s
+  + categorical contrasts align by column metadata before falling back to names 0.001s
+  + interaction 2x2 matches expected +/- pattern 0.0s
+scalafim.fmri.design.ConditionBasisListSuite:
+  + condition_basis_list splits matrix by condition 0.003s
+  + condition_basis_list matrix output matches convolve 0.001s
+  + condition_basis_list handles multi-basis FIR HRF 0.002s
+scalafim.fmri.design.TermCellsSuite:
+  + TermCells shortNames match R cells/shortnames ordering 0.0s
+  + TermCells dropEmpty drops unobserved combinations 0.0s
+scalafim.fmri.design.DesignGraphicsSuite:
+  + event plot exports build renderer-neutral graphics plots 0.038s
+  + event plot exports compile to panel scene with axes and legend guides 0.014s
+  + the DSL migration preserves the previous event scene exactly 0.014s
+  + event model helper composes design export errors with graphics errors 0.012s
+80x600 raster+SVG export median_ms=4.549041 max_ms=13.697792 bytes=257179
+scalafim.fmri.design.DesignMatrixRasterExportSuite:
+  + 80x600 SVG contains one bounded raster and reports actual warmed export time 0.244s
+80x600 raster build median_ms=0.560041 max_ms=0.609833
+scalafim.fmri.design.DesignMatrixRasterSuite:
+  + 80 by 600 matrix is one unpaged nearest-neighbour image with time down 0.011s
+  + raster construction has a reproducible bounded benchmark specimen 0.018s
+  + CSV sidecar contains identified raw values, never display-scaled values 0.002s
+  + CSV sidecar bytes are identical on every platform, including fractions, exponents and censored scans 0.0s
+  + CSV header quotes column ids and rejects ids that collide with sidecar columns 0.002s
+  + negative task values, muted non-task columns and censored scans render explicitly 0.001s
+scalafim.fmri.design.ModulatorPoliciesSuite:
+  + checked policy refinements hide identifier proof plumbing 0.001s
+  + modulators lower to sibling columns while ordinary arguments remain an interaction 0.003s
+  + whole-term ordered residualization agrees with the checked base-R receipt 0.002s
+  + within-cell residualization is permutation invariant after event identity alignment 0.003s
+  + raw degeneration has typed outcomes, identities, and a total rejection path 0.002s
+  + an empty selected modulator scope has an explicit typed receipt 0.0s
+scalafim.fmri.design.DesignExportsSuite:
+  + designTable and designMap expose matrix rows with metadata 0.007s
+  + correlationMap exports full and half matrix cells 0.001s
+  + eventPlotData groups traces within block and exports block boundaries 0.002s
+  + semantic selectors filter exports without relying on rendered column names 0.005s
+  + semantic selectors can select baseline exports by run 0.002s
+  + baselinePlotData selects first varying term and suppresses structural zero traces 0.002s
+  + contrastPlotData exports attached contrast weights in design-column space 0.004s
+  + Either export APIs report structured user errors 0.004s
+scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite:
+  + ordered within-cell modulator policy returns one clean scenario result 0.003s
+scalafim.fmri.design.ResponseBasisReviewSuite:
+  + canonical and derivative curves retain native coordinates and unnormalized values 0.007s
+  + FIR intervals and exact window weights do not depend on the display grid 0.008s
+  + derivative window functionals remain exact when display sampling changes 0.001s
+  + preview boundaries return typed errors for invalid budgets and custom kernels 0.005s
+  + renderer-neutral plots preserve selected identities and full readout receipts 0.1s
+  + current canonical amplitude, time derivative and dispersion retain independent reference values 0.001s
+[info] Passed: Total 447, Failed 0, Errors 0, Passed 447
+[[32msuccess[0m] elapsed: 15 s
+[0J[sbt-warm] designJVM/test: exit 0 in 15.5s
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/scenario-testkit/js/target/scala-3.7.4/classes ...
+[info] compiling 41 Scala sources to /private/tmp/scalafim-surface-visibility/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 61 Scala sources to /private/tmp/scalafim-surface-visibility/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 77 Scala sources to /private/tmp/scalafim-surface-visibility/modules/design/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/design/js/target/scala-3.7.4/scalafim-fmri-design-test-fastopt
+scalafim.fmri.design.ResponseBasisReviewSuite:
+  + canonical and derivative curves retain native coordinates and unnormalized values 0.008s
+  + FIR intervals and exact window weights do not depend on the display grid 0.003s
+  + derivative window functionals remain exact when display sampling changes 0.004s
+  + preview boundaries return typed errors for invalid budgets and custom kernels 0.001s
+  + renderer-neutral plots preserve selected identities and full readout receipts 0.110s
+  + current canonical amplitude, time derivative and dispersion retain independent reference values 0.000s
+scalafim.fmri.design.scenarios.MultiphaseProvenanceScenarioSuite:
+  + multiphase provenance scenario returns a clean public result 0.032s
+scalafim.fmri.design.scenarios.HeterogeneousHrfScenarioSuite:
+  + phase and cell HRFs agree with one independent continuous-time oracle 0.025s
+scalafim.fmri.design.TypedCoreSuite:
+  + EventSchedule validates typed event records 0.000s
+  + events expose typed ids without changing legacy tokens 0.000s
+  + BoundFormula binds typed column, basis, and contrast refs 0.001s
+  + DataTable typed accessors report missing and mistyped columns as DesignError 0.000s
+  + FormulaParser parseEither and EventDesignRequest build a model without exceptions 0.002s
+  + EventModelBuilder buildEither returns DesignError on bad formula inputs 0.001s
+  + EventModelBuilder buildEither exposes staged typed compiler errors 0.004s
+scalafim.fmri.design.event.EventResponseConvolutionSuite:
+  + event unit-peak normalization is per duration and retains duration receipts 0.002s
+  + overlapping events add and events do not leak across runs 0.001s
+  + final column scaling remains separate from event normalization 0.000s
+  + as-convolved is exactly the plain convolution and records no per-event scales 0.013s
+  + unit-peak honors the caller's precision and equals the plain path divided by one shared scale 0.011s
+  + multi-basis unit-peak scales each event and each basis by its own duration peak 0.162s
+  + unbounded-support kernels are truncated at span plus duration exactly as plain convolution 0.001s
+  + onsets before the run start follow the plain path's onset window under unit-peak 0.001s
+  + column event scales are kept per run: durations differing only between runs stay uniform within each run 0.001s
+  + events that reach none of their run's scans do not make a column mixed 0.002s
+  + invalid precision and amplitudes are typed errors rather than exceptions 0.000s
+scalafim.fmri.design.IdRoundTripProbeSuite:
+  + a validated ColumnId round-trips its input 0.000s
+  + the typed lookup path finds what the untyped one finds 0.000s
+  + ColumnId is injective, so distinct columns stay distinct 0.000s
+  + the round-trip law holds for every id type 0.000s
+  + ids do reject the genuinely invalid 0.000s
+  + ids reject what they would otherwise have to rewrite 0.000s
+scalafim.fmri.design.DesignSchemaOwnershipSuite:
+  + compiled schema owns its input and exported matrix storage 0.000s
+  + relabeling and combining schemas cannot reopen matrix ownership 0.001s
+  + runwise slices retain the matrix bound to their coefficient axis 0.001s
+scalafim.fmri.design.HrfKernelBasisSuite:
+  + compiles a certified basis within the rank budget 1.286s
+  + refuses when the budget cannot meet the tolerance 1.176s
+  + the kernel exposes the basis as a compact multi-column Hrf and ResponseBasis 0.002s
+  + kernel basis provenance has a platform-independent IEEE and string-framed golden 0.000s
+  + matrix identity is dimensions plus a portable FNV-1a digest of the IEEE bits 0.000s
+  + coefficient jets match finite differences and reconstruct within the certificate 0.001s
+  + compilation is deterministic 1.326s
+scalafim.fmri.design.DesignSchemaSuite:
+  + built event models retain structural cell and basis provenance 0.003s
+  + event provenance records the observed run and multi-run terms remain global 0.001s
+  + combining event and baseline schemas retains event provenance 0.000s
+  + fingerprints are deterministic and respond to semantic, row, and matrix changes 0.000s
+  + validated schemas compute scale-aware structural rank previews 0.000s
+  + schema validation returns typed errors for shape and identity violations 0.000s
+  + coefficient axes select structural columns without changing design identity 0.000s
+  + runwise coefficient axes lower global families to an inspectable run identity 0.001s
+  + legacy axes do not claim a runwise structural identity 0.000s
+  + runwise slices retain an explicit censored-row selection 0.000s
+  + runwise projections exclude zero-support nuisance and empty shared columns 0.000s
+  + built baseline models retain run-scoped structural origins 0.002s
+  + event-response transport divisors are per run, strict across runs, and refuse ambiguous receipts 0.000s
+scalafim.fmri.design.ModelJsonCodecSuite:
+  + formula JSON round trip retains all argument types 0.005s
+  + HRF JSON round trip preserves physical parameters and normalization 0.002s
+  + typed contrast JSON preserves selectors and basis weighting 0.002s
+  + difference and mask contrasts round trip 0.001s
+  + callbacks, unknown versions and unknown fields fail explicitly 0.001s
+  + typed derived declarations and run-combination policy round trip 0.003s
+  + encoded numbers are byte-identical across platforms 0.001s
+  + structural JSON errors report the real path 0.001s
+  + nested contrast errors name the nested path 0.001s
+  + ids are never trimmed: non-canonical or empty ids fail on both sides 0.000s
+  + pattern contrasts round trip by pattern source 0.001s
+scalafim.fmri.design.DesignColmapSuite:
+  + designColmap(event) includes HRF basis metadata and covariate modulation 0.005s
+  + EventModelBuilder supports hrf(Scale(rt)) and yields parametric metadata 0.002s
+  + EventModelBuilder supports trialwise() with optional mean column 0.004s
+  + designColmap(baseline) includes drift/intercept roles and run ids 0.001s
+scalafim.fmri.design.DctDriftSuite:
+  + cutoff counts include the endpoint and exclude the constant 0.000s
+  + invalid periods and excessive finite-grid requests fail explicitly 0.000s
+  + four-scan drift matches independent radical entries and a separate intercept 0.001s
+  + mixed scan counts and TRs have variable run-local column spans and stable identities 0.002s
+  + empty drift bases preserve rows and explicit runwise, global or absent intercepts 0.001s
+  + censoring selects original scan positions and acquisition-time identity 0.002s
+  + supplied cosine confounds use the existing explicit alias policy 0.002s
+  + the documented typed plan builds and legacy names remain unchanged 0.002s
+scalafim.fmri.design.DesignReviewSuite:
+  + review keeps original scan identity, acquisition time and excluded samples 0.001s
+  + source review includes structurally omitted and zero columns 0.000s
+  + review rejects incompatible sampling and repeated row identities 0.000s
+  + renderer-neutral recipes enforce size and missing sample contracts 0.005s
+  + event timeline uses the current audit provenance 0.001s
+  + unequal runs and repeated labels retain distinct columns in a rank-deficient view 0.001s
+scalafim.fmri.design.RParityCorpusSuite:
+  + R parity corpus: event interaction design, metadata, and contrasts 0.004s
+  + R parity corpus: SPMG3 multi-basis HRF design 0.003s
+  + R parity corpus: two-condition SPMG3 uses scalafim basis-major value ordering 0.008s
+  + R parity corpus: fully crossed 2x2 SPMG3 structural design 0.009s
+  + R parity corpus: subset expression drops empty condition columns 0.003s
+  + R parity corpus: trialwise add_sum matrix 0.002s
+  + R parity corpus: hrf_fun weighted per-event HRF design 0.002s
+  + R parity corpus: constant runwise baseline matrix 0.000s
+  + R parity corpus: nuisance drop baseline matrix 0.001s
+scalafim.fmri.design.ObservedModulatorSuite:
+  + by-cell centering uses observed values and one pooled within-cell scale (n - k) 0.001s
+  + z-scoring without centering records the global centering it applies 0.000s
+  + a single observed value or constant values make a degenerate partition 0.000s
+  + near-constant cells of non-representable values are degenerate under a relative tolerance 0.000s
+  + drop and zero retain their distinct source-row contracts 0.000s
+  + zero policy needs centering unless z-score supplies global centering 0.000s
+  + reject, unsupported imputation, and degenerate scales are explicit 0.000s
+  + finite inputs that overflow aggregate receipts fail explicitly 0.000s
+  + frozen grid receipts retain their source provenance and expected run summaries 0.000s
+  + all frozen stop-modulator grid states have independently recomputed partition summaries 0.024s
+scalafim.fmri.design.ConditionBasisListSuite:
+  + condition_basis_list splits matrix by condition 0.001s
+  + condition_basis_list matrix output matches convolve 0.001s
+  + condition_basis_list handles multi-basis FIR HRF 0.003s
+scalafim.fmri.design.EventPhaseSuite:
+  + phase lowering retains parent rows and structural phase identities 0.002s
+  + multiphase lowering rejects silently misaligned source rows 0.000s
+  + phase schedules reject duplicate source rows 0.000s
+  + phase schedules reject duplicate parent trial identities 0.000s
+scalafim.fmri.design.formula.EventExpressionsSuite:
+  + arithmetic and functions propagate missing numeric values 0.001s
+  + Kleene logic and filters retain only explicit true 0.000s
+  + type and level errors identify their expression path 0.000s
+  + comparison and membership require compatible scalar types 0.000s
+  + non-finite arithmetic is a typed error naming the row, never a missing value 0.000s
+  + round is half-to-even, matching R 4.5.1 round(x) 0.000s
+  + in uses Kleene semantics: a match wins over a missing candidate 0.000s
+  + type checking is static: it never depends on which rows are missing 0.000s
+  + ifelse evaluates each branch only on the rows that select it 0.001s
+  + a missing ifelse condition evaluates neither branch 0.000s
+  + & and | ignore errors on rows the left operand decides 0.000s
+  + a missing left operand of & still needs the right one, so its errors surface 0.000s
+  + nested guards: errors are reported only for rows active at the failing node 0.001s
+  + an infinite input is an error only on rows that reach the output 0.000s
+scalafim.fmri.design.EventModelSuite:
+  + basic event model creation works 0.001s
+  + feature and basis suffixes combine in convolve 0.000s
+  + convolve does not evaluate an HRF for an explicit all-zero column 0.000s
+  + convolve prepares one shared HRF kernel across conditions and blocks 0.000s
+  + EventModel rejects term metadata that does not match matrix columns 0.000s
+  + ConvolvedTerm rejects explicit column roles that do not match matrix columns 0.000s
+scalafim.fmri.design.HrfGeneratorsSuite:
+  + duration HRF generator preserves zero-duration events and blocks positive durations 0.003s
+  + weighted HRF generator works with list columns 0.002s
+  + weighted HRF generator sees onset/duration/blockid and original list columns 0.001s
+  + hrf_fun generator respects subset= and is not called for empty terms 0.002s
+  + hrf_fun validation catches length mismatch and inconsistent nbasis 0.001s
+scalafim.fmri.design.ValidateSuite:
+  + Validate.validateContrasts: rank-deficient design marks non-estimable contrast 0.001s
+  + Validate.validateContrasts: detects intercept weights and sum-to-zero 0.000s
+  + Validate.validateContrasts: aligns weights by row names 0.000s
+  + Validate.validateContrasts: F contrasts report fullRank 0.000s
+  + Validate.checkCollinearity: flags highly correlated columns 0.000s
+scalafim.fmri.design.WeightedContrastDiagnosticsSuite:
+  + known unequal run sigmas give inverse-variance weighting for t and F 0.004s
+  + empty task run is reported and never supplies invented information 0.001s
+  + a non-default rank policy is honoured by weighted combinations 0.001s
+scalafim.fmri.design.ErrorFidelityProbeSuite:
+  + a missing column reports the MissingColumn case that exists for it 0.000s
+  + column-shape mistakes name the column, what was expected, and what was found 0.000s
+  + an unknown basis call reports the call and what the formula grammar knows 0.000s
+  + the paths that were already structured stay structured 0.003s
+  + no realistic user mistake degrades to the stringly catch-all 0.002s
+scalafim.fmri.design.ContrastRegistrySuite:
+  + EventModelBuilder attaches contrasts= and validateAttachedContrasts checks them 0.003s
+scalafim.fmri.design.DesignDiagnosticsSuite:
+  + VIF, separate block R2, and joint coefficients match the independent orthonormal fixture 0.002s
+  + duplicate predictors make only the dependent target aliased 0.001s
+  + a finite near-collinear VIF is formed from the projection residual 0.000s
+  + wide selected designs use a minimum-norm, nonunique joint fit 0.001s
+  + blocks and row selections are validated against schema identities 0.000s
+  + a constant column that is not exactly representable is degenerate, not a finite VIF 0.003s
+scalafim.fmri.design.PolySuite:
+  + Poly.fit matches stats::poly for x=0:4, degree=2 (R 4.5.1) 0.001s
+scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite:
+  + ordered within-cell modulator policy returns one clean scenario result 0.005s
+scalafim.fmri.design.PortableNumberSuite:
+  + integral, fractional and exponent forms are identical on every platform 0.001s
+  + formatted text round-trips to the same double 0.000s
+  + non-finite values are rejected 0.000s
+scalafim.fmri.design.FormulaResponsePolicySuite:
+  + event_normalization = as-convolved is exactly the omitted option, at any precision 0.015s
+  + formula unit-peak honors BuildOptions precision and records per-column event scales in the audit 0.012s
+  + formula orthogonalize = TRUE is SPM-like: per run and cell, against an intercept and earlier modulators 0.003s
+  + formula orthogonalize = TRUE centres and residualizes observed rows only; zero-filled rows stay at the reference 0.002s
+  + an observed modulator with one event in a run yields an explicit degenerate receipt 0.002s
+  + the missing-value receipt reports per-modulator observed policies, not only the default 0.001s
+  + shared slopes produce the numerical main-effect and pooled slope columns 0.003s
+scalafim.fmri.design.ConvolvedContrastWeightsSuite:
+  + column contrast matches regex patterns 0.001s
+  + oneway produces Helmert weights and aligns to convolved columns 0.001s
+  + categorical contrasts align by column metadata before falling back to names 0.001s
+  + interaction 2x2 matches expected +/- pattern 0.000s
+scalafim.fmri.design.EventModelBuilderParitySuite:
+  + hrf supports per-term onsets, durations, and prefix 0.001s
+  + phase and parent arguments retain source provenance in one formula 0.001s
+  + phase provenance retains structured parent-column errors 0.000s
+  + phase policy receipts retain the exact source trial identity 0.002s
+  + multiphase formula lowering is permutation stable and permits overlapping responses 0.006s
+  + phase construction rejects duplicate parents and strict invalid timing 0.001s
+  + hrf normalize scales convolved columns to unit maximum absolute value 0.001s
+  + fourier HRF basis is available through formula basis 0.001s
+  + structural HRF-by-cell assignments lower heterogeneous basis widths 0.002s
+  + heterogeneous HRF terms reject homogeneous legacy contrast expansion 0.002s
+  + HRF-by-cell assignments reject missing and extra structural cells 0.000s
+  + HRF-by-cell assignments cover declared empty cells without offsets 0.002s
+  + builder records degenerate continuous modulator diagnostics 0.001s
+  + builder records all-zero and non-finite continuous modulator diagnostics 0.001s
+  + ordered orthogonalization is explicit, ordered, and receipt-backed 0.002s
+  + ordered orthogonalization respects run scopes 0.001s
+  + degenerate modulator policies retain evidence or reject with a typed error 0.001s
+  + centering records an explicit empty-scope outcome 0.002s
+  + builder records the default zero-contribution missing-value policy 0.001s
+  + explicit centering policies retain scope and receipt evidence 0.008s
+  + centering excludes non-finite values from the reference before missing repair 0.001s
+  + centering is scoped after term subsetting and invariant to event-row permutation 0.001s
+  + builder rejects non-finite modulators when policy is Reject 0.000s
+  + builder applies an explicit imputation constant before convolution 0.001s
+  + builder reports a non-finite imputation constant as a typed error 0.000s
+  + builder drops missing events only from the selected term 0.001s
+  + declared factor levels give stable order and retain an explicit zero cell 0.002s
+  + declared factor levels make row permutation semantically invariant 0.002s
+  + declared factor levels reject unknown observations before convolution 0.000s
+  + Reject makes declared empty cells a typed compilation error 0.000s
+  + explicit empty-cell policies apply within each run partition 0.002s
+  + factor registries reject duplicate declared levels 0.000s
+  + Scala enums derive stable declared level order through the validated constructor 0.000s
+  + run factor schema bindings reject incompatible level declarations 0.000s
+  + bound run schemas are retained in multi-run factor audit evidence 0.001s
+  + declared registries can explicitly treat integer columns as factors 0.001s
+  + declared registries use stable text for double-coded factor values 0.001s
+  + builder records parametric basis repairs and strict mode promotes them to errors 0.001s
+  + builder reports all non-finite parametric basis inputs 0.001s
+  + builder records onset-bound diagnostics and strict mode promotes them to errors 0.001s
+  + onset-bound diagnostics respect per-block TR, length, and event duration 0.001s
+  + trialwise supports duration overrides 0.001s
+  + attached and F contrast keys use canonical interaction term key 0.002s
+scalafim.fmri.design.EventTrialSummarySuite:
+  + phase summaries retain term, categorical cell, run, duration and explicit parent offsets 0.001s
+  + phased terms refuse absent, duplicate, and missing parent timing 0.000s
+  + ordinary event terms remain useful without invented trial timing 0.000s
+  + unphased provenance is validated but does not demand parent timing 0.000s
+  + inconsistent phase provenance is rejected before aggregation 0.000s
+  + m7b's five synthetic studies retain their generated event ribbons 0.056s
+  + terms sharing a tag are summarized under the model's unique term keys 0.001s
+  + parent timing is keyed by run and measured on each run's own clock 0.001s
+  + a phase earlier than its parent onset is rejected, including global-clock parent timing 0.001s
+scalafim.fmri.design.DesignGraphicsSuite:
+  + event plot exports build renderer-neutral graphics plots 0.005s
+  + event plot exports compile to panel scene with axes and legend guides 0.003s
+  + the DSL migration preserves the previous event scene exactly 0.006s
+  + event model helper composes design export errors with graphics errors 0.003s
+scalafim.fmri.design.ContrastSpecSuite:
+  + ContrastSpec.ContrastSet evaluates against a ConvolvedTerm 0.001s
+  + ContrastSpec.Mask builds weights from logical masks 0.000s
+  + typed pair selector compiles to the same weights as predicate pair 0.001s
+  + typed selector reports missing factors without throwing 0.000s
+  + ContrastSet.compileEither rejects duplicate names 0.000s
+  + ContrastSpec difference subtracts two contrast specs 0.001s
+  + ContrastSpec set generators build specs without a term 0.000s
+  + translateLegacyPattern matches R helper examples 0.000s
+scalafim.fmri.design.ContrastDiagnosticsSuite:
+  + frozen gamble design loses eight residual degrees of freedom for eight independent spikes 0.043s
+  + duplicate columns retain estimable sums and reject their difference 0.001s
+  + F worst direction is invariant to rescaling, duplicate rows, reordering, and mixing 0.001s
+  + concatenated task information ignores a wholly nuisance-confounded run 0.001s
+  + preflight rejects a design with no residual degrees of freedom 0.000s
+  + preflight uses numerical rank while the column budget remains an explicit guard 0.000s
+  + high-pass comparison rejects a changed retained column 0.001s
+  + exact m2b raw matrices reproduce the independently recomputed row-orthonormalized F efficiencies 0.073s
+  + exact m2b DMS matrices reproduce fixed-effects probe-minus-sample efficiency 0.009s
+  + exact m3 and m4 raw duplicate matrices retain the documented rank-deficient receipts 0.020s
+  + tiny supported columns and tiny residual task information remain estimable under the rank policy 0.000s
+  + rank preflight validates selected scan identities before matrix access 0.000s
+  + rank policies are values, and separately constructed equal policies combine 0.001s
+  + a non-default rank policy changes rank and estimability decisions 0.000s
+  + a zero column is reported as dropped before aliasing, also across runs 0.000s
+  + fixed effects recomputes each run, so equivalent contrast spellings combine identically 0.000s
+  + an F contrast partly outside the row space is aliased along its worst direction 0.000s
+  + nearly dependent F rows keep their span by default and collapse under a coarse policy 0.000s
+  + concatenated task F matches the independent residualized-information oracle 0.001s
+  + high-pass F variance ratio is pinned to the without-cosines worst direction 0.000s
+  + heterogeneous run sigmas match the independent fixed-effects oracle for t and F 0.009s
+scalafim.fmri.design.ExtensionRegistrySuite:
+  + BasisRegistry exposes built-in basis metadata 0.000s
+  + custom basis metadata is reflected in designColmap 0.001s
+  + formula term tags use basis registry prefixes 0.002s
+  + HrfBasisRegistry labels built-in and custom HRF bases 0.000s
+  + ExternalHrfSpecRegistry supports Scala-native extension introspection 0.000s
+scalafim.fmri.design.TrialwiseFormulaSuite:
+  + trialwise options parse and print losslessly 0.002s
+  + trialwise uses selected timing and preserves run-qualified phase provenance 0.002s
+  + trialwise identity is local to each run and rejects duplicates within a run 0.002s
+  + trialwise id uniqueness is checked on the rows the subset retains 0.002s
+  + numeric trialwise ids have byte-identical text on every platform 0.001s
+  + binding ignores modulator option names while still binding its source 0.001s
+  + expression printer uses the formula expression grammar 0.000s
+scalafim.fmri.design.ContrastSetGeneratorsSuite:
+  + pairwiseContrasts generates all pairs in order 0.001s
+  + oneAgainstAllContrasts weights 1 vs mean(other) 0.000s
+  + slidingWindowContrasts generates disjoint adjacent windows 0.001s
+scalafim.fmri.design.FormulaGrammarSuite:
+  + all-events constant creates one stream and round-trips 0.002s
+  + kernel normalization preserves relative event counts and differs from column normalization 0.004s
+  + span and normalization validate instead of silently changing custom kernels 0.001s
+  + explicit main plus modulators retains distinct column provenance 0.003s
+  + formula serial orthogonalization is ordered within each run 0.002s
+  + centered product modulators retain component identity and center after row selection 0.003s
+  + shared slopes retain categorical main effects and one slope stream 0.002s
+  + derivative-basis orthogonalization is post-convolution and auditable 0.005s
+  + portable run scaling aliases lower through observed-modulator policy 0.003s
+  + subset negation and inequality do not retain missing numeric rows 0.002s
+  + arithmetic precedence, signed literals, and Unicode operators round-trip 0.001s
+  + per-modulator observed policies apply after subset and to the entire paired term 0.005s
+  + temporal conventions and duration normalization are explicit and portable 0.012s
+scalafim.fmri.design.ResidualizeSuite:
+  + Residualize: y=x^2 residualized on (1, x) matches known residuals 0.000s
+  + Residualize: rank-deficient design uses rank, not ncol 0.000s
+  + Residualize: empty design returns data unchanged 0.000s
+  + Residualize: column subset works 0.000s
+scalafim.fmri.design.EventOnsetSelectionSuite:
+  + explicit onset policy counts missing and run-boundary exclusions 0.001s
+  + run boundaries use each run's own TR: onset 0 is retained and the end is exclusive 0.000s
+  + RejectInvalid accepts all-valid input unchanged 0.000s
+  + dropped rows become design-audit exclusions only through the explicit helper 0.000s
+scalafim.fmri.design.ModulatorPoliciesSuite:
+  + checked policy refinements hide identifier proof plumbing 0.001s
+  + modulators lower to sibling columns while ordinary arguments remain an interaction 0.009s
+  + whole-term ordered residualization agrees with the checked base-R receipt 0.003s
+  + within-cell residualization is permutation invariant after event identity alignment 0.004s
+  + raw degeneration has typed outcomes, identities, and a total rejection path 0.003s
+  + an empty selected modulator scope has an explicit typed receipt 0.001s
+scalafim.fmri.design.BaselineModelSuite:
+  + baseline_model: 1 block, bs degree=5 0.001s
+  + baseline_model: 1 block, ns df=5 0.002s
+  + baseline_model: 1 block, bs degree=5 with nuisance list 0.005s
+  + baseline_model: 2 blocks, bs degree=5 0.005s
+  + baseline_model: 2 blocks, global intercept 0.001s
+  + baseline_model: 2 blocks with nuisance list 0.002s
+  + baseline_model: basis='constant' 0.001s
+  + checkNuisance reports zero-variance, duplicates, and baseline aliasing 0.001s
+  + baseline_model default warning policy records report and keeps nuisance columns 0.000s
+  + baseline_model can error on nuisance rank problems 0.000s
+  + BaselineModel Either APIs expose structured baseline and nuisance errors 0.001s
+  + baseline_model can drop nuisance columns that do not increase rank 0.000s
+  + BaselinePlan builds through typed nuisance policy 0.001s
+  + cleanNuisance returns cleaned matrices and an audit report 0.000s
+  + naAction zero retains a leading missing confound that default drop removes 0.000s
+  + naAction median imputes the column median 0.000s
+  + naAction repair leaves infinite corruption subject to dropping 0.001s
+  + all-missing nuisance columns become zero-variance under naAction zero 0.000s
+  + naAction repairs missing values even when nuisance checks are disabled 0.000s
+scalafim.fmri.design.KernelBasisDesignSuite:
+  + the expanded condition design contracts to the direct family design at a shape 1.241s
+  + precision must match the basis grid 0.000s
+  + trial lowering aggregates to the condition design under one-hot membership 0.008s
+  + membership validation 0.000s
+  + interleaved complete records retain trial columns, membership and reversible event-row identity 0.007s
+  + trial lowering normalizes empty defaults and returns typed malformed-record failures 0.003s
+  + declared trial levels retain numeric input order beyond four-digit labels without a large design 0.017s
+scalafim.fmri.design.TermCellsSuite:
+  + TermCells shortNames match R cells/shortnames ordering 0.001s
+  + TermCells dropEmpty drops unobserved combinations 0.000s
+scalafim.fmri.design.ContrastWeightsSuite:
+  + pair contrast respects where clause 0.000s
+  + unit contrast allows where subsetting 0.000s
+  + poly contrast respects where clause 0.000s
+  + pair contrast basis filtering keeps only selected bases 0.000s
+  + basis weights reject negative and non-finite values 0.000s
+scalafim.fmri.design.SubsetBlockHrfFunSuite:
+  + EventModelBuilder parses block=~run and canonicalizes to 0-based ids 0.001s
+  + EventModelBuilder rejects decreasing block ids 0.000s
+  + EventModelBuilder applies subset= mask to realized EventTerm 0.001s
+  + EventModelBuilder supports per-onset HRF via hrf_fun generator 0.001s
+  + EventModelBuilder supports per-onset HRF via HRF list column 0.001s
+scalafim.fmri.design.NamesSuite:
+  + zeroPad matches R tests 0.000s
+  + sanitize matches R tests 0.000s
+  + basisSuffix matches R tests 0.000s
+  + featureSuffix basic 0.000s
+  + makeUniqueTags matches R tests 0.000s
+  + levelToken matches R tests 0.000s
+  + addBasis matches R tests ordering 0.000s
+  + makeColumnNames composes names 0.000s
+scalafim.fmri.design.BasisSuite:
+  + Scale reports zero variance while legacy fit remains compatible 0.000s
+  + Standardized reports all non-finite values as a typed diagnostic 0.000s
+  + ScaleWithin reports group-scoped repairs 0.000s
+  + RobustScale strict policy rejects repaired fits 0.000s
+scalafim.fmri.design.HeterogeneousHrfSuite:
+  + phase assignments are exhaustive and derive cardinality from assigned bases 0.005s
+  + phase assignment coverage reports missing and extra phases together 0.000s
+  + declared empty cells retain their assigned widths 0.002s
+  + cell assignment coverage reports missing and extra declared cells together 0.001s
+  + unscoped cell assignments cannot silently govern several HRF terms 0.000s
+  + canonical informed FIR spline Fourier and custom bases coexist deterministically 0.019s
+  + scan-space scaling is named, exact, and preserved in structural identity 0.004s
+  + unit-maximum scaling remains exact for small nonzero columns 0.000s
+scalafim.fmri.design.scenarios.MixedTrMultirunScenarioSuite:
+  + mixed-TR multi-run design preserves run-local sampling, baselines, and condition columns 0.004s
+scalafim.fmri.design.FContrastsSuite:
+  + FContrasts.forConvolvedTerm: single factor uses contr.sum 0.001s
+  + FContrasts.forConvolvedTerm: 3x2 ordering matches event cell order 0.001s
+  + FContrasts.forConvolvedTerm: replicates weights across basis 0.000s
+  + FContrasts reports expected generation failures without throwing 0.000s
+  + EventModel.validateAllContrasts validates attached + F-contrasts 0.002s
+scalafim.fmri.design.IncrementalDesignSuite:
+  + one-term edit recompiles exactly one term and matches full compilation including identity 0.006s
+  + exposed legacy matrix buffers cannot corrupt a later cache hit 0.002s
+  + unchanged context avoids repeated convolution and retains bounded cache 0.002s
+12-term build median_ms incremental=3.774 full=5.270584
+  + incremental and full build performance compare equivalent twelve-term designs 0.267s
+  + trialwise, covariate and subset terms recompile incrementally exactly as a full build 0.021s
+  + a TermCall repeated within one formula matches full compilation 0.004s
+  + changing the onset column rebuilds every term and equals full recompilation 0.004s
+scalafim.fmri.design.ConvolvedBasisOrthogonalizationSuite:
+  + per-event HRF assignments cannot claim a shared transformed response 0.002s
+  + receipts distinguish original scaling policies with equal divisors 0.002s
+  + global basis transform records scaled serial projection and effective HRFs 0.001s
+  + a collinear basis column is a typed error, not a silently zeroed column 0.001s
+  + a cell whose events all fall outside the scan window is kept with rank 0 and an identity transform 0.001s
+  + FIR and B-spline groups with more than two columns are serially orthogonalized with full rank 0.002s
+  + a broadcast per-event HRF is a shared kernel and can be orthogonalized 0.001s
+  + group-specific effective HRFs are per column; the term HRF stays the source kernel 0.001s
+  + tiny nonzero collinear columns are refused rather than recorded as an exact-zero group 0.000s
+  + tiny and huge non-collinear columns orthogonalize at full rank 0.001s
+  + huge collinear columns are refused rather than accepted through an overflowed norm 0.000s
+  + a genuinely zero basis group keeps rank 0 and the identity transform 0.000s
+  + a tiny earlier reference is not truncated away: the result is orthogonal at full rank 0.000s
+scalafim.fmri.design.CovariateSuite:
+  + CovariateSpec.construct validates sampling frame row count 0.000s
+  + EventModel.buildTerms can mix convolved and covariate terms 0.001s
+scalafim.fmri.design.FormulaPrinterSuite:
+  + canonical formula round trip 0 0.001s
+  + canonical formula round trip 1 0.002s
+  + canonical formula round trip 2 0.001s
+  + canonical formula round trip 3 0.002s
+  + canonical formula round trip 4 0.002s
+  + printer preserves explicit defaults, signed values and string escapes 0.000s
+  + quoted identifiers preserve punctuation and reserved names 0.000s
+  + source spans address original arguments including nested calls 0.000s
+  + semantic argument errors point to the offending argument 0.000s
+  + nonrepresentable typed formula fails explicitly 0.000s
+  + source spans cover comparison, logical and unary operands 0.000s
+  + numbers print byte-identically on JVM and JS 0.002s
+  + non-finite literals are reported, not thrown, by the safe printers 0.000s
+  + adversarial expressions round trip through print and parse 0.295s
+  + negation follows R precedence: below comparison, above & and | 0.000s
+  + positional and conflict errors point at the offending argument 0.000s
+scalafim.fmri.design.SpmInformedDesignColumnSuite:
+  + an impulse realizes the SPM kernel samples at scan times, including the 25-32 s tail 0.004s
+  + a short boxcar realizes the SPM kernel convolved with the drive, including the tail 0.002s
+scalafim.fmri.design.PortableNamingSuite:
+  + numeric factor levels name columns identically on every platform 0.002s
+scalafim.fmri.design.formula.DerivedEventsSuite:
+  + declaration identifiers use the portable formula lexer 0.001s
+  + typed declarations round trip and compose with missing text and logical values 0.002s
+  + declarations reject overwrites, forward references, wrong types and invalid levels 0.001s
+  + type-7 quantiles use observed pooled values and explicit left-closed cuts 0.001s
+  + binned derived factors parse and keep missing values outside every bin 0.001s
+  + derived columns validate printability at construction, so text is total 0.000s
+  + declared types are checked statically, even for entirely missing sources 0.000s
+  + division by zero in a derived column is an error, not a missing value 0.000s
+  + bin breaks print identically on every platform 0.000s
+  + guarded derived declarations evaluate only the selected branch 0.001s
+scalafim.fmri.design.FormulaParserSuite:
+  + FormulaParser parses hrf + covariate calls 0.000s
+  + FormulaParser parses parametric basis calls in hrf vars 0.000s
+  + FormulaParser retains an ordered additive modulator family 0.000s
+  + FormulaParser parses trialwise() 0.000s
+  + FormulaParser parses subset= and hrf_fun= in hrf() 0.000s
+  + FormulaParser parses contrasts= in hrf() 0.000s
+  + FormulaParser parses R hrf parity arguments 0.000s
+  + FormulaParser parses phase provenance arguments 0.000s
+  + FormulaParser rejects incomplete phase provenance 0.000s
+  + FormulaParser parses trialwise durations and normalize 0.000s
+  + FormulaParser parses named HRF column scaling and rejects conflicting compatibility syntax 0.000s
+  + FormulaParser validates named arguments through shared term schemas 0.000s
+scalafim.fmri.design.NaturalSplineSuite:
+  + NSpline.fit matches splines::ns for x=1:10, df=4 (R 4.5.1) 0.001s
+  + NSpline.predict reproduces training design matrix 0.000s
+scalafim.fmri.design.DesignIdentitySuite:
+  + single-run, two-run and FIR structural identities have shared literal goldens 0.002s
+  + numeric audit fields retain literal IEEE-754 encodings 0.000s
+  + legacy column identities are incompatible and a one-ULP change retains distinct content identity 0.001s
+  + semantic basis identity ignores display names while legacy references retain theirs 0.001s
+  + realistic SPMG structural identity is distinct from its numerical content 0.001s
+scalafim.fmri.design.DesignExportsSuite:
+  + designTable and designMap expose matrix rows with metadata 0.002s
+  + correlationMap exports full and half matrix cells 0.002s
+  + eventPlotData groups traces within block and exports block boundaries 0.001s
+  + semantic selectors filter exports without relying on rendered column names 0.001s
+  + semantic selectors can select baseline exports by run 0.001s
+  + baselinePlotData selects first varying term and suppresses structural zero traces 0.001s
+  + contrastPlotData exports attached contrast weights in design-column space 0.002s
+  + Either export APIs report structured user errors 0.002s
+scalafim.fmri.design.DesignMatrixRasterSuite:
+  + 80 by 600 matrix is one unpaged nearest-neighbour image with time down 0.032s
+80x600 raster build median_ms=1.911958 max_ms=2.108625
+  + raster construction has a reproducible bounded benchmark specimen 0.058s
+  + CSV sidecar contains identified raw values, never display-scaled values 0.001s
+  + CSV sidecar bytes are identical on every platform, including fractions, exponents and censored scans 0.000s
+  + CSV header quotes column ids and rejects ids that collide with sidecar columns 0.001s
+  + negative task values, muted non-task columns and censored scans render explicitly 0.000s
+[info] Passed: Total 446, Failed 0, Errors 0, Passed 446
+[[32msuccess[0m] elapsed: 21 s
+[0J[sbt-warm] designJS/test: exit 0 in 21.6s
+[info] compiling 6 Scala sources to /private/tmp/scalafim-surface-visibility/modules/image-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surface-visibility/modules/image-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.062s
+  + panel fitting preserves physical slice aspect on a non-square device 0.003s
+  + orthogonal layouts support checked row and column arrangements 0.005s
+  + heterogeneous layers sample in world space and retain draw order 0.003s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.003s
+  + crosshairs and orientation labels are explicit removable decorations 0.003s
+  + left-right convention changes labels and raster orientation together 0.003s
+  + viewer models reject empty and duplicate layer sets 0.001s
+scalafim.image.view.ViewerModelUpdateSuite:
+  + partial reorder preserves unmentioned layers and rejects unknown/duplicate ids 0.002s
+  + reorder changes compositing sequence while every unchanged raster stays cached 0.006s
+  + typed replacement changes pixels without stale color-bound sample reuse 0.004s
+  + session validation refuses unsupported presentation rather than silently dropping it 0.003s
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.0s
+  + panel picking is an exact root-npc to world-space roundtrip 0.003s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.001s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.003s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.005s
+  + timepoint actions drive temporal layers while static overlays persist 0.027s
+  + models reject temporal layers with incompatible frame counts 0.0s
+  + resize changes only device layout and reduction is deterministic 0.003s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.004s
+  + lazy frame sources preserve exact provider grid failures 0.003s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.002s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.006s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.037s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.005s
+  + linked view policies synchronize only declared state 0.002s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.001s
+  + a typed point sets the cursor only when its frame is the reference frame 0.002s
+  + a point in another world reaches the cursor through a typed link 0.005s
+  + cursor actions and states cannot replay into an equally shaped different world 0.002s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.0s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.001s
+  + a world-aligned layer in another world is rejected 0.001s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.005s
+  + a pullback layer must map the reference frame to its own frame 0.002s
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.001s
+  + threshold bands hide only their strict interior and disable explicitly 0.001s
+  + ramps interpolate every RGBA channel 0.0s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.001s
+  + label and mask colorizers keep missing data transparent by default 0.0s
+  + layer identifiers and opacities reject invalid states 0.001s
+[info] Passed: Total 42, Failed 0, Errors 0, Passed 42
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] imageViewJVM/test: exit 0 in 6.7s
+[info] compiling 6 Scala sources to /private/tmp/scalafim-surface-visibility/modules/image-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surface-visibility/modules/image-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/image-view/js/target/scala-3.7.4/scalafim-image-view-test-fastopt
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.001s
+  + panel picking is an exact root-npc to world-space roundtrip 0.003s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.000s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.005s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.004s
+  + timepoint actions drive temporal layers while static overlays persist 0.002s
+  + models reject temporal layers with incompatible frame counts 0.000s
+  + resize changes only device layout and reduction is deterministic 0.002s
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.008s
+  + panel fitting preserves physical slice aspect on a non-square device 0.001s
+  + orthogonal layouts support checked row and column arrangements 0.001s
+  + heterogeneous layers sample in world space and retain draw order 0.001s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.001s
+  + crosshairs and orientation labels are explicit removable decorations 0.001s
+  + left-right convention changes labels and raster orientation together 0.002s
+  + viewer models reject empty and duplicate layer sets 0.000s
+scalafim.image.view.ViewerModelUpdateSuite:
+  + partial reorder preserves unmentioned layers and rejects unknown/duplicate ids 0.001s
+  + reorder changes compositing sequence while every unchanged raster stays cached 0.003s
+  + typed replacement changes pixels without stale color-bound sample reuse 0.002s
+  + session validation refuses unsupported presentation rather than silently dropping it 0.000s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.001s
+  + a world-aligned layer in another world is rejected 0.001s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.002s
+  + a pullback layer must map the reference frame to its own frame 0.001s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.000s
+  + a typed point sets the cursor only when its frame is the reference frame 0.000s
+  + a point in another world reaches the cursor through a typed link 0.000s
+  + cursor actions and states cannot replay into an equally shaped different world 0.000s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.000s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.003s
+  + lazy frame sources preserve exact provider grid failures 0.000s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.001s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.006s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.004s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.002s
+  + linked view policies synchronize only declared state 0.000s
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.000s
+  + threshold bands hide only their strict interior and disable explicitly 0.000s
+  + ramps interpolate every RGBA channel 0.000s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.001s
+  + label and mask colorizers keep missing data transparent by default 0.000s
+  + layer identifiers and opacities reject invalid states 0.000s
+[info] Passed: Total 42, Failed 0, Errors 0, Passed 42
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] imageViewJS/test: exit 0 in 6.3s
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surface-visibility/modules/pipeline/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surface-visibility/modules/pipeline/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surface-visibility/modules/response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surface-visibility/modules/response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/response-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/response-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surface-visibility/modules/latent/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surface-visibility/modules/latent/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/ar/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/ar/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/hrf-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/hrf-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/provider-spike/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/provider-spike/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/intaglio-surface-display/modules/canvas/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/image-view-canvas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/image-view-java2d/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 23 Scala sources to /private/tmp/intaglio-surface-display/modules/interaction/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/intaglio-surface-display/modules/javafx/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/image-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surface-visibility/modules/threshold/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surface-visibility/modules/threshold/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 21 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/77e7bdc71bddb8077fcd/bids4s/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 26 Scala sources to /private/tmp/scalafim-surface-visibility/modules/motion/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 18 Scala sources to /private/tmp/scalafim-surface-visibility/modules/motion/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /private/tmp/scalafim-surface-visibility/modules/spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-surface-visibility/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 29 Scala sources to /private/tmp/scalafim-surface-visibility/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-surface-visibility/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surface-visibility/modules/archive/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-surface-visibility/modules/archive/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surface-visibility/modules/estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surface-visibility/modules/estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-surface-visibility/modules/estimates-io/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/estimates-io/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-surface-visibility/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/model/jvm/target/scala-3.7.4/classes ...
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surface-visibility/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 79 Scala sources to /private/tmp/scalafim-surface-visibility/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/fit-estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surface-visibility/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surface-visibility/modules/group/js/target/scala-3.7.4/classes ...
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/model/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 76 Scala sources to /private/tmp/scalafim-surface-visibility/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/fit-estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 14 Scala sources to /private/tmp/scalafim-surface-visibility/modules/archive-lna/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surface-visibility/modules/archive-lna/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surface-visibility/modules/archive-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /private/tmp/scalafim-surface-visibility/modules/interop-archived-response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surface-visibility/modules/archive-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 24 Scala sources to /private/tmp/scalafim-surface-visibility/modules/interop-archived-response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 53 Scala sources to /private/tmp/scalafim-surface-visibility/modules/phrf-comparison/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 39 Scala sources to /private/tmp/scalafim-surface-visibility/modules/phrf-comparison/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/core/.jvm/target/scala-3.3.8/classes ...
+[info] compiling 99 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar/modules/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/designs/.jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/api/.jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 28 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar/modules/inference/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 54 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/core/.js/target/scala-3.3.8/classes ...
+[info] compiling 99 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar/modules/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/designs/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/api/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 28 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar/modules/inference/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 54 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/kernel/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/metrics/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/data/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/tune/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/models-linear/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/ridge-gale/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/kernel/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/data/.js/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/metrics/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/tune/.js/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/models-linear/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/ridge-gale/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-artifacts/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-artifacts/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surface-visibility/modules/mvpa-spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-surface-visibility/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 18 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/77e7bdc71bddb8077fcd/bids4s/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-surface-visibility/modules/fmri-workflow/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surface-visibility/modules/dataset-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surface-visibility/modules/dataset-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 294 s (0:04:54.0)
+[0J[sbt-warm] scalafimCompileAll: exit 0 in 294.6s
+[sbt-warm] saving pin template 2dc788639b5e09ab for future worktrees

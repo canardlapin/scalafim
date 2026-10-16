@@ -7,6 +7,8 @@ import javafx.scene.{Group, ParallelCamera, PerspectiveCamera, Scene}
 import javafx.scene.input.PickResult
 import javafx.stage.Stage
 
+import javafx.scene.image.WritableImage
+
 import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
@@ -21,7 +23,6 @@ object JavaFxSurfaceInteractionProbe:
       try
         val initialPlan = SurfaceCompiler.compile(model, initial).toOption.get
         val reference = SurfaceRasterizer.render(initialPlan, RasterDimensions.unsafe(128, 128)).toOption.get
-        val referencePick = reference.pick(18, 108).toOption.flatten.get
         val backend = JavaFxSurfaceBackend.create().toOption.get
         backend.render(initialPlan).toOption.get
         val scene = backend.newSubScene(JavaFxSnapshotConfig.make(128, 128).toOption.get).toOption.get
@@ -30,9 +31,21 @@ object JavaFxSurfaceInteractionProbe:
         stage.show()
         val controller = JavaFxSurfaceController.attach(model, initial, backend, scene).toOption.get
         val chunk = backend.chunks.head
+        stage.getScene.getRoot.applyCss()
+        stage.getScene.getRoot.layout()
+        // Resolve nested camera peers through a real render before querying screen coordinates.
+        scene.snapshot(null, new WritableImage(128, 128))
+        // An interior barycentric point (0.8,0.1,0.1), projected by JavaFX itself.
+        val interior = new Point3D(-0.76, -0.82, 0.0)
+        val projected = chunk.view.localToScreen(interior)
+        val origin = scene.localToScreen(0.0, 0.0)
+        require(projected != null && origin != null)
+        println(s"interaction_projection projected=$projected origin=$origin")
+        val referencePick = reference.pick(math.floor(projected.getX-origin.getX).toInt,
+          math.floor(projected.getY-origin.getY).toInt).toOption.flatten.get
         val javafxPick = new PickResult(
           chunk.view,
-          new Point3D(-1.0, -1.0, 0.0),
+          interior,
           4.0,
           0,
           Point2D.ZERO
@@ -40,15 +53,15 @@ object JavaFxSurfaceInteractionProbe:
         val picked = controller.pick(javafxPick).toOption.get
         require(picked.face.index == referencePick.face, s"face mismatch ${picked.face.index} != ${referencePick.face}")
         require(picked.vertex.index == referencePick.vertex, s"vertex mismatch ${picked.vertex.index} != ${referencePick.vertex}")
-        require(scene.getCamera.isInstanceOf[PerspectiveCamera], "initial perspective plan did not use PerspectiveCamera")
+        require(backend.viewportCameras.nonEmpty && backend.viewportCameras.forall(_.isInstanceOf[PerspectiveCamera]), "initial perspective plan did not use PerspectiveCamera")
         controller.dispatch(SurfaceViewerAction.SetProjection(
           CameraProjection.Orthographic(OrthographicScale.unsafe(0.75))
         )).toOption.get
-        require(scene.getCamera.isInstanceOf[ParallelCamera], "mounted SubScene did not switch to ParallelCamera")
+        require(backend.viewportCameras.nonEmpty && backend.viewportCameras.forall(_.isInstanceOf[ParallelCamera]), "mounted SubScene did not switch to ParallelCamera")
         controller.dispatch(SurfaceViewerAction.SetProjection(
           CameraProjection.Perspective(FieldOfViewDegrees.Default)
         )).toOption.get
-        require(scene.getCamera.isInstanceOf[PerspectiveCamera], "mounted SubScene did not return to PerspectiveCamera")
+        require(backend.viewportCameras.nonEmpty && backend.viewportCameras.forall(_.isInstanceOf[PerspectiveCamera]), "mounted SubScene did not return to PerspectiveCamera")
         var index = 0
         while index < 60 do
           controller.dispatch(SurfaceViewerAction.OrbitBy(0.25, 0.1)).toOption.get

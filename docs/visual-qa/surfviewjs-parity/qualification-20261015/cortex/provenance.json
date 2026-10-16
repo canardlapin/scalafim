@@ -1,0 +1,28 @@
+{
+  "schema": "surface-qualification-endpoints.v1",
+  "startedAt": "2026-10-15T13:37:29.107Z",
+  "candidateCommit": "dc101ea05a327e06641b9fc7064f822c4a9608e3",
+  "referenceCommit": "fb60f3705d51d2d74e69ddf71df7000ee9eb5b06",
+  "moduleSha256": "cd5ba16845d90328118e36c8f5c89747b38243ea2f8291760a82c2ca47591fd2",
+  "depthPolicy": "preserved",
+  "frozenContractsSha256": "070f70e60022eef8e163abe064a11facb7bcf766116b9f232f503df4d10c3cca",
+  "browserProfile": "lean-browser-playwright",
+  "rendererRequest": "ANGLE Metal",
+  "auditBefore": {
+    "exitCode": 0,
+    "output": "No automated top-level browser processes found.\n"
+  },
+  "runnerHashes": {
+    "run-qualification.mjs": "f8b56850593d0e50b95bab8c21373def317a512b92a9f077a1b6bacacc33f0f2",
+    "reference-view.mjs": "e0c93043bce8ef1640f62dd646b20c2bbc0df71adcbb7fdc34904b76b9dac2fd",
+    "qualification-contracts.mjs": "6d7ce310e50974621053cae38035f77c320fadc2d2e44ebeb1ae2b897bfd2be0",
+    "qualification-specs.mjs": "9e7de0df2517dfbb922bbc480d340e881e659ca5ca1bce2a28eccf05f94f82b4",
+    "compare.mjs": "ead84086afdc3e20956618a02ea055d12613a915275a5789e905d63c6eb1a87c"
+  },
+  "referenceBundleSha256": "38871512972ecce18a6ed8b09da5aa46af7d2cf8a616ca9fc436f59a0e18a448",
+  "auditAfter": {
+    "exitCode": 0,
+    "output": "No automated top-level browser processes found.\n"
+  },
+  "finishedAt": "2026-10-15T13:38:06.798Z"
+}

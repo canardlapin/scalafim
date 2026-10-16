@@ -1,0 +1,651 @@
+{
+  "id": "C02-BR-volume/nearest/10b79be33887314e",
+  "parent": {
+    "rowId": "C02-BR-volume",
+    "checkpoint": "nearest"
+  },
+  "requirement": "required",
+  "status": "fail",
+  "artifacts": {
+    "reference.png": "5e12890367936500e1ba89f44db904216bec59d929a2b2bccfba26a175f0a9b4",
+    "native.png": "5e12890367936500e1ba89f44db904216bec59d929a2b2bccfba26a175f0a9b4",
+    "raster.png": "a0383b4e55392eb78d176e87f5a9302160a8870f9c85f66d6745e40caed7a3c4",
+    "side-by-side.png": "80c2385a06eb6b78b877b32fb8e8ded89e97115fd8f0717f154c6eb53be483ec"
+  },
+  "inputSha256": "1eaf5d2ef7cbf8af6eeeb19421490b4c3be8c317670044473a5f14379a245736",
+  "referenceMaterialContract": [],
+  "comparisons": {
+    "native": {
+      "pass": true,
+      "failures": [],
+      "metrics": {
+        "width": 600,
+        "height": 450,
+        "referenceForeground": 94556,
+        "candidateForeground": 94556,
+        "foregroundIntersection": 94556,
+        "foregroundIoU": 1,
+        "maximumChannelError": 0,
+        "meanMaximumChannelError": 0
+      },
+      "elements": []
+    },
+    "raster": {
+      "pass": false,
+      "failures": [
+        {
+          "code": "global-channel-error-exceeded",
+          "actual": 112,
+          "maximum": 2
+        }
+      ],
+      "metrics": {
+        "width": 600,
+        "height": 450,
+        "referenceForeground": 94556,
+        "candidateForeground": 94249,
+        "foregroundIntersection": 94249,
+        "foregroundIoU": 0.9967532467532467,
+        "maximumChannelError": 112,
+        "meanMaximumChannelError": 0.2546962962962963
+      },
+      "elements": []
+    }
+  },
+  "camera": {
+    "viewMaxDifference": 9.536743128535363e-8,
+    "projectionMaxDifference": 1.0145940176897739e-7
+  },
+  "runtimeErrors": [],
+  "candidate": {
+    "native": {
+      "status": "captured",
+      "coldNanos": 5600001,
+      "warmNanos": 200000,
+      "coldSnapshotNanos": 10700000,
+      "warmSnapshotNanos": 4600001,
+      "timingBoundary": "render and synchronous PNG readback; submission times reported separately",
+      "warmSnapshotSamplesNanos": [
+        3199999,
+        3000000,
+        3600000,
+        3299999,
+        4600001
+      ],
+      "warmImagesIdentical": true,
+      "warmResourceCounts": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "coldGeometryUploads": 1,
+      "warmGeometryUploads": 0,
+      "warmColorUploads": 0,
+      "drawCalls": 1,
+      "depthPolicy": "preserved",
+      "projections": [
+        {
+          "view": "qualification",
+          "columnMajorProjection": [
+            2.3786962032318115,
+            0,
+            0,
+            0,
+            0,
+            3.1715948581695557,
+            0,
+            0,
+            0,
+            0,
+            -1.000100016593933,
+            -1,
+            0,
+            0,
+            -0.2000100016593933,
+            0
+          ],
+          "viewport": [
+            0,
+            0,
+            600,
+            450
+          ]
+        }
+      ]
+    },
+    "raster": {
+      "status": "captured",
+      "provider": "Canvas2D/reference-raster",
+      "coldNanos": 126400000,
+      "resizeBackExact": true,
+      "warmNanos": 67099999,
+      "warmSamplesNanos": [
+        74200001,
+        69800001,
+        72300001,
+        70300000,
+        67099999
+      ]
+    },
+    "viewMatrix": [
+      1,
+      0,
+      0,
+      -0.6000000238418579,
+      0,
+      1,
+      0,
+      -0.375,
+      0,
+      0,
+      1,
+      -4.650000095367432,
+      0,
+      0,
+      0,
+      1
+    ],
+    "projectionMatrix": [
+      2.3786962032318115,
+      0,
+      0,
+      0,
+      0,
+      3.1715948581695557,
+      0,
+      0,
+      0,
+      0,
+      -1.000100016593933,
+      -0.2000100016593933,
+      0,
+      0,
+      -1,
+      0
+    ],
+    "viewCameras": [
+      {
+        "id": "qualification",
+        "viewMatrix": [
+          1,
+          0,
+          0,
+          -0.6000000238418579,
+          0,
+          1,
+          0,
+          -0.375,
+          0,
+          0,
+          1,
+          -4.650000095367432,
+          0,
+          0,
+          0,
+          1
+        ],
+        "projectionMatrix": [
+          2.3786962032318115,
+          0,
+          0,
+          0,
+          0,
+          3.1715948581695557,
+          0,
+          0,
+          0,
+          0,
+          -1.000100016593933,
+          -0.2000100016593933,
+          0,
+          0,
+          -1,
+          0
+        ]
+      }
+    ],
+    "matrixOrder": "row-major",
+    "picks": [
+      {
+        "x": 100,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 200,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 300,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 400,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 75,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 150,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 1,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 1,
+          "world": [
+            -0.7032349413321224,
+            0.8637131241862672,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 200,
+        "y": 150,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 1,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 1,
+          "world": [
+            -0.05161745874513213,
+            0.8637131241862672,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 300,
+        "y": 150,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 3,
+          "face": 1,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 3,
+          "face": 1,
+          "world": [
+            0.6000000238418579,
+            0.8637131241862671,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 400,
+        "y": 150,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 150,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 225,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 0,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 0,
+          "world": [
+            -0.7032349413321222,
+            0.375,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 200,
+        "y": 225,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 1,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 1,
+          "world": [
+            -0.05161745874513213,
+            0.375,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 300,
+        "y": 225,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 3,
+          "face": 1,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 3,
+          "face": 1,
+          "world": [
+            0.6000000238418579,
+            0.375,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 400,
+        "y": 225,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 225,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 300,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 0,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 2,
+          "face": 0,
+          "world": [
+            -0.7032349413321224,
+            -0.11371312418626706,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 200,
+        "y": 300,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 0,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 0,
+          "world": [
+            -0.05161745874513213,
+            -0.11371312418626695,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 300,
+        "y": 300,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 1,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 1,
+          "world": [
+            0.6000000238418579,
+            -0.11371312418626695,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 400,
+        "y": 300,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 300,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 100,
+        "y": 375,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 0,
+          "face": 0,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 0,
+          "face": 0,
+          "world": [
+            -0.7032349413321222,
+            -0.6024262483725344,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 200,
+        "y": 375,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 0,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 0,
+          "world": [
+            -0.05161745874513224,
+            -0.6024262483725344,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 300,
+        "y": 375,
+        "raster": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 0,
+          "view": "qualification"
+        },
+        "native": {
+          "surface": "analytic",
+          "vertex": 1,
+          "face": 0,
+          "world": [
+            0.6000000238418579,
+            -0.6024262483725344,
+            0
+          ],
+          "view": "qualification"
+        }
+      },
+      {
+        "x": 400,
+        "y": 375,
+        "raster": null,
+        "native": null
+      },
+      {
+        "x": 500,
+        "y": 375,
+        "raster": null,
+        "native": null
+      }
+    ],
+    "disposal": {
+      "canvasPresentedFrameReleased": true,
+      "backendResourceCount": 0
+    },
+    "numericReadouts": [
+      {
+        "surface": "analytic",
+        "layer": "analytic/sampled-volume",
+        "values": [
+          23,
+          25,
+          27,
+          29
+        ]
+      }
+    ],
+    "sourceSummaries": [
+      {
+        "surface": "analytic",
+        "vertices": 4,
+        "faces": 2
+      }
+    ],
+    "beforeHeap": 84720747,
+    "afterHeap": 576784155
+  },
+  "hostChecks": {
+    "resizeBackExact": true,
+    "disposedFrameReleased": true,
+    "nativeResourcesReleased": true,
+    "stableWarmImages": true
+  },
+  "volumeSamples": {
+    "reference": {
+      "pass": true,
+      "checks": [
+        true
+      ],
+      "expected": [
+        {
+          "surface": "analytic",
+          "layer": "sampled-volume",
+          "values": [
+            23,
+            25,
+            27,
+            29
+          ]
+        }
+      ],
+      "actual": [
+        {
+          "surface": "analytic",
+          "layer": "sampled-volume",
+          "values": [
+            23,
+            25,
+            27,
+            29
+          ]
+        }
+      ]
+    },
+    "candidate": {
+      "pass": true,
+      "checks": [
+        true
+      ],
+      "expected": [
+        {
+          "surface": "analytic",
+          "layer": "analytic/sampled-volume",
+          "values": [
+            23,
+            25,
+            27,
+            29
+          ]
+        }
+      ],
+      "actual": [
+        {
+          "surface": "analytic",
+          "layer": "analytic/sampled-volume",
+          "values": [
+            23,
+            25,
+            27,
+            29
+          ]
+        }
+      ]
+    },
+    "identityPolicy": "ScalaFIM layer IDs are explicitly namespaced by source surface"
+  },
+  "endpointStatus": "fail",
+  "remaining": [
+    "independent per-element masks and scientific pick oracle",
+    "actual input-event replay",
+    "native appearance review",
+    "full family accounting"
+  ]
+}

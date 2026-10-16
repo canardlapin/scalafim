@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T20:10:55.614025+00:00",
+  "finished_utc": "2026-10-14T20:11:19.262683+00:00",
+  "duration_seconds": 23.648378,
+  "command": [
+    "sbt",
+    "coreJVM/testOnly intaglio.BivariateEffectConfidenceSuite",
+    "coreJS/testOnly intaglio.BivariateEffectConfidenceSuite"
+  ],
+  "cwd": "/private/tmp/intaglio-surface-display",
+  "log": "/private/tmp/surfview-parity-logs/bivariate-intaglio-13.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 4444
+}

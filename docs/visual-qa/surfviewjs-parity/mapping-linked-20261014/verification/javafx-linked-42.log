@@ -1,0 +1,16 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] running (fork) scalafim.surface.view.javafx.JavaFxLinkedViewProbe /private/tmp/scalafim-javafx-linked-42
+[error] Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+[error] Oct 14, 2026 5:08:17 P.M. com.sun.javafx.application.PlatformImpl startup
+[error] WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @7ca48474'
+[error] WARNING: A restricted method in java.lang.System has been called
+[error] WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/fc4494fe/d2189dfd/javafx-graphics-21.0.5-mac-aarch64.jar)
+[error] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[error] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/16f4dc48/adca020a/scala3-library_3-3.7.4.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[[32msuccess[0m] elapsed: 8 s
+[0J[sbt-warm] surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxLinkedViewProbe /private/tmp/scalafim-javafx-linked-42: exit 0 in 8.2s

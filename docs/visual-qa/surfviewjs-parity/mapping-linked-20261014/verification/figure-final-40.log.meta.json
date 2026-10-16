@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T21:05:27.409183+00:00",
+  "finished_utc": "2026-10-14T21:05:42.886305+00:00",
+  "duration_seconds": 15.477094,
+  "command": [
+    "env",
+    "JAVA_TOOL_OPTIONS=-Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display",
+    "SBT_WARM_HEAP=6g",
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewExamplesJVM/Test/runMain scalafim.surface.view.SurfaceFigurePublicationProbe /private/tmp/scalafim-figure-proof-40"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-visibility",
+  "log": "/private/tmp/surfview-parity-logs/figure-final-40.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 300.0,
+  "log_bytes": 1325
+}

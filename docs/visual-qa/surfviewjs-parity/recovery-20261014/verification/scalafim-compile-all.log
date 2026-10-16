@@ -1,0 +1,362 @@
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surfview-parity/modules/pipeline/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surfview-parity/modules/pipeline/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surfview-parity/modules/response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surfview-parity/modules/response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surfview-parity/modules/response-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surfview-parity/modules/response-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surfview-parity/modules/latent/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surfview-parity/modules/latent/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surfview-parity/modules/ar/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surfview-parity/modules/ar/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/hrf-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/hrf-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surfview-parity/modules/provider-spike/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surfview-parity/modules/provider-spike/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/ddfd051529833423c112/intaglio/modules/javafx/jvm/target/scala-3.4.2/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surfview-parity/modules/image-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surfview-parity/modules/threshold/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-surfview-parity/modules/threshold/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 21 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/77e7bdc71bddb8077fcd/bids4s/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 26 Scala sources to /private/tmp/scalafim-surfview-parity/modules/motion/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[warn] In the last 93 seconds, 8.975 (9.7%) were spent in GC. [Heap: 2.97GB free of 5.93GB, max 6.00GB] Consider increasing the JVM heap using `-Xmx` or try a different collector, e.g. `-XX:+UseG1GC`, for better performance.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-surfview-parity/modules/motion/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /private/tmp/scalafim-surfview-parity/modules/spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-surfview-parity/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 29 Scala sources to /private/tmp/scalafim-surfview-parity/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-surfview-parity/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surfview-parity/modules/archive/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-surfview-parity/modules/archive/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surfview-parity/modules/estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surfview-parity/modules/estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-surfview-parity/modules/estimates-io/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/estimates-io/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-surfview-parity/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surfview-parity/modules/model/jvm/target/scala-3.7.4/classes ...
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surfview-parity/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 79 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fit-estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surfview-parity/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surfview-parity/modules/group/js/target/scala-3.7.4/classes ...
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surfview-parity/modules/model/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 76 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fit-estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 14 Scala sources to /private/tmp/scalafim-surfview-parity/modules/archive-lna/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surfview-parity/modules/archive-lna/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[warn] In the last 33 seconds, 10.301 (31.8%) were spent in GC. [Heap: 2.94GB free of 6.00GB, max 6.00GB] Consider increasing the JVM heap using `-Xmx` or try a different collector, e.g. `-XX:+UseG1GC`, for better performance.
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surfview-parity/modules/archive-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /private/tmp/scalafim-surfview-parity/modules/interop-archived-response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surfview-parity/modules/archive-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 24 Scala sources to /private/tmp/scalafim-surfview-parity/modules/interop-archived-response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 53 Scala sources to /private/tmp/scalafim-surfview-parity/modules/phrf-comparison/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 39 Scala sources to /private/tmp/scalafim-surfview-parity/modules/phrf-comparison/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s/core/.jvm/target/scala-3.3.8/classes ...
+[info] compiling 99 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/04c54b2d3f3921f04b0c/multivar/modules/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s/designs/.jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s/api/.jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 28 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/04c54b2d3f3921f04b0c/multivar/modules/inference/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 54 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s/core/.js/target/scala-3.3.8/classes ...
+[info] compiling 99 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/04c54b2d3f3921f04b0c/multivar/modules/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s/designs/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s/api/.js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 28 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/04c54b2d3f3921f04b0c/multivar/modules/inference/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 54 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/kernel/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/data/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/metrics/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/tune/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/models-linear/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/ridge-gale/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[warn] In the last 57 seconds, 8.893 (15.7%) were spent in GC. [Heap: 2.79GB free of 6.00GB, max 6.00GB] Consider increasing the JVM heap using `-Xmx` or try a different collector, e.g. `-XX:+UseG1GC`, for better performance.
+[info] compiling 15 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/kernel/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 16 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/data/.js/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/metrics/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/tune/.js/target/scala-3.7.4/classes ...
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/models-linear/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder/ridge-gale/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-artifacts/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-artifacts/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/mvpa-spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes ...
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/response/jvm/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/d79d1afec9bc45383768/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/d79d1afec9bc45383768/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes ...
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/d79d1afec9bc45383768/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes ...
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/b3db316401092ccd708e/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/d79d1afec9bc45383768/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/b3db316401092ccd708e/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 21 Scala sources to /private/tmp/scalafim-surfview-parity/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 24 Scala sources to /private/tmp/scalafim-surfview-parity/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-surfview-parity/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:3:24 
+[error] 3 |import image4s.geometry.D3
+[error]   |                        ^^
+[error]   |                        value D3 is not a member of image4s.geometry
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:4:24 
+[error] 4 |import image4s.geometry.Frame
+[error]   |                        ^^^^^
+[error]   |                        value Frame is not a member of image4s.geometry
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:5:24 
+[error] 5 |import image4s.geometry.Grid
+[error]   |                        ^^^^
+[error]   |                        value Grid is not a member of image4s.geometry
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:6:24 
+[error] 6 |import image4s.geometry.GridCongruence
+[error]   |                        ^^^^^^^^^^^^^^
+[error]   |                  value GridCongruence is not a member of image4s.geometry
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:24:20 
+[error] 24 |    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                    ^^^^^^^^^^^^^^
+[error]    |                    Not found: type GridCongruence
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:24:35 
+[error] 24 |    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                   ^^
+[error]    |                                   Not found: type D3
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:24:44 
+[error] 24 |    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                            ^^^^^
+[error]    |                                            Not found: type Frame
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:24:50 
+[error] 24 |    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                                  ^^
+[error]    |                                                  Not found: type D3
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:24:60 
+[error] 24 |    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                                            ^^^^^
+[error]    |                                                   Not found: type Frame
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:24:66 
+[error] 24 |    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                                                  ^^
+[error]    |                                                      Not found: type D3
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:47:24 
+[error] 47 |      maskCongruence <- Grid
+[error]    |                        ^^^^
+[error]    |                        Not found: Grid - did you mean Void?
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:75:4 
+[error] 75 |    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |    ^^^^^^^^^^^^^^
+[error]    |    Not found: type GridCongruence
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:75:19 
+[error] 75 |    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                   ^^
+[error]    |                   Not found: type D3
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:75:28 
+[error] 75 |    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                            ^^^^^
+[error]    |                            Not found: type Frame
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:75:34 
+[error] 75 |    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                  ^^
+[error]    |                                  Not found: type D3
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:75:44 
+[error] 75 |    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                            ^^^^^
+[error]    |                                            Not found: type Frame
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:75:50 
+[error] 75 |    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+[error]    |                                                  ^^
+[error]    |                                                  Not found: type D3
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:78:20 
+[error] 78 |      congruence <- Grid
+[error]    |                    ^^^^
+[error]    |                    Not found: Grid - did you mean Void?
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:126:19 
+[error] 126 |              _ <- Grid
+[error]     |                   ^^^^
+[error]     |                   Not found: Grid - did you mean Void?
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala:164:6 
+[error] 164 |      Grid
+[error]     |      ^^^^
+[error]     |      Not found: Grid - did you mean Void?
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:5:24 
+[error] 5 |import image4s.geometry.GeometryError
+[error]   |                        ^^^^^^^^^^^^^
+[error]   |                   value GeometryError is not a member of image4s.geometry
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:6:24 
+[error] 6 |import image4s.geometry.Grid
+[error]   |                        ^^^^
+[error]   |                        value Grid is not a member of image4s.geometry
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:40:23 
+[error] 40 |  case Geometry(error: GeometryError)
+[error]    |                       ^^^^^^^^^^^^^
+[error]    |                       Not found: type GeometryError
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:333:8 
+[error] 333 |    val referenceSpace = runs.head.header.shape.space
+[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |image4s.geometry.Frame is not defined in inferred type image4s.SampleSpace[? <: image4s.geometry.Frame[image4s.geometry.D3],
+[error]     |  image4s.geometry.D3]
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:335:6 
+[error] 335 |      Grid.exactCongruence(run.header.shape.grid, referenceSpace.grid) match
+[error]     |      ^^^^
+[error]     |      Not found: Grid - did you mean Void?
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:341:52 
+[error] 341 |            cause = Some(CatalogIssueCause.Geometry(error))
+[error]     |                                                    ^^^^^
+[error]     |                                                    Not found: error
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:350:12 
+[error] 350 |            Grid.exactCongruence(maskHeader.shape.grid, run.header.shape.grid) match
+[error]     |            ^^^^
+[error]     |            Not found: Grid - did you mean Void?
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala:356:58 
+[error] 356 |                  cause = Some(CatalogIssueCause.Geometry(error))
+[error]     |                                                          ^^^^^
+[error]     |                                                      Not found: error
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] 28 errors found
+[error] (fmriWorkflowJVM / Compile / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 1856 s (0:30:56.0)
+[0J[sbt-warm] scalafimCompileAll: exit 1 in 1857.4s

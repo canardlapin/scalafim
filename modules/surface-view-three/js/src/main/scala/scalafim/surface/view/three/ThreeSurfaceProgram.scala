@@ -27,6 +27,7 @@ enum ThreeSurfaceError:
   case InvalidPlan(reason: String)
   case RuntimeFailure(operation: String, reason: String)
   case BackendDisposed
+  case NativeDepthMismatch(samples: Int, red: Int, green: Int, blue: Int)
 
   def message: String =
     this match
@@ -37,6 +38,8 @@ enum ThreeSurfaceError:
       case InvalidPlan(reason) => s"invalid surface render plan: $reason"
       case RuntimeFailure(operation, reason) => s"Three.js $operation failed: $reason"
       case BackendDisposed => "the Three.js surface backend has been disposed"
+      case NativeDepthMismatch(samples, red, green, blue) =>
+        s"native depth verification failed with $samples samples: expected red foreground, observed RGB($red,$green,$blue); use hardware WebGL, a host canvas created without antialiasing, or the reference raster"
 
 final case class ThreeDirtySet(
   geometry: Boolean,
@@ -56,9 +59,11 @@ enum ThreeSurfaceCommand:
   case UploadGeometry(meshes: Vector[SurfaceMeshPacket])
   case UpdateGeometry(meshes: Vector[SurfaceMeshPacket])
   case UploadColors(colors: Vector[ThreeSurfaceColors])
+  case UploadFragments(packets: Vector[ThreeFragmentPacket])
   case UpdateLighting(lighting: SurfaceLighting)
   case UpdateCamera(camera: SurfaceCameraPacket, clipping: SurfaceClipping)
-  case UpdateLayout(slots: Vector[SurfaceViewSlot])
+  case UpdateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill)
+  case UpdateComposition(plan: SurfaceCompositionPlan)
   case Resize(size: ThreeCanvasSize)
   case Draw
 
@@ -79,45 +84,127 @@ final case class ThreeSurfaceColors(
 final case class ThreeSurfaceProgram(
   commands: Vector[ThreeSurfaceCommand],
   dirty: ThreeDirtySet,
-  receipt: SurfaceRenderReceipt
+  receipt: SurfaceRenderReceipt,
+  resourcePlan: Option[SurfaceRenderPlan] = None,
+  composition: Option[SurfaceCompositionPlan] = None
 )
 
 object ThreeSurfaceProgram:
+  /** Compiles composition resources through the established single-plan
+    * uploader, then replaces legacy camera/layout commands with one native
+    * composition update. This keeps resource dirtiness identical to legacy
+    * rendering while allowing the runtime to own display occurrences.
+    */
+  def compileComposition(
+    previous: Option[(SurfaceRenderPlan, ThreeCanvasSize)],
+    previousComposition: Option[SurfaceCompositionPlan],
+    next: SurfaceCompositionPlan,
+    size: ThreeCanvasSize,
+    forceDraw: Boolean = false
+  ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
+    val reuse = previous.fold[Either[SurfaceCompositionError, Unit]](Right(())): (plan, _) =>
+      SurfaceCompositionPlan.validateResourceReuse(SurfaceCompositionResources(
+        plan.meshes.map(m => m.resourceKey -> m).toMap, plan.layers.map(l => l.resourceKey -> l).toMap), next.resources)
+    reuse.left.map(error => ThreeSurfaceError.InvalidPlan(s"immutable composition resource changed: $error"))
+      .flatMap(_ => compositionProxy(next)).flatMap: proxy =>
+      compile(previous, proxy, size, forceDraw).map: base =>
+        val viewChanged = previousComposition.forall(_.views != next.views)
+        val changed = viewChanged || !base.dirty.isClean
+        val retained = base.commands.filter:
+          case ThreeSurfaceCommand.UpdateLighting(_) | ThreeSurfaceCommand.UpdateCamera(_, _) |
+              ThreeSurfaceCommand.UpdateLayout(_, _) => false
+          case _ => true
+        val commands =
+          if changed then
+            val beforeDraw = retained.takeWhile(_ != ThreeSurfaceCommand.Draw)
+            val afterDraw = retained.drop(beforeDraw.length)
+            val tail = if afterDraw.nonEmpty then afterDraw else Vector(ThreeSurfaceCommand.Draw)
+            beforeDraw ++ Vector(ThreeSurfaceCommand.UpdateComposition(next)) ++ tail
+          else retained
+        ThreeSurfaceProgram(commands, base.dirty.copy(camera = base.dirty.camera || viewChanged),
+          base.receipt, Some(proxy), Some(next))
+
+  private def compositionProxy(composition: SurfaceCompositionPlan): Either[ThreeSurfaceError, SurfaceRenderPlan] =
+    if composition.views.map(view => (view.colorPipeline, view.surfaceBase)).distinct.length > 1 then
+      return Left(ThreeSurfaceError.InvalidPlan("native composition requires a common color pipeline and surface base"))
+    if composition.views.exists(_.instances.exists(_.opacity != DisplayOpacity.Opaque)) || composition.views.exists(_.surfaceBase.alpha != 255) then
+      return Left(ThreeSurfaceError.InvalidPlan("surface alpha requires the Canvas raster host"))
+    val active = composition.views.flatMap(view => view.instances.map(instance => (view, instance)))
+    val descriptions = scala.collection.mutable.LinkedHashMap.empty[SurfaceId, (SurfaceResourceKey, Vector[SurfaceResourceKey], Boolean)]
+    var error: Option[ThreeSurfaceError] = None
+    active.foreach: (view, instance) =>
+      if error.isEmpty then
+        if view.clipping match
+            case SurfaceClipping.WorldPlanes(planes) => planes.length > 8 || view.instances.exists(i => !view.fragmentSurfaces(i.surface))
+            case _ => false
+        then error = Some(ThreeSurfaceError.InvalidPlan("world clipping requires fragment packets and at most eight planes"))
+        else
+          val description = (instance.mesh, instance.layerOrder, view.fragmentSurfaces(instance.surface))
+          descriptions.get(instance.surface) match
+            case Some(existing) if existing != description =>
+              error = Some(ThreeSurfaceError.InvalidPlan(
+                s"surface '${instance.surface.value}' has incompatible mesh, layers, or fragment policy across composition instances"))
+            case None => descriptions(instance.surface) = description
+            case _ => ()
+    error match
+      case Some(value) => Left(value)
+      case None =>
+        val meshes = descriptions.iterator.map { case (_, (mesh, _, _)) =>
+          composition.resources.meshes(mesh) }.toVector
+        val layers = descriptions.iterator.flatMap { case (_, (_, keys, _)) => keys.map(composition.resources.layers) }.toVector
+        val first = composition.views.head
+        val slots = meshes.map(mesh => SurfaceViewSlot(mesh.surface, SurfaceViewport(0.0, 0.0, 1.0, 1.0)))
+        val fragments = descriptions.iterator.collect:
+          case (surface, (_, _, true)) => surface
+        .toSet
+        val profile = SurfaceProfile(meshes.length, meshes.map(_.positions.length / 3).sum,
+          meshes.map(_.indices.length / 3).sum, layers.length, layers.map(_.colors.length).sum, 0L)
+        val receipt = SurfaceRenderReceipt(meshes.map(_.resourceKey), layers.map(_.resourceKey),
+          "composition-resource-proxy", 0, 0)
+        Right(SurfaceRenderPlan(slots, meshes, layers, first.camera, first.lighting, SurfaceClipping.Disabled,
+          Vector.empty, first.chrome, first.readouts, profile, receipt, first.viewportFit, fragments, first.colorPipeline, Map.empty, first.surfaceBase))
   def compile(
     previous: Option[(SurfaceRenderPlan, ThreeCanvasSize)],
     next: SurfaceRenderPlan,
     size: ThreeCanvasSize,
     forceDraw: Boolean = false
   ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
-    validate(next).map: _ =>
-      previous match
-        case None => initial(next, size)
-        case Some((before, beforeSize)) => incremental(before, beforeSize, next, size, forceDraw)
+    SurfaceThresholdEdgeValidation.validate(next).left.map(ThreeSurfaceError.InvalidPlan.apply).flatMap: _ =>
+      validate(next).flatMap: _ =>
+        previous match
+          case None => initial(next, size)
+          case Some((before, beforeSize)) => incremental(before, beforeSize, next, size, forceDraw)
 
-  private def initial(next: SurfaceRenderPlan, size: ThreeCanvasSize): ThreeSurfaceProgram =
-    val commands = Vector(
-      ThreeSurfaceCommand.UploadGeometry(next.meshes),
-      ThreeSurfaceCommand.UploadColors(ThreeSurfaceCompositor.colors(next)),
+  private def geometry(plan: SurfaceRenderPlan): Vector[SurfaceMeshPacket] =
+    plan.meshes.map(mesh => if plan.fragmentSurfaces(mesh.surface) then ThreeFragmentShader.geometry(mesh) else mesh)
+
+  private def layerCommands(plan: SurfaceRenderPlan): Either[ThreeSurfaceError, Vector[ThreeSurfaceCommand]] =
+    val fragments = Vector.newBuilder[ThreeFragmentPacket]
+    var error: Option[ThreeSurfaceError] = None
+    plan.meshes.filter(mesh => plan.fragmentSurfaces(mesh.surface)).foreach: mesh =>
+      if error.isEmpty then ThreeFragmentShader.compile(mesh, plan.layers, plan.colorPipeline, plan.surfaceBase) match
+        case Left(value) => error = Some(value)
+        case Right(value) => fragments += value
+    error match
+      case Some(value) => Left(value)
+      case None =>
+        val colors = ThreeSurfaceCompositor.colors(plan.copy(meshes = plan.meshes.filterNot(mesh => plan.fragmentSurfaces(mesh.surface))))
+        val shaders = fragments.result()
+        Right(Option.when(colors.nonEmpty)(ThreeSurfaceCommand.UploadColors(colors)).toVector ++
+          Option.when(shaders.nonEmpty)(ThreeSurfaceCommand.UploadFragments(shaders)))
+
+  private def initial(next: SurfaceRenderPlan, size: ThreeCanvasSize): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
+    layerCommands(next).map: data =>
+      val commands = Vector(ThreeSurfaceCommand.UploadGeometry(geometry(next))) ++ data ++ Vector(
       ThreeSurfaceCommand.UpdateLighting(next.lighting),
       ThreeSurfaceCommand.UpdateCamera(next.camera, next.clipping),
-      ThreeSurfaceCommand.UpdateLayout(next.slots),
+      ThreeSurfaceCommand.UpdateLayout(next.slots, next.viewportFit),
       ThreeSurfaceCommand.Resize(size),
       ThreeSurfaceCommand.Draw
     )
-    ThreeSurfaceProgram(
-      commands,
-      ThreeDirtySet(
-        geometry = true,
-        layerData = true,
-        material = true,
-        camera = true,
-        layout = true,
-        clipping = next.clipping != SurfaceClipping.Disabled,
-        canvas = true,
-        removedResources = Vector.empty
-      ),
-      next.receipt
-    )
+      ThreeSurfaceProgram(commands, ThreeDirtySet(geometry = true, layerData = true, material = true,
+        camera = true, layout = true, clipping = next.clipping != SurfaceClipping.Disabled,
+        canvas = true, removedResources = Vector.empty), next.receipt)
 
   private def incremental(
     before: SurfaceRenderPlan,
@@ -125,45 +212,55 @@ object ThreeSurfaceProgram:
     next: SurfaceRenderPlan,
     size: ThreeCanvasSize,
     forceDraw: Boolean
-  ): ThreeSurfaceProgram =
-    val topology = before.receipt.meshKeys != next.receipt.meshKeys
+  ): Either[ThreeSurfaceError, ThreeSurfaceProgram] =
+    val topology = before.receipt.meshKeys != next.receipt.meshKeys || before.fragmentSurfaces != next.fragmentSurfaces
     val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey)
-    val layerData = layerSignature(before) != layerSignature(next)
+    val layerData = layerSignature(before) != layerSignature(next) || before.colorPipeline != next.colorPipeline || before.surfaceBase != next.surfaceBase
     val material = before.lighting != next.lighting
     val camera = before.receipt.cameraKey != next.receipt.cameraKey
-    val layout = before.slots != next.slots
+    val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
     val clipping = before.clipping != next.clipping
     val canvas = beforeSize != size
     val nextKeys = (next.receipt.meshKeys ++ next.receipt.layerKeys).toSet
     val removed = (before.receipt.meshKeys ++ before.receipt.layerKeys).filterNot(nextKeys)
     val commands = Vector.newBuilder[ThreeSurfaceCommand]
     if removed.nonEmpty then commands += ThreeSurfaceCommand.DisposeResources(removed)
-    if topology then commands += ThreeSurfaceCommand.UploadGeometry(next.meshes)
-    else if geometry then commands += ThreeSurfaceCommand.UpdateGeometry(next.meshes)
-    if topology || layerData then commands += ThreeSurfaceCommand.UploadColors(ThreeSurfaceCompositor.colors(next))
-    if material then commands += ThreeSurfaceCommand.UpdateLighting(next.lighting)
+    if topology then commands += ThreeSurfaceCommand.UploadGeometry(ThreeSurfaceProgram.geometry(next))
+    else if geometry then commands += ThreeSurfaceCommand.UpdateGeometry(ThreeSurfaceProgram.geometry(next))
+    if topology || layerData then
+      layerCommands(next) match
+        case Left(error) => return Left(error)
+        case Right(data) => commands ++= data
+    if topology || material || (layerData && next.fragmentSurfaces.nonEmpty) then commands += ThreeSurfaceCommand.UpdateLighting(next.lighting)
     if camera || clipping then commands += ThreeSurfaceCommand.UpdateCamera(next.camera, next.clipping)
-    if layout then commands += ThreeSurfaceCommand.UpdateLayout(next.slots)
+    if layout then commands += ThreeSurfaceCommand.UpdateLayout(next.slots, next.viewportFit)
     if canvas then commands += ThreeSurfaceCommand.Resize(size)
     val dirty = ThreeDirtySet(geometry, layerData, material, camera, layout, clipping, canvas, removed)
     if !dirty.isClean || forceDraw then commands += ThreeSurfaceCommand.Draw
-    ThreeSurfaceProgram(commands.result(), dirty, next.receipt)
+    Right(ThreeSurfaceProgram(commands.result(), dirty, next.receipt))
 
   private def validate(plan: SurfaceRenderPlan): Either[ThreeSurfaceError, Unit] =
-    if plan.slots.length != plan.meshes.length then
+    if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) && !plan.fragmentSurfaces(layer.surface)) then
+      Left(ThreeSurfaceError.InvalidPlan("scalar layer requires fragment surface semantics"))
+    else if plan.slots.length != plan.meshes.length then
       Left(ThreeSurfaceError.InvalidPlan("slot and mesh counts differ"))
-    else if plan.clipping.isInstanceOf[SurfaceClipping.WorldPlanes] then
-      Left(ThreeSurfaceError.InvalidPlan(
-        "world clipping planes are unsupported by the Three.js backend; use the reference raster backend"
-      ))
+    else if plan.surfaceBase.alpha != 255 || plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
+      Left(ThreeSurfaceError.InvalidPlan("surface alpha requires the Canvas raster host"))
+    else if plan.clipping match
+        case SurfaceClipping.WorldPlanes(planes) => planes.length > 8 || plan.meshes.exists(mesh => !plan.fragmentSurfaces(mesh.surface))
+        case _ => false
+    then Left(ThreeSurfaceError.InvalidPlan("world clipping requires fragment packets and at most eight planes"))
+    else if (plan.colorPipeline != SurfaceColorPipeline.LegacyDisplayBytes || plan.surfaceBase != SurfaceDisplayDefaults.LegacySurfaceBase) &&
+        plan.meshes.exists(mesh => !plan.fragmentSurfaces(mesh.surface)) then
+      Left(ThreeSurfaceError.InvalidPlan("explicit color policies require fragment packets"))
     else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
       Left(ThreeSurfaceError.InvalidPlan("camera matrices must be 4x4"))
     else if plan.meshes.exists(mesh => mesh.positions.length % 3 != 0 || mesh.normals.length != mesh.positions.length) then
       Left(ThreeSurfaceError.InvalidPlan("mesh position and normal buffers are inconsistent"))
     else Right(())
 
-  private def layerSignature(plan: SurfaceRenderPlan): Vector[(SurfaceResourceKey, Double, String)] =
-    plan.layers.map(layer => (layer.resourceKey, layer.opacity.toDouble, layer.blendMode.toString))
+  private def layerSignature(plan: SurfaceRenderPlan): Vector[(SurfaceResourceKey, Double, String, SurfaceLayerCoverage)] =
+    plan.layers.map(layer => (layer.resourceKey, layer.opacity.toDouble, layer.blendMode.toString, layer.coverage))
 
 private object ThreeSurfaceCompositor:
   private val Base = Rgba32.unsafe(184, 184, 184)

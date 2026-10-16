@@ -1,0 +1,90 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-test-fastopt
+scalafim.surface.view.three.CanvasSurfaceFlatMapHostSuite:
+  + failed publication clears stale picks and disposed hosts cannot resurrect 0.002s
+scalafim.surface.view.three.ThreeVolumeProjectorSuite:
+  + 3D texture transport preserves asymmetric axes and non-cubic dimensions 0.003s
+  + nearest decisions survive float32 half-voxel ties and the upper boundary 0.002s
+  + valid zero and non-finite texels keep the shared sample-accounting policy 0.001s
+  + GPU nearest transport rejects far-outside coordinates before narrowing indices 0.000s
+scalafim.surface.view.three.CanvasRasterSurfaceHostSuite:
+  + staging failure preserves the old frame; publication failure invalidates stale picks 0.015s
+  + CSS borders and padding are excluded before mapping content coordinates 0.004s
+  + reentrant lowering cannot resurrect a disposed host or overwrite a newer frame 0.014s
+scalafim.surface.view.three.ThreeSurfaceScalarSuite:
+  + scalar shaders interpolate the full sample envelope with original face provenance 0.007s
+  + camera changes reuse attributes and style changes upload no geometry 0.001s
+  + nonfinite scalar samples carry a separate contributing-weight flag 0.001s
+  + mapping boundaries that collapse in GPU floats fail before native allocation 0.001s
+  + uncovered samples cannot dilute scalar precision 0.001s
+scalafim.surface.view.three.ThreeFragmentShaderPipelineSuite:
+  + linear-light packet carries source sampling contract and clip/opacity shader uniforms 0.002s
+  + legacy packets keep encoded-byte lighting while linear packets decode and encode once 0.001s
+scalafim.surface.view.three.ThreeSurfaceBackendSuite:
+  + native depth fixture covers its full pixel and strictly separates near and far depth 0.000s
+  + fractional viewport projection matches logical pixel positions at native device ratios 0.001s
+  + occupied depth conditioning preserves screen coordinates and separates close perspective surfaces 0.000s
+  + occupied depth conditioning retains reached clip planes and rejects uncertain eye crossings 0.001s
+  + depth conditioning uses a common interval for translated and overlapping draw slots 0.000s
+  + Three adapter consumes CPU-projected fields and network tubes as ordinary resources 0.004s
+  + GPU projection capability is explicit and unsupported policies fail before WebGL interpretation 0.001s
+  + publication preset configures an exact browser canvas size 0.000s
+  + full-frame clearing disables the stale bilateral scissor before clearing 0.000s
+  + typed runtime clear colour survives resize and draw cycles 0.001s
+  + disposal forces WebGL context loss exactly once and reports the context as lost 0.000s
+  + rejected depth admission releases its probe resources, renderer, and context exactly once 0.001s
+  + depth probe constructor failure releases already-built resources, renderer, and context exactly once 0.000s
+  + four composition views reuse one uploaded surface resource and camera-only edits stay upload-clean 0.003s
+  + composition rejects conflicting occurrences before runtime mutation 0.001s
+  + composition-to-legacy transition removes native occurrences before legacy commands 0.002s
+  + decorations validate before native mutation and never reupload scientific resources 0.004s
+  + stale decoration geometry refuses before fake runtime mutation 0.001s
+  + failed decoration replacement clears the old native decoration state 0.001s
+  + draw failure after a successful decoration install is cleared by a later plain render 0.001s
+  + display picking preserves tagged decoration hits without manufacturing a surface id 0.000s
+  + typed compiler separates geometry, color, camera, resize, and on-demand draw dirtiness 0.002s
+  + context absence, loss, disposal, and invalid picks are explicit failures 0.001s
+  + topology-preserving morphs update only retained position and normal buffers 0.002s
+  + world clipping without original fragment samples is rejected before Three.js interpretation 0.000s
+  + picking preserves Three.js face, closest vertex, world point, and surface identity 0.000s
+  + SurfViewJS scalar threshold fixture has the same semantic compositing 0.001s
+  + SurfViewJS label fixture preserves exact categorical colors 0.000s
+  + SurfViewJS multilayer fixture preserves order, opacity, and blend mode 0.000s
+  + fitting policy changes reach the runtime without geometry, colors or camera uploads 0.000s
+  + composition rejects conflicting resource bytes without native commands 0.001s
+scalafim.surface.view.three.ThreeSurfaceFaceSuite:
+  + face colors remain constant per triangle in native upload buffers 0.002s
+[info] Passed: Total 47, Failed 0, Errors 0, Passed 47
+[[32msuccess[0m] elapsed: 8 s
+[0J[sbt-warm] surfaceViewThreeJS/test: exit 0 in 8.4s
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-fastopt
+[[32msuccess[0m] elapsed: 3 s
+[0J[sbt-warm] surfaceViewThreeJS/fastLinkJS: exit 0 in 3.4s
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 29 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxVisibilityProbe.scala:49:64 
+[error] 49 |          val values = Array.tabulate(256 * 256)(index => image.getPixelReader.getArgb(index % 256, index / 256))
+[error]    |                                                          ^^^^^^^^^^^^^^^^^^^^
+[error]    |                            value getPixelReader is not a member of Unit
+[error] -- [E172] Type Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxVisibilityProbe.scala:49:113 
+[error] 49 |          val values = Array.tabulate(256 * 256)(index => image.getPixelReader.getArgb(index % 256, index / 256))
+[error]    |                                                                                                                 ^
+[error]    |                                          No ClassTag available for T
+[error]    |
+[error]    |                                          where:    T is a type variable
+[error] two errors found
+[[31merror[0m] elapsed: 5 s
+[error] (surfaceViewJavafxJVM / Test / compileIncremental) Compilation failed
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 1 in 5.7s

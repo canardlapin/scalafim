@@ -1,0 +1,24 @@
+[info] compiling 8 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 10 s
+[0J[sbt-warm] fmriWorkflowJVM/compile: exit 0 in 10.5s
+[info] compiling 18 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/77e7bdc71bddb8077fcd/bids4s/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-surfview-parity/modules/fmri-workflow/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 13 s
+[0J[sbt-warm] fmriWorkflowJS/compile: exit 0 in 13.9s
+[info] compiling 1 Scala source to /private/tmp/scalafim-surfview-parity/modules/archive-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 1 s
+[0J[sbt-warm] archiveZarrJVM/compile: exit 0 in 1.3s
+[[32msuccess[0m] elapsed: 0 s
+[0J[sbt-warm] archiveZarrJS/compile: exit 0 in 0.7s
+[info] compiling 7 Scala sources to /private/tmp/scalafim-surfview-parity/modules/dataset-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] datasetZarrJVM/compile: exit 0 in 6.4s
+[info] compiling 3 Scala sources to /private/tmp/scalafim-surfview-parity/modules/dataset-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] datasetZarrJS/compile: exit 0 in 4.9s

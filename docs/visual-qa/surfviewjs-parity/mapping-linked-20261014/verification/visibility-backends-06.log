@@ -1,0 +1,10 @@
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[error] -- [E008] Not Found Error: /private/tmp/intaglio-surface-display/modules/core/shared/src/main/scala/intaglio/BivariateEffectConfidence.scala:27:61 
+[error] 27 |  def unsafe(value: Int): BivariateTextureSize = make(value).orThrow
+[error]    |                                                 ^^^^^^^^^^^^^^^^^^^
+[error]    |value orThrow is not a member of Either[intaglio.BivariateEffectConfidenceError,
+[error]    |  intaglio.BivariateEffectConfidence$package.BivariateTextureSize]
+[error] one error found
+[[31merror[0m] elapsed: 6 s
+[error] (ProjectRef(uri("file:/private/tmp/intaglio-surface-display/"), "coreJVM") / Compile / compileIncremental) Compilation failed
+[0J[sbt-warm] surfaceViewRasterJVM/test: exit 1 in 6.4s

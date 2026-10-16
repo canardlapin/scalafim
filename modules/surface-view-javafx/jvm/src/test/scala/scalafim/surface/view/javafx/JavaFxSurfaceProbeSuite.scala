@@ -214,7 +214,7 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(chunk.material.getSelfIlluminationMap eq chunk.atlas.image)
     assertEquals(result.receipt.directAtlasBytes, 64L)
 
-  test("lit and unlit material modes bind only public PhongMaterial maps"):
+  test("lit and unlit material modes bind only the selected JavaFX material map"):
     val renderPlan = plan(geometry())
     val lit = JavaFxSurfaceProbe.compile(renderPlan, JavaFxMaterialMode.Lit).toOption.get.chunks.head
     val unlit = JavaFxSurfaceProbe.compile(renderPlan, JavaFxMaterialMode.Unlit).toOption.get.chunks.head
@@ -247,6 +247,29 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assertEquals(update.dirtyPixels, 0L)
     assert(result.chunks.head.mesh eq triangleMesh)
     assert(result.chunks.head.atlas eq atlas)
+
+  test("constant face colors eliminate texture derivatives; varying updates restore interpolation without rebuilding geometry"):
+    val mesh = geometry()
+    def fixture(colors: Vector[Rgba32]): SurfaceRenderPlan =
+      val layer = SurfaceLayer.packedRgba(layerId, surfaceId, mesh, colors).toOption.get
+      val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surfaceId, mesh).toOption.get), Vector(layer)).toOption.get
+      SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get
+    val constant = fixture(Vector.fill(3)(Rgba32.unsafe(255, 0, 0)))
+    val varying = fixture(Vector(Rgba32.unsafe(255, 0, 0), Rgba32.unsafe(0, 255, 0), Rgba32.unsafe(0, 0, 255)))
+    val result = JavaFxSurfaceProbe.compile(constant).toOption.get
+    val native = result.chunks.head.mesh
+    val uv = native.getTexCoords
+    assertEqualsDouble(uv.get(0), uv.get(2), 0)
+    assertEqualsDouble(uv.get(1), uv.get(5), 0)
+    val changed = result.updateColors(varying).toOption.get
+    assert(!changed.geometryRebuilt)
+    assertEquals(changed.textureCoordinateBytesUpdated, 24L)
+    assert(uv.get(0) != uv.get(2))
+    assertEquals(result.updateColors(varying).toOption.get.textureCoordinateBytesUpdated, 0L)
+    val restored = result.updateColors(constant).toOption.get
+    assertEquals(restored.textureCoordinateBytesUpdated, 24L)
+    assert(result.chunks.head.mesh eq native)
+    assertEqualsDouble(uv.get(0), uv.get(2), 0)
 
   test("topology-preserving geometry changes mutate points and normals without rebuilding atlases"):
     val original = geometry()
@@ -351,6 +374,16 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(!updateProgram.commands.exists(_.productPrefix == "RebuildGeometry"))
     assert(!updateProgram.commands.exists(_.productPrefix == "UpdateAtlases"))
 
+    val tiltedGeometry = SurfaceGeometry(TriangleMesh.fromRows(
+      mesh.mesh.vertices.map(point => Seq(point.x, point.y, point.x * 0.5)),
+      mesh.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))), mesh.hemisphere, mesh.kind)
+    val tilted = plan(tiltedGeometry, Rgba32.unsafe(255, 0, 0), SurfaceViewpoint.Dorsal)
+    val shadedMorph = JavaFxSurfaceProgram.compile(Some(red), tilted)
+    assert(shadedMorph.commands.exists(_.productPrefix == "UpdateGeometry"))
+    assert(!shadedMorph.commands.exists(_.productPrefix == "UpdateAtlases"))
+    val unlitMorph = JavaFxSurfaceProgram.compile(Some(unlit), tilted.copy(lighting = SurfaceLighting.Unlit))
+    assert(!unlitMorph.commands.exists(_.productPrefix == "UpdateAtlases"))
+
   test("production interpreter rejects non-Application-Thread access"):
     assert(JavaFxSurfaceBackend.create().isLeft)
 
@@ -360,3 +393,32 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     )).toOption.get
     val result = JavaFxSurfaceBackend.validateCapabilities(plan(geometry()).copy(clipping = clipping))
     assert(result.left.exists(_.message.contains("world clipping planes are unsupported")))
+
+  test("viewport fitting changes invalidate layout without uploading geometry or changing the camera"):
+    val before = plan(geometry()).copy(viewportFit = SurfaceViewportFit.Fill)
+    val after = before.copy(viewportFit = SurfaceViewportFit.Contain(1.0))
+    val program = JavaFxSurfaceProgram.compile(Some(before), after)
+    assert(program.dirty.layout)
+    assert(!program.dirty.geometry && !program.dirty.camera && !program.dirty.layerData)
+    assertEquals(program.commands, Vector(JavaFxSurfaceCommand.UpdateLayout(after.slots, after.viewportFit)))
+
+  test("native layout consumes compiled x/y projection independently on rectangular legacy viewports"):
+    val base = plan(geometry(), viewpoint = SurfaceViewpoint.Dorsal)
+    val projection = Array[Float](1.2f, 0, 0, 0, 0, 1.6f, 0, 0, 0, 0, -.002f, 0, 0, 0, 0, 1)
+    val camera = base.camera.copy(projectionMatrix = new FloatBufferView(projection))
+    for (width, height) <- Vector((960.0, 540.0), (540.0, 960.0)) do
+      val slot = base.slots.head.copy(viewport = SurfaceViewport(0.0, 0.0, 0.5, 1.0))
+      val compiled = base.copy(camera = camera, slots = Vector(slot), viewportFit = SurfaceViewportFit.Fill)
+      val cameraTransform = new _root_.javafx.scene.transform.Affine()
+      val layout = new _root_.javafx.scene.transform.Affine()
+      JavaFxSurfaceProbe.configureCamera(new PerspectiveCamera(true), cameraTransform, compiled)
+      JavaFxSurfaceProbe.configureLayout(compiled, Map(slot.surface -> layout), width, height)
+      val mesh = compiled.meshes.head
+      for vertex <- 0 until mesh.positions.length / 3 do
+        val point = new _root_.javafx.geometry.Point3D(mesh.positions(vertex * 3), mesh.positions(vertex * 3 + 1), mesh.positions(vertex * 3 + 2))
+        val actual = cameraTransform.transform(layout.transform(point))
+        val view = compiled.camera.viewMatrix
+        val x = view(0) * point.getX + view(1) * point.getY + view(2) * point.getZ + view(3)
+        val y = view(4) * point.getX + view(5) * point.getY + view(6) * point.getZ + view(7)
+        assertEqualsDouble(actual.getX, width * (slot.viewport.x + (x * projection(0) + 1) * slot.viewport.width / 2), 1e-5)
+        assertEqualsDouble(actual.getY, height * (slot.viewport.y + (1 - y * projection(5)) * slot.viewport.height / 2), 1e-5)

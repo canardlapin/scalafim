@@ -1,0 +1,83 @@
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.view.raster.SurfaceNearestRasterSuite:
+  + nearest regions match original triangle barycentrics under orthographic and perspective views 0.259s
+  + face and nearest layers blend as constant samples within each region 0.022s
+  + the exact centroid tie uses the smallest scientific id even with permuted face order 0.006s
+scalafim.surface.view.raster.SurfaceTextureSamplerSuite:
+  + POT mips and fractional LOD have independently specified color averages 0.001s
+  + mip reduction preserves premultiplied color through transparent checker texels 0.001s
+  + odd dimensions use explicit area averaging without losing the final row 0.001s
+scalafim.surface.view.raster.SurfaceFragmentCompositionSuite:
+  + all blend modes compose independently mapped layers at the fragment 0.031s
+  + thresholded scalar overlay reveals the independently interpolated curvature underlay 0.021s
+  + nearest regions do not flatten a coexisting color-interpolated layer 0.02s
+  + lighting uses the normalized interpolated normal after composition 0.001s
+  + face samples compose with scalar fields without face-to-vertex conversion 0.008s
+  + network pixels keep their own color and identity over a scalar and nearest surface 0.059s
+scalafim.surface.view.raster.SurfaceFaceRasterSuite:
+  + adjacent faces retain constant color and original picks across their shared edge 0.024s
+  + a face overlay blends with the surface base without leaking into its neighbor 0.002s
+scalafim.surface.view.raster.SurfaceScalarRasterSuite:
+  + pixels match the analytic coordinate field under clipping and perspective 0.069s
+  + nonlinear mapping differs from legacy vertex color interpolation 0.006s
+  + invalid samples do not renormalize interiors over the remaining vertices 0.016s
+  + split scales and opacity are evaluated at fragments before composition 0.006s
+scalafim.surface.view.raster.SurfaceCompositionRasterSuite:
+  + two crossing surfaces share depth and identify the original instance independent of submission order 0.013s
+  + translucent surfaces resolve far to near independent of submission order and retain transparent backgrounds 0.038s
+  + transparent crossing triangles retain distinct-depth ordering in either submission order 0.026s
+  + checked composition refuses fragment collection above its explicit capacity 0.002s
+  + positive instance opacity remains a scientific contribution before final byte packing 0.009s
+==> X scalafim.surface.view.raster.SurfaceCompositionRasterSuite.world clipping uses translated surface coordinates  0.014s munit.FailException: modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceCompositionRasterSuite.scala:121 assertion failed
+120:    // coordinate clip would incorrectly remove it.
+121:    assert(rendered.pick(30, 32).toOption.flatten.nonEmpty)
+122:
+    at munit.FunSuite.assert(FunSuite.scala:13)
+    at scalafim.surface.view.raster.SurfaceCompositionRasterSuite.$init$$$anonfun$6(SurfaceCompositionRasterSuite.scala:121)
+  + four views reuse one mesh and preserve distinct view and instance picks 0.003s
+  + changing one camera leaves the other panel's pixels unchanged 0.004s
+  + legacy lowering preserves contained viewport pixels and scientific picks on a wide canvas 0.003s
+scalafim.surface.view.raster.SurfaceDecorationRasterSuite:
+  + pixel disk draws at its declared size and returns decoration identity without changing scientific buffers 0.094s
+  + default opaque legacy surface occludes a depth-tested marker but explicit overlay remains visible 0.077s
+==> X scalafim.surface.view.raster.SurfaceDecorationRasterSuite.collected-policy coplanar marker is visible and owns the display pick  0.003s munit.FailException: modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceDecorationRasterSuite.scala:8 InvalidResource(layer:anchor-surface-color:0:2815ff10,fragment colors differ from the original sample domain)
+7:class SurfaceDecorationRasterSuite extends munit.FunSuite:
+8:  private def ok[A](value: Either[?, A]): A = value.fold(e => fail(s"$e"), identity)
+9:  private val red = Rgba32.unsafe(255, 0, 0)
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.surface.view.raster.SurfaceDecorationRasterSuite.ok$$anonfun$1(SurfaceDecorationRasterSuite.scala:8)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.surface.view.raster.SurfaceDecorationRasterSuite.ok(SurfaceDecorationRasterSuite.scala:8)
+    at scalafim.surface.view.raster.SurfaceDecorationRasterSuite.$init$$$anonfun$3(SurfaceDecorationRasterSuite.scala:72)
+  + transparent label texels preserve the surface and labels pass through picking 0.047s
+  + stale camera/size geometry and invalid buffers fail before rendering 0.002s
+  + shared annotation ray picking agrees with raster visibility and coplanar tie ownership 0.091s
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.099s
+  + reference backend publishes stable capabilities and explicit caveats 0.0s
+  + unlit asymmetric landmark image and picks are deterministic 0.014s
+  + advertised lighting produces ambient and directional Lambert pixels 0.002s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.004s
+  + world translation preserves framing, pixels, and picks 0.002s
+  + depth buffering keeps the nearer face independent of draw order 0.002s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.001s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.001s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.001s
+  + overlays composite in model order with exact packed source-over semantics 0.001s
+  + bilateral slots keep left and right surface picks distinct 0.003s
+  + raster receipts expose phase timings and exact work counters 0.001s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.005s
+[error] Failed: Total 47, Failed 2, Errors 0, Passed 45
+[error] Failed tests:
+[error] 	scalafim.surface.view.raster.SurfaceDecorationRasterSuite
+[error] 	scalafim.surface.view.raster.SurfaceCompositionRasterSuite
+[[31merror[0m] elapsed: 7 s
+[error] (surfaceViewRasterJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[0J[sbt-warm] surfaceViewRasterJVM/test: exit 1 in 6.9s

@@ -1,0 +1,14 @@
+{
+  "name": "Face",
+  "status": "pass",
+  "result": {
+    "status": "pass",
+    "checked": 196,
+    "maximumChannelError": 0,
+    "firstFace": 0,
+    "firstVertex": 1,
+    "secondFace": 1,
+    "secondVertex": 3,
+    "geometryUploadsOnTimepoint": 0
+  }
+}

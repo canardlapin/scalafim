@@ -1,0 +1,124 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:24:29 
+[warn] 24 |        if mesh.isEmpty then return Left(s"threshold edge layer '${layer.layer.value}' has no matching mesh")
+[warn]    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:27:10 
+[warn] 27 |          return Left(s"threshold edge layer '${layer.layer.value}' must cover every original vertex")
+[warn]    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:32:12 
+[warn] 32 |            return Left(s"threshold edge layer '${layer.layer.value}' has an invalid visibility sign")
+[warn]    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:36:10 
+[warn] 36 |          return Left(s"threshold edge layer '${layer.layer.value}' requires fragment surface semantics")
+[warn]    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:38:10 
+[warn] 38 |          return Left(s"threshold edge layer '${layer.layer.value}' must be topmost")
+[warn]    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:40:10 
+[warn] 40 |          return Left(s"threshold edge layer '${layer.layer.value}' must use normal blending")
+[warn]    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] -- Warning: /private/tmp/scalafim-surface-visibility/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala:42:10 
+[warn] 42 |          return Left(s"threshold edge layer '${layer.layer.value}' requires a vertex-color stack")
+[warn]    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[warn]    |Non local returns are no longer supported; use `boundary` and `boundary.break` in `scala.util` instead
+[warn] 7 warnings found
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 29 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-graphics/21.0.5/javafx-graphics-21.0.5-mac-aarch64.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+scalafim.surface.view.javafx.JavaFxAdaptiveAtlasSuite:
+  + adaptive attribute counts refuse overflow before allocation 0.011s
+  + combined morph, colour and lighting update agrees with cold final construction 0.249s
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.12s
+  + cyclic anchors avoid needless subdivision without duplicating source vertices 0.004s
+  + saturated RGB uses midpoint fallback and morphs shared source plus synthetic vertices 0.005s
+  + anchor-only colour changes reuse geometry; split changes refuse before mutation 0.004s
+  + resource admission charges actual adaptive faces, including fallback 0.002s
+  + mixed one/four-child layouts preserve winding and source identities across chunk boundaries 0.003s
+scalafim.surface.view.javafx.JavaFxAffineAtlasSuite:
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.065s
+  + independent sampler retains the known legacy diagonal failure as a discriminating control 0.001s
+  + subdivision respects atlas chunks, original face identity, winding and actual resource counts 0.004s
+  + colour and geometry updates retain topology and recompute midpoint data 0.002s
+  + encoding and expanded resource budget are admitted before native allocation 0.001s
+  + opaque gate examines final channels and constant updates keep the same midpoint mesh 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceScalarSuite:
+  + production JavaFX admission and atlas construction reject scalar fragments before allocation 0.023s
+scalafim.surface.view.javafx.JavaFxSurfaceCompositionSuite:
+  + toolkit-free preflight rejects unsupported fragment and clipping policies before native mutation 0.019s
+  + resource preflight retains declared resource identities for repeated instances 0.006s
+  + shared atlas refuses per-view lighting disagreement 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceApproximationSuite:
+  + preparation preserves original-face coordinates and reports generated allocation 0.238s
+  + mixed nearest/scalar preparation uses original positions after subdivision 0.231s
+  + small budgets fail before native allocation and plain plans retain the legacy path 0.002s
+  + constant display normals remain perpendicular to vertical faces for native tangent frames 0.078s
+  + normal changes have distinct derived identities even when positions are unchanged 0.136s
+  + native indexing and texture arithmetic reject oversized configurations before allocation 0.0s
+  + derived render faces retain original identity at arbitrary native packet indices 0.083s
+  + lit nearest cells approximate legacy corner shading and retain original provenance 0.016s
+  + varying legacy colors obey byte budgets and constant unlit categories retain their mesh 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceProbeSuite:
+  + JavaFX consumes CPU-projected fields and network tubes as ordinary resources 0.097s
+  + JavaFX capability mapping is explicit about admission and clipping 0.005s
+  + runtime receipt parses the observed Prism pipeline rather than trusting the request 0.004s
+  + stock Metal admission fails closed on fallback, version drift, and module mutation 0.006s
+  + atlas configuration rejects unsafe sizes 0.001s
+  + production backend refuses affine encodings before JavaFX access 0.001s
+  + default atlas configuration preserves legacy native-Phong semantics 0.0s
+  + explicit world-vertex Lambert uses anatomical normals and remains self-illuminated when lit 0.001s
+  + world-vertex Lambert alone makes pure lighting and morph changes update atlases 0.004s
+  + publication preset configures an exact high-resolution snapshot 0.002s
+  + POINT_NORMAL_TEXCOORD mesh and direct per-face atlas use supported JavaFX APIs 0.001s
+  + lit and unlit material modes bind only the selected JavaFX material map 0.001s
+  + style and data updates touch atlases without rebuilding geometry 0.001s
+  + camera motion updates no mesh and no atlas 0.001s
+  + constant face colors eliminate texture derivatives; varying updates restore interpolation without rebuilding geometry 0.002s
+  + topology-preserving geometry changes mutate points and normals without rebuilding atlases 0.001s
+  + orthographic plans select a parallel camera without rebuilding resources 0.001s
+  + large face sets chunk at the configured safe texture capacity 0.001s
+  + face tuples retain point, normal, and face-local atlas indices 0.0s
+  + toolkit-free programs classify camera, layer, material, and geometry dirt exactly 0.004s
+  + production interpreter rejects non-Application-Thread access 0.0s
+  + world clipping is rejected explicitly before JavaFX interpretation 0.0s
+  + viewport fitting changes invalidate layout without uploading geometry or changing the camera 0.002s
+  + native layout consumes compiled x/y projection independently on rectangular legacy viewports 0.001s
+[info] Passed: Total 51, Failed 0, Errors 0, Passed 51
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 0 in 7.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] running (fork) scalafim.surface.view.javafx.JavaFxVisibilityProbe /private/tmp/scalafim-javafx-visibility-22
+[error] Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+[error] Oct 14, 2026 4:33:12 P.M. com.sun.javafx.application.PlatformImpl startup
+[error] WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @531be3c5'
+[error] WARNING: A restricted method in java.lang.System has been called
+[error] WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/fc4494fe/d2189dfd/javafx-graphics-21.0.5-mac-aarch64.jar)
+[error] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[error] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/private/tmp/scalafim-surface-visibility/target/bg-jobs/sbt_1779dda/target/16f4dc48/adca020a/scala3-library_3-3.7.4.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] JavaFX visibility: 20 scene snapshots agree with published scientific pixels; /private/tmp/scalafim-javafx-visibility-22
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxVisibilityProbe /private/tmp/scalafim-javafx-visibility-22: exit 0 in 5.2s

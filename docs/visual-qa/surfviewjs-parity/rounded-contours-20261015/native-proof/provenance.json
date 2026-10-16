@@ -1,0 +1,10 @@
+{
+  "candidateRoot": "/private/tmp/scalafim-surface-qualification-20261015",
+  "candidateCommit": "c8da444b0d0767c6ab267b6c3166bc6a6abe14a2",
+  "scalaModule": "/private/tmp/surface-qualification-builds/rounded-strokes-07/main.js",
+  "scalaModuleSha256": "b57a48d9514a6a7a8a5f8585b49fa58f50f8bb63a2a0a845ba80ec3cd8b6191f",
+  "runnerSha256": "e1d81b50c288e135ad105f0b9b660b7c1e083757c614da4b9aba1586d4f0331d",
+  "requestedAngleBackend": "metal",
+  "startedAt": "2026-10-15T17:49:14.469Z",
+  "browserVersion": "151.0.7922.34"
+}

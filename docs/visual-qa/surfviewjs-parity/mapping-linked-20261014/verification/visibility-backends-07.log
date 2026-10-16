@@ -1,0 +1,318 @@
+[[0minfo[0m] server was not detected. starting an instance
+Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+Picked up JAVA_TOOL_OPTIONS: -Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-surface-visibility-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-surface-visibility/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-surface-display-build from plugins.sbt...
+[info] loading project definition from /private/tmp/intaglio-surface-display/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/5a3fe250684692aa42c1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/d79d1afec9bc45383768/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/b3db316401092ccd708e/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (370323 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-surface-visibility/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /private/tmp/intaglio-surface-display/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] sbt server started at local:///Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/server/7c4f759f669d47e4f084/sock
+[info] started sbt server
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/jvm/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.view.raster.SurfaceCompositionRasterSuite:
+  + two crossing surfaces share depth and identify the original instance independent of submission order 0.1s
+  + translucent surfaces resolve far to near independent of submission order and retain transparent backgrounds 0.053s
+  + transparent crossing triangles retain distinct-depth ordering in either submission order 0.019s
+  + checked composition refuses fragment collection above its explicit capacity 0.001s
+  + positive instance opacity remains a scientific contribution before final byte packing 0.006s
+  + world clipping uses translated surface coordinates 0.005s
+  + four views reuse one mesh and preserve distinct view and instance picks 0.005s
+  + changing one camera leaves the other panel's pixels unchanged 0.011s
+  + legacy lowering preserves contained viewport pixels and scientific picks on a wide canvas 0.008s
+scalafim.surface.view.raster.SurfaceScalarRasterSuite:
+  + pixels match the analytic coordinate field under clipping and perspective 0.078s
+  + nonlinear mapping differs from legacy vertex color interpolation 0.005s
+  + invalid samples do not renormalize interiors over the remaining vertices 0.011s
+  + split scales and opacity are evaluated at fragments before composition 0.013s
+scalafim.surface.view.raster.SurfaceNearestRasterSuite:
+  + nearest regions match original triangle barycentrics under orthographic and perspective views 0.073s
+  + face and nearest layers blend as constant samples within each region 0.01s
+  + the exact centroid tie uses the smallest scientific id even with permuted face order 0.002s
+scalafim.surface.view.raster.SurfaceFragmentCompositionSuite:
+  + all blend modes compose independently mapped layers at the fragment 0.009s
+  + thresholded scalar overlay reveals the independently interpolated curvature underlay 0.005s
+  + nearest regions do not flatten a coexisting color-interpolated layer 0.015s
+  + lighting uses the normalized interpolated normal after composition 0.002s
+  + face samples compose with scalar fields without face-to-vertex conversion 0.005s
+  + network pixels keep their own color and identity over a scalar and nearest surface 0.029s
+scalafim.surface.view.raster.SurfaceDecorationRasterSuite:
+  + pixel disk draws at its declared size and returns decoration identity without changing scientific buffers 0.062s
+  + default opaque legacy surface occludes a depth-tested marker but explicit overlay remains visible 0.048s
+  + collected-policy coplanar marker is visible and owns the display pick 0.024s
+  + transparent label texels preserve the surface and labels pass through picking 0.031s
+  + stale camera/size geometry and invalid buffers fail before rendering 0.001s
+  + shared annotation ray picking agrees with raster visibility and coplanar tie ownership 0.041s
+scalafim.surface.view.raster.SurfaceTextureSamplerSuite:
+  + POT mips and fractional LOD have independently specified color averages 0.001s
+  + mip reduction preserves premultiplied color through transparent checker texels 0.005s
+  + odd dimensions use explicit area averaging without losing the final row 0.0s
+scalafim.surface.view.raster.SurfaceFaceRasterSuite:
+  + adjacent faces retain constant color and original picks across their shared edge 0.019s
+  + a face overlay blends with the surface base without leaking into its neighbor 0.001s
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.046s
+  + reference backend publishes stable capabilities and explicit caveats 0.001s
+  + unlit asymmetric landmark image and picks are deterministic 0.007s
+  + advertised lighting produces ambient and directional Lambert pixels 0.002s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.004s
+  + world translation preserves framing, pixels, and picks 0.001s
+  + depth buffering keeps the nearer face independent of draw order 0.001s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.001s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.001s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.0s
+  + overlays composite in model order with exact packed source-over semantics 0.0s
+  + bilateral slots keep left and right surface picks distinct 0.002s
+  + raster receipts expose phase timings and exact work counters 0.0s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.003s
+[info] Passed: Total 47, Failed 0, Errors 0, Passed 47
+[[32msuccess[0m] elapsed: 10 s
+[0J[sbt-warm] surfaceViewRasterJVM/test: exit 0 in 46.9s
+[info] compiling 1 Scala source to /private/tmp/intaglio-surface-display/modules/core/js/target/scala-3.3.8/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-surface-visibility/modules/surface-view-raster/js/target/scala-3.7.4/scalafim-surface-view-raster-test-fastopt
+scalafim.surface.view.raster.SurfaceFragmentCompositionSuite:
+  + all blend modes compose independently mapped layers at the fragment 0.031s
+  + thresholded scalar overlay reveals the independently interpolated curvature underlay 0.017s
+  + nearest regions do not flatten a coexisting color-interpolated layer 0.015s
+  + lighting uses the normalized interpolated normal after composition 0.001s
+  + face samples compose with scalar fields without face-to-vertex conversion 0.004s
+  + network pixels keep their own color and identity over a scalar and nearest surface 0.024s
+scalafim.surface.view.raster.SurfaceScalarRasterSuite:
+  + pixels match the analytic coordinate field under clipping and perspective 0.063s
+  + nonlinear mapping differs from legacy vertex color interpolation 0.008s
+  + invalid samples do not renormalize interiors over the remaining vertices 0.007s
+  + split scales and opacity are evaluated at fragments before composition 0.012s
+scalafim.surface.view.raster.SurfaceNearestRasterSuite:
+  + nearest regions match original triangle barycentrics under orthographic and perspective views 0.074s
+  + face and nearest layers blend as constant samples within each region 0.011s
+  + the exact centroid tie uses the smallest scientific id even with permuted face order 0.002s
+scalafim.surface.view.raster.SurfaceFaceRasterSuite:
+  + adjacent faces retain constant color and original picks across their shared edge 0.020s
+  + a face overlay blends with the surface base without leaking into its neighbor 0.002s
+scalafim.surface.view.raster.SurfaceTextureSamplerSuite:
+  + POT mips and fractional LOD have independently specified color averages 0.001s
+  + mip reduction preserves premultiplied color through transparent checker texels 0.000s
+  + odd dimensions use explicit area averaging without losing the final row 0.000s
+scalafim.surface.view.raster.SurfaceDecorationRasterSuite:
+  + pixel disk draws at its declared size and returns decoration identity without changing scientific buffers 0.058s
+  + default opaque legacy surface occludes a depth-tested marker but explicit overlay remains visible 0.069s
+  + collected-policy coplanar marker is visible and owns the display pick 0.030s
+  + transparent label texels preserve the surface and labels pass through picking 0.032s
+  + stale camera/size geometry and invalid buffers fail before rendering 0.001s
+  + shared annotation ray picking agrees with raster visibility and coplanar tie ownership 0.068s
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.006s
+  + reference backend publishes stable capabilities and explicit caveats 0.000s
+  + unlit asymmetric landmark image and picks are deterministic 0.002s
+  + advertised lighting produces ambient and directional Lambert pixels 0.001s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.003s
+  + world translation preserves framing, pixels, and picks 0.001s
+  + depth buffering keeps the nearer face independent of draw order 0.001s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.001s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.001s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.001s
+  + overlays composite in model order with exact packed source-over semantics 0.001s
+  + bilateral slots keep left and right surface picks distinct 0.001s
+  + raster receipts expose phase timings and exact work counters 0.001s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.009s
+scalafim.surface.view.raster.SurfaceCompositionRasterSuite:
+  + two crossing surfaces share depth and identify the original instance independent of submission order 0.003s
+  + translucent surfaces resolve far to near independent of submission order and retain transparent backgrounds 0.011s
+  + transparent crossing triangles retain distinct-depth ordering in either submission order 0.005s
+  + checked composition refuses fragment collection above its explicit capacity 0.000s
+  + positive instance opacity remains a scientific contribution before final byte packing 0.001s
+  + world clipping uses translated surface coordinates 0.001s
+  + four views reuse one mesh and preserve distinct view and instance picks 0.001s
+  + changing one camera leaves the other panel's pixels unchanged 0.002s
+  + legacy lowering preserves contained viewport pixels and scientific picks on a wide canvas 0.002s
+[info] Passed: Total 47, Failed 0, Errors 0, Passed 47
+[[32msuccess[0m] elapsed: 10 s
+[0J[sbt-warm] surfaceViewRasterJS/test: exit 0 in 10.1s
+[info] compiling 13 Scala sources to /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[error] -- Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:73:10 
+[error] 73 |          case DecorationSource.Fixed(_, original) => original != size
+[error]    |          ^^^^
+[error]    |          indented definitions expected, case found
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:72:26 
+[error] 72 |      case Some(input) if input.decorations.exists:
+[error]    |                          ^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |Found:    (scalafim.surface.view.javafx.JavaFxRasterSurfaceHost.DecorationSource =>
+[error]    |  Boolean) => Boolean
+[error]    |Required: Boolean
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:83:23 
+[error] 83 |    if closed then Left(JavaFxRasterHostError.Disposed)
+[error]    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |        Found:    Left[
+[error]    |          (scalafim.surface.view.javafx.JavaFxRasterHostError.Disposed :
+[error]    |            scalafim.surface.view.javafx.JavaFxRasterHostError),
+[error]    |        Nothing]
+[error]    |        Required: scala.concurrent.Future[
+[error]    |          Either[scalafim.surface.view.javafx.JavaFxRasterHostError,
+[error]    |            scalafim.surface.view.javafx.JavaFxRasterHostReceipt]
+[error]    |        ]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:84:53 
+[error] 84 |    else if !Platform.isFxApplicationThread then Left(JavaFxRasterHostError.WrongThread)
+[error]    |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |     Found:    Left[
+[error]    |       (scalafim.surface.view.javafx.JavaFxRasterHostError.WrongThread :
+[error]    |         scalafim.surface.view.javafx.JavaFxRasterHostError),
+[error]    |     Nothing]
+[error]    |     Required: scala.concurrent.Future[
+[error]    |       Either[scalafim.surface.view.javafx.JavaFxRasterHostError,
+[error]    |         scalafim.surface.view.javafx.JavaFxRasterHostReceipt]
+[error]    |     ]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:85:13 
+[error] 85 |    else if !x.isFinite || !y.isFinite then Left(JavaFxRasterHostError.Fx("pick coordinates must be finite"))
+[error]    |             ^
+[error]    |             Not found: x
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:85:48 
+[error] 85 |    else if !x.isFinite || !y.isFinite then Left(JavaFxRasterHostError.Fx("pick coordinates must be finite"))
+[error]    |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |Found:    Left[scalafim.surface.view.javafx.JavaFxRasterHostError, Nothing]
+[error]    |Required: scala.concurrent.Future[
+[error]    |  Either[scalafim.surface.view.javafx.JavaFxRasterHostError,
+[error]    |    scalafim.surface.view.javafx.JavaFxRasterHostReceipt]
+[error]    |]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:88:58 
+[error] 88 |      if bounds.getWidth <= 0 || bounds.getHeight <= 0 || x < bounds.getMinX || y < bounds.getMinY ||
+[error]    |                                                          ^
+[error]    |                                                          Not found: x
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:96:36 
+[error] 96 |        val px = math.floor(left + (x - bounds.getMinX) * width / bounds.getWidth).toInt
+[error]    |                                    ^
+[error]    |                                    Not found: x
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala:97:35 
+[error] 97 |        val py = math.floor(top + (y - bounds.getMinY) * height / bounds.getHeight).toInt
+[error]    |                                   ^
+[error]    |                                   Not found: y
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala:200:51 
+[error] 200 |          plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
+[error]     |                                                   ^^^^^^^^^^^^^^
+[error]     |                                             Not found: DisplayOpacity
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-surface-visibility/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala:438:49 
+[error] 438 |        plan.surfaceOpacities.values.exists(_ != DisplayOpacity.Opaque) then
+[error]     |                                                 ^^^^^^^^^^^^^^
+[error]     |                                             Not found: DisplayOpacity
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] 11 errors found
+[[31merror[0m] elapsed: 4 s
+[error] (surfaceViewJavafxJVM / Compile / compileIncremental) Compilation failed
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 1 in 4.6s

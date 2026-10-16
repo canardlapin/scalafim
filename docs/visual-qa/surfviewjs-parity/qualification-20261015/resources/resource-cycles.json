@@ -1,0 +1,887 @@
+{
+  "status": "pass",
+  "checks": {
+    "referenceContextsReleased": true,
+    "candidateContextsReleased": true,
+    "hostReleased": true,
+    "nativeAdmitted": true,
+    "resizeBackExact": true,
+    "noWarmUploads": true,
+    "stableWarmResources": true,
+    "boundedRetainedGrowth": true
+  },
+  "retainedGrowthBytes": 482512,
+  "budget": {
+    "valid": true,
+    "referenceGrowthLimitBytes": 2097152,
+    "referenceRangeBytes": 222384,
+    "referenceGrowthBytes": 222124,
+    "maximumRetainedGrowthBytes": 8388608,
+    "policy": "Reference last-five retained heap range must be at most 2 MiB; candidate ten-cycle median growth budget fixed at 8 MiB, never enlarged by observed reference drift.",
+    "referenceCycles": [
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88182092
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88377745
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88458389
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88515829
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88691481
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88727953
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88738213
+      },
+      {
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)",
+        "contexts": 1,
+        "lostContexts": 1,
+        "remainingCanvases": 0,
+        "retainedHeapBytes": 88737953
+      }
+    ],
+    "candidateCycles": 20,
+    "warmupCycles": 5,
+    "measurement": "After five candidate warmups, compare final five-cycle median with initial five-cycle median. Require all owned GL contexts lost, no remaining canvases, no warm uploads and stable resource count.",
+    "frozenBeforeCandidate": true
+  },
+  "samples": [
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        6200000,
+        5300000,
+        5000000,
+        5200000,
+        5000000
+      ],
+      "rasterNanos": [
+        363500000,
+        352099999,
+        358800000,
+        353300000,
+        355300000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 91334720
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        6300000,
+        4599999,
+        4400001,
+        3900000,
+        3800000
+      ],
+      "rasterNanos": [
+        378300000,
+        432400001,
+        386700000,
+        386900000,
+        383700001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 91772532
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5600001,
+        4399999,
+        4400001,
+        3800000,
+        4299999
+      ],
+      "rasterNanos": [
+        361300000,
+        423900001,
+        370500000,
+        363700000,
+        360200000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 92172736
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5299999,
+        4200001,
+        4500000,
+        4200000,
+        3599999
+      ],
+      "rasterNanos": [
+        395399999,
+        453400000,
+        369099999,
+        372500000,
+        390400001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 92294644
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5699999,
+        5100001,
+        4399999,
+        4300001,
+        4800000
+      ],
+      "rasterNanos": [
+        371300000,
+        406700000,
+        375900000,
+        366399999,
+        373099999
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 92673300
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5200001,
+        4799999,
+        4300000,
+        4300001,
+        4100000
+      ],
+      "rasterNanos": [
+        366500000,
+        413800001,
+        364599999,
+        364800001,
+        371500000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 92749076
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5700000,
+        4400001,
+        4700000,
+        4699999,
+        5100001
+      ],
+      "rasterNanos": [
+        380400000,
+        398900001,
+        375000000,
+        371900001,
+        362800000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 92805128
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5899999,
+        3800001,
+        4699999,
+        4400001,
+        4000000
+      ],
+      "rasterNanos": [
+        365400000,
+        405500000,
+        394899999,
+        400700000,
+        383100001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 92846812
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5800000,
+        5500000,
+        5299999,
+        4500000,
+        4500000
+      ],
+      "rasterNanos": [
+        358400000,
+        403800001,
+        362900000,
+        354300000,
+        359300001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93213816
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        8800001,
+        4699999,
+        4800001,
+        5000000,
+        4399999
+      ],
+      "rasterNanos": [
+        393800000,
+        397600001,
+        374199999,
+        365900001,
+        360200000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93229692
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5700000,
+        5399999,
+        4300000,
+        4300001,
+        4199999
+      ],
+      "rasterNanos": [
+        365500000,
+        413300000,
+        378000000,
+        356400001,
+        371300001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93249000
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5700000,
+        4100001,
+        4000000,
+        3800000,
+        4500000
+      ],
+      "rasterNanos": [
+        369399999,
+        412100000,
+        374200000,
+        367200000,
+        370600000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93268352
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        6200000,
+        4500000,
+        4500000,
+        4300000,
+        4800000
+      ],
+      "rasterNanos": [
+        361000000,
+        401200000,
+        357100000,
+        360300000,
+        357900001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93277888
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        7400001,
+        4600001,
+        4000000,
+        4900000,
+        4899999
+      ],
+      "rasterNanos": [
+        375800000,
+        401500000,
+        371000000,
+        361200000,
+        356099999
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93289004
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5599999,
+        6100001,
+        4500000,
+        4300000,
+        4400000
+      ],
+      "rasterNanos": [
+        362500000,
+        397000000,
+        369500000,
+        382500000,
+        380199999
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93306448
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5500000,
+        3899999,
+        3900001,
+        4299999,
+        4300000
+      ],
+      "rasterNanos": [
+        358200001,
+        397600001,
+        364500000,
+        359100001,
+        361100000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93314264
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5900001,
+        5000000,
+        5599999,
+        5000000,
+        5400001
+      ],
+      "rasterNanos": [
+        384300000,
+        424700001,
+        369800000,
+        359799999,
+        380400000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93328300
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        6200000,
+        5000000,
+        4699999,
+        4400001,
+        4400000
+      ],
+      "rasterNanos": [
+        400799999,
+        445700000,
+        370000000,
+        379900000,
+        399599999
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93329324
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5599999,
+        4900001,
+        4099999,
+        4700000,
+        4700001
+      ],
+      "rasterNanos": [
+        365000000,
+        413099999,
+        377900000,
+        372100001,
+        375900000
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93338112
+    },
+    {
+      "nativeStatus": "captured",
+      "disposal": {
+        "canvasPresentedFrameReleased": true,
+        "backendResourceCount": 0
+      },
+      "resizeBackExact": true,
+      "warmUploadBytes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "warmResourceCounts": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "nativeSnapshotNanos": [
+        5700001,
+        4799999,
+        4300000,
+        4200000,
+        4000000
+      ],
+      "rasterNanos": [
+        374600000,
+        404600001,
+        377000000,
+        372500000,
+        366800001
+      ],
+      "contexts": 1,
+      "lostContexts": 1,
+      "remainingCanvases": 0,
+      "retainedHeapBytes": 93351636
+    }
+  ],
+  "limitation": "One source specimen and twenty same-page create/render/resize/dispose cycles; JS heap only; detached canvases, backing stores, GPU memory and native RSS are not measured. Unequal work per route; native resize and warmup retention are not qualified. No claim about untested families or long-run leakage."
+}

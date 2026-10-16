@@ -1,0 +1,151 @@
+{
+  "id": "C05-BR-parcels/halo/1b8160a35bd97ccd",
+  "parent": {
+    "rowId": "C05-BR-parcels",
+    "checkpoint": "halo"
+  },
+  "requirement": "required",
+  "effectiveInput": {
+    "rowId": "C05-BR-parcels",
+    "checkpoint": "halo",
+    "fixture": "fsaverage5-label-roi-boundaries.v1",
+    "productRoute": "browser viewer",
+    "viewport": {
+      "origin": [
+        0,
+        0
+      ],
+      "size": [
+        600,
+        450
+      ],
+      "dpr": 1,
+      "originConvention": "top-left",
+      "source": "frozen"
+    },
+    "camera": {
+      "eye": [
+        -350,
+        -20,
+        20
+      ],
+      "target": [
+        -30,
+        -20,
+        20
+      ],
+      "up": [
+        0,
+        0,
+        1
+      ],
+      "projection": "perspective",
+      "near": 0.1,
+      "far": 2000,
+      "aspect": 1.3333333333333333,
+      "fovDegrees": 35
+    },
+    "profile": {
+      "name": "controlled-unlit",
+      "ambientIntensity": 3.141592653589793,
+      "directionalIntensity": 0,
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "fillIntensity": 0,
+      "specular": 0,
+      "emissive": 0,
+      "emissiveIntensity": 0,
+      "base": 204,
+      "lightFrame": "world",
+      "qualification": "pending"
+    },
+    "parameters": {
+      "labelDefinitions": [
+        {
+          "id": 0,
+          "color": 10066329
+        },
+        {
+          "id": 1,
+          "color": 14964566
+        },
+        {
+          "id": 2,
+          "color": 5011624
+        },
+        {
+          "id": 3,
+          "color": 15912795
+        },
+        {
+          "id": 4,
+          "color": 5546571
+        }
+      ],
+      "ignoredLabels": [
+        0
+      ],
+      "parcelValues": {
+        "1": -3,
+        "2": -1,
+        "3": 1,
+        "4": 3
+      },
+      "fill": "categorical",
+      "outline": {
+        "color": 0,
+        "widthPixels": 2,
+        "halo": true,
+        "haloColor": 16777215,
+        "haloWidthPixels": 2,
+        "surfaceOffsetMm": 0.2,
+        "subset": null
+      },
+      "selectedParcel": null,
+      "zoomSeries": [
+        1,
+        1.5,
+        2
+      ],
+      "referenceBoundaryPolicy": "cross-label mesh edges; independently enumerate topology edges",
+      "roiBoundaryLabels": "original parcel labels"
+    },
+    "requiredElements": [
+      "parcel-fills",
+      "boundary-segments",
+      "halo-mask",
+      "medial-wall-mask"
+    ],
+    "metricPolicy": {
+      "minimumForegroundIoU": 0.995,
+      "maximumChannelError": 2,
+      "maximumLandmarkPixels": 1,
+      "smallElementRequired": true,
+      "calibration": "pending; cannot pass until reference repeatability is recorded"
+    },
+    "bundle": {
+      "zoom": 1.5,
+      "requirement": "required"
+    }
+  },
+  "effectiveInputHash": "1b8160a35bd97ccd2e8940bd027780a2043cdf595c7d7e2f67ac05db9a6eab2e",
+  "expectedElements": {
+    "parcel-fills": {
+      "expected": "present"
+    },
+    "boundary-segments": {
+      "expected": "present"
+    },
+    "halo-mask": {
+      "expected": "present"
+    },
+    "medial-wall-mask": {
+      "expected": "present"
+    }
+  },
+  "diagnostics": [],
+  "frozenContractsSha256": "070f70e60022eef8e163abe064a11facb7bcf766116b9f232f503df4d10c3cca"
+}

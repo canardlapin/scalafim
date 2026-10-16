@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T20:58:23.498317+00:00",
+  "finished_utc": "2026-10-14T20:58:30.093429+00:00",
+  "duration_seconds": 6.595017,
+  "command": [
+    "env",
+    "JAVA_TOOL_OPTIONS=-Dscalafim.intaglio.build=/private/tmp/intaglio-surface-display",
+    "SBT_WARM_HEAP=6g",
+    "python3",
+    "tools/build/sbt-warm",
+    "designJVM/test",
+    "designJS/test",
+    "imageViewJVM/test",
+    "imageViewJS/test",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-surface-visibility",
+  "log": "/private/tmp/surfview-parity-logs/consumers-36.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 1188
+}

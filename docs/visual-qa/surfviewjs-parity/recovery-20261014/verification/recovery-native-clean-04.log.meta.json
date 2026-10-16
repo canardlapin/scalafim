@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-14T16:50:26.226077+00:00",
+  "finished_utc": "2026-10-14T16:50:43.306520+00:00",
+  "duration_seconds": 17.080109,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJavafxJVM/clean",
+    "surfaceViewExamplesJVM/Test/clean",
+    "surfaceViewJavafxJVM/test",
+    "surfaceViewVisualQaJVM",
+    "surfaceViewAdmissionJVM"
+  ],
+  "cwd": "/private/tmp/scalafim-surfview-parity",
+  "log": "/private/tmp/surfview-parity-logs/recovery-native-clean-04.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": null,
+  "log_bytes": 9076
+}

@@ -4,6 +4,16 @@ Scala.js interpreter for the shared `SurfaceRenderPlan`. A host injects its
 Three.js module namespace and canvas, so the library does not impose an npm
 bundler or leak mutable Three.js types through its public API.
 
+`ThreeSurfaceBackend.render(SurfaceCompositionPlan, size, forceDraw)` renders
+disjoint native views from shared mesh and layer tables. Repeated occurrences
+of a scientific surface reuse its uploaded geometry and material through
+display-only Three.js meshes. Each view has its own camera, lighting, clipping
+policy, depth conditioning, and viewport projection. The current native path
+rejects world-plane clipping and any occurrence of one surface that requests a
+different mesh, layer order, or fragment policy before changing WebGL state.
+Composition picks return the scientific coordinates after removing the display
+translation and attach `SurfaceDisplayOrigin(view, instance)`.
+
 `ThreeVolumeProjector` admits one midpoint point per vertex, nearest-voxel
 lookup, and `minimumSamples=1`. It selects the voxel in double precision before
 uploading integer coordinates and packs the source into WebGL's X-fast texture
