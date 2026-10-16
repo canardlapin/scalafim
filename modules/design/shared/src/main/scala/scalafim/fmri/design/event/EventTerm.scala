@@ -105,7 +105,9 @@ final case class EventTerm(
     /** The phase identity when this term was lowered from a multiphase trial. */
     phaseId: Option[PhaseId] = None,
     /** Source-row identity retained alongside the numerical event schedule. */
-    eventProvenance: Vector[EventRowProvenance] = Vector.empty
+    eventProvenance: Vector[EventRowProvenance] = Vector.empty,
+    /** Original input table rows; empty means unknown, never an implicit renumbering. */
+    sourceRows: Vector[Int] = Vector.empty
 ):
 
   val schedule: EventSchedule =
@@ -126,6 +128,14 @@ final case class EventTerm(
     phaseId.forall(id => eventProvenance.isEmpty || eventProvenance.forall(_.phase.contains(id))),
     "term phase id must agree with every event provenance entry"
   )
+
+  require(sourceRows.isEmpty || sourceRows.length == n, "source rows must match the event schedule")
+  require(sourceRows.forall(_ >= 0), "source rows must be non-negative")
+  require(sourceRows.isEmpty || eventProvenance.isEmpty || sourceRows == eventProvenance.map(_.sourceRow),
+    "source rows must agree with phase provenance")
+
+  def sourceRowIndices: Vector[Int] =
+    if sourceRows.nonEmpty then sourceRows else eventProvenance.map(_.sourceRow)
 
   val durations0: Vector[Seconds] =
     schedule.durations
@@ -714,11 +724,10 @@ final case class EventTerm(
     val durs = duration.map(Seconds(_)).toVector
     val amps = amplitude.toVector
     validateRegressorParts(ons, durs, amps)
-    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
     Regressor.unsafeFromParts(
-      onsets = valid.map(ons).toVector,
-      durations = valid.map(durs).toVector,
-      amplitudes = valid.map(amps).toVector,
+      onsets = ons,
+      durations = durs,
+      amplitudes = amps,
       hrf = HrfAssignment.Shared(hrf),
       span = hrf.span,
       summate = summate
@@ -737,15 +746,14 @@ final case class EventTerm(
     val hrs = hrfs.toVector
     require(hrs.length == ons.length, "per-event HRF/onset length mismatch")
     validateRegressorParts(ons, durs, amps)
-    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
-    val keep = valid.filter(i => amps(i) != 0.0)
+    val keep = ons.indices.filter(i => amps(i) != 0.0)
     val hrsF = keep.map(hrs).toVector
     val span = hrsF.map(_.span).maxOption.getOrElse(hrs.map(_.span).maxOption.getOrElse(Seconds(0.0)))
     Regressor.unsafeFromParts(
-      onsets = valid.map(ons).toVector,
-      durations = valid.map(durs).toVector,
-      amplitudes = valid.map(amps).toVector,
-      hrf = HrfAssignment.PerEvent(valid.map(hrs).toVector),
+      onsets = ons,
+      durations = durs,
+      amplitudes = amps,
+      hrf = HrfAssignment.PerEvent(hrs),
       span = span,
       summate = summate
     )

@@ -39,7 +39,10 @@ class DerivedEventBuildSuite extends munit.FunSuite:
     val reference = built(request(manual.table, manual.retainedRows.map(blocks), DerivedEventPlan.empty))
     assertEquals(declared.columnNames, reference.columnNames)
     assertEquals(declared.designMatrix.data.toVector, reference.designMatrix.data.toVector)
-    assertEquals(declared.designSchema.audit.copy(derivedRows = Vector.empty), reference.designSchema.audit)
+    val originalSources = reference.designSchema.audit.sourceEvents.map(row =>
+      row.copy(sourceRow = manual.retainedRows(row.sourceRow)))
+    assertEquals(declared.designSchema.audit.copy(derivedRows = Vector.empty),
+      reference.designSchema.audit.copy(sourceEvents = originalSources))
     assertEquivalent(declared, reference, declared.designSchema.audit.derivedRows.head)
     // The policy is part of scientific identity.
     assertNotEquals(declared.designSchema.fingerprint.value, reference.designSchema.fingerprint.value)

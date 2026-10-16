@@ -80,6 +80,12 @@ class ProfileFitIdentitySuite extends munit.FunSuite:
   test("actual prepared profile provenance has the same literal golden on JVM and JS"):
     assertEquals(prepared().provenance, ProfileFitIdentitySuite.ProfileGolden)
 
+  test("profile term identity retains known source rows without inventing them for hand-built inputs"):
+    val identified = term.copy(sourceRows = Vector(2, 5))
+    assertNotEquals(ProfileFitIdentity.term(term), ProfileFitIdentity.term(identified))
+    assertNotEquals(ProfileFitIdentity.term(identified),
+      ProfileFitIdentity.term(identified.copy(sourceRows = Vector(5, 2))))
+
 
   private lazy val fixedFixture: (ProfileHrfPlan, ProfileDecodePolicy) =
     val convolved = expanded.term

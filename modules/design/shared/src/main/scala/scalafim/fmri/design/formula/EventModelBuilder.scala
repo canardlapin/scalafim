@@ -887,7 +887,8 @@ object EventModelBuilder:
         durations = subset.durations,
         blockIds = subset.blockIds,
         termTag = termTag,
-        phase = phase
+        phase = phase,
+        sourceRows = subset.sourceRows
       )
       emptyCells = emptyCellsFor(term)
       _ <- validateEmptyCellPolicy(termTag, emptyCells, options.emptyCellPolicy)
@@ -1037,7 +1038,8 @@ object EventModelBuilder:
         durations = rows.durations,
         blockIds = rows.blockIds,
         termTag = Some(termTag),
-        phase = phase
+        phase = phase,
+        sourceRows = rows.sourceRows
       )
       termDiagnostics = diagnoseTerm(term, samplingFrame)
       _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
@@ -1166,7 +1168,8 @@ object EventModelBuilder:
       durations: Vector[Seconds],
       blockIds: Vector[Int],
       termTag: Option[String],
-      phase: Option[EventPhase]
+      phase: Option[EventPhase],
+      sourceRows: Vector[Int]
   ): Either[DesignError, EventTerm] =
     phase match
       case None =>
@@ -1176,7 +1179,7 @@ object EventModelBuilder:
           durations = durations,
           blockIds = blockIds,
           termTag = termTag
-        )
+        ).map(_.copy(sourceRows = sourceRows))
       case Some(value) =>
         value.term(events, termTag)
 
