@@ -92,7 +92,23 @@ status. Full surface parity/scientific qualification remains separate work.
 
 ## Verification
 
-Fresh-clone results and commands are recorded in `verification.json` once run.
+The independent clone fetched published handoff commit
+`9c7904488b8f03f4f943f496d60e744de0b07722` from GitHub. The documented provider
+bootstrap passed, as did `sbt responseJVM/test responseJS/test` (16 JVM and 15
+Scala.js tests). The byte verifier passed for all three bundles, 20 overlay
+files, and 25,019 Mote files. The GitHub wrapper checks passed for isolated
+profile selection, removal of ambient token overrides, invocation outside the
+repository, and refusal without the configured account.
+
+`verification.json` records commands, exit codes, environment, warning lines,
+log hashes, and the failed tracker checks. Full logs are retained under
+`verification-logs/`; compressed logs preserve their original bytes. The clone
+used this host's dependency caches and ran sbt on Homebrew Java 25.0.1 with
+Node 26.7.0. This was not an empty-cache installation or a JDK 17 qualification.
+Upstream documentation/unused-setting and existing-artifact warnings are
+retained; no warning-clean full build is claimed.
+
 Byte custody, source smoke tests, and tracker reconstruction are separate
 results. A source smoke pass does not resolve the Mote authority gap or replace
-the full required CI suites.
+the full required CI suites. Subsequent handoff edits only add documentation
+and verification receipts; production sources and build pins remain unchanged.

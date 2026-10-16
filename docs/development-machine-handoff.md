@@ -12,6 +12,12 @@ and unpublished temporary state, and are not needed to reconstruct tickets.
 Historical session PIDs and lease records in the operation log are historical
 evidence, not proof that a worker is running on the new host.
 
+An authority journal is a single writer history, not a distributed merge log.
+Stop writes on the old host, commit the complete store, and fetch it before
+starting writes on the next host. Never run independently writable replicas
+and merge their numbered journals. Journal conflicts or unadmitted operations
+require supported recovery; ordinary Git conflict resolution is insufficient.
+
 ## Start on the new machine
 
 The latest machine-handoff snapshot is `handoff/20261015-development-machine`.
@@ -44,6 +50,24 @@ new machine and use `tools/github/gh-repo`. Git transport authentication and API
 authentication are independent. Do not copy credentials or absolute credential
 helper paths from the old machine. Configure any private-repository transport
 under the intended account on the new host.
+
+With GitHub CLI installed, configure that isolated profile independently:
+
+```sh
+env -u GH_TOKEN -u GITHUB_TOKEN -u GH_ENTERPRISE_TOKEN -u GITHUB_ENTERPRISE_TOKEN \
+  GH_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gh-canardlapin" \
+  gh auth login --hostname github.com --web --git-protocol https --skip-ssh-key
+tools/github/gh-repo auth status
+tools/github/gh-repo api user --jq .login
+```
+
+Verify that the API login is `canardlapin`. If HTTPS pushes also need that
+profile, set a helper only in this clone:
+
+```sh
+git config --local credential.helper ''
+git config --local --add credential.helper '!tools/github/gh-repo auth git-credential'
+```
 
 **Mote recovery is currently blocked.** The retained authority admits 24,000
 operations, but 943 other operations synchronized through Git have no admission

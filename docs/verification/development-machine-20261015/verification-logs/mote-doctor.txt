@@ -1,0 +1,7 @@
+store:  /private/tmp/scalafim-github-handoff-20261015/.mote
+format: ok (schema_version 1)
+layout: ok
+actor:  unresolved
+fsck:   not run (unadmitted operation 20261005T230702.111489Z-p61826-c0000-rfe31-h4498b4.json; fenced stores require the shared Mote publisher)
+git:    unavailable (0 tracked, 0 working, 0 uncommitted)
+warn:   none

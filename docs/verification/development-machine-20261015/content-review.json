@@ -34,5 +34,19 @@
     }
   ],
   "findings": [],
-  "additionalTextFilesReviewed": 97
+  "additionalTextFilesReviewed": 97,
+  "detectorCategories": [
+    "private keys",
+    "GitHub credentials",
+    "AWS access keys",
+    "Google OAuth tokens",
+    "Slack credentials",
+    "Bearer authorization values",
+    "credential assignments",
+    "clinical identifiers"
+  ],
+  "additionalVerificationLogs": {
+    "files": 9,
+    "scope": "Build/provider output, byte verification, and Mote failure receipts; no credential-producing commands executed."
+  }
 }
