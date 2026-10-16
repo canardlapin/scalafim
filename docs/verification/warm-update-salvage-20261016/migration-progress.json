@@ -155,20 +155,32 @@
         "Native probe verifies transactions, not framebuffer interpolation or publication performance",
         "JavaFX21/JDK25 emit upstream native-access/Unsafe/module warnings"
       ]
+    },
+    {
+      "sha": "140e4ab0a75e116d4172374318d158ec93e06c1a",
+      "behavior": "native surface dirt checks actual topology, geometry and colour buffers independently of caller-visible resource keys",
+      "checks": {
+        "javafxJVM": 59,
+        "actualFxThreadProbe": "pass"
+      },
+      "logs": [
+        "native-preparation-review-gate-02.log"
+      ],
+      "review": "native-publication-review.md"
     }
   ],
   "publishedToMain": false,
   "consumerRepinned": false,
   "consumerCompile": {
-    "providerCandidate": "662f88d5bf6cdb067e8cb08917d0f00a2cace854",
-    "result": "110 errors in adapters and glmReviewJavafx; desktop not reached",
-    "log": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/main-compatibility-03.log"
+    "providerCandidate": "229a65f3e403f043a363ead4625e98248d9dcda4",
+    "result": "72 adapter errors; desktop not reached; diagnostic migration in progress",
+    "log": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/main-compatibility-04.log"
   },
   "remaining": [
     "typed image/spatial consumer migration including persisted voxel index ordering",
-    "surface update transactions and geometry scene migration",
+    "surface scene migration and remaining scientific consumer contracts",
     "full consumer acceptance and touched native lanes",
-    "land provider behavior on main and repin exact qualified consumer"
+    "land provider behavior on canonical main and repin exact qualified consumer"
   ],
   "validatedSourceHead": "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15",
   "compileAll": {
@@ -178,10 +190,12 @@
       "Scala.js"
     ],
     "warnings": 0,
-    "log": "checks/recovery-compile-02.txt",
-    "scope": "all compilation targets in scalafimCompileAll, including JavaFX adapter compilation; no native visual/runtime admission implied"
+    "log": "checks/recovery-final-compile-01.txt",
+    "scope": "all compilation targets in scalafimCompileAll; run began at 8c705253a and included in-progress native dirt fix later committed as 140e4ab0a; native affected tests rerun after final test edits"
   },
   "checkpointBranch": "recovery/plsneuro-main-20261016",
-  "evidenceCaution": "Logs bind to the listed source changes. Successful affected gates supersede retained failed attempts. The compile aggregate began at 6f758ff6c; later surface edits were separately compiled and tested on JVM/JS. Current aggregate includes JavaFX compilation, contrary to the earlier checkpoint wording; native runtime/visual qualification is separate.",
-  "lastPublishedCheckpoint": "072ac7c0f037753d3cf50e123a9a2077025c8e53"
+  "evidenceCaution": "Required hosted gates remain pending. Local tests are engineering evidence, not GPU interpolation, scientific admission or release qualification.",
+  "lastPublishedCheckpoint": "8c705253ae308e9f1d524112f472e0accb3e80e1",
+  "pullRequest": "https://github.com/canardlapin/scalafim/pull/62",
+  "dependencyDirection": "PLSNeuro depends on ScalaFIM; ScalaFIM has no PLSNeuro source or build dependency. Recovery branch is temporary; final consumer pin must be on canonical main."
 }

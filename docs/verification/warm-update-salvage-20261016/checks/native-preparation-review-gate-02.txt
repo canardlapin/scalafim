@@ -1,0 +1,97 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-graphics/21.0.5/javafx-graphics-21.0.5-mac-aarch64.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+scalafim.surface.view.javafx.JavaFxAdaptiveAtlasSuite:
+  + adaptive attribute counts refuse overflow before allocation 0.01s
+  + combined morph, colour and lighting update agrees with cold final construction 0.266s
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.118s
+  + cyclic anchors avoid needless subdivision without duplicating source vertices 0.004s
+  + saturated RGB uses midpoint fallback and morphs shared source plus synthetic vertices 0.005s
+  + anchor-only colour changes reuse geometry; split changes refuse before mutation 0.004s
+  + resource admission charges actual adaptive faces, including fallback 0.002s
+  + mixed one/four-child layouts preserve winding and source identities across chunk boundaries 0.003s
+scalafim.surface.view.javafx.JavaFxAffineAtlasSuite:
+  + actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges 0.066s
+  + independent sampler retains the known legacy diagonal failure as a discriminating control 0.001s
+  + subdivision respects atlas chunks, original face identity, winding and actual resource counts 0.003s
+  + colour and geometry updates retain topology and recompute midpoint data 0.001s
+  + encoding and expanded resource budget are admitted before native allocation 0.002s
+  + opaque gate examines final channels and constant updates keep the same midpoint mesh 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceScalarSuite:
+  + production JavaFX admission and atlas construction reject scalar fragments before allocation 0.024s
+scalafim.surface.view.javafx.JavaFxSurfaceCompositionSuite:
+  + ordered depth testing without depth writes explicitly requires the raster fallback 0.031s
+  + toolkit-free preflight rejects unsupported fragment and clipping policies before native mutation 0.004s
+  + resource preflight retains declared resource identities for repeated instances 0.005s
+  + explicit asymmetric orthographic packets require the raster host before native mutation 0.001s
+  + shared atlas refuses per-view lighting disagreement 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceLayerTransactionSuite:
+  + layer dirt is conditional and stable warm updates do not upload geometry 0.007s
+  + a second-hemisphere preflight failure leaves both atlases intact and permits recovery 0.003s
+scalafim.surface.view.javafx.JavaFxSurfaceApproximationSuite:
+  + preparation preserves original-face coordinates and reports generated allocation 0.253s
+  + mixed nearest/scalar preparation uses original positions after subdivision 0.24s
+  + small budgets fail before native allocation and plain plans retain the legacy path 0.003s
+  + constant display normals remain perpendicular to vertical faces for native tangent frames 0.101s
+  + normal changes have distinct derived identities even when positions are unchanged 0.129s
+  + native indexing and texture arithmetic reject oversized configurations before allocation 0.0s
+  + derived render faces retain original identity at arbitrary native packet indices 0.066s
+  + lit nearest cells approximate legacy corner shading and retain original provenance 0.012s
+  + varying legacy colors obey byte budgets and constant unlit categories retain their mesh 0.001s
+scalafim.surface.view.javafx.JavaFxSurfaceProbeSuite:
+  + JavaFX consumes CPU-projected fields and network tubes as ordinary resources 0.09s
+  + JavaFX capability mapping is explicit about admission and clipping 0.005s
+  + runtime receipt parses the observed Prism pipeline rather than trusting the request 0.004s
+  + stock Metal admission fails closed on fallback, version drift, and module mutation 0.006s
+  + atlas configuration rejects unsafe sizes 0.001s
+  + production backend refuses affine encodings before JavaFX access 0.0s
+  + default atlas configuration preserves legacy native-Phong semantics 0.0s
+  + explicit world-vertex Lambert uses anatomical normals and remains self-illuminated when lit 0.001s
+  + world-vertex Lambert alone makes pure lighting and morph changes update atlases 0.007s
+  + publication preset configures an exact high-resolution snapshot 0.003s
+  + POINT_NORMAL_TEXCOORD mesh and direct per-face atlas use supported JavaFX APIs 0.001s
+  + lit and unlit material modes bind only the selected JavaFX material map 0.0s
+  + style and data updates touch atlases without rebuilding geometry 0.001s
+  + camera motion updates no mesh and no atlas 0.001s
+  + constant face colors eliminate texture derivatives; varying updates restore interpolation without rebuilding geometry 0.001s
+  + topology-preserving geometry changes mutate points and normals without rebuilding atlases 0.0s
+  + orthographic plans select a parallel camera without rebuilding resources 0.001s
+  + large face sets chunk at the configured safe texture capacity 0.001s
+  + face tuples retain point, normal, and face-local atlas indices 0.001s
+  + toolkit-free programs classify camera, layer, material, and geometry dirt exactly 0.003s
+  + production interpreter rejects non-Application-Thread access 0.0s
+  + world clipping is rejected explicitly before JavaFX interpretation 0.001s
+  + viewport fitting changes invalidate layout without uploading geometry or changing the camera 0.001s
+  + native layout consumes compiled x/y projection independently on rectangular legacy viewports 0.001s
+scalafim.surface.view.javafx.JavaFxColorPreparationSuite:
+  + CPU preparation has analytic corner colours and constant-cell texture coordinates 0.001s
+  + worker output equals ordinary native atlas updates and rejects changed packet inputs 0.006s
+  + native dirt checks actual buffers when caller-visible resource keys are unchanged 0.002s
+  + affine worker preparation retains the native sampler refusal 0.0s
+[info] Passed: Total 59, Failed 0, Errors 0, Passed 59
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-7nt3c4xi/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJavafxJVM/test: exit 0 in 7.7s
+[info] running (fork) scalafim.surface.view.javafx.JavaFxColorPreparationProbe 
+[error] Oct 16, 2026 10:07:38 A.M. com.sun.javafx.application.PlatformImpl startup
+[error] WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @446cdf90'
+[error] WARNING: A restricted method in java.lang.System has been called
+[error] WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/private/tmp/scalafim-pls-main-20261016/target/bg-jobs/sbt_7ad7cb6e/target/fc4494fe/d2189dfd/javafx-graphics-21.0.5-mac-aarch64.jar)
+[error] WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+[error] WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/private/tmp/scalafim-pls-main-20261016/target/bg-jobs/sbt_7ad7cb6e/target/16f4dc48/adca020a/scala3-library_3-3.7.4.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] PASS: same-key colour upload; worker preparation; live camera/selection; foreign and stale A-B-A refusal; failed publication preserves controller; no geometry upload
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-8m_y2g69/completed
+[[32msuccess[0m] elapsed: 4 s
+[0J[sbt-warm] surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxColorPreparationProbe: exit 0 in 4.5s
