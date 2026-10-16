@@ -270,7 +270,7 @@ object ViewerEvents:
     action: (AnatomicalPlane, ViewerPointer) => ViewerAction
   ): Either[ImageViewError, ViewerAction] =
     ViewerPointer.fromDevice(deviceX, deviceY, frame.device).flatMap { pointer =>
-      frame.panels.all.find(_.rect.contains(pointer.rootX, pointer.rootY)) match
+      frame.visiblePanels.find(_.rect.contains(pointer.rootX, pointer.rootY)) match
         case Some(panel) => Right(action(panel.anatomicalPlane, pointer))
         case None => Left(ImageViewError.PointerOutsideViewer)
     }
