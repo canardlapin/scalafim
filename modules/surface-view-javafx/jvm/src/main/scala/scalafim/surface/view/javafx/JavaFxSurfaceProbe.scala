@@ -176,6 +176,28 @@ final class JavaFxFaceAtlas private[javafx] (
     val blue = (channel(8) * alpha + 127) / 255
     (alpha << 24) | (red << 16) | (green << 8) | blue
 
+/** Read the actual native coordinates in one bulk transfer before comparing primitive values.
+  * A retained snapshot is scratch space only: callers can mutate the public TriangleMesh, so
+  * every comparison must refresh it and must never infer equality from a previous upload.
+  */
+private[javafx] final class JavaFxTextureCoordinates(values: javafx.collections.ObservableFloatArray):
+  private var snapshot = Array.emptyFloatArray
+
+  def install(next: Array[Float]): Long =
+    val count = values.size()
+    var same = count == next.length
+    if same then
+      if snapshot.length != count then snapshot = new Array[Float](count)
+      values.toArray(snapshot)
+      var index = 0
+      while index < count && same do
+        same = snapshot(index) == next(index)
+        index += 1
+    if same then 0L
+    else
+      values.setAll(next, 0, next.length)
+      next.length.toLong * 4L
+
 final case class JavaFxSurfaceChunk(
   surface: SurfaceId,
   meshKey: SurfaceResourceKey,
@@ -186,6 +208,8 @@ final case class JavaFxSurfaceChunk(
   material: PhongMaterial,
   view: MeshView
 ):
+  private[javafx] val textureCoordinates = new JavaFxTextureCoordinates(mesh.getTexCoords)
+
   def renderedFaceCount: Int = atlas.adaptiveLayout.fold(faceCount * atlas.encoding.facesPerSource)(_.renderedFaces)
 
   /** Resolve the native child before the controller computes original barycentrics. */
@@ -430,14 +454,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       var bytes = 0L
       var pixels = 0L
       chunks.zip(prepared.atlases).foreach: (chunk, update) =>
-        var same = true
-        var index = 0
-        while index < update.coordinates.length && same do
-          same = update.coordinates(index) == chunk.mesh.getTexCoords.get(index)
-          index += 1
-        if !same then
-          chunk.mesh.getTexCoords.setAll(update.coordinates, 0, update.coordinates.length)
-          bytes += update.coordinates.length.toLong * 4L
+        bytes += chunk.textureCoordinates.install(update.coordinates)
         val region = chunk.atlas.installPrepared(update.pixels)
         if commit then chunk.atlas.commit(region)
         pixels += update.pixels.length
@@ -473,14 +490,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         val mesh = next.meshes.find(_.surface == chunk.surface).get
         val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount,
           chunk.atlas, colorsBySurface(chunk.surface))
-        var same = coordinates.length == chunk.mesh.getTexCoords.size()
-        var coordinate = 0
-        while coordinate < coordinates.length && same do
-          same = coordinates(coordinate) == chunk.mesh.getTexCoords.get(coordinate)
-          coordinate += 1
-        if !same then
-          chunk.mesh.getTexCoords.setAll(coordinates, 0, coordinates.length)
-          textureCoordinateBytesUpdated += coordinates.length.toLong * 4L
+        textureCoordinateBytesUpdated += chunk.textureCoordinates.install(coordinates)
         val region = chunk.atlas.write(mesh.indices, colorsBySurface(chunk.surface))
         if commit then chunk.atlas.commit(region)
         dirtyPixels += chunk.atlas.width.toLong * chunk.atlas.height.toLong
