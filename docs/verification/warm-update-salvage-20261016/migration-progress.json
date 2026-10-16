@@ -167,6 +167,17 @@
         "native-preparation-review-gate-02.log"
       ],
       "review": "native-publication-review.md"
+    },
+    {
+      "sha": "7861652716348679cf8dac22dca10cbd67378dfe",
+      "behavior": "selected-estimate receipt retains exact native fixed-effects policy; shared OLS records none",
+      "checks": {
+        "JVM": 3,
+        "JS": 3
+      },
+      "logs": [
+        "selected-policy-gate-01.log"
+      ]
     }
   ],
   "publishedToMain": false,
@@ -195,7 +206,7 @@
   },
   "checkpointBranch": "recovery/plsneuro-main-20261016",
   "evidenceCaution": "Required hosted gates remain pending. Local tests are engineering evidence, not GPU interpolation, scientific admission or release qualification.",
-  "lastPublishedCheckpoint": "8c705253ae308e9f1d524112f472e0accb3e80e1",
+  "lastPublishedCheckpoint": "4e0d7dfb859b60b6c80b94c8b09d5097173710f4",
   "pullRequest": "https://github.com/canardlapin/scalafim/pull/62",
   "dependencyDirection": "PLSNeuro depends on ScalaFIM; ScalaFIM has no PLSNeuro source or build dependency. Recovery branch is temporary; final consumer pin must be on canonical main."
 }
