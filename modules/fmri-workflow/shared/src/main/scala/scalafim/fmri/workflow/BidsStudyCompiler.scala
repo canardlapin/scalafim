@@ -157,6 +157,17 @@ object BidsStudyCompiler:
       EntityKey.Resolution
     )
 
+  /** Inspect an optional companion without enabling nuisance regressors or compiling image data.
+    * Uses the same pipeline/entity specificity and ambiguity rules as requested confound binding.
+    */
+  def confoundCompanion(project: BidsProject, boldPath: BidsPath): Either[CatalogIssue, Option[BidsFile]] =
+    project.manifest.files.find(_.path == boldPath) match
+      case Some(bold) if isBoldImage(bold) =>
+        selectOptionalCompanion("confounds", bold, project.manifest.files.filter(isConfoundFile),
+          ConfoundMatchKeys, requirePipeline = true)
+      case _ => Left(CatalogIssue(CatalogIssueCode.NoBoldFiles, Some(boldPath),
+        "optional confound lookup requires a BOLD image path in the project manifest"))
+
   def compile(
       project: BidsProject,
       recipe: DatasetRecipe,
