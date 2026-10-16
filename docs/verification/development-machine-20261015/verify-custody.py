@@ -62,7 +62,7 @@ def main():
     for entry in snapshot["files"]:
         assert digest(repository / entry["path"]) == entry["sha256"], entry["path"]
     print(f"Verified {len(custody['worktreeOverlayFiles'])} overlay files and {len(snapshot['files'])} Mote files")
-    print("Byte preservation verified; Mote authority recovery remains required (see README.md).")
+    print("Historical byte preservation verified; see the current development-machine handoff for tracker status.")
 
 
 if __name__ == "__main__":

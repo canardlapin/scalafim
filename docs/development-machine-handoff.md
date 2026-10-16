@@ -24,8 +24,9 @@ The latest machine-handoff snapshot is `handoff/20261015-development-machine`.
 Use that branch until its handoff changes have landed on `main`. It starts at
 published main `ac2ec8b706fc`; all local branch commits were already remotely
 preserved. See the [2026-10-15 receipt](verification/development-machine-20261015/README.md)
-for retained evidence, worktree dispositions, verification, and the outstanding
-Mote authority recovery requirement.
+for retained evidence, worktree dispositions, and initial verification. The
+[2026-10-16 recovery receipt](verification/mote-recovery-20261016/README.md)
+records the restored tracker and modularization epic.
 
 Install Git, JDK 21 (the compiler targets Java 17), sbt 1.11.7, Node.js 22 or
 newer, Python 3.11 or newer, and a compatible current Mote CLI. With Rust/Cargo
@@ -69,19 +70,18 @@ git config --local credential.helper ''
 git config --local --add credential.helper '!tools/github/gh-repo auth git-credential'
 ```
 
-**Mote recovery is currently blocked.** The retained authority admits 24,000
-operations, but 943 other operations synchronized through Git have no admission
-record in this checkout. The earlier handoff committed an authority-enabled
-`FORMAT.json` without the journal. This snapshot preserves that journal and all
-operation bytes; it does not invent missing authority order. Current Mote
-correctly refuses replay. Restore a complete matching authority history from
-its publishing host before continuing tracker writes. Do not remove the
-authority field, rewrite admission records, or use an older binary to bypass
-the check. [The exact gap](verification/development-machine-20261015/mote-authority-gap.json)
-is retained for recovery.
+**Mote was recovered on 2026-10-16.** All 24,943 original operation files and
+the existing 75 admission records were preserved. The 943 upstream operations
+outside that journal were re-admitted through Mote's native publisher after
+the frozen prefix. The original genesis binding and authority fence remain
+active. This is a documented recovery admission order, not a claim to have
+found the missing original journals. See the
+[recovery receipt](verification/mote-recovery-20261016/README.md).
 
-Once the matching complete authority history has been recovered, bootstrap the
-local identity and verify the store:
+The [2026-10-15 receipt](verification/development-machine-20261015/README.md)
+records the earlier blocked state; the recovery receipt supersedes that live
+status. A new clone should work with the complete committed store. Bootstrap
+its local identity and verify it:
 
 ```sh
 mote --version
@@ -99,7 +99,8 @@ does not establish authority compatibility. Its schema and authority support
 must match the committed store. Select your own stable actor name rather than
 inheriting a workstation's identity. Current claims and reservations are TTL
 leases; inspect them before touching claimed paths. Git does not carry empty
-directories, so the `mkdir` step restores the ignored layout directories.
+directories, so the `mkdir` step restores the ignored layout directories. Do not
+carry `MOTE_STORE` or `MOTE_ACTOR` exports from an old session into the new clone.
 
 Formal candidate records can be bound to the original Git repository identity
 and landing target. Revalidate or rebind them through the Mote candidate

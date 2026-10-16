@@ -1,0 +1,50 @@
+{
+  "schema": "scalafim.mote-recovery-verification.v1",
+  "base": "86b3acf1e64d762be99b52ae146fa115b9050356",
+  "checks": [
+    {
+      "command": "mote --json ls --all --tag ecosystem-unification",
+      "exitCode": 0
+    },
+    {
+      "command": "mote --json graph eco-unification",
+      "exitCode": 0
+    },
+    {
+      "command": "mote --json ls --tag ecosystem-unification --tag task --ready",
+      "exitCode": 0
+    },
+    {
+      "command": "mote fsck",
+      "exitCode": 0
+    },
+    {
+      "command": "mote ready",
+      "exitCode": 0
+    },
+    {
+      "command": "mote ls",
+      "exitCode": 0
+    }
+  ],
+  "import": {
+    "accepted": 348,
+    "rejected": 0,
+    "skipped": 0
+  },
+  "epic": {
+    "id": "eco-unification",
+    "items": 33,
+    "epics": 1,
+    "milestones": 7,
+    "tasks": 25,
+    "nodes": 33,
+    "edges": 98,
+    "graphMatchesIsolatedValidatedImport": true,
+    "sourceTitlesTagsPrioritiesAndBodiesMatch": true,
+    "readyTaskIds": [
+      "eco-u0-ownership"
+    ]
+  },
+  "freshGithubClone": "pending publication"
+}

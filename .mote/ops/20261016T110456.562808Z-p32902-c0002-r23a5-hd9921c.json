@@ -1,0 +1,1 @@
+{"actor":"machine-handoff-recovery-20261016","entity":"bd-01M52657DNVWDBZC0XKXKPHJG5","expect":{"status":"20261016T110436.021783Z-p32088-c0000-r666e-hf57510"},"kind":"patch","op":"20261016T110456.562808Z-p32902-c0002-r23a5-hd9921c","set":{"status":"doing"},"ts":"2026-10-16T11:04:56.562808Z","v":1}

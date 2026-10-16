@@ -1,0 +1,110 @@
+{
+  "scope": "new untracked operations, native-generated journals, plans and recovery evidence at review time",
+  "fileCount": 1893,
+  "patterns": [
+    "private-key",
+    "github-token",
+    "aws-access-key",
+    "openai-key",
+    "credential-url"
+  ],
+  "findings": [],
+  "files": {
+    "docs/plans/ecosystem-unification-mote.json": {
+      "bytes": 67775,
+      "sha256": "87ee1150888631f6ab41d7f0becdbd9ab51cf29cba5e92e237606713bd3b76a1"
+    },
+    "docs/plans/ecosystem-unification.md": {
+      "bytes": 40944,
+      "sha256": "e714a197ca83e78c2f7d13c5f691afee445c12fcb5f16707d000b162121546a8"
+    },
+    "docs/verification/mote-recovery-20261016/README.md": {
+      "bytes": 7717,
+      "sha256": "cb288c2b3bff27d4a82e53fed7ff31a3a1dcd6fa008c493fa6c44232da7737bd"
+    },
+    "docs/verification/mote-recovery-20261016/canonical-epic-import.log.meta.json": {
+      "bytes": 642,
+      "sha256": "1a6373050314bbcd97f9806271ef7fb4f1e89171d3713d272750b25113ece2b8"
+    },
+    "docs/verification/mote-recovery-20261016/canonical-import-result.json": {
+      "bytes": 83958,
+      "sha256": "f6f27e106a167043c8f93ec6c59d9e906820a4b30352a5cfe0777587ed74732b"
+    },
+    "docs/verification/mote-recovery-20261016/epic-graph.json": {
+      "bytes": 23474,
+      "sha256": "f4f74ab2256011d014db9982d2382d82c48f34e72db41a3aa5897b639172c25f"
+    },
+    "docs/verification/mote-recovery-20261016/epic-plan-input-sha256.json": {
+      "bytes": 156,
+      "sha256": "71d3fca17645611ff7ae32a36ea3635e2bded48425eb47b126562f3a14fc6d1c"
+    },
+    "docs/verification/mote-recovery-20261016/import-input.json": {
+      "bytes": 44663,
+      "sha256": "d850a550cef0f348481e05a73667bd9cd23acaf25a1ecdd5696ee8be2e10063a"
+    },
+    "docs/verification/mote-recovery-20261016/live-authority-status.json": {
+      "bytes": 291,
+      "sha256": "dceef6487db7dabc8cc414e2fd631b364c6bd431941e6ec9427545b1df5bdaa1"
+    },
+    "docs/verification/mote-recovery-20261016/native-full-preview.log.gz": {
+      "bytes": 494,
+      "sha256": "125e0d3f432bca4b67c5e8bdaa69f79f64725bae3cb5017c5e2ae815d5cfa0b1"
+    },
+    "docs/verification/mote-recovery-20261016/native-full-preview.log.meta.json": {
+      "bytes": 666,
+      "sha256": "a111c90a3fbfa2caeb3b1dd690e6a8610bc237a1f7bc8cbe5e95a54bbf468c3f"
+    },
+    "docs/verification/mote-recovery-20261016/native-pilot.log.gz": {
+      "bytes": 257,
+      "sha256": "1f884de3a7684989ffdc41e7891cadc560145b23ab9b45f5aec7ead94f29bad4"
+    },
+    "docs/verification/mote-recovery-20261016/native-pilot.log.meta.json": {
+      "bytes": 653,
+      "sha256": "0adba1c360a97025a095a40f16df49ea6e8f4ce9fcd95df7e1d1fba325d8ba98"
+    },
+    "docs/verification/mote-recovery-20261016/planning-revision.json": {
+      "bytes": 355,
+      "sha256": "37fdd97513fa14e2caf619ee9159b6483b3e576aa4c495185004f9a64a9fb4fd"
+    },
+    "docs/verification/mote-recovery-20261016/preview-authority-status.txt": {
+      "bytes": 291,
+      "sha256": "dceef6487db7dabc8cc414e2fd631b364c6bd431941e6ec9427545b1df5bdaa1"
+    },
+    "docs/verification/mote-recovery-20261016/preview-fsck.txt": {
+      "bytes": 35,
+      "sha256": "f8af6132dec858dbba84192c6727533cf81d09d5aa5387f3eac5fde5db58a83b"
+    },
+    "docs/verification/mote-recovery-20261016/replay-analysis.json": {
+      "bytes": 3244,
+      "sha256": "0a45985ec138929a3a1dafb266a1afe35386fee44ffe338ebd5502747c92f311"
+    },
+    "docs/verification/mote-recovery-20261016/restore-receipt.json": {
+      "bytes": 132127,
+      "sha256": "15f3267354707a3b59badd3b69c48eb63f92abc67746aab7483957c00a0ef61e"
+    },
+    "docs/verification/mote-recovery-20261016/tool/Cargo.lock": {
+      "bytes": 35851,
+      "sha256": "1f1a3dba8db9684b7d2fe63f0b8aceb83851705b224d50e56d45223d517e3125"
+    },
+    "docs/verification/mote-recovery-20261016/tool/Cargo.toml": {
+      "bytes": 243,
+      "sha256": "1afc557aca16655132d398ad493b2a0b2647919f2644f1d335b2d5d01cfd3c7b"
+    },
+    "docs/verification/mote-recovery-20261016/tool/restore-generated-admissions.py": {
+      "bytes": 4630,
+      "sha256": "8d5c5f204470d4e0a20fa49de9a6ac793e9ff85f201af2de509f436f3040f5ec"
+    },
+    "docs/verification/mote-recovery-20261016/tool/src/main.rs": {
+      "bytes": 8639,
+      "sha256": "cf29ef1b06707c6ce508f6897e596a055b663e04d1ce8b25d566149dca237cbb"
+    },
+    "docs/verification/mote-recovery-20261016/verification.json": {
+      "bytes": 1049,
+      "sha256": "f77208385ac8563e0ae3684d767bfbbf53745b8a5b009a22df06f4d310a8e90d"
+    },
+    "docs/verification/mote-recovery-20261016/warm-update-branch-audit.json": {
+      "bytes": 2436,
+      "sha256": "333580faf8a15c77524e93ad7a42fcacecd4e4955cbd8bf9e2fb35b6a7d8b34b"
+    }
+  }
+}
