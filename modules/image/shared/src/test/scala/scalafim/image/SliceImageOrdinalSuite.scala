@@ -7,8 +7,9 @@ class SliceImageOrdinalSuite extends munit.FunSuite:
   private def slice[A](values: NDArray[A, Rank[2]]): SliceImage[A] =
     val width = values.shape(1)
     val height = values.shape(0)
-    val space = SampleSpaces(Vector(width, height, 1))
-    val grid = SliceGrid.covering(space,
+    val space = SampleSpaces.requireVolumeD3(SampleSpaces(Vector(width, height, 1)))
+      .fold(error => fail(error.message), identity)
+    val grid = SliceGrid.covering(space.grid,
       SlicePlane.canonical(AnatomicalPlane.Axial, WorldPoint(0, 0, 0)), PixelSpacing(1, 1))
     assertEquals((grid.dimensions.width, grid.dimensions.height), (width, height))
     SliceImage.unsafe(grid, values)
