@@ -3,6 +3,7 @@ package scalafim.surface.view.javafx
 import java.nio.{ByteBuffer, ByteOrder, IntBuffer}
 import javafx.geometry.Rectangle2D
 import javafx.beans.InvalidationListener
+import javafx.collections.ArrayChangeListener
 import javafx.scene.{AmbientLight, Camera, DepthTest, Group, ParallelCamera, PerspectiveCamera, SceneAntialiasing, SnapshotParameters, SubScene}
 import javafx.scene.image.{PixelBuffer, PixelFormat, WritableImage}
 import javafx.scene.paint.{Color, PhongMaterial}
@@ -176,6 +177,61 @@ final class JavaFxFaceAtlas private[javafx] (
     val blue = (channel(8) * alpha + 127) / 255
     (alpha << 24) | (red << 16) | (green << 8) | blue
 
+/** Tracks every observable native mutation. A preparation captures an owned CPU snapshot on
+  * the FX thread; publication may trust that snapshot only while this exact revision survives.
+  */
+private[javafx] final class JavaFxTextureCoordinates(values: _root_.javafx.collections.ObservableFloatArray):
+  private val token = new JavaFxCoordinateToken
+  private var revision = 0L
+  private var cached: Option[JavaFxCoordinateSnapshot] = None
+  private var scratch = Array.emptyFloatArray
+  private val changes: ArrayChangeListener[_root_.javafx.collections.ObservableFloatArray] =
+    new ArrayChangeListener[_root_.javafx.collections.ObservableFloatArray]:
+      override def onChanged(array: _root_.javafx.collections.ObservableFloatArray,
+          sizeChanged: Boolean, from: Int, to: Int): Unit =
+        revision += 1
+        cached = None
+  values.addListener(changes)
+
+  /** Copies once per observable revision. The resulting snapshot has no native references and is
+    * safe to retain on a worker while the listener invalidates any later FX-side mutation.
+    */
+  def capture(): JavaFxCoordinateSnapshot = cached.getOrElse:
+    val count = values.size()
+    val copied = new Array[Float](count)
+    values.toArray(copied)
+    val next = new JavaFxCoordinateSnapshot(token, revision, copied)
+    cached = Some(next)
+    next
+
+  /** Fall back to an actual native bulk read whenever preparation no longer proves freshness. */
+  def install(next: Array[Float]): Long =
+    val count = values.size()
+    var same = count == next.length
+    if same then
+      if scratch.length != count then scratch = new Array[Float](count)
+      values.toArray(scratch)
+      var index = 0
+      while index < count && same do
+        same = scratch(index) == next(index)
+        index += 1
+    if same then 0L
+    else
+      values.setAll(next, 0, next.length)
+      next.length.toLong * 4L
+
+  /** The prepared payload owns its coordinates. Only its exact payload identity, chunk token and
+    * unchanged native revision admit the worker's primitive comparison; all stale inputs bulk-read.
+    */
+  def installPrepared(next: Array[Float], prepared: JavaFxPreparedCoordinateUpdate): Long =
+    if prepared.isExactPayload(next) && (prepared.snapshot.token eq token) &&
+        prepared.snapshot.revision == revision then
+      if prepared.sameAtCapture then 0L
+      else
+        values.setAll(next, 0, next.length)
+        next.length.toLong * 4L
+    else install(next)
+
 final case class JavaFxSurfaceChunk(
   surface: SurfaceId,
   meshKey: SurfaceResourceKey,
@@ -186,6 +242,8 @@ final case class JavaFxSurfaceChunk(
   material: PhongMaterial,
   view: MeshView
 ):
+  private[javafx] val textureCoordinates = new JavaFxTextureCoordinates(mesh.getTexCoords)
+
   def renderedFaceCount: Int = atlas.adaptiveLayout.fold(faceCount * atlas.encoding.facesPerSource)(_.renderedFaces)
 
   /** Resolve the native child before the controller computes original barycentrics. */
@@ -391,7 +449,8 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       c.atlas.width, c.atlas.height, c.atlas.tileSize))
 
   private[javafx] def colorPreparationBasis(owner: JavaFxColorPreparationToken): JavaFxColorPreparationBasis =
-    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts, config)
+    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts,
+      chunks.map(_.textureCoordinates.capture()), config)
 
   private def validateColorGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
     if next.meshes.length != plan.meshes.length then
@@ -430,14 +489,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       var bytes = 0L
       var pixels = 0L
       chunks.zip(prepared.atlases).foreach: (chunk, update) =>
-        var same = true
-        var index = 0
-        while index < update.coordinates.length && same do
-          same = update.coordinates(index) == chunk.mesh.getTexCoords.get(index)
-          index += 1
-        if !same then
-          chunk.mesh.getTexCoords.setAll(update.coordinates, 0, update.coordinates.length)
-          bytes += update.coordinates.length.toLong * 4L
+        bytes += chunk.textureCoordinates.installPrepared(update.coordinates, update.coordinateUpdate)
         val region = chunk.atlas.installPrepared(update.pixels)
         if commit then chunk.atlas.commit(region)
         pixels += update.pixels.length
@@ -473,14 +525,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         val mesh = next.meshes.find(_.surface == chunk.surface).get
         val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount,
           chunk.atlas, colorsBySurface(chunk.surface))
-        var same = coordinates.length == chunk.mesh.getTexCoords.size()
-        var coordinate = 0
-        while coordinate < coordinates.length && same do
-          same = coordinates(coordinate) == chunk.mesh.getTexCoords.get(coordinate)
-          coordinate += 1
-        if !same then
-          chunk.mesh.getTexCoords.setAll(coordinates, 0, coordinates.length)
-          textureCoordinateBytesUpdated += coordinates.length.toLong * 4L
+        textureCoordinateBytesUpdated += chunk.textureCoordinates.install(coordinates)
         val region = chunk.atlas.write(mesh.indices, colorsBySurface(chunk.surface))
         if commit then chunk.atlas.commit(region)
         dirtyPixels += chunk.atlas.width.toLong * chunk.atlas.height.toLong

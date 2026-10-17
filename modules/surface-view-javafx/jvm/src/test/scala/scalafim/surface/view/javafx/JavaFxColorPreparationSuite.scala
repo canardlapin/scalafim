@@ -39,8 +39,11 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     val next = transaction.preparedPlan
     val ordinary = JavaFxSurfaceProbe.compile(before).toOption.get
     val worker = JavaFxSurfaceProbe.compile(before).toOption.get
-    val basis = worker.colorPreparationBasis(new JavaFxColorPreparationToken)
+    val owner = new JavaFxColorPreparationToken
+    val basis = worker.colorPreparationBasis(owner)
     val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() => basis.prepare(next)).get().toOption.get
+    assert(prepared.owner eq owner)
+    assert(!(prepared.owner eq new JavaFxColorPreparationToken))
     ordinary.updateColors(next).toOption.get
     worker.updatePreparedColors(prepared, next, commit = false).toOption.get
     val a = ordinary.chunks.head; val b = worker.chunks.head
@@ -87,7 +90,7 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     val viewer = model
     val plan = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
     val config = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.AdaptiveAffineOpaque).toOption.get
-    val basis = new JavaFxColorPreparationBasis(new JavaFxColorPreparationToken, plan.meshes, Vector.empty, config)
+    val basis = new JavaFxColorPreparationBasis(new JavaFxColorPreparationToken, plan.meshes, Vector.empty, Vector.empty, config)
     assertEquals(basis.prepare(plan).swap.toOption, Some(JavaFxSurfaceError.SamplerUnqualified(config.encoding)))
 
 /** Actual Application-Thread publication; no GPU interpolation qualification claim. */
