@@ -5,6 +5,12 @@ import multivar.core.SpaceRole
 import scala.compiletime.testing.typeCheckErrors
 
 class AxisRefSuite extends munit.FunSuite:
+  test("MVPA core has no response API on its compile classpath"):
+    // Axes and reindexing use locus4s and Resample4s contracts; response
+    // selections are built only by downstream response adapters.
+    assert(typeCheckErrors("scalafim.response.OrderedIndices").nonEmpty)
+    assert(typeCheckErrors("locus4s.provenance.SourceId.fromString(\"s\")").isEmpty)
+
   private def right[E, A](value: Either[E, A]): A =
     value.fold(error => fail(error.toString), identity)
 
@@ -36,7 +42,6 @@ class AxisRefSuite extends munit.FunSuite:
       first.descriptor.coordinateSignature.value,
       "7e5c0746b7244c1a6239adcb9590adca455627847d8af57eb1195d97a5e8c745"
     )
-    assertEquals(first.responseDomain.value, restored.responseDomain.value)
     // A restored axis is an independent owner that aligns by its content key.
     assert(first.locus.samePersistentIdentityAs(restored.locus))
     assert(first.locus.align(restored.locus).isRight)

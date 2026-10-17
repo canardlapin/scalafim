@@ -37,8 +37,8 @@ class EvidenceDesignSuite extends munit.FunSuite:
     assertEquals(assessed.sorted, samples.toRecord.stableKeys.sorted)
     assertEquals(assessed.distinct.length, samples.size)
     units.foreach: unit =>
-      val analysis = unit.analysis.responseSelection.values.toSet
-      val assessment = unit.assessment.responseSelection.values.toSet
+      val analysis = unit.analysis.ordinals.toVector.toSet
+      val assessment = unit.assessment.ordinals.toVector.toSet
       assertEquals(analysis.intersect(assessment), Set.empty[Int])
 
     val reverse = bound.keys.reverse.map(key => right(bound.at(key)).assessment.identity).reverse

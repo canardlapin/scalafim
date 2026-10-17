@@ -13,7 +13,6 @@ import multivar.core.{
   ValueIdentity
 }
 import resample4s.core.*
-import scalafim.response.{DuplicatePolicy, OrderedIndices}
 import scala.annotation.implicitNotFound
 
 enum ReindexingKind derives CanEqual:
@@ -99,24 +98,19 @@ final case class ReindexingIdentity(
 )
 sealed trait ReindexingKindEvidence[R <: Reindexing]:
   def kind: ReindexingKind
-  private[mvpa] def duplicatePolicy: DuplicatePolicy
 
 object ReindexingKindEvidence:
   given selection: ReindexingKindEvidence[Selection] with
     val kind: ReindexingKind = ReindexingKind.Selection
-    private[mvpa] val duplicatePolicy: DuplicatePolicy = DuplicatePolicy.Reject
 
   given injection: ReindexingKindEvidence[Injection] with
     val kind: ReindexingKind = ReindexingKind.Injection
-    private[mvpa] val duplicatePolicy: DuplicatePolicy = DuplicatePolicy.Reject
 
   given draw: ReindexingKindEvidence[Draw] with
     val kind: ReindexingKind = ReindexingKind.Draw
-    private[mvpa] val duplicatePolicy: DuplicatePolicy = DuplicatePolicy.Allow
 
   given permutation: ReindexingKindEvidence[Permutation] with
     val kind: ReindexingKind = ReindexingKind.Permutation
-    private[mvpa] val duplicatePolicy: DuplicatePolicy = DuplicatePolicy.Reject
 
 /** A Resample4s ordinal map bound to exact parent and child scientific axes.
   *
@@ -135,7 +129,6 @@ sealed trait ReindexingLeg[
   private[mvpa] val parentRecord: AxisRecord
   val child: AxisRef[AxisMember[K]] { type Id = Child }
   val ordinals: R
-  val responseSelection: OrderedIndices[P]
   val steps: Vector[ReindexingStep]
   private[mvpa] val childMembers: Vector[AxisMember[K]]
   val leg: Lin[Primal[P], Primal[Child]]
@@ -176,21 +169,16 @@ sealed trait ReindexingLeg[
       .after(next.ordinals)
       .left
       .map(EvidenceError.ReindexingCompositionFailure.apply)
-      .flatMap: composed =>
-        ReindexingLeg
-          .responseIndices(parentRecord, parent, composed)
-          .map: selected =>
-            val result = new ReindexingLeg.Bound[P, K, compose.Out, next.Child](
-              parent,
-              parentAxis,
-              parentRecord,
-              next.child,
-              composed,
-              selected,
-              steps ++ next.steps,
-              next.childMembers
-            )(leg.andThen(next.leg))
-            result
+      .map: composed =>
+        new ReindexingLeg.Bound[P, K, compose.Out, next.Child](
+          parent,
+          parentAxis,
+          parentRecord,
+          next.child,
+          composed,
+          steps ++ next.steps,
+          next.childMembers
+        )(leg.andThen(next.leg))
 
 object ReindexingLeg:
   private final class Bound[
@@ -204,7 +192,6 @@ object ReindexingLeg:
       private[mvpa] val parentRecord: AxisRecord,
       val child: AxisRef[AxisMember[K]] { type Id = C },
       val ordinals: R,
-      val responseSelection: OrderedIndices[P],
       val steps: Vector[ReindexingStep],
       private[mvpa] val childMembers: Vector[AxisMember[K]]
   )(val leg: Lin[Primal[P], Primal[C]])
@@ -263,15 +250,6 @@ object ReindexingLeg:
           parent.toRecord.scale,
           parent.toRecord.lineage ++ stepLineage(parent.descriptor, step)
         )(AxisMember.stableKey)
-        selected <- OrderedIndices
-          .fromInts(
-            parent.responseDomain,
-            parent.size,
-            mapping,
-            evidence.duplicatePolicy
-          )
-          .left
-          .map(EvidenceError.ResponseIndexFailure.apply)
         semanticLeg <- semanticLeg(parent, child, mapping)
       yield new Bound[parent.Id, K, R, child.Id](
         parent.evidence,
@@ -279,7 +257,6 @@ object ReindexingLeg:
         parent.toRecord,
         child,
         by,
-        selected,
         Vector(step),
         members
       )(semanticLeg)
@@ -361,25 +338,6 @@ object ReindexingLeg:
       )
       .left
       .map(EvidenceError.SemanticFailure.apply)
-
-  private def responseIndices[P <: SemanticSpace](
-      parentRecord: AxisRecord,
-      parent: SpaceEvidence[P],
-      reindexing: Reindexing
-  ): Either[EvidenceError, OrderedIndices[P]] =
-    val values = reindexing.toVector
-    val policy =
-      if values.distinct.length == values.length then DuplicatePolicy.Reject
-      else DuplicatePolicy.Allow
-    scalafim.response.DomainId
-      .fromString[P](parent.descriptor.id.value)
-      .left
-      .map(EvidenceError.ResponseIdentityFailure.apply)
-      .flatMap: domain =>
-        OrderedIndices
-          .fromInts(domain, parentRecord.stableKeys.length, values, policy)
-          .left
-          .map(EvidenceError.ResponseIndexFailure.apply)
 
   private[mvpa] def kindOf(value: Reindexing): ReindexingKind =
     value match

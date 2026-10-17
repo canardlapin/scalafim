@@ -5,7 +5,6 @@ import locus4s.provenance.ProvenanceSink
 import multivar.core.{MultivarError, SemanticError, SemanticSpace, SpaceEvidence, SpaceRef, SpaceRole}
 import resample4s.core.{DesignError, DigestError, DomainMismatch, FingerprintError, UnknownUnit}
 import scalafim.locus.{DomainFactory, DomainFactoryError}
-import scalafim.response.{DomainId, IdentityError, IndexError}
 
 enum EvidenceError:
   case InvalidAxis(field: String, detail: String)
@@ -16,8 +15,6 @@ enum EvidenceError:
   case MultivarFailure(error: MultivarError)
   case SemanticFailure(error: SemanticError)
   case LocusFailure(error: DomainFactoryError)
-  case ResponseIdentityFailure(error: IdentityError)
-  case ResponseIndexFailure(error: IndexError)
   case ResampleFailure(error: DesignError)
   case ResampleDigestFailure(error: DigestError)
   case ResampleFingerprintFailure(error: FingerprintError)
@@ -42,10 +39,6 @@ enum EvidenceError:
       case SemanticFailure(error) =>
         error.message
       case LocusFailure(error) =>
-        error.message
-      case ResponseIdentityFailure(error) =>
-        error.message
-      case ResponseIndexFailure(error) =>
         error.message
       case ResampleFailure(error) =>
         error.message
@@ -266,8 +259,7 @@ final class AxisRef[K] private (
     val index: AxisIndex[K],
     private val recordValue: AxisRecord,
     val semantic: SpaceRef,
-    val domain: DomainResolution,
-    val responseDomain: DomainId[semantic.Id]
+    val domain: DomainResolution
 ):
   type Id = semantic.Id
   type Locus = domain.S
@@ -399,11 +391,7 @@ object AxisRef:
         .restore(s"scalafim-mvpa-${descriptor.stableKey}", descriptor.size, Some(descriptor.namespace))
         .left
         .map(EvidenceError.LocusFailure.apply)
-      responseDomain <- DomainId
-        .fromString[semantic.Id](descriptor.stableKey)
-        .left
-        .map(EvidenceError.ResponseIdentityFailure.apply)
-    yield new AxisRef(descriptor, index, record, semantic, domain, responseDomain)
+    yield new AxisRef(descriptor, index, record, semantic, domain)
 
 private[mvpa] object AxisDigest:
   def sha256Hex(write: Writer => Unit): String =

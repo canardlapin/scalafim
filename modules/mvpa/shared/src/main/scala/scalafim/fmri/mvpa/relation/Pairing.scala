@@ -10,7 +10,7 @@ import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, EvidenceError, EvidenceOrigi
 final class PartitionCoordinate[P <: SemanticSpace, K] private[relation] (
     val selection: ReindexingLeg[P, K, Injection]
 ):
-  def ordinal: Int = selection.responseSelection.values.head
+  def ordinal: Int = selection.ordinals.toIArray(0)
 
 object PartitionCoordinate:
   def apply[P <: SemanticSpace, K](

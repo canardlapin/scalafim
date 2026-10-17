@@ -46,6 +46,21 @@ class ReindexingLegSuite extends munit.FunSuite:
       reads += 1
       matrix.transposeApplyTo(input, output)
 
+  test("binding refuses mismatched parents and empty children; selections cannot repeat"):
+    val parent = axis("a", "b", "c", "d")
+    val space = right(IndexSpace.of(parent.size))
+    val wider = right(IndexSpace.of(parent.size + 1))
+    assert(ReindexingLeg.bind(parent, right(Draw.from(ints(0, 4), wider))).left.exists:
+      case EvidenceError.ShapeMismatch("reindexing parent", 4, 5) => true
+      case _ => false
+    )
+    assert(ReindexingLeg.bind(parent, right(Draw.from(ints(), space))).left.exists:
+      case EvidenceError.InvalidAxis("reindexing child", _) => true
+      case _ => false
+    )
+    assert(Selection.from(ints(2, 0), space).isLeft, "a selection is strictly increasing")
+    assert(Selection.from(ints(1, 1), space).isLeft, "a selection cannot repeat")
+
   test("selection, injection, draw and permutation retain distinct axis identity"):
     val parent = axis("a", "b", "c", "d")
     val space = right(IndexSpace.of(parent.size))
@@ -63,7 +78,10 @@ class ReindexingLegSuite extends munit.FunSuite:
     assertEquals(draw.members.map(_.parentKey), Vector("c", "a", "c"))
     assertEquals(permutation.members.map(_.parentKey), Vector("d", "c", "b", "a"))
     assertEquals(draw.members.map(_.occurrence.toVector), Vector(Vector(0), Vector(1), Vector(2)))
-    assertEquals(draw.responseSelection.values, Vector(2, 0, 2))
+    // Occurrence identity and order live in the provider reindexing and the
+    // child members; a repeated draw is not an injective selection.
+    assertEquals(draw.ordinals.toVector, Vector(2, 0, 2))
+    assert(Injection.from(ints(2, 0, 2), space).isLeft)
     assertEquals(
       Vector(selection, injection, draw, permutation).map(_.child.descriptor.coordinateSignature).distinct.length,
       4
