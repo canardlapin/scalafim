@@ -184,7 +184,7 @@ def invalid[U <: Use.Fit](data: NonEmptyData[U, Array[Double]]) =
     import gale.linalg.{DoubleLinearOperator,DVec,MutableDVec}
     import multivar.core.{ValueIdentity,ValueId}
     import scalafim.fmri.mvpa.{EvidenceSource,Observations,MultiResponse}
-    import scalafim.response.{SourceId,ProvenanceId,Provenance}
+    import locus4s.provenance.{SourceId, ProvenanceId, Provenance}
     val samples = right(AxisRef.fromStableKeys("samples",SpaceRole.Samples,Vector("a","b"),"trial","none","one"))
     val features = right(AxisRef.fromStableKeys("features",SpaceRole.Observed,Vector("u","v"),"native","none","one"))
     var reads = 0

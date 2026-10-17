@@ -4,7 +4,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import munit.FunSuite
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class ObservationProductSuite extends FunSuite:
   private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)

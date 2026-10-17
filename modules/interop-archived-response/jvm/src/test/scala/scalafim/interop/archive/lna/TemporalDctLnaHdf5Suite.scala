@@ -16,9 +16,9 @@ import scalafim.interop.archive.{
 import scalafim.response.{
   DecodeConsistency,
   PhysicalByteEvidence,
-  ResolvedResponseSelection,
-  SourceId
+  ResolvedResponseSelection
 }
+import locus4s.provenance.SourceId
 
 import java.nio.file.{Files, Path}
 

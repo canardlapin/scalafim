@@ -46,7 +46,6 @@ import scalafim.image.SomeSampleSpace
 import scalafim.response.{
   CalibrationState,
   DomainId,
-  DomainReference,
   InMemoryResponseSource,
   NonFinitePolicy,
   ResponseSchema,
@@ -56,10 +55,13 @@ import scalafim.response.{
   SampleDomain,
   SampleDomainKind,
   SignalSchema,
-  SourceId,
   TimeAxis,
   TimeDomain,
   UnitId
+}
+import locus4s.provenance.{
+  DomainReference,
+  SourceId
 }
 
 import scala.concurrent.Future

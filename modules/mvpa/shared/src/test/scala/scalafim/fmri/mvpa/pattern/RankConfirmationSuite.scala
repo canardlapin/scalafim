@@ -7,7 +7,7 @@ import multivar.inference.{Alpha, CanonicalRankMethod, CanonicalRankSampling, Fi
 import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import scalafim.scenarios.{ScenarioHarness, ScenarioResult, ScenarioTolerance}
 
 class RankConfirmationSuite extends munit.FunSuite:

@@ -5,7 +5,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class VoxelLoadingConfirmationSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

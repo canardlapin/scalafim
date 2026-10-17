@@ -9,7 +9,7 @@ import resample4s.designs.FixedPartitions
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
 import multivar.core.{ValueId, ValueIdentity}
-import scalafim.response.{SourceId, ProvenanceId, Provenance}
+import locus4s.provenance.{SourceId, ProvenanceId, Provenance}
 
 class AlderPatternSelectionSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64

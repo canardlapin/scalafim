@@ -5,7 +5,7 @@ import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Public-pipeline arithmetic controls; these do not qualify M4.09 release. */
 class ComponentInferenceNumericsSuite extends munit.FunSuite:

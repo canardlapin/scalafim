@@ -4,7 +4,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import gale.sparse.Sparse
 import multivar.core.{OperatorRepresentation, SpaceRole, ValueId, ValueIdentity}
 import scala.compiletime.testing.typeCheckErrors
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class ObservationsSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =

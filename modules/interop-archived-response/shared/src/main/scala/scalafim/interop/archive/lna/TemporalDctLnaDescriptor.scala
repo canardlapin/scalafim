@@ -13,11 +13,9 @@ import scalafim.response.{
   CalibrationState,
   DecodeConsistency,
   DomainId,
-  DomainReference,
   NonFinitePolicy,
   ReconstructionContract,
   ReconstructionErrorBounds,
-  ReferenceNamespace,
   ResponseFailure,
   ResponseSchema,
   ResponseSchemaId,
@@ -30,6 +28,11 @@ import scalafim.response.{
   TimeDomain,
   UnitId,
   ValidationReportRef
+}
+import locus4s.provenance.{
+  DomainReference,
+  ProvenanceIdentityError,
+  ReferenceNamespace
 }
 
 private[lna] object TemporalDctLnaDescriptor:
@@ -370,12 +373,12 @@ private[lna] object TemporalDctLnaDescriptor:
       namespace <- ReferenceNamespace
         .fromString(namespaceText)
         .left
-        .map(asArchive)
+        .map(referenceAsArchive)
       value <- required(fields, s"$prefix.value")
       result <- DomainReference
         .make(namespace, value)
         .left
-        .map(asArchive)
+        .map(referenceAsArchive)
     yield result
 
   private def addReference(
@@ -490,6 +493,9 @@ private[lna] object TemporalDctLnaDescriptor:
     java.lang.Long.toHexString(java.lang.Double.doubleToRawLongBits(value))
 
   private def asArchive(error: ResponseFailure): ArchiveError =
+    ArchiveError.InvalidArchive(error.message)
+
+  private def referenceAsArchive(error: ProvenanceIdentityError): ArchiveError =
     ArchiveError.InvalidArchive(error.message)
 
 private object FramedRecord:

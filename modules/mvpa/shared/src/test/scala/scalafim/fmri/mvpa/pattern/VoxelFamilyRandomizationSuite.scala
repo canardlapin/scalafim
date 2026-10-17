@@ -8,7 +8,7 @@ import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.execution.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class VoxelFamilyRandomizationSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

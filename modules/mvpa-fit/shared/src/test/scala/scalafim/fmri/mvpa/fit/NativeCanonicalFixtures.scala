@@ -5,7 +5,7 @@ import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import scalafim.dataset.RunId
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
 import scalafim.fmri.mvpa.analysis.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Test-only native run-set construction. It deliberately binds each run to a
   * real time axis and content identity rather than synthesizing feature plans. */

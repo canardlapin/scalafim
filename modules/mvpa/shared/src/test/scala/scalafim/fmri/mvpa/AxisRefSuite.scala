@@ -1,5 +1,6 @@
 package scalafim.fmri.mvpa
 
+import locus4s.provenance.*
 import multivar.core.SpaceRole
 import scala.compiletime.testing.typeCheckErrors
 
@@ -51,6 +52,38 @@ class AxisRefSuite extends munit.FunSuite:
     assertEquals(AxisDigest.sha256Hex(_.string("")), "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119")
     assertEquals(AxisDigest.sha256Hex(writer => Vector("a" * 200, "café", "😀").foreach(writer.string)),
       "f90133bb1e6b9abd7a783a47e607a7135ce6fdcfe3214dac9fe8e0af00b140b9")
+
+  test("provenance framing keeps the pre-extraction evidence digest bytes"):
+    // Python hashlib over the token stream the three former MVPA writers
+    // emitted: every operation and evidence kind, counts as little-endian ints.
+    val reference = DomainReference.unsafe("space", "MNI")
+    def id(value: String) = ProvenanceId.unsafe(value)
+    val nodes = Vector(
+      ProvenanceNode(
+        id("a"),
+        ProvenanceOperation.SourceRead(SourceId.unsafe("src")),
+        Vector.empty,
+        Vector(ProvenanceEvidence.Domain(reference))
+      ),
+      ProvenanceNode(
+        id("b"),
+        ProvenanceOperation.Adapter(OperationId.unsafe("adapt")),
+        Vector(id("a")),
+        Vector(ProvenanceEvidence.External(reference), ProvenanceEvidence.NoneDeclared)
+      ),
+      ProvenanceNode(id("c"), ProvenanceOperation.Selection, Vector(id("b")), Vector.empty),
+      ProvenanceNode(id("d"), ProvenanceOperation.Assembly, Vector(id("c")), Vector.empty),
+      ProvenanceNode(
+        id("e"),
+        ProvenanceOperation.Derived(OperationId.unsafe("op")),
+        Vector(id("d")),
+        Vector.empty
+      )
+    )
+    val digest = AxisDigest.sha256Hex: writer =>
+      ProvenanceFraming.nodes(writer, nodes)
+      ProvenanceFraming.roots(writer, Vector(id("e")))
+    assertEquals(digest, "98d70757e8c1b35206fa722a4cb9be680c0123ebdfa3fad627e142eb82ea480d")
 
   test("ordered keys and complete scientific metadata participate in axis identity"):
     val baseline = axis()

@@ -9,7 +9,7 @@ import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
 import scalafim.fmri.mvpa.measurement.{MeasuredObservations, MeasurementFailure, MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor, PackedMeasurementEntry}
 import scalafim.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, IndexedField, Searchlight}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class SpatialMeasurementFramesSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =

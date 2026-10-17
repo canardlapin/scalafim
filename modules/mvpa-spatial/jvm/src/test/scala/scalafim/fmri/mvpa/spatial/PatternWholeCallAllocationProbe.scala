@@ -10,7 +10,7 @@ import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations}
 import scalafim.fmri.mvpa.analysis.*
 import scalafim.fmri.mvpa.measurement.MeasurementId
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Complete adopted preparation -> two-stage fit -> prediction -> native
   * scatter probe. Cumulative caller-thread allocation includes retained

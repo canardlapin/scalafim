@@ -4,7 +4,7 @@ import gale.linalg.DMat
 import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{IndexSpace, Injection}
 import scalafim.fmri.mvpa.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class PairingSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)

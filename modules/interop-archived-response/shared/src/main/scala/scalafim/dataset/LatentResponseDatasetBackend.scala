@@ -4,7 +4,7 @@ import image4s.geometry.Grid
 import scalafim.image.{Mask, SomeSampleSpace}
 import scalafim.image.space
 import scalafim.latent.{LatentResponse, LatentSelection}
-import scalafim.response.OperationId
+import locus4s.provenance.OperationId
 
 final class LatentResponseDatasetBackend private (
     val id: DatasetId,

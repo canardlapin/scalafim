@@ -14,7 +14,7 @@ import scalafim.interop.archive.{
   ArchiveResponseAccess,
   RepresentationEnvelope
 }
-import scalafim.response.SourceId
+import locus4s.provenance.SourceId
 
 import java.nio.file.{Files, Path}
 

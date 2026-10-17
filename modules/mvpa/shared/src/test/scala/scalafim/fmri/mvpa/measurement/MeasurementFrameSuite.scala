@@ -4,7 +4,7 @@ import gale.linalg.DMat
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{IndexSpace, Injection}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class MeasurementFrameSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =

@@ -5,7 +5,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{DigestAlgorithm, Draw, IndexSpace}
 import scalafim.fmri.mvpa.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class GroupedPredictiveAcceptanceSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64

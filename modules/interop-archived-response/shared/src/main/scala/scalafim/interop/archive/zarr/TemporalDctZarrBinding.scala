@@ -36,7 +36,6 @@ import scalafim.response.{
   AxisReadEvidence,
   ByteRange,
   ChunkId,
-  DomainReference,
   IntegrityEvidence,
   LogicalReadSummary,
   ObjectId,
@@ -50,7 +49,10 @@ import scalafim.response.{
   ReadCapabilities,
   ReadReceipt,
   ResolvedResponseSelection,
-  SelectionAxes,
+  SelectionAxes
+}
+import locus4s.provenance.{
+  DomainReference,
   SourceId
 }
 import zarr4s.{

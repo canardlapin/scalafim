@@ -7,7 +7,7 @@ import multivar.inference.{MonteCarloDraws, PermutationAction, RowCount}
 import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class ComponentInferenceSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

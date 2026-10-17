@@ -6,7 +6,7 @@ import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
 import scalafim.fmri.mvpa.{AxisRef, EvidenceOrigins, EvidenceSource, MultiResponse, Observations}
 import scalafim.fmri.mvpa.analysis.*
-import scalafim.response.{DomainReference, Provenance, ProvenanceEvidence, ProvenanceId, SourceId}
+import locus4s.provenance.{DomainReference, Provenance, ProvenanceEvidence, ProvenanceId, SourceId}
 
 class AlderExposureReadsSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

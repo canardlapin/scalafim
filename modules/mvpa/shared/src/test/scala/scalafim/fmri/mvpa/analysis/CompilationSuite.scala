@@ -7,7 +7,7 @@ import resample4s.core.{Coverage, DigestAlgorithm, IndexSpace, Injection}
 import resample4s.designs.KFold
 import scalafim.fmri.mvpa.{AxisRef, AxisSignature, EvidenceSource, Observations, ScientificSeed, ValidationDesign}
 import scalafim.fmri.mvpa.measurement.{MeasurementFrame, MeasurementFrameDeclaration, MeasurementId, MeasurementLeg, PackedMeasurementEntry}
-import scalafim.response.{OperationId, Provenance, ProvenanceId, ProvenanceOperation, SourceId}
+import locus4s.provenance.{OperationId, Provenance, ProvenanceId, ProvenanceOperation, SourceId}
 import scala.compiletime.testing.typeCheckErrors
 
 final class CompilationSuite extends FunSuite:

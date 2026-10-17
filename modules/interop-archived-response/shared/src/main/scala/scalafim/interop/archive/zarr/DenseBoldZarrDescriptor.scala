@@ -16,9 +16,7 @@ import scalafim.interop.archive.RepresentationEnvelope
 import scalafim.response.{
   CalibrationState,
   DomainId,
-  DomainReference,
   NonFinitePolicy,
-  ReferenceNamespace,
   ResponseSchema,
   ResponseSchemaId,
   SampleAxis,
@@ -28,6 +26,10 @@ import scalafim.response.{
   TimeAxis,
   TimeDomain,
   UnitId
+}
+import locus4s.provenance.{
+  DomainReference,
+  ReferenceNamespace
 }
 import zarr4s.{
   ArrayDescriptor,
@@ -415,12 +417,12 @@ object DenseBoldZarrDescriptor:
       namespace <- ReferenceNamespace
         .fromString(namespaceText)
         .left
-        .map(asArchive)
+        .map(referenceAsArchive)
       referenceValue <- string(value, s"$prefix-value")
       result <- DomainReference
         .make(namespace, referenceValue)
         .left
-        .map(asArchive)
+        .map(referenceAsArchive)
     yield result
 
   private def canonicalObject(
@@ -545,5 +547,10 @@ object DenseBoldZarrDescriptor:
 
   private def asArchive(
       error: scalafim.response.ResponseFailure
+  ): ArchiveError =
+    ArchiveError.InvalidArchive(error.message)
+
+  private def referenceAsArchive(
+      error: locus4s.provenance.ProvenanceIdentityError
   ): ArchiveError =
     ArchiveError.InvalidArchive(error.message)

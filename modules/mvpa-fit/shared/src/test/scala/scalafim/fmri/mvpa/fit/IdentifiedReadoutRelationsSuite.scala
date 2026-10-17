@@ -15,7 +15,7 @@ import scalafim.fmri.mvpa.{
 }
 import resample4s.core.{IndexSpace, Selection}
 import scalafim.fmri.mvpa.relation.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)

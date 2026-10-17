@@ -3,6 +3,7 @@ package scalafim.response
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all.*
+import locus4s.provenance.*
 import scala.compiletime.testing.typeCheckErrors
 import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 

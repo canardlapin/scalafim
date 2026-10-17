@@ -6,7 +6,7 @@ import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.DigestAlgorithm
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import scalafim.scenarios.{ScenarioHarness, ScenarioResult, ScenarioTolerance}
 
 class PatternTrainingStabilitySuite extends munit.FunSuite:

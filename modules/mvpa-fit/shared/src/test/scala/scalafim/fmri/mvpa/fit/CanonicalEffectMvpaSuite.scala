@@ -131,7 +131,7 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
     import multivar.core.{SpaceRole, ValueId, ValueIdentity}
     import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
     import scalafim.fmri.mvpa.analysis.*
-    import scalafim.response.{Provenance, ProvenanceId, SourceId}
+    import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
     val design = DMat.tabulate(8, 2)((r, c) => if c == 0 then 1.0 else if r % 2 == 0 then -1.0 else 1.0)
     val geometry = right(ResponsePreparationPlan.fromConfig(FitConfig()).prepareManova(DesignMatrix.unsafe(design), Vector("intercept", "task"),
       scalafim.fmri.fit.FContrast("task", Vector(Map("task" -> 1.0))), SelectedTimepointIndices.unsafe((0 until 8).toVector),
@@ -170,7 +170,7 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
   private def poison(schedule: CanonicalGeometrySchedule): (CanonicalRunSet[? <: multivar.core.SemanticSpace, ? <: multivar.core.SemanticSpace, CanonicalGeometrySchedule], () => Int) =
     import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
     import scalafim.fmri.mvpa.analysis.*
-    import scalafim.response.{Provenance, ProvenanceId, SourceId}
+    import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
     import multivar.core.{SpaceRole, ValueId, ValueIdentity}
     var reads = 0
     val neural = right(AxisRef.fromStableKeys("canonical-poison-neural", SpaceRole.Observed, Vector("v0", "v1"), "native", "psc", "raw"))

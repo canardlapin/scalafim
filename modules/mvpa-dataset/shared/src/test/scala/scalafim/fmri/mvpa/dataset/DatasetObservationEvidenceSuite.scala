@@ -23,7 +23,8 @@ import alder.kernel.DataFingerprint
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.dataset.predictive.*
 import scalafim.image.SampleSpaces
-import scalafim.response.{InMemoryResponseSource, NonFinitePolicy, ResponseSchemaId, SourceId, UnitId}
+import scalafim.response.{InMemoryResponseSource, NonFinitePolicy, ResponseSchemaId, UnitId}
+import locus4s.provenance.SourceId
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

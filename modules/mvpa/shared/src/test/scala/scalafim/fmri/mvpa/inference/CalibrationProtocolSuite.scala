@@ -60,8 +60,8 @@ class CalibrationProtocolSuite extends FunSuite:
     val pilotRoot = right(CalibrationProtocolSupport.seed("pilot", scenario, 17))
     assertNotEquals(right(CalibrationProtocolSupport.bindingIdentity(scenario, 17, fixtureRoot)),
       right(CalibrationProtocolSupport.bindingIdentity(scenario, 17, pilotRoot)))
-    assert(scalafim.response.SourceId.fromString(binding + "-brain-source").isRight)
-    assert(scalafim.response.ProvenanceId.fromString(binding + "-brain-source-root").isRight)
+    assert(locus4s.provenance.SourceId.fromString(binding + "-brain-source").isRight)
+    assert(locus4s.provenance.ProvenanceId.fromString(binding + "-brain-source-root").isRight)
     assert(multivar.core.ValueId(binding + "-X").isRight)
     assert(CalibrationProtocolSupport.bindingIdentity("bad\u0000name", 0, 39251L).isLeft)
 

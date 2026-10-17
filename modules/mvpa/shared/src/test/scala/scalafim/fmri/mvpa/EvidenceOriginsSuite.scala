@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{IndexSpace, Selection}
-import scalafim.response.{DomainReference, Provenance, ProvenanceEvidence, ProvenanceId, SourceId}
+import locus4s.provenance.{DomainReference, Provenance, ProvenanceEvidence, ProvenanceId, SourceId}
 
 class EvidenceOriginsSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =

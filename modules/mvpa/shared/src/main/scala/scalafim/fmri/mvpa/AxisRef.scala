@@ -1,6 +1,7 @@
 package scalafim.fmri.mvpa
 
 import locus4s.{DomainError, DomainResolution}
+import locus4s.provenance.ProvenanceSink
 import multivar.core.{MultivarError, SemanticError, SemanticSpace, SpaceEvidence, SpaceRef, SpaceRole}
 import resample4s.core.{DesignError, DigestError, DomainMismatch, FingerprintError, UnknownUnit}
 import scalafim.locus.{DomainFactory, DomainFactoryError, FiniteSpace, Point, SpaceKey}
@@ -426,7 +427,7 @@ private[mvpa] object AxisDigest:
       index += 1
     new String(characters)
 
-  final class Writer private[AxisDigest] ():
+  final class Writer private[AxisDigest] () extends ProvenanceSink:
     private val sha = Sha256()
 
     def string(value: String): Unit =
@@ -439,6 +440,9 @@ private[mvpa] object AxisDigest:
       sha.updateByte(value >>> 8)
       sha.updateByte(value >>> 16)
       sha.updateByte(value >>> 24)
+
+    def count(value: Int): Unit =
+      intLE(value)
 
     def digest(): Array[Byte] =
       sha.digest()

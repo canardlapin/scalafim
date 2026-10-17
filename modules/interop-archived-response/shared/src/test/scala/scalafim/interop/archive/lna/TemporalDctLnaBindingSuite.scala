@@ -18,7 +18,6 @@ import scalafim.response.{
   CalibrationState,
   DecodeConsistency,
   DomainId,
-  DomainReference,
   NonFinitePolicy,
   OrderedIndices,
   ReconstructionContract,
@@ -37,6 +36,7 @@ import scalafim.response.{
   UnitId,
   ValidationReportRef
 }
+import locus4s.provenance.DomainReference
 
 class TemporalDctLnaBindingSuite extends munit.FunSuite:
   test("write plan preserves the typed model and logical scalar bits"):

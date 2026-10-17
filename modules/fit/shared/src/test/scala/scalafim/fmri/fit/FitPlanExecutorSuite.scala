@@ -60,9 +60,9 @@ import scalafim.fmri.model.{
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,
-  SourceId,
   UnitId
 }
+import locus4s.provenance.SourceId
 import gale.linalg.{DMat, DVec}
 
 class FitPlanExecutorSuite extends munit.FunSuite:

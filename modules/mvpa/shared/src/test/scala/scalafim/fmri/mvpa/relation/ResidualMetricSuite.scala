@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.relation
 import gale.linalg.DMat
 import multivar.core.{CoordinateEvidence, Lin, SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import scalafim.fmri.mvpa.pattern.ResidualCovariance
 
 class ResidualMetricSuite extends munit.FunSuite:

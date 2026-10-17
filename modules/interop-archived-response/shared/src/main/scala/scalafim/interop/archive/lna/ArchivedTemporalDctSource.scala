@@ -29,7 +29,6 @@ import scalafim.interop.archive.ArchiveResponseAccess
 import scalafim.response.{
   AxisReadEvidence,
   DecodeConsistency,
-  DomainReference,
   IntegrityEvidence,
   LogicalReadSummary,
   OpenedLayout,
@@ -39,9 +38,6 @@ import scalafim.response.{
   PhysicalLocality,
   PhysicalReadSummary,
   PhysicalReadUnit,
-  Provenance,
-  ProvenanceEvidence,
-  ProvenanceId,
   ReadCapabilities,
   ReadError,
   ReadPlanSummary,
@@ -51,7 +47,13 @@ import scalafim.response.{
   ResolvedResponseSelection,
   ResponseBlock,
   ResponseSource,
-  SelectionAxes,
+  SelectionAxes
+}
+import locus4s.provenance.{
+  DomainReference,
+  Provenance,
+  ProvenanceEvidence,
+  ProvenanceId,
   SourceId
 }
 

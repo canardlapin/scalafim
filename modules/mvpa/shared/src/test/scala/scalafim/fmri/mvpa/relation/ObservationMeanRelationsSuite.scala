@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.relation
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.{AcquisitionCoordinates, AxisRef, Column, EvidenceError, EvidenceOrigins, EvidenceSource, Observations, PreparationSupport, ValueSupport}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class ObservationMeanRelationsSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), scala.Predef.identity)

@@ -10,7 +10,7 @@ import scalafim.fmri.mvpa.dataset.predictive.*
 import scalafim.fmri.mvpa.measurement.*
 import scalafim.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, Searchlight}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class SpatialPredictiveAcceptanceSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64

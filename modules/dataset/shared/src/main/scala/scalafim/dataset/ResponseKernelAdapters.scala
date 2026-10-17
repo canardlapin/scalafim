@@ -5,9 +5,11 @@ import cats.effect.kernel.Sync
 import cats.syntax.all.*
 import scalafim.image.SampleSpaces.*
 import scalafim.response.*
+import locus4s.provenance.*
 
 enum ResponseAdapterError:
   case Kernel(error: ResponseFailure)
+  case InvalidProvenance(error: ProvenanceError)
   case SamplingFrameCardinality(blocks: Int, origins: Int, intervals: Int)
   case TimeCountMismatch(schemaCount: Int, sourceCount: Int)
   case SampleCountMismatch(schemaCount: Int, sourceCount: Int)
@@ -16,6 +18,8 @@ enum ResponseAdapterError:
   def message: String =
     this match
       case Kernel(error) =>
+        error.message
+      case InvalidProvenance(error) =>
         error.message
       case SamplingFrameCardinality(blocks, origins, intervals) =>
         s"sampling frame has $blocks blocks, $origins origins, and $intervals intervals"
@@ -431,7 +435,7 @@ object DatasetResponseSource:
             Vector(adapterNode)
           )
           .left
-          .map(ResponseAdapterError.Kernel.apply)
+          .map(ResponseAdapterError.InvalidProvenance.apply)
       yield
         new DatasetResponseSource(
           sourceId,

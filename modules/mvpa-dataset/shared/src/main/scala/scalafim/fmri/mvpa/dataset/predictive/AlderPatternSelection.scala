@@ -14,7 +14,7 @@ import resample4s.core.{Coverage, DigestAlgorithm, Labels, UnitKey}
 import resample4s.designs.FixedPartitions
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 enum PatternSelectionTask:
   case Regression(targets: AxisRef[String])

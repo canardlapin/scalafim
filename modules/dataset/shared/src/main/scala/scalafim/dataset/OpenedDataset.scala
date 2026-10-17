@@ -4,15 +4,9 @@ import cats.Monad
 import cats.data.{EitherT, NonEmptyChain, NonEmptyVector, Validated, ValidatedNec}
 import scalafim.response.{
   CalibrationState,
-  DomainReference,
   DuplicatePolicy,
   NonFinitePolicy,
-  OperationId,
   OrderedIndices,
-  Provenance,
-  ProvenanceEvidence,
-  ProvenanceId,
-  ProvenanceOperation,
   ReadError,
   ReadPlanningError,
   ReadResult,
@@ -27,6 +21,14 @@ import scalafim.response.{
   TimeAxis,
   TimeDomain,
   UnitId
+}
+import locus4s.provenance.{
+  DomainReference,
+  OperationId,
+  Provenance,
+  ProvenanceEvidence,
+  ProvenanceId,
+  ProvenanceOperation
 }
 
 opaque type ResponseKey = String

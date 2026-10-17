@@ -10,7 +10,7 @@ import scalafim.locus.{Region as SurfaceRegion, SpaceKey}
 import scalafim.surface.{DistanceMetric, Hemisphere, MeshTopology, SurfaceGeometry, SurfaceKind, SurfaceLocusDomain, SurfaceSearchlight, TriangleMesh}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
 import scalafim.fmri.mvpa.measurement.{MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class PyMvpaSearchlightParitySuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)

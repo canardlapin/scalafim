@@ -10,7 +10,7 @@ import scalafim.fmri.mvpa.measurement.*
 import scalafim.fmri.mvpa.dataset.predictive.*
 import scalafim.fmri.mvpa.spatial.*
 import scalafim.image.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import ravel.DType.given
 
 final case class AtlasMvpaRegionResult(

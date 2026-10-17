@@ -6,7 +6,7 @@ import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
 import resample4s.core.{IndexSpace, Injection}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations, ReindexingLeg}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Independent qualification boundary for whole-brain pattern artifacts.
   * It covers this adapter's declared finite, centered, repeatable inputs only.

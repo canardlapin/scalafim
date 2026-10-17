@@ -10,7 +10,7 @@ import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.group.*
 import scalafim.fmri.mvpa.measurement.*
 import scalafim.fmri.mvpa.pattern.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class SubjectGroupSummarySuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

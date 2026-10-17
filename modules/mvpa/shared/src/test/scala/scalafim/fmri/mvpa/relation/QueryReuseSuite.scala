@@ -5,7 +5,7 @@ import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SemanticSpace
 import scala.compiletime.testing.typeCheckErrors
 import resample4s.core.DigestAlgorithm
 import scalafim.fmri.mvpa.{AxisRef, Column, EvidenceError, EvidenceIdentity, EvidenceOrigins, LeaveOneGroupOutDesign, ScientificSeed}
-import scalafim.response.SourceId
+import locus4s.provenance.SourceId
 
 class QueryReuseSuite extends munit.FunSuite:
   private given DigestAlgorithm = DigestAlgorithm.fnv1a64

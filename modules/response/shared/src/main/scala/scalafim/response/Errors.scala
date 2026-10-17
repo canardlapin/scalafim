@@ -1,5 +1,7 @@
 package scalafim.response
 
+import locus4s.provenance.*
+
 sealed trait ResponseFailure:
   def message: String
 
@@ -92,26 +94,6 @@ enum ConsistencyError extends ResponseFailure:
         s"maximum ULP distance must be non-negative; got $value"
       case InvalidTolerance(label, value) =>
         s"$label tolerance must be finite and non-negative; got $value"
-
-enum ProvenanceError extends ResponseFailure:
-  case Empty
-  case DuplicateNode(id: ProvenanceId)
-  case MissingParent(node: ProvenanceId, parent: ProvenanceId)
-  case InvalidRoot(id: ProvenanceId)
-  case DuplicateRoot(id: ProvenanceId)
-
-  def message: String =
-    this match
-      case Empty =>
-        "provenance must contain at least one node and root"
-      case DuplicateNode(id) =>
-        s"provenance contains duplicate node '${id.value}'"
-      case MissingParent(node, parent) =>
-        s"provenance node '${node.value}' references unavailable parent '${parent.value}'"
-      case InvalidRoot(id) =>
-        s"provenance root '${id.value}' is not a node"
-      case DuplicateRoot(id) =>
-        s"provenance contains duplicate root '${id.value}'"
 
 enum ReceiptConformanceError extends ResponseFailure:
   case EmptyCapabilities

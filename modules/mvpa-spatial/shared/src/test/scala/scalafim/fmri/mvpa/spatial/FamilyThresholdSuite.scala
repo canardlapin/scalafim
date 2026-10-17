@@ -8,7 +8,7 @@ import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
 import scalafim.fmri.mvpa.spatial.*
 import scalafim.fmri.threshold.{Alpha, MaxNull, MaxNullDistribution, NullReference, ThresholdAlternative, ThresholdCutoff}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class FamilyThresholdSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

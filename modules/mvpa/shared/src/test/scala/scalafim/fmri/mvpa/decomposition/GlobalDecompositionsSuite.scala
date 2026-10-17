@@ -8,7 +8,7 @@ import multivar.core.PreprocessSpec
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
 import scalafim.fmri.mvpa.analysis.*
 import scalafim.fmri.mvpa.relation.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class GlobalDecompositionsSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

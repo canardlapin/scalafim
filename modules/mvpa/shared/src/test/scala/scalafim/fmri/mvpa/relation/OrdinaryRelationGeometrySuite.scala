@@ -5,7 +5,7 @@ import scala.compiletime.testing.typeCheckErrors
 import multivar.core.{CoordinateEvidence, Lin, SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceError, RdmMethod, RdmModel, RdmScorer, RdmVector}
 import scalafim.fmri.mvpa.{Column, EvidenceSource, MvpaParityFixtures}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class OrdinaryRelationGeometrySuite extends munit.FunSuite:
   private def right[E,A](value: Either[E,A]): A = value.fold(error => fail(error.toString), identity)

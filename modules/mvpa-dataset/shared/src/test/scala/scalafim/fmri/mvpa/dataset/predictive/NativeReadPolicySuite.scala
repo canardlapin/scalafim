@@ -5,7 +5,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class NativeReadPolicySuite extends FunSuite:
   private def right[A](value: Either[?, A]): A =

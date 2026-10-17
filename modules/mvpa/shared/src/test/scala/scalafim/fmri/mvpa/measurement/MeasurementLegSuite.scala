@@ -5,7 +5,7 @@ import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{IndexSpace, Injection}
 import scala.compiletime.testing.typeCheckErrors
 import scalafim.fmri.mvpa.{AcquisitionCoordinates, AxisRef, EvidenceOrigins, EvidenceSource, Observations, PreparationSupport, ValueSupport}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class MeasurementLegSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =

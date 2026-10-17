@@ -4,7 +4,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{Draw, IndexSpace, Injection, Permutation, Reindexing, Selection}
 import scala.compiletime.testing.typeCheckErrors
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class ReindexingLegSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =

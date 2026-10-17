@@ -5,7 +5,7 @@ import gale.optim.{FirstOrderConfig, FirstOrderTolerance}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Numerical contracts for the fixed-Psi alternating adapter.
   *

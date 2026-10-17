@@ -7,7 +7,7 @@ import resample4s.kernel.Seed
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.pattern.*
 import scalafim.fmri.mvpa.inference.CalibrationProtocolSupport
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Test-only adapter for the existing production procedure and restricted plan
   * identity. It implements no CCA, fit, null statistic or distribution helper. */

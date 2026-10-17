@@ -2,6 +2,7 @@ package scalafim.response
 
 import cats.{Applicative, Monad}
 import cats.data.EitherT
+import locus4s.provenance.*
 import ravel.{Array1, NDArray, Shape}
 
 final case class ReadPlanSummary(

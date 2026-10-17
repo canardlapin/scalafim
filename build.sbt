@@ -92,7 +92,7 @@ lazy val alderMetricsJS      = ProjectRef(alderBuild, "metricsJS")
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
 // coordinated development.
-lazy val locus4sRevision = "a67bc87c33b5da8a5dc2cad49919c015b59f3050"
+lazy val locus4sRevision = "e32b0aeba5c4d19c457b2329272b95b26c061943"
 lazy val locus4sBuild =
   sys.props
     .get("scalafim.locus4s.build")
@@ -102,6 +102,8 @@ lazy val locus4sCoreJVM = ProjectRef(locus4sBuild, "locus4s-coreJVM")
 lazy val locus4sCoreJS  = ProjectRef(locus4sBuild, "locus4s-coreJS")
 lazy val locus4sDataJVM = ProjectRef(locus4sBuild, "locus4s-dataJVM")
 lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
+lazy val locus4sProvenanceJVM = ProjectRef(locus4sBuild, "locus4s-provenanceJVM")
+lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
@@ -323,8 +325,8 @@ lazy val response =
         "org.typelevel" %%% "cats-effect" % "3.5.4"
       )
     )
-    .jvmConfigure(_.dependsOn(ravelCoreJVM))
-    .jsConfigure(_.dependsOn(ravelCoreJS))
+    .jvmConfigure(_.dependsOn(ravelCoreJVM, locus4sProvenanceJVM))
+    .jsConfigure(_.dependsOn(ravelCoreJS, locus4sProvenanceJS))
     .jsSettings(jsSettingsBase)
 
 lazy val responseJS  = response.js
@@ -1237,6 +1239,7 @@ lazy val mvpa =
     .jvmConfigure(
       _.dependsOn(
         galeCoreJVM,
+        locus4sProvenanceJVM,
         multivarJVM,
         resample4sCoreJVM,
         resample4sDesignsJVM,
@@ -1246,6 +1249,7 @@ lazy val mvpa =
     .jsConfigure(
       _.dependsOn(
         galeCoreJS,
+        locus4sProvenanceJS,
         multivarJS,
         resample4sCoreJS,
         resample4sDesignsJS,

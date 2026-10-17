@@ -206,8 +206,9 @@ and anatomical grouping policy remain domain-specific.
 
 ### Source provenance and response access
 
-The current `response/Provenance.scala` defines a small validated DAG with
+The former `response/Provenance.scala` defined a small validated DAG with
 source IDs, operation IDs, parent nodes, roots, and domain/external references.
+It now lives in `locus4s-provenance` (U1, `eco-u1-provenance`).
 This is a real shared requirement: both response reads and MVPA evidence use it.
 Its identity and serialization behavior must survive extraction.
 

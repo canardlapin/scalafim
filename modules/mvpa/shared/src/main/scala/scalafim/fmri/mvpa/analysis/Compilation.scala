@@ -4,7 +4,7 @@ import multivar.core.{SemanticSpace, ValueIdentity}
 import resample4s.core.*
 import scalafim.fmri.mvpa.{AxisDigest, AxisSignature, Observations, ValidationDesign}
 import scalafim.fmri.mvpa.measurement.MeasurementFrame
-import scalafim.response.{ProvenanceEvidence, ProvenanceNode, ProvenanceOperation}
+import locus4s.provenance.ProvenanceFraming
 
 /** An open scientific question. Methods own their result, rejection, failure,
   * and capability vocabulary; adding one never changes a central dispatch
@@ -53,10 +53,8 @@ object ScientificInputs:
         writer.string(identity.columns.stableKey)
         writer.string(identity.source.value)
         writeValueIdentity(writer, identity.values)
-        writer.intLE(identity.provenanceRoots.length)
-        identity.provenanceRoots.foreach(root => writer.string(root.value))
-        writer.intLE(identity.provenanceNodes.length)
-        identity.provenanceNodes.foreach(writeProvenanceNode(writer, _))
+        ProvenanceFraming.roots(writer, identity.provenanceRoots)
+        ProvenanceFraming.nodes(writer, identity.provenanceNodes)
         identity.origins.writeFramed(writer)
 
     def sourceCapabilities(source: Observations[S, N]): CapabilitySet =
@@ -103,34 +101,6 @@ object ScientificInputs:
         writer.string(operation)
         writer.intLE(inputs.length)
         inputs.foreach(writeValueIdentity(writer, _))
-
-  private def writeProvenanceNode(writer: AxisDigest.Writer, node: ProvenanceNode): Unit =
-    writer.string(node.id.value)
-    node.operation match
-      case ProvenanceOperation.SourceRead(source) =>
-        writer.string("source-read")
-        writer.string(source.value)
-      case ProvenanceOperation.Selection => writer.string("selection")
-      case ProvenanceOperation.Assembly => writer.string("assembly")
-      case ProvenanceOperation.Adapter(adapter) =>
-        writer.string("adapter")
-        writer.string(adapter.value)
-      case ProvenanceOperation.Derived(operation) =>
-        writer.string("derived")
-        writer.string(operation.value)
-    writer.intLE(node.parents.length)
-    node.parents.foreach(parent => writer.string(parent.value))
-    writer.intLE(node.evidence.length)
-    node.evidence.foreach:
-      case ProvenanceEvidence.Domain(reference) =>
-        writer.string("domain")
-        writer.string(reference.namespace.value)
-        writer.string(reference.value)
-      case ProvenanceEvidence.External(reference) =>
-        writer.string("external")
-        writer.string(reference.namespace.value)
-        writer.string(reference.value)
-      case ProvenanceEvidence.NoneDeclared => writer.string("none-declared")
 
   private def writePlanReceipt(writer: AxisDigest.Writer, receipt: PlanReceipt): Unit =
     writer.string("plan-receipt")

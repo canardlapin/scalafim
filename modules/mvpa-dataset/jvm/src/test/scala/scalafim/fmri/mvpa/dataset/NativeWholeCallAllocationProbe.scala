@@ -11,7 +11,7 @@ import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.dataset.predictive.*
 import scalafim.fmri.mvpa.measurement.{MeasurementId, MeasurementLeg}
 import scalafim.fmri.mvpa.relation.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** JVM-only allocation probe for two complete native MVPA calls. It reports
   * cumulative current-thread allocation, rather than peak allocation or RSS.

@@ -9,7 +9,7 @@ import scalafim.latent.{
   LatentArchiveRegistry,
   LatentSelection
 }
-import scalafim.response.OperationId
+import locus4s.provenance.OperationId
 
 final class LatentArchiveDatasetBackend private (
     val id: DatasetId,

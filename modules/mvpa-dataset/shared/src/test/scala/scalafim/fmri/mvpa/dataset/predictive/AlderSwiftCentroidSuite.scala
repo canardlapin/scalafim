@@ -7,7 +7,7 @@ import resample4s.core.{DigestAlgorithm, IndexSpace, Injection, Labels}
 import resample4s.designs.FixedPartitions
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.measurement.{MeasurementId, MeasurementLeg}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class AlderSwiftCentroidSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64

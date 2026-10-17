@@ -6,7 +6,7 @@ import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations}
 import scalafim.fmri.mvpa.analysis.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Independent contracts for the training-only pilot/covariance/final adapter. */
 class TwoStagePatternFitSuite extends FunSuite:

@@ -8,7 +8,7 @@ import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.measurement.*
 import scalafim.fmri.mvpa.relation.*
 import scalafim.scenarios.{ScenarioHarness, ScenarioResult, ScenarioTolerance}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** A method-local extension rehearsal on the physically retired foundation.
   * The new result/program types appear only in this test, never in a registry. */

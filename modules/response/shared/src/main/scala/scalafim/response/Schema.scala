@@ -1,5 +1,7 @@
 package scalafim.response
 
+import locus4s.provenance.*
+
 opaque type ResponseSchemaId = String
 
 object ResponseSchemaId:
@@ -171,58 +173,6 @@ object TimeDomain:
                 previous = Some(value)
         index += 1
       Right(new Explicit(id, coordinates.result(), units))
-
-opaque type ReferenceNamespace = String
-
-object ReferenceNamespace:
-  def fromString(value: String): Either[IdentityError, ReferenceNamespace] =
-    ResponseIdentity.validate("reference namespace", value)
-
-  def unsafe(value: String): ReferenceNamespace =
-    fromString(value).fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  extension (namespace: ReferenceNamespace)
-    inline def value: String =
-      namespace
-
-final class DomainReference private (
-    val namespace: ReferenceNamespace,
-    val value: String
-):
-  override def equals(other: Any): Boolean =
-    other match
-      case that: DomainReference =>
-        namespace.value == that.namespace.value && value == that.value
-      case _ =>
-        false
-
-  override def hashCode(): Int =
-    31 * namespace.value.hashCode + value.hashCode
-
-  override def toString: String =
-    s"${namespace.value}:$value"
-
-object DomainReference:
-  def make(
-      namespace: ReferenceNamespace,
-      value: String
-  ): Either[IdentityError, DomainReference] =
-    ResponseIdentity
-      .validate("domain reference", value)
-      .map(new DomainReference(namespace, _))
-
-  def unsafe(
-      namespace: String,
-      value: String
-  ): DomainReference =
-    (for
-      checkedNamespace <- ReferenceNamespace.fromString(namespace)
-      reference <- make(checkedNamespace, value)
-    yield reference) match
-      case Left(error) =>
-        throw new IllegalArgumentException(error.message)
-      case Right(reference) =>
-        reference
 
 sealed trait SampleDomainKind
 

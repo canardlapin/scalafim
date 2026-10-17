@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.relation.*
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Native observation means and operator queries; no generic ROI executor. */
 class OperatorRsaSuite extends munit.FunSuite:

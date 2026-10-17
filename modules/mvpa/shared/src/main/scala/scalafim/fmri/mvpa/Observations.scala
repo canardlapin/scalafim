@@ -15,7 +15,14 @@ import multivar.core.{
   ValueIdentity
 }
 import resample4s.core.Reindexing
-import scalafim.response.{Provenance, ProvenanceEvidence, ProvenanceId, ProvenanceNode, ProvenanceOperation, SourceId}
+import locus4s.provenance.{
+  Provenance,
+  ProvenanceFraming,
+  ProvenanceId,
+  ProvenanceNode,
+  ProvenanceOperation,
+  SourceId
+}
 
 final class EvidenceSource private (
     val sourceId: SourceId,
@@ -68,36 +75,8 @@ final case class EvidenceIdentity(
     writer.string(rows.stableKey)
     writer.string(columns.stableKey)
     writer.string(source.value)
-    writer.intLE(provenanceNodes.length)
-    provenanceNodes.foreach: node =>
-      writer.string(node.id.value)
-      node.operation match
-        case ProvenanceOperation.SourceRead(id) =>
-          writer.string("source-read")
-          writer.string(id.value)
-        case ProvenanceOperation.Selection => writer.string("selection")
-        case ProvenanceOperation.Assembly => writer.string("assembly")
-        case ProvenanceOperation.Adapter(id) =>
-          writer.string("adapter")
-          writer.string(id.value)
-        case ProvenanceOperation.Derived(id) =>
-          writer.string("derived")
-          writer.string(id.value)
-      writer.intLE(node.parents.length)
-      node.parents.foreach(parent => writer.string(parent.value))
-      writer.intLE(node.evidence.length)
-      node.evidence.foreach:
-        case ProvenanceEvidence.Domain(reference) =>
-          writer.string("domain")
-          writer.string(reference.namespace.value)
-          writer.string(reference.value)
-        case ProvenanceEvidence.External(reference) =>
-          writer.string("external")
-          writer.string(reference.namespace.value)
-          writer.string(reference.value)
-        case ProvenanceEvidence.NoneDeclared => writer.string("none-declared")
-    writer.intLE(provenanceRoots.length)
-    provenanceRoots.foreach(root => writer.string(root.value))
+    ProvenanceFraming.nodes(writer, provenanceNodes)
+    ProvenanceFraming.roots(writer, provenanceRoots)
     EvidenceIdentity.writeValues(writer, values)
     origins.writeFramed(writer)
 

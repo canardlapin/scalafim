@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa
 
 import multivar.core.ValueIdentity
-import scalafim.response.{ProvenanceEvidence, ProvenanceOperation}
+import locus4s.provenance.ProvenanceFraming
 
 /** Acquisition coordinates are deliberately separate from the row axis of a
   * derived table. A trial/effect row does not establish which original scans
@@ -79,36 +79,8 @@ enum EvidenceOrigins:
       case Bounded(value) =>
         writer.string("bounded")
         writer.string(value.source.sourceId.value)
-        writer.intLE(value.source.nodes.length)
-        value.source.nodes.foreach: node =>
-          writer.string(node.id.value)
-          node.operation match
-            case ProvenanceOperation.SourceRead(source) =>
-              writer.string("source-read")
-              writer.string(source.value)
-            case ProvenanceOperation.Selection => writer.string("selection")
-            case ProvenanceOperation.Assembly => writer.string("assembly")
-            case ProvenanceOperation.Adapter(adapter) =>
-              writer.string("adapter")
-              writer.string(adapter.value)
-            case ProvenanceOperation.Derived(operation) =>
-              writer.string("derived")
-              writer.string(operation.value)
-          writer.intLE(node.parents.length)
-          node.parents.foreach(parent => writer.string(parent.value))
-          writer.intLE(node.evidence.length)
-          node.evidence.foreach:
-            case ProvenanceEvidence.Domain(reference) =>
-              writer.string("domain")
-              writer.string(reference.namespace.value)
-              writer.string(reference.value)
-            case ProvenanceEvidence.External(reference) =>
-              writer.string("external")
-              writer.string(reference.namespace.value)
-              writer.string(reference.value)
-            case ProvenanceEvidence.NoneDeclared => writer.string("none-declared")
-        writer.intLE(value.source.roots.length)
-        value.source.roots.foreach(root => writer.string(root.value))
+        ProvenanceFraming.nodes(writer, value.source.nodes)
+        ProvenanceFraming.roots(writer, value.source.roots)
         EvidenceOrigins.writeValueIdentity(writer, value.values)
         EvidenceOrigins.writeAcquisition(writer, value.acquisition)
         EvidenceOrigins.writeSupport(writer, value.direct)

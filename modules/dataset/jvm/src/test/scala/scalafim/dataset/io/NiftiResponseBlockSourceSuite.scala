@@ -15,6 +15,7 @@ import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 import scalafim.image.world.{SpaceEvidence, WorldSpace}
 import scalafim.response.*
+import locus4s.provenance.*
 
 import java.nio.file.{Files, Path}
 import java.nio.ByteOrder

@@ -11,7 +11,7 @@ cross-compiled sbt build.
 
 - `locus-data`: ScalaFIM domain adapters, supported parcellations, and searchlights over standalone locus4s spaces and data; aggregation over parcellations uses `locus4s.data.Aggregation`.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
-- `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
+- `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning and physical-read receipts. Source lineage uses the optional `locus4s-provenance` artifact directly.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
 - `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
 - `ar`: checked run/censor-aware AR estimation, AR/ARMA whitening plans, diagnostics, and pure design/data prewhitening.
@@ -111,7 +111,9 @@ fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
 source revision; `locus-data` retains only ScalaFIM-specific adapters and
 higher-level parcellation and searchlight policy. Aggregation over
-parcellations is owned by `locus4s.data.Aggregation`.
+parcellations is owned by `locus4s.data.Aggregation`. Source-lineage DAGs,
+their identifiers and canonical digest framing are owned by the optional
+`locus4s-provenance` artifact, shared directly by `response` and `mvpa`.
 
 Generic dense and sparse matrices, linear operators, factorizations, and
 spectral algorithms now live in standalone

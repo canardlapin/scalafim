@@ -327,7 +327,7 @@ private object TemporalDctLnaModel:
 
   private def addReference(
       fields: scala.collection.mutable.Builder[String, Vector[String]],
-      reference: scalafim.response.DomainReference
+      reference: locus4s.provenance.DomainReference
   ): Unit =
     fields += reference.namespace.value
     fields += reference.value

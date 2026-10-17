@@ -7,7 +7,7 @@ import resample4s.core.{Coverage, DigestAlgorithm}
 import resample4s.designs.KFold
 import scalafim.fmri.mvpa.{AxisRef, AxisSignature, EvidenceSource, Observations, ScientificSeed, ValidationDesign}
 import scalafim.fmri.mvpa.measurement.{MeasurementFrame, MeasurementId, MeasurementLeg, PackedMeasurementEntry}
-import scalafim.response.{Provenance, ProvenanceId, SourceId}
+import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 final class DiagnosticsSuite extends FunSuite:
   private given DigestAlgorithm = DigestAlgorithm.fnv1a64
