@@ -53,10 +53,24 @@ final class JavaFxPreparedColorUpdate private[javafx] (
   private[javafx] val owner: JavaFxColorPreparationToken,
   private[javafx] val plan: SurfaceRenderPlan,
   private[javafx] val layouts: Vector[JavaFxAtlasPixelLayout],
-  private[javafx] val atlases: Vector[JavaFxPreparedAtlasUpdate]
+  private[javafx] val atlases: Vector[JavaFxPreparedAtlasUpdate],
+  private val baseline: SurfaceRenderPlan,
+  private val config: JavaFxAtlasConfig,
+  private val compared: JavaFxSurfaceProgram.ContentChanges
 ):
   private[javafx] def matches(next: SurfaceRenderPlan): Boolean =
     JavaFxColorPreparationBasis.sameContent(plan, next)
+
+  /** Owner validation still precedes publication. This additional binding is to the
+    * exact immutable baseline and target packet buffers, never their resource hashes.
+    * A camera-only rebase can use the comparison; any content/configuration mismatch
+    * falls back to the ordinary full comparisons without changing the payload.
+    */
+  private[javafx] def contentChanges(previous: Option[SurfaceRenderPlan], next: SurfaceRenderPlan,
+      actualConfig: JavaFxAtlasConfig): Option[JavaFxSurfaceProgram.ContentChanges] =
+    Option.when(actualConfig == config && matches(next) && plan.receipt.meshKeys == next.receipt.meshKeys &&
+      previous.exists(before => JavaFxColorPreparationBasis.sameContent(baseline, before) &&
+        baseline.receipt.meshKeys == before.receipt.meshKeys))(compared)
 
 /** Capture on the Application Thread; preparation uses only immutable CPU input.
   * The existing legacy layout is supported. Affine sampler admission and
@@ -64,7 +78,7 @@ final class JavaFxPreparedColorUpdate private[javafx] (
   */
 final class JavaFxColorPreparationBasis private[javafx] (
   private val owner: JavaFxColorPreparationToken,
-  private val meshes: Vector[SurfaceMeshPacket],
+  private val baseline: SurfaceRenderPlan,
   private val layouts: Vector[JavaFxAtlasPixelLayout],
   private val coordinateSnapshots: Vector[JavaFxCoordinateSnapshot],
   private val config: JavaFxAtlasConfig
@@ -75,7 +89,7 @@ final class JavaFxColorPreparationBasis private[javafx] (
     JavaFxSurfaceBackend.validateCapabilities(plan) match
       case Left(error) => return Left(error)
       case Right(_) => ()
-    if meshes.length != plan.meshes.length || !meshes.zip(plan.meshes).forall((a, b) =>
+    if baseline.meshes.length != plan.meshes.length || !baseline.meshes.zip(plan.meshes).forall((a, b) =>
         a.surface == b.surface && a.resourceKey == b.resourceKey &&
           java.util.Arrays.equals(a.indices.unsafeArray, b.indices.unsafeArray) &&
           java.util.Arrays.equals(a.positions.unsafeArray, b.positions.unsafeArray) &&
@@ -88,7 +102,8 @@ final class JavaFxColorPreparationBasis private[javafx] (
         val mesh = plan.meshes.find(_.surface == layout.surface).get
         val raw = JavaFxAtlasPixels.prepare(layout, mesh.indices, colors(layout.surface))
         new JavaFxPreparedAtlasUpdate(raw.pixels, JavaFxPreparedCoordinateUpdate.owned(snapshot, raw.coordinates))
-      new JavaFxPreparedColorUpdate(owner, plan, layouts, prepared)
+      val compared = JavaFxSurfaceProgram.compareContent(baseline, plan, config)
+      new JavaFxPreparedColorUpdate(owner, plan, layouts, prepared, baseline, config, compared)
 
 private[javafx] object JavaFxColorPreparationBasis:
   /** Case-class equality binds every packet field, including coverage, scalar

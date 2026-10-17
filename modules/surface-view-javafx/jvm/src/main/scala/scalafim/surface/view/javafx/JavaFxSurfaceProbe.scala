@@ -449,7 +449,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       c.atlas.width, c.atlas.height, c.atlas.tileSize))
 
   private[javafx] def colorPreparationBasis(owner: JavaFxColorPreparationToken): JavaFxColorPreparationBasis =
-    new JavaFxColorPreparationBasis(owner, plan.meshes, pixelLayouts,
+    new JavaFxColorPreparationBasis(owner, plan, pixelLayouts,
       chunks.map(_.textureCoordinates.capture()), config)
 
   private def validateColorGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =

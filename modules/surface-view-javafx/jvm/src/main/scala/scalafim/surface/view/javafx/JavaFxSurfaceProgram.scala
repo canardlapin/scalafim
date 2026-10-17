@@ -38,10 +38,32 @@ final case class JavaFxSurfaceProgram(
 )
 
 object JavaFxSurfaceProgram:
+  private[javafx] final case class ContentChanges(topology: Boolean, geometry: Boolean, layerData: Boolean)
+
+  /** Pure comparisons over owned packets; worker preparation uses this same policy. */
+  private[javafx] def compareContent(before: SurfaceRenderPlan, next: SurfaceRenderPlan,
+      config: JavaFxAtlasConfig): ContentChanges =
+    val topology = before.receipt.meshKeys != next.receipt.meshKeys ||
+      before.meshes.length != next.meshes.length || !before.meshes.zip(next.meshes).forall((a, b) =>
+        a.surface == b.surface && a.resourceKey == b.resourceKey && sameInts(a.indices, b.indices))
+    val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey) ||
+      !before.meshes.zip(next.meshes).forall((a, b) => sameFloats(a.positions, b.positions) && sameFloats(a.normals, b.normals))
+    val layerData = !sameLayers(before.layers, next.layers) ||
+      (config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert && (before.lighting != next.lighting || geometry))
+    ContentChanges(topology, geometry, layerData)
+
   def compile(
     previous: Option[SurfaceRenderPlan],
     next: SurfaceRenderPlan,
     config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default
+  ): JavaFxSurfaceProgram =
+    compileWithContent(previous, next, config, None)
+
+  private[javafx] def compileWithContent(
+    previous: Option[SurfaceRenderPlan],
+    next: SurfaceRenderPlan,
+    config: JavaFxAtlasConfig,
+    content: Option[ContentChanges]
   ): JavaFxSurfaceProgram =
     previous match
       case None =>
@@ -64,14 +86,11 @@ object JavaFxSurfaceProgram:
           next.receipt
         )
       case Some(before) =>
-        val topology = before.receipt.meshKeys != next.receipt.meshKeys ||
-          before.meshes.length != next.meshes.length || !before.meshes.zip(next.meshes).forall((a, b) =>
-            a.surface == b.surface && a.resourceKey == b.resourceKey && sameInts(a.indices, b.indices))
-        val geometry = topology || before.meshes.map(_.geometryKey) != next.meshes.map(_.geometryKey) ||
-          !before.meshes.zip(next.meshes).forall((a, b) => sameFloats(a.positions, b.positions) && sameFloats(a.normals, b.normals))
+        val compared = content.getOrElse(compareContent(before, next, config))
+        val topology = compared.topology
+        val geometry = compared.geometry
         val material = before.lighting != next.lighting
-        val layerData = !sameLayers(before.layers, next.layers) ||
-          (config.lightingPolicy == JavaFxAtlasLighting.WorldVertexLambert && (material || geometry))
+        val layerData = compared.layerData
         val camera = before.receipt.cameraKey != next.receipt.cameraKey || !sameCameras(before, next)
         val layout = before.slots != next.slots || before.viewportFit != next.viewportFit
         val clipping = before.clipping != next.clipping
@@ -273,7 +292,8 @@ final class JavaFxSurfaceBackend private (
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
-        val incremental = JavaFxSurfaceProgram.compile(currentPlan, plan, config)
+        val compared = colors.flatMap(_.contentChanges(currentPlan, plan, config))
+        val incremental = JavaFxSurfaceProgram.compileWithContent(currentPlan, plan, config, compared)
         val rebuildsGeometry = incremental.commands.exists:
           case JavaFxSurfaceCommand.RebuildGeometry(_) => true
           case _ => false
