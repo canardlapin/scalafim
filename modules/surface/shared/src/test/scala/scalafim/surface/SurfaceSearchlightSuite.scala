@@ -1,6 +1,7 @@
 package scalafim.surface
 
-import scalafim.locus.{IndexedField, Region, Relation, SpaceKey}
+import locus4s.{DomainId, Region, Relation}
+import locus4s.data.VectorField
 import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceSearchlightSuite extends munit.FunSuite:
@@ -8,7 +9,7 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
   private val packedDomain =
     SurfaceLocusDomain
       .semantic(
-        SpaceKey.unsafe("subject-01:left-cortex"),
+        DomainId.parse("subject-01:left-cortex").toOption.get,
         SurfaceTestFixtures.tetraGeometry
       )
       .toOption
@@ -108,7 +109,7 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
     val searchlight =
       SurfaceSearchlight.metricBalls(domain, topology, 1.0).toOption.get
     val field =
-      IndexedField
+      VectorField
         .fromValues(domain.finiteSpace, Vector(10, 20, 30, 40))
         .toOption
         .get

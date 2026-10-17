@@ -8,15 +8,23 @@ JVM and Scala.js and depends on the locus4s core and data projects.
 The module provides:
 
 - `DomainFactory`, which restores a live, unforgeable domain owner from a
-  persistent domain id and size;
-- compatibility aliases for locus4s `IndexedField[S, A]` values and restricted
-  `Section` views;
+  persistent domain id and size, or creates an ephemeral derived domain;
 - supported `Parcellation[X, P]` quotients with typed parcel points;
 - `Searchlight[S]` center policy over a locus endorelation.
 
-`IndexedField` is not the lazy execution/provenance type
+Callers use locus4s names directly (`FiniteDomain`, `Index`, `Region`,
+`Selection`, `locus4s.data.VectorField`, `Section`); this module re-exports
+none of them. `VectorField` is not the lazy execution/provenance type
 `scalafim.spatial.Field`; storage, chunking, caches, interpolation, and IO stay
 in their existing modules.
+
+There is no process-wide domain registry. Every `DomainFactory.restore` mints an
+independent owner. Two restores of the same key share persistent identity but
+not a runtime owner, so code that combines them checks `left.align(right)` and
+transports regions, selections and maps through the resulting
+`DomainAlignment`. A composition that genuinely needs one shared live owner
+threads its own `locus4s.DomainRegistry` value. Derived supports, such as mask
+active sets, are ephemeral, and size or display name is never identity.
 
 A parcellation stores one optional parcel point per ambient point. Background
 is visible only as `None`, and construction rejects unused parcel points.
@@ -41,19 +49,21 @@ IEEE floating-point addition is not claimed to be exactly associative.
 ## Minimal example
 
 Each restored domain has an abstract owner type. Callers cannot choose or
-forge that type, while the persistent id supports serialization and semantic
-comparison:
+forge that type, while the persistent id supports serialization and checked
+alignment:
 
 ```scala
-import scalafim.locus.*
+import locus4s.{FiniteSpace, Region, Selection}
+import locus4s.data.VectorField
+import scalafim.locus.{DomainFactory, Parcellation}
 
 val voxelDomain =
-  DomainFactory.restore(SpaceKey.unsafe("sub-01:native:bold"), 6).toOption.get
+  DomainFactory.restore("sub-01:native:bold", 6).toOption.get
 type NativeVoxels = voxelDomain.S
 val voxels: FiniteSpace[NativeVoxels] = voxelDomain.space
 
 val parcelDomain =
-  DomainFactory.restore(SpaceKey.unsafe("atlas:demo:parcels"), 2).toOption.get
+  DomainFactory.restore("atlas:demo:parcels", 2).toOption.get
 type Parcels = parcelDomain.S
 val parcelAxis: FiniteSpace[Parcels] = parcelDomain.space
 
@@ -72,8 +82,8 @@ val parcels =
     .toOption.get
 
 val field =
-  IndexedField.fromValues(voxels, Vector(10, 11, 12, 20, 21, 0)).toOption.get
-val section = field.restrict(left).toOption.get
+  VectorField.fromValues(voxels, Vector(10, 11, 12, 20, 21, 0)).toOption.get
+val section = field.restrictChecked(left).toOption.get
 val orderedValues = section.gather(requestedOrder).toOption.get.toVector
 ```
 

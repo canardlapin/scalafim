@@ -37,7 +37,9 @@ class AxisRefSuite extends munit.FunSuite:
       "7e5c0746b7244c1a6239adcb9590adca455627847d8af57eb1195d97a5e8c745"
     )
     assertEquals(first.responseDomain.value, restored.responseDomain.value)
-    assert(first.locus.sameRuntimeOwnerAs(restored.locus))
+    // A restored axis is an independent owner that aligns by its content key.
+    assert(first.locus.samePersistentIdentityAs(restored.locus))
+    assert(first.locus.align(restored.locus).isRight)
     assertEquals(first.toRecord.stableKeys, Vector("trial-91", "trial-7", "trial-32"))
 
     val point = right(first.locus.index(1))
@@ -96,6 +98,7 @@ class AxisRefSuite extends munit.FunSuite:
     )
     variants.foreach: variant =>
       assert(!baseline.sameIdentityAs(variant))
+      assert(baseline.locus.align(variant.locus).isLeft)
       assert(baseline.descriptor.coordinateSignature != variant.descriptor.coordinateSignature)
       assert(baseline.evidence.descriptor != variant.evidence.descriptor)
 
@@ -139,7 +142,7 @@ class AxisRefSuite extends munit.FunSuite:
 
   test("locus points retain their runtime owner at compile time"):
     val errors = typeCheckErrors("""import scalafim.fmri.mvpa.*
-def invalid(a: AxisRef[String], b: AxisRef[String], point: scalafim.locus.Point[b.Locus]) =
+def invalid(a: AxisRef[String], b: AxisRef[String], point: locus4s.Index[b.Locus]) =
   a.keyAtPoint(point)
 """)
     assertEquals(errors.length, 1)

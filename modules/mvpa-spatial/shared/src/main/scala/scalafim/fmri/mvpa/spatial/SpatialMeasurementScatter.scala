@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.spatial
 
 import locus4s.{Index, Region}
 import scalafim.fmri.mvpa.measurement.MeasurementId
-import scalafim.locus.IndexedField
+import locus4s.data.VectorField
 
 /** A completed local analysis or a visible local failure. Failure never turns
   * into a numeric fill value during scattering. */
@@ -74,7 +74,7 @@ object SpatialMeasurementScatter:
       domain: locus4s.FiniteDomain[S],
       outcomes: Seq[SpatialLocalOutcome[S, A]],
       algebra: SpatialScatterAlgebra[A]
-  ): Either[SpatialScatterError, IndexedField[S, SpatialScatterCell[A]]] =
+  ): Either[SpatialScatterError, VectorField[S, SpatialScatterCell[A]]] =
     // Results can arrive from parallel/local execution in arbitrary order.
     // Fix the reduction order by declared measurement identity before any
     // floating-point accumulation or contributor receipt is produced.
@@ -123,7 +123,7 @@ object SpatialMeasurementScatter:
             position += 1
       item += 1
 
-    IndexedField
+    VectorField
       .fromValues(domain, domain.indices.map: point =>
         val ordinal = point.ordinal
         if denominators(ordinal) > 0.0 then

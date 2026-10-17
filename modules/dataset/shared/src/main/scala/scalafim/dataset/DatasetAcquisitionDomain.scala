@@ -1,17 +1,13 @@
 package scalafim.dataset
 
-import scalafim.locus.{
-  DomainFactory,
+import scalafim.locus.DomainFactory
+import locus4s.{
   FiniteDomain,
-  FiniteSpace,
+  Index,
   Injection,
-  Point,
   Selection,
-  SpaceKey,
   SpaceMismatch,
-  TotalMap,
-  mapping,
-  mismatch
+  TotalMap
 }
 
 enum DatasetIdentityBasis:
@@ -26,19 +22,19 @@ trait DatasetAcquisitionDomain:
   val shape: DatasetShape
   val voxelDomain: VoxelDomain
   val identityBasis: DatasetIdentityBasis
-  val timeSpace: FiniteSpace[T]
-  val fullVoxelSpace: FiniteSpace[X]
+  val timeSpace: FiniteDomain[T]
+  val fullVoxelSpace: FiniteDomain[X]
   val activeVoxelSpace: FiniteDomain[A]
   val activeToFull: Injection[A, X]
 
   def activePointFor(
-      full: Point[X]
-  ): Either[DatasetError, Point[A]]
+      full: Index[X]
+  ): Either[DatasetError, Index[A]]
 
   final def fullPointFor(
-      active: Point[A]
-  ): Point[X] =
-    activeToFull.mapping(active)
+      active: Index[A]
+  ): Index[X] =
+    activeToFull.toTotalMap(active)
 
   final def resolveTimepoints(
       requested: TimepointSelection
@@ -83,27 +79,36 @@ trait DatasetAcquisitionDomain:
     if !timeSpace.sameRuntimeOwnerAs(timepoints.space) then
       Left(
         DatasetError.ShapeMismatch(
-          mismatch(timeSpace, timepoints.space).message
+          SpaceMismatch.between(timeSpace, timepoints.space).message
         )
       )
     else if !fullVoxelSpace.sameRuntimeOwnerAs(voxels.space) then
       Left(
         DatasetError.ShapeMismatch(
-          mismatch(fullVoxelSpace, voxels.space).message
+          SpaceMismatch.between(fullVoxelSpace, voxels.space).message
         )
       )
     else
       Right(ResolvedDataSelection.fromLocus(this, timepoints, voxels))
 
 object DatasetAcquisitionDomain:
+  /** Persistent identity follows the dataset id and the exact persistent grid.
+    *
+    * image4s binds one persistent grid id to one structural grid key (frame,
+    * shape, affine); grids minted by `SampleSpaces` are content-addressed over
+    * rank, frame, shape and exact affine bits. A grid without a persistent
+    * record yields ephemeral domains: such an acquisition is usable in-process
+    * but makes no cross-load identity claim. The dataset id is length-prefixed
+    * so no dataset name can collide with the structural basis.
+    */
   def semantic(
       dataset: DatasetId,
       shape: DatasetShape,
       voxelDomain: VoxelDomain
   ): Either[DatasetError, DatasetAcquisitionDomain] =
     make(
-      SpaceKey.unsafe(
-        s"scalafim:dataset:${dataset.value}:${shape.space.hashCode}:${shape.spatialSize}"
+      persistentGrid(shape).map(grid =>
+        s"scalafim:dataset:semantic:${dataset.value.length}:${dataset.value}:$grid"
       ),
       shape,
       voxelDomain,
@@ -115,16 +120,34 @@ object DatasetAcquisitionDomain:
       voxelDomain: VoxelDomain
   ): Either[DatasetError, DatasetAcquisitionDomain] =
     make(
-      SpaceKey.unsafe(
-        s"scalafim:dataset:structural:${shape.space.hashCode}:${shape.spatialSize}"
-      ),
+      persistentGrid(shape).map(grid => s"scalafim:dataset:structural:$grid"),
       shape,
       voxelDomain,
       DatasetIdentityBasis.StructuralCompatibility
     )
 
+  /** Either a restored persistent owner or an ephemeral one, with its owner type. */
+  private trait Owned:
+    type S
+    val value: FiniteDomain[S]
+
+  private def restored(id: String, size: Int): Owned =
+    val resolution = DomainFactory.unsafeRestore(id, size)
+    new Owned:
+      type S = resolution.S
+      val value: FiniteDomain[S] = resolution.space
+
+  private def ephemeral(name: String, size: Int): Owned =
+    val domain = DomainFactory.unsafeEphemeral(name, size)
+    new Owned:
+      type S = domain.S
+      val value: FiniteDomain[S] = domain.value
+
+  private def persistentGrid(shape: DatasetShape): Option[String] =
+    shape.grid.record.toOption.map(_.key.id.value)
+
   private def make(
-      key: SpaceKey,
+      key: Option[String],
       requestedShape: DatasetShape,
       requestedVoxelDomain: VoxelDomain,
       basis: DatasetIdentityBasis
@@ -136,28 +159,23 @@ object DatasetAcquisitionDomain:
         )
       )
     else
-      val timeResolution =
-        DomainFactory.unsafeRestore(
-          // The base key carries the spatial identity only, so the timepoint
-          // count has to appear here: two acquisitions over the same grid but
-          // different run lengths are different time domains, and a key that
-          // did not say so named two sizes at once.
-          SpaceKey.unsafe(s"${key.value}:time:${requestedShape.timepoints}"),
-          requestedShape.timepoints
-        )
-      val fullResolution =
-        DomainFactory.unsafeRestore(
-          SpaceKey.unsafe(s"${key.value}:voxels"),
-          requestedShape.spatialSize
-        )
-      // The time and full-voxel domains are structural and keyed, so they
-      // canonicalize. The active domain is a *selection* over the full grid —
-      // derived, meaningful only through `injection` below — so it is ephemeral
-      // rather than keyed by its own index list.
+      // The base key carries the spatial identity only, so the timepoint count
+      // has to appear in the time key: two acquisitions over the same grid but
+      // different run lengths are different time domains. Each construction
+      // restores independent owners; equal keys align explicitly.
+      val timeDomain =
+        key.fold(ephemeral("dataset-time", requestedShape.timepoints)): base =>
+          restored(s"$base:time:${requestedShape.timepoints}", requestedShape.timepoints)
+      val fullDomain =
+        key.fold(ephemeral("dataset-voxels", requestedShape.spatialSize)): base =>
+          restored(s"$base:voxels", requestedShape.spatialSize)
+      // The active domain is a *selection* over the full grid — derived,
+      // meaningful only through `injection` below — so it is ephemeral rather
+      // than keyed by its own index list.
       val activeDomain =
         DomainFactory.unsafeEphemeral("dataset-active", requestedVoxelDomain.nVoxels)
-      val times = timeResolution.space
-      val full = fullResolution.space
+      val times = timeDomain.value
+      val full = fullDomain.value
       val active = activeDomain.value
       // VoxelDomain.indices materializes a vector. Reuse its ordinals for
       // both maps instead of rebuilding the whole vector for every voxel.
@@ -172,7 +190,7 @@ object DatasetAcquisitionDomain:
           .toOption
           .get
       val injection =
-        Injection.validate(mapping).toOption.get
+        Injection.fromTotalMap(mapping).toOption.get
       val reverse = Array.fill(requestedShape.spatialSize)(-1)
       var sample = 0
       while sample < activeIndices.length do
@@ -181,20 +199,20 @@ object DatasetAcquisitionDomain:
 
       Right:
         new DatasetAcquisitionDomain:
-          type T = timeResolution.S
-          type X = fullResolution.S
+          type T = timeDomain.S
+          type X = fullDomain.S
           type A = activeDomain.S
           val shape: DatasetShape = requestedShape
           val voxelDomain: VoxelDomain = requestedVoxelDomain
           val identityBasis: DatasetIdentityBasis = basis
-          val timeSpace: FiniteSpace[T] = times
-          val fullVoxelSpace: FiniteSpace[X] = full
+          val timeSpace: FiniteDomain[T] = times
+          val fullVoxelSpace: FiniteDomain[X] = full
           val activeVoxelSpace: FiniteDomain[A] = active
           val activeToFull: Injection[A, X] = injection
 
           def activePointFor(
-              fullPoint: Point[X]
-          ): Either[DatasetError, Point[A]] =
+              fullPoint: Index[X]
+          ): Either[DatasetError, Index[A]] =
             val activeOrdinal = reverse(fullPoint.value)
             if activeOrdinal < 0 then
               Left(DatasetError.VoxelOutsideMask(fullPoint.value))

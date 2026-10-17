@@ -1,15 +1,15 @@
 package scalafim.locus
 
 import locus4s.PartialMap
-import locus4s.data.Aggregation
+import locus4s.data.{Aggregation, VectorField}
 
 /** Qualify the remaining ScalaFIM parcellation/domain seam, not upstream algebra laws. */
 class ProviderAggregationSuite extends munit.FunSuite:
   test("parcellation assignments feed provider aggregation without losing background or order"):
     val source =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("provider-aggregate:source"), 6).space
+      DomainFactory.unsafeRestore("provider-aggregate:source", 6).space
     val target =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("provider-aggregate:target"), 2).space
+      DomainFactory.unsafeRestore("provider-aggregate:target", 2).space
     val partition =
       Parcellation
         .fromAssignments(source, target, Vector(Some(1), None, Some(0), Some(1), None, Some(0)))
@@ -20,7 +20,7 @@ class ProviderAggregationSuite extends munit.FunSuite:
         .fromOptionalTargetOrdinals(source, target, partition.assignmentOrdinals)
         .toOption
         .get
-    val field = IndexedField.tabulate(source)(_.ordinal)
+    val field = VectorField.tabulate(source)(_.ordinal)
     var reads = Vector.empty[Int]
     val contribution: Int => Vector[Int] = value =>
       reads :+= value
@@ -33,15 +33,15 @@ class ProviderAggregationSuite extends munit.FunSuite:
     assertEquals(reads, Vector(0, 2, 3, 5))
     assertEquals(target.indices.map(result.apply).toVector, Vector(Vector(2, 5), Vector(0, 3)))
     val foreign =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("provider-aggregate:foreign"), 6).space
-    val foreignField = IndexedField.tabulate(foreign)(_.ordinal)
+      DomainFactory.unsafeRestore("provider-aggregate:foreign", 6).space
+    val foreignField = VectorField.tabulate(foreign)(_.ordinal)
     assert(Aggregation.foldMapByChecked(mapping, foreignField)(0)(identity)(_ + _).isLeft)
 
   test("an empty ScalaFIM parcel domain retains the provider empty-target contract"):
     val source =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("provider-aggregate:background"), 3).space
+      DomainFactory.unsafeRestore("provider-aggregate:background", 3).space
     val target =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("provider-aggregate:empty"), 0).space
+      DomainFactory.unsafeRestore("provider-aggregate:empty", 0).space
     val partition =
       Parcellation.fromAssignments(source, target, Vector(None, None, None)).toOption.get
     val mapping =
@@ -49,7 +49,7 @@ class ProviderAggregationSuite extends munit.FunSuite:
         .fromOptionalTargetOrdinals(source, target, partition.assignmentOrdinals)
         .toOption
         .get
-    val field = IndexedField.tabulate(source)(_.ordinal)
+    val field = VectorField.tabulate(source)(_.ordinal)
     var reads = 0
     val contribution: Int => Int = value =>
       reads += 1

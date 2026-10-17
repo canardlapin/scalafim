@@ -17,7 +17,7 @@ import image4s.geometry.GridCongruence
 import image4s.locus.GridDomain
 import locus4s.Selection
 import locus4s.SpaceMismatch
-import scalafim.locus.Selection as LocusSelection
+import locus4s.Selection as LocusSelection
 
 opaque type TimepointIndex = Int
 

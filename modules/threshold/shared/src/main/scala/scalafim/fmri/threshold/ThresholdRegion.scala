@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.locus.{Region as LocusRegion}
+import locus4s.Region as LocusRegion
 
 /** Inclusive voxel-index extents of a region on the masked field's lattice.
   *

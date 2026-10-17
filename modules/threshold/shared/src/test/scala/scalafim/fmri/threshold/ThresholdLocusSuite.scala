@@ -1,6 +1,5 @@
 package scalafim.fmri.threshold
 
-import scalafim.locus.mapping
 import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdLocusSuite extends munit.FunSuite:
@@ -25,7 +24,7 @@ class ThresholdLocusSuite extends munit.FunSuite:
     assertEquals(masked.activeSelection.ordinals.toVector, Vector(0, 2, 3))
     assertEquals(masked.support.ordinalsInDomainOrder.toVector, Vector(0, 2, 3))
     assertEquals(
-      masked.activeToFull.mapping.targetOrdinals.toVector,
+      masked.activeToFull.toTotalMap.targetOrdinals.toVector,
       Vector(0, 2, 3)
     )
     assertEquals(

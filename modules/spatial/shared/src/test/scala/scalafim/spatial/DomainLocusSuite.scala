@@ -4,7 +4,7 @@ import scalafim.image.world.SubjectId
 
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
-import scalafim.locus.{Region, Relation, Selection, TotalMap, mapping}
+import locus4s.{Region, Relation, Selection, TotalMap}
 import scalafim.surface.{
   Hemisphere,
   SurfaceField,
@@ -65,7 +65,7 @@ class DomainLocusSuite extends munit.FunSuite:
         .fromOrdinals(foreign.space, Vector(3, 1))
         .fold(error => fail(error.message), identity)
 
-    assert(!locus.space.sameRuntimeOwnerAs(foreign.space))
+    assert(locus.space.align(foreign.space).isLeft)
     assertEquals(
       locus.regionDemand(nativeRegion).map(_.spatial),
       Right(SpatialDemand.Roi(Vector(1, 3)))

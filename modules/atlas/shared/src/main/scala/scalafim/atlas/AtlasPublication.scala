@@ -10,7 +10,7 @@ import locus4s.{
   FiniteSpace
 }
 import locus4s.data.Field
-import scalafim.locus.IndexedField
+import locus4s.data.VectorField
 import scalafim.surface.{
   Hemisphere as SurfaceHemisphere,
   LabeledSurface
@@ -276,7 +276,7 @@ private[atlas] trait AtlasParcelDomainResolution:
   type P
   val registry: DomainRegistry
   val space: FiniteSpace[P]
-  val keys: IndexedField[P, String]
+  val keys: VectorField[P, String]
   val publication: NeuropublishFiniteIndexedDomainV1
 
 private[atlas] object AtlasParcelDomain:
@@ -330,8 +330,8 @@ private[atlas] object AtlasParcelDomain:
               type P = resolution.S
               val registry: DomainRegistry = resolution.registry
               val space: FiniteSpace[P] = resolution.space
-              val keys: IndexedField[P, String] =
-                IndexedField.tabulate(space)(point => elementKeys(point.ordinal))
+              val keys: VectorField[P, String] =
+                VectorField.tabulate(space)(point => elementKeys(point.ordinal))
               val publication: NeuropublishFiniteIndexedDomainV1 =
                 NeuropublishFiniteIndexedDomainV1(
                   localId = "parcel-domain",

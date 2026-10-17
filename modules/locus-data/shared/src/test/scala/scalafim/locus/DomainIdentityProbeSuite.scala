@@ -1,95 +1,79 @@
 package scalafim.locus
 
-/** What a [[SpaceKey]] guarantees about domain identity.
+import locus4s.{DomainId, DomainRecord, DomainRegistry, FiniteDomain, Region, Selection, SelectionError}
+import locus4s.data.VectorField
+
+/** The domain-identity contract ScalaFIM relies on.
   *
   * locus4s distinguishes two notions:
   *
   *   - '''runtime owner''' — physical identity of the live `FiniteDomain`
   *     object. This is what the phantom `S` tracks and what every checked
   *     operation compares.
-  *   - '''persistent identity''' — the `DomainRecord` (id, key, size) that a
-  *     [[SpaceKey]] names, and the only notion that can survive serialization.
+  *   - '''persistent identity''' — the `DomainKey` (id, size, fingerprint), the
+  *     only notion that survives serialization.
   *
-  * [[DomainFactory]] canonicalizes the first through the second: one key, one
-  * owner, process-wide. Without that a second construction of the same keyed
-  * domain would be rejected against the first by every checked operation,
-  * despite their persistent identities agreeing.
+  * There is no process-wide registry. Each [[DomainFactory.restore]] mints an
+  * independent owner; consumers that combine owners with equal persistent keys
+  * check a `DomainAlignment` and transport through it. A composition that needs
+  * one shared live owner threads its own `DomainRegistry` value.
   */
 class DomainIdentityProbeSuite extends munit.FunSuite:
 
-  private val key = SpaceKey.unsafe("probe:same-key")
+  private val key = "probe:same-key"
 
-  test("a SpaceKey names a stable persistent identity"):
+  test("independent restores share persistent identity but not a runtime owner"):
     val a = DomainFactory.unsafeRestore(key, 4).space
     val b = DomainFactory.unsafeRestore(key, 4).space
-    assertEquals(a.id, b.id)
     assertEquals(a.key, b.key)
-    assert(a.samePersistentIdentityAs(b), "same key must mean same persistent identity")
+    assert(a.samePersistentIdentityAs(b))
+    assert(!a.sameRuntimeOwnerAs(b), "no process-wide canonicalization remains")
 
-  test("restoring the same key twice yields the same runtime owner"):
+  test("separate restores interoperate only through a checked alignment"):
     val a = DomainFactory.unsafeRestore(key, 4).space
     val b = DomainFactory.unsafeRestore(key, 4).space
-    assert(a.sameRuntimeOwnerAs(b), "one key must name one live domain")
-    assert(a eq b, "canonicalization should return the identical owner, not a copy")
+    val field = VectorField.tabulate(b)(index => index.ordinal)
+    assert(field.restrictChecked(Region.whole(a)).isLeft, "unaligned owners are rejected")
+    val alignment = a.align(b).fold(error => fail(error.message), identity)
+    val region = alignment.transport(Region.fromOrdinals(a, Vector(3, 1)).toOption.get)
+    assertEquals(field.restrict(region).valuesInDomainOrder.toVector, Vector(1, 3))
 
-  test("structures built on separate restores of one key interoperate"):
-    // The property the canonical registry exists to provide: a region built
-    // against one view of the domain is accepted against another.
+  test("transport preserves selection order and ownership"):
     val a = DomainFactory.unsafeRestore(key, 4).space
     val b = DomainFactory.unsafeRestore(key, 4).space
-    val regionA = Region.whole(a)
-    val fieldB = IndexedField.tabulate(b)(point => point.ordinal)
-    fieldB.restrictChecked(regionA) match
-      case Left(error) => fail(s"same-key restores should realign: ${error.message}")
-      case Right(section) =>
-        assertEquals(section.valuesInDomainOrder.toVector, Vector(0, 1, 2, 3))
+    val alignment = a.align(b).fold(error => fail(error.message), identity)
+    val moved = alignment.transport(Selection.fromOrdinals(a, Vector(3, 1)).toOption.get)
+    assertEquals(moved.ordinals.toVector, Vector(3, 1))
+    assert(moved.space.sameRuntimeOwnerAs(b))
 
-  test("distinct keys stay distinct owners"):
-    val left = DomainFactory.unsafeRestore(SpaceKey.unsafe("probe:left"), 4).space
-    val right = DomainFactory.unsafeRestore(SpaceKey.unsafe("probe:right"), 4).space
-    assert(!left.sameRuntimeOwnerAs(right), "different keys must not share an owner")
-    val fieldRight = IndexedField.tabulate(right)(point => point.ordinal)
-    assert(
-      fieldRight.restrictChecked(Region.whole(left)).isLeft,
-      "a region from a different domain must still be rejected"
-    )
-
-  test("a conflicting record for a known id is rejected, not silently shared"):
-    // Same id, different size => different DomainKey => the registry must
-    // refuse rather than hand back the incompatible existing owner.
-    val conflictKey = SpaceKey.unsafe("probe:conflict")
-    assert(DomainFactory.restore(conflictKey, 4).isRight)
-    DomainFactory.restore(conflictKey, 9) match
-      case Left(DomainFactoryError.RestoreFailed(_)) => ()
-      case Left(other) => fail(s"expected a restore conflict, got ${other.message}")
-      case Right(_) => fail("a different size for a known id must not resolve")
-
-  test("an ephemeral domain is derived: no record, and never registry-retained"):
-    // Derived selection-position domains must not accumulate in the canonical
-    // registry, and must not need a key proportional to their own content.
-    val before = DomainFactory.registeredCount
-    val supports =
-      (0 until 50).map(i => DomainFactory.unsafeEphemeral("derived-support", 10 + i))
+  test("a unique selection is not a repeated draw"):
+    val space = DomainFactory.unsafeRestore(key, 4).space
     assertEquals(
-      DomainFactory.registeredCount,
-      before,
-      "ephemeral domains must not enter the canonical registry"
+      Selection.fromOrdinals(space, Vector(2, 0, 2)).left.toOption,
+      Some(SelectionError.DuplicateOrdinal(2))
     )
 
-    val head = supports.head.value
-    assert(!head.isPersistable, "a derived support has no persistent record")
-    assertEquals(head.persistentRecord, None)
+  test("different ids or sizes never align"):
+    val left = DomainFactory.unsafeRestore("probe:left", 4).space
+    val right = DomainFactory.unsafeRestore("probe:right", 4).space
+    val resized = DomainFactory.unsafeRestore("probe:left", 5).space
+    assert(left.align(right).isLeft, "equal size is not identity")
+    assert(left.align(resized).isLeft, "an id restored at another size is another domain")
+    val field = VectorField.tabulate(right)(index => index.ordinal)
+    assert(field.restrictChecked(Region.whole(left)).isLeft)
+
+  test("an explicit registry scope shares one owner and rejects conflicting keys"):
+    val record = DomainRecord.make(DomainId.parse(key).toOption.get, "probe", 4).toOption.get
+    val first = DomainRegistry.empty.restore(record).toOption.get
+    val second = first.registry.restore(record).toOption.get
+    assert(first.space.sameRuntimeOwnerAs(second.space))
+    val conflicting = DomainRecord.make(DomainId.parse(key).toOption.get, "probe", 9).toOption.get
+    assert(first.registry.restore(conflicting).isLeft)
+
+  test("an ephemeral domain is derived: no record, and aligns only with itself"):
+    val head: FiniteDomain[?] = DomainFactory.unsafeEphemeral("derived-support", 10).value
+    val other: FiniteDomain[?] = DomainFactory.unsafeEphemeral("derived-support", 10).value
+    assert(!head.isPersistable)
     assertEquals(head.persistentKey, None)
-
-    // Each is its own owner, so they cannot be confused with one another.
-    val other = DomainFactory.unsafeEphemeral("derived-support", 10).value
-    assert(!head.sameRuntimeOwnerAs(other))
-
-  test("within a single restore the domain is its own owner"):
-    val space = DomainFactory.unsafeRestore(SpaceKey.unsafe("probe:single"), 5).space
-    val field = IndexedField.tabulate(space)(point => point.ordinal)
-    assert(field.restrictChecked(Region.whole(space)).isRight)
-    assertEquals(
-      field.restrict(Region.whole(space)).valuesInDomainOrder.toVector,
-      Vector(0, 1, 2, 3, 4)
-    )
+    assert(head.align(head).isRight)
+    assert(head.align(other).isLeft, "equal name and size do not make derived domains equal")

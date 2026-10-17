@@ -1,6 +1,6 @@
 package scalafim.surface
 
-import scalafim.locus.SpaceKey
+import locus4s.DomainId
 import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceLocusDomainSuite extends munit.FunSuite:
@@ -9,7 +9,7 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
       geometry: SurfaceGeometry = SurfaceTestFixtures.tetraGeometry
   ): SomeSurfaceLocusDomain =
     SurfaceLocusDomain
-      .semantic(SpaceKey.unsafe("subject-01:left-cortex"), geometry)
+      .semantic(DomainId.parse("subject-01:left-cortex").toOption.get, geometry)
       .toOption
       .get
 
@@ -112,7 +112,7 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
     val packed =
       SomeSurfaceLocusDomain
         .semantic(
-          SpaceKey.unsafe("runtime:left-cortex"),
+          DomainId.parse("runtime:left-cortex").toOption.get,
           SurfaceTestFixtures.tetraGeometry
         )
         .toOption

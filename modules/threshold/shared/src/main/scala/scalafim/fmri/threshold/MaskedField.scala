@@ -14,14 +14,13 @@ import scalafim.image.SomeNeuroVolume.*
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.Grid
-import scalafim.locus.{
-  DomainFactory,
+import scalafim.locus.DomainFactory
+import locus4s.{
   FiniteDomain,
   Injection,
   Region,
   Selection,
-  TotalMap,
-  mapping
+  TotalMap
 }
 import locus4s.DomainRegistry
 
@@ -68,7 +67,7 @@ sealed abstract class MaskedField private[threshold] (
       val idx = maskSpaceIndices(i)
       if idx < 0 || idx >= size then return Left(ThresholdError.IndexOutOfBounds(idx, size))
       val active = activeSpace.indexOption(idx).get
-      out(i) = activeToFull.mapping(active).value
+      out(i) = activeToFull.toTotalMap(active).value
       i += 1
     Right(out)
 
@@ -192,7 +191,7 @@ object MaskedField:
         .get
     val injection =
       Injection
-        .validate(
+        .fromTotalMap(
           TotalMap
             .fromTargetOrdinals(
               active,

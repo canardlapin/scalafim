@@ -173,7 +173,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
-| `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, and searchlights. | standalone locus4s core and data | Generic finite-domain algebra or laws, a second aggregation loop (use `locus4s.data.Aggregation`), image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
+| `locus-data` | Stateless `DomainFactory` (independent persistent restores and ephemeral derived domains), supported parcellations, and searchlights. Callers name locus4s types directly. | standalone locus4s core and data | Type aliases or re-exports of locus4s, a process-wide domain registry, generic finite-domain algebra or laws, a second aggregation loop (use `locus4s.data.Aggregation`), image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph4s-delegated deterministic DAG staging, local pure execution, and structured receipts. | standalone graph4s | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, axis-keyed locality capabilities, and read receipts. Source lineage is the provider-owned `locus4s.provenance` DAG, used directly. | Nothing internal; standalone Ravel core and locus4s-provenance; Cats Core and Cats Effect externally. | A second lineage DAG or identifier grammar, general tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
@@ -277,9 +277,13 @@ standalone locus4s -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spa
 
 Standalone locus4s is the sole owner of generic finite spaces, points, regions,
 ordered selections, exact maps, relations, indexed fields, sections, and their
-laws. `locus-data` owns ScalaFIM-specific domain construction and compatibility
-adapters plus parcellations and searchlights; parcellation aggregation uses
-locus4s-data `Aggregation`. Domain modules add
+laws, and callers use its names directly. `locus-data` owns the stateless
+`DomainFactory` plus parcellations and searchlights; parcellation aggregation
+uses locus4s-data `Aggregation`. There is no process-wide domain registry: each
+restore mints an independent owner, owners with equal persistent keys combine
+through a checked `DomainAlignment`, and a composition that needs one shared
+live owner threads its own `DomainRegistry` value. Derived supports are
+ephemeral, and size or display name is never identity. Domain modules add
 geometry, metadata, storage, provenance, or algorithm policy through checked
 adapters; they do not reproduce the generic algebra. Zarr's package-local
 `Geometry.Region` remains an array chunk/slice rectangle, not a spatial ROI,

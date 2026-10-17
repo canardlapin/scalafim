@@ -6,7 +6,7 @@ import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import image4s.geometry.{Affine, D3}
 import locus4s.{DomainRegistry, Region as VolumeRegion}
 import scalafim.image.{ExactVolumeSearchlight, GridDomain, SampleSpaces, SearchlightRadius}
-import scalafim.locus.{Region as SurfaceRegion, SpaceKey}
+import locus4s.{DomainId, Region as SurfaceRegion}
 import scalafim.surface.{DistanceMetric, Hemisphere, MeshTopology, SurfaceGeometry, SurfaceKind, SurfaceLocusDomain, SurfaceSearchlight, TriangleMesh}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
 import scalafim.fmri.mvpa.measurement.{MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor}
@@ -58,7 +58,7 @@ class PyMvpaSearchlightParitySuite extends munit.FunSuite:
   test("surface searchlights use actual geodesic construction rather than chord neighborhoods"):
     val fixture = PyMvpaSearchlightParityFixtures.Surface
     val geometry = SurfaceGeometry(TriangleMesh.fromRows(fixture.vertices, fixture.faces), Hemisphere.Left, SurfaceKind.Pial)
-    val domain = right(SurfaceLocusDomain.semantic(SpaceKey.unsafe("pymvpa-surface"), geometry)).value
+    val domain = right(SurfaceLocusDomain.semantic(DomainId.parse("pymvpa-surface").toOption.get, geometry)).value
     val centers = right(SurfaceRegion.fromOrdinals(domain.finiteSpace, fixture.centerOrdinals))
     val searchlight = right(SurfaceSearchlight.metricBalls(domain, MeshTopology.from(geometry), fixture.radius, centers, DistanceMetric.Geodesic))
     val actual = fixture.centerOrdinals.map(center => center -> searchlight.searchlight.regionAt(domain.finiteSpace.indexAtValidatedOrdinal(center)).get.ordinalsInDomainOrder.toVector)

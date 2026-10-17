@@ -8,7 +8,8 @@ import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
 import scalafim.fmri.mvpa.measurement.{MeasuredObservations, MeasurementFailure, MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor, PackedMeasurementEntry}
 import scalafim.image.ExactVolumeSearchlight
-import scalafim.locus.{CenteredSearchlight, IndexedField, Searchlight}
+import scalafim.locus.{CenteredSearchlight, Searchlight}
+import locus4s.data.VectorField
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class SpatialMeasurementFramesSuite extends munit.FunSuite:
@@ -117,7 +118,7 @@ def invalid[K, S, T](source: AxisRef[K] { type Locus = S }, declaration: Measure
       )
     )
     val neighborhoods = right(ExactVolumeSearchlight.fromRelation(centers, relation))
-    val labels = right(IndexedField.fromValues(neural.locus, Vector("left", "one", "right", "three")))
+    val labels = right(VectorField.fromValues(neural.locus, Vector("left", "one", "right", "three")))
     val frame = right(SpatialMeasurementFrames.volumeNeighborhoods(neural, declaration, neighborhoods, point => Some(labels(point))))
     assertEquals(frame.identity.declaration.key, declaration.key)
     assertEquals(frame.identity.declaration.revision, declaration.revision)

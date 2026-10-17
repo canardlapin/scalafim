@@ -9,14 +9,12 @@ import image4s.geometry.Grid
 import scalafim.image.{SampleSpaces, SomeMaskVolume, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.SomeNeuroVolume.*
-import scalafim.locus.{
-  DomainFactory,
-  FiniteSpace,
+import scalafim.locus.DomainFactory
+import locus4s.{
+  FiniteDomain,
   Region as LocusRegion,
   Selection as LocusSelection,
-  SpaceKey,
-  SpaceMismatch,
-  mismatch
+  SpaceMismatch
 }
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, SurfaceRoi}
 
@@ -287,7 +285,7 @@ object Domain:
 trait DomainLocus:
   type S
   val domainId: DomainId
-  val space: FiniteSpace[S]
+  val space: FiniteDomain[S]
 
   final def regionDemand(
       region: LocusRegion[S]
@@ -295,7 +293,7 @@ trait DomainLocus:
     if space.sameRuntimeOwnerAs(region.space) then
       Right(FieldDemand.roi(region.ordinalsInDomainOrder.toVector))
     else
-      Left(mismatch(space, region.space))
+      Left(SpaceMismatch.between(space, region.space))
 
   final def selectionDemand(
       selection: LocusSelection[S]
@@ -303,24 +301,21 @@ trait DomainLocus:
     if space.sameRuntimeOwnerAs(selection.space) then
       Right(FieldDemand.rows(selection.ordinals.toVector))
     else
-      Left(mismatch(space, selection.space))
+      Left(SpaceMismatch.between(space, selection.space))
 
 object DomainLocus:
   private[spatial] def make(
       requestedId: DomainId,
       size: Int
   ): DomainLocus =
-    val resolution =
-      DomainFactory.unsafeRestore(
-        // `size` belongs in the key: a domain key must determine the domain it
-        // names, and the registry now canonicalizes on it.
-        SpaceKey.unsafe(s"scalafim:spatial:${requestedId.value}:$size"),
-        size
-      )
+    // A caller-chosen id and an element count do not determine a domain:
+    // two subjects' "native-bold" grids can agree on both. The locus owner is
+    // therefore derived and ephemeral; transports are built against it.
+    val owned = DomainFactory.unsafeEphemeral(requestedId.value, size)
     new DomainLocus:
-      type S = resolution.S
+      type S = owned.S
       val domainId: DomainId = requestedId
-      val space: FiniteSpace[S] = resolution.space
+      val space: FiniteDomain[S] = owned.value
 
 final case class DomainPart private (
   name: PartName,

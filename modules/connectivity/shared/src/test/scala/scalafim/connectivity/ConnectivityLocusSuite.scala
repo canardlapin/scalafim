@@ -23,11 +23,9 @@ class ConnectivityLocusSuite extends munit.FunSuite:
       locus.space.indices.map(locus.nodeAt).map(_.id.value).toVector,
       Vector("a", "b", "c")
     )
-    assert(
-      !nodes.locus.space.sameRuntimeOwnerAs(
-        axis("x", "y", "z").locus.space
-      )
-    )
+    assert(nodes.locus.space.align(axis("x", "y", "z").locus.space).isLeft)
+    assert(nodes.locus.space.align(axis("a", "b", "c").locus.space).isRight)
+    assert(nodes.locus.space.align(axis("c", "b", "a").locus.space).isLeft, "node order is identity")
 
   test("edge finite spaces retain topology and vectorization order"):
     val nodes = axis("a", "b", "c")
@@ -44,7 +42,7 @@ class ConnectivityLocusSuite extends munit.FunSuite:
     val first = native.locus.space.indexOption(0).get
 
     assertEquals(native.locus.edgeAt(first), native.edge(0))
-    assert(!native.locus.space.sameRuntimeOwnerAs(ariadne.locus.space))
+    assert(native.locus.space.align(ariadne.locus.space).isLeft, "vectorization order is identity")
     assertEquals(
       native.locus.space.indices.map(native.locus.edgeAt).toVector,
       native.edges

@@ -1,8 +1,10 @@
 package scalafim.locus
 
+import locus4s.{FiniteSpace, Region, Relation}
+
 class SearchlightSuite extends munit.FunSuite:
   private val resolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("searchlight:test"), 4)
+    DomainFactory.unsafeRestore("searchlight:test", 4)
   private type S = resolution.S
   private val space: FiniteSpace[S] = resolution.space
   private val centers =
@@ -58,7 +60,7 @@ class SearchlightSuite extends munit.FunSuite:
 
   test("searchlight construction checks exact runtime space identity"):
     val other =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("searchlight:other"), 4).space
+      DomainFactory.unsafeRestore("searchlight:other", 4).space
     val wrong =
       Relation
         .fromOrdinalRows(

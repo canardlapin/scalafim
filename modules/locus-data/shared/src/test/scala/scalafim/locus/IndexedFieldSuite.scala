@@ -1,21 +1,24 @@
 package scalafim.locus
 
+import locus4s.{FiniteSpace, Region, Selection}
+import locus4s.data.{FieldConstructionError, SectionSelectionError, VectorField}
+
 class IndexedFieldSuite extends munit.FunSuite:
   private val resolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("field:test"), 6)
+    DomainFactory.unsafeRestore("field:test", 6)
   private type S = resolution.S
   private val space: FiniteSpace[S] = resolution.space
-  private val field = IndexedField.fromValues(space, Vector(0, 10, 20, 30, 40, 50)).toOption.get
+  private val field = VectorField.fromValues(space, Vector(0, 10, 20, 30, 40, 50)).toOption.get
 
   test("dense field construction validates size and owns input values"):
     val values = scala.collection.mutable.ArrayBuffer(1, 2, 3, 4, 5, 6)
-    val owned = IndexedField.fromValues(space, values).toOption.get
+    val owned = VectorField.fromValues(space, values).toOption.get
     values(0) = 99
 
     assertEquals(owned(space.indexOption(0).get), 1)
     assertEquals(
-      IndexedField.fromValues(space, Vector(1, 2)),
-      Left(IndexedFieldError.WrongValueCount(6, 2))
+      VectorField.fromValues(space, Vector(1, 2)),
+      Left(FieldConstructionError.WrongValueCount(6, 2))
     )
 
   test("restriction identity and nested-intersection laws hold"):
@@ -60,7 +63,7 @@ class IndexedFieldSuite extends munit.FunSuite:
 
   test("restriction rejects a reused phantom with a different runtime identity"):
     val other =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("field:other"), 6).space
+      DomainFactory.unsafeRestore("field:other", 6).space
     val wrongRegion =
       Region.whole(other).asInstanceOf[Region[S]]
 

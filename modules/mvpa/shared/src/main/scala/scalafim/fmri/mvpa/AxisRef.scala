@@ -1,10 +1,10 @@
 package scalafim.fmri.mvpa
 
-import locus4s.{DomainError, DomainResolution}
+import locus4s.{DomainResolution, FiniteSpace, Index}
 import locus4s.provenance.ProvenanceSink
 import multivar.core.{MultivarError, SemanticError, SemanticSpace, SpaceEvidence, SpaceRef, SpaceRole}
 import resample4s.core.{DesignError, DigestError, DomainMismatch, FingerprintError, UnknownUnit}
-import scalafim.locus.{DomainFactory, DomainFactoryError, FiniteSpace, Point, SpaceKey}
+import scalafim.locus.{DomainFactory, DomainFactoryError}
 import scalafim.response.{DomainId, IdentityError, IndexError}
 
 enum EvidenceError:
@@ -15,7 +15,6 @@ enum EvidenceError:
   case InvalidSource(detail: String)
   case MultivarFailure(error: MultivarError)
   case SemanticFailure(error: SemanticError)
-  case LocusIdentityFailure(error: DomainError)
   case LocusFailure(error: DomainFactoryError)
   case ResponseIdentityFailure(error: IdentityError)
   case ResponseIndexFailure(error: IndexError)
@@ -41,8 +40,6 @@ enum EvidenceError:
       case MultivarFailure(error) =>
         error.message
       case SemanticFailure(error) =>
-        error.message
-      case LocusIdentityFailure(error) =>
         error.message
       case LocusFailure(error) =>
         error.message
@@ -287,7 +284,7 @@ final class AxisRef[K] private (
   def keyAt(ordinal: Int): Either[EvidenceError, K] =
     index.keyAt(ordinal)
 
-  def keyAtPoint(point: Point[Locus]): Either[EvidenceError, K] =
+  def keyAtPoint(point: Index[Locus]): Either[EvidenceError, K] =
     index.keyAt(point.ordinal)
 
   def ordinalOf(key: K): Option[Int] =
@@ -398,12 +395,8 @@ object AxisRef:
         .of(descriptor.stableKey, descriptor.role, descriptor.size)
         .left
         .map(EvidenceError.MultivarFailure.apply)
-      key <- SpaceKey
-        .make(s"scalafim-mvpa-${descriptor.stableKey}")
-        .left
-        .map(EvidenceError.LocusIdentityFailure.apply)
       domain <- DomainFactory
-        .restore(key, descriptor.size, Some(descriptor.namespace))
+        .restore(s"scalafim-mvpa-${descriptor.stableKey}", descriptor.size, Some(descriptor.namespace))
         .left
         .map(EvidenceError.LocusFailure.apply)
       responseDomain <- DomainId

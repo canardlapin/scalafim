@@ -3,15 +3,18 @@ package scalafim.surface
 import scalafim.locus.{
   CenteredSearchlight,
   CenteredSearchlightError,
-  IndexedField,
-  Point,
+  Searchlight,
+  SearchlightError
+}
+import locus4s.{
+  Index,
   Region,
   Relation,
-  Searchlight,
-  SearchlightError,
+  SpaceMismatch
+}
+import locus4s.data.{
   Section,
-  SpaceMismatch,
-  mismatch
+  VectorField
 }
 
 enum SurfaceSearchlightError:
@@ -47,7 +50,7 @@ object SurfaceSearchlight:
     else if !domain.finiteSpace.sameRuntimeOwnerAs(centers.space) then
       Left:
         SurfaceSearchlightError.WrongSpace:
-          mismatch(domain.finiteSpace, centers.space)
+          SpaceMismatch.between(domain.finiteSpace, centers.space)
     else
       val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
       val centerOrdinals = centers.ordinalsInDomainOrder
@@ -122,7 +125,7 @@ object SurfaceSearchlight:
     */
   def sectionAt[S, A](
       searchlight: Searchlight[S],
-      center: Point[S],
-      field: IndexedField[S, A]
+      center: Index[S],
+      field: VectorField[S, A]
   ): Option[Section[S, A]] =
     searchlight.regionAt(center).map(field.restrict)

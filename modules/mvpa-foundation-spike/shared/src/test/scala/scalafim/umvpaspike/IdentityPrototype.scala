@@ -3,7 +3,8 @@ package scalafim.umvpaspike
 import gale.linalg.{DMat, DoubleLinearOperator}
 import multivar.core.*
 import resample4s.core.{Draw, Injection, Permutation, Reindexing, Selection}
-import scalafim.locus.{DomainFactory, SomeFiniteDomain}
+import scalafim.locus.DomainFactory
+import locus4s.SomeFiniteDomain
 import scalafim.response.{DomainId, DuplicatePolicy, OrderedIndices}
 
 /** M0.03 TEST-ONLY prototype. It composes the real provider types; it is not the production axis API. Deliberately

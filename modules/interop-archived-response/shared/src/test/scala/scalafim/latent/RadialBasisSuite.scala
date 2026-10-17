@@ -3,7 +3,6 @@ package scalafim.latent
 import scalafim.image.SampleSpaces
 import scalafim.image.SampleSpaces.{gridToIndex3D, spatialDims}
 
-import scalafim.locus.mapping
 import scalafim.archive.lna.SharedBasisId
 import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
@@ -255,7 +254,7 @@ class RadialBasisSuite extends munit.FunSuite:
       Vector(3, 1)
     )
     assertEquals(
-      locus.activeToFull.mapping.targetOrdinals.toVector,
+      locus.activeToFull.toTotalMap.targetOrdinals.toVector,
       Vector(3, 1)
     )
     val firstActive = locus.order.activeSpace.indexOption(0).get

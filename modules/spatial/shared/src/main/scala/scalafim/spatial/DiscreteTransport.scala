@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.locus.{Relation, TotalMap}
+import locus4s.{Relation, TotalMap}
 
 /** An exact point-to-point transport between finite sampled domains.
   *

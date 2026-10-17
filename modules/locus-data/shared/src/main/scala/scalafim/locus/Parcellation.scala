@@ -1,5 +1,14 @@
 package scalafim.locus
 
+import locus4s.{
+  FiniteDomain,
+  Index,
+  Region,
+  Relation,
+  SpaceMismatch,
+  Surjection
+}
+
 enum ParcellationError:
   case WrongAssignmentCount(expected: Int, actual: Int)
   case ParcelOutOfBounds(ambientOrdinal: Int, parcelOrdinal: Int, parcelCount: Int)
@@ -19,7 +28,7 @@ final class Parcellation[X, P] private (
     val parcels: FiniteDomain[P],
     private val parcelOrdinalAt: Array[Int]
 ):
-  def parcelAt(point: Point[X]): Option[Point[P]] =
+  def parcelAt(point: Index[X]): Option[Index[P]] =
     if !ambient.contains(point) then None
     else
       val parcel = parcelOrdinalAt(point.ordinal)
@@ -28,7 +37,7 @@ final class Parcellation[X, P] private (
   def support: Region[X] =
     Region.tabulate(ambient)(point => parcelOrdinalAt(point.ordinal) >= 0)
 
-  def fiber(parcel: Point[P]): Region[X] =
+  def fiber(parcel: Index[P]): Region[X] =
     Region.tabulate(ambient)(point => parcelOrdinalAt(point.ordinal) == parcel.ordinal)
 
   def quotientRelation: Relation[X, P] =
@@ -46,19 +55,19 @@ final class Parcellation[X, P] private (
   def coarsen[Q](
       mapping: Surjection[P, Q]
   ): Either[SpaceMismatch, Parcellation[X, Q]] =
-    if parcels.sameIdentityAs(mapping.mapping.from) then
-      val targets = mapping.mapping.targetOrdinals
+    if parcels.sameRuntimeOwnerAs(mapping.toTotalMap.from) then
+      val targets = mapping.toTotalMap.targetOrdinals
       val assignments = parcelOrdinalAt.map: parcel =>
         if parcel < 0 then -1 else targets(parcel)
-      Right(Parcellation.fromValidated(ambient, mapping.mapping.to, assignments))
+      Right(Parcellation.fromValidated(ambient, mapping.toTotalMap.to, assignments))
     else
-      Left(mismatch(parcels, mapping.mapping.from))
+      Left(SpaceMismatch.between(parcels, mapping.toTotalMap.from))
 
   def sameBlocksAs[Q](
       that: Parcellation[X, Q]
   ): Either[SpaceMismatch, Boolean] =
-    if !ambient.sameIdentityAs(that.ambient) then
-      Left(mismatch(ambient, that.ambient))
+    if !ambient.sameRuntimeOwnerAs(that.ambient) then
+      Left(SpaceMismatch.between(ambient, that.ambient))
     else if parcels.size != that.parcels.size then
       Right(false)
     else
@@ -134,8 +143,8 @@ object Parcellation:
   def fromSurjection[P, Q](
       mapping: Surjection[P, Q]
   ): Parcellation[P, Q] =
-    val assignments = mapping.mapping.targetOrdinals
-    fromValidated(mapping.mapping.from, mapping.mapping.to, assignments)
+    val assignments = mapping.toTotalMap.targetOrdinals
+    fromValidated(mapping.toTotalMap.from, mapping.toTotalMap.to, assignments)
 
   private[locus] def fromValidated[X, P](
       ambient: FiniteDomain[X],

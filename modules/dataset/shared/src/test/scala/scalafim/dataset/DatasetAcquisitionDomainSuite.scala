@@ -1,6 +1,5 @@
 package scalafim.dataset
 
-import scalafim.locus.mapping
 import gale.linalg.DMat
 import image4s.locus.GridDomain
 import scalafim.image.{
@@ -28,25 +27,52 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
       .semantic(DatasetId(id), requestedShape, voxels)
       .fold(error => fail(error.message), identity)
 
-  test("semantic acquisition identity includes dataset and exact grid geometry"):
-    val original = shape()
-    val shifted =
-      shape(
-        GaleTestData.matrixFromRows(
-          Vector(
-            Vector(1.0, 0.0, 0.0, 10.0),
-            Vector(0.0, 1.0, 0.0, 0.0),
-            Vector(0.0, 0.0, 1.0, 0.0),
-            Vector(0.0, 0.0, 0.0, 1.0)
-          )
-        )
+  private val shifted =
+    GaleTestData.matrixFromRows(
+      Vector(
+        Vector(1.0, 0.0, 0.0, 10.0),
+        Vector(0.0, 1.0, 0.0, 0.0),
+        Vector(0.0, 0.0, 1.0, 0.0),
+        Vector(0.0, 0.0, 0.0, 1.0)
       )
-    val first = domain("run-a", original, VoxelDomain.fullUnsafe(original))
-    val otherDataset = domain("run-b", original, VoxelDomain.fullUnsafe(original))
-    val otherGrid = domain("run-a", shifted, VoxelDomain.fullUnsafe(shifted))
+    )
 
-    assert(!first.fullVoxelSpace.sameRuntimeOwnerAs(otherDataset.fullVoxelSpace))
-    assert(!first.fullVoxelSpace.sameRuntimeOwnerAs(otherGrid.fullVoxelSpace))
+  /** A grid in a declared template world: separately built, equal geometry
+    * yields the same persistent grid, so a reload can be simulated faithfully.
+    */
+  private def placed(affine: DMat = DMat.eye(4), timepoints: Int = 3): DatasetShape =
+    val world =
+      scalafim.image.world.WorldSpace
+        .template("MNI152NLin2009cAsym")
+        .fold(error => fail(error.message), identity)
+    val space =
+      SampleSpaces
+        .inWorld(SampleSpaces(Vector(4, 1, 1), affine = Some(GaleTestData.affineD3(affine))), world)
+        .fold(error => fail(error.message), identity)
+    DatasetShape.unsafe(space, timepoints)
+
+  private def placedDomain(id: String, requested: DatasetShape): DatasetAcquisitionDomain =
+    domain(id, requested, VoxelDomain.fullUnsafe(requested))
+
+  test("semantic acquisition identity includes dataset and exact grid geometry"):
+    val first = placedDomain("run-a", placed())
+    val reload = placedDomain("run-a", placed())
+    val otherDataset = placedDomain("run-b", placed())
+    val otherGrid = placedDomain("run-a", placed(shifted))
+
+    assert(first.fullVoxelSpace.align(reload.fullVoxelSpace).isRight, "a rebuilt grid reloads")
+    assert(first.timeSpace.align(reload.timeSpace).isRight)
+    assert(first.fullVoxelSpace.align(otherDataset.fullVoxelSpace).isLeft)
+    assert(first.fullVoxelSpace.align(otherGrid.fullVoxelSpace).isLeft, "same frame, other affine")
+
+  test("no dataset name collides with the structural identity basis"):
+    val requested = placed()
+    val named = placedDomain("structural", requested)
+    val structural =
+      DatasetAcquisitionDomain
+        .structuralCompatibility(requested, VoxelDomain.fullUnsafe(requested))
+        .fold(error => fail(error.message), identity)
+    assert(named.fullVoxelSpace.align(structural.fullVoxelSpace).isLeft)
 
   test("active-to-full injection and checked reverse preserve global voxel identity"):
     val requestedShape = shape()
@@ -57,7 +83,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
       )
     val acquisition = domain("masked", requestedShape, active)
 
-    assertEquals(acquisition.activeToFull.mapping.targetOrdinals.toVector, Vector(0, 2, 3))
+    assertEquals(acquisition.activeToFull.toTotalMap.targetOrdinals.toVector, Vector(0, 2, 3))
     val activeTwo = acquisition.activeVoxelSpace.indexOption(1).get
     assertEquals(acquisition.fullPointFor(activeTwo).value, 2)
     assertEquals(
@@ -95,48 +121,56 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     assertEquals(full.ordinals.toVector, Vector(0, 1, 2, 3))
     assertEquals(ordered.ordinals.toVector, Vector(3, 0))
 
-  test("matching semantic acquisitions share one live owner"):
-    // Previously each construction minted its own owner, so two views of the
-    // same acquisition agreed on persistent identity but were rejected against
-    // each other by every checked operation. `DomainFactory` now canonicalizes
-    // a key to a single live domain, which is what makes a second construction
-    // — a reload, a deserialization, a parallel code path — usable with the
-    // first.
+  test("matching semantic acquisitions align across independent constructions"):
+    // Each construction restores independent owners. Equal persistent keys make
+    // a reload usable with the first view through a checked alignment; nothing
+    // is shared process-wide.
     val requestedShape = shape()
     val full = VoxelDomain.fullUnsafe(requestedShape)
     val first = domain("run-a", requestedShape, full)
     val second = domain("run-a", requestedShape, full)
     val timepoints =
-      scalafim.locus.Selection
+      locus4s.Selection
         .fromOrdinals(first.timeSpace, Vector(2, 0))
         .fold(error => fail(error.message), identity)
     val voxels =
-      scalafim.locus.Selection
+      locus4s.Selection
         .fromOrdinals(first.fullVoxelSpace, Vector(3, 1))
         .fold(error => fail(error.message), identity)
 
     assert(first.fromSelections(timepoints, voxels).isRight)
     assert(first.timeSpace.samePersistentIdentityAs(second.timeSpace))
     assert(first.fullVoxelSpace.samePersistentIdentityAs(second.fullVoxelSpace))
-    assert(first.timeSpace.sameRuntimeOwnerAs(second.timeSpace))
-    assert(first.fullVoxelSpace.sameRuntimeOwnerAs(second.fullVoxelSpace))
-    // Note what sharing does and does not buy. The two acquisitions still have
-    // distinct static owner types, so `second.fromSelections(timepoints, ...)`
-    // rightly does not compile — canonicalization is not a way around the type
-    // system. What it changes is the *dynamic* boundary: the runtime-owner
-    // check that every checked operation performs now succeeds, so a
-    // deserialized or independently constructed view can be realigned instead
-    // of being rejected outright.
-    assert(first.timeSpace.align(second.timeSpace).isRight)
-    assert(first.fullVoxelSpace.align(second.fullVoxelSpace).isRight)
+    assert(!first.fullVoxelSpace.sameRuntimeOwnerAs(second.fullVoxelSpace))
+    // The distinct static owners mean `second.fromSelections(timepoints, ...)`
+    // does not compile. The dynamic boundary realigns explicitly instead.
+    val timeAlignment =
+      first.timeSpace.align(second.timeSpace).fold(error => fail(error.message), identity)
+    val voxelAlignment =
+      first.fullVoxelSpace.align(second.fullVoxelSpace).fold(error => fail(error.message), identity)
+    val moved =
+      second
+        .fromSelections(timeAlignment.transport(timepoints), voxelAlignment.transport(voxels))
+        .fold(error => fail(error.message), identity)
+    assertEquals(moved.voxels, Vector(3, 1))
+    assertEquals(moved.timepoints, Vector(2, 0))
+
+  test("separately built grids in an unresolved world make no shared identity claim"):
+    // Identity follows the persistent grid key, never object hash codes. A grid
+    // whose world is unresolved gets a fresh frame per construction, so equal
+    // dimensions and affine do not assert that two loads are one voxel space.
+    val first = domain("run-a", shape(), VoxelDomain.fullUnsafe(shape()))
+    val second = domain("run-a", shape(), VoxelDomain.fullUnsafe(shape()))
+    assert(first.fullVoxelSpace.isPersistable)
+    assert(first.fullVoxelSpace.align(second.fullVoxelSpace).isLeft)
 
   test("acquisitions differing only in run length get distinct time domains"):
     // The time key must carry the timepoint count; without it two run lengths
     // over one grid claimed the same domain id at two different sizes.
-    val full4 = VoxelDomain.fullUnsafe(shape())
-    val short = domain("run-a", shape(timepoints = 2), VoxelDomain.fullUnsafe(shape(timepoints = 2)))
-    val long = domain("run-a", shape(timepoints = 4), full4)
-    assert(!short.timeSpace.sameRuntimeOwnerAs(long.timeSpace))
+    val short = placedDomain("run-a", placed(timepoints = 2))
+    val long = placedDomain("run-a", placed(timepoints = 4))
+    assert(short.timeSpace.align(long.timeSpace).isLeft)
+    assert(short.fullVoxelSpace.align(long.fullVoxelSpace).isRight, "the grid is shared")
     assertEquals(short.timeSpace.size, 2)
     assertEquals(long.timeSpace.size, 4)
 

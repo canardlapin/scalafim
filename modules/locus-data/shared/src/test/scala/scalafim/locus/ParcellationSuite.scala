@@ -1,16 +1,16 @@
 package scalafim.locus
 
-import locus4s.PartialMap
-import locus4s.data.Aggregation
+import locus4s.{FiniteSpace, PartialMap, Region, Surjection, TotalMap}
+import locus4s.data.{Aggregation, VectorField}
 
 class ParcellationSuite extends munit.FunSuite:
   private val ambientResolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:ambient"), 6)
+    DomainFactory.unsafeRestore("partition:ambient", 6)
   private type X = ambientResolution.S
   private val ambient: FiniteSpace[X] = ambientResolution.space
 
   private val parcelResolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:parcels"), 3)
+    DomainFactory.unsafeRestore("partition:parcels", 3)
   private type P = parcelResolution.S
   private val parcels: FiniteSpace[P] = parcelResolution.space
 
@@ -69,7 +69,7 @@ class ParcellationSuite extends munit.FunSuite:
 
   test("partition equality is invariant to bijective relabeling"):
     val relabeledResolution =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:relabeled"), 3)
+      DomainFactory.unsafeRestore("partition:relabeled", 3)
     type Q = relabeledResolution.S
     val relabeledParcels: FiniteSpace[Q] = relabeledResolution.space
     val relabeled =
@@ -91,24 +91,24 @@ class ParcellationSuite extends munit.FunSuite:
 
   test("coarsening is functorial and coarsened fibers are source-fiber unions"):
     val networkResolution =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:networks"), 2)
+      DomainFactory.unsafeRestore("partition:networks", 2)
     type Q = networkResolution.S
     val networks: FiniteSpace[Q] = networkResolution.space
     val systemResolution =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:systems"), 1)
+      DomainFactory.unsafeRestore("partition:systems", 1)
     type N = systemResolution.S
     val systems: FiniteSpace[N] = systemResolution.space
     val parcelToNetwork =
-      Surjection.validate(
+      Surjection.fromTotalMap(
         TotalMap.fromTargetOrdinals(parcels, networks, Array(0, 0, 1)).toOption.get
       ).toOption.get
     val networkToSystem =
-      Surjection.validate(
+      Surjection.fromTotalMap(
         TotalMap.fromTargetOrdinals(networks, systems, Array(0, 0)).toOption.get
       ).toOption.get
     val parcelToSystem =
-      Surjection.validate(
-        parcelToNetwork.mapping.andThen(networkToSystem.mapping)
+      Surjection.fromTotalMap(
+        parcelToNetwork.toTotalMap.andThen(networkToSystem.toTotalMap)
       ).toOption.get
 
     val stepwise =
@@ -128,17 +128,17 @@ class ParcellationSuite extends munit.FunSuite:
 
   test("fromSurjection is total over its source and its fibers are preimages"):
     val networkResolution =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:surjection-networks"), 2)
+      DomainFactory.unsafeRestore("partition:surjection-networks", 2)
     type Q = networkResolution.S
     val networks: FiniteSpace[Q] = networkResolution.space
     val parcelToNetwork =
-      Surjection.validate(
+      Surjection.fromTotalMap(
         TotalMap.fromTargetOrdinals(parcels, networks, Array(1, 0, 1)).toOption.get
       ).toOption.get
 
     val quotient = Parcellation.fromSurjection(parcelToNetwork)
-    assert(quotient.ambient.sameIdentityAs(parcels))
-    assert(quotient.parcels.sameIdentityAs(networks))
+    assert(quotient.ambient.sameRuntimeOwnerAs(parcels))
+    assert(quotient.parcels.sameRuntimeOwnerAs(networks))
     assertEquals(quotient.assignmentOrdinals, Vector(Some(1), Some(0), Some(1)))
     assertEquals(quotient.support.ordinalsInDomainOrder.toVector, Vector(0, 1, 2))
     assertEquals(
@@ -148,11 +148,11 @@ class ParcellationSuite extends munit.FunSuite:
 
   test("aggregating through fromSurjection fuses with aggregating over coarsen"):
     val networkResolution =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("partition:fusion-networks"), 2)
+      DomainFactory.unsafeRestore("partition:fusion-networks", 2)
     type Q = networkResolution.S
     val networks: FiniteSpace[Q] = networkResolution.space
     val parcelToNetwork =
-      Surjection.validate(
+      Surjection.fromTotalMap(
         TotalMap.fromTargetOrdinals(parcels, networks, Array(0, 0, 1)).toOption.get
       ).toOption.get
     def providerMapping[S, T](partition: Parcellation[S, T]): PartialMap[S, T] =
@@ -164,7 +164,7 @@ class ParcellationSuite extends munit.FunSuite:
         )
         .toOption
         .get
-    val field = IndexedField.tabulate(ambient)(_.ordinal)
+    val field = VectorField.tabulate(ambient)(_.ordinal)
 
     val direct =
       Aggregation
@@ -198,5 +198,5 @@ class ParcellationSuite extends munit.FunSuite:
       assertEquals(hierarchical(network), direct(network))
 
   test("identity coarsening preserves the label field"):
-    val identity = Surjection.validate(TotalMap.identity(parcels)).toOption.get
+    val identity = Surjection.fromTotalMap(TotalMap.identity(parcels)).toOption.get
     assertEquals(parcellation.coarsen(identity).toOption.get, parcellation)

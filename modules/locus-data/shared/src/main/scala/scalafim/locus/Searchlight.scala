@@ -1,5 +1,12 @@
 package scalafim.locus
 
+import locus4s.{
+  Index,
+  Region,
+  Relation,
+  SpaceMismatch
+}
+
 enum SearchlightError:
   case WrongSpace(error: SpaceMismatch)
   case NonEmptyOutsideCenters(pointOrdinal: Int)
@@ -22,7 +29,7 @@ final class Searchlight[S] private (
     val centers: Region[S],
     val neighborhoods: Relation[S, S]
 ):
-  def regionAt(center: Point[S]): Option[Region[S]] =
+  def regionAt(center: Index[S]): Option[Region[S]] =
     Option.when(centers.contains(center))(neighborhoods.row(center))
 
 object Searchlight:
@@ -30,10 +37,10 @@ object Searchlight:
       centers: Region[S],
       neighborhoods: Relation[S, S]
   ): Either[SearchlightError, Searchlight[S]] =
-    if !centers.space.sameIdentityAs(neighborhoods.from) then
-      Left(SearchlightError.WrongSpace(mismatch(centers.space, neighborhoods.from)))
-    else if !centers.space.sameIdentityAs(neighborhoods.to) then
-      Left(SearchlightError.WrongSpace(mismatch(centers.space, neighborhoods.to)))
+    if !centers.space.sameRuntimeOwnerAs(neighborhoods.from) then
+      Left(SearchlightError.WrongSpace(SpaceMismatch.between(centers.space, neighborhoods.from)))
+    else if !centers.space.sameRuntimeOwnerAs(neighborhoods.to) then
+      Left(SearchlightError.WrongSpace(SpaceMismatch.between(centers.space, neighborhoods.to)))
     else
       var ordinal = 0
       var invalid = -1
