@@ -25,7 +25,7 @@ for the module map; this file is the working contract.
   Never verify only one platform. Run the tests — evidence over assertion.
 - `scalacOptions` include `-deprecation -feature -unchecked`; keep the build warning-clean.
 - **Prefer `python3 tools/build/sbt-warm` for repeated gates**, e.g.
-  `python3 tools/build/sbt-warm mvpaJVM/test mvpaJS/test`. It gives each worktree its own
+  `python3 tools/build/sbt-warm mvpaDatasetJVM/test mvpaDatasetJS/test`. It gives each worktree its own
   sbt global base (copy-on-write cloned from a template for the same dependency
   pins, under `~/.cache/scalafim-sbt`) and a resident sbt server reached through
   `sbt --client`, so a repeat gate costs about a second instead of about a minute of

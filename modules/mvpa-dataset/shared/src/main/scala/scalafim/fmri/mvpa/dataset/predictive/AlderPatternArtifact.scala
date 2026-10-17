@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.dataset.predictive
 import alder.kernel.*
 import cats.Id
 import cats.data.EitherT
-import scalafim.fmri.mvpa.pattern.PatternArtifact
+import mvpa4s.pattern.PatternArtifact
 
 enum AlderPatternArtifactError:
   case ExpectedTrainingReceiptMismatch

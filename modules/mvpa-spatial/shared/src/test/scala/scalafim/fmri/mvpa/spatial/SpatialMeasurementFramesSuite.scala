@@ -5,8 +5,8 @@ import scala.compiletime.testing.typeCheckErrors
 import locus4s.{Relation, Region, Selection}
 import gale.linalg.DMat
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-import scalafim.fmri.mvpa.measurement.{MeasuredObservations, MeasurementFailure, MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor, PackedMeasurementEntry}
+import mvpa4s.{AxisRef, EvidenceSource, Observations}
+import mvpa4s.measurement.{MeasuredObservations, MeasurementFailure, MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor, PackedMeasurementEntry}
 import scalafim.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, Searchlight}
 import locus4s.data.VectorField
@@ -67,8 +67,8 @@ class SpatialMeasurementFramesSuite extends munit.FunSuite:
 
   test("foreign locus owners are rejected at the typed support boundary"):
     val errors = typeCheckErrors("""import locus4s.Region
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.measurement.{MeasurementFrameDeclaration, MeasurementId}
+import mvpa4s.AxisRef
+import mvpa4s.measurement.{MeasurementFrameDeclaration, MeasurementId}
 import scalafim.fmri.mvpa.spatial.{SpatialMeasurementFrames, SpatialMeasurementSite, SpatialMeasurementSupport}
 def invalid[K, S, T](source: AxisRef[K] { type Locus = S }, declaration: MeasurementFrameDeclaration, support: Region[T]) =
   val site = SpatialMeasurementSite[T](MeasurementId.unsafe("foreign"), SpatialMeasurementSupport.Regional(support), None, None)

@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.dataset.predictive
 
 import multivar.core.SpaceRole
 import munit.FunSuite
-import scalafim.fmri.mvpa.AxisRef
+import mvpa4s.AxisRef
 import alder.kernel.DataFingerprint
 import alder.data.*
 import alder.kernel.*
@@ -12,7 +12,7 @@ import gale.linalg.DMat
 import scala.compiletime.testing.typeCheckErrors
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.{CrossFitDesign, ScientificSeed}
+import mvpa4s.{CrossFitDesign, ScientificSeed}
 
 class AlderPredictiveAdmissionSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A =
@@ -183,7 +183,7 @@ def invalid[U <: Use.Fit](data: NonEmptyData[U, Array[Double]]) =
   test("native-table budget refusal precedes poison evidence reads"):
     import gale.linalg.{DoubleLinearOperator,DVec,MutableDVec}
     import multivar.core.{ValueIdentity,ValueId}
-    import scalafim.fmri.mvpa.{EvidenceSource,Observations,MultiResponse}
+    import mvpa4s.{EvidenceSource,Observations,MultiResponse}
     import locus4s.provenance.{SourceId, ProvenanceId, Provenance}
     val samples = right(AxisRef.fromStableKeys("samples",SpaceRole.Samples,Vector("a","b"),"trial","none","one"))
     val features = right(AxisRef.fromStableKeys("features",SpaceRole.Observed,Vector("u","v"),"native","none","one"))

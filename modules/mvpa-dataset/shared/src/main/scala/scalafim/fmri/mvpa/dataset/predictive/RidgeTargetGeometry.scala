@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.dataset.predictive
 
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef}
+import mvpa4s.{AxisDescriptor, AxisDigest, AxisRef}
 
 /** A fixed target block with total assessment mass, shared equally by its
   * coordinates. It does not rescale predictors or provider ridge penalties.

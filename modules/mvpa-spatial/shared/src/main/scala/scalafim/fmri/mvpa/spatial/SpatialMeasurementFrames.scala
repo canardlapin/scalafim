@@ -3,8 +3,8 @@ package scalafim.fmri.mvpa.spatial
 import locus4s.{Index, Region, Selection}
 import multivar.core.SemanticSpace
 import resample4s.core.{IndexSpace, Injection}
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.measurement.{MeasurementError, MeasurementFrame, MeasurementFrameDeclaration, MeasurementId, MeasurementLeg, PackedMeasurementEntry}
+import mvpa4s.AxisRef
+import mvpa4s.measurement.{MeasurementError, MeasurementFrame, MeasurementFrameDeclaration, MeasurementId, MeasurementLeg, PackedMeasurementEntry}
 import scalafim.image.VolumeNeighborhoods
 import scalafim.locus.CenteredSearchlight
 

@@ -2,10 +2,10 @@ package scalafim.fmri.mvpa.group
 
 import gale.linalg.DMat
 import multivar.core.SemanticSpace
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.analysis.{EvidenceExposure, ExposureActorRole, ExposureAssurance, ExposureAttempt, ExposureControl,
+import mvpa4s.*
+import mvpa4s.analysis.{EvidenceExposure, ExposureActorRole, ExposureAssurance, ExposureAttempt, ExposureControl,
   ExposurePayload, ExposurePurpose, ExposureRequest, ExposureScope}
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.pattern.*
 
 enum SubjectPredictionError:
   case Binding(detail: String)

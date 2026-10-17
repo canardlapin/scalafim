@@ -7,10 +7,10 @@ import java.lang.management.ManagementFactory
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{DigestAlgorithm, IndexSpace, Injection, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import scalafim.fmri.mvpa.dataset.predictive.*
-import scalafim.fmri.mvpa.measurement.{MeasurementId, MeasurementLeg}
-import scalafim.fmri.mvpa.relation.*
+import mvpa4s.measurement.{MeasurementId, MeasurementLeg}
+import mvpa4s.relation.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** JVM-only allocation probe for two complete native MVPA calls. It reports

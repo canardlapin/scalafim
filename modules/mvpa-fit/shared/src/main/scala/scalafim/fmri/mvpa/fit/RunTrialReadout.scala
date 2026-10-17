@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.fit
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{ResponseBlock, TrialCoefficientId, TrialEstimability, TrialReadout}
-import scalafim.fmri.mvpa.{
+import mvpa4s.{
   FeatureIndex,
   MvpaError,
   PatternCopyBudget,

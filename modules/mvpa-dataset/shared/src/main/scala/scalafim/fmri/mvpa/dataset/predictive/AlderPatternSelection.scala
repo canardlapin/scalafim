@@ -12,8 +12,8 @@ import gale.linalg.DMat
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{Coverage, DigestAlgorithm, Labels, UnitKey}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.*
+import mvpa4s.pattern.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 enum PatternSelectionTask:

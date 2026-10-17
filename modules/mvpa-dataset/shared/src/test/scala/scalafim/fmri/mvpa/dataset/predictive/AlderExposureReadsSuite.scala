@@ -4,8 +4,8 @@ import alder.kernel.DataFingerprint
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
-import scalafim.fmri.mvpa.{AxisRef, EvidenceOrigins, EvidenceSource, MultiResponse, Observations}
-import scalafim.fmri.mvpa.analysis.*
+import mvpa4s.{AxisRef, EvidenceOrigins, EvidenceSource, MultiResponse, Observations}
+import mvpa4s.analysis.*
 import locus4s.provenance.{DomainReference, Provenance, ProvenanceEvidence, ProvenanceId, SourceId}
 
 class AlderExposureReadsSuite extends FunSuite:
@@ -140,9 +140,9 @@ class AlderExposureReadsSuite extends FunSuite:
     val features = right(AxisRef.fromStableKeys("features", SpaceRole.Observed, Vector("y"), "native", "none", "one"))
     val sourceValue = ValueIdentity.source(ValueId.unsafe("values"))
     val evidenceSource = source("preparation-source")
-    val support = scalafim.fmri.mvpa.ValueSupport.Bounded(samples.descriptor, sourceValue, Vector(0, 1))
-    val fixed = right(EvidenceOrigins.make(evidenceSource, sourceValue, scalafim.fmri.mvpa.AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor), support, scalafim.fmri.mvpa.PreparationSupport.FixedShared(support), samples.descriptor))
-    val joint = right(EvidenceOrigins.make(evidenceSource, sourceValue, scalafim.fmri.mvpa.AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor), support, scalafim.fmri.mvpa.PreparationSupport.JointlyLearned(support, support), samples.descriptor))
+    val support = mvpa4s.ValueSupport.Bounded(samples.descriptor, sourceValue, Vector(0, 1))
+    val fixed = right(EvidenceOrigins.make(evidenceSource, sourceValue, mvpa4s.AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor), support, mvpa4s.PreparationSupport.FixedShared(support), samples.descriptor))
+    val joint = right(EvidenceOrigins.make(evidenceSource, sourceValue, mvpa4s.AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor), support, mvpa4s.PreparationSupport.JointlyLearned(support, support), samples.descriptor))
     def observation(origins: EvidenceOrigins) = right(Observations.fromOperator(samples, neural, new Poison(DMat.dense(2, 1, Vector(1.0, 2.0))), sourceValue, evidenceSource, origins))
     def target = right(MultiResponse.fromOperator(samples, features, new Poison(DMat.dense(2, 1, Vector(3.0, 4.0))), ValueIdentity.source(ValueId.unsafe("target")), source("target"), EvidenceOrigins.Unknown))
     val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(1L, 2L), DataFingerprint.external("declared")))

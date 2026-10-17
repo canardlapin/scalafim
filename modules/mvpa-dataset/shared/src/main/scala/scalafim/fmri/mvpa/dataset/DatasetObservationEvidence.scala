@@ -12,7 +12,7 @@ import scalafim.dataset.{
   TimepointIndex,
   VoxelIndex
 }
-import scalafim.fmri.mvpa.{AxisDigest, AxisRef, Column, EvidenceSource, FeatureIndex, Observations, ClassLabel, SampleIndex, PatternMatrix}
+import mvpa4s.{AxisDigest, AxisRef, Column, EvidenceSource, FeatureIndex, Observations, ClassLabel, SampleIndex, PatternMatrix}
 import gale.linalg.{DMat, Matrix}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}

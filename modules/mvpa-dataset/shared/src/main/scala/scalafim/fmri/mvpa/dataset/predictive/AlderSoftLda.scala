@@ -7,7 +7,7 @@ import cats.data.EitherT
 import gale.linalg.{DMat, Matrix}
 import multivar.family.canonical.TrialNuisanceDesign
 import resample4s.core.Coverage
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import scalafim.fmri.mvpa.fit.*
 
 /** Admission stores only response metadata. Pattern values remain behind the

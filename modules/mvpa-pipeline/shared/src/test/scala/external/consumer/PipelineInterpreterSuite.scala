@@ -2,10 +2,10 @@ package external.consumer
 
 import multivar.core.SpaceRole
 import resample4s.core.Seed
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.analysis.*
-import scalafim.fmri.mvpa.execution.*
-import scalafim.fmri.mvpa.measurement.MeasurementId
+import mvpa4s.AxisRef
+import mvpa4s.analysis.*
+import mvpa4s.execution.*
+import mvpa4s.measurement.MeasurementId
 import scalafim.fmri.mvpa.pipeline.PipelineInterpreter
 
 /** Uses public constructors across the optional module boundary. */

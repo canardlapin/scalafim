@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.spatial
 
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.AxisRef
+import mvpa4s.pattern.*
 import scalafim.surface.{TriangleMesh, VertexId}
 
 enum SupportWeightPolicy:

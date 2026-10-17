@@ -2,8 +2,8 @@ package scalafim.fmri.mvpa.dataset.predictive
 
 import alder.kernel.DataFingerprint
 import multivar.core.SemanticSpace
-import scalafim.fmri.mvpa.{AxisDigest, MultiResponse, Observations}
-import scalafim.fmri.mvpa.analysis.{EvidenceExposure, ExposureActorRole, ExposureAssurance, ExposureAttempt, ExposureControl, ExposureError, ExposurePayload, ExposurePermit, ExposurePurpose, ExposureReference, ExposureRequest, ExposureScope, PlanId, ResultIdentity}
+import mvpa4s.{AxisDigest, MultiResponse, Observations}
+import mvpa4s.analysis.{EvidenceExposure, ExposureActorRole, ExposureAssurance, ExposureAttempt, ExposureControl, ExposureError, ExposurePayload, ExposurePermit, ExposurePurpose, ExposureReference, ExposureRequest, ExposureScope, PlanId, ResultIdentity}
 
 /** Result of a provider read coupled to the immutable exposure snapshot left
   * by that attempt. Failures after an operator invocation keep that snapshot.

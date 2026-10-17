@@ -454,7 +454,7 @@ Current verified command spellings for the source baseline include:
 
 ```sh
 # Small affected ScalaFIM batches; update project names after each cutover.
-python3 tools/build/sbt-warm responseJVM/test responseJS/test mvpaJVM/test mvpaJS/test
+python3 tools/build/sbt-warm responseJVM/test responseJS/test mvpaDatasetJVM/test mvpaDatasetJS/test
 python3 tools/build/sbt-warm imageJVM/test imageJS/test transformJVM/test transformJS/test
 python3 tools/build/sbt-warm surfaceJVM/test surfaceJS/test
 python3 tools/build/sbt-warm atlasJVM/test atlasJS/test spatialJVM/test spatialJS/test

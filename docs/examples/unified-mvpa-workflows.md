@@ -34,10 +34,12 @@ capabilities using cached metadata, so diagnosing a plan should not read the
 neural matrix. The executable rehearsal checks this with a source that throws
 on payload access:
 
+These suites live in [mvpa4s](https://github.com/canardlapin/mvpa4s); from an
+mvpa4s checkout:
+
 ```sh
-python3 tools/build/sbt-warm \
-  'mvpaJVM/testOnly scalafim.fmri.mvpa.analysis.FoundationExtensionSuite scalafim.fmri.mvpa.analysis.DiagnosticsSuite' \
-  'mvpaJS/testOnly scalafim.fmri.mvpa.analysis.FoundationExtensionSuite scalafim.fmri.mvpa.analysis.DiagnosticsSuite'
+sbt 'coreJVM/testOnly mvpa4s.analysis.FoundationExtensionSuite mvpa4s.analysis.DiagnosticsSuite' \
+  'coreJS/testOnly mvpa4s.analysis.FoundationExtensionSuite mvpa4s.analysis.DiagnosticsSuite'
 ```
 
 ## Add RSA to retained relations
@@ -57,10 +59,11 @@ when its lifetime permits it. A new RSA model or scorer invalidates the
 comparison child; it can reuse unchanged fitted relations and geometry. A
 change to training scope, metric or relation provenance requires recomputation.
 
+From an mvpa4s checkout:
+
 ```sh
-python3 tools/build/sbt-warm \
-  'mvpaJVM/testOnly scalafim.fmri.mvpa.relation.RelationConsumersSuite' \
-  'mvpaJS/testOnly scalafim.fmri.mvpa.relation.RelationConsumersSuite'
+sbt 'coreJVM/testOnly mvpa4s.relation.RelationConsumersSuite' \
+  'coreJS/testOnly mvpa4s.relation.RelationConsumersSuite'
 ```
 
 The suite measures source reads, retains the actual RDM, tests model-only

@@ -5,7 +5,7 @@ import gale.linalg.DMat
 import multivar.core.SpaceRole
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 class NativePredictiveLawsSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64

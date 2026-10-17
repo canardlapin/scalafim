@@ -2,8 +2,8 @@ package scalafim.fmri.mvpa.group
 
 import gale.linalg.DMat
 import scalafim.fmri.group.*
-import scalafim.fmri.mvpa.AxisDigest
-import scalafim.fmri.mvpa.pattern.SubjectCoordinateKey
+import mvpa4s.AxisDigest
+import mvpa4s.pattern.SubjectCoordinateKey
 
 /** Scientific declarations, not evidence that a sampling design is valid.
   * The null is zero marginal mean at each task/measurement coordinate. */

@@ -8,8 +8,8 @@ import locus4s.{DomainRegistry, Region as VolumeRegion}
 import scalafim.image.{ExactVolumeSearchlight, GridDomain, SampleSpaces, SearchlightRadius}
 import locus4s.{DomainId, Region as SurfaceRegion}
 import scalafim.surface.{DistanceMetric, Hemisphere, MeshTopology, SurfaceGeometry, SurfaceKind, SurfaceLocusDomain, SurfaceSearchlight, TriangleMesh}
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-import scalafim.fmri.mvpa.measurement.{MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor}
+import mvpa4s.{AxisRef, EvidenceSource, Observations}
+import mvpa4s.measurement.{MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class PyMvpaSearchlightParitySuite extends munit.FunSuite:
@@ -91,10 +91,10 @@ class PyMvpaSearchlightParitySuite extends munit.FunSuite:
       )
     val frame = right(SpatialMeasurementFrames.regions(neural, MeasurementFrameDeclaration(name, PyMvpaSearchlightParityFixtures.sourceRevision, Vector.empty), sites))
     val visitor = new MeasurementVisitor[samples.Id, neural.Id, String, SpatialMeasurementRendition[neural.Locus], Double]:
-      def visit[L <: SemanticSpace](entry: scalafim.fmri.mvpa.measurement.PackedMeasurementEntry[neural.Id, String, SpatialMeasurementRendition[neural.Locus]] { type Local = L }, measured: scalafim.fmri.mvpa.measurement.MeasuredObservations[samples.Id, L]) =
+      def visit[L <: SemanticSpace](entry: mvpa4s.measurement.PackedMeasurementEntry[neural.Id, String, SpatialMeasurementRendition[neural.Locus]] { type Local = L }, measured: mvpa4s.measurement.MeasuredObservations[samples.Id, L]) =
         val center = entry.measurement.descriptor.id.value.stripPrefix(name + "-").toInt
-        if failAt.contains(center) then Left(scalafim.fmri.mvpa.measurement.MeasurementFailure.Task("forced fixture failure"))
-        else measured.patterns(DMat.eye(measured.patterns.cols)).left.map(error => scalafim.fmri.mvpa.measurement.MeasurementFailure.Task(error.message)).map: local =>
+        if failAt.contains(center) then Left(mvpa4s.measurement.MeasurementFailure.Task("forced fixture failure"))
+        else measured.patterns(DMat.eye(measured.patterns.cols)).left.map(error => mvpa4s.measurement.MeasurementFailure.Task(error.message)).map: local =>
           var zero = 0.0
           var one = 0.0
           var zeroCount = 0
@@ -126,7 +126,7 @@ class PyMvpaSearchlightParitySuite extends munit.FunSuite:
           assertEqualsDouble(actual, expectedByCenter(center), PyMvpaSearchlightParityFixtures.tolerance)
         case Left(error) =>
           assert(failAt.contains(center), error.toString)
-          assertEquals(error, scalafim.fmri.mvpa.measurement.MeasurementFailure.Task("forced fixture failure"))
+          assertEquals(error, mvpa4s.measurement.MeasurementFailure.Task("forced fixture failure"))
     failAt.foreach: _ =>
       assertEquals(result.value.count(_.value.isLeft), 1)
       assert(result.value.exists(outcome => outcome.descriptor.id.value == name + "-23" && outcome.value.isRight))

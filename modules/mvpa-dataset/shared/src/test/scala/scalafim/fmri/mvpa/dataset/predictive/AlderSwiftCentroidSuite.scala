@@ -5,8 +5,8 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{DigestAlgorithm, IndexSpace, Injection, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.measurement.{MeasurementId, MeasurementLeg}
+import mvpa4s.*
+import mvpa4s.measurement.{MeasurementId, MeasurementLeg}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class AlderSwiftCentroidSuite extends munit.FunSuite:

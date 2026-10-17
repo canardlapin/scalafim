@@ -7,7 +7,7 @@ import gale.linalg.DMat
 import multivar.core.SpaceRole
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.{AxisRef, CrossFitDesign, ScientificSeed, ValidationDesign}
+import mvpa4s.{AxisRef, CrossFitDesign, ScientificSeed, ValidationDesign}
 
 class AlderRidgeRegressionSuite extends munit.FunSuite:
   given DigestAlgorithm = DigestAlgorithm.fnv1a64

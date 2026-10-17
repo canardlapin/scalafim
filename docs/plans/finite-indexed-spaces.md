@@ -3,7 +3,7 @@
 Historical design record, superseded by the unified MVPA cutover. API names in
 the body describe the earlier implementation. The immutable pre-retirement
 [record](https://github.com/canardlapin/scalafim/blob/528c302e454697055bc9af31c9a6eca684f019e3/docs/plans/finite-indexed-spaces.md)
-preserves that context. Current callers use the [native core](../../modules/mvpa/README.md),
+preserves that context. Current callers use the [native core](https://github.com/canardlapin/mvpa4s/blob/main/docs/core.md),
 [trial-readout bridge](../../modules/mvpa-fit/README.md), and
 [dataset evidence](../../modules/mvpa-dataset/README.md).
 

@@ -1,15 +1,17 @@
-package scalafim.fmri.mvpa.analysis
+package scalafim.fmri.mvpa.group
 
+import mvpa4s.testkit.MvpaFixtures
+import mvpa4s.analysis.*
 import gale.backend.Backend.given
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.dataset.SubjectId
 import scalafim.estimates.{DfRole, PoolingScope, ScientificFact}
 import scalafim.fmri.group.*
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import scalafim.fmri.mvpa.group.*
-import scalafim.fmri.mvpa.measurement.*
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.measurement.*
+import mvpa4s.pattern.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class SubjectGroupSummarySuite extends munit.FunSuite:
@@ -23,8 +25,8 @@ class SubjectGroupSummarySuite extends munit.FunSuite:
   private def close(left: DMat, expected: DMat, tolerance: Double = 1e-10): Unit =
     assertEquals((left.rows, left.cols), (expected.rows, expected.cols))
     for i <- 0 until left.rows; j <- 0 until left.cols do assertEqualsDouble(left(i, j), expected(i, j), tolerance, s"$i,$j")
-  private val planId = PlanId.derived(EstimandId("subject-group-suite"), Vector(AxisSignature.unsafe("0" * 64)),
-    AxisSignature.unsafe("1" * 64), AxisSignature.unsafe("2" * 64), "evidence", "design", "frame", "question",
+  private val planId = MvpaFixtures.unsafePlanId(EstimandId("subject-group-suite"), Vector(MvpaFixtures.unsafeSignature("0" * 64)),
+    MvpaFixtures.unsafeSignature("1" * 64), MvpaFixtures.unsafeSignature("2" * 64), "evidence", "design", "frame", "question",
     Vector.empty, Vector.empty, "reduction", Vector.empty, Set.empty)
   private def exposure(identity: String, result: String = "discovery") =
     EvidenceExposure.internal(ExposureReference(planId, identity, "fixture provenance", ResultIdentity(result)))

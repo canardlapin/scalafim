@@ -6,7 +6,7 @@ import gale.linalg.DMat
 import multivar.core.SemanticSpace
 import resample4s.core.{DigestAlgorithm, Labels, PlanReceipt}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, EvidenceIdentity, MultiResponse, Observations}
+import mvpa4s.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, EvidenceIdentity, MultiResponse, Observations}
 import scala.util.control.NonFatal
 
 final case class NativeAxisEntry private[predictive] (stableKey: String, nativeId: Long)
@@ -128,8 +128,8 @@ final case class NativeReadReceipt(
     targetCopiedCells: Long,
     maximumWorkspaceCells: Long,
     metadataIdentity: DataFingerprint,
-    observationsIdentity: scalafim.fmri.mvpa.EvidenceIdentity,
-    targetsIdentity: scalafim.fmri.mvpa.EvidenceIdentity
+    observationsIdentity: mvpa4s.EvidenceIdentity,
+    targetsIdentity: mvpa4s.EvidenceIdentity
 )
 
 enum AlderPredictiveAdmissionError:
@@ -213,7 +213,7 @@ object AlderPredictiveAdmission:
     */
   def nativeMeasurement[S <: SemanticSpace, N <: SemanticSpace, NK, L <: SemanticSpace, F <: SemanticSpace, M](
       observations: Observations[S, N],
-      measurement: scalafim.fmri.mvpa.measurement.MeasurementLeg[N, NK, L],
+      measurement: mvpa4s.measurement.MeasurementLeg[N, NK, L],
       targets: MultiResponse[S, F],
       metadata: Vector[M],
       metadataIdentity: DataFingerprint,

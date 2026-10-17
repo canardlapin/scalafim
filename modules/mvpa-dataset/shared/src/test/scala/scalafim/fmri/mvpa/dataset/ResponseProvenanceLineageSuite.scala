@@ -5,7 +5,7 @@ import cats.effect.unsafe.implicits.global
 import locus4s.provenance.*
 import multivar.core.SpaceRole
 import resample4s.core.{Draw, IndexSpace, Injection}
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, ReindexingLeg}
+import mvpa4s.{AxisRef, EvidenceSource, ReindexingLeg}
 import scalafim.response.*
 
 /** U0 specimen 3: a response read and MVPA evidence exchange one provider-owned

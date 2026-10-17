@@ -4,8 +4,8 @@ import scala.compiletime.testing.typeCheckErrors
 
 import locus4s.Region
 import multivar.core.SpaceRole
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.measurement.MeasurementId
+import mvpa4s.AxisRef
+import mvpa4s.measurement.MeasurementId
 
 class SpatialMeasurementScatterSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =
@@ -65,7 +65,7 @@ class SpatialMeasurementScatterSuite extends munit.FunSuite:
     )
 
     val errors = typeCheckErrors("""import locus4s.{FiniteDomain, Region}
-import scalafim.fmri.mvpa.measurement.MeasurementId
+import mvpa4s.measurement.MeasurementId
 import scalafim.fmri.mvpa.spatial.{SpatialLocalOutcome, SpatialMeasurementScatter, SpatialScatterAlgebra}
 def invalid[S, T](domain: FiniteDomain[S], support: Region[T]) =
   SpatialMeasurementScatter.scatter(domain, Vector(SpatialLocalOutcome(MeasurementId.unsafe("foreign"), support, 1.0, Right(1.0))), SpatialScatterAlgebra.weightedMeanDouble)

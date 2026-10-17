@@ -5,7 +5,7 @@ import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Result-boundary oracle: inspect shared temporal/preparation support using

@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.fit
 
 import gale.linalg.{DMat, Matrix}
 import multivar.family.canonical.{LdaObjective, TraceRidgeFraction, TrialNuisanceDesign, WithinScatterPolicy}
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 class SoftLdaSuite extends munit.FunSuite:
   private def config: SoftLdaConfig = SoftLdaConfig(WithinScatterPolicy.FixedTraceScaledRidge(TraceRidgeFraction.unsafe(0.05)))

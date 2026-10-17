@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.pipeline
 
-import scalafim.fmri.mvpa.execution.{UnitError, UnitEvaluation, UnitInterpreter}
+import mvpa4s.execution.{UnitError, UnitEvaluation, UnitInterpreter}
 import scalafim.pipeline.{ArtifactKind, LocalPipelineRunner, PipelineBuilder, PipelineError, PipelineStep, RunContext, StepId}
 
 /** Optional ScalaFIM pipeline interpretation of an MVPA work-unit evaluation.

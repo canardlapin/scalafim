@@ -6,7 +6,7 @@ import cats.Id
 import cats.data.EitherT
 import gale.linalg.{DMat, Matrix}
 import resample4s.core.Coverage
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 final class SwiftTargetCoding private (val values: Vector[(Double, ClassLabel)]):
   def classes: Vector[ClassLabel] = values.map(_._2)

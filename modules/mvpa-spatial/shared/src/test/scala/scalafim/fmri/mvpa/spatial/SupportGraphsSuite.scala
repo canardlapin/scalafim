@@ -2,8 +2,8 @@ package scalafim.fmri.mvpa.spatial
 
 import multivar.core.SpaceRole
 import munit.FunSuite
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.pattern.SupportTopology
+import mvpa4s.AxisRef
+import mvpa4s.pattern.SupportTopology
 import scalafim.surface.{TriangleMesh, VertexId}
 
 class SupportGraphsSuite extends FunSuite:

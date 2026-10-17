@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.dataset
 
 import multivar.core.SemanticSpace
 import resample4s.core.Reindexing
-import scalafim.fmri.mvpa.{ReindexingKind, ReindexingLeg}
+import mvpa4s.{ReindexingKind, ReindexingLeg}
 import scalafim.response.{DomainId, DuplicatePolicy, IndexError, OrderedIndices, TimeAxis, TimeDomain}
 
 enum ResponseReindexingError:

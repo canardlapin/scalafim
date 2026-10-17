@@ -1,8 +1,8 @@
 package scalafim.fmri.mvpa.artifacts
 
 import scalafim.estimates.FileReference
-import scalafim.fmri.mvpa.{AxisRecord, AxisRef}
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.{AxisRecord, AxisRef}
+import mvpa4s.pattern.*
 
 /** A declaration of an attempted fit. It deliberately makes no validity claim
   * beyond complete declared unit coverage. */

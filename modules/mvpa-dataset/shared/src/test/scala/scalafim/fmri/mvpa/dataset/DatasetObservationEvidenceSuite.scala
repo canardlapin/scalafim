@@ -20,7 +20,7 @@ import scalafim.dataset.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import alder.kernel.DataFingerprint
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import scalafim.fmri.mvpa.dataset.predictive.*
 import scalafim.image.SampleSpaces
 import scalafim.response.{InMemoryResponseSource, NonFinitePolicy, ResponseSchemaId, UnitId}
@@ -316,8 +316,8 @@ class DatasetObservationEvidenceSuite extends FunSuite:
 
   test("serialized columns refuse foreign datasets and distinct ordered sample origins"):
     def refuses(left: DatasetObservationEvidence, rightSide: DatasetObservationEvidence): Unit =
-      scalafim.fmri.mvpa.Column.decode(left.samples, right(rightSide.categoricalLabels).toRecord) match
-        case Left(scalafim.fmri.mvpa.EvidenceError.AxisMismatch("column rows", _, _)) => ()
+      mvpa4s.Column.decode(left.samples, right(rightSide.categoricalLabels).toRecord) match
+        case Left(mvpa4s.EvidenceError.AxisMismatch("column rows", _, _)) => ()
         case other => fail(s"expected foreign-axis refusal, got $other")
     val baseline = identityEvidence()
     refuses(baseline, identityEvidence(dataset = "different-domain"))
@@ -333,7 +333,7 @@ class DatasetObservationEvidenceSuite extends FunSuite:
     assertEquals(changedValues.samples.toRecord, baseline.samples.toRecord)
     assertEquals(changedLabels.neural.toRecord, baseline.neural.toRecord)
     assertEquals(changedValues.neural.toRecord, baseline.neural.toRecord)
-    assert(scalafim.fmri.mvpa.Column.decode(baseline.samples, right(changedLabels.categoricalLabels).toRecord).isRight)
+    assert(mvpa4s.Column.decode(baseline.samples, right(changedLabels.categoricalLabels).toRecord).isRight)
 
   test("neural coordinates bind mapping domain and shape while feature restriction retains sample coordinates"):
     def mapped(shape: Option[scalafim.dataset.DatasetShape], domain: String = "coordinate-domain") =

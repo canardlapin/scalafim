@@ -4,7 +4,7 @@ import multivar.core.*
 import multivar.family.canonical.*
 
 import gale.linalg.{CholeskyOptions, DMat, Matrix}
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 enum SoftLdaComponents:
   case Maximum

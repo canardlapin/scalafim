@@ -4,7 +4,7 @@ import gale.linalg.{DMat, Matrix}
 import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SpaceRole, ValueId, ValueIdentity}
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock}
-import scalafim.fmri.mvpa.{
+import mvpa4s.{
   AcquisitionCoordinates,
   AxisRef,
   EvidenceOrigins,
@@ -14,7 +14,7 @@ import scalafim.fmri.mvpa.{
   ValueSupport
 }
 import resample4s.core.{IndexSpace, Selection}
-import scalafim.fmri.mvpa.relation.*
+import mvpa4s.relation.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
@@ -26,7 +26,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     val effects = axis("effects", Vector("a", "b"))
     val neural = axis("voxels", Vector("0", "1"))
     val origins = ReadoutRelationOrigins("acquisition:r1", "response:r1", "readout:lss", "preparation:fixed", "noise:none", ReadoutRelationAccess.OneShot)
-    val expected = right(run.explicitPatterns(scalafim.fmri.mvpa.PatternCopyBudget(100000L))).value
+    val expected = right(run.explicitPatterns(mvpa4s.PatternCopyBudget(100000L))).value
     right(IdentifiedReadoutRelations.withRuns(partitions, effects, neural, Vector(RunReadoutRelation.oneShot(run, origins, resource)))(relations =>
       val actual = right(relations.relations.head.estimate(DMat.eye(neural.size)))
       assertMatrixClose(actual, expected)
@@ -108,7 +108,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     val scopedOrigins = ReadoutRelationOrigins("acquisition:r1", "response:r1", "readout:lss", "preparation:fixed", "noise:none", ReadoutRelationAccess.ScopedReplay("fixture", "v1"))
     val metric = Lin.fromDenseMatrix(DMat.eye(2), CoordinateEvidence.primal(neural.evidence), CoordinateEvidence.dual(neural.evidence), ValueIdentity.source(ValueId.unsafe("scoped-metric")), SemanticProvenance.source("fixture")).fold(error => fail(error.toString), identity)
     val experimental = Lin.fromDenseMatrix(DMat.eye(2), CoordinateEvidence.primal(effects.evidence), CoordinateEvidence.dual(effects.evidence), ValueIdentity.source(ValueId.unsafe("scoped-query")), SemanticProvenance.source("fixture")).fold(error => fail(error.toString), identity)
-    var escaped: () => Either[scalafim.fmri.mvpa.EvidenceError, scalafim.fmri.mvpa.relation.ScalarRelationStatistic] = () => Left(scalafim.fmri.mvpa.EvidenceError.InvalidSource("unset"))
+    var escaped: () => Either[mvpa4s.EvidenceError, mvpa4s.relation.ScalarRelationStatistic] = () => Left(mvpa4s.EvidenceError.InvalidSource("unset"))
     right(IdentifiedReadoutRelations.withRuns(partitions, effects, neural, Vector(RunReadoutRelation.scopedReplay(readoutRun("run-1"), scopedOrigins, resource))): relations =>
       val relation = relations.relations.head
       assert(relation.origins.access.isInstanceOf[RelationAccess.ScopedReplay])
@@ -118,7 +118,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
       Right(())
     )
     escaped() match
-      case Left(scalafim.fmri.mvpa.EvidenceError.InvalidSource(message)) => assert(message.contains("expired"))
+      case Left(mvpa4s.EvidenceError.InvalidSource(message)) => assert(message.contains("expired"))
       case other => fail(other.toString)
 
   test("two scoped native readouts match independent signed RDM and detached RSA oracles"):
@@ -135,7 +135,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     // Independent readout means [1,10], [2,20], [4,40]; identity signed
     // products are negative squared differences / two features.
     val expected = Vector(-50.5, -454.5, -202.0)
-    assertMatrixClose(right(runs.head.explicitPatterns(scalafim.fmri.mvpa.PatternCopyBudget(100000L))).value, DMat.dense(3, 2, Vector(1.0, 10.0, 2.0, 20.0, 4.0, 40.0)))
+    assertMatrixClose(right(runs.head.explicitPatterns(mvpa4s.PatternCopyBudget(100000L))).value, DMat.dense(3, 2, Vector(1.0, 10.0, 2.0, 20.0, 4.0, 40.0)))
     val metric = right(Lin.fromDenseMatrix(DMat.eye(2), CoordinateEvidence.primal(neural.evidence), CoordinateEvidence.dual(neural.evidence), ValueIdentity.source(ValueId.unsafe("oracle-metric")), SemanticProvenance.source("fixture")))
     val model = right(SquareRelationModel("oracle", Vector("a", "b", "c"), Map(("a", "b") -> 1.0, ("a", "c") -> 2.0, ("b", "c") -> 3.0), ValueIdentity.source(ValueId.unsafe("oracle-model")), "unit", "fixed", "none"))
     var escaped = Vector.empty[() => Unit]
@@ -188,7 +188,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     val declared = ReadoutRelationOrigins("acquisition:r1", "response:r1", "readout:lss", "preparation:fixed", "noise:none", ReadoutRelationAccess.ScopedReplay("fixture", "same-revision"))
     val metric = Lin.fromDenseMatrix(DMat.eye(2), CoordinateEvidence.primal(neural.evidence), CoordinateEvidence.dual(neural.evidence), ValueIdentity.source(ValueId.unsafe("same-metric")), SemanticProvenance.source("fixture")).fold(error => fail(error.toString), identity)
     val experimental = Lin.fromDenseMatrix(DMat.eye(2), CoordinateEvidence.primal(effects.evidence), CoordinateEvidence.dual(effects.evidence), ValueIdentity.source(ValueId.unsafe("same-query")), SemanticProvenance.source("fixture")).fold(error => fail(error.toString), identity)
-    var first: () => Either[scalafim.fmri.mvpa.EvidenceError, scalafim.fmri.mvpa.relation.ScalarRelationStatistic] = () => Left(scalafim.fmri.mvpa.EvidenceError.InvalidSource("unset"))
+    var first: () => Either[mvpa4s.EvidenceError, mvpa4s.relation.ScalarRelationStatistic] = () => Left(mvpa4s.EvidenceError.InvalidSource("unset"))
     var closeSawExpired = false
     val closing = new ReadoutResource:
       def acquire(): Either[String, Unit] = Right(())
@@ -246,7 +246,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
       assertEquals(closed,0)
       val witness = relationWitness(relations.relations.head.origins.access)
       assert(witness.isActive, "rejected nested acquisition preserves the outer witness")
-      assertMatrixClose(right(relations.relations.head.estimate(DMat.eye(2))),right(readoutRun("run-1").explicitPatterns(scalafim.fmri.mvpa.PatternCopyBudget(100000L))).value)
+      assertMatrixClose(right(relations.relations.head.estimate(DMat.eye(2))),right(readoutRun("run-1").explicitPatterns(mvpa4s.PatternCopyBudget(100000L))).value)
       Right(())
     )
     assertEquals(closed,1)
@@ -268,7 +268,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
 
   test("task failure and multiple returned or thrown close failures are preserved"):
     var closed = Vector.empty[String]
-    var witnesses = Vector.empty[scalafim.fmri.mvpa.relation.ScopeReplay]
+    var witnesses = Vector.empty[mvpa4s.relation.ScopeReplay]
     def owned(name: String, throws: Boolean) = new ReadoutResource:
       def acquire(): Either[String,Unit] = Right(())
       def close(): Either[String,Unit] =
@@ -286,7 +286,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     assertEquals(result,Left(IdentifiedReadoutRelationError.TaskAndCloseFailure(IdentifiedReadoutRelationError.TaskFailure("task-fault"),Vector("close-throw","close-left"))))
 
   test("foreign residual source is rejected before any capability callback"):
-    import scalafim.fmri.mvpa.relation.*
+    import mvpa4s.relation.*
     given Estimability[Int] with
       def effectEstimability(value: Int): Vector[EffectEstimability] = throw IllegalStateException("poison capability")
     val result = IdentifiedReadoutRelations.withRuns(axis("runs",Vector("run-1")),axis("effects",Vector("a","b")),axis("voxels",Vector("0","1")),Vector(RunReadoutRelation.oneShot(readoutRun("run-1"),origins,resource))): relations =>

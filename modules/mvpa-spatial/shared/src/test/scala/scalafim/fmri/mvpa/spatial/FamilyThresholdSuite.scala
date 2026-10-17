@@ -1,11 +1,13 @@
-package scalafim.fmri.mvpa.analysis
+package scalafim.fmri.mvpa.spatial
 
+import mvpa4s.testkit.MvpaFixtures
+import mvpa4s.analysis.*
 import gale.backend.Backend.given
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.kernel.Seed
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.*
+import mvpa4s.pattern.*
 import scalafim.fmri.mvpa.spatial.*
 import scalafim.fmri.threshold.{Alpha, MaxNull, MaxNullDistribution, NullReference, ThresholdAlternative, ThresholdCutoff}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
@@ -18,8 +20,8 @@ class FamilyThresholdSuite extends munit.FunSuite:
   private def source(name: String) =
     val id = SourceId.unsafe(name)
     right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"$name-root"), id)))
-  private val plan = PlanId.derived(EstimandId("family-threshold-suite"), Vector(AxisSignature.unsafe("0" * 64)),
-    AxisSignature.unsafe("1" * 64), AxisSignature.unsafe("2" * 64), "evidence", "design", "frame", "question",
+  private val plan = MvpaFixtures.unsafePlanId(EstimandId("family-threshold-suite"), Vector(MvpaFixtures.unsafeSignature("0" * 64)),
+    MvpaFixtures.unsafeSignature("1" * 64), MvpaFixtures.unsafeSignature("2" * 64), "evidence", "design", "frame", "question",
     Vector.empty, Vector.empty, "reduction", Vector.empty, Set.empty)
 
   private final class Fixture:

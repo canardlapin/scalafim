@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.dataset.predictive
 import alder.kernel.DataFingerprint
 import gale.linalg.DMat
 import multivar.core.SpaceRole
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 class AlderCrossDecodingSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

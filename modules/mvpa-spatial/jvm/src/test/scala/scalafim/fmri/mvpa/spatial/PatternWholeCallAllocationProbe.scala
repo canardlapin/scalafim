@@ -6,10 +6,10 @@ import gale.optim.{FirstOrderConfig, FirstOrderTolerance}
 import java.lang.management.ManagementFactory
 import locus4s.Region
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations}
-import scalafim.fmri.mvpa.analysis.*
-import scalafim.fmri.mvpa.measurement.MeasurementId
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.{AxisRef, EvidenceSource, MultiResponse, Observations}
+import mvpa4s.analysis.*
+import mvpa4s.measurement.MeasurementId
+import mvpa4s.pattern.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Complete adopted preparation -> two-stage fit -> prediction -> native

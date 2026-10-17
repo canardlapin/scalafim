@@ -3,8 +3,8 @@ package scalafim.fmri.mvpa.artifacts
 import gale.linalg.DMat
 import java.nio.file.Files
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.AxisRef
+import mvpa4s.pattern.*
 
 class PatternPredictionArchiveSuite extends munit.FunSuite:
   private def right[A](v: Either[?,A]): A = v.fold(e=>fail(e.toString),identity)

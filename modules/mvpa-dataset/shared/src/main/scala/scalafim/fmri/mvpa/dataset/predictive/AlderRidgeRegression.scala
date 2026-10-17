@@ -11,7 +11,7 @@ import gale.linalg.{DMat, Matrix}
 import multivar.core.SemanticSpace
 import resample4s.core.{Coverage, DigestAlgorithm, Labels, PlanReceipt, UnitKey}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, ValidationDesign}
+import mvpa4s.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, ValidationDesign}
 
 /** Distinct, finite, non-negative penalties searched with one shared value for
   * every response column. Grid order is the tie-break order.

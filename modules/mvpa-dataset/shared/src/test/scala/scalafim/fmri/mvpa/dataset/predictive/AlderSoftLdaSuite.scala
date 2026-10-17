@@ -6,7 +6,7 @@ import multivar.core.SpaceRole
 import multivar.family.canonical.{TraceRidgeFraction, TrialNuisanceDesign, WithinScatterPolicy}
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import scalafim.fmri.mvpa.fit.*
 
 class AlderSoftLdaSuite extends munit.FunSuite:

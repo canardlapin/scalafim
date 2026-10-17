@@ -5,7 +5,7 @@ import alder.kernel.*
 import cats.Id
 import cats.data.EitherT
 import gale.linalg.{DMat, Matrix}
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 enum CrossDecodingPreparationScope:
   case Identity

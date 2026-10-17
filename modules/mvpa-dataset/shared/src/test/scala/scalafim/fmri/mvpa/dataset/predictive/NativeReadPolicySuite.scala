@@ -4,7 +4,7 @@ import alder.kernel.DataFingerprint
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, MultiResponse, Observations}
+import mvpa4s.{AxisRef, EvidenceSource, MultiResponse, Observations}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 class NativeReadPolicySuite extends FunSuite:

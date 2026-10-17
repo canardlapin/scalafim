@@ -2,10 +2,10 @@ package scalafim.fmri.mvpa.fit
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock}
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import gale.linalg.{DMat, Matrix}
 import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SpaceRole, ValueId, ValueIdentity}
-import scalafim.fmri.mvpa.relation.*
+import mvpa4s.relation.*
 
 class BetaFreeRsaAcceptanceSuite extends munit.FunSuite:
 

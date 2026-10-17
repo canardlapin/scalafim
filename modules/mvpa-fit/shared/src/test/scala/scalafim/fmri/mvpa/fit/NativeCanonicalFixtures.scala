@@ -3,8 +3,8 @@ package scalafim.fmri.mvpa.fit
 import gale.linalg.DMat
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import scalafim.dataset.RunId
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
-import scalafim.fmri.mvpa.analysis.*
+import mvpa4s.{AxisRef, EvidenceSource, Observations}
+import mvpa4s.analysis.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
 /** Test-only native run-set construction. It deliberately binds each run to a

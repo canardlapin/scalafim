@@ -6,7 +6,7 @@ import cats.Id
 import cats.data.EitherT
 import gale.linalg.{DMat, Matrix}
 import resample4s.core.Coverage
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 final case class AlderFeatureModelFoldFit(
     unit: resample4s.core.UnitKey,

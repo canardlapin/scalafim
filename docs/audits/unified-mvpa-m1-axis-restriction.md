@@ -2,7 +2,7 @@
 
 Historical packet evidence. Legacy API references below describe the recorded
 base revision, not the current public surface. See the
-[native MVPA documentation](../../modules/mvpa/README.md) for current callers.
+[native MVPA documentation](https://github.com/canardlapin/mvpa4s/blob/main/docs/core.md) for current callers.
 
 Recorded: 2026-09-14
 

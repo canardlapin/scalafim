@@ -1,11 +1,12 @@
 package scalafim.fmri.mvpa.dataset.predictive
 
+import mvpa4s.reference.{MvpaMigrationParityFixtures, MvpaRReferenceFixtures}
 import alder.kernel.DataFingerprint
 import gale.linalg.DMat
 import multivar.core.SpaceRole
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 /** Frozen independent R expectations survive deletion of the old executors. */
 class NativePredictiveParitySuite extends munit.FunSuite:

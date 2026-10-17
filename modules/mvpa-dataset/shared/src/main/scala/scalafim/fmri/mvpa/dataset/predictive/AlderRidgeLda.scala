@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.dataset.predictive
 import alder.kernel.{Audit, DataFingerprint}
 import gale.linalg.DMat
 import resample4s.core.Coverage
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 
 /** Fold-level evidence for the regularized LDA head. */
 final case class RidgeLdaFoldFit(

@@ -6,8 +6,8 @@ import java.nio.file.Files
 import multivar.core.SpaceRole
 import scalafim.archive.io.LocalObjectStore
 import scalafim.estimates.FileReference
-import scalafim.fmri.mvpa.AxisRef
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.AxisRef
+import mvpa4s.pattern.*
 
 class LocalPatternArchiveSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(e => fail(e.toString), identity)

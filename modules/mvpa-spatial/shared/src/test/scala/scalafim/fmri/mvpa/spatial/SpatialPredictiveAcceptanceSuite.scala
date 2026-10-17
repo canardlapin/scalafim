@@ -5,9 +5,9 @@ import gale.linalg.DMat
 import locus4s.{Relation, Region, Selection}
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.DigestAlgorithm
-import scalafim.fmri.mvpa.*
+import mvpa4s.*
 import scalafim.fmri.mvpa.dataset.predictive.*
-import scalafim.fmri.mvpa.measurement.*
+import mvpa4s.measurement.*
 import scalafim.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, Searchlight}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}

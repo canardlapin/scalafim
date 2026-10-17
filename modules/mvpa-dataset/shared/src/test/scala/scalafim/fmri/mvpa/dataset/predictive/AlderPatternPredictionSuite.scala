@@ -5,8 +5,8 @@ import alder.kernel.*
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import munit.FunSuite
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.*
+import mvpa4s.pattern.*
 
 class AlderPatternPredictionSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)

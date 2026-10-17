@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.spatial
 
 import locus4s.{Index, Region}
-import scalafim.fmri.mvpa.measurement.MeasurementId
+import mvpa4s.measurement.MeasurementId
 import locus4s.data.VectorField
 
 /** A completed local analysis or a visible local failure. Failure never turns

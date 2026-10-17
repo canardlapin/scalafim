@@ -6,8 +6,8 @@ import gale.optim.{FirstOrderConfig, FirstOrderTolerance}
 import multivar.core.SpaceRole
 import resample4s.core.{Coverage, DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.*
+import mvpa4s.pattern.*
 import multivar.core.{ValueId, ValueIdentity}
 import locus4s.provenance.{SourceId, ProvenanceId, Provenance}
 

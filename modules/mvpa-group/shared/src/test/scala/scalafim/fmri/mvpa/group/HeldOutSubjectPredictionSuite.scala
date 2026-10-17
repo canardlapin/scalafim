@@ -1,10 +1,12 @@
-package scalafim.fmri.mvpa.analysis
+package scalafim.fmri.mvpa.group
 
+import mvpa4s.testkit.MvpaFixtures
+import mvpa4s.analysis.*
 import gale.backend.Backend.given
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
-import scalafim.fmri.mvpa.*
-import scalafim.fmri.mvpa.pattern.*
+import mvpa4s.*
+import mvpa4s.pattern.*
 import scalafim.fmri.mvpa.group.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
@@ -15,7 +17,7 @@ class HeldOutSubjectPredictionSuite extends munit.FunSuite:
   private def source(name: String) =
     val id = SourceId.unsafe(name)
     right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"$name-root"), id)))
-  private val planId = PlanId.derived(EstimandId("component-suite"), Vector(AxisSignature.unsafe("0" * 64)), AxisSignature.unsafe("1" * 64), AxisSignature.unsafe("2" * 64), "evidence", "design", "frame", "question", Vector.empty, Vector.empty, "reduction", Vector.empty, Set.empty)
+  private val planId = MvpaFixtures.unsafePlanId(EstimandId("component-suite"), Vector(MvpaFixtures.unsafeSignature("0" * 64)), MvpaFixtures.unsafeSignature("1" * 64), MvpaFixtures.unsafeSignature("2" * 64), "evidence", "design", "frame", "question", Vector.empty, Vector.empty, "reduction", Vector.empty, Set.empty)
   private def exposure(identity: String) = EvidenceExposure.internal(ExposureReference(planId, identity, "fixture", ResultIdentity("component-result")))
 
   private final class Fixture(mapping: Vector[Int] = Vector.range(0, 8), unitCount: Int = 8, includeIntercept: Boolean = true, trainingName: String = "training", assessmentName: String = "confirmation"):

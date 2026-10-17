@@ -48,7 +48,7 @@ cross-compiled sbt build.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
 - `phrf-comparison`: unpublished comparative-evaluation preparation and scoring on JVM/Scala.js, with JVM runners and custody tooling. [Pilot integration scope](modules/phrf-comparison/README.md) excludes the pending S10 launch and rehearsal.
-- `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
+- MVPA core (identified evidence, relational/pattern analyses, measurement and execution contracts) lives in standalone [`mvpa4s`](https://github.com/canardlapin/mvpa4s), pinned by `mvpa4sRevision`; the `mvpa-*` modules below are ScalaFIM integrations over it.
 - `mvpa-pipeline`: optional ScalaFIM pipeline interpreter for MVPA work units; the core runs directly and owns resource/commit semantics.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
@@ -113,7 +113,7 @@ source revision; `locus-data` retains only ScalaFIM-specific adapters and
 higher-level parcellation and searchlight policy. Aggregation over
 parcellations is owned by `locus4s.data.Aggregation`. Source-lineage DAGs,
 their identifiers and canonical digest framing are owned by the optional
-`locus4s-provenance` artifact, shared directly by `response` and `mvpa`.
+`locus4s-provenance` artifact, shared directly by `response` and `mvpa4s`.
 
 Generic dense and sparse matrices, linear operators, factorizations, and
 spectral algorithms now live in standalone
@@ -280,8 +280,6 @@ sbt archiveZarrJVM/test
 sbt archiveZarrJS/test
 sbt datasetZarrJVM/test
 sbt datasetZarrJS/test
-sbt mvpaJVM/test
-sbt mvpaJS/test
 sbt mvpaPipelineJVM/test
 sbt mvpaPipelineJS/test
 sbt mvpaFitJVM/test

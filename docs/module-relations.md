@@ -25,7 +25,7 @@ The estimate artifact modules form a separate reader boundary:
 ```text
 estimates     -> archive, image
 estimates-io  -> estimates
-mvpa-artifacts -> mvpa, estimates-io
+mvpa-artifacts -> mvpa4s, estimates-io
 fit-estimates -> fit, estimates, group
 ```
 
@@ -39,7 +39,7 @@ response
 +-- response-laws   reusable cross-platform law checks; test-support only
 +-- dataset         response adapters; response has no internal dependencies
                     (external: Ravel and the optional locus4s-provenance lineage
-                    artifact, which mvpa also consumes directly)
+                    artifact, which mvpa4s also consumes directly)
 
 standalone locus4s
 +-- locus-data
@@ -48,7 +48,7 @@ standalone locus4s
 |   +-- atlas         also depends on image, surface, spatial, transform, standalone graph4s
 |   +-- spatial       also depends on standalone Gale, image, surface, transform
 |   +-- dataset       also depends on response, image, hrf
-|   +-- mvpa-spatial  also depends on mvpa, image, surface, atlas
+|   +-- mvpa-spatial  also depends on mvpa4s, image, surface, atlas
 +-- latent            also depends on response, image
 +-- threshold         also depends on image
 +-- connectivity      also depends on standalone graph4s
@@ -59,11 +59,12 @@ standalone graph4s
 +-- surface           also depends on image, locus-data
 +-- atlas             also depends on image, surface, locus-data
 
+standalone mvpa4s (pinned; over Gale, locus4s, Multivar, Resample4s)
++-- mvpa-dataset      also depends on dataset, mvpa-fit
+
 standalone Gale
 +-- ar
 +-- design           also depends on hrf
-+-- mvpa
-|   +-- mvpa-dataset  also depends on dataset, mvpa-fit
 +-- threshold         also depends on image
 +-- motion            also depends on image
 +-- spatial           also depends on image, surface
@@ -71,8 +72,8 @@ standalone Gale
 +-- fit               also depends on model, ar
 +-- group             also depends on image, dataset, design, estimates
 
-pipeline + mvpa
-+-- mvpa-pipeline     optional interpreter; mvpa core has no pipeline dependency
+pipeline + mvpa4s
++-- mvpa-pipeline     optional interpreter; mvpa4s core has no pipeline dependency
 
 standalone Intaglio core
 +-- design                 also depends on hrf, standalone Gale
@@ -97,12 +98,12 @@ image
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-data, and standalone Gale
 +-- dataset          also depends on response, hrf, locus-data
-|   +-- mvpa-dataset  also depends on mvpa
+|   +-- mvpa-dataset  also depends on mvpa4s
 +-- transform        also depends on image4s-geometry, reframe4s
 +-- surface          also depends on transform
 |   +-- spatial        also depends on standalone Gale, image, transform
 |   +-- atlas          also depends on image, spatial, transform
-|   +-- mvpa-spatial   also depends on mvpa, image, atlas
+|   +-- mvpa-spatial   also depends on mvpa4s, image, atlas
 |   +-- surface-view   also depends on Intaglio core
 +-- threshold         also depends on standalone Gale
 +-- motion            also depends on image4s-geometry; bids4s on JVM
@@ -137,11 +138,11 @@ archive
 +-- interop-archived-response
     +-- also depends on response, latent, archive-lna, archive-zarr, and dataset
 
-fit + mvpa
+fit + mvpa4s
 +-- mvpa-fit          run-local trial-readout and pattern-operator composition
 
 standalone multivar
-+-- mvpa-fit          also depends on fit, mvpa
++-- mvpa-fit          also depends on fit, mvpa4s
 ```
 
 Graphics is developed in standalone
@@ -205,14 +206,14 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `locus-data`; standalone Gale | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`; standalone Gale | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `model`, `ar`; standalone Gale | Model description, dataset storage, hidden blocking readers, or group inference. |
-| `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `locus-data`; standalone Gale, locus4s-provenance, multivar, multivar-inference and Resample4s | Response types (axes and reindexing use locus4s and Resample4s; response selections are built in downstream adapters), pipeline runtime, spatial object adapters or dataset backend logic. |
-| `mvpa-pipeline` | Optional synchronous interpretation of MVPA unit evaluation through the existing local pipeline runner. | `mvpa`, `pipeline` | Scientific scheduling, seeds, resource cleanup, retry/commit policy or a second execution engine. |
-| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
+| `mvpa4s` (standalone, pinned) | Identified MVPA evidence, axes and reindexing, relational/pattern analyses, measurement and execution contracts; `mvpa4s-testkit` supplies test-scope fixture identities and R parity reference data. | standalone Gale, locus4s core/provenance, Multivar, Multivar inference, Resample4s | Response, pipeline, imaging, surface, atlas, dataset or fMRI-fit types; ScalaFIM dependencies of any kind. |
+| `mvpa-pipeline` | Optional synchronous interpretation of MVPA unit evaluation through the existing local pipeline runner. | `mvpa4s`, `pipeline` | Scientific scheduling, seeds, resource cleanup, retry/commit policy or a second execution engine. |
+| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa4s`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
-| `mvpa-dataset` | Typed dataset and identified Alder lifecycle adapters; operator SoftLda delegates to the single-fit `mvpa-fit` kernel. | `mvpa`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
-| `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data`, `threshold` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
+| `mvpa-dataset` | Typed dataset and identified Alder lifecycle adapters; operator SoftLda delegates to the single-fit `mvpa-fit` kernel. | `mvpa4s`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
+| `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa4s`, `image`, `surface`, `atlas`, `locus-data`, `threshold` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
-| `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
+| `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
 | `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
@@ -328,15 +329,15 @@ fit -> group -> threshold
 image --------^       ^
 dataset -------------+
 
-dataset -> mvpa-dataset -> mvpa
-image/surface/atlas -> mvpa-spatial -> mvpa
-fit + mvpa -> mvpa-fit
-mvpa + group -> mvpa-group
+dataset -> mvpa-dataset -> mvpa4s
+image/surface/atlas -> mvpa-spatial -> mvpa4s
+fit + mvpa4s -> mvpa-fit
+mvpa4s + group -> mvpa-group
 standalone multivar-inference (external)
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
-modeling module. `mvpa` is spatially agnostic; `mvpa-dataset` converts selected
+modeling module. `mvpa4s` is spatially agnostic; `mvpa-dataset` converts selected
 dataset rows into pattern sources, while `mvpa-spatial` converts spatial objects
 into feature sets.
 
@@ -479,7 +480,7 @@ There are intentionally two layers:
   backends, phase/HMM/TVGL/SRLC internals, and scheduler-specific execution
   outside this structural core.
 - Put dataset/sample adapters for MVPA in `mvpa-dataset`; put spatial feature
-  adapters for MVPA in `mvpa-spatial`; keep `mvpa` over plain sample-by-feature
+  adapters for MVPA in `mvpa-spatial`; keep `mvpa4s` over plain sample-by-feature
   matrices and linear operators. Put fit-owned time-to-trial readout composition,
   run stacking, and trial/run metadata in `mvpa-fit` so neither lower module
   depends back on the other.
