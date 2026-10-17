@@ -80,8 +80,8 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     val next = SurfaceLayerTransaction.prepare(viewer, state(viewer),
       Vector(colors(Vector.fill(3)(blue)))).toOption.get.preparedPlan
     val probe = JavaFxSurfaceProbe.compile(before).toOption.get
-    val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() =>
-      probe.colorPreparationBasis(new JavaFxColorPreparationToken).prepare(next)).get().toOption.get
+    val basis = probe.colorPreparationBasis(new JavaFxColorPreparationToken)
+    val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() => basis.prepare(next)).get().toOption.get
     val config = JavaFxAtlasConfig.Default
     val compared = prepared.contentChanges(Some(before), next, config)
     assertEquals(compared, Some(JavaFxSurfaceProgram.ContentChanges(false, false, true)))
@@ -127,6 +127,29 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     assert(prepared.contentChanges(Some(before.copy(receipt = rekeyed.receipt)), next, config).isEmpty)
     assert(JavaFxSurfaceProgram.compile(Some(before), rekeyed).dirty.geometry)
     assert(prepared.contentChanges(Some(before), next, JavaFxAtlasConfig.make(tileSize = 8).toOption.get).isEmpty)
+
+  test("worker comparison retains world-Lambert atlas updates when only lighting changes"):
+    val viewer = model
+    val full = SurfaceLighting.directional(1.0, 0.0, 0.0, 0.0, 1.0).toOption.get
+    val quarter = SurfaceLighting.directional(0.25, 0.0, 0.0, 0.0, 1.0).toOption.get
+    val before = SurfaceCompiler.compile(viewer, state(viewer).copy(lighting = full)).toOption.get
+    val next = before.copy(lighting = quarter)
+    val config = JavaFxAtlasConfig.make(lightingPolicy = JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+    val ordinary = JavaFxSurfaceProbe.compile(before, JavaFxMaterialMode.Lit, config).toOption.get
+    val worker = JavaFxSurfaceProbe.compile(before, JavaFxMaterialMode.Lit, config).toOption.get
+    val basis = worker.colorPreparationBasis(new JavaFxColorPreparationToken)
+    val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() => basis.prepare(next)).get().toOption.get
+    val compared = prepared.contentChanges(Some(before), next, config)
+    assertEquals(compared, Some(JavaFxSurfaceProgram.ContentChanges(false, false, true)))
+    val program = JavaFxSurfaceProgram.compileWithContent(Some(before), next, config, compared)
+    assert(program.dirty.material && program.dirty.layerData && !program.dirty.geometry)
+    ordinary.updateColors(next).toOption.get
+    worker.updatePreparedColors(prepared, next, commit = false).toOption.get
+    val expected = ordinary.chunks.head.atlas.image
+    val actual = worker.chunks.head.atlas.image
+    assertEquals(actual.getPixelReader.getArgb(1, 1), 0xff400000)
+    for y <- 0 until actual.getHeight.toInt; x <- 0 until actual.getWidth.toInt do
+      assertEquals(actual.getPixelReader.getArgb(x, y), expected.getPixelReader.getArgb(x, y))
 
   test("prepared colours remain compatible with a camera-only packet update"):
     val viewer = model
@@ -217,6 +240,12 @@ object JavaFxColorPreparationProbe:
         require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == 0xff0000ff,
           "published same-key plan differs from displayed pixels")
         require(renderer.render(collision, collidingPrepared).isLeft, "same-key update did not expire preparation")
+        val beforeMaterial = renderer.colorPreparationBasis.toOption.get.prepare(collision).toOption.get
+        val lighting = SurfaceLighting.directional(0.3, 0.7, 0.0, 0.0, 1.0).toOption.get
+        val materialReceipt = renderer.render(collision.copy(lighting = lighting)).toOption.get
+        require(materialReceipt.dirty.material, "lighting change did not reach the native material")
+        require(renderer.render(collision, beforeMaterial).isLeft,
+          "successful material change did not expire preparation")
         println("PASS: same-key colour upload; worker preparation; live camera/selection; foreign and stale A-B-A refusal; invalid camera refusal preserves token, pixels and plan; failed publication preserves controller; no geometry upload")
       catch case error: Throwable => failure = Some(error)
       finally
