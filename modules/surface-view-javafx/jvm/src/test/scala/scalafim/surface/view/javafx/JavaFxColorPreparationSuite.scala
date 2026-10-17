@@ -74,6 +74,83 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     val equivalent = before.copy(layers = before.layers.map(l => l.copy(colors = new IntBufferView(l.colors.unsafeArray.clone()))))
     assert(JavaFxSurfaceProgram.compile(Some(before), equivalent).dirty.isClean)
 
+  test("worker content comparisons retain live camera layout and clipping decisions"):
+    val viewer = model
+    val before = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
+    val next = SurfaceLayerTransaction.prepare(viewer, state(viewer),
+      Vector(colors(Vector.fill(3)(blue)))).toOption.get.preparedPlan
+    val probe = JavaFxSurfaceProbe.compile(before).toOption.get
+    val basis = probe.colorPreparationBasis(new JavaFxColorPreparationToken)
+    val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() => basis.prepare(next)).get().toOption.get
+    val config = JavaFxAtlasConfig.Default
+    val compared = prepared.contentChanges(Some(before), next, config)
+    assertEquals(compared, Some(JavaFxSurfaceProgram.ContentChanges(false, false, true)))
+    assertEquals(JavaFxSurfaceProgram.compileWithContent(Some(before), next, config, compared),
+      JavaFxSurfaceProgram.compile(Some(before), next, config))
+
+    val matrix = next.camera.viewMatrix.unsafeArray.clone()
+    matrix(3) += 0.25f
+    val live = next.copy(camera = next.camera.copy(viewMatrix = new FloatBufferView(matrix)),
+      viewportFit = SurfaceViewportFit.Contain(2.0), clipping = SurfaceClipping.NearFar(0.1, 100.0))
+    val liveCompared = prepared.contentChanges(Some(before), live, config)
+    assert(liveCompared.nonEmpty)
+    val program = JavaFxSurfaceProgram.compileWithContent(Some(before), live, config, liveCompared)
+    assert(program.dirty.camera && program.dirty.layout && program.dirty.clipping && program.dirty.layerData)
+    assert(!program.dirty.geometry)
+    assertEquals(program, JavaFxSurfaceProgram.compile(Some(before), live, config))
+
+  test("content comparison bindings reject changed baseline target keys and configuration"):
+    val viewer = model
+    val before = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
+    val next = SurfaceLayerTransaction.prepare(viewer, state(viewer),
+      Vector(colors(Vector.fill(3)(blue)))).toOption.get.preparedPlan
+    val probe = JavaFxSurfaceProbe.compile(before).toOption.get
+    val prepared = probe.colorPreparationBasis(new JavaFxColorPreparationToken).prepare(next).toOption.get
+    val config = JavaFxAtlasConfig.Default
+    val equivalent = before.copy(meshes = before.meshes.map(m =>
+      m.copy(positions = new FloatBufferView(m.positions.unsafeArray.clone()))))
+    assert(prepared.contentChanges(Some(equivalent), next, config).isEmpty)
+    assert(!JavaFxSurfaceProgram.compileWithContent(Some(equivalent), next, config, None).dirty.geometry)
+
+    val changed = before.copy(meshes = before.meshes.map(m =>
+      m.copy(positions = new FloatBufferView(m.positions.unsafeArray.map(_ + 1.0f)))))
+    val fallback = prepared.contentChanges(Some(changed), next, config)
+    assert(fallback.isEmpty)
+    assert(JavaFxSurfaceProgram.compileWithContent(Some(changed), next, config, fallback).dirty.geometry)
+    val lit = SurfaceLighting.directional(0.3, 0.7, 0.0, 0.0, 1.0).toOption.get
+    assert(prepared.contentChanges(Some(before.copy(lighting = lit)), next, config).isEmpty)
+    val substituted = next.copy(layers = next.layers.map(l =>
+      l.copy(colors = new IntBufferView(Array.fill(3)(red.toPackedInt)))))
+    assert(prepared.contentChanges(Some(before), substituted, config).isEmpty)
+    val rekeyed = next.copy(receipt = next.receipt.copy(meshKeys = Vector(SurfaceResourceKey("changed"))))
+    assert(prepared.contentChanges(Some(before), rekeyed, config).isEmpty)
+    assert(prepared.contentChanges(Some(before.copy(receipt = rekeyed.receipt)), next, config).isEmpty)
+    assert(JavaFxSurfaceProgram.compile(Some(before), rekeyed).dirty.geometry)
+    assert(prepared.contentChanges(Some(before), next, JavaFxAtlasConfig.make(tileSize = 8).toOption.get).isEmpty)
+
+  test("worker comparison retains world-Lambert atlas updates when only lighting changes"):
+    val viewer = model
+    val full = SurfaceLighting.directional(1.0, 0.0, 0.0, 0.0, 1.0).toOption.get
+    val quarter = SurfaceLighting.directional(0.25, 0.0, 0.0, 0.0, 1.0).toOption.get
+    val before = SurfaceCompiler.compile(viewer, state(viewer).copy(lighting = full)).toOption.get
+    val next = before.copy(lighting = quarter)
+    val config = JavaFxAtlasConfig.make(lightingPolicy = JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+    val ordinary = JavaFxSurfaceProbe.compile(before, JavaFxMaterialMode.Lit, config).toOption.get
+    val worker = JavaFxSurfaceProbe.compile(before, JavaFxMaterialMode.Lit, config).toOption.get
+    val basis = worker.colorPreparationBasis(new JavaFxColorPreparationToken)
+    val prepared = java.util.concurrent.CompletableFuture.supplyAsync(() => basis.prepare(next)).get().toOption.get
+    val compared = prepared.contentChanges(Some(before), next, config)
+    assertEquals(compared, Some(JavaFxSurfaceProgram.ContentChanges(false, false, true)))
+    val program = JavaFxSurfaceProgram.compileWithContent(Some(before), next, config, compared)
+    assert(program.dirty.material && program.dirty.layerData && !program.dirty.geometry)
+    ordinary.updateColors(next).toOption.get
+    worker.updatePreparedColors(prepared, next, commit = false).toOption.get
+    val expected = ordinary.chunks.head.atlas.image
+    val actual = worker.chunks.head.atlas.image
+    assertEquals(actual.getPixelReader.getArgb(1, 1), 0xff400000)
+    for y <- 0 until actual.getHeight.toInt; x <- 0 until actual.getWidth.toInt do
+      assertEquals(actual.getPixelReader.getArgb(x, y), expected.getPixelReader.getArgb(x, y))
+
   test("prepared colours remain compatible with a camera-only packet update"):
     val viewer = model
     val before = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
@@ -90,7 +167,7 @@ class JavaFxColorPreparationSuite extends munit.FunSuite:
     val viewer = model
     val plan = SurfaceCompiler.compile(viewer, state(viewer)).toOption.get
     val config = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.AdaptiveAffineOpaque).toOption.get
-    val basis = new JavaFxColorPreparationBasis(new JavaFxColorPreparationToken, plan.meshes, Vector.empty, Vector.empty, config)
+    val basis = new JavaFxColorPreparationBasis(new JavaFxColorPreparationToken, plan, Vector.empty, Vector.empty, config)
     assertEquals(basis.prepare(plan).swap.toOption, Some(JavaFxSurfaceError.SamplerUnqualified(config.encoding)))
 
 /** Actual Application-Thread publication; no GPU interpolation qualification claim. */
@@ -163,6 +240,12 @@ object JavaFxColorPreparationProbe:
         require(renderer.chunks.head.atlas.image.getPixelReader.getArgb(1, 1) == 0xff0000ff,
           "published same-key plan differs from displayed pixels")
         require(renderer.render(collision, collidingPrepared).isLeft, "same-key update did not expire preparation")
+        val beforeMaterial = renderer.colorPreparationBasis.toOption.get.prepare(collision).toOption.get
+        val lighting = SurfaceLighting.directional(0.3, 0.7, 0.0, 0.0, 1.0).toOption.get
+        val materialReceipt = renderer.render(collision.copy(lighting = lighting)).toOption.get
+        require(materialReceipt.dirty.material, "lighting change did not reach the native material")
+        require(renderer.render(collision, beforeMaterial).isLeft,
+          "successful material change did not expire preparation")
         println("PASS: same-key colour upload; worker preparation; live camera/selection; foreign and stale A-B-A refusal; invalid camera refusal preserves token, pixels and plan; failed publication preserves controller; no geometry upload")
       catch case error: Throwable => failure = Some(error)
       finally
