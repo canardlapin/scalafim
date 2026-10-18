@@ -21,7 +21,7 @@ import scalafim.dataset.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import alder.kernel.DataFingerprint
 import mvpa4s.*
-import scalafim.fmri.mvpa.dataset.predictive.*
+import mvpa4s.predictive.*
 import scalafim.image.SampleSpaces
 import scalafim.response.{InMemoryResponseSource, NonFinitePolicy, ResponseSchemaId, UnitId}
 import locus4s.provenance.SourceId

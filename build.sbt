@@ -80,14 +80,6 @@ lazy val alderKernelJVM = ProjectRef(alderBuild, "kernelJVM")
 lazy val alderKernelJS  = ProjectRef(alderBuild, "kernelJS")
 lazy val alderDataJVM   = ProjectRef(alderBuild, "dataJVM")
 lazy val alderDataJS    = ProjectRef(alderBuild, "dataJS")
-lazy val alderModelsLinearJVM = ProjectRef(alderBuild, "modelsLinearJVM")
-lazy val alderModelsLinearJS  = ProjectRef(alderBuild, "modelsLinearJS")
-lazy val alderRidgeGaleJVM    = ProjectRef(alderBuild, "ridgeGaleJVM")
-lazy val alderRidgeGaleJS     = ProjectRef(alderBuild, "ridgeGaleJS")
-lazy val alderTuneJVM        = ProjectRef(alderBuild, "tuneJVM")
-lazy val alderTuneJS         = ProjectRef(alderBuild, "tuneJS")
-lazy val alderMetricsJVM     = ProjectRef(alderBuild, "metricsJVM")
-lazy val alderMetricsJS      = ProjectRef(alderBuild, "metricsJS")
 
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
@@ -108,9 +100,9 @@ lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
 // mvpa4s owns identified MVPA evidence and analyses. Ordinary builds clone the
 // exact reviewed revision. Coordinated overrides are forwarded so mvpa4s
 // resolves the same provider builds as ScalaFIM.
-lazy val mvpa4sRevision = "0d617f0cddbc93dfb39bae7fa153e3cd24fa5dc0"
+lazy val mvpa4sRevision = "d7c482537b9332aaaec9670b7021f4c5135145a7"
 lazy val mvpa4sBuild = {
-  Seq("gale", "locus4s", "multivar", "resample4s").foreach { provider =>
+  Seq("alder", "gale", "locus4s", "multivar", "resample4s").foreach { provider =>
     sys.props
       .get(s"scalafim.$provider.build")
       .foreach(System.setProperty(s"mvpa4s.$provider.build", _))
@@ -124,6 +116,8 @@ lazy val mvpa4sCoreJVM    = ProjectRef(mvpa4sBuild, "coreJVM")
 lazy val mvpa4sCoreJS     = ProjectRef(mvpa4sBuild, "coreJS")
 lazy val mvpa4sTestkitJVM = ProjectRef(mvpa4sBuild, "testkitJVM")
 lazy val mvpa4sTestkitJS  = ProjectRef(mvpa4sBuild, "testkitJS")
+lazy val mvpa4sPredictiveJVM = ProjectRef(mvpa4sBuild, "predictiveJVM")
+lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
@@ -1329,8 +1323,8 @@ lazy val mvpaDataset =
     .settings(
       name := "scalafim-fmri-mvpa-dataset"
     )
-    .jvmConfigure(_.dependsOn(alderKernelJVM, alderDataJVM, alderModelsLinearJVM, alderRidgeGaleJVM, alderTuneJVM, alderMetricsJVM))
-    .jsConfigure(_.dependsOn(alderKernelJS, alderDataJS, alderModelsLinearJS, alderRidgeGaleJS, alderTuneJS, alderMetricsJS))
+    .jvmConfigure(_.dependsOn(mvpa4sPredictiveJVM, alderKernelJVM, alderDataJVM))
+    .jsConfigure(_.dependsOn(mvpa4sPredictiveJS, alderKernelJS, alderDataJS))
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaDatasetJS  = mvpaDataset.js

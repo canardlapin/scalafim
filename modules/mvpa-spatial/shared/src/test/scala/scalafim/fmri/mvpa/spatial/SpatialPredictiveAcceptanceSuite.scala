@@ -6,7 +6,7 @@ import locus4s.{Relation, Region, Selection}
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.DigestAlgorithm
 import mvpa4s.*
-import scalafim.fmri.mvpa.dataset.predictive.*
+import mvpa4s.predictive.*
 import mvpa4s.measurement.*
 import scalafim.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, Searchlight}

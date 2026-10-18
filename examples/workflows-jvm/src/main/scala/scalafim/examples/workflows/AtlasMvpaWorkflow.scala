@@ -7,7 +7,7 @@ import resample4s.core.DigestAlgorithm
 import scalafim.atlas.*
 import mvpa4s.*
 import mvpa4s.measurement.*
-import scalafim.fmri.mvpa.dataset.predictive.*
+import mvpa4s.predictive.*
 import scalafim.fmri.mvpa.spatial.*
 import scalafim.image.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}

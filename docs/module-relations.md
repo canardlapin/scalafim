@@ -59,8 +59,9 @@ standalone graph4s
 +-- surface           also depends on image, locus-data
 +-- atlas             also depends on image, surface, locus-data
 
-standalone mvpa4s (pinned; over Gale, locus4s, Multivar, Resample4s)
-+-- mvpa-dataset      also depends on dataset, mvpa-fit
+standalone mvpa4s (pinned; core over Gale, locus4s, Multivar, Resample4s;
+                   optional mvpa4s-predictive over Alder)
++-- mvpa-dataset      also depends on mvpa4s-predictive, dataset, mvpa-fit
 
 standalone Gale
 +-- ar
@@ -210,7 +211,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `mvpa-pipeline` | Optional synchronous interpretation of MVPA unit evaluation through the existing local pipeline runner. | `mvpa4s`, `pipeline` | Scientific scheduling, seeds, resource cleanup, retry/commit policy or a second execution engine. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa4s`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
-| `mvpa-dataset` | Typed dataset and identified Alder lifecycle adapters; operator SoftLda delegates to the single-fit `mvpa-fit` kernel. | `mvpa4s`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
+| `mvpa-dataset` | Typed dataset adapters and the fit-dependent soft-LDA Alder lifecycle, which delegates to the single-fit `mvpa-fit` kernel; generic Alder adapters live in `mvpa4s-predictive`. | `mvpa4s`, `mvpa4s-predictive`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa4s`, `image`, `surface`, `atlas`, `locus-data`, `threshold` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |

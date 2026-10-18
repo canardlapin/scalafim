@@ -7,6 +7,7 @@ import multivar.family.canonical.{TraceRidgeFraction, TrialNuisanceDesign, Withi
 import resample4s.core.{DigestAlgorithm, Labels}
 import resample4s.designs.FixedPartitions
 import mvpa4s.*
+import mvpa4s.predictive.*
 import scalafim.fmri.mvpa.fit.*
 
 class AlderSoftLdaSuite extends munit.FunSuite:

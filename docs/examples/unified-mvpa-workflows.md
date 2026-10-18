@@ -17,7 +17,7 @@ python3 tools/build/sbt-warm 'workflowExamplesJVM/runMain scalafim.examples.work
 builds nominal sample and neural axes, run-bound columns, an atlas measurement
 frame and `LeaveOneGroupOutDesign`. Each visited region enters
 `AlderPredictiveAdmission.nativeMeasurement` and
-`AlderSwiftCentroid.crossValidate`. Results retain feature identities, tested
+`AlderSwiftCentroid.crossValidate`, from `mvpa4s-predictive`. Results retain feature identities, tested
 sample count and accuracy. The example's separable synthetic data illustrate
 wiring, not real-data accuracy or a matched comparison.
 

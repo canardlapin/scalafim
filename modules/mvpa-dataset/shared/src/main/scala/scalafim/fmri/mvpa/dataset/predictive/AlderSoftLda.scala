@@ -8,6 +8,7 @@ import gale.linalg.{DMat, Matrix}
 import multivar.family.canonical.TrialNuisanceDesign
 import resample4s.core.Coverage
 import mvpa4s.*
+import mvpa4s.predictive.*
 import scalafim.fmri.mvpa.fit.*
 
 /** Admission stores only response metadata. Pattern values remain behind the
@@ -75,10 +76,7 @@ object AlderSoftLda:
       _ <- if trialNuisance.forall(_.samples == mapping.axis.size) then Right(()) else Left(AlderSoftLdaError.Admission(AlderPredictiveAdmissionError.MatrixShapeMismatch("trial nuisance", trialNuisance.fold(0)(_.samples), trialNuisance.fold(0)(_.columns), mapping.axis.size, -1)))
       required = targets.length.toLong + nuisanceCells
       _ <- if required <= budget.maximumCells then Right(()) else Left(AlderSoftLdaError.Budget(required, budget.maximumCells))
-      root <- alder.data.IdentifiedRows.fromRows(
-        mapping.nativeIds.zipWithIndex.map((id, ordinal) => id -> Example(AlderSoftLdaRow(id, ordinal), Array(targets(ordinal)), ())),
-        mapping.declaredMappingIdentity
-      ).left.map(error => AlderSoftLdaError.Admission(AlderPredictiveAdmissionError.ProviderFixedSelection(error.toString)))
+      root <- mapping.identifiedRows((id, ordinal) => Example(AlderSoftLdaRow(id, ordinal), Array(targets(ordinal)), ())).left.map(AlderSoftLdaError.Admission.apply)
     yield new AlderSoftLdaRows(root, mapping, operator, SoftLdaAdmissionReceipt(targets.length, targets.length.toLong, nuisanceCells, budget.maximumCells), None, trialNuisance)
 
   def admitSoft(
@@ -96,10 +94,7 @@ object AlderSoftLda:
       targetCells = membership.samples.toLong * membership.classCount.toLong
       required = targetCells + nuisanceCells
       _ <- if required <= budget.maximumCells then Right(()) else Left(AlderSoftLdaError.Budget(required, budget.maximumCells))
-      root <- alder.data.IdentifiedRows.fromRows(
-        mapping.nativeIds.zipWithIndex.map((id, ordinal) => id -> Example(AlderSoftLdaRow(id, ordinal), Array.tabulate(membership.classCount)(klass => membership.values(ordinal, klass)), ())),
-        mapping.declaredMappingIdentity
-      ).left.map(error => AlderSoftLdaError.Admission(AlderPredictiveAdmissionError.ProviderFixedSelection(error.toString)))
+      root <- mapping.identifiedRows((id, ordinal) => Example(AlderSoftLdaRow(id, ordinal), Array.tabulate(membership.classCount)(klass => membership.values(ordinal, klass)), ())).left.map(AlderSoftLdaError.Admission.apply)
     yield new AlderSoftLdaRows(root, mapping, operator, SoftLdaAdmissionReceipt(membership.samples, targetCells, nuisanceCells, budget.maximumCells), Some(membership.classes), trialNuisance)
 
   def crossValidate[S <: multivar.core.SemanticSpace, K](
