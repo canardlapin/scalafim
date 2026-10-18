@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "6f7a1f9509a07c2b3f5b956332d39a1bc5b64c3c"
+lazy val galeRevision = "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -60,7 +60,7 @@ lazy val resample4sDesignsJS  = ProjectRef(resample4sBuild, "designsJS")
 
 // Alder owns fit lifecycles, stage-aware cross-fitting, and fitted artifacts.
 // Keep its coordinated provider overrides explicit and process-local.
-lazy val alderRevision = "e555bad92307af1c2cbc104aef398cb9d9de88f0"
+lazy val alderRevision = "7618c715002b3912f856c4d44468ae173fce4dec"
 lazy val alderBuild = {
   sys.props
     .get("scalafim.resample4s.build")
@@ -100,7 +100,7 @@ lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
 // mvpa4s owns identified MVPA evidence and analyses. Ordinary builds clone the
 // exact reviewed revision. Coordinated overrides are forwarded so mvpa4s
 // resolves the same provider builds as ScalaFIM.
-lazy val mvpa4sRevision = "d7c482537b9332aaaec9670b7021f4c5135145a7"
+lazy val mvpa4sRevision = "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
 lazy val mvpa4sBuild = {
   Seq("alder", "gale", "locus4s", "multivar", "resample4s").foreach { provider =>
     sys.props
@@ -121,7 +121,7 @@ lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "20c9515495e43dff9d17bc1283a8ca1d56355c4a"
+lazy val image4sRevision = "cff0bdca35583436ffd4cef019b353b82b146f58"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -146,7 +146,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
 // so reframe4s resolves the same image4s build. reframe4s accepts only a local
 // path, so the default pinned-URI build still loads reframe4s's own image4s pin.
-lazy val reframe4sRevision = "9662317912185c51e82dd04b2c87006ed2af82f2"
+lazy val reframe4sRevision = "2342b8b04451f86ff74e9ce7fc3ad5f2b9a258dd"
 lazy val reframe4sBuild = {
   sys.props
     .get("scalafim.image4s.build")
@@ -166,7 +166,7 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
 // source override for coordinated development.
-lazy val graph4sRevision = "b585e594eec4567bad78ae23206c1a8f535bcd5e"
+lazy val graph4sRevision = "6a72b58b564933234768f025e67228736ef2f7c5"
 lazy val graph4sBuild =
   sys.props
     .get("scalafim.graph4s.build")
@@ -180,7 +180,7 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
-lazy val multivarRevision = "2bc14d14ba42a678fbbe169293153eddaba6175c"
+lazy val multivarRevision = "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
 lazy val multivarBuild = {
   // Inference must share the same resample4s classes as native MVPA adapters.
   System.setProperty("multivar.resample4s.build.uri", resample4sBuild.toString)

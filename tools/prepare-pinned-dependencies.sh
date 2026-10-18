@@ -26,6 +26,21 @@ if [ "${#gale_revision}" -ne 40 ] || [ "$gale_revision" != "$multivar_gale_revis
   echo "Gale revision mismatch: ScalaFIM=$gale_revision Multivar=$multivar_gale_revision" >&2
   exit 1
 fi
+# Source providers that load their own Gale build carry the same hazard: each
+# must pin ScalaFIM's Gale so one Gale resolves throughout the graph.
+for provider in alder graph4s image4s mvpa4s reframe4s; do
+  revision=$(sed -n "s/^lazy val ${provider}Revision = \"\\([0-9a-f]*\\)\".*/\\1/p" "$repo_root/build.sbt")
+  [ "${#revision}" -eq 40 ] || { echo "Invalid ${provider}Revision in build.sbt" >&2; exit 1; }
+  git clone --quiet --no-checkout --filter=blob:none \
+    "https://github.com/canardlapin/$provider.git" "$provider_tmp/$provider"
+  provider_gale=$(git -C "$provider_tmp/$provider" show "$revision:build.sbt" |
+    sed -n -e 's/^lazy val galeRevision = "\([0-9a-f]*\)".*/\1/p' \
+      -e '/^lazy val galeRevision =$/{n;s/^ *"\([0-9a-f]*\)".*/\1/p;}')
+  if [ "$provider_gale" != "$gale_revision" ]; then
+    echo "Gale revision mismatch: ScalaFIM=$gale_revision $provider=$provider_gale" >&2
+    exit 1
+  fi
+done
 GALE_CACHE="$provider_tmp/gale" \
   "$provider_tmp/multivar/tools/publish-gale-local.sh"
 RESAMPLE4S_CACHE="$provider_tmp/resample4s" \
