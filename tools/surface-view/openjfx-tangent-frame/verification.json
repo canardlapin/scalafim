@@ -1,0 +1,155 @@
+{
+  "schema": "scalafim.black-surface-verification.v1",
+  "issue": "bd-01M5ABGAP2ZP15KWQM5B0ZSQSY",
+  "baseSha": "fb53f187cee3361c79845b2fbd21a1c9098e0af7",
+  "worktree": "/private/tmp/scalafim-black-surface-takeover-20261019",
+  "runtime": "OpenJFX 24.0.1+4 / JDK 25.0.1 / macOS ES2",
+  "component": {
+    "schema": "scalafim.openjfx-tangent-frame.v1",
+    "runtime": "24.0.1+4",
+    "sourceJarSha256": "fb2d327f60ca45af83598aa5edbade751e2373515169d1213515a518d40f9c29",
+    "sourceSha256": "32d3d720b7accbd290cd71388b3e6f87f696ef7e184c7815407ea169d34c9ef8",
+    "patchSha256": "3e21693e6076e95b21631b2b19bb35439ec654a82cda8144593c6e3b0f69b381",
+    "patchedSourceSha256": "86e743e197ecebccdb1d26105bcaeb79107b268ddedf89ca91d9cc3d43770ccf",
+    "moduleSha256": {
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0051.jar": "0ea913712b982e24be7fb20d1a90b45dafc38403f49dd9d494d1d0d3b43e8794",
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0053.jar": "90b9c1c89ebd0d79a8af6951517516828cd08896def96871af015cf0a09cdf53",
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0055.jar": "0c90550f1989637741c2f08bfb8c37216c2d55b0a7d047169d60815cc9e44dbf",
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0057.jar": "144740516f36debb16d262afa119377894bf2c1bc6c18a73f399487c7a1ced76",
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0059.jar": "05978759e5c021c4604ae355421e7dd32a4806347e4357efa21ab826752b751d",
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0061.jar": "2e97be7df2a2a0a6c31c79fd4c92e7588654165074c434f309366caab9176b27",
+      "/private/tmp/plsneuro-render-corrected-02/runtime/0063.jar": "4e86208bef175107997e7149a9bea44427f32aa34fa39c832f9d296250d9abf7"
+    },
+    "compilerSha256": "2b82003a472b8a4856f6f601a45fef76be31a51ffcd006aa4a28ca36eb9d63f1",
+    "compilerVersion": "javac 25.0.1",
+    "jarSha256": "490b13a1b368360f0eb48f58a4c135ac00821defc2269295e8294f64f32f2702",
+    "cpu": "pass",
+    "stockCpu": "reproduced-failure",
+    "native": "pass"
+  },
+  "combinedComponent": {
+    "jar": "/private/tmp/scalafim-black-surface-evidence-20261019/consumer-integration/component/openjfx-24.0.1-affine-atlas-compat.jar",
+    "sha256": "3410cf25be9d1f61f3967f14879cc52fc3bf938e460cacbc6d004d2cf1b21734",
+    "unchangedOriginalClasses": {
+      "com/sun/prism/es2/ES2PhongMaterial$ES2PhongMaterialDisposerRecord.class": true,
+      "com/sun/prism/es2/ES2PhongMaterial.class": true,
+      "com/sun/prism/es2/ES2PhongShader$BumpMapState.class": true,
+      "com/sun/prism/es2/ES2PhongShader$DiffuseState.class": true,
+      "com/sun/prism/es2/ES2PhongShader$SelfIllumState.class": true,
+      "com/sun/prism/es2/ES2PhongShader$SpecularState.class": true,
+      "com/sun/prism/es2/ES2PhongShader.class": true
+    },
+    "newClasses": [
+      "com/sun/prism/impl/MeshUtil.class"
+    ]
+  },
+  "cpu": {
+    "stockFailed": 18,
+    "repairedFailed": 0,
+    "cases": 24
+  },
+  "publicNative": {
+    "stockBlackPixels": 41328,
+    "fixedBlackPixels": 0,
+    "fixedInitialOrangePixels": 41328,
+    "fixedUpdatedBluePixels": 41328
+  },
+  "providerUnitLateralOrbit": {
+    "retainedAndLegacy": "pass",
+    "exactColorPixelsPerFrame": 32504,
+    "blackPixels": 0
+  },
+  "nativePicking": {
+    "cases": 28,
+    "checkedIntersections": 30479,
+    "maximumBarycentricError": 8.692280328848057e-08,
+    "result": "pass",
+    "adaptation": "Explicit original white.surfaceToWorld in one constructor call for the admitted provider overload; original and adapted source hashes in picking-open-command.json; helper requires --add-opens javafx.graphics/javafx.scene=ALL-UNNAMED."
+  },
+  "consumer": {
+    "old-fixed": {
+      "result": "pass",
+      "retainedApplyMs": {
+        "n": 5,
+        "p50": 1.770416,
+        "p95": 17.050708,
+        "max": 17.050708
+      }
+    },
+    "optimized-fixed": {
+      "result": "pass",
+      "retainedApplyMs": {
+        "n": 5,
+        "p50": 3.136917,
+        "p95": 6.076625,
+        "max": 6.076625
+      }
+    },
+    "optimized-final": {
+      "result": "pass",
+      "retainedApplyMs": {
+        "n": 5,
+        "p50": 3.711167,
+        "p95": 7.444292,
+        "max": 7.444292
+      }
+    },
+    "combined-adopted-final": {
+      "result": "pass",
+      "retainedApplyMs": {
+        "n": 6,
+        "p50": 2.987584,
+        "p95": 6.213792,
+        "max": 6.213792
+      },
+      "configuration": "Exact combined JAR with updated consumer strict hash and same-origin checks for material, shader and MeshUtil."
+    },
+    "combined-original-guard": {
+      "result": "rejected as intended",
+      "reason": "Old qualified hash pinned; failure retained in consumer-combined-final.log."
+    }
+  },
+  "scalaGates": {
+    "surfaceViewJVM/test": "blocked: 55 missing Intaglio API errors in unchanged Compile sources",
+    "surfaceViewJS/test": "blocked: same 55 errors",
+    "surfaceViewJavafxJVM/test": "not reached because prerequisite Compile failed; final native reproducer separately compiled with -Werror"
+  },
+  "performanceQualification": "not established; adverse retained-publication observations preserved; no threshold changes",
+  "evidence": {
+    "scala-jvm-js.log": {
+      "path": "/private/tmp/scalafim-black-surface-evidence-20261019/scala-jvm-js.log",
+      "sha256": "41e1eb3088913f739bcf78bbd22486b11f88e121d9f429fee26bb948a40b6019"
+    },
+    "scala-js.log": {
+      "path": "/private/tmp/scalafim-black-surface-evidence-20261019/scala-js.log",
+      "sha256": "e46d6bf9ce1d062a3f331602ad08ddc25009c9824fb5c5939c4e014dee7d304c"
+    },
+    "picking-open.log": {
+      "path": "/private/tmp/scalafim-black-surface-evidence-20261019/picking-open.log",
+      "sha256": "1a092a4da97c977d0890b0f02d9c55942e4ef0554b9c5ff98b166b881dd73835"
+    },
+    "consumer-optimized-final.log": {
+      "path": "/private/tmp/scalafim-black-surface-evidence-20261019/consumer-optimized-final.log",
+      "sha256": "ed5c4d1e56a14c879a9a9353158eff46df6d953162e7e52a3b6fc10f8e183f5a"
+    }
+  },
+  "fullEvidenceDirectory": "/private/tmp/scalafim-black-surface-evidence-20261019",
+  "adoption": "Four-file consumer patch prepared and apply-checked: native patch and manifest, strict SurfaceRenderer hash/origin check, launcher hash. Combined component built offline and native-qualified with updated guard in an isolated overlay; production checkout and launch recipe untouched.",
+  "consumerGuard": {
+    "qualifiedNewComponent": "accepted",
+    "oldComponent": "rejected: MeshUtil has different origin",
+    "hashCheck": "retained; pinned to 3410cf25be9d1f61f3967f14879cc52fc3bf938e460cacbc6d004d2cf1b21734"
+  },
+  "sourceSha256": {
+    "tools/surface-view/openjfx-tangent-frame/build.py": "ece97ca9994d299a0ceb9f4f1d93701760f5b879e578981a506fbc8527ca1837",
+    "tools/surface-view/openjfx-tangent-frame/PublicEmissionControl.java": "ef0e1198fe9298c4af56de5cc5a14cb72f4d97794457e8b327027cbb55678826",
+    "tools/surface-view/openjfx-tangent-frame/LICENSE": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726",
+    "tools/surface-view/openjfx-tangent-frame/MeshUtil.patch": "3e21693e6076e95b21631b2b19bb35439ec654a82cda8144593c6e3b0f69b381",
+    "tools/surface-view/openjfx-tangent-frame/ADDITIONAL_LICENSE_INFO": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916",
+    "tools/surface-view/openjfx-tangent-frame/ASSEMBLY_EXCEPTION": "a44eb7b5caf5534c6ef536b21edb40b4d6babf91bf97d9d45596868618b2c6fb",
+    "tools/surface-view/openjfx-tangent-frame/README.md": "2aacb60b6a1488aa6667bde75890f4cbc290de3574100324d75670324d0e5a3c",
+    "tools/surface-view/openjfx-tangent-frame/TangentSpaceProbe.java": "c9865b0afff8b9ad112b450d8cc2684de46b2e879b0d6b68446d1d4b22f51c84",
+    "tools/surface-view/openjfx-tangent-frame/plsneuro-integration.patch": "450a8b141cf7f830aeccd1b86517df27204437c07633f1a8c91a9aab6bd7a47c",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxEmissionReproducer.scala": "e406901ca886b1fbd6b1f4396e69baa3f0ee27802e20e1bad5656c59d7333135"
+  }
+}

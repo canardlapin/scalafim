@@ -1,0 +1,125 @@
+--- a/tools/provider-patches/openjfx-24.0.1-affine-atlas.patch
++++ b/tools/provider-patches/openjfx-24.0.1-affine-atlas.patch
+@@ -65,3 +65,57 @@
+              String[] pixelShaders = new String[]{
+                  fragShader
+              };
++--- a/com/sun/prism/impl/MeshUtil.java
+++++ b/com/sun/prism/impl/MeshUtil.java
++@@ -34,6 +34,12 @@
++  */
++ class MeshUtil {
++ 
+++    static {
+++        if (!"24.0.1+4".equals(com.sun.javafx.runtime.VersionInfo.getRuntimeVersion())) {
+++            throw new LinkageError("Tangent-frame compatibility requires OpenJFX 24.0.1+4");
+++        }
+++    }
+++
++     static final float NORMAL_WELD_COS = 0.9952f; // cos(5.6)
++     static final float TANGENT_WELD_COS = 0.866f; // cos(30)
++     static final float G_UV_PARALLEL = 0.9988f; // cos(2.8125)
++@@ -211,6 +217,38 @@
++         float n1Length = n1.length();
++         float n2Length = n2.length();
++ 
+++        // Explicit vertex normals can be parallel to a face UV derivative.
+++        // Projecting that derivative onto the normal plane then gives zero;
+++        // the ordinary angle calculation would divide by zero and poison the
+++        // vertex quaternion (and even self illumination) with NaNs.
+++        if (n1Length <= MAGIC_SMALL || n2Length <= MAGIC_SMALL) {
+++            norm[0].mul(1f / nNorm);
+++            if (n1Length > MAGIC_SMALL) {
+++                n1.mul(1f / n1Length);
+++                n2.cross(norm[0], n1);
+++                n2.normalize();
+++            } else if (n2Length > MAGIC_SMALL) {
+++                n2.mul(1f / n2Length);
+++                n1.cross(n2, norm[0]);
+++                n1.normalize();
+++            } else {
+++                // Choose the least aligned coordinate axis deterministically.
+++                float x = Math.abs(norm[0].x);
+++                float y = Math.abs(norm[0].y);
+++                float z = Math.abs(norm[0].z);
+++                n1.set(x <= y && x <= z ? 1f : 0f,
+++                       y < x && y <= z ? 1f : 0f,
+++                       z < x && z < y ? 1f : 0f);
+++                getOrt(norm[0], n1);
+++                n1.normalize();
+++                n2.cross(norm[0], n1);
+++                n2.normalize();
+++            }
+++            norm[1].set(n1);
+++            norm[2].set(n2);
+++            return;
+++        }
+++
++         double cosPhi = (n1.dot(n2)) / (n1Length * n2Length);
++         Vec3f e1 = instance.vec3f3;
++         Vec3f e2 = instance.vec3f4;
+--- a/tools/provider-patches/openjfx-24.0.1-affine-atlas.json
++++ b/tools/provider-patches/openjfx-24.0.1-affine-atlas.json
+@@ -39,13 +39,15 @@
+   },
+   "sources": {
+     "com/sun/prism/es2/ES2PhongMaterial.java": "962a6980d29ce4ea758c66a48aa951ae65ae4da62fe7328f33ff8f8243a53f32",
+-    "com/sun/prism/es2/ES2PhongShader.java": "bec102460717909e0a2f5c8f3c12eb7898035940882c0ea32f4a07e42f00afd2"
++    "com/sun/prism/es2/ES2PhongShader.java": "bec102460717909e0a2f5c8f3c12eb7898035940882c0ea32f4a07e42f00afd2",
++    "com/sun/prism/impl/MeshUtil.java": "32d3d720b7accbd290cd71388b3e6f87f696ef7e184c7815407ea169d34c9ef8"
+   },
+   "patchedSources": {
+     "com/sun/prism/es2/ES2PhongMaterial.java": "bcade919913cc74e4445f9d15b6ee9f09b558f545b8aaa39bdebe00cc1ee284e",
+-    "com/sun/prism/es2/ES2PhongShader.java": "f08a24f613355b7896bee4d068602dbccf2b3d849887f1cbfc53b0fb7593a649"
++    "com/sun/prism/es2/ES2PhongShader.java": "f08a24f613355b7896bee4d068602dbccf2b3d849887f1cbfc53b0fb7593a649",
++    "com/sun/prism/impl/MeshUtil.java": "86e743e197ecebccdb1d26105bcaeb79107b268ddedf89ca91d9cc3d43770ccf"
+   },
+-  "patchSha256": "efc6f8f1a08c02e260b44b21a4731d7abe78d5471b8ace97d4a415aa2ed58713",
++  "patchSha256": "cf1d60f5eb277f180875dacc2a80674d33f692229ee9259ee8dcbf4eade460a7",
+   "classes": [
+     "com/sun/prism/es2/ES2PhongMaterial.class",
+     "com/sun/prism/es2/ES2PhongMaterial$ES2PhongMaterialDisposerRecord.class",
+@@ -53,7 +55,8 @@
+     "com/sun/prism/es2/ES2PhongShader$BumpMapState.class",
+     "com/sun/prism/es2/ES2PhongShader$DiffuseState.class",
+     "com/sun/prism/es2/ES2PhongShader$SelfIllumState.class",
+-    "com/sun/prism/es2/ES2PhongShader$SpecularState.class"
++    "com/sun/prism/es2/ES2PhongShader$SpecularState.class",
++    "com/sun/prism/impl/MeshUtil.class"
+   ],
+-  "scope": "Opt-in macOS ES2 policy; diffuse/self-illumination maps process-wide; bilinear filtering retained; GLSL120 centroid UVs. Does not enable adaptive encoding in ScalaFIM or install a runtime."
++  "scope": "Opt-in macOS ES2 policy; diffuse/self-illumination maps process-wide; bilinear filtering retained; GLSL120 centroid UVs. Does not enable adaptive encoding in ScalaFIM or install a runtime. Includes a finite tangent-frame fallback for explicit normals parallel to UV derivatives; preserves normal direction and the ordinary nondegenerate path."
+ }
+--- a/modules/desktop/src/main/scala/plsneuro/desktop/SurfaceRenderer.scala
++++ b/modules/desktop/src/main/scala/plsneuro/desktop/SurfaceRenderer.scala
+@@ -9,7 +9,7 @@
+   * Ordinary unpatched development launches retain the provider's legacy mode.
+   */
+ private[desktop] object SurfaceRenderer:
+-  private val compatibilitySha256 = "6025860c1a41b589737511d30607f6bb745480bc41d7b7711476d986725a7194"
++  private val compatibilitySha256 = "3410cf25be9d1f61f3967f14879cc52fc3bf938e460cacbc6d004d2cf1b21734"
+ 
+   private def source(kind: Class[?]): Path =
+     require(kind.getModule.isNamed && kind.getModule.getName == "javafx.graphics",
+@@ -24,7 +24,9 @@
+       val loader = classOf[javafx.scene.paint.PhongMaterial].getClassLoader
+       val material = source(Class.forName("com.sun.prism.es2.ES2PhongMaterial", false, loader))
+       val shader = source(Class.forName("com.sun.prism.es2.ES2PhongShader", false, loader))
+-      require(material == shader && Files.isRegularFile(material), "Surface compatibility classes have different origins")
++      val tangent = source(Class.forName("com.sun.prism.impl.MeshUtil", false, loader))
++      require(material == shader && material == tangent && Files.isRegularFile(material),
++        "Surface compatibility classes have different origins")
+       val hash = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(material))
+         .map(byte => f"${byte & 0xff}%02x").mkString
+       require(hash == compatibilitySha256, "Surface compatibility component differs from the qualified build")
+--- a/tools/launch-desktop.py
++++ b/tools/launch-desktop.py
+@@ -11,7 +11,7 @@
+ import zipfile
+ 
+ 
+-COMPAT_SHA256 = '6025860c1a41b589737511d30607f6bb745480bc41d7b7711476d986725a7194'
++COMPAT_SHA256 = '3410cf25be9d1f61f3967f14879cc52fc3bf938e460cacbc6d004d2cf1b21734'
+ MODULES = {'javafx.' + name for name in ('base', 'graphics', 'controls', 'fxml', 'media', 'swing', 'web')}
+ 
+ 
