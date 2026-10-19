@@ -172,8 +172,8 @@ final class MniTemplateBridge private (
       on: Grid[WorldFrames.Mni6, D3] = TemplateGrids.mni6Res1.grid
   ): Either[AtlasError, MniTemplateBridge] =
     for
-      field    <- transform.materialize(TemplateGrids.mni2009cRes1.grid).left.map((error => AtlasError.Provider(TransformFailure(error))))
-      inverted <- field.invertNumerically(on, policy).left.map((error => AtlasError.Provider(TransformFailure(error))))
+      field    <- transform.materialize(TemplateGrids.mni2009cRes1.grid).left.map(error => AtlasError.Provider(TransformFailure(error)))
+      inverted <- field.invertNumerically(on, policy).left.map(error => AtlasError.Provider(TransformFailure(error)))
     yield new MniTemplateBridge(inverted, asset)
 
 object MniTemplateBridge:
@@ -210,7 +210,7 @@ object MniTemplateBridge:
           asset
         )
         .left
-        .map((error => AtlasError.Provider(TransformFailure(error))))
+        .map(error => AtlasError.Provider(TransformFailure(error)))
       mapped <- chain.composed match
         case mapped: WorldTransform.Mapped[WorldFrames.Mni6, WorldFrames.Mni2009c] @unchecked => Right(mapped)
         case other => Left(refused(xfm, s"expected a dense composite, the file interpreted as ${other.getClass.getSimpleName}"))

@@ -4,7 +4,6 @@ import neuroatlas4s.*
 
 import java.nio.file.Path
 
-import neuroatlas4s.AtlasError
 import scalafim.atlas.{MniTemplateBridge, TemplateFlowXfm, TransformFailure}
 import scalafim.surface.io.TemplateFlowCache
 import scalafim.transform.{AssetRef, NativeTransform, TransformError, TransformFiles}

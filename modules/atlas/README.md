@@ -2,9 +2,12 @@
 
 Typed standard-atlas metadata and parcel operations for `scalafim`.
 
-The atlas module is a Scala 3 rewrite of the useful computational core from
-`neuroatlas`: standard atlas identity, provenance, region metadata, lookup,
-parcel reduction, overlap, and graph relationships. It deliberately leaves
+The atlas module builds volume and surface atlases over the
+[neuroatlas4s](https://github.com/canardlapin/neuroatlas4s) core, which owns
+standard atlas identity, releases, provenance, region metadata, the standard
+catalog and the realization contract. This module adds lookup, parcel
+reduction, overlap, graph relationships, loaders, template routes and
+Neuropublish projection. It deliberately leaves
 plotting, Shiny-style interaction, and hidden TemplateFlow downloads out of the
 core.
 
@@ -23,6 +26,7 @@ workflow guide.
 Shared, cross-platform atlas API:
 
 ```scala
+import neuroatlas4s.*
 import scalafim.atlas.*
 import scalafim.atlas.syntax.*
 ```
@@ -280,6 +284,7 @@ TemplateFlow assets from local caches (`TemplateFlowCache.roots`:
 and never downloads:
 
 ```scala
+import neuroatlas4s.*
 import scalafim.atlas.*
 import scalafim.atlas.io.StandardSurfaceRouteFiles
 import scalafim.surface.CorticalHemisphere
@@ -374,6 +379,7 @@ the network:
 
 ```scala
 import java.nio.file.Path
+import neuroatlas4s.*
 import scalafim.atlas.*
 import scalafim.atlas.io.*
 

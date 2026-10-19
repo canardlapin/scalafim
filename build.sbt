@@ -186,7 +186,7 @@ lazy val neuroim4sSpacesJS  = ProjectRef(neuroim4sBuild, "spacesJS")
 // neuroatlas4s-core owns atlas identities, releases, labels, hierarchies, the
 // standard catalog and the realized-assignment contract. It pins the same
 // locus4s revision as ScalaFIM; a ScalaFIM locus4s override is forwarded.
-lazy val neuroatlas4sRevision = "34d43b15f8041e65d67cb944191591c923a61efc"
+lazy val neuroatlas4sRevision = "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
 lazy val neuroatlas4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")

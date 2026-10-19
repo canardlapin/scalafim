@@ -59,7 +59,7 @@ object AtlasOverlap:
     Grid
       .exactCongruence(atlas1.labelVolume.grid, atlas2.labelVolume.grid)
       .left
-      .map((error => AtlasError.Provider(GeometryFailure(error))))
+      .map(error => AtlasError.Provider(GeometryFailure(error)))
       .map(_ => ())
 
   private def computeFromAssignments(

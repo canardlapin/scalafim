@@ -6,7 +6,6 @@ import java.io.InputStream
 import java.net.URI
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
-import neuroatlas4s.Digest
 
 final case class AtlasAsset(
   key: String,
