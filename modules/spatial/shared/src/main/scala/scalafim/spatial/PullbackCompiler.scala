@@ -508,8 +508,9 @@ private object SparseOperatorSupportPlanner extends PullbackSupportPlanner:
     else
       operator.map match
         case csr: CSR =>
-          val rows = csr.toTriplets.colIndices.distinct.sorted.toVector
-          Right(PullbackSupport(program.fingerprint, rows, SupportPrecision.Exact))
+          val columns = scala.collection.mutable.HashSet.empty[Int]
+          csr.foreachStoredEntry((row, col, value) => columns += col)
+          Right(PullbackSupport(program.fingerprint, columns.toVector.sorted, SupportPrecision.Exact))
         case _ =>
           Right(
             PullbackSupport(

@@ -219,7 +219,7 @@ class NeurofunctorLawParitySuite extends munit.FunSuite:
         assertNotEquals(restricted.rows, int(t.out("n_rows")))
         assertEquals(restricted.qc.coverage.targetRows, roi)
         assertMatrix(s"${t.id} forward", linValue(restricted.forward(x)), t.out("forward"), tol)
-        assertMatrix(s"${t.id} full rows", linValue(full.forward(x)).selectRows(roi), t.out("full_forward"), tol)
+        assertMatrix(s"${t.id} full rows", linValue(full.forward(x)).gatherRows(roi), t.out("full_forward"), tol)
         assertEqualsDouble(restricted.qc.coverage.fraction, scalar(t.out("coverage")), tol)
         val check = value(SpatialQc.roiRestrictionLaw(full, restricted, roi, x, value(QcTolerance(tol))))
         assert(check.passed, clue = check)

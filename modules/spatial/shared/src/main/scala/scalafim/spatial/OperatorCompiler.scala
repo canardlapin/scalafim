@@ -145,7 +145,7 @@ final case class SpatialOperator private (
     map.cols
 
   def forward(input: DMat): Either[LinAlgError, DMat] =
-    map.forward(input)
+    map.applyTo(input)
 
 object SpatialOperator:
   def build(

@@ -150,3 +150,16 @@ class SpatialQcSuite extends munit.FunSuite:
     val check = value(SpatialQc.tripletFixtureLaw(operator, fixture))
     assert(check.passed)
     assertEquals(fixture.rowIndices, Vector(0, 1))
+
+  test("triplet fixture QC distinguishes coordinates, stored values, and shape"):
+    val epi = domain("triplet-qc", Vector(2, 1, 1))
+    val operator = compile(graph(Vector(epi), Vector.empty), CompileRequest(epi.id, epi.id, sampling = SamplingPolicy.Nearest))
+    val fixtures = Vector(
+      TripletFixture.zeroBased(2, 2, Vector(0, 1), Vector(1, 0), Vector(1.0, 1.0)),
+      TripletFixture.zeroBased(2, 2, Vector(0, 1), Vector(0, 1), Vector(1.0, 2.0)),
+      TripletFixture.zeroBased(2, 3, Vector(0, 1), Vector(0, 1), Vector(1.0, 1.0)),
+      TripletFixture.zeroBased(2, 2, Vector(0), Vector(0), Vector(1.0))
+    )
+
+    fixtures.foreach: fixture =>
+      assert(!value(SpatialQc.tripletFixtureLaw(operator, value(fixture))).passed)

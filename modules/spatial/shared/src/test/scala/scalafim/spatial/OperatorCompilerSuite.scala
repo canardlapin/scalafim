@@ -61,20 +61,20 @@ class OperatorCompilerSuite extends munit.FunSuite:
 
   private def triplets(operator: SpatialOperator): SparseTriplets =
     operator.map match
-      case csr: CsrMatrix => csr.toTriplets
+      case csr: CsrMatrix => csr.toCOO
       case other => fail(s"expected CsrMatrix, got ${other.getClass.getName}")
 
   test("identity volume compilation emits zero-based target-by-source rows"):
     val epi = domain("epi", Vector(2, 2, 1))
     val request = CompileRequest(epi.id, epi.id, sampling = SamplingPolicy.Nearest)
     val operator = value(OperatorCompiler.compile(graph(Vector(epi), Vector.empty), request))
-    val t = triplets(operator)
+    val t = triplets(operator).entries.toVector
 
     assertEquals(operator.rows, 4)
     assertEquals(operator.cols, 4)
-    assertEquals(t.rowIndices.toVector, Vector(0, 1, 2, 3))
-    assertEquals(t.colIndices.toVector, Vector(0, 1, 2, 3))
-    assertEquals(t.values.toVector, Vector(1.0, 1.0, 1.0, 1.0))
+    assertEquals(t.map(_.row), Vector(0, 1, 2, 3))
+    assertEquals(t.map(_.col), Vector(0, 1, 2, 3))
+    assertEquals(t.map(_.value), Vector(1.0, 1.0, 1.0, 1.0))
     assertEquals(operator.qc.coverage.rowCoverage, Vector(1.0, 1.0, 1.0, 1.0))
     assertEquals(operator.provenance.path.map(_.value), Vector("identity:epi"))
     assertEquals(operator.provenance.sampling, SamplingPolicy.Nearest)
@@ -85,13 +85,13 @@ class OperatorCompilerSuite extends munit.FunSuite:
     val morphism = affine("source-to-target", source, target, translation(0.25, 0.0, 0.0))
     val operator =
       value(OperatorCompiler.compile(graph(Vector(source, target), Vector(morphism)), CompileRequest(source.id, target.id)))
-    val t = triplets(operator)
+    val t = triplets(operator).entries.toVector
 
-    assertEquals(t.rowIndices.toVector, Vector(0, 0))
-    assertEquals(t.colIndices.toVector, Vector(0, 1))
-    assertEqualsDouble(t.values.toVector.sum, 1.0, 1e-12)
-    assertEqualsDouble(t.values.toVector(0), 0.75, 1e-12)
-    assertEqualsDouble(t.values.toVector(1), 0.25, 1e-12)
+    assertEquals(t.map(_.row), Vector(0, 0))
+    assertEquals(t.map(_.col), Vector(0, 1))
+    assertEqualsDouble(t.map(_.value).sum, 1.0, 1e-12)
+    assertEqualsDouble(t.map(_.value)(0), 0.75, 1e-12)
+    assertEqualsDouble(t.map(_.value)(1), 0.25, 1e-12)
     assertEqualsDouble(operator.qc.coverage.rowCoverage.head, 1.0, 1e-12)
 
     val sourceValues = DoubleMatrix.fromRows(Vector(Vector(10.0), Vector(20.0), Vector(30.0)))
@@ -113,7 +113,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
       val operator =
         value(OperatorCompiler.compile(graph(Vector(source, target), Vector(morphism)), CompileRequest(source.id, target.id)))
       assertEqualsDouble(operator.qc.coverage.rowCoverage.head, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
-      assertEqualsDouble(triplets(operator).values.toVector.sum, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
+      assertEqualsDouble(triplets(operator).entries.map(_.value).sum, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
 
   test("ROI rows preserve order and report out-of-bounds coverage"):
     val source = domain("source", Vector(2, 1, 1))

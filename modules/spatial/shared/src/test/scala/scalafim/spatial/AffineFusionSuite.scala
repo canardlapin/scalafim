@@ -127,10 +127,10 @@ class AffineFusionSuite extends munit.FunSuite:
 
     fused.map match
       case csr: CsrMatrix =>
-        val triplets = csr.toTriplets
-        assertEquals(triplets.rowIndices.toVector, Vector(0, 1, 2))
-        assertEquals(triplets.colIndices.toVector, Vector(1, 2, 3))
-        assertEquals(triplets.values.toVector, Vector(1.0, 1.0, 1.0))
+        val triplets = csr.toCOO.entries.toVector
+        assertEquals(triplets.map(_.row), Vector(0, 1, 2))
+        assertEquals(triplets.map(_.col), Vector(1, 2, 3))
+        assertEquals(triplets.map(_.value), Vector(1.0, 1.0, 1.0))
       case other =>
         fail(s"expected fused CSR operator, got ${other.getClass.getName}")
 

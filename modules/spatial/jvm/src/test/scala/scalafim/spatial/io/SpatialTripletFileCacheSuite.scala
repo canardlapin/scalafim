@@ -36,10 +36,12 @@ class SpatialTripletFileCacheSuite extends munit.FunSuite:
   private def assertSameTriplets(actual: SparseTriplets, expected: SparseTriplets): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
-    assertEquals(actual.rowIndices.toVector, expected.rowIndices.toVector)
-    assertEquals(actual.colIndices.toVector, expected.colIndices.toVector)
-    val actualValues = actual.values
-    val expectedValues = expected.values
+    val actualEntries = actual.entries
+    val expectedEntries = expected.entries
+    assertEquals(actualEntries.map(_.row), expectedEntries.map(_.row))
+    assertEquals(actualEntries.map(_.col), expectedEntries.map(_.col))
+    val actualValues = actualEntries.map(_.value)
+    val expectedValues = expectedEntries.map(_.value)
     assertEquals(actualValues.length, expectedValues.length)
     var i = 0
     while i < actualValues.length do
@@ -120,7 +122,7 @@ class SpatialTripletFileCacheSuite extends munit.FunSuite:
       )
     val expected =
       operator.map match
-        case csr: CsrMatrix => csr.toTriplets
+        case csr: CsrMatrix => csr.toCOO
         case other => fail(s"expected CsrMatrix, got ${other.getClass.getName}")
 
     withTempFile("compiled.sftc") { path =>

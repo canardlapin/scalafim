@@ -1,8 +1,8 @@
 package scalafim.spatial
 
 import gale.backend.Backend.given
-import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError}
-import gale.sparse.{COO, CSR, CSRProductPlan, Sparse, SparseEntryConsumer, SparseValuePolicy}
+import gale.linalg.{DMat, LinAlgError}
+import gale.sparse.{COO, CSR, CSRProductPlan, Sparse, SparseValuePolicy}
 
 private[spatial] object GaleSpatialSupport:
   def matrixFromRows(rowsData: Seq[Seq[Double]]): DMat =
@@ -87,51 +87,3 @@ extension (matrix: DMat)
   private[spatial] def toRows: Vector[Vector[Double]] =
     Vector.tabulate(matrix.rows): row =>
       Vector.tabulate(matrix.cols)(column => matrix(row, column))
-
-  private[spatial] def selectRows(rowIndices: IndexedSeq[Int]): DMat =
-    require(rowIndices.nonEmpty, "row selection must be non-empty")
-    val values = new Array[Double](rowIndices.length * matrix.cols)
-    var outputRow = 0
-    while outputRow < rowIndices.length do
-      val sourceRow = rowIndices(outputRow)
-      require(sourceRow >= 0 && sourceRow < matrix.rows, s"row index $sourceRow out of bounds")
-      var col = 0
-      while col < matrix.cols do
-        values(outputRow * matrix.cols + col) = matrix(sourceRow, col)
-        col += 1
-      outputRow += 1
-    GaleSpatialSupport.unsafeOwnedMatrix(rowIndices.length, matrix.cols, values)
-
-extension (operator: DoubleLinearOperator)
-  private[spatial] def forward(input: DMat): Either[LinAlgError, DMat] =
-    operator.applyTo(input)
-
-extension (matrix: CSR)
-  private[spatial] def toTriplets: COO =
-    val builder = Sparse.coo(matrix.rows, matrix.cols)
-    matrix.foreachStoredEntry: (row, col, value) =>
-      builder.add(row, col, value)
-    builder.toCOO()
-
-extension (triplets: COO)
-  private[spatial] def rowIndices: Array[Int] =
-    tripletArrays(triplets)._1
-
-  private[spatial] def colIndices: Array[Int] =
-    tripletArrays(triplets)._2
-
-  private[spatial] def values: Array[Double] =
-    tripletArrays(triplets)._3
-
-private def tripletArrays(triplets: COO): (Array[Int], Array[Int], Array[Double]) =
-  val rows = new Array[Int](triplets.nnz)
-  val cols = new Array[Int](triplets.nnz)
-  val values = new Array[Double](triplets.nnz)
-  var index = 0
-  val consumer: SparseEntryConsumer = (row, col, value) =>
-    rows(index) = row
-    cols(index) = col
-    values(index) = value
-    index += 1
-  triplets.foreachStoredEntry(consumer)
-  (rows, cols, values)

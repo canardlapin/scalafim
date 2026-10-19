@@ -226,8 +226,8 @@ object SpatialQc:
     tolerance: QcTolerance = QcTolerance.default
   ): Either[SpatialError, QcCheck] =
     for
-      px <- operator.map.forward(sourceProbe).left.map(linearError)
-      pty <- operator.map.adjoint.forward(targetProbe).left.map(linearError)
+      px <- operator.map.applyTo(sourceProbe).left.map(linearError)
+      pty <- operator.map.adjoint.applyTo(targetProbe).left.map(linearError)
     yield
       val left = dot(px, targetProbe)
       val right = dot(sourceProbe, pty)
@@ -244,7 +244,9 @@ object SpatialQc:
       fullOut <- full.forward(probe).left.map(linearError)
       restrictedOut <- restricted.forward(probe).left.map(linearError)
     yield
-      val expected = fullOut.selectRows(roiRows)
+      require(roiRows.nonEmpty, "row selection must be non-empty")
+      roiRows.foreach(row => require(row >= 0 && row < fullOut.rows, s"row index $row out of bounds"))
+      val expected = fullOut.gatherRows(roiRows)
       matrixCheck("roi restriction", restrictedOut, expected, tolerance)
 
   def coverageLaw(
@@ -262,7 +264,7 @@ object SpatialQc:
     for
       expected <- fixture.toSparseTriplets
       observed <- operatorTriplets(operator)
-    yield tripletCheck(observed.toCSR.toTriplets, expected.toCSR.toTriplets, tolerance)
+    yield tripletCheck(observed.toCSR.toCOO, expected.toCSR.toCOO, tolerance)
 
   /** Round trip A -> B -> A: route A to B and B back to A (inverses allowed, forward-first), evaluate the composite
     * pullback at `probes` in A's world, and report how far it moves them.
@@ -339,7 +341,7 @@ object SpatialQc:
     weights: WeightInspection
   ): Either[SpatialError, ProjectionMetrics] =
     val ones = GaleSpatialSupport.unsafeOwnedMatrix(map.cols, 1, Array.fill(map.cols)(1.0))
-    map.forward(ones).left.map(linearError).map { summed =>
+    map.applyTo(ones).left.map(linearError).map { summed =>
       val rowSums = Vector.tabulate(summed.rows)(row => summed(row, 0))
       ProjectionMetrics(map.rows, map.cols, coverage, rowSums, summarizeRowSums(rowSums), weights)
     }
@@ -427,7 +429,7 @@ object SpatialQc:
   private def operatorTriplets(operator: SpatialOperator): Either[SpatialError, COO] =
     operator.map match
       case csr: CSR =>
-        Right(csr.toTriplets)
+        Right(csr.toCOO)
       case other =>
         Left(SpatialError.OperatorAssemblyFailed(s"operator map ${other.getClass.getName} cannot be serialized as triplets"))
 
@@ -474,14 +476,16 @@ object SpatialQc:
     tolerance: QcTolerance
   ): QcCheck =
     val sameShape = observed.rows == expected.rows && observed.cols == expected.cols && observed.nnz == expected.nnz
-    val sameRows = observed.rowIndices.toVector == expected.rowIndices.toVector
-    val sameCols = observed.colIndices.toVector == expected.colIndices.toVector
+    val observedEntries = observed.entries
+    val expectedEntries = expected.entries
+    val sameCoordinates = observedEntries.iterator.zip(expectedEntries).forall: (actual, wanted) =>
+      actual.row == wanted.row && actual.col == wanted.col
     val valueError =
       if !sameShape then Double.MaxValue
-      else maxVectorAbsDiff(observed.values.toVector, expected.values.toVector)
+      else maxVectorAbsDiff(observedEntries.map(_.value).toVector, expectedEntries.map(_.value).toVector)
     QcCheck(
       name = "triplet fixture",
-      passed = sameShape && sameRows && sameCols && tolerance.accepts(valueError, 0.0),
+      passed = sameShape && sameCoordinates && tolerance.accepts(valueError, 0.0),
       expected = 0.0,
       observed = valueError,
       maxAbsError = valueError,

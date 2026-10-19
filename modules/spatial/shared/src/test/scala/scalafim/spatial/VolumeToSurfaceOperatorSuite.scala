@@ -73,7 +73,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 
   private def triplets(operator: SpatialOperator): SparseTriplets =
     operator.map match
-      case csr: CsrMatrix => csr.toTriplets
+      case csr: CsrMatrix => csr.toCOO
       case other => fail(s"expected CsrMatrix, got ${other.getClass.getName}")
 
   test("midpoint operator matches eager surface sampling and exposes an adjoint"):
@@ -90,7 +90,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     assertEqualsDouble(sampled(2, 0), eager.values.valueAt(VertexId(2)).get, 1e-12)
     assertEquals(operator.qc.coverage.rowCoverage, Vector(1.0, 1.0, 1.0))
 
-    val back = linValue(operator.map.adjoint.forward(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))))
+    val back = linValue(operator.map.adjoint.applyTo(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))))
     assertEqualsDouble(back(1, 0), 1.0, 1e-12)
     assertEqualsDouble(back(10, 0), 2.0, 1e-12)
     assertEqualsDouble(back(4, 0), 3.0, 1e-12)
@@ -122,8 +122,8 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     assertEqualsDouble(sampled(1, 0), 101.0, 1e-12)
     assertEquals(operator.qc.coverage.rowCoverage, Vector(1.0, 1.0, 1.0))
 
-    val row0 = t.rowIndices.zip(t.colIndices).zip(t.values).collect {
-      case ((row, col), value) if row == 0 => col -> value
+    val row0 = t.entries.collect {
+      case entry if entry.row == 0 => entry.col -> entry.value
     }.toVector
     assertEquals(row0, Vector(0 -> 0.5, 2 -> 0.5))
 

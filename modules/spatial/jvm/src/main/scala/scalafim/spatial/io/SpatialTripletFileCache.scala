@@ -20,7 +20,7 @@ object SpatialTripletFileCache:
   def write(path: Path, operator: SpatialOperator): Either[SpatialIoError, Unit] =
     operator.map match
       case csr: CSR =>
-        writeTriplets(path, OperatorCacheKey.from(operator), operator.provenance, csr.toTriplets)
+        writeTriplets(path, OperatorCacheKey.from(operator), operator.provenance, csr.toCOO)
       case other =>
         Left(SpatialIoError.UnsupportedLinearMap(path, other.getClass.getName))
 
@@ -127,18 +127,13 @@ object SpatialTripletFileCache:
     yield OperatorProvenance.fromRecipe(recipe)
 
   private def writeTriplets(out: DataOutputStream, triplets: COO): Unit =
-    val rows = triplets.rowIndices
-    val cols = triplets.colIndices
-    val values = triplets.values
     out.writeInt(triplets.rows)
     out.writeInt(triplets.cols)
     out.writeInt(triplets.nnz)
-    var i = 0
-    while i < triplets.nnz do
-      out.writeInt(rows(i))
-      out.writeInt(cols(i))
-      out.writeDouble(values(i))
-      i += 1
+    triplets.foreachStoredEntry: (row, col, value) =>
+      out.writeInt(row)
+      out.writeInt(col)
+      out.writeDouble(value)
 
   private def readTriplets(in: DataInputStream, path: Path): Either[SpatialIoError, COO] =
     for
