@@ -146,7 +146,7 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
         .toOption
         .get
     val mapped =
-      selected.selected.mapValues[Int, image4s.Categorical](_ + 1)
+      selected.mapValues[Int, image4s.Categorical](_ + 1)
     val result = SelectedSeries.fromSelected(mapped).toOption.get
 
     assertEquals(result.data.shape, ravel.Shape(2, 2))

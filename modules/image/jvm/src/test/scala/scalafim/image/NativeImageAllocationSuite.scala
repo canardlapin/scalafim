@@ -162,7 +162,6 @@ class NativeImageAllocationSuite extends munit.FunSuite:
             retained = SelectedVolume
               .gather(domain, nativeVolume, selection)
               .fold(error => fail(error.message), identity)
-              .selected
               .asInstanceOf[AnyRef]
         ),
         Receipt(

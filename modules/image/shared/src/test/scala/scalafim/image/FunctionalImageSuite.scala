@@ -126,7 +126,7 @@ class FunctionalImageSuite extends munit.FunSuite:
         val coord = domain.indexOfOrdinal(ordinal).toOption.get.values
         selected(position, time) + coord(1) * 100 + time * 1000
     val mapped =
-      selected.selected
+      selected
         .withSelectionData(selection, mappedData)
         .toOption
         .get
@@ -155,7 +155,7 @@ class FunctionalImageSuite extends munit.FunSuite:
         .toOption
         .get
     val mapped =
-      selected.selected
+      selected
         .mapValues[Int, image4s.Categorical](_ + 1)
     val result = SelectedSeries.fromSelected(mapped).toOption.get
 

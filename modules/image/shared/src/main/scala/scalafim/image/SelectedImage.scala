@@ -2,14 +2,11 @@ package scalafim.image
 
 import image4s.Axis
 import image4s.AxisKind
-import image4s.Categorical
 import image4s.Continuous
 import image4s.ImageError
 import image4s.ImageMetadata
 import image4s.NonSpatialAxes
-import image4s.SampleSpace
 import image4s.ValueSemantics
-import image4s.Mask as MaskSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.locus.GridDomain
@@ -146,39 +143,6 @@ object SelectedVolume:
       metadata
     )
 
-  def categorical[F <: Frame[D3], S, T, A](
-      domain: GridDomain[F, D3, S],
-      selection: Selection[T],
-      data: NDArray[A, Rank[1]],
-      metadata: ImageMetadata = ImageMetadata.empty
-  )(using
-      ValueSemantics[A, Categorical]
-  ): Either[SelectedImageError, SelectedVolume[F, S, A, Categorical]] =
-    create[F, S, T, A, Categorical](
-      domain,
-      selection,
-      data,
-      metadata
-    )
-
-  def mask[F <: Frame[D3], S, T](
-      domain: GridDomain[F, D3, S],
-      selection: Selection[T],
-      data: NDArray[Boolean, Rank[1]],
-      metadata: ImageMetadata = ImageMetadata.empty
-  )(using
-      ValueSemantics[Boolean, MaskSemantics]
-  ): Either[
-    SelectedImageError,
-    SelectedVolume[F, S, Boolean, MaskSemantics]
-  ] =
-    create[F, S, T, Boolean, MaskSemantics](
-      domain,
-      selection,
-      data,
-      metadata
-    )
-
   def gather[
       F <: Frame[D3],
       S,
@@ -251,9 +215,6 @@ object SelectedVolume:
   extension [F <: Frame[D3], S, A, Sem](
       volume: SelectedVolume[F, S, A, Sem]
   )
-    inline def selected: SelectedSampled[F, D3, S, A, Sem, Rank[1]] =
-      volume
-
     inline def apply(position: Int): A =
       volume.data(position)
 
@@ -261,7 +222,6 @@ object SelectedVolume:
         fill: A
     ): Either[SelectedImageError, SomeNeuroVolume[A, Sem]] =
       volume
-        .selected
         .scatterVolume(fill)
         .left
         .map(SelectedImageError.Provider.apply)
@@ -325,7 +285,6 @@ object SelectedVolume:
         NDArray.tabulate[A](requested.size): position =>
           valueAtOrdinal(ordinals(position))
       volume
-        .selected
         .withSelectionData(requested, data)
         .left
         .map(SelectedImageError.Provider.apply)
@@ -406,60 +365,6 @@ object SelectedSeries:
             .left
             .map(SelectedImageError.Provider.apply)
             .flatMap(fromSelected)
-
-  def continuous[F <: Frame[D3], S, T, A](
-      domain: GridDomain[F, D3, S],
-      selection: Selection[T],
-      timeAxis: Axis,
-      data: NDArray[A, Rank[2]],
-      metadata: ImageMetadata = ImageMetadata.empty
-  )(using
-      ValueSemantics[A, Continuous]
-  ): Either[SelectedImageError, SelectedSeries[F, S, A, Continuous]] =
-    create[F, S, T, A, Continuous](
-      domain,
-      selection,
-      timeAxis,
-      data,
-      metadata
-    )
-
-  def categorical[F <: Frame[D3], S, T, A](
-      domain: GridDomain[F, D3, S],
-      selection: Selection[T],
-      timeAxis: Axis,
-      data: NDArray[A, Rank[2]],
-      metadata: ImageMetadata = ImageMetadata.empty
-  )(using
-      ValueSemantics[A, Categorical]
-  ): Either[SelectedImageError, SelectedSeries[F, S, A, Categorical]] =
-    create[F, S, T, A, Categorical](
-      domain,
-      selection,
-      timeAxis,
-      data,
-      metadata
-    )
-
-  def mask[F <: Frame[D3], S, T](
-      domain: GridDomain[F, D3, S],
-      selection: Selection[T],
-      timeAxis: Axis,
-      data: NDArray[Boolean, Rank[2]],
-      metadata: ImageMetadata = ImageMetadata.empty
-  )(using
-      ValueSemantics[Boolean, MaskSemantics]
-  ): Either[
-    SelectedImageError,
-    SelectedSeries[F, S, Boolean, MaskSemantics]
-  ] =
-    create[F, S, T, Boolean, MaskSemantics](
-      domain,
-      selection,
-      timeAxis,
-      data,
-      metadata
-    )
 
   def gather[
       F <: Frame[D3],
@@ -547,9 +452,6 @@ object SelectedSeries:
   extension [F <: Frame[D3], S, A, Sem](
       series: SelectedSeries[F, S, A, Sem]
   )
-    inline def selected: SelectedSampled[F, D3, S, A, Sem, Rank[2]] =
-      series
-
     inline def apply(position: Int, time: Int): A =
       series.data(position, time)
 
@@ -560,7 +462,6 @@ object SelectedSeries:
         fill: A
     ): Either[SelectedImageError, SomeNeuroSeries[A, Sem]] =
       series
-        .selected
         .scatter(fill)
         .left
         .map(SelectedImageError.Provider.apply)
@@ -631,7 +532,6 @@ object SelectedSeries:
         NDArray.tabulate[A](requested.size, nTime): (position, time) =>
           series.data(sourcePosition(ordinals(position)), time)
       series
-        .selected
         .withSelectionData(requested, data)
         .left
         .map(SelectedImageError.Provider.apply)
@@ -650,7 +550,6 @@ object SelectedSeries:
             .get(ordinals(position))
             .fold(fill)(source => series.data(source, time))
       series
-        .selected
         .withSelectionData(requested, data)
         .left
         .map(SelectedImageError.Provider.apply)

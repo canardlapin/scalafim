@@ -24,11 +24,11 @@ class DomainValiditySuite extends munit.FunSuite:
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 3)).toOption.get
     val selected =
       SelectedVolume
-        .categorical(
+        .create(
           domain,
           selection,
           RavelArray.fromSeq(ravel.Shape(2), Vector(1, 1))
-        )
+        )(using image4s.ValueSemantics.categorical[Int])
         .toOption
         .get
     val result = SelectedVolumeWindow.make(

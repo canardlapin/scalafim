@@ -262,11 +262,11 @@ class OwnershipSuite extends munit.FunSuite:
     val input = Array[Int](10, 20)
     val values =
       SelectedVolume
-        .categorical(
+        .create(
           domain,
           selection,
           RavelArray.fromSeq(ravel.Shape(2), input)
-        )
+        )(using image4s.ValueSemantics.categorical[Int])
         .fold(error => fail(error.message), identity)
 
     input(0) = 99
@@ -292,11 +292,11 @@ class OwnershipSuite extends munit.FunSuite:
     val input = Array[Int](10, 20)
     val selected =
       SelectedVolume
-        .categorical(
+        .create(
           domain,
           selection,
           RavelArray.fromSeq(ravel.Shape(2), input)
-        )
+        )(using image4s.ValueSemantics.categorical[Int])
         .fold(error => fail(error.message), identity)
     val center = domain.space.indexAtValidatedOrdinal(2)
     val window =

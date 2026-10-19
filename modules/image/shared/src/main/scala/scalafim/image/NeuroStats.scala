@@ -381,7 +381,7 @@ object NeuroCompare:
       ValueSemantics[Boolean, MaskSemantics]
   ): SelectedVolume[F, S, Boolean, MaskSemantics] =
     SelectedVolume.fromSelected(
-      volume.selected.mapValues[Boolean, MaskSemantics]: value =>
+      volume.mapValues[Boolean, MaskSemantics]: value =>
         test(value, scalar, predicate)
     )
 
@@ -394,7 +394,7 @@ object NeuroCompare:
       ValueSemantics[Boolean, MaskSemantics]
   ): SelectedVolume[F, S, Boolean, MaskSemantics] =
     SelectedVolume.fromSelected(
-      volume.selected.mapValues[Boolean, MaskSemantics]: value =>
+      volume.mapValues[Boolean, MaskSemantics]: value =>
         test(scalar, value, predicate)
     )
 

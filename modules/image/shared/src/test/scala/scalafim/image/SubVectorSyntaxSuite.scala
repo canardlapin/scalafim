@@ -44,7 +44,7 @@ class SubVectorSyntaxSuite extends munit.FunSuite:
     val time = Axis.create("time", 4, AxisKind.Time).toOption.get
     val selected =
       SelectedSeries
-        .continuous(
+        .create(
           domain,
           selection,
           time,
@@ -53,7 +53,7 @@ class SubVectorSyntaxSuite extends munit.FunSuite:
             Vector(1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0)
           ),
           ImageMetadata("selected")
-        )
+        )(using image4s.ValueSemantics.continuous[Double])
         .toOption
         .get
 
@@ -64,7 +64,7 @@ class SubVectorSyntaxSuite extends munit.FunSuite:
       Vector(1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0),
       clue = ""
     )
-    val provider = selected.selected
+    val provider = selected
     val first =
       provider.seriesAt(
         provider.selection.positions.indexAtValidatedOrdinal(0)

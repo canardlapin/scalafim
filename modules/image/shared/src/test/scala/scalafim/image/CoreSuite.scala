@@ -226,7 +226,7 @@ class CoreSuite extends munit.FunSuite:
         .gather(domain, SomeNeuroSeries.eraseSpace(series), selection)
         .toOption
         .get
-    val provider = selected.selected
+    val provider = selected
     val first =
       provider.seriesAt(
         provider.selection.positions.indexAtValidatedOrdinal(0)
@@ -491,7 +491,7 @@ class CoreSuite extends munit.FunSuite:
       RavelArray.tabulate[Double](union.size, 2): (position, time) =>
         left(position, time) + right(position, time)
     val summed =
-      left.selected
+      left
         .withSelectionData(union, summedData)
         .toOption
         .get

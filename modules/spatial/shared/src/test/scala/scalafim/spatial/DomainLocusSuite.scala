@@ -90,24 +90,15 @@ class DomainLocusSuite extends munit.FunSuite:
         .toOption
         .get
 
-    val exactLowering =
-      ExactSpatialMap
-        .build(domain, domain, exact)
-        .fold(error => fail(error.message), identity)
-    val crispLowering =
-      CrispSpatialRelation
-        .build(domain, domain, crisp)
-        .fold(error => fail(error.message), identity)
-
-    assertEquals(exactLowering.mapping.targetOrdinals.toVector, Vector(0, 1, 2, 3))
+    assertEquals(exact.targetOrdinals.toVector, Vector(0, 1, 2, 3))
     assertEquals(
-      crispLowering.relation.ordinalRows.map(_.toVector).toVector,
+      crisp.ordinalRows.map(_.toVector).toVector,
       Vector(Vector(0), Vector(1), Vector(2), Vector(3))
     )
-    assert(ExactSpatialMap.build(other, other, exact).isLeft)
-    assert(CrispSpatialRelation.build(other, other, crisp).isLeft)
-    assert(!classOf[SpatialOperator].isAssignableFrom(exactLowering.getClass))
-    assert(!classOf[SpatialOperator].isAssignableFrom(crispLowering.getClass))
+    assert(exact.from.align(other.locus.space).isLeft)
+    assert(crisp.from.align(other.locus.space).isLeft)
+    assert(!classOf[SpatialOperator].isAssignableFrom(exact.getClass))
+    assert(!classOf[SpatialOperator].isAssignableFrom(crisp.getClass))
 
   test("surface mask compatibility requires exact ordered topology"):
     val vertices =

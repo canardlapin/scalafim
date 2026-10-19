@@ -115,7 +115,7 @@ class SelectedImageSuite extends munit.FunSuite:
         1202.0
       )
     )
-    val native = selected.selected
+    val native = selected
     val first = native.selection.positions.indexOption(0).get
     val firstSeries = native.seriesAt(first)
     assert(firstSeries.isContiguous)
