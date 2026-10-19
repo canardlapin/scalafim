@@ -6,7 +6,8 @@ Fixture follow-through is recorded in `9c180664e` and `1cb288d5f`.
 Additional local follow-through is isolated in `529526e3d` (JavaFX test probes)
 and `8c1de2757` (raw storage chart metadata and visibility).
 The bounded full-suite qualification is complete. Consolidated source is
-`d9216dc8831143c1b6e7f4760f987947c03c4ff6`; Opus review is pending.
+`d9216dc8831143c1b6e7f4760f987947c03c4ff6`. Opus approved exact candidate
+`4fe0fe4ee78fdf690f1da53fdbd81287d97cbd21` in advisory Fray review 175/sREV1.
 Nothing has been published.
 
 ## Ownership and admission
@@ -177,7 +178,30 @@ numerical tolerance, native bound, or admission invariant was relaxed.
 
 All iterative raw logs and metadata, resource hashes, and provider attempts are
 retained under the common Git directory's
-`verification/topology-cutover-20261019/`. Required independent Opus review is
-still pending. This receipt does not close `eco-u3-topology`, either
+`verification/topology-cutover-20261019/`. Independent Opus review approved the source candidate; see
+[opus-review.json](opus-review.json) for exact binding, findings and limits. This receipt does not close `eco-u3-topology`, either
 simplification phase, or a later eco milestone. Hosted CI and publication have
 not been performed.
+
+
+## Review and remaining work
+
+Opus (`claude-opus-5-5`) independently inspected the candidate and supplied
+receipts, verified source equivalence, and approved `4fe0fe4ee` at Fray event
+1091. It ran no tests itself. The first review turn could read provider source
+but could not execute Git there or inspect locus4s. That access limit is
+retained in the review, alongside the separate parent-verified provider gate.
+No hosted CI, publication, JavaFX runtime, or skipped-case qualification is claimed.
+
+Three non-blocking findings belong in the existing U3 kernel/consumer work:
+edge weights must follow the provider's new edge ordinals; hot neighbor callers
+should use provider traversal without repeatedly materializing collections;
+and route placement should retain topology when only coordinates change.
+The cutover remains approved without a numerical or scientific objection.
+
+This handoff adds only tracker and verification records after the approved
+source candidate. A verdict is bound to its exact SHA and does not transfer
+automatically; the final handoff candidate is submitted for a separate delta
+review. The mesh4s prerequisite remains unpublished, so default remote-only
+build closure and publication remain outstanding. Simplification A/B remain
+partial and are not closed by these receipts.
