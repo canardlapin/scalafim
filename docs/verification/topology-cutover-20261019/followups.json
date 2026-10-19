@@ -1,0 +1,151 @@
+{
+  "recorded_utc": "2026-10-19T19:36:28.515339+00:00",
+  "source_sha": "ab800a16698f2c8d13210c22fc614f5fdef224d8",
+  "changes": [
+    {
+      "sha": "6860aef0bb110fada2b13eb657d2c7a8cdd6c166",
+      "summary": "Provider neighbor traversal with reused callbacks; point-map coordinate replacement retains topology; exhaustive128-mask edge-union oracle."
+    },
+    {
+      "sha": "ab800a16698f2c8d13210c22fc614f5fdef224d8",
+      "summary": "Remove497 unused lines including3 tests of removed HalfFlow copies. No surviving check or numeric tolerance changed."
+    }
+  ],
+  "mesh4s_publication": {
+    "timestamp_utc": "2026-10-19T18:49:46.911895+00:00",
+    "repository": "canardlapin/mesh4s",
+    "remote": "git@github-canardlapin:canardlapin/mesh4s.git",
+    "branch": "main",
+    "previous_remote_sha": "3e8eb70b23501009d58e8a3d57935ccdaca17fb2",
+    "published_sha": "54b7278880e6db38c543a4a565355afd864e576a",
+    "local_head": "54b7278880e6db38c543a4a565355afd864e576a",
+    "tracking_main": "54b7278880e6db38c543a4a565355afd864e576a",
+    "live_remote_main": "54b7278880e6db38c543a4a565355afd864e576a",
+    "push_exit_code": 0,
+    "force": false,
+    "worktree_clean": true,
+    "authorization": "User: yes, publish mesh4s",
+    "scalafim_published": false,
+    "hosted_ci_checked": false,
+    "scalafim_remote_only_gate_run": false
+  },
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "show surfaceJVM / buildDependencies",
+        "surfaceJVM/test",
+        "surfaceJS/test"
+      ],
+      "source_sha": "56ca752575d8998c63ed86b5c2e729eeda98607f",
+      "log": "published-provider-closure-01.log",
+      "log_sha256": "d9aa9d2e86d48f6239854c11663f575e17dd4a794fef366f3b634da6505f9bb1",
+      "exit_code": 0,
+      "test_results": [
+        {
+          "total": 320,
+          "passed": 320,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        },
+        {
+          "total": 279,
+          "passed": 277,
+          "skipped": 2,
+          "failed": 0,
+          "errors": 0
+        }
+      ]
+    },
+    {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceJVM/test",
+        "surfaceViewJVM/test",
+        "surfaceJS/test",
+        "surfaceViewJS/test"
+      ],
+      "source_sha": "6860aef0bb110fada2b13eb657d2c7a8cdd6c166",
+      "log": "u3-traversal-6860aef0b.log",
+      "log_sha256": "7e310031394eec43bc7786ad5f30598caf70ba86e685fd7b46cb8695b37f023e",
+      "exit_code": 0,
+      "test_results": [
+        {
+          "total": 321,
+          "passed": 321,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        },
+        {
+          "total": 256,
+          "passed": 256,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        },
+        {
+          "total": 280,
+          "passed": 278,
+          "skipped": 2,
+          "failed": 0,
+          "errors": 0
+        },
+        {
+          "total": 256,
+          "passed": 256,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        }
+      ]
+    },
+    {
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "imageJVM/test",
+        "imageJS/test",
+        "scalafimCompileAll"
+      ],
+      "source_sha": "ab800a16698f2c8d13210c22fc614f5fdef224d8",
+      "log": "image-dead-helpers-ab800a166.log",
+      "log_sha256": "78afa86cfba0cece708791f223f8319ec82c61297f6a49904798c59fed99c5c3",
+      "exit_code": 0,
+      "test_results": [
+        {
+          "total": 352,
+          "passed": 352,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        },
+        {
+          "total": 322,
+          "passed": 322,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        }
+      ]
+    }
+  ],
+  "current_input_manifest": {
+    "file": "ab800a166-inputs.json",
+    "sha256": "e6ab2ff6b54191c300246a46acee8dbb71f9f475e0cbb2d9a753493099a035f2",
+    "files_verified": 2621
+  },
+  "reference_audit": {
+    "before": "image-dead-helpers-audit.json",
+    "after": "No remaining source references in modules/examples/tools; historical receipts untouched."
+  },
+  "limits": [
+    "ScalaFIM commits remain local; no hosted CI or new native scientific qualification.",
+    "Original exact-SHA Opus approval belongs to56ca75257, not to these follow-up commits.",
+    "U3 kernel/consumer and neuroim provider issues remain partial.",
+    "Published-pin startup reported pre-existing linops4s build-definition and Intaglio unused-key warnings; follow-up gates emitted no warnings."
+  ]
+}
