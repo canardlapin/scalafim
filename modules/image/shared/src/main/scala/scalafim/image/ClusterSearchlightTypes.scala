@@ -12,18 +12,6 @@ enum SpatialCoordinateFrame:
   case Grid
   case World
 
-enum SearchlightSupport:
-  case FullNeighborhood
-  case InsideMask
-
-enum SearchlightCenterDomain:
-  case AllVoxels
-  case MaskVoxels
-
-enum SearchlightValueSupport:
-  case AllValues
-  case NonZero
-
 enum SearchlightError:
   case InvalidRadius(value: Double)
   case RadiusBelowVoxelSpacing(radius: Double, minimumSpacing: Double)
@@ -31,10 +19,6 @@ enum SearchlightError:
   case InvalidSpace(error: SampleSpaceError)
   case Geometry(error: ImageGeometryError)
   case CenterExcluded(center: VoxelCoord)
-  case IncompatiblePolicies(
-      centerDomain: SearchlightCenterDomain,
-      support: SearchlightSupport
-  )
 
   def message: String =
     this match
@@ -50,8 +34,6 @@ enum SearchlightError:
         error.message
       case CenterExcluded(center) =>
         s"searchlight center ${center.toVector} is excluded by the selected support policy"
-      case IncompatiblePolicies(centerDomain, support) =>
-        s"searchlight center domain $centerDomain is incompatible with support policy $support"
 
 opaque type SearchlightRadius = Double
 
