@@ -1,0 +1,68 @@
+{
+  "provider_head": "54b7278880e6db38c543a4a565355afd864e576a",
+  "provider_worktree_clean": true,
+  "gates": [
+    {
+      "log": "mesh4s-54b7278-checkall.log",
+      "sha256": "fb3fb5105e8bd529cdd3dd09a3a7dea207baad9f2bdccdbebc16deccb3965bf6",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T16:04:12.555236+00:00",
+        "finished_utc": "2026-10-19T16:05:46.846114+00:00",
+        "duration_seconds": 94.290481,
+        "command": [
+          "python3",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "mesh4sCheckAll"
+        ],
+        "cwd": "/private/tmp/scalafim-mesh4s-u3-source-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/mesh4s-54b7278-checkall.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 18536
+      },
+      "summaries": [
+        "[info] Passed: Total 39, Failed 0, Errors 0, Passed 39",
+        "[info] Passed: Total 37, Failed 0, Errors 0, Passed 37",
+        "[info] Passed: Total 23, Failed 0, Errors 0, Passed 23",
+        "[info] Passed: Total 27, Failed 0, Errors 0, Passed 27",
+        "[info] Passed: Total 19, Failed 0, Errors 0, Passed 19",
+        "[info] Passed: Total 19, Failed 0, Errors 0, Passed 19",
+        "<auto-imports>:0: error: not found: object $568e872e693dc016abbb"
+      ]
+    },
+    {
+      "log": "mesh4s-54b7278-checkall-batch.log",
+      "sha256": "9ffb1d41c0ee3f3135400f577d9660e61581cd23f807f4a8a0204ba3cfd99010",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T16:06:46.200685+00:00",
+        "finished_utc": "2026-10-19T16:07:15.729097+00:00",
+        "duration_seconds": 29.528078,
+        "command": [
+          "python3",
+          "/private/tmp/scalafim-u3-provider-check.py"
+        ],
+        "cwd": "/private/tmp/scalafim-mesh4s-u3-source-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/mesh4s-54b7278-checkall-batch.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 2400.0,
+        "log_bytes": 10224
+      },
+      "summaries": [
+        "[info] Passed: Total 37, Failed 0, Errors 0, Passed 37",
+        "[info] Passed: Total 39, Failed 0, Errors 0, Passed 39",
+        "[info] Passed: Total 23, Failed 0, Errors 0, Passed 23",
+        "[info] Passed: Total 27, Failed 0, Errors 0, Passed 27",
+        "[info] Passed: Total 19, Failed 0, Errors 0, Passed 19",
+        "[info] Passed: Total 19, Failed 0, Errors 0, Passed 19"
+      ]
+    }
+  ]
+}

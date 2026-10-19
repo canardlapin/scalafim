@@ -1,0 +1,1470 @@
+{
+  "schema": 1,
+  "qualification_chain": [
+    {
+      "state": "full-suite-resume-io-fixture-5b984197a/state.json",
+      "state_sha256": "d9e4e6f7303af0ba25c17815cc70927024142b83e5065d221de07fd8a22bf1b8",
+      "source_head": "5b984197a6fac0cd8cf994b389f31dba97f07dba",
+      "status": "passed",
+      "changed_inputs": [
+        "examples/surface-jvm/src/main/resources/surface/tetra_lh_midthickness.surf.gii"
+      ],
+      "source_and_input_manifest_sha256": "d6cb66d0422fc1cfcd7d041322ba3c4a366cea70195b01566de489a1c8990d4d",
+      "reused_batches": 38,
+      "failed_batch": null
+    },
+    {
+      "state": "full-suite-repair-products-1cb288d5f/state.json",
+      "state_sha256": "a2fb26d40531cde160bf003a53ecd8c55e2c8cf306a01f9cd470859aa77d9a03",
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "status": "failed",
+      "changed_inputs": [],
+      "source_and_input_manifest_sha256": "6ce91faa531de5ed67ffc88064d7b36bfa4887ec74890bae872a1dc05ac78ae0",
+      "reused_batches": 30,
+      "failed_batch": 39
+    },
+    {
+      "state": "full-suite-resume-1cb288d5f/state.json",
+      "state_sha256": "ceef8c380e3a07e46ce31796fa6564748b5e2fcbb820b43520a30eda0f931a3f",
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "status": "failed",
+      "changed_inputs": [
+        "examples/surface-view/shared/src/main/resources/surface/tetra_lh_midthickness.surf.gii",
+        "examples/surface-view/shared/src/test/scala/scalafim/examples/surfaceview/CorticalSurfaceLensAcceptanceSuite.scala",
+        "examples/surface-view/shared/src/test/scala/scalafim/examples/surfaceview/SurfaceViewerExampleSuite.scala"
+      ],
+      "source_and_input_manifest_sha256": "6ce91faa531de5ed67ffc88064d7b36bfa4887ec74890bae872a1dc05ac78ae0",
+      "reused_batches": 16,
+      "failed_batch": 31
+    },
+    {
+      "state": "full-suite-resume-9c180664e/state.json",
+      "state_sha256": "7696adafbf486ceaeb61f1205e2b2fb057f2925f5032e7501df1c98685a51057",
+      "source_head": "9c180664e3105364d052c9ddbe6f772548aea1f2",
+      "status": "failed",
+      "changed_inputs": [
+        "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceBackendSuite.scala"
+      ],
+      "source_and_input_manifest_sha256": "9e14d67137d02bc4b606aae5bba0ff67b9e8e400779ba9e17b889864ecd68a87",
+      "reused_batches": 15,
+      "failed_batch": 17
+    },
+    {
+      "state": "full-suite-3488cfbc2/state.json",
+      "state_sha256": "2a6e33d9d44d237eba34b120d773d8fd1eace6372ef6c9e4a69237f089acdf56",
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "status": "failed",
+      "changed_inputs": [],
+      "source_and_input_manifest_sha256": "b5ad5763594b0296fa57eb7d35851fb123e694d917b71a5cbfe89bb880590ef9",
+      "reused_batches": 0,
+      "failed_batch": 16
+    }
+  ],
+  "implementation": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+  "qualified_source_head": "5b984197a6fac0cd8cf994b389f31dba97f07dba",
+  "changed_inputs_on_resume": [
+    "examples/surface-jvm/src/main/resources/surface/tetra_lh_midthickness.surf.gii"
+  ],
+  "reused_unchanged_batches": 38,
+  "baseline": "eeea0600d244634bacfb54f5557069fc2d9cde98",
+  "mesh4s_revision": "54b7278880e6db38c543a4a565355afd864e576a",
+  "source_and_input_manifest_sha256": "d6cb66d0422fc1cfcd7d041322ba3c4a366cea70195b01566de489a1c8990d4d",
+  "source_unchanged_during_final_stage": true,
+  "target_count": 97,
+  "batch_count": 40,
+  "test_totals": {
+    "total": 10153,
+    "failed": 0,
+    "errors": 0,
+    "passed": 10145,
+    "skipped": 8
+  },
+  "display_exclusions": {
+    "imageViewJavafxJVM/test": "requires OpenJFX natives and a display",
+    "surfaceViewJavafxJVM/test": "requires OpenJFX natives and a display"
+  },
+  "limits": [
+    "Local JVM and Scala.js tests; no hosted CI or publication.",
+    "JavaFX modules compiled but display tests excluded.",
+    "Opt-in skips remain unqualified.",
+    "Explicit local mesh4s source override used because the exact commit is unpublished."
+  ],
+  "batches": [
+    {
+      "index": 1,
+      "targets": [
+        "phrfComparisonJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 381.430609,
+      "test_summaries": [
+        {
+          "total": 548,
+          "failed": 0,
+          "errors": 0,
+          "passed": 544,
+          "skipped": 4
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/01-phrf-comparison-jvm.log",
+      "raw_log_sha256": "330c24bcce6a8991d8a08ed30469f19abe2a9f18a59ede968ffac40c9e3bd845",
+      "metadata_sha256": "36e3e5c83332124aa493ccdfbb86fd1828ea4f94387f29e55e920eb1e764968b"
+    },
+    {
+      "index": 2,
+      "targets": [
+        "phrfComparisonJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 126.222939,
+      "test_summaries": [
+        {
+          "total": 254,
+          "failed": 0,
+          "errors": 0,
+          "passed": 254,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/02-phrf-comparison-js.log",
+      "raw_log_sha256": "29a4a8ac670665e684934b1ceae06b1ea14a1f3d2414c336ed5964cdefcad858",
+      "metadata_sha256": "3eb14e171e912a92b433823ab51380a7c03beaa58c97598f7df1374a3c52f7f1"
+    },
+    {
+      "index": 3,
+      "targets": [
+        "locusDataJVM/test",
+        "pipelineJVM/test",
+        "responseJVM/test",
+        "responseLawsJVM/test",
+        "latentJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 53.515878,
+      "test_summaries": [
+        {
+          "total": 26,
+          "failed": 0,
+          "errors": 0,
+          "passed": 26,
+          "skipped": 0
+        },
+        {
+          "total": 38,
+          "failed": 0,
+          "errors": 0,
+          "passed": 38,
+          "skipped": 0
+        },
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 44,
+          "failed": 0,
+          "errors": 0,
+          "passed": 44,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/03-core-jvm.log",
+      "raw_log_sha256": "5a563214800a06057c31015ce987ffe641a4b442595e425cce534d5b622a3dfb",
+      "metadata_sha256": "36e637a9beeb0901f7e855390ca1145ad8def6e526a0deacf8f235e7a431218e"
+    },
+    {
+      "index": 4,
+      "targets": [
+        "arJVM/test",
+        "hrfJVM/test",
+        "scenarioTestkitJVM/test",
+        "designJVM/test",
+        "providerSpikeJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 62.713861,
+      "test_summaries": [
+        {
+          "total": 172,
+          "failed": 0,
+          "errors": 0,
+          "passed": 172,
+          "skipped": 0
+        },
+        {
+          "total": 398,
+          "failed": 0,
+          "errors": 0,
+          "passed": 398,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 553,
+          "failed": 0,
+          "errors": 0,
+          "passed": 553,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/04-core-jvm.log",
+      "raw_log_sha256": "8cb2392713de82d458cfac56952f54b42edc3f5beee135ce22ccab6505a853aa",
+      "metadata_sha256": "263c9b8e3319aa28bd5eb6b21c6e1dfcdfe47fc4c73a6bc2417db0db6fac66e1"
+    },
+    {
+      "index": 5,
+      "targets": [
+        "locusDataJS/test",
+        "pipelineJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 47.165627,
+      "test_summaries": [
+        {
+          "total": 26,
+          "failed": 0,
+          "errors": 0,
+          "passed": 26,
+          "skipped": 0
+        },
+        {
+          "total": 38,
+          "failed": 0,
+          "errors": 0,
+          "passed": 38,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/05-core-js.log",
+      "raw_log_sha256": "28c7a6ee712292902efe58a1cc1a3ac3ef25cce342ef40ef5cabeab35663f27e",
+      "metadata_sha256": "4ede6c468b3ce27d53391a0495812345c19abdb3bc4df4918d4645ea893d87af"
+    },
+    {
+      "index": 6,
+      "targets": [
+        "responseJS/test",
+        "responseLawsJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 46.349617,
+      "test_summaries": [
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/06-core-js.log",
+      "raw_log_sha256": "dc8460d3e0927f53b26708e924761987f33a7028bd5dbc77eee258ec07404920",
+      "metadata_sha256": "9a25afa645edfd82de5defa30e3f2fee369ed27bf9d76f6e40da78a37908fe66"
+    },
+    {
+      "index": 7,
+      "targets": [
+        "latentJS/test",
+        "arJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 54.916635,
+      "test_summaries": [
+        {
+          "total": 44,
+          "failed": 0,
+          "errors": 0,
+          "passed": 44,
+          "skipped": 0
+        },
+        {
+          "total": 170,
+          "failed": 0,
+          "errors": 0,
+          "passed": 170,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/07-core-js.log",
+      "raw_log_sha256": "e84fc64fe59b6b1dee8f9e6e88c5eb8548ef353ab904274e05bc5742fc81fdf3",
+      "metadata_sha256": "9e18ef9d68929db6ee19df4101e96418ad2b46abb7503e8abf4fbfe314f1fa02"
+    },
+    {
+      "index": 8,
+      "targets": [
+        "hrfJS/test",
+        "scenarioTestkitJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 57.350584,
+      "test_summaries": [
+        {
+          "total": 398,
+          "failed": 0,
+          "errors": 0,
+          "passed": 398,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/08-core-js.log",
+      "raw_log_sha256": "91b8d439c123cab5e0d90bb9d56acad075e7c6ebc49d955386ca6bdd17603850",
+      "metadata_sha256": "4016bac91ec16b2dcce79f2cffaec6a9e75be53ca7ebb8c8b70f1c10f091d802"
+    },
+    {
+      "index": 9,
+      "targets": [
+        "designJS/test",
+        "providerSpikeJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 70.966695,
+      "test_summaries": [
+        {
+          "total": 552,
+          "failed": 0,
+          "errors": 0,
+          "passed": 552,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/09-core-js.log",
+      "raw_log_sha256": "a9094422873b6ec664943605c6f3400288cb888b41ba822f433a5d09ba2c5da5",
+      "metadata_sha256": "eb6885491f1fcd2e598611ef466de339783ebb9cc0810b79a8b2806c6d1255cd"
+    },
+    {
+      "index": 10,
+      "targets": [
+        "imageJVM/test",
+        "imageViewJVM/test",
+        "imageViewJava2dJVM/test",
+        "thresholdJVM/test",
+        "motionJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 75.38499,
+      "test_summaries": [
+        {
+          "total": 355,
+          "failed": 0,
+          "errors": 0,
+          "passed": 355,
+          "skipped": 0
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 90,
+          "failed": 0,
+          "errors": 0,
+          "passed": 90,
+          "skipped": 0
+        },
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/10-image-surface-jvm.log",
+      "raw_log_sha256": "d14d74befc66b03e3557255307218213dafb3ae63c0f4253fe6d7658ec251c7a",
+      "metadata_sha256": "2c693d2b0285f3ddc237cee990c396899489a81b11c20ef83ea86349a5be8724"
+    },
+    {
+      "index": 11,
+      "targets": [
+        "surfaceJVM/test",
+        "surfaceTestFixturesJVM/test",
+        "surfaceViewJVM/test",
+        "surfaceViewRasterJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 125.35472,
+      "test_summaries": [
+        {
+          "total": 317,
+          "failed": 0,
+          "errors": 0,
+          "passed": 317,
+          "skipped": 0
+        },
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21,
+          "skipped": 0
+        },
+        {
+          "total": 256,
+          "failed": 0,
+          "errors": 0,
+          "passed": 256,
+          "skipped": 0
+        },
+        {
+          "total": 69,
+          "failed": 0,
+          "errors": 0,
+          "passed": 69,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/11-image-surface-jvm.log",
+      "raw_log_sha256": "e343deca9ce2354bbd0c23151d73746728b1509194bed060a9d70ac4053219e4",
+      "metadata_sha256": "09e281d6ecae6203bf566b2c56984528f545d6eae730c7eae0f8a298c7b3230a"
+    },
+    {
+      "index": 12,
+      "targets": [
+        "imageJS/test",
+        "imageViewJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 48.861618,
+      "test_summaries": [
+        {
+          "total": 325,
+          "failed": 0,
+          "errors": 0,
+          "passed": 325,
+          "skipped": 0
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/12-image-surface-js.log",
+      "raw_log_sha256": "953c5bfae34543f66d9c38dece2269a7ce982477faf14b0f21ada99b3ffd1e52",
+      "metadata_sha256": "5b1e273848c2ddcbecbf729a3e91a727ba22adbea9d19e5e60eaa389befea320"
+    },
+    {
+      "index": 13,
+      "targets": [
+        "imageViewCanvasJS/test",
+        "thresholdJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 80.639473,
+      "test_summaries": [
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8,
+          "skipped": 0
+        },
+        {
+          "total": 90,
+          "failed": 0,
+          "errors": 0,
+          "passed": 90,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/13-image-surface-js.log",
+      "raw_log_sha256": "00dbc07e48cced3bb9a9bdd0c131ee6063e580ba072fcb8ab8355c081bdfc5bf",
+      "metadata_sha256": "28973819f8dcbc75ac800d1e50c4da4484fd6f3ffd527bfec2f90bcf17034642"
+    },
+    {
+      "index": 14,
+      "targets": [
+        "motionJS/test",
+        "surfaceJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 70.7799,
+      "test_summaries": [
+        {
+          "total": 92,
+          "failed": 0,
+          "errors": 0,
+          "passed": 92,
+          "skipped": 0
+        },
+        {
+          "total": 276,
+          "failed": 0,
+          "errors": 0,
+          "passed": 274,
+          "skipped": 2
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/14-image-surface-js.log",
+      "raw_log_sha256": "e9a2c88ab1324caae3de4c3c5c6728f91c0558eac1b5855dd253d61609c79960",
+      "metadata_sha256": "d8d6edafcc046c4c2848ac8530d3b2c23ddb226f4eaa5e9f5111a396f8be2d5a"
+    },
+    {
+      "index": 15,
+      "targets": [
+        "surfaceTestFixturesJS/test",
+        "surfaceViewJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 66.054956,
+      "test_summaries": [
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 256,
+          "failed": 0,
+          "errors": 0,
+          "passed": 256,
+          "skipped": 0
+        }
+      ],
+      "source_head": "3488cfbc2121137e4d0f17b1cf47a44571b652d5",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-3488cfbc2/15-image-surface-js.log",
+      "raw_log_sha256": "d0630011e57a2669857f39f9fc677e7ec86738320efaa56899619c6cb91dcc9c",
+      "metadata_sha256": "73288951846b007b23b8de3a7694f4415319ceb842feb6f2b9b51cc1dca5594e"
+    },
+    {
+      "index": 16,
+      "targets": [
+        "surfaceViewRasterJS/test",
+        "surfaceViewThreeJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 46.437825,
+      "test_summaries": [
+        {
+          "total": 69,
+          "failed": 0,
+          "errors": 0,
+          "passed": 69,
+          "skipped": 0
+        },
+        {
+          "total": 55,
+          "failed": 0,
+          "errors": 0,
+          "passed": 55,
+          "skipped": 0
+        }
+      ],
+      "source_head": "9c180664e3105364d052c9ddbe6f772548aea1f2",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-9c180664e/16-image-surface-js.log",
+      "raw_log_sha256": "727e4d0aee10b39769c9d6b4409256e24bebd510fd368d731bd4d21e089542c6",
+      "metadata_sha256": "dd31be02da179b1355dda93bb08a11ff9d62c07048aab8cdef0009388c77493e"
+    },
+    {
+      "index": 17,
+      "targets": [
+        "surfaceViewConnectivityJVM/test",
+        "surfaceViewExamplesJVM/test",
+        "transformJVM/test",
+        "spatialJVM/test",
+        "atlasJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 169.643007,
+      "test_summaries": [
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 30,
+          "failed": 0,
+          "errors": 0,
+          "passed": 30,
+          "skipped": 0
+        },
+        {
+          "total": 179,
+          "failed": 0,
+          "errors": 0,
+          "passed": 179,
+          "skipped": 0
+        },
+        {
+          "total": 229,
+          "failed": 0,
+          "errors": 0,
+          "passed": 229,
+          "skipped": 0
+        },
+        {
+          "total": 120,
+          "failed": 0,
+          "errors": 0,
+          "passed": 120,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/17-data-jvm.log",
+      "raw_log_sha256": "98715396b347b90c43d62e4ea9e2bf731db6f55c03f4088c2fe96aa9c33f92e5",
+      "metadata_sha256": "bfea2eb91b3860fb579285e28e00244141340c8c78cd3b9b3b8751ed9078d99e"
+    },
+    {
+      "index": 18,
+      "targets": [
+        "archiveJVM/test",
+        "archiveLnaJVM/test",
+        "archivedResponseInteropJVM/test",
+        "datasetJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 56.610972,
+      "test_summaries": [
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11,
+          "skipped": 0
+        },
+        {
+          "total": 142,
+          "failed": 0,
+          "errors": 0,
+          "passed": 142,
+          "skipped": 0
+        },
+        {
+          "total": 78,
+          "failed": 0,
+          "errors": 0,
+          "passed": 78,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/18-data-jvm.log",
+      "raw_log_sha256": "9c46baaeac1bd741333632be5735b923f3bd60d2e08c69c068b8f8acc0b13e78",
+      "metadata_sha256": "b70170c046722e65b5f6628b5546529807c19475a227c1f38ab5305be31eb45c"
+    },
+    {
+      "index": 19,
+      "targets": [
+        "surfaceViewConnectivityJS/test",
+        "surfaceViewExamplesJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 52.445628,
+      "test_summaries": [
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 29,
+          "failed": 0,
+          "errors": 0,
+          "passed": 29,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/19-data-js.log",
+      "raw_log_sha256": "f3ceab4267e3efa310e5669ec1cc66704a2c2f506206fffd4f4939c89a689967",
+      "metadata_sha256": "dc58e7051450c24e1f7df1654292621f955e7709ba56d62f15101d33dfd7cc2a"
+    },
+    {
+      "index": 20,
+      "targets": [
+        "transformJS/test",
+        "spatialJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 80.301779,
+      "test_summaries": [
+        {
+          "total": 149,
+          "failed": 0,
+          "errors": 0,
+          "passed": 149,
+          "skipped": 0
+        },
+        {
+          "total": 204,
+          "failed": 0,
+          "errors": 0,
+          "passed": 204,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/20-data-js.log",
+      "raw_log_sha256": "146d21ad06946def8de0005b17c3c8c38c781b5265520af7c0a3861f449ab7fb",
+      "metadata_sha256": "698a403e30ad0e9627beb78076add49cb48eca4146314550511481122ff7b345"
+    },
+    {
+      "index": 21,
+      "targets": [
+        "atlasJS/test",
+        "archiveJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 48.46889,
+      "test_summaries": [
+        {
+          "total": 74,
+          "failed": 0,
+          "errors": 0,
+          "passed": 74,
+          "skipped": 0
+        },
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/21-data-js.log",
+      "raw_log_sha256": "de131b6e2e60bd94b1adfdda907532ea8cc197c2360cb6e5c13bc8a85936f180",
+      "metadata_sha256": "37c6606493d2a97188395ed63a0e031e2660b638290915cdb93750f34286fece"
+    },
+    {
+      "index": 22,
+      "targets": [
+        "archiveLnaJS/test",
+        "archivedResponseInteropJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 52.468989,
+      "test_summaries": [
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8,
+          "skipped": 0
+        },
+        {
+          "total": 104,
+          "failed": 0,
+          "errors": 0,
+          "passed": 104,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/22-data-js.log",
+      "raw_log_sha256": "be66b1227f94f8a6dd0af52438ddc590f4bc65fde924b2923ef260df6e14bd06",
+      "metadata_sha256": "c046cd8228488df9de73d670abccef93d81f418f26864b4f37f01b400bb2a1de"
+    },
+    {
+      "index": 23,
+      "targets": [
+        "datasetJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 45.651326,
+      "test_summaries": [
+        {
+          "total": 64,
+          "failed": 0,
+          "errors": 0,
+          "passed": 64,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/23-data-js.log",
+      "raw_log_sha256": "e800e070d4f9fd6f6b4d44f2ee064b16e9db2e9d5ffb9065f9293f116e831376",
+      "metadata_sha256": "33c9e2de3716b300c8d1d5e85b8bd920573dbee838258a5619283811ffe6e5f5"
+    },
+    {
+      "index": 24,
+      "targets": [
+        "estimatesJVM/test",
+        "estimatesIoJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 47.956486,
+      "test_summaries": [
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11,
+          "skipped": 0
+        },
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/24-estimates-jvm.log",
+      "raw_log_sha256": "16cbc111b855836fdab6b5f6ba3d905462bd1a73b77878bea5b7c11cf7e54f08",
+      "metadata_sha256": "ac75fceeedd4f0df7353c4b83960fce5201d3880c777160d6409166a44f63f1d"
+    },
+    {
+      "index": 25,
+      "targets": [
+        "estimatesJS/test",
+        "estimatesIoJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 48.653207,
+      "test_summaries": [
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/25-estimates-js.log",
+      "raw_log_sha256": "7e4c0c40003bdda3525b38f433a2145332600e09e8c759eea52085593a114ea9",
+      "metadata_sha256": "36026b15a29b8bcddd370fb42f09565a61f6e545bafd24bdf2eca0e009b72dcf"
+    },
+    {
+      "index": 26,
+      "targets": [
+        "modelJVM/test",
+        "fitJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 120.357482,
+      "test_summaries": [
+        {
+          "total": 101,
+          "failed": 0,
+          "errors": 0,
+          "passed": 101,
+          "skipped": 0
+        },
+        {
+          "total": 762,
+          "failed": 0,
+          "errors": 0,
+          "passed": 762,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/26-analysis-jvm.log",
+      "raw_log_sha256": "cd730ee00ce77c7ccec891637e8b9574d0552bcaf44163b4775f4cfe5cb9298a",
+      "metadata_sha256": "f42f2ca92e04360f99284f42b27d7bb4409bdba130a21d1da9e8c1ae676f0f2e"
+    },
+    {
+      "index": 27,
+      "targets": [
+        "firstLevelLawsJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 423.492338,
+      "test_summaries": [
+        {
+          "total": 222,
+          "failed": 0,
+          "errors": 0,
+          "passed": 221,
+          "skipped": 1
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/27-analysis-jvm.log",
+      "raw_log_sha256": "0999f9a3ea01a98e889affdc61d5701955462d6c47781f4f9dff79919edb59d6",
+      "metadata_sha256": "ba20dab54b58138134d2b5eaba3f83743ae5ac542adef1a4fb4f350e0d34e6c0"
+    },
+    {
+      "index": 28,
+      "targets": [
+        "mvpaPipelineJVM/test",
+        "mvpaFitJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 80.371537,
+      "test_summaries": [
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6,
+          "skipped": 0
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/28-analysis-jvm.log",
+      "raw_log_sha256": "a449db5a7e081a4c3754e9340c9e1af4eed8a962ba5167f7e706266819ee56e5",
+      "metadata_sha256": "bad6c8c6209a019f73443fd1b591d05351e8e76f11888016c30c1a9f889aba57"
+    },
+    {
+      "index": 29,
+      "targets": [
+        "modelJS/test",
+        "fitJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 131.985294,
+      "test_summaries": [
+        {
+          "total": 101,
+          "failed": 0,
+          "errors": 0,
+          "passed": 101,
+          "skipped": 0
+        },
+        {
+          "total": 704,
+          "failed": 0,
+          "errors": 0,
+          "passed": 704,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/29-analysis-js.log",
+      "raw_log_sha256": "43b2df10817840d8fcdd811bb2dc68658a1bac7a7fc00caf91ab4b7f39586560",
+      "metadata_sha256": "7a979e10b64406784d80fee917ba83b228c7bc058b469867cdaadde1e28b9d79"
+    },
+    {
+      "index": 30,
+      "targets": [
+        "firstLevelLawsJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 1352.540505,
+      "test_summaries": [
+        {
+          "total": 222,
+          "failed": 0,
+          "errors": 0,
+          "passed": 221,
+          "skipped": 1
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-resume-1cb288d5f/30-analysis-js.log",
+      "raw_log_sha256": "1fe939ffc05a4aeba52b8dbdd92f0102f2d9a7560af47344e1087befa2577b0f",
+      "metadata_sha256": "6c32cfb99bdbfb6b9b90bee58040b05ce51808898522ea7feda0a675fe7fc5a4"
+    },
+    {
+      "index": 31,
+      "targets": [
+        "mvpaPipelineJS/test",
+        "mvpaFitJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 146.471705,
+      "test_summaries": [
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6,
+          "skipped": 0
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/31-analysis-js.log",
+      "raw_log_sha256": "a0dc20515555f4465e9f00f47c6d40cebd86051c1307d6e3f8f2124678d019f6",
+      "metadata_sha256": "b49ba6ea68f2483e952ac7963f129e3e6cbbe3d8fc8894f1d87ec706cd677a73"
+    },
+    {
+      "index": 32,
+      "targets": [
+        "connectivityJVM/test",
+        "mvpaDatasetJVM/test",
+        "mvpaArtifactsJVM/test",
+        "mvpaSpatialJVM/test",
+        "mvpaFoundationAdmissionJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 161.459083,
+      "test_summaries": [
+        {
+          "total": 64,
+          "failed": 0,
+          "errors": 0,
+          "passed": 64,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 24,
+          "failed": 0,
+          "errors": 0,
+          "passed": 24,
+          "skipped": 0
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/32-downstream-jvm.log",
+      "raw_log_sha256": "fe68401480b49d74a59a3f73b5fb73ba88903e01c237406c347c90e9a80cd898",
+      "metadata_sha256": "f22af0f155a1f3691931ec0b273142f2af9563b02b254f562f1b03215463ad92"
+    },
+    {
+      "index": 33,
+      "targets": [
+        "groupJVM/test",
+        "mvpaGroupJVM/test",
+        "fmriWorkflowJVM/test",
+        "archiveZarrJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 82.302566,
+      "test_summaries": [
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        },
+        {
+          "total": 39,
+          "failed": 0,
+          "errors": 0,
+          "passed": 39,
+          "skipped": 0
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/33-downstream-jvm.log",
+      "raw_log_sha256": "765d7d0a7aba88f124f9917f539a6b84b3e0e8832ba2eb2c22344acc7ba4dfea",
+      "metadata_sha256": "44f24e53f4a3b49c8f3c59fb89e2f7847e2bf7baaeec1b116c8a5b9800df97ed"
+    },
+    {
+      "index": 34,
+      "targets": [
+        "connectivityJS/test",
+        "mvpaDatasetJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 89.078262,
+      "test_summaries": [
+        {
+          "total": 64,
+          "failed": 0,
+          "errors": 0,
+          "passed": 64,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/34-downstream-js.log",
+      "raw_log_sha256": "efcdf2898072711acae9d337ce7a5b5f93bf430fe33669d51c6b1bf99f3b39db",
+      "metadata_sha256": "2be3662fde53096d092b7df79fb2142b05616114adc8b7d08b637625dad019f1"
+    },
+    {
+      "index": 35,
+      "targets": [
+        "mvpaArtifactsJS/test",
+        "mvpaSpatialJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 74.357093,
+      "test_summaries": [
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 24,
+          "failed": 0,
+          "errors": 0,
+          "passed": 24,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/35-downstream-js.log",
+      "raw_log_sha256": "2a31b360bb5c4d5f41d7df2c7195b08b44caef5efcd1f3006f536007538e042f",
+      "metadata_sha256": "72e428cd0cfd96d28314f69c7c91d56c201244d1fdc7531fe016667362f84c14"
+    },
+    {
+      "index": 36,
+      "targets": [
+        "mvpaFoundationAdmissionJS/test",
+        "groupJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 62.635366,
+      "test_summaries": [
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 104,
+          "failed": 0,
+          "errors": 0,
+          "passed": 104,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/36-downstream-js.log",
+      "raw_log_sha256": "454b50556e4e8526c1bf4cec6bfd77d5b4a8c8934718f061becbfc782b0a5481",
+      "metadata_sha256": "6e2c06976b14de7948b34f6f8878babbaea6903a7b3ce0e34328f279f8bf81c1"
+    },
+    {
+      "index": 37,
+      "targets": [
+        "mvpaGroupJS/test",
+        "fmriWorkflowJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 72.314086,
+      "test_summaries": [
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        },
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/37-downstream-js.log",
+      "raw_log_sha256": "3a7090343b30b866248dcc82e94fb27d0486900c2dc509419009ef2d31678852",
+      "metadata_sha256": "12a92e11ab7c9213830e2b01f62f7df02b0fae150b4876647797e89a1d476867"
+    },
+    {
+      "index": 38,
+      "targets": [
+        "archiveZarrJS/test",
+        "datasetZarrJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 50.058213,
+      "test_summaries": [
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        }
+      ],
+      "source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+      "reuse_basis": "Only the bundled JVM IO example GIFTI resource changes (013 -> 031); no production Scala source changes. These first38 library batches do not depend on the examples/surface-jvm project. Earlier fixture/cache-repair proofs and actual source SHAs remain in the stage chain. Failed batch39 is rerun.",
+      "raw_log": "full-suite-repair-products-1cb288d5f/38-downstream-js.log",
+      "raw_log_sha256": "e2a06995e872642d76250d206e37bd3b2a4df4dded477518a9c1dd83884748b9",
+      "metadata_sha256": "3591625e3ca9e2831256b1911b348ca34b2da6af2949638cf91c389414b9d094"
+    },
+    {
+      "index": 39,
+      "targets": [
+        "surfaceExamplesJVM/test",
+        "atlasExamplesJVM/test",
+        "workflowExamplesJVM/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 62.949021,
+      "test_summaries": [
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "source_head": "5b984197a6fac0cd8cf994b389f31dba97f07dba",
+      "reuse_basis": null,
+      "raw_log": "full-suite-resume-io-fixture-5b984197a/39-examples.log",
+      "raw_log_sha256": "d4732be71787528645583236245110998425cec43c49cb0f0250daeee470dbd1",
+      "metadata_sha256": "932e7ae85761a271707cf13e94832987f266c5b6d7623f2131c8b92e30752aec"
+    },
+    {
+      "index": 40,
+      "targets": [
+        "workflowExamplesJS/test"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 56.937529,
+      "test_summaries": [
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        }
+      ],
+      "source_head": "5b984197a6fac0cd8cf994b389f31dba97f07dba",
+      "reuse_basis": null,
+      "raw_log": "full-suite-resume-io-fixture-5b984197a/40-examples-js.log",
+      "raw_log_sha256": "a9819933637705d10875ef3e4a8bc4733e413c4c514b718ae8b18bb7792db4f3",
+      "metadata_sha256": "7dc39ffd3895a64588869fc3f5fcac6daeaf7b6fd62dd533d1ff9a3c3fe58553"
+    }
+  ],
+  "skip_evidence": [
+    {
+      "log": "01-phrf-comparison-jvm.log",
+      "line": "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.006s"
+    },
+    {
+      "log": "01-phrf-comparison-jvm.log",
+      "line": "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.001s"
+    },
+    {
+      "log": "01-phrf-comparison-jvm.log",
+      "line": "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.001s"
+    },
+    {
+      "log": "01-phrf-comparison-jvm.log",
+      "line": "==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.0s"
+    },
+    {
+      "log": "14-image-surface-js.log",
+      "line": "==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped"
+    },
+    {
+      "log": "14-image-surface-js.log",
+      "line": "==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped"
+    },
+    {
+      "log": "27-analysis-jvm.log",
+      "line": "==> s scalafim.fmri.laws.FglsCmrgSuite.opt-in full external CMRG control packet preserves all five cells and every dataset skipped 0.008s"
+    },
+    {
+      "log": "30-analysis-js.log",
+      "line": "==> i <unknown> ignored"
+    },
+    {
+      "log": "30-analysis-js.log",
+      "line": "==> i <unknown> ignored"
+    },
+    {
+      "log": "30-analysis-js.log",
+      "line": "==> s opt-in full external CMRG control packet preserves all five cells and every dataset skipped"
+    },
+    {
+      "log": "30-analysis-js.log",
+      "line": "==> i <unknown> ignored"
+    },
+    {
+      "log": "30-analysis-js.log",
+      "line": "==> i <unknown> ignored"
+    },
+    {
+      "log": "30-analysis-js.log",
+      "line": "==> i <unknown> ignored"
+    }
+  ]
+}

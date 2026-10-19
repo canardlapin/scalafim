@@ -1,0 +1,46 @@
+{
+  "source_head": "529526e3dc877fd87754caa14b48cbcfc18599d1",
+  "portable_matrix_source_head": "1cb288d5f5fb955c953deec6a633a4c830bb56fe",
+  "changed_inputs": [
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxNativePickProbe.scala",
+      "before_sha256": "7f68849a0299747edb87eef55afb0f13c3bc9f72a59e69a7dd9e4519adf59b6e",
+      "after_sha256": "192ab0f573f630e2b142cf8b3ebf19ecc7b71a41a3b36867feb73ace07cfc5e0"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxViewportIsolationProbe.scala",
+      "before_sha256": "42c02f0b14e36e6054cde3b12375660ecac808b554eb2b4a9be6c2222a7b60ce",
+      "after_sha256": "2f3c2691dc738dac7a8d11736918bef9f362f39b34029b608445448c1f02abc0"
+    }
+  ],
+  "unchanged_source_input_files": 3051,
+  "exit_code": 0,
+  "targets": [
+    "surfaceViewJavafxJVM/Test/compile",
+    "imageViewJavafxJVM/Test/compile"
+  ],
+  "native_display_tests_run": false,
+  "raw_log": "javafx-test-compilation.log",
+  "raw_log_sha256": "a718b3891b831c0f1945cdc99f69e45548932384b77e1c3bc8b4814cf0927852",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-19T16:56:52.478072+00:00",
+    "finished_utc": "2026-10-19T17:01:53.311286+00:00",
+    "duration_seconds": 300.833296,
+    "command": [
+      "python3",
+      "tools/build/sbt-warm",
+      "surfaceViewJavafxJVM/Test/compile",
+      "imageViewJavafxJVM/Test/compile"
+    ],
+    "cwd": "/private/tmp/scalafim-u3-javafx-20261019",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/topology-cutover-20261019/javafx-test-compilation.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 18669
+  },
+  "scope": "The two changed files are JavaFX Test-only probes. Portable matrix projects do not depend on JavaFX Test sources. No production Scala source or portable test/input changed."
+}
