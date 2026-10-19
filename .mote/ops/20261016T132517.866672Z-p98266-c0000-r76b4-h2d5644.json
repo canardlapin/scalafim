@@ -1,0 +1,1 @@
+{"actor":"warm-salvage-analysis-20261016","entity":"bd-01M52AQ9JQS51XFMB17X4BDQJX","kind":"reserve_open","mode":"exclusive","op":"20261016T132517.866672Z-p98266-c0000-r76b4-h2d5644","paths":["modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala"],"reservation_id":"rv-01M52E6VDAK65EY7DN52JKMM8J","ts":"2026-10-16T13:25:17.866672Z","ttl_s":14400,"v":2}
