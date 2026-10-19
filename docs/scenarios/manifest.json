@@ -584,9 +584,9 @@
     {
       "id": "group.first-level-bridge.v1",
       "tier": "cross_level_workflow",
-      "module": "fit-estimates",
+      "module": "fmri-workflow",
       "suite_class": "scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite",
-      "suite_path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+      "suite_path": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -594,15 +594,15 @@
         "description": "First-level TContrastResult estimates and SEs are bridged to GroupData, then fixed-effects inverse-variance inference is checked analytically."
       },
       "allowed_statuses": ["pass"],
-      "acceptance_commands": ["sbt fitEstimatesJVM/test", "sbt fitEstimatesJS/test"],
+      "acceptance_commands": ["sbt fmriWorkflowJVM/test", "sbt fmriWorkflowJS/test"],
       "caveats": []
     },
     {
       "id": "group.first-level-to-group-known-effect.v1",
       "tier": "cross_level_workflow",
-      "module": "fit-estimates",
+      "module": "fmri-workflow",
       "suite_class": "scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite",
-      "suite_path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+      "suite_path": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -610,7 +610,7 @@
         "description": "Subject-level public first-level fits recover injected task effects, bridge into GroupData, and fixed-effects group inference matches an analytic inverse-variance oracle."
       },
       "allowed_statuses": ["pass"],
-      "acceptance_commands": ["sbt fitEstimatesJVM/test", "sbt fitEstimatesJS/test"],
+      "acceptance_commands": ["sbt fmriWorkflowJVM/test", "sbt fmriWorkflowJS/test"],
       "caveats": []
     },
     {
