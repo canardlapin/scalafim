@@ -122,6 +122,17 @@ class SpatialQcSuite extends munit.FunSuite:
     assert(check.passed)
     assertEquals(operator.qc.coverage.uncoveredTargetRows, Vector(2))
 
+  test("ROI restriction QC retains non-empty and row-bound admission"):
+    val epi = domain("roi-admission", Vector(3, 1, 1))
+    val operator = compile(graph(Vector(epi), Vector.empty), CompileRequest(epi.id, epi.id, sampling = SamplingPolicy.Nearest))
+    val probe = DoubleMatrix.fromRows(Vector(Vector(1.0, 10.0), Vector(2.0, 20.0), Vector(3.0, 30.0)))
+
+    interceptMessage[IllegalArgumentException]("requirement failed: row selection must be non-empty"):
+      SpatialQc.roiRestrictionLaw(operator, operator, Vector.empty, probe)
+    for row <- Vector(-1, 3) do
+      interceptMessage[IllegalArgumentException](s"requirement failed: row index $row out of bounds"):
+        SpatialQc.roiRestrictionLaw(operator, operator, Vector(row), probe)
+
   test("one-based neurofunctor-style triplet fixtures compare against zero-based operators"):
     val epi = domain("epi", Vector(2, 1, 1))
     val operator = compile(graph(Vector(epi), Vector.empty), CompileRequest(epi.id, epi.id, sampling = SamplingPolicy.Nearest))

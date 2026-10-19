@@ -96,6 +96,10 @@ class SpatialTripletFileCacheSuite extends munit.FunSuite:
 
     withTempFile("operator.sftc") { path =>
       ioValue(SpatialTripletFileCache.writeTriplets(path, key, provenance, triplets))
+      // Independent Python struct encoding of the cache-v1 grammar, including -0.0.
+      val digest = java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(path))
+      assertEquals(digest.map(b => f"${b & 0xff}%02x").mkString,
+        "43b3ffab2af5f15ea4133baf23a2b9b519bcffb7df8a416b4afaa0c58532c50a")
       val cached = ioValue(SpatialTripletFileCache.read(path))
 
       assertEquals(cached.key, key)
