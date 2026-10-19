@@ -69,7 +69,7 @@ class DomainValiditySuite extends munit.FunSuite:
       ExactVolumeSearchlight.materializeCategorical(
         domain,
         searchlight,
-        center,
+        searchlight.centers.indexAtValidatedOrdinal(4),
         field,
         support = Some(support)
       )
@@ -89,7 +89,7 @@ class DomainValiditySuite extends munit.FunSuite:
     val searchlight =
       ExactVolumeSearchlight.metricBalls(domain, radius, support).toOption.get
     val field = locus4s.data.Field.view(domain.space)(_ => 1)
-    val windows = support.indicesInDomainOrder.map: center =>
+    val windows = searchlight.centers.indices.map: center =>
       ExactVolumeSearchlight
         .materializeCategorical(
           domain,

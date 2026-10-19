@@ -1,11 +1,10 @@
 package scalafim.fmri.mvpa.spatial
 
-import locus4s.{Index, Region, Selection}
+import locus4s.{CenteredNeighborhoodSystem, Index, Region, Selection}
 import multivar.core.SemanticSpace
 import resample4s.core.{IndexSpace, Injection}
 import mvpa4s.AxisRef
 import mvpa4s.measurement.{MeasurementError, MeasurementFrame, MeasurementFrameDeclaration, MeasurementId, MeasurementLeg, PackedMeasurementEntry}
-import scalafim.image.VolumeNeighborhoods
 import scalafim.locus.CenteredSearchlight
 
 /** Display and spatial support accompany a measurement, but do not contribute
@@ -132,30 +131,26 @@ object SpatialMeasurementFrames:
               SpatialMeasurementRendition(site.center, site.support.region, site.label)
             )
 
-  def volumeNeighborhoods[K, S](
+  def volumeNeighborhoods[K, C, S](
       source: AxisRef[K] { type Locus = S },
       declaration: MeasurementFrameDeclaration,
-      neighborhoods: VolumeNeighborhoods[S],
+      neighborhoods: CenteredNeighborhoodSystem[C, S],
       label: Index[S] => Option[String] = (_: Index[S]) => None
   ): Either[SpatialMeasurementFrameError, MeasurementFrame[source.Id, K, SpatialMeasurementRendition[S]]] =
-    if !source.locus.sameRuntimeOwnerAs(neighborhoods.centers.space) then
-      Left(ownerError("volume neighborhood centers", source, neighborhoods.centers.space.toString))
-    else if !source.locus.sameRuntimeOwnerAs(neighborhoods.relation.from) then
-      Left(ownerError("volume neighborhood source relation", source, neighborhoods.relation.from.toString))
-    else if !source.locus.sameRuntimeOwnerAs(neighborhoods.relation.to) then
-      Left(ownerError("volume neighborhood target relation", source, neighborhoods.relation.to.toString))
+    if !source.locus.sameRuntimeOwnerAs(neighborhoods.ambient) then
+      Left(ownerError("volume neighborhood ambient", source, neighborhoods.ambient.toString))
     else
       val sites = Vector.newBuilder[SpatialMeasurementSite[S]]
-      val centers = neighborhoods.centers.indicesInDomainOrder
+      val centers = neighborhoods.centers.indices
       while centers.hasNext do
-        val center = centers.next()
-        neighborhoods.regionAt(center).foreach: support =>
-          sites += SpatialMeasurementSite(
-            MeasurementId.unsafe(stableId(source, "volume", center.ordinal)),
-            SpatialMeasurementSupport.Regional(support),
-            Some(center),
-            label(center)
-          )
+        val compactCenter = centers.next()
+        val center = neighborhoods.center(compactCenter)
+        sites += SpatialMeasurementSite(
+          MeasurementId.unsafe(stableId(source, "volume", center.ordinal)),
+          SpatialMeasurementSupport.Regional(neighborhoods.neighborhood(compactCenter)),
+          Some(center),
+          label(center)
+        )
       regions(source, declaration, sites.result())
 
   def surfacePatches[K, S](

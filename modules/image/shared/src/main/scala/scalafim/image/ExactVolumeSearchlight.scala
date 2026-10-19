@@ -9,6 +9,8 @@ import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.locus.GridDomain
+import locus4s.CenteredNeighborhoodSystem
+import locus4s.NeighborhoodSystemError
 import locus4s.Index
 import locus4s.Region
 import locus4s.Relation
@@ -26,7 +28,6 @@ enum ExactVolumeSearchlightError:
   case InvalidRelation(error: RelationError)
   case NonEmptyOutsideCenters(pointOrdinal: Int)
   case MissingCenter(pointOrdinal: Int)
-  case CenterUnavailable(pointOrdinal: Int)
   case CenterExcluded(pointOrdinal: Int)
   case InvalidSelection(error: SelectionError)
   case InvalidSelectedImage(error: SelectedImageError)
@@ -44,8 +45,6 @@ enum ExactVolumeSearchlightError:
         s"searchlight relation row $point is non-empty outside the center region"
       case MissingCenter(point) =>
         s"searchlight neighborhood at $point does not contain its center"
-      case CenterUnavailable(point) =>
-        s"point $point is not an allowed searchlight center"
       case CenterExcluded(point) =>
         s"point $point is excluded by the requested field support"
       case InvalidSelection(error) => error.message
@@ -59,14 +58,6 @@ enum ExactVolumeSearchlightError:
         s"blobby-ball drop probability must be finite and in [0, 1]; got $value"
       case InvalidEdgeFraction(value) =>
         s"blobby-ball edge fraction must be finite and in (0, 1]; got $value"
-
-/** Domain-specific policy pairing allowed centers with exact locus rows. */
-final class VolumeNeighborhoods[S] private[image] (
-    val centers: Region[S],
-    val relation: Relation[S, S]
-):
-  def regionAt(center: Index[S]): Option[Region[S]] =
-    Option.when(centers.contains(center))(relation.row(center))
 
 /** Reusable exact searchlight support. Geometry and selection construction are
   * workload preparation; applying image values retains only the compact Ravel
@@ -85,7 +76,7 @@ object ExactVolumeSearchlight:
   def fromRelation[S](
       centers: Region[S],
       relation: Relation[S, S]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     if !centers.space.sameRuntimeOwnerAs(relation.from) then
       Left(
         ExactVolumeSearchlightError.WrongSpace(
@@ -98,26 +89,40 @@ object ExactVolumeSearchlight:
           SpaceMismatch.between(centers.space, relation.to)
         )
       )
-    else validateCentered(centers, relation)
+    else
+      val checked = centeredRows(centers): center =>
+        relation.row(center).ordinalsInDomainOrder
+      var ordinal = 0
+      var invalidOutside = -1
+      while ordinal < centers.space.size && invalidOutside < 0 do
+        val point = centers.space.indexAtValidatedOrdinal(ordinal)
+        if !centers.contains(point) && !relation.row(point).isEmpty then
+          invalidOutside = ordinal
+        ordinal += 1
+      checked match
+        case Left(ExactVolumeSearchlightError.MissingCenter(missing))
+            if invalidOutside < 0 || missing < invalidOutside => checked
+        case _ if invalidOutside >= 0 =>
+          Left(ExactVolumeSearchlightError.NonEmptyOutsideCenters(invalidOutside))
+        case _ => checked
 
-  def prepare[S](
-      searchlight: VolumeNeighborhoods[S],
-      center: Index[S],
+  def prepare[C, S](
+      searchlight: CenteredNeighborhoodSystem[C, S],
+      center: Index[C],
       support: Option[Region[S]] = None
   ): Either[ExactVolumeSearchlightError, PreparedVolumeWindow[S]] =
+    val ambientCenter = searchlight.center(center)
+    val neighborhood = searchlight.neighborhood(center)
     for
-      neighborhood <- searchlight
-        .regionAt(center)
-        .toRight(
-          ExactVolumeSearchlightError.CenterUnavailable(center.ordinal)
-        )
-      restricted = support.fold(neighborhood)(neighborhood.intersect)
+      restricted <- support match
+        case Some(region) if !searchlight.ambient.sameRuntimeOwnerAs(region.space) =>
+          Left(ExactVolumeSearchlightError.WrongSpace(
+            SpaceMismatch.between(searchlight.ambient, region.space)
+          ))
+        case _ => Right(support.fold(neighborhood)(neighborhood.intersect))
       _ <-
-        if restricted.contains(center) then Right(())
-        else
-          Left(
-            ExactVolumeSearchlightError.CenterExcluded(center.ordinal)
-          )
+        if restricted.contains(ambientCenter) then Right(())
+        else Left(ExactVolumeSearchlightError.CenterExcluded(ambientCenter.ordinal))
       selection <- Selection
         .fromRegion(restricted)
         .left
@@ -126,23 +131,17 @@ object ExactVolumeSearchlight:
         var position = 0
         var found = -1
         while position < selection.size && found < 0 do
-          val selectedPosition =
-            selection.positions.indexAtValidatedOrdinal(position)
-          if selection(selectedPosition).ordinal == center.ordinal then
-            found = position
+          val selectedPosition = selection.positions.indexAtValidatedOrdinal(position)
+          if selection(selectedPosition).ordinal == ambientCenter.ordinal then found = position
           position += 1
         found
-    yield new PreparedVolumeWindow(
-      selection,
-      center,
-      centerPosition
-    )
+    yield new PreparedVolumeWindow(selection, ambientCenter, centerPosition)
 
   def metricBalls[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
       radius: SearchlightRadius,
       centers: Region[S]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     if !domain.space.sameRuntimeOwnerAs(centers.space) then
       Left(
         ExactVolumeSearchlightError.WrongSpace(
@@ -159,7 +158,7 @@ object ExactVolumeSearchlight:
   def metricBalls[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
       radius: SearchlightRadius
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     metricBalls(domain, radius, Region.whole(domain.space))
 
   /** Grid-axis-aligned boxes with half-width expressed in physical units. */
@@ -167,7 +166,7 @@ object ExactVolumeSearchlight:
       domain: GridDomain[F, D3, S],
       radius: SearchlightRadius,
       centers: Region[S]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     checkSpace(domain, centers.space).flatMap: _ =>
       val distance = radius.millimeters
       val deltas = Vector.tabulate(3): axis =>
@@ -177,7 +176,7 @@ object ExactVolumeSearchlight:
   def cubes[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
       radius: SearchlightRadius
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     cubes(domain, radius, Region.whole(domain.space))
 
   /** Ellipsoids obtained by scaling the grid-axis contributions before
@@ -194,7 +193,7 @@ object ExactVolumeSearchlight:
       centers: Region[S],
       jitter: Double = 0.0,
       rng: Random = new Random(0L)
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     if scales.length != 3 || scales.exists(value => !value.isFinite || value <= 0.0)
     then Left(ExactVolumeSearchlightError.InvalidScales(scales))
     else if !jitter.isFinite || jitter < 0.0 then
@@ -224,7 +223,7 @@ object ExactVolumeSearchlight:
       domain: GridDomain[F, D3, S],
       radius: SearchlightRadius,
       scales: Vector[Double]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     ellipsoids(
       domain,
       radius,
@@ -242,7 +241,7 @@ object ExactVolumeSearchlight:
       edgeFraction: Double,
       centers: Region[S],
       rng: Random = new Random(0L)
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     if !drop.isFinite || drop < 0.0 || drop > 1.0 then
       Left(ExactVolumeSearchlightError.InvalidDrop(drop))
     else if !edgeFraction.isFinite || edgeFraction <= 0.0 || edgeFraction > 1.0
@@ -284,7 +283,7 @@ object ExactVolumeSearchlight:
       drop: Double,
       edgeFraction: Double,
       rng: Random
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     blobbyBalls(
       domain,
       radius,
@@ -299,37 +298,29 @@ object ExactVolumeSearchlight:
     * Centers are retained, so the operation fails when the supplied support
     * excludes any center instead of silently producing an invalid searchlight.
     */
-  def restrictTargets[S](
-      searchlight: VolumeNeighborhoods[S],
+  def restrictTargets[C, S](
+      searchlight: CenteredNeighborhoodSystem[C, S],
       support: Region[S]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
-    if !searchlight.centers.space.sameRuntimeOwnerAs(support.space) then
-      Left(
-        ExactVolumeSearchlightError.WrongSpace(
-          SpaceMismatch.between(searchlight.centers.space, support.space)
-        )
-      )
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[C, S]] =
+    if !searchlight.ambient.sameRuntimeOwnerAs(support.space) then
+      Left(ExactVolumeSearchlightError.WrongSpace(
+        SpaceMismatch.between(searchlight.ambient, support.space)
+      ))
     else
-      Relation
-        .fromOrdinalRows(
-          searchlight.centers.space,
-          searchlight.centers.space,
-          Iterator.tabulate(searchlight.centers.space.size): ordinal =>
-            val center =
-              searchlight.centers.space.indexAtValidatedOrdinal(ordinal)
-            searchlight.relation
-              .row(center)
-              .intersect(support)
-              .ordinalsInDomainOrder
-        )
-        .left
-        .map(ExactVolumeSearchlightError.InvalidRelation.apply)
-        .flatMap(fromRelation(searchlight.centers, _))
+      Relation.fromOrdinalRows(
+        searchlight.centers,
+        searchlight.ambient,
+        searchlight.centers.indices.map: center =>
+          searchlight.neighborhood(center).intersect(support).ordinalsInDomainOrder
+      ).left.map(ExactVolumeSearchlightError.InvalidRelation.apply)
+        .flatMap(membership => CenteredNeighborhoodSystem
+          .from(searchlight.centerEmbedding, membership)
+          .left.map(neighborhoodError))
 
-  def materialize[F <: Frame[D3], S, A, Sem](
+  def materialize[F <: Frame[D3], C, S, A, Sem](
       domain: GridDomain[F, D3, S],
-      searchlight: VolumeNeighborhoods[S],
-      center: Index[S],
+      searchlight: CenteredNeighborhoodSystem[C, S],
+      center: Index[C],
       field: Field[S, A],
       support: Option[Region[S]] = None,
       label: String = ""
@@ -341,7 +332,7 @@ object ExactVolumeSearchlight:
     SelectedVolumeWindow[F, S, A, Sem]
   ] =
     for
-      _ <- checkSpace(domain, searchlight.centers.space)
+      _ <- checkSpace(domain, searchlight.ambient)
       _ <- checkSpace(domain, field.space)
       prepared <- prepare(searchlight, center, support)
       data = NDArray.build[A, ravel.Rank[1]](
@@ -366,7 +357,7 @@ object ExactVolumeSearchlight:
         .left
         .map(ExactVolumeSearchlightError.InvalidSelectedImage.apply)
       window <- SelectedVolumeWindow
-        .make(selected, center, prepared.centerPosition)
+        .make(selected, prepared.center, prepared.centerPosition)
         .left
         .map(ExactVolumeSearchlightError.InvalidWindow.apply)
     yield window
@@ -412,10 +403,10 @@ object ExactVolumeSearchlight:
         .map(ExactVolumeSearchlightError.InvalidWindow.apply)
     yield window
 
-  def materializeVolume[F <: Frame[D3], S, A, Sem](
+  def materializeVolume[F <: Frame[D3], C, S, A, Sem](
       domain: GridDomain[F, D3, S],
-      searchlight: VolumeNeighborhoods[S],
-      center: Index[S],
+      searchlight: CenteredNeighborhoodSystem[C, S],
+      center: Index[C],
       volume: SomeNeuroVolume[A, Sem],
       support: Option[Region[S]] = None,
       label: String = ""
@@ -427,7 +418,7 @@ object ExactVolumeSearchlight:
     SelectedVolumeWindow[F, S, A, Sem]
   ] =
     for
-      _ <- checkSpace(domain, searchlight.centers.space)
+      _ <- checkSpace(domain, searchlight.ambient)
       prepared <- prepare(searchlight, center, support)
       window <- materializePreparedVolume(
         domain,
@@ -441,10 +432,10 @@ object ExactVolumeSearchlight:
     * choose between the continuous and categorical meanings available for
     * several primitive element types.
     */
-  def materializeContinuous[F <: Frame[D3], S, A](
+  def materializeContinuous[F <: Frame[D3], C, S, A](
       domain: GridDomain[F, D3, S],
-      searchlight: VolumeNeighborhoods[S],
-      center: Index[S],
+      searchlight: CenteredNeighborhoodSystem[C, S],
+      center: Index[C],
       field: Field[S, A],
       support: Option[Region[S]] = None,
       label: String = ""
@@ -455,7 +446,7 @@ object ExactVolumeSearchlight:
     ExactVolumeSearchlightError,
     SelectedVolumeWindow[F, S, A, Continuous]
   ] =
-    materialize[F, S, A, Continuous](
+    materialize[F, C, S, A, Continuous](
       domain,
       searchlight,
       center,
@@ -465,10 +456,10 @@ object ExactVolumeSearchlight:
     )
 
   /** Materialize a label-valued searchlight with categorical semantics. */
-  def materializeCategorical[F <: Frame[D3], S, A](
+  def materializeCategorical[F <: Frame[D3], C, S, A](
       domain: GridDomain[F, D3, S],
-      searchlight: VolumeNeighborhoods[S],
-      center: Index[S],
+      searchlight: CenteredNeighborhoodSystem[C, S],
+      center: Index[C],
       field: Field[S, A],
       support: Option[Region[S]] = None,
       label: String = ""
@@ -479,7 +470,7 @@ object ExactVolumeSearchlight:
     ExactVolumeSearchlightError,
     SelectedVolumeWindow[F, S, A, Categorical]
   ] =
-    materialize[F, S, A, Categorical](
+    materialize[F, C, S, A, Categorical](
       domain,
       searchlight,
       center,
@@ -494,7 +485,7 @@ object ExactVolumeSearchlight:
       deltas: Vector[Int]
   )(
       include: (Int, Int, Int) => Boolean
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
     buildNeighborhoods(domain, centers): center =>
       boundedOrdinals(domain, center, deltas)(include)
 
@@ -503,27 +494,34 @@ object ExactVolumeSearchlight:
       centers: Region[S]
   )(
       rowAt: VoxelCoord => IterableOnce[Int]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
-    val rows = Array.fill(domain.space.size)(Vector.empty[Int])
-    centers.indicesInDomainOrder.foreach: centerIndex =>
-      val lattice =
-        Indexing.indexToGrid3D(domain.grid.shape, centerIndex.ordinal)
-      val center = VoxelCoord(
-        lattice(0),
-        lattice(1),
-        lattice(2)
-      )
-      rows(centerIndex.ordinal) = rowAt(center).iterator.toVector
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
+    centeredRows(centers): centerIndex =>
+      val lattice = Indexing.indexToGrid3D(domain.grid.shape, centerIndex.ordinal)
+      rowAt(VoxelCoord(lattice(0), lattice(1), lattice(2)))
 
-    Relation
-      .fromOrdinalRows(
-        domain.space,
-        domain.space,
-        rows.iterator.map(_.iterator)
-      )
-      .left
-      .map(ExactVolumeSearchlightError.InvalidRelation.apply)
-      .flatMap(fromRelation(centers, _))
+  private def centeredRows[S](centers: Region[S])(
+      rowAt: Index[S] => IterableOnce[Int]
+  ): Either[ExactVolumeSearchlightError, CenteredNeighborhoodSystem[?, S]] =
+    for
+      selected <- Selection.fromRegion(centers)
+        .left.map(ExactVolumeSearchlightError.InvalidSelection.apply)
+      membership <- Relation.fromOrdinalRows(
+        selected.positions,
+        centers.space,
+        selected.indices.map(rowAt)
+      ).left.map(ExactVolumeSearchlightError.InvalidRelation.apply)
+      centered <- CenteredNeighborhoodSystem.fromSelection(selected, membership)
+        .left.map(neighborhoodError)
+    yield centered
+
+  private def neighborhoodError(error: NeighborhoodSystemError): ExactVolumeSearchlightError =
+    error match
+      case NeighborhoodSystemError.MissingEmbeddedCenter(_, ambient) =>
+        ExactVolumeSearchlightError.MissingCenter(ambient)
+      case NeighborhoodSystemError.MembershipCenterOwnerMismatch(mismatch) =>
+        ExactVolumeSearchlightError.WrongSpace(mismatch)
+      case NeighborhoodSystemError.MembershipAmbientOwnerMismatch(mismatch) =>
+        ExactVolumeSearchlightError.WrongSpace(mismatch)
 
   private def boundedOrdinals[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
@@ -601,33 +599,6 @@ object ExactVolumeSearchlight:
     val wy = matrix(1, 0) * dx + matrix(1, 1) * dy + matrix(1, 2) * dz
     val wz = matrix(2, 0) * dx + matrix(2, 1) * dy + matrix(2, 2) * dz
     wx * wx + wy * wy + wz * wz
-
-  private def validateCentered[S](
-      centers: Region[S],
-      relation: Relation[S, S]
-  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
-    var ordinal = 0
-    var invalidOutside = -1
-    var missingCenter = -1
-    while ordinal < centers.space.size &&
-        invalidOutside < 0 && missingCenter < 0
-    do
-      val point = centers.space.indexAtValidatedOrdinal(ordinal)
-      val row = relation.row(point)
-      if centers.contains(point) then
-        if !row.contains(point) then missingCenter = ordinal
-      else if !row.isEmpty then invalidOutside = ordinal
-      ordinal += 1
-
-    if invalidOutside >= 0 then
-      Left(
-        ExactVolumeSearchlightError.NonEmptyOutsideCenters(
-          invalidOutside
-        )
-      )
-    else if missingCenter >= 0 then
-      Left(ExactVolumeSearchlightError.MissingCenter(missingCenter))
-    else Right(new VolumeNeighborhoods(centers, relation))
 
   private def checkSpace[F <: Frame[D3], S, T](
       domain: GridDomain[F, D3, S],

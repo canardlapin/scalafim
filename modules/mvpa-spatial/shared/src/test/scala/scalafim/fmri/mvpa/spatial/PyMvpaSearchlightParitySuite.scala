@@ -22,11 +22,12 @@ class PyMvpaSearchlightParitySuite extends munit.FunSuite:
     val packed = right(GridDomain.register(grid, "pymvpa-physical", DomainRegistry.empty))
     val centers = right(VolumeRegion.fromOrdinals(packed.value.space, fixture.centerOrdinals))
     val support = right(VolumeRegion.fromOrdinals(packed.value.space, fixture.supportOrdinals))
-    val physical = right(ExactVolumeSearchlight.restrictTargets(
-      right(ExactVolumeSearchlight.metricBalls(packed.value, right(SearchlightRadius.make(fixture.radiusMillimeters)), centers)),
-      support
-    ))
-    val physicalRows = fixture.centerOrdinals.map(center => center -> physical.regionAt(packed.value.space.indexAtValidatedOrdinal(center)).get.ordinalsInDomainOrder.toVector)
+    val balls = right(ExactVolumeSearchlight.metricBalls(packed.value, right(SearchlightRadius.make(fixture.radiusMillimeters)), centers))
+    val physical = right(ExactVolumeSearchlight.restrictTargets(balls, support))
+    val rowsByVoxel = physical.centers.indices.map: center =>
+      physical.center(center).ordinal -> physical.neighborhood(center).ordinalsInDomainOrder.toVector
+    val byVoxel = rowsByVoxel.toMap
+    val physicalRows = fixture.centerOrdinals.map(center => center -> byVoxel(center))
     assertEquals(physicalRows, fixture.neighborhoods)
     assertEquals(directPhysicalNeighborhoods(fixture.dims, fixture.affineRowMajor, fixture.supportOrdinals, fixture.centerOrdinals, fixture.radiusMillimeters * fixture.radiusMillimeters), fixture.neighborhoods)
     assertEqualsDouble(physicalSquaredDistance(fixture.dims, fixture.affineRowMajor, 8, 4), 10.0, 0.0)

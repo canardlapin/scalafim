@@ -72,7 +72,6 @@ class NativeImageAllocationSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
 
     val centerOrdinal = domain.space.size / 2
-    val center = domain.space.indexAtValidatedOrdinal(centerOrdinal)
     val centers =
       Region
         .fromOrdinals(domain.space, Vector(centerOrdinal))
@@ -94,7 +93,7 @@ class NativeImageAllocationSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
     val preparedSearchlight =
       ExactVolumeSearchlight
-        .prepare(searchlight, center)
+        .prepare(searchlight, searchlight.centers.indexAtValidatedOrdinal(0))
         .fold(error => fail(error.message), identity)
 
     val cases =

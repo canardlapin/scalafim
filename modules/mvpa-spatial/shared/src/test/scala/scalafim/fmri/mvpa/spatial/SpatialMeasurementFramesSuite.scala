@@ -145,6 +145,12 @@ def invalid[K, S, T](source: AxisRef[K] { type Locus = S }, declaration: Measure
           Some(neural.locus.indexAtValidatedOrdinal(center)))
     ))
     assertEquals(actual.identity, expected.identity)
+    val reverseSelection = right(Selection.fromOrdinals(neural.locus, Vector(3, 1)))
+    val compactRows = right(Relation.fromOrdinalRows(reverseSelection.positions, neural.locus,
+      Vector(Vector(2, 3), Vector(0, 1))))
+    val direct = right(locus4s.CenteredNeighborhoodSystem.fromSelection(reverseSelection, compactRows))
+    val reordered = right(SpatialMeasurementFrames.volumeNeighborhoods(neural, declaration, direct))
+    assertEquals(reordered.identity, expected.identity)
     val visitor = new MeasurementVisitor[samples.Id, neural.Id, String, SpatialMeasurementRendition[neural.Locus], DMat]:
       def visit[L <: SemanticSpace](entry: PackedMeasurementEntry[neural.Id, String, SpatialMeasurementRendition[neural.Locus]] { type Local = L }, measured: MeasuredObservations[samples.Id, L]): Either[MeasurementFailure, DMat] =
         Right(right(measured.patterns(DMat.eye(measured.localAxis.size))))
