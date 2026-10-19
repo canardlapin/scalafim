@@ -9,6 +9,7 @@ import image4s.geometry.Frame
 import image4s.geometry.GeometryError as ImageGeometryError
 import image4s.geometry.Grid
 import image4s.geometry.Point
+import ravel.CanonicalArray
 import ravel.DType
 import ravel.NDArray
 import ravel.Rank
@@ -81,6 +82,8 @@ final case class SliceImage[A] private (
     "slice shape must be (row, column)"
   )
 
+  private val canonicalValues = CanonicalArray.from(values).toOption
+
   def dimensions: SliceDimensions =
     grid.dimensions
 
@@ -91,7 +94,9 @@ final case class SliceImage[A] private (
 
   inline def valueAtCanonicalOrdinal(index: Int): A =
     require(index >= 0 && index < dimensions.pixelCount, "slice ordinal out of bounds")
-    values(index / dimensions.width, index % dimensions.width)
+    canonicalValues match
+      case Some(canonical) => canonical.readLinear(index)
+      case None => values(index / dimensions.width, index % dimensions.width)
 
 object SliceImage:
   private[image] def unsafe[A](grid: SliceGrid, values: NDArray[A, Rank[2]]): SliceImage[A] =

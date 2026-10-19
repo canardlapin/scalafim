@@ -1,0 +1,94 @@
+{
+  "schema": "scalafim.canonical-slice-access-evidence.v1",
+  "tested_source": "27a79246ed8b4527a4201695dd84b769f998b63b",
+  "base_main": "9c409939d8280a244e68a26104742a39c45a8e44",
+  "jvm": {
+    "image": 392,
+    "image_view": 47,
+    "failures": 0,
+    "skips": 0
+  },
+  "js": {
+    "image": 361,
+    "image_view": 47,
+    "failures": 0,
+    "skips": 0
+  },
+  "review": {
+    "agent": "/root/voxel_migration_review",
+    "source": "9b42c6757884388909e707a155e232a5bd16a686",
+    "production_blob_unchanged_at_tested_source": "79ca41168eca05f9340df56b8eb2b0436ccf0093",
+    "verdict": "No semantic blocker; original bounds refusal precedes capability read; noncanonical and offset views use original coordinates; signedzero/nonfinite values preserved. Separately compiled JVM/JS callers required. Those module gates subsequently passed at27a.",
+    "test_only_followup": "Checked SomeSampleSpace refinement before creating regression fixture grid."
+  },
+  "measurement": "Proxy only:32freshJVMs, exact full-rasterSHA256;160px3planes29.0675->25.6975ms,512px111.3331->103.0314ms; no warmed regression. Not a product cold-open acceptance claim.",
+  "consumer_status": "f910 consumer brain lane still fails one205.666ms sample vs200; current candidate has not run final fullconsumer acceptance or landedmain.",
+  "files": [
+    {
+      "file": "scalafim-canonical-slice-27a-jvm.log.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-27a-jvm.log",
+      "raw_sha256": "fc64c1da4e6dc9b10bd4798c2073311fb1ef3c909f32d8f91449f06e406b2bef",
+      "gzip_sha256": "816a8a790f87a1809beba4fc55692a94d1cf9fd2ba872ba085d65c185f70ff41"
+    },
+    {
+      "file": "scalafim-canonical-slice-27a-jvm.log.meta.json.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-27a-jvm.log.meta.json",
+      "raw_sha256": "1fcb5c353793d0a909cb35ddf0efabc07977d6e3af4b47fad4a14c20601eea57",
+      "gzip_sha256": "d52939ea2ca7579759ca84953152419f2f81dc8d8b271182b2e03545f1c32b01"
+    },
+    {
+      "file": "scalafim-canonical-slice-27a-js.log.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-27a-js.log",
+      "raw_sha256": "08d5473bf086500b68dca4fc85caf946926a671c6edc81d1b05395244e2304ab",
+      "gzip_sha256": "a120ea7a60d789d414d476f7be10d2dcb9393e0117160d1f375d89e9bf628f80"
+    },
+    {
+      "file": "scalafim-canonical-slice-27a-js.log.meta.json.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-27a-js.log.meta.json",
+      "raw_sha256": "ddfbd95fe918cbd363868a2a760b26c618036a09ca24b491540a9e23c72de13b",
+      "gzip_sha256": "82d81d71265278cfb68728f733fd53b953a2dc9772ee086671b1a2740cdf3e80"
+    },
+    {
+      "file": "jvm-suite-summary.json.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-verify-9b42/.agent-work/jvm-suite-summary.json",
+      "raw_sha256": "1205198ae176751096d57f1ec192011d4b45c480f858504465789d96a1a15d23",
+      "gzip_sha256": "698be8b0298ff76ef453f4a67dabe34b9deb6adf871b875afc4f6b86aca8e1d2"
+    },
+    {
+      "file": "js-suite-summary.json.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-verify-9b42/.agent-work/js-suite-summary.json",
+      "raw_sha256": "708e13ef478fe04eb7a0b8258b1a0db45f02091b91245114a913013741ff9a1f",
+      "gzip_sha256": "d00302ae7c0c22e0f6ef46abbcf3fa1739ca0de517cecdb7e2a55bbc4ccfe8a3"
+    },
+    {
+      "file": "jvm-test-02.log.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-verify-9b42/.agent-work/jvm-test-02.log",
+      "raw_sha256": "dfff3f51470513b7cdbe030567f710834ea04070d3a7c73a957ffd21db016055",
+      "gzip_sha256": "ff6301ae4bc1c43a0701f2bad4a2a1e58491fcab125b9b1786075796aeb98c57"
+    },
+    {
+      "file": "jvm-test-02.json.gz",
+      "original": "/private/tmp/scalafim-canonical-slice-verify-9b42/.agent-work/jvm-test-02.json",
+      "raw_sha256": "2a87e5dabb812f9ef0d05eb30706dd8ea917398998abc486767b81d4f4b83816",
+      "gzip_sha256": "9fcf6dd147ca52cf6b46250c7c65d1866ff58783187b8ddcb2b08a0d41832aef"
+    },
+    {
+      "file": "proxy-receipt.json.gz",
+      "original": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/slice-linear-read/comparison/receipt.json",
+      "raw_sha256": "dd1a702821cbe64890114da03600caaed02fb10dee91820b0f5ebeb0f1ad7145",
+      "gzip_sha256": "8e6e327958b3c40ae3607ec3c4152822aac351ac02804b42e8e74cd1fb07358c"
+    },
+    {
+      "file": "proxy-records.json.gz",
+      "original": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/slice-linear-read/comparison/records.json",
+      "raw_sha256": "31a6e9813710082a4eb24310787589ed9f592a309c77933a624cd781c2c0e335",
+      "gzip_sha256": "13349fca7b8532e84d1877e87db0c50bf3c9b4b704eedd0208acfd3399a4aa4f"
+    },
+    {
+      "file": "proxy-plan.json.gz",
+      "original": "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/slice-linear-read/plan.json",
+      "raw_sha256": "0325fd557549bd94f23fd4ff6a1e7646d1fae25a46d028ff721c73b9fd453bbb",
+      "gzip_sha256": "2ae98ce385c8ac7d0ddc78db2397703eefec370f54327b3fc5cb424db031c4e0"
+    }
+  ]
+}
