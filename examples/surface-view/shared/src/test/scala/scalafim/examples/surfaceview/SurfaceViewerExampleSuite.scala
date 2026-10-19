@@ -110,20 +110,34 @@ class SurfaceViewerExampleSuite extends munit.FunSuite:
   private def corticalGeometry(hemisphere: Hemisphere): SurfaceGeometry =
     val vertexCount = CorticalSurfaceAcceptance.LeftCorpus.vertices
     val faceCount = CorticalSurfaceAcceptance.LeftCorpus.faces
+    // Synthetic count fixture: a valid closed bipyramid, not cortical anatomy.
+    val ringCount = vertexCount - 2
+    require(faceCount == 2 * ringCount)
     val coordinates = Array.tabulate(vertexCount * 3): index =>
       val vertex = index / 3
+      val pole = vertex == 0 || vertex == vertexCount - 1
+      val angle = 2.0 * math.Pi * (vertex - 1) / ringCount
       index % 3 match
         case 0 =>
           val hemisphereOffset = if hemisphere == Hemisphere.Left then -20.0 else 20.0
-          math.cos(vertex * 0.013) + hemisphereOffset
-        case 1 => math.sin(vertex * 0.017)
-        case _ => vertex.toDouble / vertexCount
+          hemisphereOffset + (if pole then 0.0 else math.cos(angle))
+        case 1 => if pole then 0.0 else math.sin(angle)
+        case _ => if vertex == 0 then 1.0 else if vertex == vertexCount - 1 then -1.0 else 0.0
     val faces = Array.tabulate(faceCount * 3): index =>
       val face = index / 3
-      index % 3 match
-        case 0 => face % (vertexCount - 2)
-        case 1 => face % (vertexCount - 2) + 1
-        case _ => face % (vertexCount - 2) + 2
+      val current = face / 2 + 1
+      val next = face / 2 % ringCount + 2
+      val wrapped = if next > ringCount then 1 else next
+      if face % 2 == 0 then
+        index % 3 match
+          case 0 => 0
+          case 1 => current
+          case _ => wrapped
+      else
+        index % 3 match
+          case 0 => vertexCount - 1
+          case 1 => wrapped
+          case _ => current
     SurfaceGeometry(
       TriangleMesh.fromArrays(coordinates, faces),
       hemisphere,

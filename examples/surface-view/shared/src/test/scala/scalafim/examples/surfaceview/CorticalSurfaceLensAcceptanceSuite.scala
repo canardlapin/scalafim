@@ -44,14 +44,17 @@ class CorticalSurfaceLensAcceptanceSuite extends munit.FunSuite:
       pial,
       SurfaceGeometry(inflated.mesh, Hemisphere.Right, SurfaceKind.Inflated, Affine.identity[D3])
     ).isLeft)
-    val rewound = inflated.mesh.faceIndices.toArray
-    val swap = rewound(1)
-    rewound(1) = rewound(2)
-    rewound(2) = swap
+    val reordered = inflated.mesh.faceIndices.toArray
+    var corner = 0
+    while corner < 3 do
+      val swap = reordered(corner)
+      reordered(corner) = reordered(3 + corner)
+      reordered(3 + corner) = swap
+      corner += 1
     assert(CorticalSurfaceLensAcceptance.build(
       pial,
       SurfaceGeometry(
-        TriangleMesh.fromArrays(inflated.mesh.coordinates.toArray, rewound),
+        TriangleMesh.fromArrays(inflated.mesh.coordinates.toArray, reordered),
         Hemisphere.Left,
         SurfaceKind.Inflated,
         Affine.identity[D3]
