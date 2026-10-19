@@ -5,7 +5,7 @@ import scalafim.image.SampleSpaces.*
 import scalafim.dataset.*
 import scalafim.image.{PrimitiveBuffers, SomeSampleSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 import java.io.BufferedInputStream
 import java.nio.ByteBuffer

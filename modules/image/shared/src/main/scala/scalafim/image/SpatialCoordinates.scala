@@ -14,7 +14,8 @@ import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import image4s.geometry.Point
 import scala.annotation.targetName
-import scalafim.image.world.{Rebind, SpaceError, ToolCoordinates}
+import scalafim.image.world.{Rebind, ToolCoordinates}
+import neuroim4s.spaces.SpaceError
 
 object SpatialCoordinates:
 
@@ -459,7 +460,7 @@ object GridSpec:
     for
       raw <- Point.fromVector[D3](frame, coordinates)
       self <- Frame.alignOwners[D3, frame.type, F](frame, frame)
-      owned <- self.pointToRight(raw)
+      owned <- self.pointToRight(raw).left.map(GeometryError.fromSpatial)
     yield owned
 
   /** Move a grid across a checked frame alignment, keeping its shape, affine and persistent grid id. */

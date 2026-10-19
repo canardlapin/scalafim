@@ -6,16 +6,7 @@ import java.nio.file.{Files, Path, Paths}
 import image4s.geometry.{Affine, D3, Frame}
 import image4s.nifti.{NiftiAffinePolicy, NiftiAffineSource}
 import scalafim.image.SampleSpaces
-import scalafim.image.world.{
-  DatasetNamespace,
-  SpaceError,
-  SpaceEvidence,
-  SpaceResolver,
-  Spaces,
-  SubjectId,
-  WorldSpace,
-  XformCode
-}
+import neuroim4s.spaces.{DatasetNamespace, SpaceError, SpaceEvidence, SpaceResolver, Spaces, SubjectId, WorldSpace, XformCode}
 
 class NiftiSpaceEvidenceSuite extends munit.FunSuite:
   // nibabel-oblique.nii stores qform_code = 1 (scanner) and sform_code = 2 (aligned).

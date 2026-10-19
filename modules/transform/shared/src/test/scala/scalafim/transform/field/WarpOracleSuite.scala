@@ -2,7 +2,7 @@ package scalafim.transform.field
 
 import image4s.geometry.{Affine, D3, Frame, Grid, GridId, LatticeIndex, Point}
 import reframe4s.field.{CoordinateBoundaryPolicy, DeterminantValue, InversionError, InversionGateFailure, MaterializedOutcome}
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.fsl.FslHeaderGeometry
 import scalafim.transform.itk.{ItkHdf5Dumps, ItkHdf5Interpretation}

@@ -11,7 +11,7 @@ import scalafim.image.PrimitiveBuffers
 import scalafim.image.SomeScalarVolume
 import scalafim.image.{space, valueAtCanonicalOrdinal, values}
 import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 import java.net.URI
 import java.nio.file.Path

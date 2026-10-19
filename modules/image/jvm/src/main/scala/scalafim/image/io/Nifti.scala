@@ -32,7 +32,7 @@ import ravel.Rank
 import ravel.AnyRank
 import scalafim.image.*
 import scalafim.image.NeuroAffineSyntax.*
-import scalafim.image.world.{SpaceError, SpaceEvidence, SpaceResolver, WorldSpace, XformCode}
+import neuroim4s.spaces.{SpaceError, SpaceEvidence, SpaceResolver, WorldSpace, XformCode}
 
 import java.nio.ByteOrder
 import java.nio.file.Path

@@ -1,7 +1,7 @@
 package scalafim.surface.reference
 
 import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 import scalafim.surface.SurfaceError
 
 import java.nio.file.{Files, Path}

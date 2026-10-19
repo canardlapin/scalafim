@@ -4,7 +4,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 object GlasserLoader:
   final case class Assets(volume: AtlasAsset, labels: AtlasAsset)

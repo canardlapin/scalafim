@@ -43,7 +43,7 @@ geometric map between named spaces, however it was obtained. Keeping the
 words apart avoids a false reading, such as treating a transform read from an
 FSL `.mat` as a registration result carrying convergence evidence.
 
-`scalafim.spatial.SpaceRef` and `scalafim.image.world.WorldSpace` are
+`scalafim.spatial.SpaceRef` and `neuroim4s.spaces.WorldSpace` are
 deliberately different:
 
 - A `SpaceRef` names a *sampled domain*: a grid, a mesh or a latent basis.
@@ -122,8 +122,10 @@ never with a guess:
 
 ## 7. Placement (restates plan D0)
 
-- Frame identity, conventions and orientation live in `image`, under
-  `scalafim.image.world`.
+- World-space identity lives in neuroim4s-spaces (`neuroim4s.spaces`) over
+  spatial4s frames, and the generic two-frame `WorldLink` in reframe4s-core
+  (accepted at the 2026-10-18 coordinate-provider cutover). Toolkit coordinate
+  conventions and orientation stay in `image`, under `scalafim.image.world`.
 - Formats, `WorldTransform` and conversion live in the new `transform`
   module.
 - Graph ingestion stays in `spatial`.

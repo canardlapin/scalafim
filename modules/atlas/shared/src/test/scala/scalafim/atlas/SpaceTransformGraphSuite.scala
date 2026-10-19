@@ -3,7 +3,7 @@ package scalafim.atlas
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
 import scalafim.image.{GridSpec, SpatialPullbacks}
-import scalafim.image.world.{FrameCatalog, TemplateName, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, TemplateName, WorldSpace}
 import scalafim.spatial.{CoordinateMap, DomainKind, MorphismKind, SamplingGeometry}
 import scalafim.transform.{TransformProvenance, WorldTransform}
 
@@ -100,7 +100,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
     assert(!value(SpaceTransforms.plan(SpaceId.MNI152NLin2009cAsym, SpaceId.MNI152NLin6Asym, registry = implemented)).isExecutable)
 
   test("assets on frames outside the catalog are rejected when the graph is built"):
-    def foreign(name: String): Frame[D3] = FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe(name)))
+    def foreign(name: String): Frame[D3] = FrameCatalog.frame(WorldSpace.Template(TemplateName(name).toOption.get))
     val pullback = FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](foreign("MNI152NLin2009cAsym"), foreign("MNI152NLin6Asym"))(translation(0.0, 0.0, 0.0))
     val asset = TransformAsset(WorldTransform.Linear(pullback, TransformProvenance.empty), "foreign")
     val registry =

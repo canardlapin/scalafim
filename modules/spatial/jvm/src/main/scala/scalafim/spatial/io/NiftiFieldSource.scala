@@ -3,7 +3,7 @@ package scalafim.spatial.io
 import image4s.geometry.Grid
 import scalafim.image.{SampleSpaceError, SampleSpaces}
 import scalafim.image.io.{Nifti, NiftiHeader}
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 import scalafim.spatial.*
 
 import java.nio.ByteBuffer

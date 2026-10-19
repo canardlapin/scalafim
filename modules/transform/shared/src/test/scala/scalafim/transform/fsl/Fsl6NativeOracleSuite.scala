@@ -2,7 +2,8 @@ package scalafim.transform.fsl
 
 import image4s.geometry.{Affine, D3, Frame, Grid, Point}
 import reframe4s.field.{CoordinateBoundaryPolicy, DeterminantValue}
-import scalafim.image.world.{FrameCatalog, SpaceError, ToolCoordinates, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, SpaceError, WorldSpace}
+import scalafim.image.world.ToolCoordinates
 import scalafim.transform.*
 import scalafim.transform.field.{FnirtCoefficientInterpretation, FnirtCoefficientContext, FnirtCoefficientsCodec, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, VectorFieldNiftiCodec}
 import scalafim.transform.nifti.NiftiRaw

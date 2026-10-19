@@ -17,7 +17,7 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 // Ravel is the single dense-array substrate shared by response and image
 // semantics. The local override coordinates cross-repository development;
 // ordinary builds remain pinned to an immutable source revision.
-lazy val ravelRevision = "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
+lazy val ravelRevision = "195d71027423d5bda1c53ef1baa17e07670fe290"
 lazy val ravelBuild =
   sys.props
     .get("scalafim.ravel.build")
@@ -121,11 +121,13 @@ lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "cff0bdca35583436ffd4cef019b353b82b146f58"
+lazy val image4sRevision = "0816f10eab8034fe09ba46a8ffc9df852e779633"
 lazy val image4sBuild = {
-  sys.props
-    .get("scalafim.locus4s.build")
-    .foreach(System.setProperty("image4s.locus4s.build", _))
+  Seq("locus4s", "spatial4s").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"image4s.$provider.build", _))
+  }
   sys.props
     .get("scalafim.image4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -144,13 +146,15 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
-// so reframe4s resolves the same image4s build. reframe4s accepts only a local
-// path, so the default pinned-URI build still loads reframe4s's own image4s pin.
-lazy val reframe4sRevision = "2342b8b04451f86ff74e9ce7fc3ad5f2b9a258dd"
+// so reframe4s resolves the same image4s build; reframe4s pins the same image4s
+// as ScalaFIM and the same spatial4s as image4s.
+lazy val reframe4sRevision = "750e01506b74e73d0929c28518d18989d25e3a45"
 lazy val reframe4sBuild = {
-  sys.props
-    .get("scalafim.image4s.build")
-    .foreach(System.setProperty("reframe4s.image4s.build", _))
+  Seq("image4s", "spatial4s").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"reframe4s.$provider.build", _))
+  }
   sys.props
     .get("scalafim.reframe4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -162,6 +166,22 @@ lazy val reframe4sFieldJVM    = ProjectRef(reframe4sBuild, "reframe4s-fieldJVM")
 lazy val reframe4sFieldJS     = ProjectRef(reframe4sBuild, "reframe4s-fieldJS")
 lazy val reframe4sResampleJVM = ProjectRef(reframe4sBuild, "reframe4s-resampleJVM")
 lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS")
+
+// neuroim4s-spaces owns the anatomical world identities (template, subject
+// scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
+// pins the same spatial4s revision as image4s and reframe4s.
+lazy val neuroim4sRevision = "3b7a8441e0fcdfd20428835f8eaec7688b73a9ef"
+lazy val neuroim4sBuild = {
+  sys.props
+    .get("scalafim.spatial4s.build")
+    .foreach(System.setProperty("neuroim4s.spatial4s.build", _))
+  sys.props
+    .get("scalafim.neuroim4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/neuroim4s.git#$neuroim4sRevision"))
+}
+lazy val neuroim4sSpacesJVM = ProjectRef(neuroim4sBuild, "spacesJVM")
+lazy val neuroim4sSpacesJS  = ProjectRef(neuroim4sBuild, "spacesJS")
 
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
@@ -203,7 +223,7 @@ lazy val multivarInferenceJS  = ProjectRef(multivarBuild, "inferenceJS")
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "13747a3a8bf75fd788ff68e1c979d6c84f740605"
+lazy val intaglioRevision = "d553c327824f9916b1c0a055226c6c5e8f77bc59"
 lazy val intaglioBuild =
   uri(
     sys.props.getOrElse(
@@ -579,6 +599,7 @@ lazy val image =
         image4sLocusJVM,
         image4sFilterJVM,
         image4sNiftiJVM,
+        neuroim4sSpacesJVM,
         reframe4sLieJVM,
         reframe4sFieldJVM,
         reframe4sResampleJVM
@@ -591,6 +612,7 @@ lazy val image =
         image4sGeometryJS,
         image4sLocusJS,
         image4sFilterJS,
+        neuroim4sSpacesJS,
         reframe4sLieJS,
         reframe4sFieldJS,
         reframe4sResampleJS

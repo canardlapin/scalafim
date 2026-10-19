@@ -7,7 +7,7 @@ import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetIndexSuite extends munit.FunSuite:
 
-  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("dataset fixture shared world")
+  private val fixtureWorld = neuroim4s.spaces.WorldSpace.declare("dataset fixture shared world")
     .fold(error => fail(error.message), identity)
 
   private def fixtureSpace(

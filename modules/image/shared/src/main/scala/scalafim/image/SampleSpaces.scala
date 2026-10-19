@@ -20,7 +20,7 @@ import image4s.geometry.LengthUnit
 import image4s.locus.GridDomain
 import gale.linalg.DMat
 import scalafim.image.NeuroAffineSyntax.*
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 
 enum SampleSpaceError:
   case EmptyDimensions
@@ -136,7 +136,7 @@ object SampleSpaces:
     if space.grid.frame.spatialRank != 3 then
       Left(SampleSpaceError.ExpectedDimensionality("world-space relabel", 3, space.grid.frame.spatialRank))
     else if current.unit != LengthUnit.Millimeter || current.convention != CoordinateConvention.RAS then
-      Left(SampleSpaceError.WorldIdentity(s"world admission requires RAS millimetres, got ${current.convention} ${current.unit}"))
+      Left(SampleSpaceError.WorldIdentity(s"world admission requires RAS millimetres, got ${CoordinateConvention.serializedName(current.convention)} ${LengthUnit.serializedName(current.unit)}"))
     else if !relabelAllowed then
       Left(SampleSpaceError.WorldRelabel(FrameCatalog.worldOf(current).fold(_.message, _.displayName), world.displayName))
     else
@@ -424,7 +424,7 @@ object SampleSpaces:
           .create("scalafim-space")
           .left
           .map(SampleSpaceError.Geometry.apply)
-        frame = Frame.createPersistent[D2](
+        frame = Frame.persistent[D2](
           rasD2FrameId,
           metadata,
           convention = CoordinateConvention.RAS

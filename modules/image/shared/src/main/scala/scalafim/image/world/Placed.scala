@@ -1,5 +1,6 @@
 package scalafim.image.world
 
+import neuroim4s.spaces.*
 import image4s.geometry.{D3, Frame, FrameAlignment, Point, Vec}
 import scalafim.image.GridSpec
 

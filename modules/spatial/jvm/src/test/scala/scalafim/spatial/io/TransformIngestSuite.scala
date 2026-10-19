@@ -1,7 +1,7 @@
 package scalafim.spatial.io
 
 import reframe4s.field.CoordinateBoundaryPolicy
-import scalafim.image.world.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*

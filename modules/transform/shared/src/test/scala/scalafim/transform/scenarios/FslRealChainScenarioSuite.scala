@@ -5,7 +5,8 @@ import image4s.geometry.{Affine, D3, Frame, Grid, Point}
 import ravel.DType.given
 import ravel.NDArray
 import reframe4s.resample.Interpolation
-import scalafim.image.world.{FrameCatalog, ToolCoordinates, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+import scalafim.image.world.ToolCoordinates
 import scalafim.scenarios.{ScenarioHarness, ScenarioObservation, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtCoefficientsCodec}

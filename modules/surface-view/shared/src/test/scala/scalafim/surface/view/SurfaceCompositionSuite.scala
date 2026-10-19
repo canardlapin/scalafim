@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.image.world.Spaces
+import neuroim4s.spaces.Spaces
 import scalafim.surface.*
 
 class SurfaceCompositionSuite extends munit.FunSuite:

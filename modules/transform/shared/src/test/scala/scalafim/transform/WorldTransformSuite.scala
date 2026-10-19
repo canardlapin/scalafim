@@ -3,7 +3,7 @@ package scalafim.transform
 import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.core.{MapError, SpatialMap}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.{FrameCatalog, Spaces, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, Spaces, WorldSpace}
 
 class WorldTransformSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =

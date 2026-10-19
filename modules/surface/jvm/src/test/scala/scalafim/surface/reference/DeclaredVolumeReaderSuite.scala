@@ -5,7 +5,7 @@ import image4s.nifti.NiftiCoordinateSystem
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
-import scalafim.image.world.WorldSpace
+import neuroim4s.spaces.WorldSpace
 
 import java.nio.file.{Files, Path}
 import java.nio.{ByteBuffer, ByteOrder}

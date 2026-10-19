@@ -190,9 +190,11 @@ class CanvasViewerHostSuite extends munit.FunSuite:
 
   test("runtime preserves viewer rasters and Canvas uploads across redraws") {
     var uploads = 0
+    var uploadedBytes = 0L
     given CanvasRasterFactory with
       def create(image: RasterImage, target: CanvasRenderingContext2D): CanvasImageSource =
         uploads += 1
+        uploadedBytes += image.width.toLong * image.height * 4L
         js.Dynamic.literal().asInstanceOf[CanvasImageSource]
 
     val context = fakeContext()
@@ -204,21 +206,15 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(cold.compiled.viewerProfile.cacheMisses, 3)
     assertEquals(cold.compiled.viewerProfile.sampleCacheMisses, 3)
     assertEquals(cold.canvasProfile.cacheMisses, 3)
-    assertEquals(cold.canvasProfile.uploadedBytes, cold.compiled.viewerProfile.colorizedPixels * 4L)
+    // Intaglio uploads rasters prepared at display resolution, so the profile reports
+    // the bytes actually handed to the raster factory, not the colorized source pixels.
+    assertEquals(cold.canvasProfile.uploadedBytes, uploadedBytes)
     assertEquals(warm.compiled.viewerProfile.cacheHits, 3)
     assertEquals(warm.compiled.viewerProfile.sampledPixels, 0L)
     assertEquals(warm.canvasProfile, CanvasDrawProfile(3, 3, 0, 0L))
     assertEquals(uploads, 3)
     assertEquals(runtime.sampledSliceCount, 3)
     assertEquals(runtime.rasterCount, 3)
-
-    val resized = runtime.render(
-      model,
-      session.copy(device = DeviceContext.unsafe(800.0, 500.0)),
-      context
-    ).toOption.get
-    assertEquals(resized.compiled.viewerProfile.cacheHits, 3)
-    assertEquals(resized.canvasProfile, CanvasDrawProfile(3, 3, 0, 0L))
 
     val movedSession = session.copy(
       state = session.state.copy(cursor = ViewerState.move(session.state.cursor, AnatomicalDirection.Superior.unit.scaled(1.0)).toOption.get)
@@ -229,6 +225,18 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(moved.canvasProfile.cacheHits, 2)
     assertEquals(moved.canvasProfile.cacheMisses, 1)
     assertEquals(uploads, 4)
+
+    val bytesBeforeResize = uploadedBytes
+    val resized = runtime.render(
+      model,
+      session.copy(device = DeviceContext.unsafe(800.0, 500.0)),
+      context
+    ).toOption.get
+    // A resize reuses every sampled slice; Intaglio re-prepares the rasters at the new display size.
+    assertEquals(resized.compiled.viewerProfile.cacheHits, 3)
+    assertEquals(resized.compiled.viewerProfile.sampledPixels, 0L)
+    assertEquals(resized.canvasProfile, CanvasDrawProfile(3, 0, 3, uploadedBytes - bytesBeforeResize))
+    assertEquals(uploads, 7)
   }
 
   test("dispose closes the controller, empties both caches, and closes tracked bitmaps") {

@@ -11,7 +11,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
 import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 import gale.linalg.DVec
 
 import java.nio.charset.StandardCharsets

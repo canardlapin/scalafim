@@ -23,8 +23,8 @@ import java.nio.file.Path
 
 class NiftiSuite extends munit.FunSuite:
 
-  private val readEvidence = scalafim.image.world.SpaceEvidence(
-    assertion = Some(scalafim.image.world.WorldSpace.declare("synthetic NIfTI IO fixture").toOption.get)
+  private val readEvidence = neuroim4s.spaces.SpaceEvidence(
+    assertion = Some(neuroim4s.spaces.WorldSpace.declare("synthetic NIfTI IO fixture").toOption.get)
   )
 
   private final case class QForm(

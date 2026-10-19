@@ -7,7 +7,7 @@ import ravel.NDArray
 import reframe4s.core.MapError
 import reframe4s.field.CoordinateBoundaryPolicy
 import reframe4s.resample.Interpolation
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.scenarios.{CaveatKind, CaveatSeverity, ScenarioCaveat, ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{DenseContext, LatticeAffine}

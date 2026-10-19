@@ -1,5 +1,6 @@
 package scalafim.image.world
 
+import neuroim4s.spaces.*
 import image4s.geometry.{Affine, D3}
 import munit.ScalaCheckSuite
 import org.scalacheck.{Gen, Prop}

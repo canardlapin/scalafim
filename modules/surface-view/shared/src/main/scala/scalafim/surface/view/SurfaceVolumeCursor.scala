@@ -1,7 +1,7 @@
 package scalafim.surface.view
 
 import image4s.geometry.{D3, Frame, Point}
-import scalafim.image.world.{WorldLink, WorldLinkError}
+import reframe4s.core.{WorldLink, WorldLinkError}
 import scalafim.surface.{FramedSurface, SurfaceFrameError, VertexId}
 
 /** Failures of linking a surface vertex cursor with a volume cursor. */
@@ -31,7 +31,7 @@ final case class SurfaceCursorHit[S <: Frame[D3]] private[view] (selection: Surf
 
 /** A cursor linking one displayed surface, in frame `S`, with a volume in frame `V`.
   *
-  * Every crossing goes through the typed [[scalafim.image.world.WorldLink]]:
+  * Every crossing goes through the typed [[reframe4s.core.WorldLink]]:
   *   - when the surface and the volume are one world, a `WorldLink.Shared` alignment carries coordinates over unchanged;
   *   - when they are different worlds (a surface in subject tkRAS or scanner space and a volume in MNI, for example),
   *     a `WorldLink.Mapped` carries them, typically a `WorldTransform`'s `link` from the `transform` module. A direction
@@ -44,7 +44,7 @@ final case class SurfaceCursorHit[S <: Frame[D3]] private[view] (selection: Surf
 final class SurfaceVolumeCursor[S <: Frame[D3], V <: Frame[D3]] private (
     val surfaceId: SurfaceId,
     val surface: FramedSurface[S],
-    val link: WorldLink[S, V]
+    val link: WorldLink[S, V, D3]
 ):
   private val placed: IArray[Double] = surface.coordinates
 
@@ -99,9 +99,9 @@ object SurfaceVolumeCursor:
   def make[S <: Frame[D3], V <: Frame[D3]](
       surfaceId: SurfaceId,
       surface: FramedSurface[S],
-      link: WorldLink[S, V]
+      link: WorldLink[S, V, D3]
   ): Either[SurfaceCursorError, SurfaceVolumeCursor[S, V]] =
-    Frame
+    spatial4s.Frame
       .alignOwners[D3, S, S](surface.frame, link.left)
       .left
       .map(error => SurfaceCursorError.Link(WorldLinkError.FrameMismatch(error)))
@@ -112,6 +112,6 @@ object SurfaceVolumeCursor:
     */
   def forDisplay[S <: Frame[D3], V <: Frame[D3]](
       display: SurfaceDisplayFrame[S],
-      link: WorldLink[S, V]
+      link: WorldLink[S, V, D3]
   ): Either[SurfaceCursorError, SurfaceVolumeCursor[S, V]] =
     make(display.surfaceId, display.surface, link)

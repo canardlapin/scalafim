@@ -5,7 +5,7 @@ import scalafim.dataset.DatasetShape
 import scalafim.image.SomeSampleSpace
 import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.Path
 import scala.util.control.NonFatal

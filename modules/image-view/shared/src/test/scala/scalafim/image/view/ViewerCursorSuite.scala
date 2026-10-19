@@ -3,7 +3,8 @@ package scalafim.image.view
 import image4s.geometry.{Affine, D3, Point}
 import reframe4s.lie.FramedAffine
 import scalafim.image.*
-import scalafim.image.world.{FrameCatalog, Spaces, TemplateName, WorldLink, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, Spaces, TemplateName, WorldSpace}
+import reframe4s.core.WorldLink
 
 /** STP P8.02: the viewer cursor crosses into typed frames only through the reference frame's alignment. */
 class ViewerCursorSuite extends munit.FunSuite:
@@ -11,7 +12,7 @@ class ViewerCursorSuite extends munit.FunSuite:
     result.fold(error => fail(s"unexpected failure: $error"), identity)
 
   private def volumeIn(template: String): SomeScalarVolume[Double] =
-    val space = ok(SampleSpaces.inWorld(SampleSpaces(Vector(5, 5, 5)), WorldSpace.Template(TemplateName.unsafe(template))))
+    val space = ok(SampleSpaces.inWorld(SampleSpaces(Vector(5, 5, 5)), WorldSpace.Template(TemplateName(template).toOption.get)))
     val typed = ok(SampleSpaces.requireVolumeD3(space))
     SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.tabulate[Double](typed.grid.shape.product)(_.toDouble), typed, template)
 
@@ -38,7 +39,7 @@ class ViewerCursorSuite extends munit.FunSuite:
         assert(cursor.belongsTo(reference.grid.frame))
         assertEquals(cursor.toWorldPoint, WorldPoint(1.0, -2.0, 3.0))
       case other => fail(s"expected SetCursor, got $other")
-    val fsaverage = FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe("fsaverage")))
+    val fsaverage = FrameCatalog.frame(WorldSpace.Template(TemplateName("fsaverage").toOption.get))
     assert(ViewerCursor.set(model, ok(Point.in(fsaverage)(1.0, -2.0, 3.0))).left.exists(_.isInstanceOf[ViewerCursorError.FrameMismatch]))
     assert(ViewerCursor.point(model, state, fsaverage).left.exists(_.isInstanceOf[ViewerCursorError.FrameMismatch]))
 
@@ -46,7 +47,7 @@ class ViewerCursorSuite extends munit.FunSuite:
     val subject = FrameCatalog.frame(ok(WorldSpace.declare("sub-01 T1w")))
     // pullback MNI -> subject: subject = MNI + (2, 0, 0); the forward map is its exact inverse
     val pull = FramedAffine.betweenFrames[mni.type, subject.type, D3](mni, subject)(ok(Affine.fromRowMajor[D3](Vector(1, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1))))
-    val link = ok(WorldLink.pullback[subject.type, mni.type](pull, Some(pull.inverse), "affine"))
+    val link = ok(WorldLink.pullback[subject.type, mni.type, D3](pull, Some(pull.inverse), "affine"))
     assert(ViewerCursor.set(model, ok(Point.in(subject)(5.0, 5.0, 5.0))).isLeft, clue = "subject coordinates are not MNI coordinates")
     val inMni = ok(link.toRight(ok(Point.in(subject)(5.0, 5.0, 5.0))))
     ok(ViewerCursor.set(model, inMni)) match

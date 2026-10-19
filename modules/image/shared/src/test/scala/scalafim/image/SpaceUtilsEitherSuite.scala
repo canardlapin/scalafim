@@ -1,7 +1,7 @@
 package scalafim.image
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.world.WorldSpace
+import neuroim4s.spaces.WorldSpace
 
 class SpaceUtilsEitherSuite extends munit.FunSuite:
   private val oblique = Affine

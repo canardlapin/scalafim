@@ -2,17 +2,7 @@ package scalafim.image.io
 
 import image4s.geometry.{Affine, D3}
 import image4s.nifti.{DecodedNifti, NiftiAffinePolicy, NiftiAffineSource}
-import scalafim.image.world.{
-  DatasetNamespace,
-  GeometryDigest,
-  NativeContext,
-  ReferenceAcquisition,
-  SessionId,
-  SpaceError,
-  SpaceEvidence,
-  SubjectId,
-  XformCode
-}
+import neuroim4s.spaces.{DatasetNamespace, GeometryDigest, NativeContext, ReferenceAcquisition, SessionId, SpaceError, SpaceEvidence, SubjectId, XformCode}
 
 /** World-space evidence carried by a NIfTI header: the xform code of the affine that the read policy selects.
   *
@@ -31,7 +21,7 @@ object NiftiSpaceEvidence:
       case NiftiAffineSource.Fallback => Right(SpaceEvidence(xform = Some(XformCode.Unknown)))
       case NiftiAffineSource.Explicit => Right(SpaceEvidence())
 
-  /** Lossless digest of the selected geometry, for anchoring a native [[scalafim.image.world.ReferenceAcquisition]]. */
+  /** Lossless digest of the selected geometry, for anchoring a native [[neuroim4s.spaces.ReferenceAcquisition]]. */
   def geometry(header: NiftiHeader, policy: NiftiAffinePolicy): Either[SpaceError, GeometryDigest] =
     val native = header.native
     val (_, affine) = selectedSource(native, policy)

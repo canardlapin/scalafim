@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.image.world.Spaces
+import neuroim4s.spaces.Spaces
 
 class SurfaceCompositionDocumentSuite extends munit.FunSuite:
   private def ok[E, A](value: Either[E, A]): A = value.fold(error => fail(s"$error"), identity)
@@ -56,6 +56,12 @@ class SurfaceCompositionDocumentSuite extends munit.FunSuite:
     for invalid <- Vector("legacy-v1", "future-framing") do
       val mutated = encoded.take(split) + encoded.drop(split).replace("bounds-fit", invalid)
       assert(SurfaceCompositionCodec.decode(mutated).isLeft)
+
+  test("persisted frame keys keep their unit and convention spellings"):
+    assertEquals(
+      SurfaceCompositionFrameKey.from(frame),
+      Right(SurfaceCompositionFrameKey("scalafim-world:template:MNI152NLin2009cAsym", 3, "Millimeter", "RAS"))
+    )
 
   test("version 1 composition documents default saved instance opacity to opaque"):
     val document = ok(SurfaceCompositionDocument.capture(model, state, navigation, bindings, provenance))

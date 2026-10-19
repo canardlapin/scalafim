@@ -4,7 +4,7 @@ import image4s.{NonSpatialAxes, SampleSpace}
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, FrameMetadata, Grid, LengthUnit}
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
-import scalafim.image.world.WorldSpace
+import neuroim4s.spaces.WorldSpace
 import scalafim.surface.*
 
 /** Independent route contracts. Vertices are placed at chosen continuous voxel

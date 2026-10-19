@@ -13,7 +13,7 @@ import scalafim.dataset.{
 import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 import scalafim.response.*
 import locus4s.provenance.*
 

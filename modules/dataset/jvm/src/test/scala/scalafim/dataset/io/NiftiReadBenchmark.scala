@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.{DataSelection, TimepointSelection, VoxelIndex, VoxelSelection}
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.channels.FileChannel
@@ -79,6 +79,7 @@ object NiftiReadBenchmark:
     header.putFloat(80, 1.0f)
     header.putFloat(84, 1.0f)
     header.putFloat(88, 1.0f)
+    header.putFloat(92, 1.0f)
     header.putFloat(108, 352.0f)
     header.putFloat(112, 1.0f)
     val magic = "n+1".getBytes(StandardCharsets.US_ASCII)

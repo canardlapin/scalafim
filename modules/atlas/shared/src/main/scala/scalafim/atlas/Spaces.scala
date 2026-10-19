@@ -9,7 +9,7 @@ import scalafim.image.{
   SpatialPullback,
   SpatialPullbacks
 }
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
 import scalafim.transform.WorldTransform
 

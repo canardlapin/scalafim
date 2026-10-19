@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces}
 import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{SubjectId, TemplateName}
+import neuroim4s.spaces.{SubjectId, TemplateName}
 import scalafim.surface.*
 
 class TemplateSurfaceOperatorSuite extends munit.FunSuite:

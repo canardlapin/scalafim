@@ -1,7 +1,8 @@
 package scalafim.transform.fsl
 
 import image4s.geometry.{D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, FslAffineSource, FslHeaderPolicy, FslVolumeGeometry, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+import scalafim.image.world.{FslAffineSource, FslHeaderPolicy, FslVolumeGeometry}
 import scalafim.transform.*
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}

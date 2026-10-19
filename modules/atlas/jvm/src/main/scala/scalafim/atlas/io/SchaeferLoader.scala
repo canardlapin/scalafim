@@ -4,7 +4,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 object SchaeferLoader:
   private val baseUri =

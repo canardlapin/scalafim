@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.SpatialPoint
-import scalafim.image.world.TemplateName
+import neuroim4s.spaces.TemplateName
 import scalafim.spatial.NeurofunctorLawTriplets.*
 
 /** Replays every neurofunctor law triplet (STP P7.06) through ScalaFIM's spatial API.

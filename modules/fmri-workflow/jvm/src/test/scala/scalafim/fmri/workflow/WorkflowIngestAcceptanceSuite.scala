@@ -11,7 +11,7 @@ import scalafim.dataset.io.NiftiStagingCache
 import scalafim.image.{PrimitiveBuffers, SomeSampleSpace, SomeNeuroVolume}
 import scalafim.image.SomeScalarVolume
 import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, TemplateName, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, TemplateName, WorldSpace}
 import image4s.nifti.{NiftiCoordinateSystem, NiftiWriteOptions}
 
 import java.nio.{ByteBuffer, ByteOrder}
@@ -95,7 +95,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       root.resolve("derivatives/fmriprep/dataset_description.json"),
       """{"Name":"fMRIPrep","BIDSVersion":"1.10.0","DatasetType":"derivative"}"""
     )
-    val space = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1)), WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym"))).toOption.get
+    val space = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1)), WorldSpace.Template(TemplateName("MNI152NLin2009cAsym").toOption.get)).toOption.get
 
     Vector("01", "02").foreach { run =>
       val prefix = s"sub-01_task-demo_run-$run"

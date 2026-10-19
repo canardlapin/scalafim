@@ -9,7 +9,7 @@ import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiWriteOptions
 import scalafim.fmri.motion.*
 import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 import scalafim.image.*
 
 import java.nio.charset.StandardCharsets

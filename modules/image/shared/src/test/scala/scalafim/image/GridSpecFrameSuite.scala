@@ -5,7 +5,8 @@ import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.Grid
 import scala.compiletime.testing.typeCheckErrors
-import scalafim.image.world.{Placed, Spaces}
+import scalafim.image.world.Placed
+import neuroim4s.spaces.Spaces
 
 class GridSpecFrameSuite extends munit.FunSuite:
   private val shape = SpatialDims(3, 4, 5)
@@ -57,7 +58,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
     val errors = typeCheckErrors(
       """
         import scalafim.image.GridSpec
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         def needsMni(grid: GridSpec[Spaces.Mni2009c]): Int = grid.nVoxels
         val fs: GridSpec[Spaces.FsAverage] = ???
         needsMni(fs)
@@ -67,7 +68,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
     val control = typeCheckErrors(
       """
         import scalafim.image.GridSpec
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         def needsMni(grid: GridSpec[Spaces.Mni2009c]): Int = grid.nVoxels
         val mni: GridSpec[Spaces.Mni2009c] = ???
         needsMni(mni)
@@ -79,7 +80,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
     val errors = typeCheckErrors(
       """
         import scalafim.image.GridSpec
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         val dynamic: GridSpec[?] = GridSpec.identity(Vector(2, 2, 2))
         val mni: GridSpec[Spaces.Mni2009c] = dynamic
       """
@@ -92,7 +93,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
         import image4s.geometry.Affine
         import image4s.geometry.D3
         import scalafim.image.{GridSpec, Resample, ResamplingPlan, SpatialPullbacks}
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         val mni: GridSpec[Spaces.Mni2009c] = ???
         val fs: GridSpec[Spaces.FsAverage] = ???
         val mniToFs = SpatialPullbacks.affine(fs, mni, Affine.identity[D3])
@@ -105,7 +106,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
         import image4s.geometry.Affine
         import image4s.geometry.D3
         import scalafim.image.{GridSpec, Resample, ResamplingPlan, SpatialPullbacks}
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         val mni: GridSpec[Spaces.Mni2009c] = ???
         val fs: GridSpec[Spaces.FsAverage] = ???
         val fsToMni = SpatialPullbacks.affine(mni, fs, Affine.identity[D3])
@@ -119,7 +120,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
       """
         import image4s.geometry.{D3, Point}
         import scalafim.image.GridSpec
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         val fs: GridSpec[Spaces.FsAverage] = ???
         val mniPoint: Point[Spaces.Mni2009c, D3] = ???
         fs.voxelAt(mniPoint)
@@ -128,8 +129,8 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assert(isTypeMismatch(errors), clue = s"a native point must not be accepted by an MNI grid: $errors")
 
   test("Placed[GridSpec] binds a decoded-frame grid to the static template frame"):
-    val decodedFrame = scalafim.image.world.FrameCatalog.frame(
-      scalafim.image.world.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get
+    val decodedFrame = neuroim4s.spaces.FrameCatalog.frame(
+      neuroim4s.spaces.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get
     )
     assert(!decodedFrame.sameRuntimeOwnerAs(Spaces.MNI152NLin2009cAsym))
     val decoded = GridSpec.in(decodedFrame)(shape, affine).fold(error => fail(error.message), identity)
@@ -144,8 +145,8 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assert(placed.bindTo(Spaces.fsaverage).isLeft, clue = "binding to a different world must fail")
 
   test("Placed.of packages a runtime-decoded GridSpec[?] and binds it to the static template frame"):
-    val decodedFrame = scalafim.image.world.FrameCatalog.frame(
-      scalafim.image.world.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get
+    val decodedFrame = neuroim4s.spaces.FrameCatalog.frame(
+      neuroim4s.spaces.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get
     )
     val decoded: GridSpec[?] = GridSpec.in(decodedFrame)(shape, affine).fold(error => fail(error.message), identity)
     val placed = Placed.of(decoded.frame)(decoded).fold(error => fail(error.message), identity)
@@ -156,7 +157,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assert(placed.bindTo(Spaces.fsaverage).isLeft)
 
   test("Placed.of checks the value's runtime frame owner when its static frame type is wide"):
-    val subjectFrame = scalafim.image.world.FrameCatalog.frame(scalafim.image.world.WorldSpace.declare("subject").toOption.get)
+    val subjectFrame = neuroim4s.spaces.FrameCatalog.frame(neuroim4s.spaces.WorldSpace.declare("subject").toOption.get)
     val wide: GridSpec[Frame[D3]] =
       GridSpec.fromGrid(Grid.forFrame[D3, Frame[D3]](subjectFrame)(shape.toVector, affine).fold(error => fail(error.message), identity))
     val mni: Frame[D3] = Spaces.MNI152NLin2009cAsym
@@ -166,7 +167,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
   test("worldAligned relates grids of one world space and refuses grids of different ones"):
     val mni = mniGrid
     val otherMniOwner = GridSpec
-      .in(scalafim.image.world.FrameCatalog.frame(scalafim.image.world.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get))(shape, affine)
+      .in(neuroim4s.spaces.FrameCatalog.frame(neuroim4s.spaces.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get))(shape, affine)
       .fold(error => fail(error.message), identity)
     assert(SpatialPullbacks.worldAligned(mni, otherMniOwner).isRight, clue = "one world, two runtime owners")
     val fs = GridSpec.in(Spaces.fsaverage)(shape, affine).fold(error => fail(error.message), identity)
@@ -177,9 +178,9 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assert(SpatialPullbacks.worldAligned(mni, unresolved).isLeft, clue = "an unresolved grid is not in MNI space")
 
   test("legacy world-aligned resampling surfaces a world mismatch instead of resampling across worlds"):
-    val subjectA = SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), scalafim.image.world.WorldSpace.declare("sub-01").toOption.get)
+    val subjectA = SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), neuroim4s.spaces.WorldSpace.declare("sub-01").toOption.get)
       .fold(error => fail(error.message), identity)
-    val subjectB = SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), scalafim.image.world.WorldSpace.declare("sub-02").toOption.get)
+    val subjectB = SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), neuroim4s.spaces.WorldSpace.declare("sub-02").toOption.get)
       .fold(error => fail(error.message), identity)
     val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(27)(_.toDouble), subjectA, "a")
     assertEqualsDouble(Resample.trilinear(volume, subjectA)(1, 1, 1), volume(1, 1, 1), 1e-12)

@@ -1,6 +1,6 @@
 package scalafim.image.io
 
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import image4s.{Axis, AxisKind, AxisUnit, NonSpatialAxes, SampleSpace}
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid, LengthUnit}

@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import image4s.geometry.{D3, Frame, Vec}
+import image4s.geometry.{D3, Frame, GeometryError, Vec}
 import intaglio.*
 
 opaque type SurfaceResourceKey = String
@@ -137,7 +137,7 @@ object SurfaceCameraPacket:
   def lookAt[F <: Frame[D3]](pose: SurfaceCameraPose[F], up: Vec[F, D3],
       frustum: SurfaceCameraFrustum): Either[SurfaceCameraFrustumError, SurfaceCameraPacket] =
     Frame.alignOwners[D3, F, F](up.frame, pose.frame).flatMap(_.vectorToRight(up))
-      .left.map(SurfaceCameraFrustumError.FrameMismatch.apply).flatMap: ownedUp =>
+      .left.map(GeometryError.fromCoordinate).left.map(SurfaceCameraFrustumError.FrameMismatch.apply).flatMap: ownedUp =>
         checkedPacket(pose, ownedUp, frustum)
 
   private def checkedPacket[F <: Frame[D3]](pose: SurfaceCameraPose[F], up: Vec[F, D3],

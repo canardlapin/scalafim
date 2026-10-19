@@ -1,7 +1,7 @@
 package scalafim.transform.afni
 
 import image4s.geometry.{Affine, D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.oracle.OracleFixtures
 

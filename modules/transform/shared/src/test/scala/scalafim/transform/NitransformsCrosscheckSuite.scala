@@ -1,7 +1,8 @@
 package scalafim.transform
 
 import image4s.geometry.{Affine, D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, FslHeaderPolicy, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+import scalafim.image.world.FslHeaderPolicy
 import scalafim.transform.afni.{Aff12Codec, Aff12Interpretation, AfniCardinal}
 import scalafim.transform.freesurfer.{LtaCodec, LtaInterpretation}
 import scalafim.transform.fsl.{FlirtCodec, FlirtInterpretation, FslHeaderGeometry}

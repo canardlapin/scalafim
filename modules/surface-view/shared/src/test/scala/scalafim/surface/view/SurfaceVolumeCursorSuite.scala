@@ -1,9 +1,11 @@
 package scalafim.surface.view
 
 import image4s.geometry.{Affine, D3, Frame, Point}
+import reframe4s.core.{LinkDirection, WorldLink, WorldLinkError}
 import reframe4s.lie.FramedAffine
 import scalafim.image.{GridSpec, SpatialDims, VoxelPoint}
 import scalafim.image.world.*
+import neuroim4s.spaces.*
 import scalafim.surface.*
 
 /** STP P8.02: the linked surface <-> volume cursor goes through a typed world link. */
@@ -34,7 +36,7 @@ class SurfaceVolumeCursorSuite extends munit.FunSuite:
 
   /** MNI -> tkRAS pullback (tkRAS = MNI + (5, -3, 1)); push withheld, as for a composite whose warp has no inverse. */
   private val pullOnly =
-    ok(WorldLink.pullback[tkRas.type, mni.type](
+    ok(WorldLink.pullback[tkRas.type, mni.type, D3](
       FramedAffine.betweenFrames[mni.type, tkRas.type, D3](mni, tkRas)(affine(1, 0, 0, 5, 0, 1, 0, -3, 0, 0, 1, 1, 0, 0, 0, 1)),
       None,
       "fMRIPrep composite without inverse warp"
@@ -76,7 +78,7 @@ class SurfaceVolumeCursorSuite extends munit.FunSuite:
 
   test("with a forward map the cursor round-trips vertex -> volume -> vertex"):
     val pull = FramedAffine.betweenFrames[mni.type, tkRas.type, D3](mni, tkRas)(affine(1, 0, 0, 5, 0, 1, 0, -3, 0, 0, 1, 1, 0, 0, 0, 1))
-    val link = ok(WorldLink.pullback[tkRas.type, mni.type](pull, Some(pull.inverse), "affine registration"))
+    val link = ok(WorldLink.pullback[tkRas.type, mni.type, D3](pull, Some(pull.inverse), "affine registration"))
     val cursor = ok(SurfaceVolumeCursor.make(surfaceId, white, link))
     val selection = SurfaceSelection(surfaceId, VertexId(1))
     val inMni = ok(cursor.toVolume(selection))
@@ -90,7 +92,7 @@ class SurfaceVolumeCursorSuite extends munit.FunSuite:
     val scannerSurface = ok(white.toScanner(scanner, FreeSurferVolumeGeometry(Vector(64, 72, 50), affine(-1, 0, 0, 32, 0, 0, 1, -36, 0, -1, 0, 25, 0, 0, 0, 1))))
     val volumeFrame = FrameCatalog.frame(WorldSpace.SubjectNative(namespace, subject, None, reference))
     assert(!volumeFrame.sameRuntimeOwnerAs(scanner), clue = "the volume's frame is another owner of the same world")
-    val cursor = ok(SurfaceVolumeCursor.make(surfaceId, scannerSurface, ok(WorldLink.shared[scanner.type, volumeFrame.type](scanner, volumeFrame))))
+    val cursor = ok(SurfaceVolumeCursor.make(surfaceId, scannerSurface, ok(WorldLink.shared[scanner.type, volumeFrame.type, D3](scanner, volumeFrame))))
     val selection = SurfaceSelection(surfaceId, VertexId(3))
     val inVolume = ok(cursor.toVolume(selection))
     assert(inVolume.belongsTo(volumeFrame))
@@ -98,8 +100,8 @@ class SurfaceVolumeCursorSuite extends munit.FunSuite:
     assertEquals(ok(cursor.toSurface(inVolume, radius)).selection, selection)
 
   test("the cursor refuses another world's link, another surface's selection, and points beyond the radius"):
-    val scannerLink = ok(WorldLink.shared[scanner.type, scanner.type](scanner, scanner))
-    SurfaceVolumeCursor.make(surfaceId, white, scannerLink.asInstanceOf[WorldLink[tkRas.type, scanner.type]]) match
+    val scannerLink = ok(WorldLink.shared[scanner.type, scanner.type, D3](scanner, scanner))
+    SurfaceVolumeCursor.make(surfaceId, white, scannerLink.asInstanceOf[WorldLink[tkRas.type, scanner.type, D3]]) match
       case Left(SurfaceCursorError.Link(WorldLinkError.FrameMismatch(_))) => ()
       case other => fail(s"expected a tkRAS surface to refuse a scanner-space link, got $other")
     val cursor = ok(SurfaceVolumeCursor.make(surfaceId, white, pullOnly))

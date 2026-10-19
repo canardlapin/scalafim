@@ -2,7 +2,7 @@ package scalafim.atlas
 
 import image4s.geometry.{Affine, D3}
 import reframe4s.field.CoordinateBoundaryPolicy
-import scalafim.image.world.Spaces as WorldFrames
+import neuroim4s.spaces.Spaces as WorldFrames
 import scalafim.transform.{AssetRef, PushAvailability, TransformProvenance, WorldTransform}
 import scalafim.transform.field.DenseLattice
 import scalafim.transform.itk.{ItkHdf5Component, ItkHdf5File}

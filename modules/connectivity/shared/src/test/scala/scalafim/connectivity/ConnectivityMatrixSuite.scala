@@ -88,9 +88,9 @@ class ConnectivityMatrixSuite extends munit.FunSuite:
     val otherSpace = EdgeSpace.directed(axis).toOption.get
     val static = StaticConnectivity(ConnectivityMatrix.fromEdgeVector(EdgeVector.from(space, Vector(1.0, 2.0, 3.0)).toOption.get).toOption.get)
     val otherStatic = StaticConnectivity(ConnectivityMatrix.fromEdgeVector(EdgeVector.from(otherSpace, Vector(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)).toOption.get).toOption.get)
-    val s1 = SubjectConnectivity(SubjectId.unsafe("sub-1"), static)
-    val s2 = SubjectConnectivity(SubjectId.unsafe("sub-2"), static)
-    val bad = SubjectConnectivity(SubjectId.unsafe("sub-3"), otherStatic)
+    val s1 = SubjectConnectivity(SubjectId("sub-1").toOption.get, static)
+    val s2 = SubjectConnectivity(SubjectId("sub-2").toOption.get, static)
+    val bad = SubjectConnectivity(SubjectId("sub-3").toOption.get, otherStatic)
     val group = CovariateName.unsafe("group")
     val age = CovariateName.unsafe("age")
     val cov1 = SubjectCovariates.unsafe(s1.subjectId, Map(
@@ -101,7 +101,7 @@ class ConnectivityMatrixSuite extends munit.FunSuite:
       group -> CovariateValue.categorical("b").toOption.get,
       age -> CovariateValue.continuous(31.0).toOption.get
     ))
-    val unknown = SubjectCovariates.unsafe(SubjectId.unsafe("sub-99"), Map(group -> CovariateValue.categorical("z").toOption.get))
+    val unknown = SubjectCovariates.unsafe(SubjectId("sub-99").toOption.get, Map(group -> CovariateValue.categorical("z").toOption.get))
 
     assertEquals(ConnectivitySet.from(Vector(s1, s2), Vector(cov1, cov2)).toOption.map(_.subjectCount), Some(2))
     assert(ConnectivitySet.from(Vector(s1, s2), Vector(cov1)).isLeft)

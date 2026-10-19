@@ -3,7 +3,7 @@ package scalafim.spatial
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
 import scalafim.image.SpatialPoint
-import scalafim.image.world.{FrameCatalog, TemplateName, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, TemplateName, WorldSpace}
 import scalafim.transform.{TransformProvenance, WorldTransform}
 
 class UnsampledDomainSuite extends munit.FunSuite:
@@ -12,14 +12,14 @@ class UnsampledDomainSuite extends munit.FunSuite:
     result.fold(error => fail(error.message), identity)
 
   private def frame(name: String): Frame[D3] =
-    FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe(name)))
+    FrameCatalog.frame(WorldSpace.Template(TemplateName(name).toOption.get))
 
   private def template(name: String, kind: DomainKind, world: Frame[D3]): Domain =
     val templateKind = if kind == DomainKind.Surface then TemplateKind.Surface else TemplateKind.Volume
     value(
       Domain.build(
         value(DomainId(name)),
-        SpaceRef.Template(TemplateName.unsafe(name), None, templateKind),
+        SpaceRef.Template(TemplateName(name).toOption.get, None, templateKind),
         value(SamplingGeometry.unsampled(kind, world))
       )
     )

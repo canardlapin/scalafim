@@ -7,7 +7,7 @@ import image4s.ImageMetadata
 import scalafim.atlas.*
 import scalafim.image.*
 import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 object AtlasLabelMaps:
   def readIntVolume(

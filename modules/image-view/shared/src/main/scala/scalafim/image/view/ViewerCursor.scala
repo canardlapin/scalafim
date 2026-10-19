@@ -36,7 +36,7 @@ object ViewerCursor:
         .alignOwners[D3, A, F](cursor.frame, frame)
         .left
         .map(ViewerCursorError.FrameMismatch.apply)
-      owned <- aligned.pointToRight(cursor).left.map(ViewerCursorError.Geometry.apply)
+      owned <- aligned.pointToRight(cursor).left.map(GeometryError.fromSpatial).left.map(ViewerCursorError.Geometry.apply)
     yield owned
 
   /** The action that moves the cursor to `point`, whose frame must be the model's reference frame. */
@@ -45,5 +45,5 @@ object ViewerCursor:
       .alignOwners[D3, F, Frame[D3]](point.frame, model.referenceSpace.frame)
       .left
       .map(ViewerCursorError.FrameMismatch.apply)
-      .flatMap(_.pointToRight(point).left.map(ViewerCursorError.Geometry.apply))
+      .flatMap(_.pointToRight(point).left.map(GeometryError.fromSpatial).left.map(ViewerCursorError.Geometry.apply))
       .map(ViewerAction.SetCursor.apply)

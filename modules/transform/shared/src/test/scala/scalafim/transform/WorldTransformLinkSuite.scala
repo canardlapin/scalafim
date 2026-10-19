@@ -3,7 +3,8 @@ package scalafim.transform
 import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.core.{MapError, SpatialMap}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.{FrameCatalog, LinkDirection, Spaces, WorldLinkError, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, Spaces, WorldSpace}
+import reframe4s.core.{LinkDirection, WorldLinkError}
 
 /** STP P8.02: a `WorldTransform` is the typed map behind a linked cursor between two worlds. */
 class WorldTransformLinkSuite extends munit.FunSuite:
@@ -33,7 +34,7 @@ class WorldTransformLinkSuite extends munit.FunSuite:
     a.coordinates.zip(b.coordinates).foreach((x, y) => assertEqualsDouble(x, y, 1e-9))
 
   test("an affine transform links both ways, agreeing with pullPoint and mapPoint"):
-    val link = registration.link
+    val link = ok(registration.link)
     assert(LinkDirection.values.forall(link.supports))
     val peak = ok(Point.in(mni)(-42.0, 18.0, 24.0))
     val inSubject = ok(link.toLeft(peak))
@@ -43,7 +44,7 @@ class WorldTransformLinkSuite extends munit.FunSuite:
 
   test("a composite whose warp has no inverse links target to source only; the forward direction is a typed error"):
     val composite: WorldTransform[native.type, mni.type] = registration.andThen(warp)
-    val link = composite.link
+    val link = ok(composite.link)
     val peak = ok(Point.in(mni)(-42.0, 18.0, 24.0))
     close(ok(link.toLeft(peak)), ok(composite.pullPoint(peak)))
     assert(!link.supports(LinkDirection.LeftToRight))

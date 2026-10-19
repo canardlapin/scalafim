@@ -1,10 +1,12 @@
 package scalafim.surface.view
 
+import reframe4s.core.WorldLink
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import intaglio.*
 import scalafim.image.*
 import scalafim.image.world.*
+import neuroim4s.spaces.*
 import scalafim.surface.*
 
 class SurfaceDynamicsSuite extends munit.FunSuite:
@@ -217,7 +219,7 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
     val frame = FrameCatalog.frame(WorldSpace.declare("surface-selection-fixture").toOption.get)
     val volume = GridSpec.in(frame)(SpatialDims(64, 64, 64), Affine.identity[D3]).toOption.get
     val surface = FramedSurface.in(frame)(target, SurfacePlacement.SurfaceToWorld).toOption.get
-    val link = WorldLink.shared[frame.type, frame.type](frame, frame).toOption.get
+    val link = WorldLink.shared[frame.type, frame.type, D3](frame, frame).toOption.get
     val cursor = SurfaceVolumeCursor.make(surfaceId, surface, link).toOption.get
     val inVolume = cursor.toVolume(selection).toOption.get
     val world = WorldPoint(inVolume.coordinates(0), inVolume.coordinates(1), inVolume.coordinates(2))

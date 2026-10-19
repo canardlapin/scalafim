@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.image.world.Spaces
+import neuroim4s.spaces.Spaces
 
 class SurfaceCompositionNavigationSuite extends munit.FunSuite:
   private def ok[E, A](value: Either[E, A]): A = value.fold(error => fail(s"$error"), identity)

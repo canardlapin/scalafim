@@ -13,7 +13,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.*
 import scalafim.fmri.model.*
 import scalafim.image.SampleSpaces
-import scalafim.image.world.{TemplateName, WorldSpace}
+import neuroim4s.spaces.{TemplateName, WorldSpace}
 
 class ProfileFitIdentitySuite extends munit.FunSuite:
   // A rank-one, exactly representable fixture keeps these structural goldens
@@ -58,7 +58,7 @@ class ProfileFitIdentitySuite extends munit.FunSuite:
     .fold(error => fail(error.message), identity)
   private lazy val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("identity|dataset"),
     DMat.zeros(4, 1), SampleSpaces.inWorld(SampleSpaces(Vector(1, 1, 1)),
-      WorldSpace.Template(TemplateName.unsafe("identity-golden"))).fold(error => fail(error.message), identity), metadata), frame).dataset
+      WorldSpace.Template(TemplateName("identity-golden").toOption.get)).fold(error => fail(error.message), identity), metadata), frame).dataset
   private lazy val baseline = BaselineModel.build(frame, BaselineBasis.Constant, intercept = Intercept.Global)
   private val membership = TrialMembership.make(Vector(0, 0), 1).fold(error => fail(error.message), identity)
   private val drive = ProfileTrialDrive.make(schedule, membership, Vector(ConditionId.unsafe("a|b")),

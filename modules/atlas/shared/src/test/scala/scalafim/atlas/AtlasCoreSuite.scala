@@ -114,7 +114,7 @@ class AtlasCoreSuite extends munit.FunSuite:
     // The route carries MNI305 points to MNI152 points: the target grid is in MNI305, the source grid in MNI152.
     def gridIn(space: AnySpaceId): GridSpec[?] =
       val world = TemplateCatalog.standard.world(space).toOption.get
-      GridSpec.in(scalafim.image.world.FrameCatalog.frame(world))(SpatialDims(2, 2, 2), Affine.identity[D3]).toOption.get
+      GridSpec.in(neuroim4s.spaces.FrameCatalog.frame(world))(SpatialDims(2, 2, 2), Affine.identity[D3]).toOption.get
     val sourceGrid = gridIn(SpaceId.MNI152)
     val targetGrid = gridIn(SpaceId.MNI305)
     val pullback =

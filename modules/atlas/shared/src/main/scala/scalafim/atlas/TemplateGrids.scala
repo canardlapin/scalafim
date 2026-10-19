@@ -2,7 +2,7 @@ package scalafim.atlas
 
 import image4s.geometry.{Affine, D3, Grid, GridId}
 import scalafim.image.GridSpec
-import scalafim.image.world.Spaces as WorldFrames
+import neuroim4s.spaces.Spaces as WorldFrames
 
 /** Stock voxel grids of the MNI templates, exactly as TemplateFlow's `tpl-<template>_res-0N_*.nii.gz` headers place
   * them (sform = qform, code 4, RAS millimetres). Each grid is typed at its template's world frame, so a grid of one

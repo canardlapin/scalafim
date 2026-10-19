@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
 
 import com.sun.management.ThreadMXBean
 import scalafim.image.io.Nifti

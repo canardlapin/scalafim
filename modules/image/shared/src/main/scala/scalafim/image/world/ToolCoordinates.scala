@@ -1,5 +1,6 @@
 package scalafim.image.world
 
+import neuroim4s.spaces.*
 import image4s.geometry.{Affine, D3}
 
 /** Which stored affine FSL places a volume with: the sform when its code is non-zero, else the qform when its code is

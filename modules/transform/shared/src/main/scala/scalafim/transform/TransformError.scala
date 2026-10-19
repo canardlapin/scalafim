@@ -4,7 +4,7 @@ import image4s.geometry.GeometryError
 import reframe4s.core.MapError
 import reframe4s.field.{CompositionError, InversionError, TopologyAssessmentError}
 import reframe4s.resample.ResamplingError
-import scalafim.image.world.SpaceError
+import neuroim4s.spaces.SpaceError
 
 /** Failures of interpreting, composing, inverting or applying a world transform. */
 enum TransformError derives CanEqual:

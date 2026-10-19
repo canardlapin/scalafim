@@ -6,7 +6,7 @@ import ravel.DType.given
 import ravel.NDArray
 import reframe4s.field.CoordinateBoundaryPolicy
 import reframe4s.resample.Interpolation
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.scenarios.{ScenarioHarness, ScenarioObservation, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{DenseContext, LatticeAffine}

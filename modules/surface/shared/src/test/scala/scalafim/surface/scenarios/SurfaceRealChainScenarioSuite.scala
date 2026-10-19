@@ -4,6 +4,7 @@ import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
 import scalafim.image.{GridSpec, SpatialDims}
 import scalafim.image.world.*
+import neuroim4s.spaces.*
 import scalafim.scenarios.{ScenarioHarness, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.surface.*
 

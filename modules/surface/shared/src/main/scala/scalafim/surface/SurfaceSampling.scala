@@ -3,7 +3,7 @@ package scalafim.surface
 import scalafim.image.SampleSpaces.*
 
 import image4s.{BoundaryPolicy, Continuous, ImageError, SampleSpace, Sampled}
-import image4s.geometry.{D3, Frame, Point}
+import image4s.geometry.{D3, Frame, GeometryError, Point}
 import reframe4s.resample.{Interpolation, SampledInterpolator}
 import ravel.Rank
 import scalafim.image.*
@@ -221,10 +221,12 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   private def worldPoint(surface: SurfaceGeometry, vertex: VertexId): Vector[Double] =
     val point = surface.mesh.vertex(vertex)
-    surface.surfaceToWorld(Vector(point.x, point.y, point.z)).fold(
-      error => throw new IllegalStateException(error.message),
-      identity
-    )
+    surface.surfaceToWorld(Vector(point.x, point.y, point.z)) match
+      case Right(world) => world
+      // A finite vertex whose world coordinate overflows has no finite location;
+      // the point classifiers count it as outside the volume.
+      case Left(GeometryError.NonFiniteCoordinate(_, _)) => Vector.fill(3)(Double.NaN)
+      case Left(error) => throw new IllegalStateException(error.message)
 
   private def sampleValues(
     volume: SomeScalarVolume[Double],

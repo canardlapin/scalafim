@@ -1,16 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.{
-  DatasetNamespace,
-  GeometryDigest,
-  NativeContext,
-  ReferenceAcquisition,
-  SessionId,
-  SpaceError,
-  SubjectId,
-  TemplateName,
-  WorldSpace
-}
+import neuroim4s.spaces.{DatasetNamespace, GeometryDigest, NativeContext, ReferenceAcquisition, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
 import scalafim.surface.{Hemisphere, SurfaceKind}
 
 class SpaceRefWorldSuite extends munit.FunSuite:
@@ -30,12 +20,12 @@ class SpaceRefWorldSuite extends munit.FunSuite:
 
   private val volume = SpaceRef.Volume(subject, Some(session), ok(Modality("bold")))
   private val surface = SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.White)
-  private val template = SpaceRef.Template(TemplateName.unsafe("MNI152NLin2009cAsym"), None, TemplateKind.Volume)
+  private val template = SpaceRef.Template(TemplateName("MNI152NLin2009cAsym").toOption.get, None, TemplateKind.Volume)
   private val latent = ok(SpaceRef.latent(8))
 
   test("a template reference names its template world; many domains share it"):
-    assertEquals(template.world, Right(WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym"))))
-    val hybrid = SpaceRef.Template(TemplateName.unsafe("MNI152NLin2009cAsym"), None, TemplateKind.Hybrid)
+    assertEquals(template.world, Right(WorldSpace.Template(TemplateName("MNI152NLin2009cAsym").toOption.get)))
+    val hybrid = SpaceRef.Template(TemplateName("MNI152NLin2009cAsym").toOption.get, None, TemplateKind.Hybrid)
     assertEquals(hybrid.world, template.world)
     assertEquals(template.worldIn(context), template.world)
 

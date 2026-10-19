@@ -433,11 +433,19 @@ private[atlas] object AtlasPublicationProjection:
         case CoordinateConvention.Unspecified => "unspecified"
         case CoordinateConvention.RAS => "RAS"
         case CoordinateConvention.LPS => "LPS"
+        case other =>
+          throw new IllegalArgumentException(
+            s"atlas publication encodes only standard conventions, not ${CoordinateConvention.serializedName(other)}"
+          )
     val unit =
       grid.frame.unit match
         case LengthUnit.Millimeter => "millimeter"
         case LengthUnit.Meter => "meter"
         case LengthUnit.Micrometer => "micrometer"
+        case other =>
+          throw new IllegalArgumentException(
+            s"atlas publication encodes only standard units, not ${LengthUnit.serializedName(other)}"
+          )
     val affine = grid.indexToFrame.rowMajor.map(normalizeZero)
     val preimage =
       AtlasPublicationBinaryV1.volumeGrid(

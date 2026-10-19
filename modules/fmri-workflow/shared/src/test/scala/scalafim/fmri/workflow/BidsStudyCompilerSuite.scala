@@ -16,7 +16,7 @@ import scalafim.image.SomeSampleSpace
 
 class BidsStudyCompilerSuite extends FunSuite:
 
-  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("registered BIDS compiler fixture world")
+  private val fixtureWorld = neuroim4s.spaces.WorldSpace.declare("registered BIDS compiler fixture world")
     .fold(error => fail(error.message), identity)
 
   private def fixtureSpace(dims: Vector[Int]): image4s.SomeSampleSpace =

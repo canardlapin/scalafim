@@ -2,6 +2,7 @@ package scalafim.surface
 
 import image4s.geometry.{Affine, D3, Frame}
 import scalafim.image.world.*
+import neuroim4s.spaces.*
 
 class FramedSurfaceSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =
@@ -92,7 +93,7 @@ class FramedSurfaceSuite extends munit.FunSuite:
     assert(errors.contains("Required:") && errors.contains("FramedSurface") && errors.contains("scanner"), errors)
 
   test("a surface placed in a runtime world binds to the static template frame with the same key"):
-    val placed = ok(FramedSurface.inWorld(WorldSpace.Template(TemplateName.unsafe("fsaverage")))(geometry, SurfacePlacement.StoredCoordinates))
+    val placed = ok(FramedSurface.inWorld(WorldSpace.Template(TemplateName("fsaverage").toOption.get))(geometry, SurfacePlacement.StoredCoordinates))
     val bound: FramedSurface[Spaces.FsAverage] = ok(placed.bindTo(Spaces.fsaverage))
     assert(bound.frame.sameRuntimeOwnerAs(Spaces.fsaverage))
     assertEquals(bound.coordinates.toVector, mesh.coordinates.toVector)

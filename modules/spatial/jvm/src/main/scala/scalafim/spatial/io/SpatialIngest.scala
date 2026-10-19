@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.world.{SessionId, SubjectId}
+import neuroim4s.spaces.{SessionId, SubjectId}
 
 import scalafim.spatial.*
 import scalafim.transform.TransformFormat

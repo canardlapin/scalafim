@@ -182,7 +182,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | standalone Gale | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, standalone Gale, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `phrf-comparison` | Unpublished comparative-evaluation preparation/scoring and JVM runners/custody. | `model`, `ar`, `hrf`, `fit`, standalone Gale | Production workflow orchestration or claims of completed S10 rehearsal/pilot qualification. |
-| `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, world-space frame identity and toolkit coordinate conventions (`scalafim.image.world`), neuroimaging adapters over provider geometry and resampling, clustering, and metric searchlight construction. | `locus-data`; standalone Gale, image4s (core, geometry, locus, filter; NIfTI on JVM) and reframe4s (`lie`, `field`, `resample`) | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code, toolkit transform file formats, or a local morphism/affine algebra (`imageAlgebraBoundaryCheck`). |
+| `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, toolkit coordinate conventions and world-frame binding (`scalafim.image.world`, over neuroim4s-spaces world identities), neuroimaging adapters over provider geometry and resampling, clustering, and metric searchlight construction. | `locus-data`; standalone Gale, image4s (core, geometry, locus, filter; NIfTI on JVM) and reframe4s (`lie`, `field`, `resample`), neuroim4s-spaces | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code, toolkit transform file formats, or a local morphism/affine algebra (`imageAlgebraBoundaryCheck`). |
 | `provider-spike` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
 | `transform` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | `image`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), frame identity (`image`), platform IO in shared sources (`transformBoundaryCheck`), or graph routing (`spatial`). |
 | `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
@@ -371,8 +371,11 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
   `DenseVectorField` roles, and anatomical orientation. It defines no
   morphism or affine algebra of its own; `imageAlgebraBoundaryCheck` rejects
   the retired `SpatialMorphism`/`Affine3DMorphism` family.
-  - `scalafim.image.world` owns world-space frame identity and toolkit
-    coordinate conventions. Bare D3 geometry receives a fresh unknown-world
+  - World-space identity (`WorldSpace`, `FrameCatalog`, `Spaces`,
+    `SpaceResolver`) comes from neuroim4s-spaces and the linked-cursor
+    `WorldLink` from reframe4s; `scalafim.image.world` keeps toolkit
+    coordinate conventions (`ToolCoordinates`) and world-frame binding
+    (`Placed`). Bare D3 geometry receives a fresh unknown-world
     scope; file admission requires explicit resolved evidence.
 - **`transform`** owns toolkit transform formats (ITK/ANTs, FSL, AFNI,
   FreeSurfer, X5), their interpretation as typed world-space transforms, and

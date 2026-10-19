@@ -3,7 +3,7 @@ package scalafim.fmri.motion.io
 import scalafim.fmri.motion.*
 import scalafim.image.*
 import scalafim.image.io.Nifti
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 import java.nio.file.Path
 import scala.util.control.NonFatal

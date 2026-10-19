@@ -3,7 +3,7 @@ package scalafim.atlas.io
 import java.net.URI
 import java.nio.file.Path
 import scalafim.atlas.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 object AsegLoader:
   final case class Assets(volume: AtlasAsset)

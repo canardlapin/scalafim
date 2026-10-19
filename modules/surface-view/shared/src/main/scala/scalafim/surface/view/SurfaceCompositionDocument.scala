@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import image4s.geometry.{D3, Frame}
+import image4s.geometry.{CoordinateConvention, D3, Frame, LengthUnit}
 import intaglio.DisplayOpacity
 import scalafim.surface.SurfaceKind
 
@@ -11,7 +11,14 @@ final case class SurfaceCompositionFrameKey(id: String, rank: Int, unit: String,
 object SurfaceCompositionFrameKey:
   def from(frame: Frame[D3]): Either[SurfaceSceneError, SurfaceCompositionFrameKey] =
     frame.persistentKey.toRight(SurfaceSceneError.InvalidDocument("composition persistence requires a persistent frame"))
-      .map(key => SurfaceCompositionFrameKey(key.id.value, key.spatialRank, key.unit.toString, key.convention.toString))
+      .map(key =>
+        SurfaceCompositionFrameKey(
+          key.id.value,
+          key.spatialRank,
+          LengthUnit.serializedName(key.unit),
+          CoordinateConvention.serializedName(key.convention)
+        )
+      )
 
 final case class SurfaceCompositionSavedInstance(
   id: SurfaceInstanceId,

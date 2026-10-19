@@ -7,7 +7,8 @@ import ravel.NDArray
 import reframe4s.field.{DeterminantValue, InversionError, InversionGateFailure}
 import reframe4s.lie.FramedAffine
 import reframe4s.resample.Interpolation
-import scalafim.image.world.{FrameCatalog, FslVolumeGeometry, ToolCoordinates, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+import scalafim.image.world.{FslVolumeGeometry, ToolCoordinates}
 import scalafim.scenarios.{CaveatKind, CaveatSeverity, ScenarioCaveat, ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{

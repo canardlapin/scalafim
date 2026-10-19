@@ -2,7 +2,7 @@ package scalafim.surface.reference
 
 import scalafim.image.*
 import scalafim.image.SampleSpaces.{indexToGrid3D, spatialDims}
-import scalafim.image.world.WorldSpace
+import neuroim4s.spaces.WorldSpace
 import scalafim.surface.*
 import PointMapFixtures.*
 

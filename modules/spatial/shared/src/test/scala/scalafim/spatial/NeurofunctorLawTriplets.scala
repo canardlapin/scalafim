@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.{SampleSpaces, SpatialPoint}
-import scalafim.image.world.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.spatial.fixtures.NeurofunctorLawFixtures
 
 /** Loads the embedded neurofunctor law fixtures (see `tools/r-parity/generate_neurofunctor_law_fixtures.R`). */

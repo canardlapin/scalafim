@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path}
 import scalafim.atlas.*
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 class AtlasIoSuite extends munit.FunSuite:
 

@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.{NativeContext, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
+import neuroim4s.spaces.{NativeContext, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
 
 import image4s.SampleSpace
 import image4s.geometry.D3

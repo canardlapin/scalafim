@@ -3,7 +3,7 @@ package scalafim.image
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import scala.compiletime.testing.typeCheckErrors
-import scalafim.image.world.Spaces
+import neuroim4s.spaces.Spaces
 
 class WorldBoxSuite extends munit.FunSuite:
 
@@ -45,7 +45,7 @@ class WorldBoxSuite extends munit.FunSuite:
     val errors = typeCheckErrors(
       """
         import scalafim.image.WorldBox
-        import scalafim.image.world.Spaces
+        import neuroim4s.spaces.Spaces
         val mniBox: WorldBox[Spaces.Mni2009c] = ???
         val fsBox: WorldBox[Spaces.FsAverage] = ???
         mniBox.union(fsBox)

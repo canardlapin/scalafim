@@ -6,7 +6,7 @@ import image4s.geometry.D3
 import scalafim.fmri.motion.*
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -312,6 +312,7 @@ class MotionIoSuite extends munit.FunSuite:
     bb.putFloat(80, 1.0f)
     bb.putFloat(84, 1.0f)
     bb.putFloat(88, 1.0f)
+    if dims.length == 4 then bb.putFloat(92, 1.0f)
     bb.putFloat(108, 352.0f)
     bb.putFloat(112, 1.0f)
     bb.putFloat(116, 0.0f)

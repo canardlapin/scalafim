@@ -3,7 +3,7 @@ package scalafim.surface.reference
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid, LengthUnit}
 import scalafim.image.{SomeMaskVolume, SomeSampleSpace}
 import scalafim.image.SampleSpaces
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 
 /** Failures admitting a spatial reference. Admission never guesses: an
   * ambiguous or incomplete reference is refused rather than normalized.
@@ -160,7 +160,7 @@ object VolumeReference:
         case _: WorldSpace.Unresolved => false
         case _ => true
       if coordinates.unit != LengthUnit.Millimeter || coordinates.convention != CoordinateConvention.RAS then
-        Left(ReferenceError.InvalidVolumeGrid(s"expected RAS millimetres; got ${coordinates.convention} ${coordinates.unit}"))
+        Left(ReferenceError.InvalidVolumeGrid(s"expected RAS millimetres; got ${CoordinateConvention.serializedName(coordinates.convention)} ${LengthUnit.serializedName(coordinates.unit)}"))
       else if conflict then
         Left(ReferenceError.InvalidVolumeGrid(s"resolved world ${world.toOption.get.displayName} contradicts ${frame.display}"))
       else

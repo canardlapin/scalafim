@@ -1,6 +1,6 @@
 package scalafim.image.io
 
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import scalafim.image.SampleSpaces.*
 

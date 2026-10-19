@@ -1,8 +1,10 @@
 package scalafim.surface.view
 
+import reframe4s.core.WorldLink
 import image4s.geometry.{Affine, D3, Point}
 import reframe4s.lie.FramedAffine
 import scalafim.image.world.*
+import neuroim4s.spaces.*
 import scalafim.surface.*
 
 /** STP P8.02: surface camera targets and positions are typed points in the displayed surface's frame. */
@@ -57,7 +59,7 @@ class SurfaceCameraPoseSuite extends munit.FunSuite:
     val shownState = SurfaceViewerState.initial(shown)
     val bound: SurfaceDisplayFrame[tkRas.type] = ok(SurfaceDisplayFrame.bind(shown, id, white))
     val pull = FramedAffine.betweenFrames[mni.type, tkRas.type, D3](mni, tkRas)(affine(1, 0, 0, 5, 0, 1, 0, -3, 0, 0, 1, 1, 0, 0, 0, 1))
-    val link = ok(WorldLink.pullback[tkRas.type, mni.type](pull, None, "composite without inverse"))
+    val link = ok(WorldLink.pullback[tkRas.type, mni.type, D3](pull, None, "composite without inverse"))
     val cursor = ok(SurfaceVolumeCursor.forDisplay(bound, link))
     val hit = ok(cursor.toSurface(ok(Point.in(mni)(-5.0, 3.0, 8.5)), SurfaceLinkRadius.unsafe(1.0)))
     assertEquals(hit.selection.vertex, VertexId(3))

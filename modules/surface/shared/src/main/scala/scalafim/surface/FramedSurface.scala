@@ -3,7 +3,8 @@ package scalafim.surface
 import image4s.geometry.{Affine, D3, Frame, FrameAlignment, GeometryError, Point}
 import reframe4s.core.{MapError, SpatialMap}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.{FrameCatalog, FreeSurferVolumeGeometry, Placed, Rebind, SpaceError, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, SpaceError, WorldSpace}
+import scalafim.image.world.{FreeSurferVolumeGeometry, Placed, Rebind}
 
 /** Failures of placing surface vertices in a world frame or moving them between frames. */
 enum SurfaceFrameError derives CanEqual:
@@ -85,7 +86,7 @@ final class FramedSurface[F <: Frame[D3]] private (
           val moved =
             for
               raw <- Point.fromVector[D3](frame, Vector(c(3 * i), c(3 * i + 1), c(3 * i + 2))).left.map(SurfaceFrameError.Geometry.apply)
-              point <- self.pointToRight(raw).left.map(SurfaceFrameError.Geometry.apply)
+              point <- self.pointToRight(raw).left.map(GeometryError.fromSpatial).left.map(SurfaceFrameError.Geometry.apply)
               next <- map(point).left.map(SurfaceFrameError.Map.apply)
             yield next.coordinates
           moved match
@@ -146,7 +147,7 @@ object FramedSurface:
     for
       self <- selfAlignment(frame)
       raw <- Point.fromVector[D3](frame, coordinates).left.map(SurfaceFrameError.Geometry.apply)
-      owned <- self.pointToRight(raw).left.map(SurfaceFrameError.Geometry.apply)
+      owned <- self.pointToRight(raw).left.map(GeometryError.fromSpatial).left.map(SurfaceFrameError.Geometry.apply)
     yield owned
 
   /** Evidence retyping points made at `frame.type` to the (possibly wider) static owner `F`. */

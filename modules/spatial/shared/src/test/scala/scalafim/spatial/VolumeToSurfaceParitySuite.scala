@@ -3,7 +3,7 @@ package scalafim.spatial
 import image4s.geometry.{Affine, D3}
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
-import scalafim.image.world.SubjectId
+import neuroim4s.spaces.SubjectId
 import scalafim.surface.*
 
 class VolumeToSurfaceParitySuite extends munit.FunSuite:

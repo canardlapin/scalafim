@@ -5,7 +5,7 @@ import image4s.geometry.{Affine, D3, Point}
 import ravel.NDArray
 import scalafim.atlas.*
 import scalafim.image.{GridSpec, SpatialDims}
-import scalafim.image.world.Spaces as WorldFrames
+import neuroim4s.spaces.Spaces as WorldFrames
 import scalafim.surface.io.TemplateFlowCache
 
 import java.nio.file.Path

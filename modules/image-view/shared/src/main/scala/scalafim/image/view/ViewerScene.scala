@@ -2,7 +2,7 @@ package scalafim.image.view
 
 import scalafim.image.SampleSpaces.*
 
-import image4s.geometry.{ContinuousIndex, D3, Frame, Grid, Point as GeoPoint}
+import image4s.geometry.{ContinuousIndex, D3, Frame, GeometryError, Grid, Point as GeoPoint}
 import intaglio.*
 import scalafim.image.*
 import scalafim.image.NeuroAffineSyntax.*
@@ -38,7 +38,7 @@ object ViewerState:
       .alignOwners[D3, F, Frame[D3]](cursor.frame, model.referenceSpace.frame)
       .left
       .map(ImageViewError.CursorFrameMismatch.apply)
-      .flatMap(_.pointToRight(cursor).left.map(ImageViewError.GeometryFailure.apply))
+      .flatMap(_.pointToRight(cursor).left.map(GeometryError.fromSpatial).left.map(ImageViewError.GeometryFailure.apply))
 
   def move(
     cursor: GeoPoint[? <: Frame[D3], D3],

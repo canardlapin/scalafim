@@ -1,7 +1,8 @@
 package scalafim.transform
 
 import image4s.geometry.{Affine, D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, FreeSurferVolumeGeometry, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+import scalafim.image.world.FreeSurferVolumeGeometry
 import scalafim.transform.Conversion.EncodedTransform
 import scalafim.transform.field.{DenseContext, FnirtDefinition}
 import scalafim.transform.freesurfer.VolGeom

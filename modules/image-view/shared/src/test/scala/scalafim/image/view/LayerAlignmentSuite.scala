@@ -3,7 +3,7 @@ package scalafim.image.view
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import scalafim.image.*
-import scalafim.image.world.{DatasetNamespace, GeometryDigest, ReferenceAcquisition, SubjectId, TemplateName, WorldSpace}
+import neuroim4s.spaces.{DatasetNamespace, GeometryDigest, ReferenceAcquisition, SubjectId, TemplateName, WorldSpace}
 
 class LayerAlignmentSuite extends munit.FunSuite:
   private def volumeIn(space: SomeSampleSpace, label: String): SomeScalarVolume[Double] =
@@ -27,7 +27,7 @@ class LayerAlignmentSuite extends munit.FunSuite:
 
   private def inTemplate(name: String): SomeSampleSpace =
     SampleSpaces
-      .inWorld(SampleSpaces(Vector(3, 3, 3)), WorldSpace.Template(TemplateName.unsafe(name)))
+      .inWorld(SampleSpaces(Vector(3, 3, 3)), WorldSpace.Template(TemplateName(name).toOption.get))
       .fold(error => fail(error.message), identity)
 
   test("layers carry their own frame and a checked alignment to the reference"):

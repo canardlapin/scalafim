@@ -2,7 +2,7 @@ package scalafim.surface.view
 
 import image4s.geometry.{D3, Frame}
 import intaglio.*
-import scalafim.image.world.Spaces
+import neuroim4s.spaces.Spaces
 import scalafim.surface.*
 
 /** Synthetic linked-view specimen: an asymmetric temporal field and a 1.2

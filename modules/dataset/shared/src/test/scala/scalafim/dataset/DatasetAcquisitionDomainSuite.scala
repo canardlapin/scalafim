@@ -42,7 +42,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     */
   private def placed(affine: DMat = DMat.eye(4), timepoints: Int = 3): DatasetShape =
     val world =
-      scalafim.image.world.WorldSpace
+      neuroim4s.spaces.WorldSpace
         .template("MNI152NLin2009cAsym")
         .fold(error => fail(error.message), identity)
     val space =

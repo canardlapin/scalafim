@@ -8,7 +8,7 @@ import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, So
 import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

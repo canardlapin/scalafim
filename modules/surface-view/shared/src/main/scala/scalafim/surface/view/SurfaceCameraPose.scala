@@ -130,14 +130,14 @@ object SurfaceCameraPose:
       self <- Frame.alignOwners[D3, frame.type, F](frame, frame)
       raw <- Point.fromVector[D3](frame, coordinates)
       owned <- self.pointToRight(raw)
-    yield owned).left.map(SurfaceCameraError.Geometry.apply)
+    yield owned).left.map(GeometryError.fromCoordinate).left.map(SurfaceCameraError.Geometry.apply)
 
   private def vecIn[F <: Frame[D3]](frame: F, coordinates: Vector[Double]): Either[SurfaceCameraError, Vec[F, D3]] =
     (for
       self <- Frame.alignOwners[D3, frame.type, F](frame, frame)
       raw <- Vec.fromVector[D3](frame, coordinates)
       owned <- self.vectorToRight(raw)
-    yield owned).left.map(SurfaceCameraError.Geometry.apply)
+    yield owned).left.map(GeometryError.fromCoordinate).left.map(SurfaceCameraError.Geometry.apply)
 
   private[view] def own[F <: Frame[D3]](point: Point[F, D3], owner: F): Either[SurfaceCameraError, Point[F, D3]] =
     if point.belongsTo(owner) then Right(point)
@@ -145,5 +145,7 @@ object SurfaceCameraPose:
       Frame
         .alignOwners[D3, F, F](point.frame, owner)
         .flatMap(_.pointToRight(point))
+        .left
+        .map(GeometryError.fromCoordinate)
         .left
         .map(SurfaceCameraError.Geometry.apply)

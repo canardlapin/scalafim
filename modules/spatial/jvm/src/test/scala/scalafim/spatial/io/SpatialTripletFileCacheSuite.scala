@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.world.SubjectId
+import neuroim4s.spaces.SubjectId
 
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*

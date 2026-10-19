@@ -1,7 +1,7 @@
 package scalafim.transform.x5
 
 import image4s.geometry.{Affine, D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.field.DenseContext
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}

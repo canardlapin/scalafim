@@ -2,7 +2,8 @@ package scalafim.transform
 
 import image4s.geometry.{Affine, D3, Frame, Grid, GridId, LatticeIndex, Point}
 import reframe4s.core.MapError
-import scalafim.image.world.{FrameCatalog, ToolCoordinates, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
+import scalafim.image.world.ToolCoordinates
 import scalafim.transform.field.*
 import scalafim.transform.fsl.FslHeaderGeometry
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}

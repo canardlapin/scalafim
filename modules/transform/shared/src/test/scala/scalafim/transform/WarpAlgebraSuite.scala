@@ -18,7 +18,7 @@ import reframe4s.field.{
 }
 import reframe4s.lie.FramedAffine
 import reframe4s.resample.VolumeModulation
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.transform.field.DenseLattice
 
 /** STP Phase 6: typed world-transform adapters over reframe4s materialization, numerical inversion, Jacobian

@@ -1,5 +1,6 @@
 package scalafim.image.world
 
+import neuroim4s.spaces.*
 import image4s.geometry.{D3, Frame, Point}
 import reframe4s.lie.FramedAffine
 import scalafim.image.world.Rebind.PointIn
@@ -17,10 +18,10 @@ class PlacedSuite extends munit.FunSuite:
     )
 
   test("a value decoded in a fresh MNI frame binds to the static template frame"):
-    val decoded = FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym")))
+    val decoded = FrameCatalog.frame(WorldSpace.Template(TemplateName("MNI152NLin2009cAsym").toOption.get))
     val point = ok(Point.in(decoded)(10.0, -20.0, 30.0))
     val placed = ok(Placed[PointIn](decoded)(point))
-    assertEquals(placed.world, WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym")))
+    assertEquals(placed.world, WorldSpace.Template(TemplateName("MNI152NLin2009cAsym").toOption.get))
     val bound: Point[Spaces.Mni2009c, D3] = ok(placed.bindTo(Spaces.MNI152NLin2009cAsym))
     assertEquals(bound.coordinates, Vector(10.0, -20.0, 30.0))
 
@@ -42,7 +43,7 @@ class PlacedSuite extends munit.FunSuite:
     assertNoDiff(compileErrors("Placed[PointIn](native)(subjectPoint)"), "")
 
   test("a packaged value is not a template point until it is bound"):
-    val decoded = FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym")))
+    val decoded = FrameCatalog.frame(WorldSpace.Template(TemplateName("MNI152NLin2009cAsym").toOption.get))
     val placed = ok(Placed[PointIn](decoded)(ok(Point.in(decoded)(0.0, 0.0, 0.0))))
     val errors = compileErrors("val p: Point[Spaces.Mni2009c, D3] = placed.value")
     assert(errors.contains("Found:"), errors)

@@ -7,7 +7,7 @@ import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.Point
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 
 object SpaceUtils:
 

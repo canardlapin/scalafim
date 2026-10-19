@@ -7,7 +7,7 @@ import scalafim.atlas.syntax.*
 
 class AtlasCoverageSuite extends munit.FunSuite:
 
-  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("atlas fixture shared world")
+  private val fixtureWorld = neuroim4s.spaces.WorldSpace.declare("atlas fixture shared world")
     .fold(error => fail(error.message), identity)
 
   private def fixtureSpace(

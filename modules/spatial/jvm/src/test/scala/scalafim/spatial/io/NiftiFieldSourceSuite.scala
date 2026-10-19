@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
 
 import image4s.geometry.GeometryError
 import scalafim.image.io.Nifti

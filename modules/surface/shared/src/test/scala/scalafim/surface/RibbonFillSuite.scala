@@ -5,6 +5,7 @@ import scalafim.image.{GridSpec, SpatialDims}
 import scalafim.image.SomeNeuroVolume
 import scalafim.image.SomeNeuroVolume.*
 import scalafim.image.world.*
+import neuroim4s.spaces.*
 import scalafim.surface.fixtures.{RibbonRFixture, SphereMeshes}
 
 class RibbonFillSuite extends munit.FunSuite:

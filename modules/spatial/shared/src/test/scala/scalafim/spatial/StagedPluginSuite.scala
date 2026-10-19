@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.{SubjectId, TemplateName}
+import neuroim4s.spaces.{SubjectId, TemplateName}
 
 import gale.linalg.DMat as GaleDMat
 import scalafim.image.{SampleSpaces, SomeSampleSpace}

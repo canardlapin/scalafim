@@ -3,11 +3,10 @@ package scalafim.transform
 import image4s.{BoundaryPolicy, Continuous, ContinuousImage, SampleSpace}
 import image4s.geometry.{D3, Frame, Grid, Point}
 import ravel.AnyRank
-import reframe4s.core.{SmoothIso, SpatialMap}
+import reframe4s.core.{SmoothIso, SpatialMap, WorldLink, WorldLinkError}
 import reframe4s.field.{CoordinateBoundaryPolicy, CoverageReportingMap, DenseMap, DeterminantDirection, LogDeterminantField}
 import reframe4s.lie.FramedAffine
 import reframe4s.resample.{Interpolation, ResamplingResult, VolumeModulation}
-import scalafim.image.world.WorldLink
 
 /** A spatial transform from world space `S` (source, moving) to world space `T` (target, fixed), whatever toolkit it
   * came from.
@@ -40,10 +39,10 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
   /** This transform as a typed point link from its source frame (left) to its target frame (right), the map behind a
     * linked cursor between data in the two worlds. `toLeft` is the pullback and always exists; `toRight` exists exactly
     * when [[push]] does, and is otherwise `WorldLinkError.DirectionUnavailable`, never an approximation. Read the other
-    * way with `swap`.
+    * way with `swap`. The link checks that the maps join this transform's frames.
     */
-  final def link: WorldLink.Mapped[S, T] =
-    WorldLink.pullbackUnchecked(pull, push, provenance.describe)
+  final def link: Either[WorldLinkError, WorldLink.Mapped[S, T, D3]] =
+    WorldLink.pullback[S, T, D3](pull, push, provenance.describe)
 
   /** Lazy composition `S -> T -> U`. Two affines are better fused with [[WorldTransform.Linear.andThen]].
     *

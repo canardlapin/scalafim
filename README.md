@@ -20,7 +20,7 @@ cross-compiled sbt build.
 - `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
-- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, world-space frame identity and toolkit coordinate conventions, provider-backed (image4s/reframe4s) resampling, statistics, clustering, and image IO.
+- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, toolkit coordinate conventions and world-frame binding over neuroim4s-spaces world identities, provider-backed (image4s/reframe4s) resampling, statistics, clustering, and image IO.
 - `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
 - `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.

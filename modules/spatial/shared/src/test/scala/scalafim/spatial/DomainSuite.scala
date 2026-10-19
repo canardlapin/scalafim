@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.GeometryError
 import scalafim.image.{SampleSpaceError, SampleSpaces, Mask, SomeSampleSpace}

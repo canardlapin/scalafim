@@ -2,7 +2,7 @@ package scalafim.transform.itk
 
 import image4s.geometry.{D3, Frame, Point}
 import reframe4s.field.CoordinateBoundaryPolicy
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.field.{DenseContext, LpsDisplacementInterpretation, VectorFieldNiftiCodec}
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}

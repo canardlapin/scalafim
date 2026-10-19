@@ -103,10 +103,12 @@ private[profile] object ProfileFitIdentity:
       case LengthUnit.Millimeter => "millimeter"
       case LengthUnit.Meter => "meter"
       case LengthUnit.Micrometer => "micrometer"
+      case other => unsupported(s"unit ${LengthUnit.serializedName(other)}")
     val convention = physical.convention match
       case CoordinateConvention.Unspecified => "unspecified"
       case CoordinateConvention.RAS => "ras"
       case CoordinateConvention.LPS => "lps"
+      case other => unsupported(s"convention ${CoordinateConvention.serializedName(other)}")
     val axes = value.nonSpatialAxes.records.map: axis =>
       val AxisRecord(name, kind, coordinates) = axis
       val sampling = coordinates match
@@ -182,6 +184,9 @@ private[profile] object ProfileFitIdentity:
       s"prior=${ConditionProfileProvenance.priorCanonical(policy.prior)}|admission=${option(policy.observedAdmission.map(_.fingerprint))}|" +
       s"execution=${record("execution", blockSize.toString, workers.toString)}|route=${field(route)}|ml=${option(mlIdentity)}" +
       compactComparisonMarker(route, policy) + trialPreparationMarker(route, policy) + trialReferenceMarker(policy) + s"|exact-readout=$exactReadout"
+
+  private def unsupported(what: String): Nothing =
+    throw new IllegalArgumentException(s"profile-fit identity encodes only standard coordinates, not $what")
 
   private def trialReferenceMarker(policy: ProfileDecodePolicy): String =
     policy.trialReferences.fold(""): references =>

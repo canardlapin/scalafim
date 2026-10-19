@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.image.SampleSpaces
-import scalafim.image.world.WorldSpace
+import neuroim4s.spaces.WorldSpace
 
 import gale.linalg.{DMat, DVec}
 import scalafim.archive.RunLabel

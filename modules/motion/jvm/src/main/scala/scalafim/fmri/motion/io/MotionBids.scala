@@ -4,7 +4,7 @@ import bids4s.*
 import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
 import scalafim.image.*
-import scalafim.image.world.SpaceEvidence
+import neuroim4s.spaces.SpaceEvidence
 
 import java.nio.file.{Path, Paths}
 

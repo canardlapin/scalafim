@@ -1,6 +1,6 @@
 package scalafim.dataset.zarr
 
-import scalafim.image.world.{SpaceEvidence, WorldSpace}
+import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import scalafim.image.valueAtCanonicalOrdinal
 

@@ -35,11 +35,11 @@ A `WorldSpace` names a continuous RAS-millimetre coordinate system:
 - a declared space
 - `Unresolved(token)`, a fresh persistent scope when there is no anatomical identity evidence
 
-`FrameCatalog` turns a world space into an image4s `Frame[D3]`. Standard
+`FrameCatalog` (in [neuroim4s-spaces](https://github.com/canardlapin/neuroim4s)) turns a world space into a spatial4s `Frame[D3]`. Standard
 templates have stable frames that can appear in types:
 
 ```scala
-import scalafim.image.world.{FrameCatalog, Spaces, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, Spaces, WorldSpace}
 
 val mni = Spaces.MNI152NLin2009cAsym                      // usable as mni.type
 val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)
@@ -331,19 +331,20 @@ position and world identity; this matches nibabel's `as_reoriented`.
 A viewer that links a cortical surface with a volume often shows data from two
 worlds: a surface in the subject's tkRAS or scanner space, and a volume in MNI
 reached through an fMRIPrep composite. The link between the two cursors is a
-typed `WorldLink[L, R]` (in `scalafim.image.world`):
+typed `WorldLink[L, R, D]` (in reframe4s, `reframe4s.core`):
 
 - `WorldLink.shared(left, right)` links two frames of one world. Coordinates
   carry over unchanged under a checked alignment, and frames of different
   worlds are refused.
 - `WorldLink.Mapped` joins different worlds through typed maps. A
-  `WorldTransform` supplies one with `link`: `toLeft` is its pullback, and
-  `toRight` exists exactly when the forward map does.
+  `WorldTransform` supplies one with `link`, checked against its frames:
+  `toLeft` is its pullback, and `toRight` exists exactly when the forward map
+  does.
 
 ```scala
-val link = warp.link              // WorldLink.Mapped[subject.type, mni.type]
-link.toLeft(peakInMni)                         // Right(point in subject): the pullback
-link.toRight(pointInSubject)                   // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
+warp.link.foreach: link =>                     // WorldLink.Mapped[subject.type, mni.type, D3]
+  link.toLeft(peakInMni)                       // Right(point in subject): the pullback
+  link.toRight(pointInSubject)                 // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
 ```
 
 ### Map one MNI peak to a subject volume and surface

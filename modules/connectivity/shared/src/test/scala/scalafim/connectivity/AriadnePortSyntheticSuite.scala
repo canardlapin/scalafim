@@ -187,7 +187,7 @@ class AriadnePortSyntheticSuite extends munit.FunSuite:
         measure = ConnectivityMeasure.correlation,
         diagonalPolicy = DiagonalPolicy.Unit
       ).toOption.get
-      SubjectConnectivity(SubjectId.unsafe(s"sub-${subjectIndex + 1}"), StaticConnectivity(matrix))
+      SubjectConnectivity(SubjectId(s"sub-${subjectIndex + 1}").toOption.get, StaticConnectivity(matrix))
     }
     (ConnectivitySet.from(subjects).toOption.get, x, planted)
 

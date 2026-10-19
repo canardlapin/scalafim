@@ -1,7 +1,7 @@
 package scalafim.atlas
 
 import image4s.geometry.{Affine as ProviderAffine, D3, Frame}
-import scalafim.image.world.{FrameCatalog, Spaces as WorldFrames, TemplateName, WorldSpace}
+import neuroim4s.spaces.{FrameCatalog, Spaces as WorldFrames, TemplateName, WorldSpace}
 import scalafim.spatial.{
   CoordinateMap,
   Domain,
@@ -26,7 +26,7 @@ import scalafim.surface.{SurfaceGeometry, TemplateSphere}
 /** Stable world frames for the template spaces a transform manifest names.
   *
   * Provider maps check endpoint frames by runtime owner, so every edge and every attached [[TransformAsset]] must use
-  * the frames from one catalog. Named templates reuse the frames in `scalafim.image.world.Spaces`; fsaverage5/6 share
+  * the frames from one catalog. Named templates reuse the frames in `neuroim4s.spaces.Spaces`; fsaverage5/6 share
   * fsaverage's world and fsLR_32k shares fsLR's, because they are samplings of one coordinate system.
   */
 final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D3]]):
@@ -55,10 +55,11 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
       kind = TemplateCatalog.domainKind(normalized)
       geometry <- SamplingGeometry.unsampled(kind, world).left.map(AtlasError.TransformGraph.apply)
       templateKind = if kind == DomainKind.Surface then TemplateKind.Surface else TemplateKind.Volume
+      name <- TemplateName(normalized.value).left.map(_ => AtlasError.UnknownSpace(normalized))
       domain <- Domain
         .build(
           TemplateCatalog.domainId(normalized),
-          SpaceRef.Template(TemplateName.unsafe(normalized.value), None, templateKind),
+          SpaceRef.Template(name, None, templateKind),
           geometry
         )
         .left
@@ -84,11 +85,12 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
         AtlasError.TransformGraph(SpatialError.UnsupportedGeometry("sampled template topology mismatch"))
       )
       _ <- frame(space)
+      name <- TemplateName(space.value).left.map(_ => AtlasError.UnknownSpace(space))
       sampling <- SamplingGeometry.surface(geometry).left.map(AtlasError.TransformGraph.apply)
       domain <- Domain
         .build(
           id,
-          SpaceRef.Template(TemplateName.unsafe(space.value), None, TemplateKind.Surface),
+          SpaceRef.Template(name, None, TemplateKind.Surface),
           sampling
         )
         .left
@@ -128,7 +130,9 @@ object TemplateCatalog:
       case SpaceKindTag.Volume | SpaceKindTag.Unknown => DomainKind.Volume
 
   private def templateFrame(name: String): Frame[D3] =
-    FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe(name)))
+    FrameCatalog.frame(
+      WorldSpace.Template(TemplateName(name).fold(error => throw new IllegalArgumentException(error.message), identity))
+    )
 
 /** A transform manifest as a [[SpatialGraph]]: one unsampled domain per catalogued space, one morphism per step.
   *
