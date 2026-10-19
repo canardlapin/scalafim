@@ -4,6 +4,7 @@ private[surface] object SurfaceTopologyTraversal:
   def connectedComponents(topology: MeshTopology, active: Set[Int]): Vector[Vector[Int]] =
     if active.isEmpty then Vector.empty
     else
+      val owner = topology.mesh.topology
       val visited = scala.collection.mutable.Set.empty[Int]
       val components = Vector.newBuilder[Vector[Int]]
 
@@ -13,15 +14,16 @@ private[surface] object SurfaceTopologyTraversal:
           val component = Vector.newBuilder[Int]
           visited += start
           queue.enqueue(start)
+          val visit: owner.VertexIndex => Unit = neighbor =>
+            val index = neighbor.ordinal
+            if active(index) && !visited(index) then
+              visited += index
+              queue.enqueue(index)
 
           while queue.nonEmpty do
             val vertex = queue.dequeue()
             component += vertex
-            topology.neighborsOf(VertexId.unsafe(vertex)).foreach: neighbor =>
-              val index = neighbor.index
-              if active(index) && !visited(index) then
-                visited += index
-                queue.enqueue(index)
+            owner.foreachNeighbor(owner.vertices.indexAtValidatedOrdinal(vertex))(visit)
 
           components += component.result().sorted
 

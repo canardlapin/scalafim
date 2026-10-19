@@ -614,6 +614,7 @@ object SurfaceLensDeformation:
     displacement: Array[Double],
     steps: Int
   ): Unit =
+    val owner = topology.mesh.topology
     val collar = new Array[Int](lens.vertexCount)
     var collarCount = 0
     var vertex = 0
@@ -625,25 +626,29 @@ object SurfaceLensDeformation:
       vertex += 1
     var current = displacement
     var next = displacement.clone()
+    var x = 0.0
+    var y = 0.0
+    var z = 0.0
+    var degree = 0
+    val accumulate: owner.VertexIndex => Unit = neighbor =>
+      val offset = neighbor.ordinal * 3
+      x += current(offset)
+      y += current(offset + 1)
+      z += current(offset + 2)
+      degree += 1
     var iteration = 0
     while iteration < steps do
       var collarIndex = 0
       while collarIndex < collarCount do
         vertex = collar(collarIndex)
-        val neighbors = topology.neighborsOf(VertexId.unsafe(vertex))
-        var x = 0.0
-        var y = 0.0
-        var z = 0.0
-        var neighbor = 0
-        while neighbor < neighbors.length do
-          val offset = neighbors(neighbor).index * 3
-          x += current(offset)
-          y += current(offset + 1)
-          z += current(offset + 2)
-          neighbor += 1
+        x = 0.0
+        y = 0.0
+        z = 0.0
+        degree = 0
+        owner.foreachNeighbor(owner.vertices.indexAtValidatedOrdinal(vertex))(accumulate)
         val offset = vertex * 3
-        if neighbors.nonEmpty then
-          val inverseDegree = 1.0 / neighbors.length.toDouble
+        if degree > 0 then
+          val inverseDegree = 1.0 / degree.toDouble
           next(offset) = x * inverseDegree
           next(offset + 1) = y * inverseDegree
           next(offset + 2) = z * inverseDegree

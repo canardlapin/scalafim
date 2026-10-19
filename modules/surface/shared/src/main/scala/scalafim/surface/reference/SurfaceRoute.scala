@@ -539,7 +539,7 @@ object SurfaceRoute:
       coordinates(3 * i + 1) = at.y
       coordinates(3 * i + 2) = at.z
       i += 1
-    val placed = SurfaceGeometry(TriangleMesh.fromArrays(coordinates, surface.mesh.faceIndices.clone()), surface.hemisphere,
+    val placed = SurfaceGeometry(surface.mesh.withCoordinates(coordinates), surface.hemisphere,
       surface.kind)
     (placed, outcomes)
 
