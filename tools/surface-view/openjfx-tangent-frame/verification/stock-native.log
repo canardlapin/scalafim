@@ -1,0 +1,11 @@
+pulses=3 orange=0 blue=0 black=41328
+java.lang.AssertionError: Native emission did not preserve the exact texture color
+	at PublicEmissionControl$App$1.handle(PublicEmissionControl.java:48)
+	at javafx.graphics@24.0.1/javafx.animation.AnimationTimer$AnimationTimerReceiver.handle(AnimationTimer.java:51)
+	at javafx.graphics@24.0.1/com.sun.scenario.animation.AbstractPrimaryTimer.timePulseImpl(AbstractPrimaryTimer.java:329)
+	at javafx.graphics@24.0.1/com.sun.scenario.animation.AbstractPrimaryTimer$MainLoop.run(AbstractPrimaryTimer.java:239)
+	at javafx.graphics@24.0.1/com.sun.javafx.tk.quantum.QuantumToolkit.pulse(QuantumToolkit.java:588)
+	at javafx.graphics@24.0.1/com.sun.javafx.tk.quantum.QuantumToolkit.pulse(QuantumToolkit.java:572)
+	at javafx.graphics@24.0.1/com.sun.javafx.tk.quantum.QuantumToolkit.pulseFromQueue(QuantumToolkit.java:565)
+	at javafx.graphics@24.0.1/com.sun.javafx.tk.quantum.QuantumToolkit.lambda$runToolkit$6(QuantumToolkit.java:346)
+	at javafx.graphics@24.0.1/com.sun.glass.ui.InvokeLaterDispatcher$Future.run(InvokeLaterDispatcher.java:95)

@@ -1,0 +1,54 @@
+--- a/com/sun/prism/impl/MeshUtil.java
++++ b/com/sun/prism/impl/MeshUtil.java
+@@ -34,6 +34,12 @@
+  */
+ class MeshUtil {
+ 
++    static {
++        if (!"24.0.1+4".equals(com.sun.javafx.runtime.VersionInfo.getRuntimeVersion())) {
++            throw new LinkageError("Tangent-frame compatibility requires OpenJFX 24.0.1+4");
++        }
++    }
++
+     static final float NORMAL_WELD_COS = 0.9952f; // cos(5.6)
+     static final float TANGENT_WELD_COS = 0.866f; // cos(30)
+     static final float G_UV_PARALLEL = 0.9988f; // cos(2.8125)
+@@ -211,6 +217,38 @@
+         float n1Length = n1.length();
+         float n2Length = n2.length();
+ 
++        // Explicit vertex normals can be parallel to a face UV derivative.
++        // Projecting that derivative onto the normal plane then gives zero;
++        // the ordinary angle calculation would divide by zero and poison the
++        // vertex quaternion (and even self illumination) with NaNs.
++        if (n1Length <= MAGIC_SMALL || n2Length <= MAGIC_SMALL) {
++            norm[0].mul(1f / nNorm);
++            if (n1Length > MAGIC_SMALL) {
++                n1.mul(1f / n1Length);
++                n2.cross(norm[0], n1);
++                n2.normalize();
++            } else if (n2Length > MAGIC_SMALL) {
++                n2.mul(1f / n2Length);
++                n1.cross(n2, norm[0]);
++                n1.normalize();
++            } else {
++                // Choose the least aligned coordinate axis deterministically.
++                float x = Math.abs(norm[0].x);
++                float y = Math.abs(norm[0].y);
++                float z = Math.abs(norm[0].z);
++                n1.set(x <= y && x <= z ? 1f : 0f,
++                       y < x && y <= z ? 1f : 0f,
++                       z < x && z < y ? 1f : 0f);
++                getOrt(norm[0], n1);
++                n1.normalize();
++                n2.cross(norm[0], n1);
++                n2.normalize();
++            }
++            norm[1].set(n1);
++            norm[2].set(n2);
++            return;
++        }
++
+         double cosPhi = (n1.dot(n2)) / (n1Length * n2Length);
+         Vec3f e1 = instance.vec3f3;
+         Vec3f e2 = instance.vec3f4;
