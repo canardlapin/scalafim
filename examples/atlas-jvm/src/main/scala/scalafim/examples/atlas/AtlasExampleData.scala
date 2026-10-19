@@ -1,6 +1,7 @@
 package scalafim.examples.atlas
 
 import scalafim.atlas.*
+import neuroatlas4s.*
 import scalafim.image.*
 import ravel.DType.given
 

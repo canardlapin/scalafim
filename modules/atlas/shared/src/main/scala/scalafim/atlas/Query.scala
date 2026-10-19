@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import scalafim.image.Indexing
 import scalafim.image.SampleSpaces.*
 

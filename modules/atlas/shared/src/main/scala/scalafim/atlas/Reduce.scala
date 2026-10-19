@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.Continuous
 import image4s.geometry.D3
 import image4s.geometry.Frame

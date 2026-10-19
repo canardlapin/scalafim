@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import scalafim.image.SampleSpaces.*
 
 import image4s.geometry.Grid

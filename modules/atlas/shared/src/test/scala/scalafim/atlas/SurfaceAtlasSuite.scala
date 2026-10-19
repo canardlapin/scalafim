@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import scalafim.surface.{
   Hemisphere as SurfaceHemisphere,
   LabelInfo,

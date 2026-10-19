@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.{Affine as ProviderAffine, D3, Frame}
 import neuroim4s.spaces.{FrameCatalog, Spaces as WorldFrames, TemplateName, WorldSpace}
 import scalafim.spatial.{

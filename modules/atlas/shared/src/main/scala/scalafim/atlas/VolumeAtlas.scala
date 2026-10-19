@@ -1,21 +1,12 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.geometry.D3
 import locus4s.DomainRegistry
 import scalafim.image.*
-
-trait Atlas:
-  def ref: AtlasRef
-  def provenance: AtlasProvenance
-  def regions: RegionIndex
-  def realization: AtlasRealization
-
-  def family: String = ref.family
-  def model: String = ref.model
-  def name: String = ref.name
-  def representation: AtlasRepresentation = ref.representation
 
 /** A volumetric atlas whose sole membership owner is its exact realization.
   *

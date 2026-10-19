@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
 import scalafim.image.{GridSpec, SpatialPullbacks}

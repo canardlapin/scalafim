@@ -183,6 +183,22 @@ lazy val neuroim4sBuild = {
 lazy val neuroim4sSpacesJVM = ProjectRef(neuroim4sBuild, "spacesJVM")
 lazy val neuroim4sSpacesJS  = ProjectRef(neuroim4sBuild, "spacesJS")
 
+// neuroatlas4s-core owns atlas identities, releases, labels, hierarchies, the
+// standard catalog and the realized-assignment contract. It pins the same
+// locus4s revision as ScalaFIM; a ScalaFIM locus4s override is forwarded.
+lazy val neuroatlas4sRevision = "34d43b15f8041e65d67cb944191591c923a61efc"
+lazy val neuroatlas4sBuild = {
+  sys.props
+    .get("scalafim.locus4s.build")
+    .foreach(System.setProperty("neuroatlas4s.locus4s.build", _))
+  sys.props
+    .get("scalafim.neuroatlas4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/neuroatlas4s.git#$neuroatlas4sRevision"))
+}
+lazy val neuroatlas4sCoreJVM = ProjectRef(neuroatlas4sBuild, "coreJVM")
+lazy val neuroatlas4sCoreJS  = ProjectRef(neuroatlas4sBuild, "coreJS")
+
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
 // source override for coordinated development.
@@ -1005,8 +1021,8 @@ lazy val atlas =
     )
     // Test-only: the real-asset fsLR fixtures (locked asset gate, SimpleITK inverse oracle, qualification inputs)
     // live in an unpublished fixture module; atlas drives the public standard-route entry point.
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, surfaceTestFixturesJVM % "test->compile"))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(neuroatlas4sCoreJVM, image4sGeometryJVM, graph4sAlgorithmsJVM, surfaceTestFixturesJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(neuroatlas4sCoreJS, image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
 lazy val atlasJS  = atlas.js

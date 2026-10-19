@@ -1,6 +1,7 @@
 package scalafim.atlas.fixtures
 
 import scalafim.atlas.*
+import neuroatlas4s.*
 import scalafim.image.*
 
 object AtlasParityFixtures:

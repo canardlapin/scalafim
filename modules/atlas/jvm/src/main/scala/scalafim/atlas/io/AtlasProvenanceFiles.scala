@@ -2,6 +2,7 @@ package scalafim.atlas.io
 
 import java.nio.file.Path
 import scalafim.atlas.*
+import neuroatlas4s.*
 
 object AtlasProvenanceFiles:
   def withLocalFiles(provenance: AtlasProvenance, files: (ArtifactRole, Path)*): AtlasProvenance =

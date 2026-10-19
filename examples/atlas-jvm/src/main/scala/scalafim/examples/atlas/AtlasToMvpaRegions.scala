@@ -1,6 +1,7 @@
 package scalafim.examples.atlas
 
 import scalafim.atlas.*
+import neuroatlas4s.*
 
 final case class RegionFeatureRow(regionId: Int, label: Option[String], nFeatures: Int)
 

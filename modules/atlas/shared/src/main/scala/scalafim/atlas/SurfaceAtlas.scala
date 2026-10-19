@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import scalafim.surface.{
   FragmentedParcelPolicy,
   Hemisphere as SurfaceHemisphere,

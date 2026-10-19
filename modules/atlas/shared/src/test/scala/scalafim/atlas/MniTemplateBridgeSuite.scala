@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.{Affine, D3}
 import reframe4s.field.CoordinateBoundaryPolicy
 import neuroim4s.spaces.Spaces as WorldFrames

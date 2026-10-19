@@ -3,6 +3,7 @@ package scalafim.atlas.io
 import java.net.URI
 import java.nio.file.Path
 import scalafim.atlas.*
+import neuroatlas4s.*
 import neuroim4s.spaces.SpaceEvidence
 
 object AsegLoader:

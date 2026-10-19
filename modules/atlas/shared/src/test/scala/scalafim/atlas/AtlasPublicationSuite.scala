@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import locus4s.DomainRegistry
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.surface.Hemisphere as SurfaceHemisphere

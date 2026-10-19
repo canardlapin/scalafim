@@ -5,6 +5,7 @@ import scalafim.image.SampleSpaces.*
 import java.nio.file.Path
 import image4s.ImageMetadata
 import scalafim.atlas.*
+import neuroatlas4s.*
 import scalafim.image.*
 import scalafim.image.io.Nifti
 import neuroim4s.spaces.SpaceEvidence

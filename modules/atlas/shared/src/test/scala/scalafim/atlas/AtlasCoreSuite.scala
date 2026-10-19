@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import ravel.Shape
@@ -54,27 +56,6 @@ class AtlasCoreSuite extends munit.FunSuite:
       regions,
       AtlasTestImages.labelVolume(sp, labels, label = "toy")
     )
-
-  test("registry resolves standard atlas aliases") {
-    val spec = AtlasRegistry.default("hcp-mmp")
-    assertEquals(spec.id, "glasser")
-    assertEquals(spec.defaultSpace, SpaceId.MNI152NLin2009cAsym)
-    assert(AtlasRegistry.default.ids.contains("schaefer"), clue = "")
-
-    val schaefer = Schaefer2018(SchaeferParcels.P400, YeoNetworks.Seventeen, VoxelResolution.TwoMm)
-    val typedVolumeRef: VolumeAtlasRef = schaefer.atlasRef()
-    assertEquals(schaefer.id, "schaefer-400-17-2mm")
-    assertEquals(typedVolumeRef.templateSpace, SpaceId.MNI152NLin6Asym)
-
-    val schaeferSurface: SurfaceAtlasRef = Schaefer2018Surface.default.atlasRef()
-    assertEquals(schaeferSurface.representation, AtlasRepresentation.Surface)
-    assertEquals(schaeferSurface.templateSpace, SpaceId.FsAverage6)
-    assertEquals(schaeferSurface.density, Some("41k"))
-
-    val glasserSurfaceSpec = AtlasRegistry.default("hcp-mmp-surface")
-    assertEquals(glasserSurfaceSpec.id, "glasser-surface")
-    assertEquals(glasserSurfaceSpec.defaultSpace, SpaceId.FsLR32k)
-  }
 
   test("space transform plans include direct, identity, two-hop, and planned routes") {
     val direct = SpaceTransforms.plan(SpaceId.MNI305, SpaceId.MNI152).toOption.get

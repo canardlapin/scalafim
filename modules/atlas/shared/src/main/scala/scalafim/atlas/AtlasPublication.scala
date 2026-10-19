@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.{CoordinateConvention, LengthUnit}
 import image4s.locus.GridDomainRecord
 import locus4s.{

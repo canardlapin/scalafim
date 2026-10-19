@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.locus.GridDomain
 import locus4s.Bijection
 import locus4s.DomainRegistry

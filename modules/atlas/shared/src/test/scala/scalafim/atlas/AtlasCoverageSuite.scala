@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.GeometryError
 import ravel.Shape
 import scalafim.image.*
@@ -53,54 +55,14 @@ class AtlasCoverageSuite extends munit.FunSuite:
       )
     )
 
-  test("registry normalizes aliases and reports unknown ids with available atlases"):
-    val spec = AtlasRegistry.default.find("Glasser 360 Surface").toOption.get
-    assertEquals(spec.id, "glasser-surface")
-
-    AtlasRegistry.default.find("not-a-real-atlas") match
-      case Left(err @ AtlasError.UnknownAtlas(name, available)) =>
-        assertEquals(name, "not-a-real-atlas")
-        assert(available.contains("schaefer"), clue = available.mkString(","))
-        assert(err.message.contains("available atlases: schaefer, glasser"), clue = err.message)
-      case other =>
-        fail(s"expected unknown atlas error, got $other")
-
-    val thrown = intercept[NoSuchElementException]:
-      AtlasRegistry.default("not-a-real-atlas")
-    assert(thrown.getMessage.contains("unknown atlas 'not-a-real-atlas'"), clue = thrown.getMessage)
-
-  test("region index normalizes labels, filters hemispheres, and rejects duplicate ids"):
-    val index =
-      RegionIndex(
-        Vector(
-          AtlasRegionMetadata(RegionId(1), "Left V1", labelFull = Some("Network/Left V1"), hemisphere = Some(Hemisphere.Left)),
-          AtlasRegionMetadata(RegionId(2), "Left-V1", labelFull = Some("Network/Right V1"), hemisphere = Some(Hemisphere.Right)),
-          AtlasRegionMetadata(RegionId(3), "Area 3", labelFull = Some("Full Area 3"), hemisphere = Some(Hemisphere.Bilateral))
-        )
-      )
-
-    assertEquals(index.find("left v1").map(_.id), Vector(RegionId(1), RegionId(2)))
-    assertEquals(index.find("network left v1").map(_.id), Vector(RegionId(1)))
-    assertEquals(index.find("LEFT_V1", Some(Hemisphere.Left)).map(_.id), Vector(RegionId(1)))
-    assertEquals(index.filter(_.hemisphere.contains(Hemisphere.Left)).ids, Vector(RegionId(1)))
-    assertEquals(index.regions.head.typedLabel, RegionLabel.unsafe("Left V1"))
-    assertEquals(index.regions.head.typedFullLabel, RegionLabel.unsafe("Network/Left V1"))
+  test("ScalaFIM provider failures keep their messages"):
+    val gridMismatch = GeometryError.GridsNotCongruent(0.0)
+    assertEquals(AtlasError.Provider(GeometryFailure(gridMismatch)).message, gridMismatch.message)
+    val graph = scalafim.spatial.SpatialError.UnsupportedGeometry("no route")
     assertEquals(
-      AtlasRegionMetadata.checked(RegionId(10), "Area 10", attributes = Map("system" -> "visual")).map(_.typedAttributes.toMap),
-      Right(Map("system" -> "visual"))
+      AtlasError.Provider(TransformGraphFailure(graph)).message,
+      s"transform manifest does not form a valid spatial graph: ${graph.message}"
     )
-    assertEquals(
-      AtlasRegionMetadata.checked(RegionId(10), " ", attributes = Map.empty),
-      Left(AtlasError.InvalidRegionMetadata("region label must be non-empty"))
-    )
-
-    val missing = intercept[NoSuchElementException]:
-      index.requireRegion(RegionId(99))
-    assertEquals(missing.getMessage, "atlas payload is missing region id 99")
-
-    val duplicate = intercept[IllegalArgumentException]:
-      RegionIndex(Vector(AtlasRegionMetadata(RegionId(1), "A"), AtlasRegionMetadata(RegionId(1), "B")))
-    assert(duplicate.getMessage.contains("atlas region ids must be unique: 1"), clue = duplicate.getMessage)
 
   test("volume atlas construction rejects unknown and absent payload labels"):
     val regions = twoRegionIndex
@@ -303,43 +265,3 @@ class AtlasCoverageSuite extends munit.FunSuite:
       intercept[IllegalArgumentException]:
         AtlasQuery.query(a, Vector(Point3D(0.0, 0.0, 0.0)), fromSpace = SpaceId.FsLR32k)
     assert(err.getMessage.contains("no transform route found from 'fsLR_32k' to 'MNI152'"), clue = err.getMessage)
-
-  test("atlas error messages and provenance helper aliases remain explicit"):
-    val gridMismatch = GeometryError.GridsNotCongruent(0.0)
-    val errors =
-      Vector(
-        AtlasError.EmptyAtlas -> "atlas must contain at least one region",
-        AtlasError.DuplicateRegionIds(Vector(RegionId(1), RegionId(2))) -> "atlas region ids must be unique: 1, 2",
-        AtlasError.MissingRegionId(RegionId(3)) -> "atlas payload is missing region id 3",
-        AtlasError.UnknownAtlas("missing", Vector("schaefer", "glasser")) -> "unknown atlas 'missing'; available atlases: schaefer, glasser",
-        AtlasError.UnknownSpace(SpaceId("bad")) -> "unknown space 'bad'",
-        AtlasError.SpaceKindMismatch(SpaceId.FsAverage, SpaceKindTag.Volume, SpaceKindTag.Surface) -> "space 'fsaverage' has kind Surface; expected Volume",
-        AtlasError.NoTransformRoute(SpaceId.Custom, SpaceId.MNI152) -> "no transform route found from 'custom' to 'MNI152'",
-        AtlasError.TransformNotExecutable(SpaceId.FsAverage, SpaceId.FsLR32k, "non-affine") -> "transform route from 'fsaverage' to 'fsLR_32k' is not executable: non-affine",
-        AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)) -> "expected spatial dimensions 2x2x1 but got 2x1x1",
-        AtlasError.ExactGridRequired("expected-grid", "actual-grid") -> "exact atlas grid required; expected expected-grid but got actual-grid",
-        AtlasError.Provider(GeometryFailure(gridMismatch)) -> gridMismatch.message,
-        AtlasError.InvalidQuery("bad query") -> "bad query",
-        AtlasError.InvalidCoordinate("bad coordinate") -> "bad coordinate",
-        AtlasError.InvalidRegionMetadata("bad metadata") -> "bad metadata"
-      )
-    errors.foreach { case (error, expected) => assertEquals(error.message, expected) }
-
-    assertEquals(ArtifactRole.fromLegacy("volume"), ArtifactRole.ParcellationVolume)
-    assertEquals(ArtifactRole.fromLegacy("annotation"), ArtifactRole.SurfaceAnnotation)
-    assertEquals(ArtifactRole.fromLegacy("lut"), ArtifactRole.LabelTable)
-    assertEquals(ArtifactRole.fromLegacy("xfm"), ArtifactRole.Transform)
-    assertEquals(ArtifactRole.fromLegacy("docs"), ArtifactRole.Documentation)
-    assertEquals(ArtifactRole.fromLegacy("something else"), ArtifactRole.Other)
-
-    val schema = LabelTableSchema("toy labels", Vector("id", "label"))
-    assertEquals(schema.columns, Vector("id", "label"))
-
-    interceptMessage[IllegalArgumentException]("requirement failed: label table schema must contain columns"):
-      LabelTableSchema("toy labels", Vector.empty)
-
-    val textCitation = Citation(text = Some("A textual citation."))
-    assertEquals(textCitation.text, Some("A textual citation."))
-
-    interceptMessage[IllegalArgumentException]("requirement failed: citation requires DOI or text"):
-      Citation()

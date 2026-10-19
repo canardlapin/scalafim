@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
+import neuroatlas4s.*
 import neuroim4s.spaces.SpaceEvidence
 
 object BrainnetomeLoader:

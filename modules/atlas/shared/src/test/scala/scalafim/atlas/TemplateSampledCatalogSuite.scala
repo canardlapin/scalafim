@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import scalafim.spatial.{DomainKind, SamplingGeometry}
 
 class TemplateSampledCatalogSuite extends munit.FunSuite:

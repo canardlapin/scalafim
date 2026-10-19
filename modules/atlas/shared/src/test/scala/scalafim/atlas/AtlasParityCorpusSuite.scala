@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import ravel.Shape
 import scalafim.atlas.fixtures.AtlasParityFixtures
 import scalafim.atlas.fixtures.AtlasParityFixtures.OverlapExpected

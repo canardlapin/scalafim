@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.geometry.Affine as ProviderAffine
 import image4s.geometry.D3
 import image4s.geometry.Frame
@@ -25,14 +27,8 @@ object Point3D:
   def fromVector(values: Vector[Double]): Point3D =
     SpatialPoint.unsafeFromVector(values, "Point3D")
 
-enum TransformKind:
-  case Identity, Affine, NonlinearWarp, SphereResample, VolToSurf, SurfToVol
-
 enum TransformBackend:
   case Identity, InternalAffine, TemplateFlowAnts, SphereNearest, Workbench, NeuroSurf, RibbonFill
-
-enum TransformStatus:
-  case Available, Planned
 
 enum DataKind:
   case Parcel, Vertex, Voxel

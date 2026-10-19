@@ -1,10 +1,12 @@
 package scalafim.atlas.io
 
+import neuroatlas4s.*
+
 import java.io.InputStream
 import java.net.URI
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
-import scalafim.atlas.Digest
+import neuroatlas4s.Digest
 
 final case class AtlasAsset(
   key: String,

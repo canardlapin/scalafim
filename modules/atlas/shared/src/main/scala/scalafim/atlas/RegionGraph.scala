@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}

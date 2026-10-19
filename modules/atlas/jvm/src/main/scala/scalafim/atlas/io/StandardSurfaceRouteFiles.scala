@@ -2,8 +2,7 @@ package scalafim.atlas.io
 
 import java.nio.file.Path
 
-import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kHemisphereInput, Fslr32kRoute, StandardRoutePolicy, StandardRouteRefusal,
-  StandardSurfaceRoutes}
+import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kHemisphereInput, Fslr32kRoute, StandardRoutePolicy, StandardRouteRefusal, StandardSurfaceRoutes}
 import scalafim.surface.SurfaceKind
 import scalafim.surface.io.TemplateFlowCache
 import scalafim.surface.reference.{DeclaredMedialWallReader, DeclaredPointMapReader, DeclaredSurfaceReader, ReferenceError}

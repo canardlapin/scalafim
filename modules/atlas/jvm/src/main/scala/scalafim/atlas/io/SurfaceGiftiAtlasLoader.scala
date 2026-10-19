@@ -3,6 +3,7 @@ package scalafim.atlas.io
 import java.nio.file.Path
 import scala.util.control.NonFatal
 import scalafim.atlas.*
+import neuroatlas4s.*
 import scalafim.surface.{Hemisphere as SurfaceHemisphere, LabelInfo, LabeledSurface, SurfaceGeometry}
 import scalafim.surface.gifti.*
 import scalafim.surface.io.{GiftiReader, GiftiSurfaceReader}
