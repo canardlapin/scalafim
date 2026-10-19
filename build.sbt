@@ -121,7 +121,7 @@ lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "0816f10eab8034fe09ba46a8ffc9df852e779633"
+lazy val image4sRevision = "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df"
 lazy val image4sBuild = {
   Seq("locus4s", "spatial4s").foreach { provider =>
     sys.props
@@ -148,7 +148,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
 // so reframe4s resolves the same image4s build; reframe4s pins the same image4s
 // as ScalaFIM and the same spatial4s as image4s.
-lazy val reframe4sRevision = "750e01506b74e73d0929c28518d18989d25e3a45"
+lazy val reframe4sRevision = "a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295"
 lazy val reframe4sBuild = {
   Seq("image4s", "spatial4s").foreach { provider =>
     sys.props
