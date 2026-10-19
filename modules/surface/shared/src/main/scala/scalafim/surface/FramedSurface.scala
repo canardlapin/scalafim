@@ -65,7 +65,7 @@ final class FramedSurface[F <: Frame[D3]] private (
       FramedSurface.pointIn(frame, Vector(mesh.coordinates(3 * i), mesh.coordinates(3 * i + 1), mesh.coordinates(3 * i + 2)))
 
   /** The same surface as a plain geometry whose stored coordinates are the placed ones. */
-  def geometry: SurfaceGeometry = SurfaceGeometry(TriangleMesh.fromArrays(mesh.coordinates.clone(), mesh.faceIndices.clone()), hemisphere, kind)
+  def geometry: SurfaceGeometry = SurfaceGeometry(mesh, hemisphere, kind)
 
   def hasSameTopology(other: FramedSurface[?]): Boolean = mesh.hasSameTopology(other.mesh)
 
@@ -97,7 +97,7 @@ final class FramedSurface[F <: Frame[D3]] private (
               out(3 * i + 2) = xyz(2)
             case Right(_) => failure = Some(SurfaceFrameError.NonFiniteVertex(i))
           i += 1
-    failure.toLeft(new FramedSurface(map.target, TriangleMesh.fromArrays(out, mesh.faceIndices.clone()), hemisphere, kind))
+    failure.toLeft(new FramedSurface(map.target, mesh.withCoordinates(out), hemisphere, kind))
 
   /** Move a FreeSurfer tkRAS surface into the subject's scanner RAS with `Norig * inverse(Torig)` of the volume that
     * defines its tkRAS (usually `orig.mgz`). This surface's frame must be a [[WorldSpace.SubjectTkRas]] frame and
@@ -126,7 +126,7 @@ object FramedSurface:
   /** Declare that `placement` of `geometry` gives coordinates in `frame`. */
   def in(frame: Frame[D3])(geometry: SurfaceGeometry, placement: SurfacePlacement): Either[SurfaceFrameError, FramedSurface[frame.type]] =
     placed(geometry, placement).map(coords =>
-      new FramedSurface[frame.type](frame, TriangleMesh.fromArrays(coords, geometry.mesh.faceIndices.clone()), geometry.hemisphere, geometry.kind)
+      new FramedSurface[frame.type](frame, geometry.mesh.withCoordinates(coords), geometry.hemisphere, geometry.kind)
     )
 
   /** Place a geometry in the catalogued frame of `world`, as a dependent pair for code without a static frame. */
@@ -159,7 +159,7 @@ object FramedSurface:
       case SurfacePlacement.StoredCoordinates => Right(geometry.mesh.coordinates.clone())
       case SurfacePlacement.SurfaceToWorld    => applyAffine(geometry.surfaceToWorld, geometry.mesh.coordinates)
 
-  private def applyAffine(affine: Affine[D3], coords: Array[Double]): Either[SurfaceFrameError, Array[Double]] =
+  private def applyAffine(affine: Affine[D3], coords: MeshCoordinates): Either[SurfaceFrameError, Array[Double]] =
     val m = affine.rowMajor.toArray
     val out = new Array[Double](coords.length)
     var i = 0

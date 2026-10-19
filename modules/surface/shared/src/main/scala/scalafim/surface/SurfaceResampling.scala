@@ -20,9 +20,9 @@ object SphereMesh:
         out(3 * i + 1) = mesh.coordinates(3 * i + 1) * scale
         out(3 * i + 2) = mesh.coordinates(3 * i + 2) * scale
         i += 1
-      Right(TriangleMesh.fromArrays(out, mesh.faceIndices.clone()))
+      Right(mesh.withCoordinates(out))
 
-  private[surface] def radius(c: Array[Double], i: Int): Double =
+  private[surface] def radius(c: MeshCoordinates, i: Int): Double =
     math.sqrt(c(3 * i) * c(3 * i) + c(3 * i + 1) * c(3 * i + 1) + c(3 * i + 2) * c(3 * i + 2))
 
 /** A sparse resampling operator from moving-mesh vertex data to reference-mesh vertices: row `rows(k)` (reference
@@ -164,7 +164,7 @@ private final class FaceLocator(mesh: TriangleMesh):
       Option.when(t > 0.0)(Array(1.0 - u - v, u, v))
 
 /** Buckets items (vertices, or triangles by their bounding boxes) into a uniform grid over the mesh bounds. */
-private final class SpatialHash(c: Array[Double], vertexCount: Int, items: Array[(Int, Int, Int)], singlePoints: Boolean):
+private final class SpatialHash(c: MeshCoordinates, vertexCount: Int, items: Array[(Int, Int, Int)], singlePoints: Boolean):
   private val (lo, hi) =
     val lo = Array(Double.PositiveInfinity, Double.PositiveInfinity, Double.PositiveInfinity)
     val hi = Array(Double.NegativeInfinity, Double.NegativeInfinity, Double.NegativeInfinity)

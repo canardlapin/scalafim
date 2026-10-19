@@ -27,7 +27,7 @@ cross-compiled sbt build.
 - `image-view-javafx`: thin JVM JavaFX Canvas host behind the existing toolkit-free drawing contract.
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
-- `surface`: surface-mesh data structures, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
+- `surface`: mesh4s-backed topology and point storage with strict manifold admission, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
 - `surface-test-fixtures`: unpublished JVM fsLR asset locks, independent oracles, qualification helpers and their tests; atlas tests consume its Compile configuration.
 - `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
 - `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
@@ -60,6 +60,12 @@ cross-compiled sbt build.
 - Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
 - `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.
+
+Triangle topology and primitive surface point storage are owned by standalone
+[`mesh4s`](https://github.com/canardlapin/mesh4s). Surface sets share one ordered
+topology across white, pial, inflated and spherical realizations. ScalaFIM keeps
+neuroimaging semantics, legacy persisted identity encodings and adapters. The
+`scalafim.mesh4s.build` property supports an explicit sibling source override.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 

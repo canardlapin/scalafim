@@ -13,6 +13,37 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
       .toOption
       .get
 
+  test("semantic adapters retain persistent keys and use one typed topology vertex owner"):
+    val geometry = SurfaceTestFixtures.sheetGeometry
+    val key = DomainId.parse("subject-01:left-cortex").toOption.get
+    val first = SurfaceLocusDomain.semantic(key, geometry).toOption.get.value
+    val again = SurfaceLocusDomain.semantic(key, geometry).toOption.get.value
+    val other = SurfaceLocusDomain.semantic(DomainId.parse("subject-02:left-cortex").toOption.get, geometry).toOption.get.value
+    assert(first.finiteSpace.samePersistentIdentityAs(again.finiteSpace))
+    assert(!first.finiteSpace.sameRuntimeOwnerAs(again.finiteSpace))
+    assert(first.finiteSpace.align(again.finiteSpace).isRight)
+    assert(first.finiteSpace.align(other.finiteSpace).isLeft)
+    assert(first.geometry.mesh.topology eq first.topology)
+    assert(first.finiteSpace.sameRuntimeOwnerAs(first.topology.vertices))
+    assert(first.finiteSpace.sameRuntimeOwnerAs(first.geometry.mesh.points.space))
+    assertEquals(first.finiteSpace.id.value, s"subject-01:left-cortex:surface:${first.meshDomain.display}")
+    assertEquals(first.geometry, geometry)
+    val vertex = first.finiteSpace.indexOption(0).get
+    assertEquals(first.topology.neighbors(vertex).cardinality, 2)
+
+  test("structural adapters retain their original key and geometry metadata"):
+    val geometry = SurfaceTestFixtures.sheetGeometry
+    val first = SurfaceLocusDomain.structuralCompatibility(geometry).toOption.get.value
+    val moved = SurfaceGeometry(geometry.mesh.withCoordinates(geometry.mesh.coordinates.toArray.map(_ * 2.0)),
+      geometry.hemisphere, SurfaceKind.Inflated, geometry.surfaceToWorld)
+    val second = SurfaceLocusDomain.structuralCompatibility(moved).toOption.get.value
+    assertEquals(first.finiteSpace.id.value, s"scalafim:surface:structural:${first.meshDomain.display}")
+    assert(first.finiteSpace.samePersistentIdentityAs(second.finiteSpace))
+    assertEquals(second.geometry.kind, moved.kind)
+    assertEquals(second.geometry.surfaceToWorld, moved.surfaceToWorld)
+    assertEquals(second.geometry.mesh.coordinates.toVector, moved.mesh.coordinates.toVector)
+    assertEquals(second.geometry.mesh.faceIndices.toVector, geometry.mesh.faceIndices.toVector)
+
   test("surface domain identity includes exact ordered topology"):
     val tetra = domain().value
     val equalSizedDifferentTopology =

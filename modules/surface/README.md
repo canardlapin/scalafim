@@ -93,8 +93,28 @@ Faces and vertices are zero-based internally. FreeSurfer ASCII, FreeSurfer
 binary, and GIFTI triangle indices are preserved as zero-based indices when
 loaded into `TriangleMesh`.
 
-`TriangleMesh` stores only geometry. `MeshTopology` is a derived view over the
-mesh, so graph-like queries do not become a second source of truth.
+`TriangleMesh` composes a strict `mesh4s.TriangleTopology` and a primitive
+mesh4s point field. Admission preserves every face and corner ordinal and
+refuses duplicate faces, conflicting orientation, unused vertices and
+non-manifold edges or vertex fans. It never silently repairs or reorients an
+input. `fromArraysEither` exposes the typed provider audit; throwing constructors
+remain available for validated fixtures and compatibility callers.
+
+`coordinates(i)` and `faceIndices(i)` are read-only primitive views. Use
+`.toArray` for an explicit defensive copy at an IO or editing boundary.
+`withCoordinates` retains the exact topology owner for finite replacement
+positions. `SurfaceSet` and `SurfaceGeometryPair` share that owner across
+compatible realizations; separately loaded meshes are compared by exact ordered
+connectivity before attachment.
+
+`SurfaceLocusDomain` retains its original semantic/structural persistent vertex
+keys and builds its topology on that restored domain. Its `topology.Vertex` is
+statically equal to its field space, and geometry/points use that same runtime
+vertex owner. This does not assert persistent identity for edges or faces.
+
+`MeshTopology` is a derived view over the mesh4s owner. Its edge vector uses
+mesh4s edge ordinals, so custom weights must follow that vector rather than an
+assumed lexicographic edge order. Neighbors are materialized on request.
 `MeshTopology.toGraph` materializes an immutable graph on demand; callers may
 reuse that value, but `MeshTopology` does not retain a parallel full topology.
 Thresholded components share one surface-local filtered traversal rather than

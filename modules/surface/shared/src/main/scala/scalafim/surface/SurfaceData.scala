@@ -264,6 +264,12 @@ final case class SurfaceSet private (
     "all surface geometries must share a surface-to-world transform"
   )
 
+  require(surfaces.values.forall(_.mesh.topology eq surfaces(defaultKind).mesh.topology),
+    "all surface geometries must share one topology owner")
+
+  def copy(surfaces: Map[SurfaceKind, SurfaceGeometry] = this.surfaces, defaultKind: SurfaceKind = this.defaultKind): SurfaceSet =
+    SurfaceSet(surfaces, defaultKind)
+
   def default: SurfaceGeometry =
     surfaces(defaultKind)
 
@@ -282,7 +288,14 @@ object SurfaceSet:
     surfaces: Map[SurfaceKind, SurfaceGeometry],
     defaultKind: SurfaceKind
   ): SurfaceSet =
-    new SurfaceSet(surfaces, defaultKind)
+    require(surfaces.contains(defaultKind), "surface set default must exist in the set")
+    val owner = surfaces(defaultKind).mesh
+    require(surfaces.values.forall(_.mesh.hasSameTopology(owner)), "all surface geometries must share ordered triangle topology")
+    val shared = surfaces.map: (kind, geometry) =>
+      val mesh = geometry.mesh.sharingTopology(owner)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      kind -> SurfaceGeometry(mesh, geometry.hemisphere, geometry.kind, geometry.surfaceToWorld)
+    new SurfaceSet(shared, defaultKind)
 
   def of(defaultKind: SurfaceKind, default: SurfaceGeometry, rest: (SurfaceKind, SurfaceGeometry)*): SurfaceSet =
     val entries = (defaultKind -> default) +: rest

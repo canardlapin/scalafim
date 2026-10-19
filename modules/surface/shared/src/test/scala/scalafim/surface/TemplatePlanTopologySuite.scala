@@ -42,7 +42,7 @@ class TemplatePlanTopologySuite extends munit.FunSuite:
       coordinates(3 * i + 2) = radius * z / norm
     TriangleMesh.fromArrays(coordinates, faces.flatMap((a, b, c) => Vector(a, b, c)).toArray)
 
-  test("fsaverage5 plan freezes endpoint topology and rejects a later face-order mutation"):
+  test("fsaverage5 plan keeps immutable endpoint topology and rejects reordered face rows"):
     val surface = TemplateSurface(TemplateMesh.FsAverage5, CorticalHemisphere.Left)
     val sourceMesh = icosphere(5, 97.0)
     val targetMesh = icosphere(5, 103.0, 0.013)
@@ -53,11 +53,16 @@ class TemplatePlanTopologySuite extends munit.FunSuite:
     assertEquals(plan.plan.referenceVertices, 10242)
     assertEquals(ok(plan.resample(Array.tabulate(10242)(i => math.sin(i * 0.013)))).length, 10242)
     assertEquals(plan.validateSourceGeometry(originalSourceGeometry), Right(()))
-    val sourceFaces = sourceMesh.faceIndices
-    val swap = sourceFaces(1)
-    sourceFaces(1) = sourceFaces(2)
-    sourceFaces(2) = swap
-    plan.validateSourceGeometry(originalSourceGeometry) match
+    val sourceFaces = sourceMesh.faceIndices.toArray
+    var corner = 0
+    while corner < 3 do
+      val swap = sourceFaces(corner)
+      sourceFaces(corner) = sourceFaces(3 + corner)
+      sourceFaces(3 + corner) = swap
+      corner += 1
+    assertEquals(plan.validateSourceGeometry(originalSourceGeometry), Right(()))
+    val reordered = SurfaceGeometry(TriangleMesh.fromArrays(sourceMesh.coordinates.toArray, sourceFaces), Hemisphere.Left, SurfaceKind.White)
+    plan.validateSourceGeometry(reordered) match
       case Left(SurfaceError.InvalidTopology(reason)) => assert(reason.contains("ordered template topology"), reason)
       case other => fail(s"expected frozen topology refusal, got $other")
     val wrongHemisphere = SurfaceGeometry(targetMesh, Hemisphere.Right, SurfaceKind.Inflated)

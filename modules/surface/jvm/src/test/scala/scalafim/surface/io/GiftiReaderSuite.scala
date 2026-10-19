@@ -82,7 +82,7 @@ class GiftiReaderSuite extends munit.FunSuite:
       SurfaceGeometry(
         TriangleMesh.fromRows(
           vertices = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0)),
-          faces = Vector((0, 1, 2), (0, 1, 3))
+          faces = Vector((0, 1, 2), (0, 3, 1))
         ),
         Hemisphere.Left,
         SurfaceKind.Midthickness

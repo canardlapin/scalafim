@@ -120,7 +120,7 @@ class PointwiseInverseBridgeSuite extends munit.FunSuite:
   private val worldA = indicesA.map(i => Vector(i(0) - 4.0, i(1) - 4.0, i(2) - 4.0))
   private val worldB = worldA.zipWithIndex.map: (p, v) =>
     if v == 4 then Vector(30.0, 0.0, 0.0) else Vector.tabulate(3)(c => p(c) + d(c) + t(c))
-  private val faces = Vector((0, 1, 2), (2, 3, 4), (3, 4, 5))
+  private val faces = Vector((0, 1, 2), (1, 3, 2), (2, 3, 4), (3, 5, 4))
 
   private def anatomy(points: Vector[Vector[Double]], frame: TemplateFrame): SamplingAnatomy =
     val geometry = SurfaceGeometry(TriangleMesh.fromRows(points, faces), Hemisphere.Left, SurfaceKind.Midthickness)

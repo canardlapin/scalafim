@@ -37,7 +37,7 @@ class SurfaceCoreSuite extends munit.FunSuite:
     val rewound =
       TriangleMesh.fromRows(
         SurfaceTestFixtures.tetraVertices,
-        SurfaceTestFixtures.tetraFaces.updated(0, (0, 2, 1))
+        SurfaceTestFixtures.tetraFaces.map((a, b, c) => (a, c, b))
       )
 
     assertEquals(mesh.topologyIdentity, moved.topologyIdentity)

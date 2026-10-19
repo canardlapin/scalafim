@@ -519,7 +519,10 @@ object CoordinateMap:
   private def hashSurfaceGeometry(seed: Int, geometry: SurfaceGeometry): Int =
     var hash = MurmurHash3.mix(seed, geometry.hemisphere.hashCode)
     hash = MurmurHash3.mix(hash, geometry.kind.hashCode)
-    hash = hashDoubles(hash, geometry.mesh.coordinates)
+    var position = 0
+    while position < geometry.mesh.coordinates.length do
+      hash = MurmurHash3.mix(hash, geometry.mesh.coordinates(position).hashCode)
+      position += 1
     var i = 0
     while i < geometry.mesh.faceIndices.length do
       hash = MurmurHash3.mix(hash, geometry.mesh.faceIndices(i))

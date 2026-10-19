@@ -8,7 +8,7 @@ class SurfaceParcelsSuite extends munit.FunSuite:
     val boundaries = SurfaceParcels.boundaryEdges(sheetLabels, sheetTopology)
     assertEquals(
       boundaries.map(boundary => (boundary.edge.a.index, boundary.edge.b.index)),
-      Vector((0, 2), (1, 2), (1, 3))
+      Vector((1, 2), (0, 2), (1, 3))
     )
     assert(boundaries.forall(boundary => boundary.atA != boundary.atB))
 
@@ -20,7 +20,7 @@ class SurfaceParcelsSuite extends munit.FunSuite:
     )
     assertEquals(
       roi.map(boundary => (boundary.edge.a.index, boundary.edge.b.index)),
-      Vector((0, 2), (1, 2), (1, 3))
+      Vector((1, 2), (0, 2), (1, 3))
     )
 
   private val sheetTopology = SurfaceTestFixtures.sheetTopology

@@ -23,5 +23,5 @@ class SurfaceFaceFieldSuite extends munit.FunSuite:
     val field = SurfaceFaceField.make(geometry(), Array(1, 2)).toOption.get
     assert(field.isCompatibleWith(geometry(shift = 3.0)))
     assert(!field.isCompatibleWith(geometry(Seq((0, 2, 3), (0, 1, 2)))))
-    assert(!field.isCompatibleWith(geometry(Seq((0, 2, 1), (0, 2, 3)))))
+    assert(!field.isCompatibleWith(geometry(Seq((0, 2, 1), (0, 3, 2)))))
     assert(!field.isCompatibleWith(SurfaceGeometry(geometry().mesh, Hemisphere.Right, SurfaceKind.Inflated)))

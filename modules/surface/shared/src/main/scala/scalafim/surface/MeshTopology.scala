@@ -16,14 +16,19 @@ object Edge:
 
 final case class MeshTopology private (
   mesh: TriangleMesh,
-  edges: Vector[Edge],
-  private val neighborRows: Vector[Vector[VertexId]],
-  edgeLengths: Vector[Double],
   domainOption: Option[SurfaceDomain] = None
 ):
-  require(edges.length == edgeLengths.length, "edges and edgeLengths must match")
-  require(neighborRows.length == mesh.vertexCount, "neighbor rows must match vertex count")
   domainOption.foreach(domain => require(domain.vertexCount == mesh.vertexCount, "topology domain vertex count must match mesh"))
+
+  /** Edge ordinals are mesh4s edge ordinals, derived without another adjacency owner. */
+  lazy val edges: Vector[Edge] =
+    val owner = mesh.topology
+    owner.edges.indices.map: index =>
+      val endpoints = owner.endpointsOf(index)
+      Edge.between(VertexId.unsafe(endpoints.first.ordinal), VertexId.unsafe(endpoints.second.ordinal))
+    .toVector
+
+  lazy val edgeLengths: Vector[Double] = edges.map(edgeLength)
 
   def edgeCount: Int =
     edges.length
@@ -61,7 +66,8 @@ final case class MeshTopology private (
   def neighborsOf(vertex: VertexId): Vector[VertexId] =
     val i = vertex.index
     require(i < mesh.vertexCount, "vertex id out of range")
-    neighborRows(i)
+    val owner = mesh.topology
+    owner.neighbors(owner.vertices.indexAtValidatedOrdinal(i)).ordinalsInDomainOrder.toVector.map(VertexId.unsafe)
 
   def vertexDegree(vertex: VertexId): Int =
     neighborsOf(vertex).length
@@ -70,7 +76,7 @@ final case class MeshTopology private (
     domainOption.toRight(SurfaceError.MissingSurfaceDomain("mesh topology"))
 
   def withDomain(domain: SurfaceDomain): MeshTopology =
-    MeshTopology(mesh, edges, neighborRows, edgeLengths, Some(domain))
+    MeshTopology(mesh, Some(domain))
 
   def edgeLength(edge: Edge): Double =
     val a = mesh.vertex(edge.a)
@@ -130,49 +136,4 @@ object MeshTopology:
     catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidTopology(SurfaceError.reason(error)))
 
   private def from(mesh: TriangleMesh, domain: Option[SurfaceDomain]): MeshTopology =
-    val edgePairs = Vector.newBuilder[(Int, Int)]
-
-    var f = 0
-    while f < mesh.faceCount do
-      val tri = mesh.face(FaceId.unsafe(f))
-      addPair(edgePairs, tri.a.index, tri.b.index)
-      addPair(edgePairs, tri.b.index, tri.c.index)
-      addPair(edgePairs, tri.a.index, tri.c.index)
-      f += 1
-
-    val uniquePairs =
-      edgePairs.result().distinct.sortBy { case (a, b) => (a, b) }
-
-    val edges =
-      uniquePairs.map { case (a, b) => Edge.between(VertexId.unsafe(a), VertexId.unsafe(b)) }
-
-    val neighborSets =
-      Array.fill(mesh.vertexCount)(scala.collection.mutable.Set.empty[Int])
-
-    edges.foreach { edge =>
-      val a = edge.a.index
-      val b = edge.b.index
-      neighborSets(a) += b
-      neighborSets(b) += a
-    }
-
-    val neighbors =
-      neighborSets.toVector.map { set =>
-        set.toVector.sorted.map(VertexId.unsafe)
-      }
-
-    val lengths =
-      edges.map { edge =>
-        val a = mesh.vertex(edge.a)
-        val b = mesh.vertex(edge.b)
-        (a - b).norm
-      }
-
-    MeshTopology(mesh, edges, neighbors, lengths, domain)
-
-  private def addPair(
-    builder: scala.collection.mutable.Builder[(Int, Int), Vector[(Int, Int)]],
-    a: Int,
-    b: Int
-  ): Unit =
-    if a < b then builder += ((a, b)) else builder += ((b, a))
+    MeshTopology(mesh, domain)

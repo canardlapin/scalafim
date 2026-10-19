@@ -199,6 +199,24 @@ lazy val neuroatlas4sBuild = {
 lazy val neuroatlas4sCoreJVM = ProjectRef(neuroatlas4sBuild, "coreJVM")
 lazy val neuroatlas4sCoreJS  = ProjectRef(neuroatlas4sBuild, "coreJS")
 
+// mesh4s owns triangle topology, surface realizations and point fields. It
+// pins the same locus4s, spatial4s and graph4s revisions as ScalaFIM's other
+// providers; ScalaFIM overrides for those are forwarded.
+lazy val mesh4sRevision = "54b7278880e6db38c543a4a565355afd864e576a"
+lazy val mesh4sBuild = {
+  Seq("locus4s", "spatial4s", "graph4s").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"mesh4s.$provider.build", _))
+  }
+  sys.props
+    .get("scalafim.mesh4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/mesh4s.git#$mesh4sRevision"))
+}
+lazy val mesh4sGeometryJVM = ProjectRef(mesh4sBuild, "mesh4s-geometryJVM")
+lazy val mesh4sGeometryJS  = ProjectRef(mesh4sBuild, "mesh4s-geometryJS")
+
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
 // source override for coordinated development.
@@ -728,8 +746,8 @@ lazy val surface =
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
+    .jvmConfigure(_.dependsOn(mesh4sGeometryJVM, image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(mesh4sGeometryJS, image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js

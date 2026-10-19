@@ -18,7 +18,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
         Seq(offset + 0.0, 1.0, 0.0),
         Seq(offset + 0.0, 0.0, 1.0)
       ),
-      Seq((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+      Seq((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
     )
 
   private def geometry(
@@ -115,7 +115,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
       Some(SurfaceViewError.UnknownSurface(SurfaceId.unsafe("missing")))
     )
 
-    val rewound = TriangleMesh.fromRows(left.mesh.vertices.map(p => Seq(p.x, p.y, p.z)), Seq((0, 2, 1), (0, 1, 3), (0, 2, 3), (1, 2, 3)))
+    val rewound = TriangleMesh.fromRows(left.mesh.vertices.map(p => Seq(p.x, p.y, p.z)), Seq((0, 2, 1), (0, 1, 3), (0, 3, 2), (1, 2, 3)))
     val wrongGeometry = SurfaceGeometry(rewound, Hemisphere.Left, SurfaceKind.Pial)
     val wrongLayer = scalarLayer(wrongGeometry)
     assertEquals(
@@ -395,7 +395,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     ).toOption.get
     assertEqualsDouble(revealed.mesh.vertex(VertexId(0)).x, 2.0, 0.0)
     assertEqualsDouble(revealed.mesh.vertex(VertexId(1)).x, 2.0, 1e-12)
-    assertEquals(revealed.mesh.faceIndices.toSeq, white.mesh.faceIndices.toSeq)
+    assertEquals(revealed.mesh.faceIndices.toVector, white.mesh.faceIndices.toVector)
     assertEquals(revealed.mesh.topologyIdentity, white.mesh.topologyIdentity)
 
     assert(SurfaceLensRadius.make(-1.0).isLeft)
@@ -556,7 +556,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
       SurfaceMorphFraction.unsafe(1.0)
     ).toOption.get
     assertEquals(opened.mesh.vertex(center), source.mesh.vertex(center))
-    assertEquals(opened.mesh.faceIndices.toSeq, source.mesh.faceIndices.toSeq)
+    assertEquals(opened.mesh.faceIndices.toVector, source.mesh.faceIndices.toVector)
     assertEquals(opened.mesh.topologyIdentity, source.mesh.topologyIdentity)
     assert(SurfaceLensRelaxationSteps.make(0).isLeft)
     assert(SurfaceLensRelaxationSteps.make(1001).isLeft)

@@ -33,8 +33,12 @@ final class SurfaceLocusDomain[S] private[surface] (
     val geometry: SurfaceGeometry,
     val meshDomain: SurfaceMeshDomain,
     val finiteSpace: FiniteSpace[S],
-    val identityBasis: SurfaceIdentityBasis
+    val identityBasis: SurfaceIdentityBasis,
+    val topology: mesh4s.TriangleTopology { type Vertex = S }
 ):
+  require(geometry.mesh.topology eq topology, "surface geometry must retain its typed topology owner")
+  require(topology.vertices.sameRuntimeOwnerAs(finiteSpace), "surface fields must use the topology vertex owner")
+
   def optionalField[A](
       field: SurfaceField[A]
   ): Either[SurfaceLocusError, VectorField[S, Option[A]]] =
@@ -151,14 +155,17 @@ object SomeSurfaceLocusDomain:
   ): SomeSurfaceLocusDomain =
     val resolution =
       DomainFactory.unsafeRestore(key, geometry.vertexCount)
+    val (mesh, topology) = TriangleMesh.onDomain(geometry.mesh, resolution.space)
+    val ownedGeometry = SurfaceGeometry(mesh, geometry.hemisphere, geometry.kind, geometry.surfaceToWorld)
     new SomeSurfaceLocusDomain:
       type S = resolution.S
       val value: SurfaceLocusDomain[S] =
         new SurfaceLocusDomain(
-          geometry,
+          ownedGeometry,
           meshDomain,
           resolution.space,
-          basis
+          basis,
+          topology
         )
 
 trait SurfaceParcellation[S]:

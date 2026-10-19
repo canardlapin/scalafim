@@ -798,13 +798,8 @@ object SurfaceMorph:
             coordinates(index) = from.mesh.coordinates(index) +
               fraction.value * (to.mesh.coordinates(index) - from.mesh.coordinates(index))
             index += 1
-          val faces = new Array[Int](from.mesh.faceIndices.length)
-          index = 0
-          while index < faces.length do
-            faces(index) = from.mesh.faceIndices(index)
-            index += 1
           Right(SurfaceGeometry(
-            TriangleMesh.fromArrays(coordinates, faces),
+            from.mesh.withCoordinates(coordinates),
             from.hemisphere,
             SurfaceKind.Custom(s"morph:${from.kind.label}->${to.kind.label}"),
             from.surfaceToWorld
@@ -862,13 +857,8 @@ object SurfaceMorph:
       while index < coordinates.length do
         coordinates(index) = from.mesh.coordinates(index) + fraction.value * deformation.displacementAtUnsafe(index)
         index += 1
-      val faces = new Array[Int](from.mesh.faceIndices.length)
-      index = 0
-      while index < faces.length do
-        faces(index) = from.mesh.faceIndices(index)
-        index += 1
       Right(SurfaceGeometry(
-        TriangleMesh.fromArrays(coordinates, faces),
+        from.mesh.withCoordinates(coordinates),
         from.hemisphere,
         SurfaceKind.Custom(s"lens:${from.kind.label}->${to.kind.label}"),
         from.surfaceToWorld
@@ -900,13 +890,8 @@ object SurfaceMorph:
         coordinates(offset + 2) = from.mesh.coordinates(offset + 2) +
           amount * (to.mesh.coordinates(offset + 2) - from.mesh.coordinates(offset + 2))
         vertex += 1
-      val faces = new Array[Int](from.mesh.faceIndices.length)
-      var index = 0
-      while index < faces.length do
-        faces(index) = from.mesh.faceIndices(index)
-        index += 1
       Right(SurfaceGeometry(
-        TriangleMesh.fromArrays(coordinates, faces),
+        from.mesh.withCoordinates(coordinates),
         from.hemisphere,
         SurfaceKind.Custom(s"lens:${from.kind.label}->${to.kind.label}"),
         from.surfaceToWorld

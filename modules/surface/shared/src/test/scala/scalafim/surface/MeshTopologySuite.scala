@@ -44,18 +44,19 @@ class MeshTopologySuite extends munit.FunSuite:
           Vector(1.0, 0.0, 0.0),
           Vector(0.0, 1.0, 0.0),
           Vector(1.0, 1.0, 0.0),
-          Vector(2.0, 1.0, 0.0)
+          Vector(2.0, 1.0, 0.0),
+          Vector(2.0, 2.0, 0.0)
         ),
         Vector(
           (0, 1, 2),
-          (2, 3, 4)
+          (3, 4, 5)
         )
       )
 
     val topology = MeshTopology.from(mesh)
     assertEquals(topology.edgeCount, 6)
-    assertEquals(topology.eulerCharacteristic, 1)
-    assertEquals(topology.neighborsOf(VertexId(2)), Vector(VertexId(0), VertexId(1), VertexId(3), VertexId(4)))
+    assertEquals(topology.eulerCharacteristic, 2)
+    assertEquals(topology.neighborsOf(VertexId(2)), Vector(VertexId(0), VertexId(1)))
 
   test("MeshTopology carries a surface domain when built from geometry"):
     val topology = MeshTopology.from(SurfaceTestFixtures.tetraGeometry)

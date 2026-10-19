@@ -70,7 +70,7 @@ class TemplateSurfacesSuite extends munit.FunSuite:
     TemplateSphere.admit(left, SphereRegistration.FsLR, ico5, "x") match
       case Left(SurfaceError.InvalidGeometry(reason)) => assert(reason.contains("fsaverage sphere"), reason)
       case other                                      => fail(s"fsaverage5 on the fsLR sphere must be refused, got $other")
-    val squashed = TriangleMesh.fromArrays(ico5.coordinates.zipWithIndex.map((v, i) => if i % 3 == 2 then 0.5 * v else v), ico5.faceIndices)
+    val squashed = ico5.withCoordinates(Array.tabulate(ico5.coordinates.length)(i => if i % 3 == 2 then 0.5 * ico5.coordinates(i) else ico5.coordinates(i)))
     assert(TemplateSphere.admit(left, SphereRegistration.FsAverage, squashed, "x").isLeft)
     assert(TemplateSphere.admit(left, SphereRegistration.FsAverage, ico5, " ").isLeft)
 

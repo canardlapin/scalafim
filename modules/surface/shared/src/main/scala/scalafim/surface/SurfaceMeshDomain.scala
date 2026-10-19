@@ -10,7 +10,7 @@ import scala.util.hashing.MurmurHash3
 opaque type MeshTopologyIdentity = Long
 
 object MeshTopologyIdentity:
-  private[surface] def from(vertexCount: Int, faceIndices: Array[Int]): MeshTopologyIdentity =
+  private[surface] def from(vertexCount: Int, faceIndices: MeshFaces): MeshTopologyIdentity =
     var primary = MurmurHash3.mix(0x3c074a61, vertexCount)
     var secondary = MurmurHash3.mix(0x1b873593, faceIndices.length)
     var index = 0

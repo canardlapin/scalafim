@@ -11,7 +11,9 @@ import scalafim.surface.*
 /** Real ds002748 sub-01 left hemisphere, seven-point segment ribbon and two
   * registered-sphere routes on a frozen connected fsLR patch. Original mesh
   * IDs, ordered contributor faces and volume sample bytes are retained.
-  * Native closest-point and public radial interpolation are distinct estimators.
+  * Disconnected subject vertex fans are cut by a fixture-only lineage adapter;
+  * the frozen source resources are unchanged. Native closest-point and public
+  * radial interpolation are distinct estimators.
   * The real intensity gap is descriptive; analytic commutativity has a bound
   * derived exclusively from input geometry. This is not a whole-mesh domain,
   * polyhedral ribbon, registration-quality or template-volume qualification.
@@ -26,7 +28,17 @@ class SurfaceRealChainScenarioSuite extends munit.FunSuite:
   private def bytes(name: String): Array[Byte] = SurfaceRealFixturePlatform.read(s"$Root/$name")
   private def text(name: String): String = String(bytes(name), "UTF-8")
   private def rows(name: String): Array[Array[Double]] =
+    val original = rawRows(name)
+    name match
+      case "white.tsv" | "pial.tsv" | "white-scanner-math.tsv" | "white-scanner-header.tsv" | "ribbon-math.tsv" | "ribbon-native.tsv" =>
+        subjectFixture.expand(original)
+      case "subject-to-fsaverage.tsv" | "subject-to-target.tsv" => subjectFixture.remapPlan(original)
+      case _ => original
+  private def rawRows(name: String): Array[Array[Double]] =
     text(name).linesIterator.drop(1).filter(_.nonEmpty).map(_.split("\t").map(_.toDouble)).toArray
+  private lazy val subjectFixture = FanSplitFixture(
+    rawRows("subject-vertices.tsv").flatMap(_.drop(1)),
+    rawRows("subject-faces.tsv").flatMap(_.drop(1).map(_.toInt)))
   private def column(name: String, index: Int): Array[Double] = rows(name).map(_(index))
   private def affine(values: Array[Double]): Affine[D3] = ok(Affine.fromRowMajor[D3](values.toVector))
   private def mesh(name: String): TriangleMesh =
@@ -41,7 +53,7 @@ class SurfaceRealChainScenarioSuite extends munit.FunSuite:
   private lazy val orig = FreeSurferVolumeGeometry(geometry.take(3).map(_.toInt).toVector, affine(geometry.slice(3, 19)))
   private lazy val grid = ok(GridSpec.in(scanner)(SpatialDims(geometry(19).toInt, geometry(20).toInt, geometry(21).toInt), affine(geometry.drop(22))))
   private lazy val volume = SurfaceRealFixturePlatform.gunzip(bytes("volume.raw.gz")).map(b => (b & 0xff).toDouble)
-  private lazy val registered = mesh("subject")
+  private lazy val registered = subjectFixture.mesh
   private lazy val average = mesh("fsaverage")
   private lazy val target = mesh("target")
   private lazy val whiteMesh = TriangleMesh.fromArrays(rows("white.tsv").flatten, registered.faceIndices.clone())
@@ -124,6 +136,32 @@ class SurfaceRealChainScenarioSuite extends munit.FunSuite:
     val result = run(Mutation.Faithful)
     assertEquals(result.status, ScenarioStatus.Pass, result.render)
     assert(result.ciPass, result.render)
+
+  test("fixture fan splitting preserves all ordered face coordinates and exact oracle operators"):
+    val originalVertices = rawRows("subject-vertices.tsv")
+    val originalFaces = rawRows("subject-faces.tsv")
+    assert(TriangleMesh.fromArraysEither(originalVertices.flatMap(_.drop(1)), originalFaces.flatMap(_.drop(1).map(_.toInt))).isLeft)
+    assertEquals(subjectFixture.sourceRows.size, 236)
+    assertEquals(subjectFixture.sourceRows.drop(originalVertices.length).distinct.size, 61)
+    assertEquals(registered.faceCount, 176)
+    originalFaces.indices.foreach: face =>
+      (0 until 3).foreach: corner =>
+        val oldVertex = originalFaces(face)(corner + 1).toInt
+        val newVertex = registered.faceIndices(3 * face + corner)
+        assertEquals(subjectFixture.sourceRows(newVertex), oldVertex)
+        (0 until 3).foreach: axis =>
+          assertEqualsDouble(registered.coordinates(3 * newVertex + axis), originalVertices(oldVertex)(axis + 1), 0.0)
+    for name <- Vector("subject-to-fsaverage.tsv", "subject-to-target.tsv") do
+      rawRows(name).zip(rows(name)).foreach: (original, migrated) =>
+        // Equal source columns and identical coefficient bits establish P' E = P
+        // for every original subject field, independently of the two test channels.
+        (0 until 3).foreach: corner =>
+          assertEquals(subjectFixture.sourceRows(migrated(corner).toInt), original(corner).toInt)
+          assertEqualsDouble(migrated(corner + 3), original(corner + 3), 0.0)
+    Vector("white.tsv", "pial.tsv", "white-scanner-math.tsv", "white-scanner-header.tsv", "ribbon-math.tsv", "ribbon-native.tsv").foreach: name =>
+      val originals = rawRows(name)
+      rows(name).zip(subjectFixture.sourceRows).foreach: (copy, original) =>
+        assertEquals(copy.toVector, originals(original).toVector)
 
   test("full-source contributor faces and independent radial weights match the public plans"):
     for (plan, name) <- Vector((first, "subject-to-fsaverage"), (second, "fsaverage-to-target"), (directPlan, "subject-to-target")) do

@@ -8,7 +8,7 @@ class SurfaceWorldIndexSuite extends munit.FunSuite:
   private val id = SurfaceId.unsafe("left")
   private val unlimited = SurfaceLinkRadius.unsafe(Double.MaxValue)
   private def geometry(points: Seq[Seq[Double]], affine: Affine[D3] = Affine.identity[D3]) =
-    SurfaceGeometry(TriangleMesh.fromRows(points, Seq((0, 1, 2))), Hemisphere.Left, SurfaceKind.Pial, affine)
+    SurfaceGeometry(TriangleMesh.fromRows(points, Vector.tabulate(points.size - 2)(i => if i % 2 == 0 then (i, i + 1, i + 2) else (i + 1, i, i + 2))), Hemisphere.Left, SurfaceKind.Pial, affine)
 
   test("prepared picks agree with independent world landmarks under full affine transforms"):
     val points = Vector.tabulate(211)(i => Vector(math.sin(i * 0.7) * 8, math.cos(i * 0.3) * 7, (i % 17).toDouble))
@@ -37,11 +37,14 @@ class SurfaceWorldIndexSuite extends munit.FunSuite:
     assertEquals(index.nearestVertex(query, SurfaceLinkRadius.unsafe(1.0)), Right(SurfaceSelection(id, VertexId(0))))
     assert(index.nearestVertex(query, SurfaceLinkRadius.unsafe(0.999)).isLeft)
 
-  test("snapshot lifetime is explicit across coordinate mutation and equal-topology replacements"):
+  test("snapshot lifetime is explicit across immutable coordinate replacements"):
     val g = geometry(Seq(Seq(0.0, 0.0, 0.0), Seq(1.0, 0.0, 0.0), Seq(0.0, 1.0, 0.0)))
     val before = SurfaceWorldLink.prepare(id, g).toOption.get
-    g.mesh.coordinates(0) = 100.0
-    val after = SurfaceWorldLink.prepare(id, g).toOption.get
+    val changed = g.mesh.coordinates.toArray
+    changed(0) = 100.0
+    assertEqualsDouble(g.mesh.coordinates(0), 0.0, 0.0)
+    val changedGeometry = SurfaceGeometry(g.mesh.withCoordinates(changed), g.hemisphere, g.kind, g.surfaceToWorld)
+    val after = SurfaceWorldLink.prepare(id, changedGeometry).toOption.get
     val query = WorldPoint(0.0, 0.0, 0.0)
     assertEquals(before.nearestVertex(query, unlimited).toOption.get.vertex.index, 0)
     assertEquals(after.nearestVertex(query, unlimited).toOption.get.vertex.index, 1)
@@ -53,8 +56,9 @@ class SurfaceWorldIndexSuite extends munit.FunSuite:
     val index = SurfaceWorldLink.prepare(id, geometry(Vector.fill(513)(Vector(2.0, 3.0, 4.0)))).toOption.get
     assertEquals(index.nearestVertex(WorldPoint(2.0, 3.0, 4.0), unlimited).toOption.get.vertex.index, 0)
 
-  test("malformed transforms are refused at the affine boundary and mutated nonfinite coordinates cannot be indexed"):
+  test("malformed transforms and nonfinite coordinates are refused at construction boundaries"):
     assert(Affine.fromRowMajor[D3](Vector(1.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.1, 0, 0, 1)).isLeft)
     val g = geometry(Seq(Seq(0.0, 0.0, 0.0), Seq(1.0, 0.0, 0.0), Seq(0.0, 1.0, 0.0)))
-    g.mesh.coordinates(0) = Double.NaN
-    assert(SurfaceWorldLink.prepare(id, g).isLeft)
+    val invalid = g.mesh.coordinates.toArray
+    invalid(0) = Double.NaN
+    assert(TriangleMesh.fromArraysEither(invalid, g.mesh.faceIndices.toArray).isLeft)

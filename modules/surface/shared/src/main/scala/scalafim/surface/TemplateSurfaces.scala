@@ -152,8 +152,8 @@ object TemplateResampling:
         .plan(reference = target.sphere, moving = source.sphere, method = method, spherical = true, radius = TemplateSphere.Radius)
         .map: rawPlan =>
           // Mesh arrays are mutable at the IO boundary. Keep the planned topology and COO values private snapshots.
-          val sourceSnapshot = TriangleMesh.fromArrays(source.sphere.coordinates.clone(), source.sphere.faceIndices.clone())
-          val targetSnapshot = TriangleMesh.fromArrays(target.sphere.coordinates.clone(), target.sphere.faceIndices.clone())
+          val sourceSnapshot = source.sphere
+          val targetSnapshot = target.sphere
           val plan = SurfaceResamplingPlan(
             IArray.from(rawPlan.rows), IArray.from(rawPlan.cols), IArray.from(rawPlan.vals),
             rawPlan.referenceVertices, rawPlan.movingVertices, rawPlan.method

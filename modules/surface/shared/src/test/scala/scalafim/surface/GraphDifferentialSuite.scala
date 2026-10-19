@@ -83,7 +83,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
     assertEquals(indexed.vertices.map(indexed.label).map(_.index).toVector, Vector(0, 1, 2, 3))
     assertEquals(
       indexedEdges,
-      topology.edges.map(edge => (edge.a.index, edge.b.index))
+      topology.edges.map(edge => (edge.a.index, edge.b.index)).sorted
     )
     assertEquals(
       topology.edges.map(edge => graph.weights.get(edge.a, edge.b).get),

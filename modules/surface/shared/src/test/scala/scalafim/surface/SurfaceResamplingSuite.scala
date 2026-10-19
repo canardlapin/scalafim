@@ -43,7 +43,7 @@ class SurfaceResamplingSuite extends munit.FunSuite:
     assert(SphereMesh.isSphere(fine))
     val scaled = ok(SphereMesh.withRadius(fine, 100.0))
     (0 until scaled.vertexCount).foreach(i => assertEqualsDouble(SphereMesh.radius(scaled.coordinates, i), 100.0, 1e-9))
-    val squashed = TriangleMesh.fromArrays(fine.coordinates.zipWithIndex.map((v, i) => if i % 3 == 2 then v * 0.5 else v), fine.faceIndices)
+    val squashed = fine.withCoordinates(Array.tabulate(fine.coordinates.length)(i => if i % 3 == 2 then 0.5 * fine.coordinates(i) else fine.coordinates(i)))
     assert(!SphereMesh.isSphere(squashed))
     assert(SphereMesh.withRadius(squashed).isLeft)
 
@@ -82,7 +82,7 @@ class SurfaceResamplingSuite extends munit.FunSuite:
     val plan = ok(SurfaceResampling.plan(coarse, fine))
     val moving = ok(SphereMesh.withRadius(fine))
     val reference = ok(SphereMesh.withRadius(coarse))
-    def f(c: Array[Double], i: Int) = 0.3 * c(3 * i) - 0.5 * c(3 * i + 1) + 0.8 * c(3 * i + 2)
+    def f(c: MeshCoordinates, i: Int) = 0.3 * c(3 * i) - 0.5 * c(3 * i + 1) + 0.8 * c(3 * i + 2)
     val out = ok(SurfaceResampling.apply(plan, Array.tabulate(moving.vertexCount)(f(moving.coordinates, _))))
     val worst = out.indices.map(i => math.abs(out(i) - f(reference.coordinates, i))).max
     assert(worst < 2.0, s"max error $worst exceeds the chord sagitta bound for a level-3 icosphere of radius 100")

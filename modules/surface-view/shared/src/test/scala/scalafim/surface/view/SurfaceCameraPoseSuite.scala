@@ -22,7 +22,7 @@ class SurfaceCameraPoseSuite extends munit.FunSuite:
 
   private val mesh = TriangleMesh.fromRows(
     Vector(Vector(0.0, 0.0, 0.0), Vector(10.0, 0.0, 0.0), Vector(0.0, 10.0, 0.0), Vector(0.0, 0.0, 10.0)),
-    Vector((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+    Vector((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
   )
   /** Stored coordinates placed by a translation, so display coordinates differ from stored ones. */
   private val placedGeometry = SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.White, affine(1, 0, 0, -20, 0, 1, 0, 4, 0, 0, 1, 7, 0, 0, 0, 1))

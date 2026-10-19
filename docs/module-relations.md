@@ -113,7 +113,7 @@ image
 standalone image4s + reframe4s (lie, field, resample)
 +-- image             also depends on locus-data, standalone Gale
     +-- transform     also depends on image4s-geometry and reframe4s directly
-        +-- surface   also depends on image, locus-data, image4s-geometry, graph4s, zarr4s
+        +-- surface   also depends on image, locus-data, mesh4s-geometry, image4s-geometry, graph4s, zarr4s
         +-- spatial   also depends on image, surface, locus-data, standalone Gale
         +-- atlas     also depends on image, surface, spatial, locus-data, graph4s
 
@@ -191,7 +191,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, standalone image4s-geometry; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
-| `surface` | Meshes, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | `image`, `transform`, `locus-data`; standalone graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `surface` | Neuro-surface composition over strict mesh4s topology/points, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | `image`, `transform`, `locus-data`; standalone mesh4s-geometry, graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, standalone Intaglio core | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view`, Intaglio core | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
 | `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, Intaglio core; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |

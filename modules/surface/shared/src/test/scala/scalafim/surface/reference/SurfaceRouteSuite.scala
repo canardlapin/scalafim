@@ -58,7 +58,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     Vector(1.3, 2.2, 0.7), Vector(4.7, 0.2, 2.8), Vector(0.2, 3.6, 1.1),
     Vector(2.4, 1.3, 3.3), Vector(6.4, 1.0, 1.0), Vector(3.1, 4.2, 0.2))
   private val depth = Vector(0.0, 0.0, 1.9)
-  private val faces = Vector((0, 1, 2), (2, 3, 4), (3, 4, 5))
+  private val faces = Vector((0, 1, 2), (1, 3, 2), (2, 3, 4), (3, 5, 4))
 
   private def surface(points: Vector[Vector[Double]], kind: SurfaceKind, hemisphere: Hemisphere = Hemisphere.Left,
       rows: Vector[(Int, Int, Int)] = faces): SurfaceGeometry =
@@ -145,7 +145,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
   test("fsLR 32k admission binds exact vertex count, cortical hemisphere and mask domain"):
     def strip(n: Int, hemisphere: Hemisphere) = SurfaceGeometry(
       TriangleMesh.fromRows(Vector.tabulate(n)(i => Vector(i.toDouble, (i % 7).toDouble, (i % 3).toDouble)),
-        Vector.tabulate(n - 2)(i => (i, i + 1, i + 2))), hemisphere, SurfaceKind.Midthickness)
+        Vector.tabulate(n - 2)(i => if i % 2 == 0 then (i, i + 1, i + 2) else (i + 1, i, i + 2))), hemisphere, SurfaceKind.Midthickness)
     def wall(g: SurfaceGeometry) = MedialWallMask.fromCortexFlags(g.meshDomainEither.toOption.get,
       Vector.tabulate(g.vertexCount)(_ % 10 != 0)).toOption.get
     val exact = strip(32492, Hemisphere.Right)
@@ -163,7 +163,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
   test("anatomy refuses display shapes and topology that differs from the reference"):
     val inflated = surface(midIndices.map(world), SurfaceKind.Inflated)
     assert(SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(inflated, frameA))).isLeft)
-    val rewound = surface(midIndices.map(world), SurfaceKind.Midthickness, rows = Vector((0, 2, 1), (2, 3, 4), (3, 4, 5)))
+    val rewound = surface(midIndices.map(world), SurfaceKind.Midthickness, rows = faces.map((a, b, c) => (a, c, b)))
     assert(SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(rewound, frameA))).isLeft)
     val swapped = AnatomicalGeometry.WhitePial(
       declared(surface(midIndices.map(world), SurfaceKind.Pial), frameA),
@@ -369,10 +369,10 @@ class SurfaceRouteSuite extends munit.FunSuite:
       assert(displayed.mapped eq result)
       assertEquals(displayed.mapped.coverageAt(VertexId(v)), result.coverageAt(VertexId(v)))
       assertSameValue(displayed.mapped.valueAt(VertexId(v)), result.valueAt(VertexId(v)))
-    val rewound = surface(inflatedPoints, SurfaceKind.Inflated, rows = Vector((0, 2, 1), (2, 3, 4), (3, 4, 5)))
+    val rewound = surface(inflatedPoints, SurfaceKind.Inflated, rows = faces.map((a, b, c) => (a, c, b)))
     assert(DisplaySurface.make(reference, rewound).isLeft)
     assert(DisplaySurface.make(reference, surface(inflatedPoints, SurfaceKind.Custom("flat"))).isLeft)
-    val otherTopology = surface(inflatedPoints, SurfaceKind.Inflated, rows = Vector((0, 1, 2), (1, 3, 4), (3, 4, 5)))
+    val otherTopology = surface(inflatedPoints, SurfaceKind.Inflated, rows = Vector((0, 2, 1), (1, 2, 3), (2, 4, 3), (3, 4, 5)))
     val otherRef = CorticalMeshReference.make(testMesh, otherTopology, MedialWallMask.fromCortexFlags(
       otherTopology.meshDomainEither.toOption.get, Vector.fill(6)(true)).toOption.get).toOption.get
     val foreign = DisplaySurface.make(otherRef, otherTopology).toOption.get
