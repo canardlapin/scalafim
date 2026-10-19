@@ -53,10 +53,26 @@ class MeshAdmissionSuite extends munit.FunSuite:
     assert(moved.topology eq mesh.topology)
     assert(moved.points.space.sameRuntimeOwnerAs(mesh.topology.vertices))
     assert(mesh.hasSameTopology(moved))
+    assert(spatial4s.FrameAlignment.check(mesh.points.frame, moved.points.frame).isLeft)
     intercept[IllegalArgumentException](mesh.withCoordinates(Array(Double.NaN)))
     TriangleMesh.fromArraysEither(coordinates.updated(0, Double.NaN), faces) match
       case Left(MeshAdmissionError.Coordinates(_: mesh4s.geometry.PointFieldError.NonFiniteCoordinate)) => ()
       case other => fail(s"expected typed nonfinite-coordinate refusal, found $other")
+
+  test("raw storage charts claim neither physical units nor alignment between meshes"):
+    val mesh = TriangleMesh.fromArrays(coordinates, faces)
+    val other = TriangleMesh.fromArrays(coordinates, faces)
+    val chart = mesh.points.frame
+    assertEquals(chart.unit.scaleToCanonical, None)
+    assert(chart.unit.quantity != spatial4s.CoordinateQuantity.Length)
+    assert(chart.unit.quantity != spatial4s.CoordinateQuantity.Dimensionless)
+    assertEquals(chart.convention, spatial4s.CoordinateConvention.Unspecified)
+    assertEquals(chart.persistentKey, None)
+    assert(spatial4s.FrameAlignment.check(chart, other.points.frame).isLeft)
+    val shared = other.sharingTopology(mesh).toOption.get
+    assert(shared.topology eq mesh.topology)
+    assert(shared.points.space.sameRuntimeOwnerAs(mesh.topology.vertices))
+    assert(spatial4s.FrameAlignment.check(chart, shared.points.frame).isLeft)
 
   test("white, pial, inflated and sphere share the selected topology owner"):
     def geometry(kind: SurfaceKind, scale: Double): SurfaceGeometry =

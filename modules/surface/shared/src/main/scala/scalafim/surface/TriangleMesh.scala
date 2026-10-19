@@ -2,7 +2,7 @@ package scalafim.surface
 
 import mesh4s.{Triangle as MeshTriangle, TriangleTopology, TopologyAudit, TopologyIssue}
 import mesh4s.geometry.{PointField, PointFieldError}
-import spatial4s.{D3, Frame}
+import spatial4s.{CoordinateConvention, CoordinateQuantity, CoordinateUnit, D3, Frame}
 
 enum MeshAdmissionError:
   case Shape(reason: String)
@@ -35,7 +35,7 @@ final class MeshFaces private[surface] (private val packed: IArray[Int]):
   */
 final class TriangleMesh private (
   val topology: TriangleTopology
-)(val points: PointField[topology.Vertex, D3, Frame[D3]]):
+)(private[surface] val points: PointField[topology.Vertex, D3, Frame[D3]]):
   val coordinates: MeshCoordinates = new MeshCoordinates(points)
   val faceIndices: MeshFaces = new MeshFaces(topology.packedFaces)
   def vertexCount: Int = topology.vertices.size
@@ -105,8 +105,10 @@ final class TriangleMesh private (
   def faces: Vector[Triangle] = Vector.tabulate(faceCount)(i => face(FaceId.unsafe(i)))
 
 object TriangleMesh:
-  // Legacy unplaced coordinates carry no anatomical convention or world claim.
-  private val localFrame = Frame.named[D3]("unplaced surface coordinates").toOption.get
+  // Storage coordinates have no declared physical quantity or conversion scale.
+  // Each field gets its own ephemeral chart; topology sharing is not frame alignment.
+  private val storageQuantity = CoordinateQuantity.custom("uninterpreted-surface-coordinates").toOption.get
+  private val storageUnit = CoordinateUnit.custom("uninterpreted-surface-unit", "unknown", storageQuantity, None).toOption.get
 
   def fromRows(vertices: Seq[Seq[Double]], faces: Seq[(Int, Int, Int)]): TriangleMesh =
     require(vertices.forall(_.length == 3), "vertex rows must have exactly 3 coordinates")
@@ -162,6 +164,7 @@ object TriangleMesh:
     (attached, owner)
 
   private def on(owner: TriangleTopology, values: Array[Double]): Either[MeshAdmissionError, TriangleMesh] =
+    val localFrame = Frame.named[D3]("unplaced surface coordinates", storageUnit, CoordinateConvention.Unspecified).toOption.get
     PointField.fromInterleavedDoubles(owner.vertices, localFrame, values)
       .left.map(MeshAdmissionError.Coordinates.apply)
       .map(points => new TriangleMesh(owner)(points))

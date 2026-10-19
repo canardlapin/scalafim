@@ -81,6 +81,22 @@ class FramedSurfaceSuite extends munit.FunSuite:
     val huge = reframe4s.lie.FramedAffine.betweenFrames[scanner.type, scanner.type, D3](scanner, scanner)(affine(1e308, 0, 0, 0, 0, 1e308, 0, 0, 0, 0, 1e308, 0, 0, 0, 0, 1))
     assert(surface.transport(huge).left.exists(_.isInstanceOf[SurfaceFrameError.Map]))
 
+  test("explicit metre frames own placed points and transported coordinates"):
+    val source = ok(Frame.named[D3]("source metres", spatial4s.CoordinateUnit.Meter))
+    val target = ok(Frame.named[D3]("target metres", spatial4s.CoordinateUnit.Meter))
+    val placed = ok(FramedSurface.in(source)(geometry, SurfacePlacement.StoredCoordinates))
+    val original = ok(placed.vertex(VertexId(0)))
+    assert(original.belongsTo(source))
+    assertEquals(original.coordinates, Vector(1.0, 2.0, 3.0))
+    val map = reframe4s.lie.FramedAffine.betweenFrames[source.type, target.type, D3](source, target)(
+      affine(1, 0, 0, 10, 0, 1, 0, -20, 0, 0, 1, 30, 0, 0, 0, 1))
+    val moved = ok(placed.transport(map))
+    val point = ok(moved.vertex(VertexId(0)))
+    assert(point.belongsTo(target))
+    assertEquals(moved.frame.unit, spatial4s.CoordinateUnit.Meter)
+    assertEquals(point.coordinates, Vector(11.0, -18.0, 33.0))
+    assert(moved.geometry.mesh.topology eq mesh.topology)
+
   test("surfaces in different frames cannot be substituted for one another"):
     val errors = compileErrors(
       """

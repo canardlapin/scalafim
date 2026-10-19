@@ -100,6 +100,11 @@ non-manifold edges or vertex fans. It never silently repairs or reorients an
 input. `fromArraysEither` exposes the typed provider audit; throwing constructors
 remain available for validated fixtures and compatibility callers.
 
+The internal point field owns storage and vertex indices, without declaring
+physical coordinates. Its private, ephemeral chart has an uninterpreted unit
+with no conversion scale; each field has a fresh chart even when topology is
+shared. Declare physical units and coordinate alignment through `FramedSurface`.
+
 `coordinates(i)` and `faceIndices(i)` are read-only primitive views. Use
 `.toArray` for an explicit defensive copy at an IO or editing boundary.
 `withCoordinates` retains the exact topology owner for finite replacement
