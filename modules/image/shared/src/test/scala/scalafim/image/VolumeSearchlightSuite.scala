@@ -215,6 +215,29 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     )
     assertEquals(fromNative.centerPosition, fromField.centerPosition)
 
+  test("seeded sparse geometries retain canonical ambient rows"):
+    val centers = right(locus4s.Region.fromOrdinals(domain.space, Vector(8, 0, 4)))
+    val radius = right(SearchlightRadius.make(1.5))
+    val ellipsoid = right(ExactVolumeSearchlight.ellipsoids(
+      domain, radius, Vector(1.0, 0.8, 1.0), centers,
+      jitter = 0.25, rng = new scala.util.Random(731L)
+    ))
+    val blobby = right(ExactVolumeSearchlight.blobbyBalls(
+      domain, radius, drop = 0.5, edgeFraction = 0.5, centers = centers,
+      rng = new scala.util.Random(17L)
+    ))
+    // Captured from the original ambient-row representation before provider migration.
+    assertEquals(Vector(0, 4, 8).map(i => i -> ellipsoid.relation.ordinalRows(i).toVector), Vector(
+      0 -> Vector(0, 1, 3),
+      4 -> Vector(0, 1, 2, 3, 4, 5, 6, 7, 8),
+      8 -> Vector(4, 5, 6, 7, 8)
+    ))
+    assertEquals(Vector(0, 4, 8).map(i => i -> blobby.relation.ordinalRows(i).toVector), Vector(
+      0 -> Vector(0, 1, 3),
+      4 -> Vector(0, 3, 4, 5, 6),
+      8 -> Vector(4, 5, 7, 8)
+    ))
+
   private def right[E, A](value: Either[E, A]): A =
     value match
       case Right(result) => result

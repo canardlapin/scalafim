@@ -127,6 +127,25 @@ class DomainValiditySuite extends munit.FunSuite:
     )
   }
 
+  test("relation admission reports the earliest invalid ambient row"):
+    val centers = locus4s.Region.fromOrdinals(domain.space, Vector(4)).toOption.get
+    for outside <- Vector(1, 7) do
+      val relation = locus4s.Relation.fromOrdinalRows(
+        domain.space,
+        domain.space,
+        Vector.tabulate(domain.space.size): ordinal =>
+          if ordinal == outside then Vector(ordinal) else Vector.empty[Int]
+      ).toOption.get
+      val expected =
+        if outside < 4 then ExactVolumeSearchlightError.NonEmptyOutsideCenters(outside)
+        else ExactVolumeSearchlightError.MissingCenter(4)
+      assertEquals(ExactVolumeSearchlight.fromRelation(centers, relation).left.toOption, Some(expected))
+
+  test("empty center support admits exactly an empty relation"):
+    val centers = locus4s.Region.empty(domain.space)
+    val relation = locus4s.Relation.empty(domain.space, domain.space)
+    assert(ExactVolumeSearchlight.fromRelation(centers, relation).isRight)
+
   test("searchlight radii admit zero and reject negative or non-finite values") {
     assertEquals(SearchlightRadius.make(0.0).map(_.millimeters), Right(0.0), clue = "")
     assert(SearchlightRadius.make(-0.1).isLeft, clue = "")

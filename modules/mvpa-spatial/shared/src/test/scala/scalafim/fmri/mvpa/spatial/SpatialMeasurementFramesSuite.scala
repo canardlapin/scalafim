@@ -127,6 +127,40 @@ def invalid[K, S, T](source: AxisRef[K] { type Locus = S }, declaration: Measure
     // MeasurementFrame traversal.
     assertEquals(frame.identity.source, neural.descriptor)
 
+  test("sparse volume centers preserve ambient IDs, complete frame identity and measured values"):
+    val neural = axis("volume-neighborhood-migration")
+    val samples = right(AxisRef.fromStableKeys("volume-neighborhood-migration-samples", SpaceRole.Samples, Vector("s1", "s2"), "sample-order", "psc", "raw"))
+    val centers = right(Region.fromOrdinals(neural.locus, Vector(3, 1)))
+    val relation = right(Relation.fromOrdinalRows(neural.locus, neural.locus,
+      Vector(Vector.empty, Vector(0, 1), Vector.empty, Vector(2, 3))))
+    val neighborhoods = right(ExactVolumeSearchlight.fromRelation(centers, relation))
+    val actual = right(SpatialMeasurementFrames.volumeNeighborhoods(
+      neural, declaration, neighborhoods, index => Some(s"voxel-${index.ordinal}")))
+    val ids = Vector(1, 3).map(ordinal => s"volume:${neural.descriptor.coordinateSignature.value}:$ordinal")
+    val expected = right(SpatialMeasurementFrames.regions(neural, declaration,
+      Vector(1, 3).zip(Vector(Vector(0, 1), Vector(2, 3))).zip(ids).map:
+        case ((center, members), id) => SpatialMeasurementSite(
+          MeasurementId.unsafe(id),
+          SpatialMeasurementSupport.Regional(right(Region.fromOrdinals(neural.locus, members))),
+          Some(neural.locus.indexAtValidatedOrdinal(center)))
+    ))
+    assertEquals(actual.identity, expected.identity)
+    val visitor = new MeasurementVisitor[samples.Id, neural.Id, String, SpatialMeasurementRendition[neural.Locus], DMat]:
+      def visit[L <: SemanticSpace](entry: PackedMeasurementEntry[neural.Id, String, SpatialMeasurementRendition[neural.Locus]] { type Local = L }, measured: MeasuredObservations[samples.Id, L]): Either[MeasurementFailure, DMat] =
+        Right(right(measured.patterns(DMat.eye(measured.localAxis.size))))
+    val result = actual.traverse(1)(Right(MeasurementResource(observations(samples, neural))(())))(visitor)
+    assertEquals(result.error, None)
+    assertEquals(result.value.map(_.descriptor.id.value), ids)
+    assertEquals(result.value.map(_.rendition.center.map(_.ordinal)), Vector(Some(1), Some(3)))
+    assertEquals(result.value.map(_.rendition.label), Vector(Some("voxel-1"), Some("voxel-3")))
+    val matrices = result.value.map(_.value.toOption.get)
+    val expectedValues = Vector(Vector(Vector(1.0, 10.0), Vector(2.0, 20.0)), Vector(Vector(100.0, 1000.0), Vector(200.0, 2000.0)))
+    for
+      site <- matrices.indices
+      row <- 0 until 2
+      column <- 0 until 2
+    do assertEqualsDouble(matrices(site)(row, column), expectedValues(site)(row)(column), 0.0)
+
   test("empty centered surface patches are an explicit frame error"):
     val neural = axis("spatial-empty-surface")
     val searchlight = right(Searchlight.make(Region.empty(neural.locus), Relation.empty(neural.locus, neural.locus)))
