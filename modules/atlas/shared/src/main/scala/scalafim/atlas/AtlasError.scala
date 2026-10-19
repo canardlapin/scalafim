@@ -1,8 +1,10 @@
 package scalafim.atlas
 
-import image4s.geometry.GeometryError
-import scalafim.spatial.SpatialError
-import scalafim.transform.TransformError
+/** A failure from a provider an atlas operation delegates to, such as image geometry or a transform.
+  * Libraries that realise atlases over a provider define the concrete causes.
+  */
+trait AtlasProviderFailure:
+  def message: String
 
 enum AtlasError:
   case EmptyAtlas
@@ -14,8 +16,8 @@ enum AtlasError:
   case SpaceKindMismatch(space: AnySpaceId, expected: SpaceKindTag, actual: SpaceKindTag)
   case NoTransformRoute(from: AnySpaceId, to: AnySpaceId)
   case TransformNotExecutable(from: AnySpaceId, to: AnySpaceId, reason: String)
-  case TransformGraph(cause: SpatialError)
-  case Transform(cause: TransformError)
+  /** A failure reported by a provider the atlas operation delegates to. */
+  case Provider(cause: AtlasProviderFailure)
 
   /** A template asset was read but is not admitted: an uninspected file, or one whose direction contradicts its name. */
   case TemplateAssetRefused(asset: String, reason: String)
@@ -25,7 +27,6 @@ enum AtlasError:
   case GridWorldMismatch(role: String, space: AnySpaceId, detail: String)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
   case ExactGridRequired(expected: String, actual: String)
-  case Geometry(cause: GeometryError)
   case InvalidQuery(detail: String)
   case InvalidCoordinate(detail: String)
   case InvalidRegionMetadata(detail: String)
@@ -52,9 +53,7 @@ enum AtlasError:
         s"no transform route found from '${from.value}' to '${to.value}'"
       case TransformNotExecutable(from, to, reason) =>
         s"transform route from '${from.value}' to '${to.value}' is not executable: $reason"
-      case TransformGraph(cause) =>
-        s"transform manifest does not form a valid spatial graph: ${cause.message}"
-      case Transform(cause) =>
+      case Provider(cause) =>
         cause.message
       case TemplateAssetRefused(asset, reason) =>
         s"template asset $asset is refused: $reason"
@@ -66,8 +65,6 @@ enum AtlasError:
         s"expected spatial dimensions ${expected.mkString("x")} but got ${actual.mkString("x")}"
       case ExactGridRequired(expected, actual) =>
         s"exact atlas grid required; expected $expected but got $actual"
-      case Geometry(cause) =>
-        cause.message
       case InvalidQuery(detail) =>
         detail
       case InvalidCoordinate(detail) =>

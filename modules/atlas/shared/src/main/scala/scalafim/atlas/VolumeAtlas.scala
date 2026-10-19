@@ -106,7 +106,7 @@ object VolumeAtlas:
       labels: SomeLabelVolume[Int],
       provenance: AtlasProvenance
   ): Either[AtlasRealizationError, VolumeAtlas] =
-    AtlasRealization
+    AtlasRealizations
       .volumeFromLabelsIn(
         DomainRegistry.empty,
         ref,

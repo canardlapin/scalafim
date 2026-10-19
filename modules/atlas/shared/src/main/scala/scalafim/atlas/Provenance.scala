@@ -330,7 +330,6 @@ enum DerivationStep:
   case ValidatedLabels(regionIds: Vector[RegionId])
   case FilteredLabels(kept: Vector[RegionId], dropped: Vector[RegionId])
   case Resampled(from: AnySpaceId, to: AnySpaceId, kind: TransformKind, status: TransformStatus, confidence: Confidence)
-  case ProjectedVolumeToSurface(from: AnySpaceId, to: AnySpaceId, sampling: SurfaceSamplingSpec, status: TransformStatus)
   case LegacyHistory(
     action: String,
     fromTemplateSpace: AnySpaceId,

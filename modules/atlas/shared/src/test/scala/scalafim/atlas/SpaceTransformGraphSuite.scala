@@ -117,7 +117,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
         ).withAsset(asset)
       )
     SpaceTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, registry = registry) match
-      case Left(AtlasError.TransformGraph(_)) => ()
+      case Left(AtlasError.Provider(TransformGraphFailure(_))) => ()
       case other => fail(s"expected a graph error for foreign frames, got $other")
 
   test("routes fall back to exact inverses only when no forward route exists"):

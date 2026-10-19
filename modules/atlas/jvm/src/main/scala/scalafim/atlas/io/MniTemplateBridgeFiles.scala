@@ -2,7 +2,7 @@ package scalafim.atlas.io
 
 import java.nio.file.Path
 
-import scalafim.atlas.{AtlasError, MniTemplateBridge, TemplateFlowXfm}
+import scalafim.atlas.{AtlasError, MniTemplateBridge, TemplateFlowXfm, TransformFailure}
 import scalafim.surface.io.TemplateFlowCache
 import scalafim.transform.{AssetRef, NativeTransform, TransformError, TransformFiles}
 
@@ -17,7 +17,7 @@ object MniTemplateBridgeFiles:
       catch case scala.util.control.NonFatal(error) => Left(AtlasError.TemplateAssetMissing(path.toString, Vector(Option(error.getMessage).getOrElse(error.toString))))
     digest
       .flatMap(sha => MniTemplateBridge.admitted(AssetRef(path.toString, Some(sha))))
-      .flatMap(_ => TransformFiles.load(path).left.map(error => AtlasError.Transform(TransformError.Io(error))))
+      .flatMap(_ => TransformFiles.load(path).left.map(error => AtlasError.Provider(TransformFailure(TransformError.Io(error)))))
       .flatMap: loaded =>
         loaded.native match
           case NativeTransform.ItkHdf5(file) => MniTemplateBridge.fromItk(file, loaded.asset)

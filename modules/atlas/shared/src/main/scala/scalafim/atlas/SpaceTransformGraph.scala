@@ -53,7 +53,7 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
     for
       world <- frame(normalized)
       kind = TemplateCatalog.domainKind(normalized)
-      geometry <- SamplingGeometry.unsampled(kind, world).left.map(AtlasError.TransformGraph.apply)
+      geometry <- SamplingGeometry.unsampled(kind, world).left.map((error => AtlasError.Provider(TransformGraphFailure(error))))
       templateKind = if kind == DomainKind.Surface then TemplateKind.Surface else TemplateKind.Volume
       name <- TemplateName(normalized.value).left.map(_ => AtlasError.UnknownSpace(normalized))
       domain <- Domain
@@ -63,7 +63,7 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
           geometry
         )
         .left
-        .map(AtlasError.TransformGraph.apply)
+        .map((error => AtlasError.Provider(TransformGraphFailure(error))))
     yield domain
 
   /** Admit a concrete sampled template surface. Catalog domains deliberately remain unsampled; this explicit factory
@@ -78,15 +78,15 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
     for
       _ <- sphere.surface.hemisphere.tag match
         case expected if expected == geometry.hemisphere => Right(())
-        case _ => Left(AtlasError.TransformGraph(SpatialError.UnsupportedGeometry("sampled template hemisphere mismatch")))
+        case _ => Left(AtlasError.Provider(TransformGraphFailure(SpatialError.UnsupportedGeometry("sampled template hemisphere mismatch"))))
       _ <- Either.cond(
         sphere.sphere.hasSameTopology(geometry.mesh),
         (),
-        AtlasError.TransformGraph(SpatialError.UnsupportedGeometry("sampled template topology mismatch"))
+        AtlasError.Provider(TransformGraphFailure(SpatialError.UnsupportedGeometry("sampled template topology mismatch")))
       )
       _ <- frame(space)
       name <- TemplateName(space.value).left.map(_ => AtlasError.UnknownSpace(space))
-      sampling <- SamplingGeometry.surface(geometry).left.map(AtlasError.TransformGraph.apply)
+      sampling <- SamplingGeometry.surface(geometry).left.map((error => AtlasError.Provider(TransformGraphFailure(error))))
       domain <- Domain
         .build(
           id,
@@ -94,7 +94,7 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
           sampling
         )
         .left
-        .map(AtlasError.TransformGraph.apply)
+        .map((error => AtlasError.Provider(TransformGraphFailure(error))))
     yield domain
 
   /** This catalog plus fresh template frames for any of `extra` it does not already hold. */
@@ -171,7 +171,7 @@ final case class SpaceTransformGraph private (
         .left
         .map {
           case SpatialError.NoPath(_, _) => AtlasError.NoTransformRoute(fromNorm, toNorm)
-          case other => AtlasError.TransformGraph(other)
+          case other => AtlasError.Provider(TransformGraphFailure(other))
         }
         .flatMap { path =>
           path.morphisms
@@ -187,7 +187,7 @@ final case class SpaceTransformGraph private (
       if morphism.isInverted then MorphismId.unsafe(morphism.id.value.stripSuffix(":inverse")) else morphism.id
     stepsById
       .get(forwardId)
-      .toRight(AtlasError.TransformGraph(SpatialError.MissingCoordinateMap(morphism.id)))
+      .toRight(AtlasError.Provider(TransformGraphFailure(SpatialError.MissingCoordinateMap(morphism.id))))
       .map { step =>
         if !morphism.isInverted then step
         else
@@ -210,7 +210,7 @@ object SpaceTransformGraph:
     for
       domains <- traverse(spaces)(fullCatalog.domain)
       edges <- traverse(registry.zipWithIndex) { (step, index) => morphism(step, index, fullCatalog) }
-      graph <- SpatialGraph.build(domains, edges.map(_._1)).left.map(AtlasError.TransformGraph.apply)
+      graph <- SpatialGraph.build(domains, edges.map(_._1)).left.map((error => AtlasError.Provider(TransformGraphFailure(error))))
     yield SpaceTransformGraph(fullCatalog, graph, edges.map((edge, step) => edge.id -> step).toMap)
 
   private def morphism(
@@ -237,16 +237,16 @@ object SpaceTransformGraph:
           coordinateMap = coordinateMap
         )
         .left
-        .map(AtlasError.TransformGraph.apply)
+        .map((error => AtlasError.Provider(TransformGraphFailure(error))))
     yield (morphism, normalized)
 
   /** The step's pullback (target world to source world); non-executable steps carry no map. */
   private def coordinateMapOf(step: TransformStep, source: Domain, target: Domain): Either[AtlasError, CoordinateMap] =
     (step.affine, step.asset) match
       case (Some(forward), _) =>
-        CoordinateMap.affine(source, target, forward.inverse).left.map(AtlasError.TransformGraph.apply)
+        CoordinateMap.affine(source, target, forward.inverse).left.map((error => AtlasError.Provider(TransformGraphFailure(error))))
       case (None, Some(asset)) =>
-        CoordinateMap.fromWorldTransform(asset.transform, asset.identity).left.map(AtlasError.TransformGraph.apply)
+        CoordinateMap.fromWorldTransform(asset.transform, asset.identity).left.map((error => AtlasError.Provider(TransformGraphFailure(error))))
       case (None, None) =>
         Right(CoordinateMap.Unspecified)
 

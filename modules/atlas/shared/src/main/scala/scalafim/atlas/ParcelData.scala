@@ -20,6 +20,6 @@ final case class ParcelData[A](
     records.map(_.value)
 
 object ParcelData:
-  def fromValues[A](atlas: VolumeAtlas, values: Vector[A]): ParcelData[A] =
+  def fromValues[A](atlas: Atlas, values: Vector[A]): ParcelData[A] =
     require(values.length == atlas.regions.size, "values length must match atlas region count")
     ParcelData(atlas.ref, atlas.regions.regions.zip(values).map(ParcelRecord.apply))

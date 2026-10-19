@@ -307,7 +307,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
         labels = valid.provenance.labels.copy(background = Some(99))
       )
     assertEquals(
-      AtlasRealization.volumeFromLabelsIn(
+      AtlasRealizations.volumeFromLabelsIn(
         DomainRegistry.empty,
         volumeRef,
         regions,
@@ -328,7 +328,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
         SampleSpaces(Vector(2, 2, 1)),
         Array(10, 10, 30, 30)
       )
-    AtlasRealization.volumeFromLabelsIn(
+    AtlasRealizations.volumeFromLabelsIn(
       DomainRegistry.empty,
       volumeRef,
       regions,
@@ -347,7 +347,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
         SampleSpaces(Vector(2, 2, 1)),
         Array(10, 10, 10, 10)
       )
-    AtlasRealization.volumeFromLabelsIn(
+    AtlasRealizations.volumeFromLabelsIn(
       DomainRegistry.empty,
       volumeRef,
       regions,

@@ -237,7 +237,7 @@ object SurfaceAtlas:
       ).message
     )
     val realization =
-      AtlasRealization.surface(ref, regions, payload, provenance)
+      AtlasRealizations.surface(ref, regions, payload, provenance)
     new SurfaceAtlas(
       realization,
       left.geometry,

@@ -151,7 +151,7 @@ class AtlasRealizationSuite extends munit.FunSuite:
         )
       )
     val result =
-      AtlasRealization.volumeIn(
+      AtlasRealizations.volumeIn(
         registered.registry,
         volumeRef,
         regions,
@@ -169,7 +169,7 @@ class AtlasRealizationSuite extends munit.FunSuite:
   test("volume and bilateral surface share exact parcel identity"):
     val volume = volumeRealization(volumeRef, regions, labelVolume())
     val surface =
-      AtlasRealization.surface(
+      AtlasRealizations.surface(
         surfaceRef,
         regions,
         surfacePayload(),
@@ -203,7 +203,7 @@ class AtlasRealizationSuite extends munit.FunSuite:
       index: RegionIndex,
       labels: SomeLabelVolume[Int]
   ): VolumeAtlasRealization =
-    AtlasRealization.volumeFromLabels(
+    AtlasRealizations.volumeFromLabels(
       ref,
       index,
       labels,

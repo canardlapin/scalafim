@@ -62,9 +62,6 @@ trait AtlasRealization:
   val metadata: Field[P, AtlasRegionMetadata]
   val displayOrder: Selection[P]
   val networkAssignment: Option[AtlasNetworkAssignment[P]]
-  val parcelDomainRecord: NeuropublishFiniteIndexedDomainV1
-  val neuropublishSupportDomains: Vector[NeuropublishSpatialDomainV1]
-  val neuropublishAssignments: Vector[NeuropublishHardAssignmentV1]
 
   final def parcelDomain: FiniteDomain[P] =
     parcelAssignment.to
@@ -117,6 +114,12 @@ trait AtlasRealization:
         .find(index => network.networkIds(index) == id)
         .map(network.assignment.fiber)
 
+/** An atlas realization with its Neuropublish projection: the optional publication adapter. */
+trait PublishedAtlasRealization extends AtlasRealization:
+  val parcelDomainRecord: NeuropublishFiniteIndexedDomainV1
+  val neuropublishSupportDomains: Vector[NeuropublishSpatialDomainV1]
+  val neuropublishAssignments: Vector[NeuropublishHardAssignmentV1]
+
   final lazy val neuropublishProjection: NeuropublishAtlasProjectionV1 =
     val order =
       displayOrder.indices.map(parcelKeys.apply).toVector
@@ -147,14 +150,14 @@ trait AtlasRealization:
   ): Either[AtlasPublicationError, Unit] =
     AtlasPublicationProjection.validate(neuropublishProjection, projection)
 
-trait VolumeAtlasRealization extends AtlasRealization:
+trait VolumeAtlasRealization extends PublishedAtlasRealization:
   type F <: Frame[D3]
 
   val domain: GridDomain[F, D3, X]
   val parcellation: VolumeParcellation[F, X, P, AtlasRegionMetadata]
   val volumeSupportDomain: NeuropublishVolumeGridDomainV1
 
-trait SurfaceAtlasRealization extends AtlasRealization:
+trait SurfaceAtlasRealization extends PublishedAtlasRealization:
   val leftVertexCount: Int
   val rightVertexCount: Int
   val leftSupportDomain: NeuropublishSurfaceVerticesDomainV1
@@ -187,7 +190,7 @@ enum AtlasRealizationError:
       case Parcellation(error) => error.message
       case Publication(error) => error.message
 
-object AtlasRealization:
+object AtlasRealizations:
   /** Register the image's exact grid owner and build one direct volume
     * realization from a categorical image4s-backed label volume.
     */

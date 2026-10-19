@@ -189,7 +189,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val shifted = volumeAtlas(space = shiftedSpace)
 
     AtlasOverlap.computeEither(reference, shifted) match
-      case Left(AtlasError.Geometry(GeometryError.GridsNotCongruent(0.0))) =>
+      case Left(AtlasError.Provider(GeometryFailure(GeometryError.GridsNotCongruent(0.0)))) =>
         ()
       case other =>
         fail(s"expected exact-grid rejection, got $other")

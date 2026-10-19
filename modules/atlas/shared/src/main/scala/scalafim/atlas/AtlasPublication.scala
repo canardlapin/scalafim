@@ -1114,15 +1114,6 @@ private[atlas] object AtlasPublicationProjection:
           transformStatus(status),
           confidence(certainty)
         )
-      case DerivationStep.ProjectedVolumeToSurface(from, to, sampling, status) =>
-        NeuropublishAtlasDerivationV1.ProjectedVolumeToSurface(
-          from.value,
-          to.value,
-          sampling.surfaceKind.label,
-          samplingMethod(sampling.method),
-          sampling.notes,
-          transformStatus(status)
-        )
       case DerivationStep.LegacyHistory(
             action,
             fromTemplate,
@@ -1177,12 +1168,6 @@ private[atlas] object AtlasPublicationProjection:
     value match
       case TransformStatus.Available => "available"
       case TransformStatus.Planned => "planned"
-
-  private def samplingMethod(value: SurfaceSamplingMethod): String =
-    value match
-      case SurfaceSamplingMethod.NearestLabel => "nearest-label"
-      case SurfaceSamplingMethod.RibbonMode => "ribbon-mode"
-      case SurfaceSamplingMethod.RibbonMean => "ribbon-mean"
 
   private def normalizeZero(value: Double): Double =
     if value == 0.0 then 0.0 else value

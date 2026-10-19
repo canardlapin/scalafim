@@ -163,15 +163,15 @@ final class MniTemplateBridge private (
     * The composite is first materialized on its own displacement lattice (2009c res-01). There the result is exact:
     * the composite's affine applied to a trilinearly interpolated displacement is the trilinear interpolant of its
     * lattice values. The bridge's pullback becomes that field, since an estimate belongs to the pullback it was
-    * qualified against. Gate failures are [[AtlasError.Transform]] with the complete residual evidence.
+    * qualified against. Gate failures are `AtlasError.Provider(TransformFailure(...))` with the complete residual evidence.
     */
   def withNumericalInverse(
       policy: InversionPolicy = MniTemplateBridge.defaultInversionPolicy,
       on: Grid[WorldFrames.Mni6, D3] = TemplateGrids.mni6Res1.grid
   ): Either[AtlasError, MniTemplateBridge] =
     for
-      field    <- transform.materialize(TemplateGrids.mni2009cRes1.grid).left.map(AtlasError.Transform.apply)
-      inverted <- field.invertNumerically(on, policy).left.map(AtlasError.Transform.apply)
+      field    <- transform.materialize(TemplateGrids.mni2009cRes1.grid).left.map((error => AtlasError.Provider(TransformFailure(error))))
+      inverted <- field.invertNumerically(on, policy).left.map((error => AtlasError.Provider(TransformFailure(error))))
     yield new MniTemplateBridge(inverted, asset)
 
 object MniTemplateBridge:
@@ -208,7 +208,7 @@ object MniTemplateBridge:
           asset
         )
         .left
-        .map(AtlasError.Transform.apply)
+        .map((error => AtlasError.Provider(TransformFailure(error))))
       mapped <- chain.composed match
         case mapped: WorldTransform.Mapped[WorldFrames.Mni6, WorldFrames.Mni2009c] @unchecked => Right(mapped)
         case other => Left(refused(xfm, s"expected a dense composite, the file interpreted as ${other.getClass.getSimpleName}"))

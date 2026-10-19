@@ -1,7 +1,5 @@
 package scalafim.atlas
 
-import scalafim.surface.SurfaceKind
-
 enum SchaeferParcels(val value: Int):
   case P100 extends SchaeferParcels(100)
   case P200 extends SchaeferParcels(200)
@@ -26,13 +24,12 @@ enum StandardSurface(
   val key: String,
   val spaceId: SurfaceSpaceId,
   val density: String,
-  val verticesPerHemisphere: Option[Int],
-  val preferredKind: SurfaceKind
+  val verticesPerHemisphere: Option[Int]
 ):
-  case FsAverage extends StandardSurface("fsaverage", SpaceId.FsAverage, "164k", Some(163842), SurfaceKind.Pial)
-  case FsAverage6 extends StandardSurface("fsaverage6", SpaceId.FsAverage6, "41k", Some(40962), SurfaceKind.Pial)
-  case FsAverage5 extends StandardSurface("fsaverage5", SpaceId.FsAverage5, "10k", Some(10242), SurfaceKind.Pial)
-  case FsLR32k extends StandardSurface("fsLR_32k", SpaceId.FsLR32k, "32k", Some(32492), SurfaceKind.Midthickness)
+  case FsAverage extends StandardSurface("fsaverage", SpaceId.FsAverage, "164k", Some(163842))
+  case FsAverage6 extends StandardSurface("fsaverage6", SpaceId.FsAverage6, "41k", Some(40962))
+  case FsAverage5 extends StandardSurface("fsaverage5", SpaceId.FsAverage5, "10k", Some(10242))
+  case FsLR32k extends StandardSurface("fsLR_32k", SpaceId.FsLR32k, "32k", Some(32492))
 
 final case class Schaefer2018(
   parcels: SchaeferParcels,

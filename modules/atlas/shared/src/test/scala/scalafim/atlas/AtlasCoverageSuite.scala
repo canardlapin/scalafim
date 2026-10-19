@@ -261,7 +261,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val mismatched = atlas(Vector(1, 2), space = fixtureSpace(Vector(2, 1, 1)))
     val cause = GeometryError.GridsNotCongruent(0.0)
     AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact) match
-      case Left(AtlasError.Geometry(GeometryError.GridsNotCongruent(tolerance))) =>
+      case Left(AtlasError.Provider(GeometryFailure(GeometryError.GridsNotCongruent(tolerance)))) =>
         assertEqualsDouble(tolerance, 0.0, 0.0)
       case result =>
         fail(s"expected typed grid-congruence failure, got $result")
@@ -318,7 +318,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
         AtlasError.TransformNotExecutable(SpaceId.FsAverage, SpaceId.FsLR32k, "non-affine") -> "transform route from 'fsaverage' to 'fsLR_32k' is not executable: non-affine",
         AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)) -> "expected spatial dimensions 2x2x1 but got 2x1x1",
         AtlasError.ExactGridRequired("expected-grid", "actual-grid") -> "exact atlas grid required; expected expected-grid but got actual-grid",
-        AtlasError.Geometry(gridMismatch) -> gridMismatch.message,
+        AtlasError.Provider(GeometryFailure(gridMismatch)) -> gridMismatch.message,
         AtlasError.InvalidQuery("bad query") -> "bad query",
         AtlasError.InvalidCoordinate("bad coordinate") -> "bad coordinate",
         AtlasError.InvalidRegionMetadata("bad metadata") -> "bad metadata"
