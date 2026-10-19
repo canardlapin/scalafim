@@ -31,14 +31,15 @@ object JavaFxViewportIsolationProbe:
           def modelFor(rebuilt: Boolean): SurfaceViewerModel =
             val geometries = ids.indices.map: index =>
               val vertices = for z <- Vector(0.2, -0.2); (x, y) <- Vector((-3.0,-3.0),(3.0,-3.0),(3.0,3.0),(-3.0,3.0)) yield Seq(x, y, z)
-              SurfaceGeometry(TriangleMesh.fromRows(vertices, Seq((0,1,2),(0,2,3),(4,5,6),(4,6,7)) ++ (if rebuilt then Seq((4,6,7)) else Seq.empty)),
+              val farFaces = if rebuilt then Seq((4,5,7),(5,6,7)) else Seq((4,5,6),(4,6,7))
+              SurfaceGeometry(TriangleMesh.fromRows(vertices, Seq((0,1,2),(0,2,3)) ++ farFaces),
                 if index == 0 then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Pial)
             val assets = ids.zip(geometries).map((id, g) => SurfaceAsset.make(id, g).toOption.get)
             val layers = ids.zip(geometries).zipWithIndex.map: (entry, index) =>
               val (id, g) = entry
               val front = if index == 0 then Rgba32.unsafe(220,30,50) else Rgba32.unsafe(20,190,80)
               SurfaceLayer.facePackedRgba(SurfaceLayerId.unsafe(s"color-$index"), id,
-                SurfaceFaceField.make(g, Array(front, front) ++ Array.fill(if rebuilt then 3 else 2)(Rgba32.unsafe(30,50,220))).toOption.get)
+                SurfaceFaceField.make(g, Array(front, front) ++ Array.fill(2)(Rgba32.unsafe(30,50,220))).toOption.get)
             SurfaceViewerModel.make(assets, layers).toOption.get
           var model = modelFor(false)
           var state = SurfaceFaceFixture.state(model)

@@ -26,7 +26,7 @@ object JavaFxNativePickProbe:
             case "face" => SurfaceFaceFixture.model
             case "large-face" =>
               val original = SurfaceFaceFixture.geometry
-              val large = SurfaceGeometry(TriangleMesh.fromArrays(original.mesh.coordinates.map(_ * 100), original.mesh.faceIndices),
+              val large = SurfaceGeometry(original.mesh.withCoordinates(original.mesh.coordinates.toArray.map(_ * 100)),
                 original.hemisphere, original.kind, original.surfaceToWorld)
               val layer = SurfaceLayer.facePackedRgba(SurfaceFaceFixture.Layer, SurfaceFaceFixture.Surface,
                 SurfaceFaceField.make(large, Array(SurfaceFaceFixture.Red, SurfaceFaceFixture.Blue)).toOption.get)
