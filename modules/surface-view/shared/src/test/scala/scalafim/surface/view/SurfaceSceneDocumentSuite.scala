@@ -9,6 +9,29 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
   private val activationId = SurfaceLayerId.unsafe("activation")
   private val labelsId = SurfaceLayerId.unsafe("labels")
 
+  test("persisted scene topology key retains its legacy hex spelling"):
+    val vertices = Vector(
+      Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0),
+      Vector(1.0, 1.0, 0.0), Vector(0.0, 1.0, 0.0)
+    )
+    val faces = Vector((0, 1, 2), (0, 2, 3))
+    def modelFor(rows: Vector[Vector[Double]], triangles: Vector[(Int, Int, Int)]): SurfaceViewerModel =
+      val geometry = SurfaceGeometry(TriangleMesh.fromRows(rows, triangles), Hemisphere.Left, SurfaceKind.Pial)
+      SurfaceViewerModel.make(Vector(SurfaceAsset.make(leftId, geometry).toOption.get), Vector.empty).toOption.get
+    val model = modelFor(vertices, faces)
+    val state = SurfaceViewerState.initial(model)
+    val bindings = SurfaceSceneBindings(Map(leftId -> reference("asset://surfaces/quad", 'a')), Map.empty)
+    val provenance = SurfaceProvenance.make("identity-golden", "1", "2026-10-19T00:00:00Z", Vector.empty).toOption.get
+    val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+    val encoded = SurfaceSceneCodec.encode(document)
+    assertEquals(document.assets.head.topologyIdentity, "fcf7e2e81f78e46f")
+    assert(encoded.contains("\"topologyIdentity\":\"fcf7e2e81f78e46f\""))
+    val decoded = SurfaceSceneCodec.decode(encoded).toOption.get
+    assertEquals(decoded.assets.head.topologyIdentity, "fcf7e2e81f78e46f")
+    assertEquals(decoded.restore(model, bindings), Right(state))
+    assert(decoded.restore(modelFor(vertices.map(_.map(_ * 2.0)), faces), bindings).isRight)
+    assert(decoded.restore(modelFor(vertices, faces.reverse), bindings).isLeft)
+
   test("revision 1 documents retain vertex association and their original JSON shape"):
     val (model, state, bindings, provenance) = fixture()
     val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get

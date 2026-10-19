@@ -1,0 +1,24 @@
+{
+  "quad": {
+    "hex": "fcf7e2e81f78e46f",
+    "decimal": "-218456570315873169"
+  },
+  "reorderedQuad": {
+    "hex": "6861754c1ed19bde",
+    "decimal": "7521421822480456670"
+  },
+  "disconnectedBanks": {
+    "hex": "15eee6888e0561b3",
+    "decimal": "1580453993426280883"
+  },
+  "quadSurface": {
+    "left": "4c7011c0f5eb306b575eb8ec6ff154537c4084fff4324a4a9c0dcaa242239068",
+    "right": "dccf1258fbdc49208abe7fccd65c0a95704eb1f787ea1fd4b598415bd5856752",
+    "bilateral": "e70751de9fdb395d32ac4191d5291885c2f181210621e3e2bfb5aa4487b2581f"
+  },
+  "reorderedQuadSurface": {
+    "left": "bcc68c3de25a207c6f5c0c8728d57d5e70548297966e0b25823894a87589f7eb",
+    "right": "73b84152f673d8b6bd050aa9f9c39d30b81fd6a52d15014ab7f50c3e143135d5",
+    "bilateral": "2a48f89b1c400b954e3b095a91c5cc6fe9c6f9f24a0186592739f48b15abe0b0"
+  }
+}

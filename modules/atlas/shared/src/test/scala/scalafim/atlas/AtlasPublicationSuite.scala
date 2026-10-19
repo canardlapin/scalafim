@@ -120,6 +120,19 @@ class AtlasPublicationSuite extends munit.FunSuite:
         quadMesh(swappedFaces = false, coordinateScale = 2.0)
       ).realization
 
+    // Independent Python hashlib/preimage calculation in the topology identity receipt.
+    assertEquals(
+      first.leftSupportDomain.identity.structuralFingerprint,
+      "4c7011c0f5eb306b575eb8ec6ff154537c4084fff4324a4a9c0dcaa242239068"
+    )
+    assertEquals(
+      first.rightSupportDomain.identity.structuralFingerprint,
+      "dccf1258fbdc49208abe7fccd65c0a95704eb1f787ea1fd4b598415bd5856752"
+    )
+    assertEquals(
+      reordered.leftSupportDomain.identity.structuralFingerprint,
+      "bcc68c3de25a207c6f5c0c8728d57d5e70548297966e0b25823894a87589f7eb"
+    )
     assertNotEquals(
       first.leftSupportDomain.identity.structuralFingerprint,
       reordered.leftSupportDomain.identity.structuralFingerprint

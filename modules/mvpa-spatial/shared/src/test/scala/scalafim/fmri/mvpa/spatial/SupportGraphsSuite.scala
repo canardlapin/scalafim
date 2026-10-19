@@ -19,7 +19,8 @@ class SupportGraphsSuite extends FunSuite:
     assert(graph.edges.forall(e => (e.left < 3) == (e.right < 3)))
     assertEqualsDouble(graph.edges.find(e => e.left == 0 && e.right == 1).get.weight, 0.5, 1e-12)
     assertEquals(graph.weightUnits, "1/mm")
-    assert(graph.topology.isInstanceOf[SupportTopology.SurfaceTriangles])
+    // Frozen legacy decimal topology ID, independently calculated by reference.py.
+    assertEquals(graph.topology, SupportTopology.SurfaceTriangles("1580453993426280883"))
 
   test("volume uses face adjacency only and preserves anisotropic physical weights"):
     val coordinates = Vector((0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1), (2, 2, 0))
