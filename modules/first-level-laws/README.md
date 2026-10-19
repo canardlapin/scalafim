@@ -1,7 +1,7 @@
 # First-level generated laws
 
 `first-level-laws` is the non-published property court for ScalaFIM's public
-first-level stack. It depends on `hrf-laws` and `fit`, so generated examples can
+first-level stack. It owns the HRF kernel and parametric-family law helpers and depends on `fit`, so generated examples can
 cross the real HRF, design, model, and fit boundaries without adding a testing
 dependency to any production artifact.
 

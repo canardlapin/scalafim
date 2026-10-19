@@ -46,11 +46,11 @@ run_batch phrf-comparison-js phrfComparisonJS/test
 # runners otherwise accumulate enough heap to exhaust ordinary CI runners.
 run_batch core-jvm \
   locusDataJVM/test pipelineJVM/test responseJVM/test responseLawsJVM/test \
-  latentJVM/test arJVM/test hrfJVM/test hrfLawsJVM/test \
+  latentJVM/test arJVM/test hrfJVM/test \
   scenarioTestkitJVM/test designJVM/test providerSpikeJVM/test
 run_batch core-js \
   locusDataJS/test pipelineJS/test responseJS/test responseLawsJS/test \
-  latentJS/test arJS/test hrfJS/test hrfLawsJS/test \
+  latentJS/test arJS/test hrfJS/test \
   scenarioTestkitJS/test designJS/test providerSpikeJS/test
 
 run_batch image-surface-jvm \
@@ -73,9 +73,9 @@ run_batch data-js \
   archivedResponseInteropJS/test datasetJS/test
 
 run_batch estimates-jvm \
-  estimatesJVM/test estimatesIoJVM/test fitEstimatesJVM/test
+  estimatesJVM/test estimatesIoJVM/test
 run_batch estimates-js \
-  estimatesJS/test estimatesIoJS/test fitEstimatesJS/test
+  estimatesJS/test estimatesIoJS/test
 
 run_batch analysis-jvm \
   modelJVM/test fitJVM/test firstLevelLawsJVM/test mvpaPipelineJVM/test mvpaFitJVM/test

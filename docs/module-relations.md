@@ -26,10 +26,10 @@ The estimate artifact modules form a separate reader boundary:
 estimates     -> archive, image
 estimates-io  -> estimates
 mvpa-artifacts -> mvpa4s, estimates, archive
-fit-estimates -> fit, estimates, group
+fmri-workflow -> fit, group
 ```
 
-`fit-estimates` uses `estimates-io` only in its test configuration for physical
+`fmri-workflow` uses `estimates-io` only in its test configuration for physical
 readback tests. A production reader has no dependency on the fitter. The group
 bridge now reads pinned estimate inputs; workflow result references remain to
 be migrated. See [estimate sets](estimate-sets.md).
@@ -215,7 +215,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface objects into MVPA feature-set plans. | `mvpa4s`, `surface`, `threshold` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
-| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
+| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, result references, estimate production, and the eager fit-to-group adapter; generic pipeline lowering is a future orchestration slice. | `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
 | `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
 
@@ -244,7 +244,7 @@ archive-lna + archive-zarr + latent + response + dataset
 response -> response-laws
   -> reusable checks consumed from module test configurations
 
-hrf-laws + fit -> first-level-laws
+fit -> first-level-laws (owns HRF law helpers)
   -> generated cross-stack scientific laws; test-only and non-published
 
 archive-zarr + dataset + image + bids4s

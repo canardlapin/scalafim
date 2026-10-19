@@ -1,0 +1,82 @@
+[
+  {
+    "from": "modules/hrf-laws/shared/src/main/scala/scalafim/fmri/hrf/laws/HrfLaws.scala",
+    "to": "modules/first-level-laws/shared/src/main/scala/scalafim/fmri/hrf/laws/HrfLaws.scala",
+    "sha256": "a910bfdd590097e5ad98100a796ca89c36f057014d6e745c8101ea2d6e27516e",
+    "finalSha256": "6973dafe65150516668f2cf10069f93a9f75aef3e8d76dcfdc0fc3f1e1c8674d",
+    "change": "Remove unused HrfAssignment and StimulusEvent imports required by the destination compiler policy."
+  },
+  {
+    "from": "modules/hrf-laws/shared/src/main/scala/scalafim/fmri/hrf/laws/ParametricFamilyLaws.scala",
+    "to": "modules/first-level-laws/shared/src/main/scala/scalafim/fmri/hrf/laws/ParametricFamilyLaws.scala",
+    "sha256": "b0f7066747e30af34e548445b1045db298e1851f4fc167322462135d80bae305",
+    "finalSha256": "b0f7066747e30af34e548445b1045db298e1851f4fc167322462135d80bae305"
+  },
+  {
+    "from": "modules/hrf-laws/shared/src/test/scala/scalafim/fmri/hrf/laws/HrfLawsSuite.scala",
+    "to": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/hrf/laws/HrfLawsSuite.scala",
+    "sha256": "1a4c430d143e0f9f24ac00392d157c20531dd4e985507f607a1740a21a33e4d4",
+    "finalSha256": "99846422e4a0a56a7819edefa77e882520f0eb90767ab59243751f9704785b5a",
+    "change": "Discard an unused pattern variable required by the destination compiler policy."
+  },
+  {
+    "from": "modules/hrf-laws/shared/src/test/scala/scalafim/fmri/hrf/laws/ParametricFamilyLawsSuite.scala",
+    "to": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/hrf/laws/ParametricFamilyLawsSuite.scala",
+    "sha256": "7c09f2eb3d8b0acc19e94cb6cfde9b7fa97a3a077660a84e16146e0ed595baed",
+    "finalSha256": "7c09f2eb3d8b0acc19e94cb6cfde9b7fa97a3a077660a84e16146e0ed595baed"
+  },
+  {
+    "from": "modules/fit-estimates/jvm/src/test/scala/scalafim/fmri/fit/estimates/FirAnalyticProducerProbe.scala",
+    "to": "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/fit/estimates/FirAnalyticProducerProbe.scala",
+    "sha256": "79a403de259164779aa16951a143b3cf25920837691264a550c75cdb89a9468f",
+    "finalSha256": "79a403de259164779aa16951a143b3cf25920837691264a550c75cdb89a9468f"
+  },
+  {
+    "from": "modules/fit-estimates/jvm/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateReadbackSuite.scala",
+    "to": "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateReadbackSuite.scala",
+    "sha256": "52c432a7910857b1ccef8f333ee3b8210db2fb6926b2340128d0655ab430d666",
+    "finalSha256": "52c432a7910857b1ccef8f333ee3b8210db2fb6926b2340128d0655ab430d666"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala",
+    "to": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala",
+    "sha256": "151392d616bf52b7863c343bcca79bf2bd21f339cf7080eb211642f957f7a091",
+    "finalSha256": "151392d616bf52b7863c343bcca79bf2bd21f339cf7080eb211642f957f7a091"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala",
+    "to": "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala",
+    "sha256": "6dd242e4047b4a3aea6c6009fec85b6f1fad16a5fcc372ff4bb528dadb03deee",
+    "finalSha256": "6dd242e4047b4a3aea6c6009fec85b6f1fad16a5fcc372ff4bb528dadb03deee"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/fit/estimates/FirEstimateProducerSuite.scala",
+    "to": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/fit/estimates/FirEstimateProducerSuite.scala",
+    "sha256": "a0ddf906b941d610f240de1cb52f73e4d025e04eec8b77dffe6d941b9977f857",
+    "finalSha256": "a0ddf906b941d610f240de1cb52f73e4d025e04eec8b77dffe6d941b9977f857"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateProducerSuite.scala",
+    "to": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateProducerSuite.scala",
+    "sha256": "04fe7aca132979a0ecd2a4cf736575d838e76edcff68fa73ff5774008568c99e",
+    "finalSha256": "04fe7aca132979a0ecd2a4cf736575d838e76edcff68fa73ff5774008568c99e"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/FirstLevelBridgeSuite.scala",
+    "to": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/FirstLevelBridgeSuite.scala",
+    "sha256": "d5b56c2868539e4c9de5193aa6c9d998af8356d6685378d4cc6abb5c9ced2905",
+    "finalSha256": "d5b56c2868539e4c9de5193aa6c9d998af8356d6685378d4cc6abb5c9ced2905"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+    "to": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+    "sha256": "b4e169f439eb937d4b62ebf295a4d13b732b634feddb5f9529ddef3d39c90b1c",
+    "finalSha256": "b4e169f439eb937d4b62ebf295a4d13b732b634feddb5f9529ddef3d39c90b1c"
+  },
+  {
+    "from": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+    "to": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+    "sha256": "eed452046064ec6c070e11f65ca06b15da572e002f48e8ff8fa25cde4fdc9b6b",
+    "finalSha256": "eed452046064ec6c070e11f65ca06b15da572e002f48e8ff8fa25cde4fdc9b6b"
+  }
+]

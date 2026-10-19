@@ -16,8 +16,7 @@ cross-compiled sbt build.
 - `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
 - `ar`: checked run/censor-aware AR estimation, AR/ARMA whitening plans, diagnostics, and pure design/data prewhitening.
 - `hrf`: causal hemodynamic kernels with enforced causality and declared support, pulse-shaped neural drive (impulse, unit-height and unit-mass boxes), convergent box quadrature, response bases with typed dual coefficients and reported basis transforms, sampling, convolution, and regressors.
-- `hrf-laws`: reusable JVM/Scala.js law checks for kernel causality and support, event additivity, homogeneity, permutation invariance, translation equivariance, pulse and quadrature convergence, basis reconstruction and gauge invariance, and evaluation-plan equivalence.
-- `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
+- `first-level-laws`: HRF kernel and parametric-family law checks, plus non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, toolkit coordinate conventions and world-frame binding over neuroim4s-spaces world identities, provider-backed (image4s/reframe4s) resampling, statistics, clustering, and image IO.
@@ -41,7 +40,6 @@ cross-compiled sbt build.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
 - `estimates`: fit-independent estimate catalogs, scientific identities, product/validity/uncertainty metadata and bounded read/write contracts.
 - `estimates-io`: shared development-schema JSON codecs and a JVM local NIfTI sink, verified reader and immutable collection publication. See [implementation scope](docs/estimate-sets.md).
-- `fit-estimates`: physical-IO-independent shared-OLS effects and joint-uncertainty producer, plus the eager direct-fit group adapter.
 - `archive-lna`: typed LNA 2 schema, pure manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
 - `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, LNA pipeline reconstruction, archive-aware dataset adapters, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
@@ -58,7 +56,7 @@ cross-compiled sbt build.
 - `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `mvpa-group`: identified subject-coordinate and full-covariance adapters into group inputs, preserving first-level uncertainty/df and explicit admission limits.
-- `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
+- `fmri-workflow`: estimate production and the eager fit-to-group adapter, plus typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
 - Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
 - `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.

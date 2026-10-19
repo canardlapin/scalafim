@@ -50,8 +50,8 @@ bash tools/ci/first-level-gate.sh
 ```
 
 This uses Python's standard library for manifest and checked-in fixture
-coherence, then runs the shared `scenario-testkit`, `hrf`, `hrf-laws`,
-`design`, `model`, and `fit` tests on both the JVM and Scala.js. It does not
+coherence, then runs the shared `scenario-testkit`, `hrf`, `design`, `model`,
+`fit`, and `first-level-laws` tests on both the JVM and Scala.js. It does not
 install or execute R, Nilearn, or fmrimod.
 
 ## Live regeneration

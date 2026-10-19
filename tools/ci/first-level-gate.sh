@@ -73,10 +73,10 @@ run_batch() {
 # accumulate across the whole first-level court.
 run_batch formatting firstLevelLawsJVM/Test/scalafmtCheck
 run_batch first-level-jvm \
-  scenarioTestkitJVM/test arJVM/test hrfJVM/test hrfLawsJVM/test \
+  scenarioTestkitJVM/test arJVM/test hrfJVM/test \
   designJVM/test modelJVM/test fitJVM/test firstLevelLawsJVM/test
 run_batch first-level-js-a \
-  scenarioTestkitJS/test arJS/test hrfJS/test hrfLawsJS/test
+  scenarioTestkitJS/test arJS/test hrfJS/test
 run_batch first-level-js-b \
   designJS/test modelJS/test fitJS/test firstLevelLawsJS/test
 echo "[first-level-ci] focused first-level gates passed"

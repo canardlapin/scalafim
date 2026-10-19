@@ -152,6 +152,29 @@ Collapse the typed/legacy `FitConfig` and `ContrastCore` bridges to the typed
 form. This touches fit identity hashing, so it needs its own plan with
 identity fixtures before any change.
 
+## Implementation progress (2026-10-19)
+
+- A1: unused HRF/design dependencies, unused Multivar project refs, wrong
+  MVPA edges, and redundant workflow/comparison edges removed. MVPA spatial
+  tests now declare their predictive provider directly; MVPA artifact codecs
+  declare `ujson` directly.
+- A2, bounded portion: the unreferenced separable-filter implementation and
+  R-name HRF facade removed. Deprecated APIs, `PrimitiveBuffers`, duplicate
+  reader handling, and the unused-public-definition audit remain.
+- A4: obsolete removed-type/file scans, the duplicate frame-erasure scan,
+  duplicate all-build aliases, and the Mill experiment removed. The live
+  frame-erasure and provider-state checks remain at the image boundary.
+- B1/B2: `hrf-laws` absorbed by `first-level-laws`; `fit-estimates` absorbed by
+  `fmri-workflow`. Packages stay unchanged. Compiler policy required only two
+  unused imports and one unused pattern variable to be removed from moved
+  law files. The build now declares 49 modules instead of 51.
+- Remaining B steps retain their original gates and coordination requirements.
+
+The [verification receipt](../verification/module-simplification-20261019/README.md)
+records the checks, original/final move hashes, adverse attempts, and recovery
+of the unpublished mesh4s prerequisite. These steps do not complete either
+simplification phase or an ecosystem milestone.
+
 ## 5. Decisions (2026-10-19)
 
 1. Delete `mvpa-pipeline`: **approved**.

@@ -1,7 +1,7 @@
 package scalafim.fmri.hrf.laws
 
 import scalafim.fmri.hrf.*
-import scalafim.fmri.hrf.regressor.{HrfAssignment, Regressor, StimulusEvent}
+import scalafim.fmri.hrf.regressor.Regressor
 
 /** A law that failed, with enough detail to act on. */
 final case class LawFailure(law: String, detail: String, worstError: Double):

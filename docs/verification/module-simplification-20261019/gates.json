@@ -1,0 +1,782 @@
+{
+  "baseline": "747282570b1132486968845f2baefdce3658b960",
+  "hygieneCommit": "933fc6c23",
+  "gates": [
+    {
+      "task": "hrfJVM/test",
+      "exitCode": 0,
+      "seconds": 111.7,
+      "log": "01-jvm.log",
+      "total": 398,
+      "failed": 0,
+      "errors": 0,
+      "passed": 398,
+      "skipped": 0
+    },
+    {
+      "task": "hrfJS/test",
+      "exitCode": 0,
+      "seconds": 30.5,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 398,
+      "failed": 0,
+      "errors": 0,
+      "passed": 398,
+      "skipped": 0
+    },
+    {
+      "task": "designJVM/test",
+      "exitCode": 0,
+      "seconds": 45.6,
+      "log": "01-jvm.log",
+      "total": 553,
+      "failed": 0,
+      "errors": 0,
+      "passed": 553,
+      "skipped": 0
+    },
+    {
+      "task": "designJS/test",
+      "exitCode": 0,
+      "seconds": 74.9,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 552,
+      "failed": 0,
+      "errors": 0,
+      "passed": 552,
+      "skipped": 0
+    },
+    {
+      "task": "imageJVM/test",
+      "exitCode": 0,
+      "seconds": 24.9,
+      "log": "01-jvm.log",
+      "total": 355,
+      "failed": 0,
+      "errors": 0,
+      "passed": 355,
+      "skipped": 0
+    },
+    {
+      "task": "imageJS/test",
+      "exitCode": 0,
+      "seconds": 49.3,
+      "log": "07-image-js-fresh.log",
+      "total": 325,
+      "failed": 0,
+      "errors": 0,
+      "passed": 325,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaSpatialJVM/test",
+      "exitCode": 0,
+      "seconds": 24.3,
+      "log": "02-jvm-resume.log",
+      "total": 24,
+      "failed": 0,
+      "errors": 0,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaSpatialJS/test",
+      "exitCode": 0,
+      "seconds": 136.1,
+      "log": "08-mvpa-js.log",
+      "total": 24,
+      "failed": 0,
+      "errors": 0,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaArtifactsJVM/test",
+      "exitCode": 0,
+      "seconds": 7.4,
+      "log": "03-jvm-resume.log",
+      "total": 13,
+      "failed": 0,
+      "errors": 0,
+      "passed": 13,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaArtifactsJS/test",
+      "exitCode": 0,
+      "seconds": 12.8,
+      "log": "08-mvpa-js.log",
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "passed": 5,
+      "skipped": 0
+    },
+    {
+      "task": "fmriWorkflowJVM/test",
+      "exitCode": 0,
+      "seconds": 15.7,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 39,
+      "failed": 0,
+      "errors": 0,
+      "passed": 39,
+      "skipped": 0
+    },
+    {
+      "task": "fmriWorkflowJS/test",
+      "exitCode": 0,
+      "seconds": 112.2,
+      "log": "09-workflow-js.log",
+      "total": 31,
+      "failed": 0,
+      "errors": 0,
+      "passed": 31,
+      "skipped": 0
+    },
+    {
+      "task": "firstLevelLawsJVM/test",
+      "exitCode": 0,
+      "seconds": 384.0,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "skipped": 1
+    },
+    {
+      "task": "firstLevelLawsJS/test",
+      "exitCode": 0,
+      "seconds": 10624.4,
+      "log": "10-laws-js.log",
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "skipped": 1
+    },
+    {
+      "task": "phrfComparisonJVM/test",
+      "exitCode": 0,
+      "seconds": 383.2,
+      "log": "03-jvm-resume.log",
+      "total": 548,
+      "failed": 0,
+      "errors": 0,
+      "passed": 544,
+      "skipped": 4
+    },
+    {
+      "task": "phrfComparisonJS/test",
+      "exitCode": 0,
+      "seconds": 246.9,
+      "log": "11-comparison-js.log",
+      "total": 254,
+      "failed": 0,
+      "errors": 0,
+      "passed": 254,
+      "skipped": 0
+    }
+  ],
+  "compileAll": {
+    "task": "scalafimCompileAll",
+    "exitCode": 0,
+    "seconds": 406.0,
+    "log": "12-compile-all.log"
+  },
+  "classpathChecks": "passed",
+  "attempts": [
+    {
+      "task": "hrfJVM/test",
+      "exitCode": 0,
+      "seconds": 111.7,
+      "log": "01-jvm.log",
+      "total": 398,
+      "failed": 0,
+      "errors": 0,
+      "passed": 398,
+      "skipped": 0
+    },
+    {
+      "task": "designJVM/test",
+      "exitCode": 0,
+      "seconds": 45.6,
+      "log": "01-jvm.log",
+      "total": 553,
+      "failed": 0,
+      "errors": 0,
+      "passed": 553,
+      "skipped": 0
+    },
+    {
+      "task": "imageJVM/test",
+      "exitCode": 0,
+      "seconds": 24.9,
+      "log": "01-jvm.log",
+      "total": 355,
+      "failed": 0,
+      "errors": 0,
+      "passed": 355,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaSpatialJVM/test",
+      "exitCode": 1,
+      "seconds": 23.7,
+      "log": "01-jvm.log"
+    },
+    {
+      "task": "reload",
+      "exitCode": 0,
+      "seconds": 40.2,
+      "log": "02-jvm-resume.log"
+    },
+    {
+      "task": "mvpaSpatialJVM/test",
+      "exitCode": 0,
+      "seconds": 24.3,
+      "log": "02-jvm-resume.log",
+      "total": 24,
+      "failed": 0,
+      "errors": 0,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaArtifactsJVM/test",
+      "exitCode": 1,
+      "seconds": 5.1,
+      "log": "02-jvm-resume.log"
+    },
+    {
+      "task": "reload",
+      "exitCode": 0,
+      "seconds": 42.8,
+      "log": "03-jvm-resume.log"
+    },
+    {
+      "task": "mvpaArtifactsJVM/test",
+      "exitCode": 0,
+      "seconds": 7.4,
+      "log": "03-jvm-resume.log",
+      "total": 13,
+      "failed": 0,
+      "errors": 0,
+      "passed": 13,
+      "skipped": 0
+    },
+    {
+      "task": "fmriWorkflowJVM/test",
+      "exitCode": 0,
+      "seconds": 21.4,
+      "log": "03-jvm-resume.log",
+      "total": 23,
+      "failed": 0,
+      "errors": 0,
+      "passed": 23,
+      "skipped": 0
+    },
+    {
+      "task": "phrfComparisonJVM/test",
+      "exitCode": 0,
+      "seconds": 383.2,
+      "log": "03-jvm-resume.log",
+      "total": 548,
+      "failed": 0,
+      "errors": 0,
+      "passed": 544,
+      "skipped": 4
+    },
+    {
+      "task": "reload",
+      "exitCode": 0,
+      "seconds": 42.3,
+      "log": "04-merges-jvm-and-core-js.log"
+    },
+    {
+      "task": "firstLevelLawsJVM/test",
+      "exitCode": 1,
+      "seconds": 6.9,
+      "log": "04-merges-jvm-and-core-js.log"
+    },
+    {
+      "task": "firstLevelLawsJVM/test",
+      "exitCode": 1,
+      "seconds": 18.1,
+      "log": "05-merges-jvm-and-core-js.log"
+    },
+    {
+      "task": "firstLevelLawsJVM/test",
+      "exitCode": 0,
+      "seconds": 384.0,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "skipped": 1
+    },
+    {
+      "task": "fmriWorkflowJVM/test",
+      "exitCode": 0,
+      "seconds": 15.7,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 39,
+      "failed": 0,
+      "errors": 0,
+      "passed": 39,
+      "skipped": 0
+    },
+    {
+      "task": "hrfJS/test",
+      "exitCode": 0,
+      "seconds": 30.5,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 398,
+      "failed": 0,
+      "errors": 0,
+      "passed": 398,
+      "skipped": 0
+    },
+    {
+      "task": "designJS/test",
+      "exitCode": 0,
+      "seconds": 74.9,
+      "log": "06-merges-jvm-and-core-js.log",
+      "total": 552,
+      "failed": 0,
+      "errors": 0,
+      "passed": 552,
+      "skipped": 0
+    },
+    {
+      "task": "imageJS/test",
+      "exitCode": 1,
+      "seconds": 241.4,
+      "log": "06-merges-jvm-and-core-js.log"
+    },
+    {
+      "task": "imageJS/test",
+      "exitCode": 0,
+      "seconds": 49.3,
+      "log": "07-image-js-fresh.log",
+      "total": 325,
+      "failed": 0,
+      "errors": 0,
+      "passed": 325,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaSpatialJS/test",
+      "exitCode": 0,
+      "seconds": 136.1,
+      "log": "08-mvpa-js.log",
+      "total": 24,
+      "failed": 0,
+      "errors": 0,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "task": "mvpaArtifactsJS/test",
+      "exitCode": 0,
+      "seconds": 12.8,
+      "log": "08-mvpa-js.log",
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "passed": 5,
+      "skipped": 0
+    },
+    {
+      "task": "fmriWorkflowJS/test",
+      "exitCode": 0,
+      "seconds": 112.2,
+      "log": "09-workflow-js.log",
+      "total": 31,
+      "failed": 0,
+      "errors": 0,
+      "passed": 31,
+      "skipped": 0
+    },
+    {
+      "task": "firstLevelLawsJS/test",
+      "exitCode": 0,
+      "seconds": 10624.4,
+      "log": "10-laws-js.log",
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "skipped": 1
+    },
+    {
+      "task": "phrfComparisonJS/test",
+      "exitCode": 0,
+      "seconds": 246.9,
+      "log": "11-comparison-js.log",
+      "total": 254,
+      "failed": 0,
+      "errors": 0,
+      "passed": 254,
+      "skipped": 0
+    },
+    {
+      "task": "scalafimCompileAll",
+      "exitCode": 0,
+      "seconds": 406.0,
+      "log": "12-compile-all.log"
+    },
+    {
+      "task": "show hrfJVM/libraryDependencies",
+      "exitCode": 0,
+      "seconds": 0.5,
+      "log": "12-compile-all.log"
+    },
+    {
+      "task": "show mvpaSpatialJVM/Compile/internalDependencyClasspath",
+      "exitCode": 0,
+      "seconds": 4.9,
+      "log": "12-compile-all.log"
+    },
+    {
+      "task": "show mvpaArtifactsJVM/Compile/internalDependencyClasspath",
+      "exitCode": 0,
+      "seconds": 4.0,
+      "log": "12-compile-all.log"
+    }
+  ],
+  "logs": [
+    {
+      "file": "01-jvm.log",
+      "sha256": "74ef12f730851e02586ec26f4731e6117c16d38dd06834d0737d05fb2cae01c7",
+      "bytes": 128457,
+      "exitCode": 1,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T10:58:13.791578+00:00",
+        "finished_utc": "2026-10-19T11:01:51.595838+00:00",
+        "duration_seconds": 217.802211,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJVM/test",
+          "designJVM/test",
+          "imageJVM/test",
+          "mvpaSpatialJVM/test",
+          "mvpaArtifactsJVM/test",
+          "fmriWorkflowJVM/test",
+          "phrfComparisonJVM/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/01-jvm.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 128457
+      }
+    },
+    {
+      "file": "02-jvm-resume.log",
+      "sha256": "9c0b25f5f1ab6c709a03a891601adba66b98851694b40d9e0591fd20786b8d21",
+      "bytes": 14190,
+      "exitCode": 1,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:02:07.848155+00:00",
+        "finished_utc": "2026-10-19T11:03:17.522748+00:00",
+        "duration_seconds": 69.673863,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "reload",
+          "mvpaSpatialJVM/test",
+          "mvpaArtifactsJVM/test",
+          "fmriWorkflowJVM/test",
+          "phrfComparisonJVM/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/02-jvm-resume.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 14190
+      }
+    },
+    {
+      "file": "03-jvm-resume.log",
+      "sha256": "78c8ccbb5dc9cdaf160abbe288909b32af81d3b4483deee38c61bab03144bd29",
+      "bytes": 88257,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:03:25.827891+00:00",
+        "finished_utc": "2026-10-19T11:11:00.736017+00:00",
+        "duration_seconds": 454.895723,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "reload",
+          "mvpaArtifactsJVM/test",
+          "fmriWorkflowJVM/test",
+          "phrfComparisonJVM/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/03-jvm-resume.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 88257
+      }
+    },
+    {
+      "file": "04-merges-jvm-and-core-js.log",
+      "sha256": "df51e26675a19a6b5ea6b0c923b2424a4f2c5572f2b6878eca2ec9aeae90b798",
+      "bytes": 9834,
+      "exitCode": 1,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:11:08.695549+00:00",
+        "finished_utc": "2026-10-19T11:11:57.997414+00:00",
+        "duration_seconds": 49.301054,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "reload",
+          "firstLevelLawsJVM/test",
+          "fmriWorkflowJVM/test",
+          "hrfJS/test",
+          "designJS/test",
+          "imageJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/04-merges-jvm-and-core-js.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 9834
+      }
+    },
+    {
+      "file": "05-merges-jvm-and-core-js.log",
+      "sha256": "fd5dfe81b5d1e28f226b4346802bf75dababb588795f7af78342b5b557d5292e",
+      "bytes": 942,
+      "exitCode": 1,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:12:17.943638+00:00",
+        "finished_utc": "2026-10-19T11:12:36.192998+00:00",
+        "duration_seconds": 18.249149,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "firstLevelLawsJVM/test",
+          "fmriWorkflowJVM/test",
+          "hrfJS/test",
+          "designJS/test",
+          "imageJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/05-merges-jvm-and-core-js.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 942
+      }
+    },
+    {
+      "file": "06-merges-jvm-and-core-js.log",
+      "sha256": "a7fd7d80d52d78649c3716382945bb47717bb3682077b2e6ec137e700f966927",
+      "bytes": 272046,
+      "exitCode": 1,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:12:58.088824+00:00",
+        "finished_utc": "2026-10-19T11:25:24.734921+00:00",
+        "duration_seconds": 746.638114,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "firstLevelLawsJVM/test",
+          "fmriWorkflowJVM/test",
+          "hrfJS/test",
+          "designJS/test",
+          "imageJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/06-merges-jvm-and-core-js.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 272046
+      }
+    },
+    {
+      "file": "07-image-js-fresh.log",
+      "sha256": "60832398b12728f0f1c59b420e6c96f6c8ab8f2efc280de12497e53b8e608c4b",
+      "bytes": 35101,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:25:33.127999+00:00",
+        "finished_utc": "2026-10-19T11:26:22.555401+00:00",
+        "duration_seconds": 49.426753,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "imageJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/07-image-js-fresh.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 35101
+      }
+    },
+    {
+      "file": "08-mvpa-js.log",
+      "sha256": "5c8252b68989f83804d4cee25136213107309484a28204e968ffa0a806b11e3e",
+      "bytes": 17807,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:26:59.335197+00:00",
+        "finished_utc": "2026-10-19T11:29:28.386176+00:00",
+        "duration_seconds": 149.049234,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "mvpaSpatialJS/test",
+          "mvpaArtifactsJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/08-mvpa-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 17807
+      }
+    },
+    {
+      "file": "09-workflow-js.log",
+      "sha256": "9f6b1dceef567806f365bbf69db5cbb888734e67bc78e5712aa28a3b6d22915b",
+      "bytes": 13666,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:29:30.130958+00:00",
+        "finished_utc": "2026-10-19T11:31:22.518579+00:00",
+        "duration_seconds": 112.38619,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "fmriWorkflowJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/09-workflow-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 13666
+      }
+    },
+    {
+      "file": "10-laws-js.log",
+      "sha256": "110665e142a2091c2ca7f56cf2876df655e551dfe505d9703b563afdfcce69c8",
+      "bytes": 187661,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T11:31:23.276338+00:00",
+        "finished_utc": "2026-10-19T14:28:27.783030+00:00",
+        "duration_seconds": 1267.051503,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "firstLevelLawsJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/10-laws-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 187661
+      }
+    },
+    {
+      "file": "11-comparison-js.log",
+      "sha256": "99b95932f0b6db8d09d75fdc383ea14031013b906e467bcf341bf59ff3fbd66e",
+      "bytes": 38248,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T14:28:29.665972+00:00",
+        "finished_utc": "2026-10-19T14:32:36.763572+00:00",
+        "duration_seconds": 247.097649,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "phrfComparisonJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/11-comparison-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 38248
+      }
+    },
+    {
+      "file": "12-compile-all.log",
+      "sha256": "a6938a6de4175ce3024523d2df0143d1a5b8b7879c8016c734923d2f73a33cc3",
+      "bytes": 28932,
+      "exitCode": 0,
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T14:32:37.946519+00:00",
+        "finished_utc": "2026-10-19T14:39:33.625405+00:00",
+        "duration_seconds": 415.664397,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/private/tmp/scalafim-simplify-a-20261019/tools/build/sbt-warm",
+          "scalafimCompileAll",
+          "show hrfJVM/libraryDependencies",
+          "show mvpaSpatialJVM/Compile/internalDependencyClasspath",
+          "show mvpaArtifactsJVM/Compile/internalDependencyClasspath"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/private/tmp/scalafim-simplify-a-evidence/12-compile-all.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 28932
+      }
+    }
+  ]
+}

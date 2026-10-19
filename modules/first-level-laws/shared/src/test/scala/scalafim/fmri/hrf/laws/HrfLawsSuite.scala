@@ -76,7 +76,7 @@ class HrfLawsSuite extends munit.FunSuite:
 
   test("evaluation plans agree within the stated tolerance"):
     // Grid-aligned onsets: all three plans should agree tightly.
-    scalarKernels.foreach { case (name, hrf) =>
+    scalarKernels.foreach { case (_, hrf) =>
       report(HrfLaws.planEquivalence(hrf, Seq(10.0, 30.0), grid, precision = 0.1, tol = 1e-2))
     }
 
