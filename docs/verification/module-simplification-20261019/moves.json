@@ -23,7 +23,8 @@
     "from": "modules/hrf-laws/shared/src/test/scala/scalafim/fmri/hrf/laws/ParametricFamilyLawsSuite.scala",
     "to": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/hrf/laws/ParametricFamilyLawsSuite.scala",
     "sha256": "7c09f2eb3d8b0acc19e94cb6cfde9b7fa97a3a077660a84e16146e0ed595baed",
-    "finalSha256": "7c09f2eb3d8b0acc19e94cb6cfde9b7fa97a3a077660a84e16146e0ed595baed"
+    "finalSha256": "1df1093200a1087193524bd10855f9fd435f8209e2fca3403445062044c08dbd",
+    "change": "Apply destination scalafmt layout to the chained flatMap expression; no logic change."
   },
   {
     "from": "modules/fit-estimates/jvm/src/test/scala/scalafim/fmri/fit/estimates/FirAnalyticProducerProbe.scala",

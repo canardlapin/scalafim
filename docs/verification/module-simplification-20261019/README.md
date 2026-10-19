@@ -1,17 +1,19 @@
 # Module simplification, 2026-10-19
 
 Baseline: `eco/u2-pins` at `747282570b1132486968845f2baefdce3658b960`.
-The hygiene change is `933fc6c23`; the commit containing this receipt carries
-the two module merges. The local working branch is `simplify/phase-a-20261019`.
+The hygiene change is `933fc6c23`; `dda3152a9` carries the two module merges.
+The formatter follow-up updates the final hash of one moved test.
+The local working branch is `simplify/phase-a-20261019`.
 
 ## Changes
 
 The build declares 49 modules, down from 51: `hrf-laws` is absorbed by
 `first-level-laws`, and `fit-estimates` by `fmri-workflow`. Packages and
 scientific implementations stay the same. [moves.json](moves.json) records
-original and final hashes for all 13 moved Scala files. Two files needed only
-unused-import/pattern cleanup under the destination's existing strict compiler
-policy; no compiler gate was relaxed. CI batches and current documentation use
+original and final hashes for all 13 moved Scala files. Two files needed
+unused-import/pattern cleanup under the destination's existing
+strict compiler policy; a third needed the destination formatter's layout. No
+compiler gate or assertion was relaxed. CI batches and current documentation use
 the surviving projects. `estimates-io` stays test-only for workflow readback.
 
 The hygiene change removes unused HRF/design dependencies, unused Multivar
@@ -30,6 +32,9 @@ Scala.js: `hrf`, `design`, `image`, `mvpaSpatial`, `mvpaArtifacts`,
 3,957 passes and six existing opt-in skips. `scalafimCompileAll` passed across
 the repository on both platforms. This is affected-module test evidence and
 repository compilation; the full repository test suite and hosted CI were not run.
+The destination Test formatting check also passed after its layout correction,
+and the affected `ParametricFamilyLawsSuite` was rerun on JVM and JS (five
+passes each). These supplemental runs are separate from the 3,957-pass total.
 
 [gates.json](gates.json) records each result, dependency classpath checks, log
 hashes, and all attempts. Full raw logs and command metadata are preserved under
@@ -47,6 +52,9 @@ logs, and these durations must not be used as performance evidence.
 - `04-merges-jvm-and-core-js.log` and `05-merges-jvm-and-core-js.log`: the stricter
   law destination rejected two unused imports and one unused pattern variable.
   These were corrected without changing the policy or assertions.
+- `14-identity-goldens-jvm.log`: the first-level Test formatting gate found one
+  transferred law test with nonconforming layout; `15-law-format.log` retains
+  its formatter correction and successful check.
 - `06-merges-jvm-and-core-js.log`: completed law/workflow JVM and HRF/design JS
   gates, then image JS reached sustained 98% garbage collection at the 6 GiB
   heap bound. Only the verified task-owned sbt PID was stopped. The unchanged

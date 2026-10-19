@@ -12,8 +12,11 @@ class ParametricFamilyLawsSuite extends munit.FunSuite:
         ParametricFamilyLaws.jetsMatchFiniteDifferences(cascade, point, Array.tabulate(500)(i => i * 0.2)) ++
           ParametricFamilyLaws.realisationMatchesLibraryKernel(cascade, point, Array(0.0, 0.1, 3.0, 20.0, 100.0)) ++
           ParametricFamilyLaws.causality(cascade, point) ++
-          NormalizationRule.values.filter(cascade.supports).toVector.flatMap: rule =>
-            ParametricFamilyLaws.scaleJetsMatchFiniteDifferences(cascade, rule, point)
+          NormalizationRule.values
+            .filter(cascade.supports)
+            .toVector
+            .flatMap: rule =>
+              ParametricFamilyLaws.scaleJetsMatchFiniteDifferences(cascade, rule, point)
       assert(failures.isEmpty, failures.map(_.message).mkString("\n"))
 
   private val family = GaussianFamily.Default
