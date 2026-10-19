@@ -1,0 +1,78 @@
+{
+  "recorded_utc": "2026-10-19T19:53:16.100154+00:00",
+  "baseline_tests_sha": "d3b65f1239bd3db06d43f5268ce0a601a46b381e",
+  "implementation_sha": "849694260361535a8a0ece6e8858d6f32e4fb25d",
+  "gale_sha": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+  "source_main_line_delta": -48,
+  "commands": [
+    "python3",
+    "tools/build/sbt-warm",
+    "spatialJVM/test",
+    "spatialJS/test",
+    "atlasJVM/test",
+    "atlasJS/test",
+    "scalafimCompileAll"
+  ],
+  "exit_code": 0,
+  "test_targets": [
+    {
+      "target": "spatialJVM/test",
+      "passed": 231,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "target": "spatialJS/test",
+      "passed": 206,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "target": "atlasJVM/test",
+      "passed": 120,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "target": "atlasJS/test",
+      "passed": 74,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "baseline_tests": {
+    "JVM": 10,
+    "JS": 7
+  },
+  "compile_all_both_platforms": "passed without warnings",
+  "cache_v1_golden": {
+    "sha256": "43b3ffab2af5f15ea4133baf23a2b9b519bcffb7df8a416b4afaa0c58532c50a",
+    "bytes": 278,
+    "oracle": "Independent Python struct encoding of the documented Java big-endian cache-v1 grammar. Fixture strings are ASCII; writeUTF encoding equals two-byte length plus bytes. Sparse entries are (0,1,pi),(0,3,-0.0),(1,0,0.125)."
+  },
+  "input_manifest": {
+    "file": "inputs.json",
+    "sha256": "98de3d2ab065a6b584efbc02d2e6fbbc45d2068aea5a269793a2e1742cd186b7",
+    "files_verified": 2605
+  },
+  "logs": [
+    {
+      "file": "baseline-contracts.log",
+      "sha256": "afbe92671f1dcd9e4874bc969b3344076933b3a6f691e3439d8182a7c08cacdf"
+    },
+    {
+      "file": "gale-cutover-gates.log",
+      "sha256": "21b41b77ca69d88cd62867303b51c35d2822bed62111364b3517627aae7d70e0"
+    }
+  ],
+  "limits": [
+    "ScalaFIM remains local and unpushed; hosted CI not run.",
+    "No provider changes, new dependency pins, native scientific requalification or performance claim.",
+    "Broader eco-neuroim-providers and U3 kernel extractions remain unfinished.",
+    "Baseline startup emitted existing provider build-definition/unused-key warnings; the final gate log emitted no warnings."
+  ]
+}
