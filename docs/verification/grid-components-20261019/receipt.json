@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-19T21:36:47.046351+00:00",
+  "scalafim_base": "cc2cfb383d06f33d6def4515669db37feb5c3142",
+  "golden_commit": "cc2cfb383d06f33d6def4515669db37feb5c3142",
+  "qualified_consumer_blob": "c6df1fa6836ea857cd62e5efebfe541a9d32b61a",
+  "original_consumer_blob": "c07fa7214d4a585a422e6178a22c9c907a4f29b1",
+  "consumer_patch_sha256": "ea399852d94586929e5eaf3659a89682715bc7af71e2b23995861afdfc294a19",
+  "consumer_cutover_state": "saved patch only; production source and pins restored until publication approval",
+  "providers": {
+    "image4s": {
+      "checkout": "/private/tmp/scalafim-image4s-components-20261019",
+      "branch": "eco/grid-components-20261019",
+      "head": "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df",
+      "parent": "0816f10eab8034fe09ba46a8ffc9df852e779633",
+      "remote": "git@github-canardlapin:canardlapin/image4s.git",
+      "clean": true,
+      "published": false,
+      "recovery_bundle": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/image4s.bundle",
+      "bundle_sha256": "06dcbbbdc137e5f61d414ef96368be1315853f95c68873b47f8adb50d4749273"
+    },
+    "reframe4s": {
+      "checkout": "/private/tmp/scalafim-reframe-components-20261019",
+      "branch": "eco/image4s-components-20261019",
+      "head": "a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295",
+      "parent": "750e01506b74e73d0929c28518d18989d25e3a45",
+      "remote": "git@github-canardlapin:canardlapin/reframe4s.git",
+      "clean": true,
+      "published": false,
+      "recovery_bundle": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/reframe4s.bundle",
+      "bundle_sha256": "b9f2742d9a1a5442d33b6940b14682b607d01c7a963a5c15d5ee63614f431fee"
+    }
+  },
+  "loaded_build_uris": [
+    "file:/private/tmp/scalafim-simplify-a-20261019/",
+    "https://github.com/canardlapin/resample4s.git#6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+    "https://github.com/canardlapin/linops4s.git#fec77db060b130b3c609a43d07ff0bfb31088aae",
+    "https://github.com/canardlapin/neuroim4s.git#3b7a8441e0fcdfd20428835f8eaec7688b73a9ef",
+    "https://github.com/canardlapin/zarr4s.git#2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+    "https://github.com/canardlapin/ravel.git#195d71027423d5bda1c53ef1baa17e07670fe290",
+    "https://github.com/canardlapin/spatial4s.git#77037a7e6ced044b92d0a70b713c0a32a94f680d",
+    "https://github.com/canardlapin/locus4s.git#e32b0aeba5c4d19c457b2329272b95b26c061943",
+    "https://github.com/canardlapin/mesh4s.git#54b7278880e6db38c543a4a565355afd864e576a",
+    "https://github.com/canardlapin/graph4s.git#6a72b58b564933234768f025e67228736ef2f7c5",
+    "file:/private/tmp/scalafim-image4s-components-20261019/",
+    "https://github.com/canardlapin/intaglio.git#d553c327824f9916b1c0a055226c6c5e8f77bc59",
+    "file:/private/tmp/scalafim-reframe-components-20261019/",
+    "https://github.com/canardlapin/mvpa4s.git#b8259ab7eb00b4ad48cf26e3f5da49f398eae58a",
+    "https://github.com/canardlapin/bids4s.git#a33678390614a91fadbdef13f22970e78c26e091",
+    "https://github.com/canardlapin/multivar.git#7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+    "https://github.com/canardlapin/gale.git#779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+    "https://github.com/canardlapin/alder.git#7618c715002b3912f856c4d44468ae173fce4dec",
+    "https://github.com/canardlapin/neuroatlas4s.git#375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+  ],
+  "qualification_overrides": {
+    "scalafim.image4s.build": "/private/tmp/scalafim-image4s-components-20261019",
+    "scalafim.reframe4s.build": "/private/tmp/scalafim-reframe-components-20261019"
+  },
+  "checks": [
+    {
+      "name": "radial-baseline-final.log",
+      "sha256": "b6ed8db5a5d945a74ccc6e792a9bc50c97333745d6b2507f4f371a9841fca66e",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T21:26:50.059621+00:00",
+        "finished_utc": "2026-10-19T21:26:58.839158+00:00",
+        "duration_seconds": 8.779306,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "latentJVM/testOnly scalafim.latent.RadialComponentMigrationSuite",
+          "latentJS/testOnly scalafim.latent.RadialComponentMigrationSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/radial-baseline-final.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 600.0,
+        "log_bytes": 1328
+      },
+      "test_totals": [
+        {
+          "total": 1,
+          "failed": 0,
+          "errors": 0,
+          "passed": 1
+        },
+        {
+          "total": 1,
+          "failed": 0,
+          "errors": 0,
+          "passed": 1
+        }
+      ]
+    },
+    {
+      "name": "provider-tests-typed-owner.log",
+      "sha256": "9402b7abe7f344e06027b8deaeca56b23ed33d15e3c0a1d7faf9e957f00ba580",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T21:27:30.476168+00:00",
+        "finished_utc": "2026-10-19T21:28:29.722890+00:00",
+        "duration_seconds": 59.246208,
+        "command": [
+          "sbt",
+          "-Dsbt.global.base=/private/tmp/scalafim-image4s-components-global-20261019",
+          "image4s-locusJVM/scalafmt",
+          "image4s-locusJVM/Test/scalafmt",
+          "image4s-locusJVM/test",
+          "image4s-locusJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-image4s-components-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/provider-tests-typed-owner.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 10530
+      },
+      "test_totals": [
+        {
+          "total": 44,
+          "failed": 0,
+          "errors": 0,
+          "passed": 44
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42
+        }
+      ]
+    },
+    {
+      "name": "consumer-tests-local-provider.log",
+      "sha256": "7e35f405f2071fca6e4c14ecf4200ec230b81df5dabdd9884f0f8272b60d1c21",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T21:28:55.819297+00:00",
+        "finished_utc": "2026-10-19T21:31:08.551762+00:00",
+        "duration_seconds": 132.72882,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "latentJVM/test",
+          "latentJS/test",
+          "archivedResponseInteropJVM/testOnly scalafim.latent.RadialBasisSuite",
+          "archivedResponseInteropJS/testOnly scalafim.latent.RadialBasisSuite"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/consumer-tests-local-provider.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 26733
+      },
+      "test_totals": [
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20
+        }
+      ]
+    },
+    {
+      "name": "coherent-graph-checks.log",
+      "sha256": "77cd2e5719265f5560ddab88d55d5328a255bca78a27c54125404cf1aced05a5",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T21:31:37.421079+00:00",
+        "finished_utc": "2026-10-19T21:36:07.886789+00:00",
+        "duration_seconds": 270.463973,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "{file:/private/tmp/scalafim-reframe-components-20261019/}reframe4s-lieJVM/test",
+          "{file:/private/tmp/scalafim-reframe-components-20261019/}reframe4s-lieJS/test",
+          "{file:/private/tmp/scalafim-reframe-components-20261019/}reframe4s-resampleJVM/test",
+          "{file:/private/tmp/scalafim-reframe-components-20261019/}reframe4s-resampleJS/test",
+          "{file:/private/tmp/scalafim-reframe-components-20261019/}reframe4s-lawsJVM/test",
+          "{file:/private/tmp/scalafim-reframe-components-20261019/}reframe4s-lawsJS/test",
+          "imageJVM/test",
+          "imageJS/test",
+          "spatialJVM/test",
+          "spatialJS/test",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/coherent-graph-checks.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 114029
+      },
+      "test_totals": [
+        {
+          "total": 22,
+          "failed": 0,
+          "errors": 0,
+          "passed": 22
+        },
+        {
+          "total": 22,
+          "failed": 0,
+          "errors": 0,
+          "passed": 22
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13
+        },
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11
+        },
+        {
+          "total": 50,
+          "failed": 0,
+          "errors": 0,
+          "passed": 50
+        },
+        {
+          "total": 48,
+          "failed": 0,
+          "errors": 0,
+          "passed": 48
+        },
+        {
+          "total": 352,
+          "failed": 0,
+          "errors": 0,
+          "passed": 352
+        },
+        {
+          "total": 322,
+          "failed": 0,
+          "errors": 0,
+          "passed": 322
+        },
+        {
+          "total": 231,
+          "failed": 0,
+          "errors": 0,
+          "passed": 231
+        },
+        {
+          "total": 206,
+          "failed": 0,
+          "errors": 0,
+          "passed": 206
+        }
+      ]
+    },
+    {
+      "name": "build-inventory.log",
+      "sha256": "c6e875a679c12a5336eccf738508323feef8d0aeb463c842116077b8c42daa65",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T21:36:15.766195+00:00",
+        "finished_utc": "2026-10-19T21:36:16.652222+00:00",
+        "duration_seconds": 0.885853,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "projects"
+        ],
+        "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/build-inventory.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 180.0,
+        "log_bytes": 11147
+      },
+      "test_totals": []
+    },
+    {
+      "name": "provider-tests.log",
+      "sha256": "ff9c90b899b44dd25ab23022ad41f959a76fc17b688a8bd219e45a6119d37a0d",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-19T21:24:45.374809+00:00",
+        "finished_utc": "2026-10-19T21:26:37.054997+00:00",
+        "duration_seconds": 111.679349,
+        "command": [
+          "sbt",
+          "-Dsbt.global.base=/private/tmp/scalafim-image4s-components-global-20261019",
+          "image4s-locusJVM/scalafmt",
+          "image4s-locusJVM/Test/scalafmt",
+          "image4s-locusJVM/test",
+          "image4s-locusJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-image4s-components-20261019",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/grid-components-20261019/provider-tests.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 9026
+      },
+      "test_totals": []
+    }
+  ],
+  "focused_test_executions": 1493,
+  "baseline_golden_executions": 2,
+  "full_module_compile": "passed both platforms with local provider overrides; no Scala source warnings",
+  "known_build_lint": "18 unused-setting keys in the unchanged pinned Intaglio build",
+  "default_remote_pin_qualification": "pending publication and override-free gates",
+  "hosted_ci": "not run",
+  "full_scalafim_test_all": "not run",
+  "review": "local source/type review and independent computational oracle; no new peer-review verdict claimed",
+  "approval_needed": "publish image4s first, then reframe4s, non-force; ScalaFIM push remains separate"
+}

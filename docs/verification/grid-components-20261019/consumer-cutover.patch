@@ -1,0 +1,131 @@
+diff --git a/build.sbt b/build.sbt
+--- a/build.sbt
++++ b/build.sbt
+@@ -121,7 +121,7 @@
+
+ // image4s is independently owned. Ordinary builds use its immutable source
+ // revision; coordinated development can select a sibling checkout explicitly.
+-lazy val image4sRevision = "0816f10eab8034fe09ba46a8ffc9df852e779633"
++lazy val image4sRevision = "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df"
+ lazy val image4sBuild = {
+   Seq("locus4s", "spatial4s").foreach { provider =>
+     sys.props
+@@ -148,7 +148,7 @@
+ // reviewed source revision. A ScalaFIM image4s checkout override is forwarded
+ // so reframe4s resolves the same image4s build; reframe4s pins the same image4s
+ // as ScalaFIM and the same spatial4s as image4s.
+-lazy val reframe4sRevision = "750e01506b74e73d0929c28518d18989d25e3a45"
++lazy val reframe4sRevision = "a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295"
+ lazy val reframe4sBuild = {
+   Seq("image4s", "spatial4s").foreach { provider =>
+     sys.props
+diff --git a/modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala b/modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala
+index c07fa7214..c6df1fa68 100644
+--- a/modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala
++++ b/modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala
+@@ -2,10 +2,12 @@ package scalafim.latent
+
+ import image4s.geometry.D3
+ import image4s.geometry.Frame
++import image4s.locus.GridComponents
++import image4s.locus.GridConnectivity
+ import image4s.locus.GridDomain
+ import locus4s.DomainRegistry
+ import locus4s.Selection
+-import scalafim.image.{Indexing, SampleSpaces, SomeSampleSpace}
++import scalafim.image.{SampleSpaces, SomeSampleSpace}
+ import scalafim.image.SampleSpaces.*
+ import gale.linalg.{DMat, DVec}
+
+@@ -384,14 +386,7 @@ object RadialBasis:
+       col += 1
+
+ private object RadialAtomGenerator:
+-  private final case class Candidate(index: Int, coordinate: WorldCoordinate3D, grid: Vector[Int])
+-
+-  private val NeighborOffsets6: Vector[(Int, Int, Int)] =
+-    Vector(
+-      (-1, 0, 0), (1, 0, 0),
+-      (0, -1, 0), (0, 1, 0),
+-      (0, 0, -1), (0, 0, 1)
+-    )
++  private final case class Candidate(index: Int, coordinate: WorldCoordinate3D)
+
+   def generate(
+       activeVoxels: RadialActiveVoxels,
+@@ -402,7 +397,10 @@ private object RadialAtomGenerator:
+     else if spec.tinyMaskIdentity && candidates.length <= spec.tinyMaskLimit then
+       Right(tinyIdentityAtoms(candidates, spec))
+     else
+-      val components = connectedComponents(candidates, activeVoxels.domain.grid.shape)
++      val byIndex = candidates.iterator.map(candidate => candidate.index -> candidate).toMap
++      val components = GridComponents
++        .connected(activeVoxels.domain, activeVoxels.selection.region, GridConnectivity.Face)
++        .map(_.ordinalsInDomainOrder.iterator.map(byIndex).toVector)
+       val atoms = Vector.newBuilder[RadialAtom]
+
+       var level = 0
+@@ -428,14 +426,12 @@ private object RadialAtomGenerator:
+       if result.isEmpty then Left(RadialBasisError.EmptyAtoms) else Right(result)
+
+   private def activeCandidates(activeVoxels: RadialActiveVoxels): Vector[Candidate] =
+-    val shape = activeVoxels.domain.grid.shape
+     val ordinals = activeVoxels.selection.ordinals
+     Vector.tabulate(activeVoxels.size) { i =>
+       val index = ordinals(i)
+       Candidate(
+         index = index,
+-        coordinate = activeVoxels.coordinates(i),
+-        grid = scalafim.image.Indexing.indexToGrid3D(shape, index)
++        coordinate = activeVoxels.coordinates(i)
+       )
+     }
+
+@@ -472,47 +468,6 @@ private object RadialAtomGenerator:
+
+     selected.result()
+
+-  private def connectedComponents(
+-      candidates: Vector[Candidate],
+-      dims: Vector[Int]
+-  ): Vector[Vector[Candidate]] =
+-    val byIndex = candidates.map(candidate => candidate.index -> candidate).toMap
+-    val visited = scala.collection.mutable.HashSet.empty[Int]
+-    val components = Vector.newBuilder[Vector[Candidate]]
+-    val seeds = candidates.sortBy(_.index)
+-
+-    var seedIndex = 0
+-    while seedIndex < seeds.length do
+-      val seed = seeds(seedIndex)
+-      if !visited.contains(seed.index) then
+-        val component = Vector.newBuilder[Candidate]
+-        val queue = scala.collection.mutable.Queue.empty[Candidate]
+-        queue.enqueue(seed)
+-        visited += seed.index
+-
+-        while queue.nonEmpty do
+-          val current = queue.dequeue()
+-          component += current
+-          var offsetIndex = 0
+-          while offsetIndex < NeighborOffsets6.length do
+-            val (dx, dy, dz) = NeighborOffsets6(offsetIndex)
+-            val x = current.grid(0) + dx
+-            val y = current.grid(1) + dy
+-            val z = current.grid(2) + dz
+-            if x >= 0 && x < dims(0) && y >= 0 && y < dims(1) && z >= 0 && z < dims(2) then
+-              val neighborIndex = Indexing.gridToIndex3D(dims, x, y, z)
+-              byIndex.get(neighborIndex) match
+-                case Some(neighbor) if !visited.contains(neighborIndex) =>
+-                  visited += neighborIndex
+-                  queue.enqueue(neighbor)
+-                case _ =>
+-                  ()
+-            offsetIndex += 1
+-        components += component.result().sortBy(_.index)
+-      seedIndex += 1
+-
+-    components.result().sortBy(component => component.headOption.map(_.index).getOrElse(Int.MaxValue))
+-
+   private def deterministicKey(
+       seed: Long,
+       level: Int,
