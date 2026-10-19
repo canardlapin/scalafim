@@ -7,7 +7,7 @@ import image4s.NonSpatialAxes
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import ravel.{NDArray as RavelArray, Rank, Shape}
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import spire.std.double.given
 import spire.std.int.given
 

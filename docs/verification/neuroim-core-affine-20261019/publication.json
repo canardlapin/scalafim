@@ -1,0 +1,194 @@
+{
+  "repository": "canardlapin/neuroim4s",
+  "published_main": "9780bcab6c061284a3c8864d9599b0534c71a97f",
+  "head": "9780bcab6c061284a3c8864d9599b0534c71a97f",
+  "tracking": "9780bcab6c061284a3c8864d9599b0534c71a97f",
+  "clean": true,
+  "push": "non-force fast-forward",
+  "approved_by_user": true,
+  "verified_utc": "2026-10-19T23:27:46.645727+00:00",
+  "qualified_consumer_blobs": {
+    "build.sbt": "facbad6b955800f9acee1c6c18b081cfc65cf89e",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/BidsNiftiExporter.scala": "d7174242f86fd0e5dac94319589a1bef54f6e882",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala": "522d10a4463258f46e8b8abaa6ed78b1f8fd922e",
+    "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala": "08f8f558247a416aa39a8dc7fb84bdd399938073",
+    "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala": "61e81f0b1a9c028d2e4d9023f4e27b2aa44814a5",
+    "modules/image/shared/src/main/scala/scalafim/image/NeuroAffineSyntax.scala": null,
+    "modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala": "a3de1dfcdef3d010e4bae3ca20d3ea060d12fa18",
+    "modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala": "07e751c91713d357a0d662c7f430d7912aad1648",
+    "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala": "cb74b3eb46941b92356dedfc161aff2e98aec1c4",
+    "modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala": "fd1f3aea11bba38ef9337a6e60e120f3700713e4",
+    "modules/image/shared/src/test/scala/scalafim/image/ProviderAffineContractSuite.scala": "630e9837303480e5781e73b0d82a7c1918aebe55",
+    "modules/image/shared/src/test/scala/scalafim/image/SpaceUtilsSuite.scala": "e285c427577704e97a9f7f8766dad2c133351fb4"
+  },
+  "inputs_unchanged_during_gates": true,
+  "local_overrides": false,
+  "test_executions": 794,
+  "skips": 0,
+  "compile_all": "passed every ScalaFIM module JVM and JS",
+  "scala_source_warnings": [],
+  "test_totals": [
+    {
+      "total": 359,
+      "failed": 0,
+      "errors": 0,
+      "passed": 359
+    },
+    {
+      "total": 329,
+      "failed": 0,
+      "errors": 0,
+      "passed": 329
+    },
+    {
+      "total": 42,
+      "failed": 0,
+      "errors": 0,
+      "passed": 42
+    },
+    {
+      "total": 42,
+      "failed": 0,
+      "errors": 0,
+      "passed": 42
+    },
+    {
+      "total": 15,
+      "failed": 0,
+      "errors": 0,
+      "passed": 15
+    },
+    {
+      "total": 7,
+      "failed": 0,
+      "errors": 0,
+      "passed": 7
+    }
+  ],
+  "provider_inventory": {
+    "neuroim4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/127b7f11a9c714dce6f9/neuroim4s",
+      "commit": "9780bcab6c061284a3c8864d9599b0534c71a97f"
+    },
+    "image4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/f5c617061301c10ae066/image4s",
+      "commit": "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df"
+    },
+    "spatial4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+      "commit": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+    },
+    "gale": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+      "commit": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+    },
+    "locus4s": {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+      "commit": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+    }
+  },
+  "allocation_checks": [
+    {
+      "case": "map-view-safe",
+      "samples": "64000",
+      "bytes": "519440",
+      "limit": "708608"
+    },
+    {
+      "case": "zip-view-safe",
+      "samples": "64000",
+      "bytes": "519136",
+      "limit": "708608"
+    },
+    {
+      "case": "temporal-reduction",
+      "samples": "32000",
+      "bytes": "261248",
+      "limit": "452608"
+    },
+    {
+      "case": "linear-resampling",
+      "samples": "64000",
+      "bytes": "533440",
+      "limit": "708608"
+    },
+    {
+      "case": "ravel-stencil",
+      "samples": "64000",
+      "bytes": "1052392",
+      "limit": "1286144"
+    },
+    {
+      "case": "dense-to-selected",
+      "samples": "21334",
+      "bytes": "685200",
+      "limit": "879296"
+    },
+    {
+      "case": "selected-to-dense",
+      "samples": "64000",
+      "bytes": "1029216",
+      "limit": "1220608"
+    },
+    {
+      "case": "prepared-exact-searchlight",
+      "samples": "64000",
+      "bytes": "2050632",
+      "limit": "2244608"
+    }
+  ],
+  "default_pins_gate": {
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-19T23:27:47.108993+00:00",
+      "finished_utc": "2026-10-19T23:30:31.341825+00:00",
+      "duration_seconds": 164.231883,
+      "command": [
+        "sbt",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "imageJVM/test",
+        "imageJS/test",
+        "imageViewJVM/test",
+        "imageViewJS/test",
+        "datasetZarrJVM/test",
+        "datasetZarrJS/test",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-affine-20261019/default-pins-gates.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 2400.0,
+      "log_bytes": 83007
+    },
+    "raw_log_sha256": "2c4e6fc4b0060947cb1189492672a18d35113353402758ffe017a209a4673ce6"
+  },
+  "push_receipt": {
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-19T23:27:06.896190+00:00",
+      "finished_utc": "2026-10-19T23:27:08.271017+00:00",
+      "duration_seconds": 1.374628,
+      "command": [
+        "git",
+        "push",
+        "--porcelain",
+        "github",
+        "9780bcab6c061284a3c8864d9599b0534c71a97f:refs/heads/main"
+      ],
+      "cwd": "/private/tmp/scalafim-neuroim-core-20261019",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-affine-20261019/publish-neuroim4s.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 120.0,
+      "log_bytes": 129
+    },
+    "raw_log_sha256": "3d20b049bdae1fea018bc7c6090d941dd16fe353ade169e83a4fa93703afd317"
+  },
+  "scalafim_published": false,
+  "broader_core_task_complete": false
+}

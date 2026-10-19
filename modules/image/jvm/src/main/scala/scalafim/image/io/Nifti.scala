@@ -31,7 +31,7 @@ import image4s.nifti.NiftiWriteOptions
 import ravel.Rank
 import ravel.AnyRank
 import scalafim.image.*
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import neuroim4s.spaces.{SpaceError, SpaceEvidence, SpaceResolver, WorldSpace, XformCode}
 
 import java.nio.ByteOrder

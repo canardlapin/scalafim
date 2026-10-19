@@ -16,7 +16,7 @@ import image4s.ops.Kernel as ImageKernel
 import image4s.ops.Offset
 import image4s.ops.OpError
 import image4s.ops.Support
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import ravel.DType
 import ravel.DType.given
 import ravel.NDArray as RavelArray

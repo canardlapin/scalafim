@@ -6,7 +6,7 @@ import gale.linalg.DMat
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.Point
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 
 class SpaceUtilsSuite extends munit.FunSuite:
 

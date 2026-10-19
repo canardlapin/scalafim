@@ -170,11 +170,13 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
 // neuroim4s-spaces owns the anatomical world identities (template, subject
 // scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
 // pins the same spatial4s revision as image4s and reframe4s.
-lazy val neuroim4sRevision = "3b7a8441e0fcdfd20428835f8eaec7688b73a9ef"
+lazy val neuroim4sRevision = "9780bcab6c061284a3c8864d9599b0534c71a97f"
 lazy val neuroim4sBuild = {
-  sys.props
-    .get("scalafim.spatial4s.build")
-    .foreach(System.setProperty("neuroim4s.spatial4s.build", _))
+  Seq("spatial4s", "image4s").foreach { provider =>
+    sys.props
+      .get(s"scalafim.$provider.build")
+      .foreach(System.setProperty(s"neuroim4s.$provider.build", _))
+  }
   sys.props
     .get("scalafim.neuroim4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -182,6 +184,8 @@ lazy val neuroim4sBuild = {
 }
 lazy val neuroim4sSpacesJVM = ProjectRef(neuroim4sBuild, "spacesJVM")
 lazy val neuroim4sSpacesJS  = ProjectRef(neuroim4sBuild, "spacesJS")
+lazy val neuroim4sCoreJVM = ProjectRef(neuroim4sBuild, "coreJVM")
+lazy val neuroim4sCoreJS  = ProjectRef(neuroim4sBuild, "coreJS")
 
 // neuroatlas4s-core owns atlas identities, releases, labels, hierarchies, the
 // standard catalog and the realized-assignment contract. It pins the same
@@ -565,6 +569,7 @@ lazy val image =
         image4sFilterJVM,
         image4sNiftiJVM,
         neuroim4sSpacesJVM,
+        neuroim4sCoreJVM,
         reframe4sLieJVM,
         reframe4sFieldJVM,
         reframe4sResampleJVM
@@ -578,6 +583,7 @@ lazy val image =
         image4sLocusJS,
         image4sFilterJS,
         neuroim4sSpacesJS,
+        neuroim4sCoreJS,
         reframe4sLieJS,
         reframe4sFieldJS,
         reframe4sResampleJS

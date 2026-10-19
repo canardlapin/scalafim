@@ -5,7 +5,7 @@ import scalafim.image.SampleSpaces.*
 import image4s.geometry.{ContinuousIndex, D3, Frame, GeometryError, Grid, Point as GeoPoint}
 import intaglio.*
 import scalafim.image.*
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import scala.collection.mutable
 
 final case class ViewerState(

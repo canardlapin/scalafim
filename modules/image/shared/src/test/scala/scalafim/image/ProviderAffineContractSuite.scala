@@ -5,7 +5,7 @@ import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.GeometryError
 import munit.FunSuite
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 
 class ProviderAffineContractSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A =

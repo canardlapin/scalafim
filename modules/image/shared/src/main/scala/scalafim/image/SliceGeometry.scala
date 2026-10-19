@@ -2,7 +2,7 @@ package scalafim.image
 
 import SampleSpaces.*
 
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 
 import image4s.geometry.D3
 import image4s.geometry.Frame

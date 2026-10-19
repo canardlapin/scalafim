@@ -19,7 +19,7 @@ import image4s.geometry.GridId
 import image4s.geometry.LengthUnit
 import image4s.locus.GridDomain
 import gale.linalg.DMat
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 
 enum SampleSpaceError:

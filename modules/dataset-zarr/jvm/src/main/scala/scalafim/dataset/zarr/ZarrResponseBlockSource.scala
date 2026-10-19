@@ -6,7 +6,7 @@ import image4s.geometry.{Affine, D3}
 import scalafim.archive.zarr.OpenedCanonicalBold
 import scalafim.dataset.*
 import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
-import scalafim.image.NeuroAffineSyntax.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import scalafim.image.SampleSpaces.*
 import zarr4s.*
 
