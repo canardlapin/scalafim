@@ -10,58 +10,6 @@ import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
 import neuroim4s.transform.WorldTransform
 
-type Point3D = SpatialPoint
-
-object Point3D:
-  val Origin: Point3D =
-    SpatialPoint.Origin
-
-  def apply(x: Double, y: Double, z: Double): Point3D =
-    SpatialPoint(x, y, z)
-
-  def fromVector(values: Vector[Double]): Point3D =
-    SpatialPoint.unsafeFromVector(values, "Point3D")
-
-enum TransformBackend:
-  case Identity, InternalAffine, TemplateFlowAnts, SphereNearest, Workbench, NeuroSurf, RibbonFill
-
-enum DataKind:
-  case Parcel, Vertex, Voxel
-
-/** A provider transform implementing a manifest step: a `neuroim4s.transform` world transform between the catalog
-  * frames of the step's spaces, and an identity that determines its values (e.g. asset SHA-256 digests plus every
-  * loading policy). The identity keys non-affine maps, whose values cannot be fingerprinted structurally.
-  */
-final case class TransformAsset(transform: WorldTransform[?, ?], identity: String):
-  require(identity.trim.nonEmpty, "transform asset identity must be non-empty")
-
-/** One entry of a transform manifest: a declared edge between two template spaces.
-  *
-  * A step can carry coordinates only when it is `Available` and holds either an internal `affine` (the forward,
-  * source-to-target matrix) or a provider `asset`. Every other step, e.g. a TemplateFlow warp whose H5 file has not been
-  * loaded, stays in the graph as a typed non-executable edge: routes through it are planned and reported, never
-  * guessed.
-  */
-final case class TransformStep(
-  from: AnySpaceId,
-  to: AnySpaceId,
-  kind: TransformKind,
-  backend: TransformBackend,
-  confidence: Confidence,
-  reversible: Boolean,
-  dataFiles: Vector[String],
-  status: TransformStatus,
-  notes: Option[String] = None,
-  affine: Option[ProviderAffine[D3]] = None,
-  asset: Option[TransformAsset] = None
-):
-  require(dataFiles.forall(_.trim.nonEmpty), "transform data file names must be non-empty")
-  require(affine.isEmpty || asset.isEmpty, "a transform step carries an internal affine or a provider asset, not both")
-
-  /** Implement this step with a loaded provider transform; the step becomes `Available`. */
-  def withAsset(value: TransformAsset): TransformStep =
-    copy(status = TransformStatus.Available, affine = None, asset = Some(value))
-
 /** A route through the transform manifest, resolved by `SpatialGraph` routing.
   *
   * `steps` describe the route in order (a step run through its inverse appears with its endpoints swapped); `path` is
@@ -238,70 +186,8 @@ object TransformPlan:
     planned ++ lowConfidence ++ vertexNearest ++ inverses
 
 object SpaceTransforms:
-  val mni305ToMni152: ProviderAffine[D3] =
-    ProviderAffine.fromRowMajor[D3](
-      Vector(
-        0.9975, -0.0073, 0.0176, -0.0429,
-        0.0146, 1.0009, -0.0024, 1.5496,
-        -0.0130, -0.0093, 0.9971, 1.1840,
-        0.0, 0.0, 0.0, 1.0
-      )
-    ).fold(error => throw new IllegalStateException(error.message), identity)
-
-  val mni152ToMni305: ProviderAffine[D3] =
-    mni305ToMni152.inverse
-
   val manifest: Vector[TransformStep] =
-    Vector(
-      TransformStep(
-        SpaceId.MNI305,
-        SpaceId.MNI152,
-        TransformKind.Affine,
-        TransformBackend.InternalAffine,
-        Confidence.Exact,
-        reversible = true,
-        dataFiles = Vector.empty,
-        TransformStatus.Available,
-        notes = Some("FreeSurfer mni152.register.dat"),
-        affine = Some(mni305ToMni152)
-      ),
-      TransformStep(
-        SpaceId.MNI152,
-        SpaceId.MNI305,
-        TransformKind.Affine,
-        TransformBackend.InternalAffine,
-        Confidence.Exact,
-        reversible = true,
-        dataFiles = Vector.empty,
-        TransformStatus.Available,
-        notes = Some("Inverse of FreeSurfer mni152.register.dat"),
-        affine = Some(mni152ToMni305)
-      ),
-      TransformStep(
-        SpaceId.MNI152NLin6Asym,
-        SpaceId.MNI152NLin2009cAsym,
-        TransformKind.NonlinearWarp,
-        TransformBackend.TemplateFlowAnts,
-        Confidence.High,
-        reversible = true,
-        dataFiles = Vector(TemplateFlowXfm.Mni6ToMni2009c.relativePath),
-        TransformStatus.Planned,
-        notes = Some("TemplateFlow composite warp; load it with MniTemplateBridge and install the bridge's steps")
-      ),
-      TransformStep(
-        SpaceId.MNI152NLin2009cAsym,
-        SpaceId.MNI152NLin6Asym,
-        TransformKind.NonlinearWarp,
-        TransformBackend.TemplateFlowAnts,
-        Confidence.High,
-        reversible = true,
-        dataFiles = Vector(TemplateFlowXfm.Mni6ToMni2009c.relativePath),
-        TransformStatus.Planned,
-        notes = Some(
-          "Inverse of the TemplateFlow composite warp; needs a qualified numerical inverse " +
-            s"(${TemplateFlowXfm.Mni2009cToMni6.fileName} pulls the same way as the forward file and is refused)"
-        )
-      ),
+    VolumeTransforms.manifest ++ Vector(
       TransformStep(
         SpaceId.FsAverage,
         SpaceId.FsAverage6,

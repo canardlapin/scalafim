@@ -49,11 +49,11 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
   test("the standard manifest populates one spatial graph over unsampled template domains"):
     val manifestGraph = value(SpaceTransforms.standardGraph)
     assertEquals(manifestGraph.graph.morphisms.length, SpaceTransforms.manifest.length)
-    val mni = manifestGraph.graph.domains(TemplateCatalog.domainId(SpaceId.MNI152NLin2009cAsym))
+    val mni = manifestGraph.graph.domains(TemplateDomains.domainId(SpaceId.MNI152NLin2009cAsym))
     mni.geometry match
       case SamplingGeometry.Unsampled(kind, _) => assertEquals(kind, DomainKind.Volume)
       case other => fail(s"expected an unsampled template domain, got $other")
-    assertEquals(manifestGraph.graph.domains(TemplateCatalog.domainId(SpaceId.FsLR32k)).kind, DomainKind.Surface)
+    assertEquals(manifestGraph.graph.domains(TemplateDomains.domainId(SpaceId.FsLR32k)).kind, DomainKind.Surface)
 
     val kinds = manifestGraph.graph.morphisms.map(_.kind).toSet
     assert(kinds.contains(MorphismKind.VolumeToSurface))
@@ -123,7 +123,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
       case other => fail(s"expected a graph error for foreign frames, got $other")
 
   test("routes fall back to exact inverses only when no forward route exists"):
-    val registry = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, SpaceTransforms.mni305ToMni152))
+    val registry = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, VolumeTransforms.mni305ToMni152))
     val reverse = value(SpaceTransforms.plan(SpaceId.MNI152, SpaceId.MNI305, registry = registry))
     assert(reverse.usedInverses)
     assert(reverse.warnings.exists(_.contains("inverse")), clue = reverse.warnings.mkString(";"))
@@ -132,7 +132,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
     assertEqualsDouble(mapped.x, 10.0, 0.01)
     assertEqualsDouble(mapped.y, -20.0, 0.01)
 
-    val irreversible = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, SpaceTransforms.mni305ToMni152, reversible = false))
+    val irreversible = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, VolumeTransforms.mni305ToMni152, reversible = false))
     assertEquals(
       SpaceTransforms.plan(SpaceId.MNI152, SpaceId.MNI305, registry = irreversible),
       Left(AtlasError.NoTransformRoute(SpaceId.MNI152, SpaceId.MNI305))

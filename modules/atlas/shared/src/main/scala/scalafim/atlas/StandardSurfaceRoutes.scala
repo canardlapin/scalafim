@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.TemplateFlowXfm
+
 import scalafim.surface.{CorticalHemisphere, VertexId}
 import scalafim.surface.reference.*
 

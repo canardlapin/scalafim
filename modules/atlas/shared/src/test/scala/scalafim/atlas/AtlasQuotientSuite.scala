@@ -5,7 +5,7 @@ import image4s.SomeSampleSpace
 import neuroatlas4s.*
 
 import image4s.geometry.GeometryError
-import scalafim.atlas.syntax.*
+import neuroatlas4s.syntax.*
 import neuroim4s.image.*
 import scalafim.surface.{
   Hemisphere as SurfaceHemisphere,

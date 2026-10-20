@@ -7,7 +7,7 @@ import image4s.geometry.D3
 import ravel.Shape
 import neuroim4s.image.*
 import neuroim4s.image.SampleSpaces.*
-import scalafim.atlas.syntax.*
+import neuroatlas4s.syntax.*
 
 class AtlasCoreSuite extends munit.FunSuite:
 

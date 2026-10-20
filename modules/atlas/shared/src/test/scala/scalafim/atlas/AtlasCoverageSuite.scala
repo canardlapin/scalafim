@@ -7,7 +7,7 @@ import neuroatlas4s.*
 import image4s.geometry.GeometryError
 import ravel.Shape
 import neuroim4s.image.*
-import scalafim.atlas.syntax.*
+import neuroatlas4s.syntax.*
 
 class AtlasCoverageSuite extends munit.FunSuite:
 

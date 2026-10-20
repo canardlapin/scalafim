@@ -1,5 +1,7 @@
 package scalafim.atlas.io
 
+import neuroatlas4s.io.*
+
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import scalafim.atlas.*

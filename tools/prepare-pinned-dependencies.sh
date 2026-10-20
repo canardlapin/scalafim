@@ -57,6 +57,19 @@ for provider in mesh4s neuroim4s; do
     exit 1
   fi
 done
+# Atlas volume policy exchanges neuroim4s values with ScalaFIM's mixed consumers.
+# Check its immutable default as well; sibling overrides must not hide drift.
+neuroim_revision=$(sed -n 's/^lazy val neuroim4sRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
+atlas_revision=$(sed -n 's/^lazy val neuroatlas4sRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
+[ "${#atlas_revision}" -eq 40 ] || { echo 'Invalid neuroatlas4sRevision in build.sbt' >&2; exit 1; }
+git clone --quiet --no-checkout --filter=blob:none \
+  https://github.com/canardlapin/neuroatlas4s.git "$provider_tmp/neuroatlas4s"
+atlas_neuroim=$(git -C "$provider_tmp/neuroatlas4s" show "$atlas_revision:build.sbt" |
+  sed -n 's/^lazy val neuroim4sRevision = "\([0-9a-f]*\)".*/\1/p')
+if [ "${#neuroim_revision}" -ne 40 ] || [ "$atlas_neuroim" != "$neuroim_revision" ]; then
+  echo "neuroim4s revision mismatch: ScalaFIM=$neuroim_revision neuroatlas4s=$atlas_neuroim" >&2
+  exit 1
+fi
 GALE_CACHE="$provider_tmp/gale" \
   "$provider_tmp/multivar/tools/publish-gale-local.sh"
 RESAMPLE4S_CACHE="$provider_tmp/resample4s" \

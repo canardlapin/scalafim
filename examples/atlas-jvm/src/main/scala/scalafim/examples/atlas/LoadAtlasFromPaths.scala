@@ -4,6 +4,7 @@ import java.nio.file.Path
 import scalafim.atlas.*
 import neuroatlas4s.*
 import scalafim.atlas.io.*
+import neuroatlas4s.io.*
 import neuroim4s.image.SampleSpaces.*
 
 final case class LoadedAtlasSummary(

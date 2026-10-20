@@ -1,5 +1,7 @@
 package scalafim.atlas.io
 
+import neuroatlas4s.io.*
+
 import scalafim.testkit.RealAssetGate
 
 import scalafim.atlas.{Fslr32kFrom2009c, StandardRouteRefusal, StandardSurfaceRoutes}

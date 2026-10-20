@@ -2,8 +2,8 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import image4s.geometry.{Affine as ProviderAffine, D3, Frame}
-import neuroim4s.spaces.{FrameCatalog, Spaces as WorldFrames, TemplateName, WorldSpace}
+import image4s.geometry.{Affine as ProviderAffine, D3}
+import neuroim4s.spaces.TemplateName
 import scalafim.spatial.{
   CoordinateMap,
   Domain,
@@ -23,104 +23,27 @@ import scalafim.spatial.{
   TemplateKind
 }
 import neuroim4s.transform.{PushAvailability, WorldTransform}
-import scalafim.surface.{SurfaceGeometry, TemplateSphere}
 
-/** Stable world frames for the template spaces a transform manifest names.
-  *
-  * Provider maps check endpoint frames by runtime owner, so every edge and every attached [[TransformAsset]] must use
-  * the frames from one catalog. Named templates reuse the frames in `neuroim4s.spaces.Spaces`; fsaverage5/6 share
-  * fsaverage's world and fsLR_32k shares fsLR's, because they are samplings of one coordinate system.
-  */
-final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D3]]):
-  def spaces: Vector[AnySpaceId] =
-    frames.keys.toVector.sortBy(_.value)
-
-  def contains(space: AnySpaceId): Boolean =
-    frames.contains(SpaceId.normalize(space))
-
-  def frame(space: AnySpaceId): Either[AtlasError, Frame[D3]] =
-    val normalized = SpaceId.normalize(space)
-    frames.get(normalized).toRight(AtlasError.UnknownSpace(normalized))
-
-  /** The world space a catalogued space's coordinates live in: its catalog frame's world. Uncatalogued spaces are
-    * [[AtlasError.UnknownSpace]], never a guessed template.
-    */
-  def world(space: AnySpaceId): Either[AtlasError, WorldSpace] =
-    val normalized = SpaceId.normalize(space)
-    frame(normalized).flatMap(f => FrameCatalog.worldOf(f).left.map(_ => AtlasError.UnknownSpace(normalized)))
-
+/** Mixed volume/surface domains over the shared template frame catalog. */
+object TemplateDomains:
   /** The routing-graph domain of a catalogued space: unsampled, in the space's world frame. */
-  def domain(space: AnySpaceId): Either[AtlasError, Domain] =
+  def domain(catalog: TemplateCatalog, space: AnySpaceId): Either[AtlasError, Domain] =
     val normalized = SpaceId.normalize(space)
     for
-      world <- frame(normalized)
-      kind = TemplateCatalog.domainKind(normalized)
+      world <- catalog.frame(normalized)
+      kind = TemplateDomains.domainKind(normalized)
       geometry <- SamplingGeometry.unsampled(kind, world).left.map(error => AtlasError.Provider(TransformGraphFailure(error)))
       templateKind = if kind == DomainKind.Surface then TemplateKind.Surface else TemplateKind.Volume
       name <- TemplateName(normalized.value).left.map(_ => AtlasError.UnknownSpace(normalized))
       domain <- Domain
         .build(
-          TemplateCatalog.domainId(normalized),
+          TemplateDomains.domainId(normalized),
           SpaceRef.Template(name, None, templateKind),
           geometry
         )
         .left
         .map(error => AtlasError.Provider(TransformGraphFailure(error)))
     yield domain
-
-  /** Admit a concrete sampled template surface. Catalog domains deliberately remain unsampled; this explicit factory
-    * binds an executable vertex domain to the registered sphere and its ordered topology.
-    */
-  def sampledSurface[R <: scalafim.surface.SphereRegistration](
-      id: DomainId,
-      sphere: TemplateSphere[R],
-      geometry: SurfaceGeometry
-  ): Either[AtlasError, Domain] =
-    val space = SpaceId.surface(sphere.surface.mesh.label)
-    for
-      _ <- sphere.surface.hemisphere.tag match
-        case expected if expected == geometry.hemisphere => Right(())
-        case _ => Left(AtlasError.Provider(TransformGraphFailure(SpatialError.UnsupportedGeometry("sampled template hemisphere mismatch"))))
-      _ <- Either.cond(
-        sphere.sphere.hasSameTopology(geometry.mesh),
-        (),
-        AtlasError.Provider(TransformGraphFailure(SpatialError.UnsupportedGeometry("sampled template topology mismatch")))
-      )
-      _ <- frame(space)
-      name <- TemplateName(space.value).left.map(_ => AtlasError.UnknownSpace(space))
-      sampling <- SamplingGeometry.surface(geometry).left.map(error => AtlasError.Provider(TransformGraphFailure(error)))
-      domain <- Domain
-        .build(
-          id,
-          SpaceRef.Template(name, None, TemplateKind.Surface),
-          sampling
-        )
-        .left
-        .map(error => AtlasError.Provider(TransformGraphFailure(error)))
-    yield domain
-
-  /** This catalog plus fresh template frames for any of `extra` it does not already hold. */
-  def including(extra: Iterable[AnySpaceId]): TemplateCatalog =
-    val missing = extra.iterator.map(SpaceId.normalize).filterNot(frames.contains).toVector.distinct
-    if missing.isEmpty then this
-    else new TemplateCatalog(frames ++ missing.map(space => space -> TemplateCatalog.templateFrame(space.value)))
-
-object TemplateCatalog:
-  val standard: TemplateCatalog =
-    new TemplateCatalog(
-      Map(
-        SpaceId.MNI152 -> templateFrame("MNI152"),
-        SpaceId.MNI305 -> WorldFrames.MNI305,
-        SpaceId.MNI152NLin6Asym -> WorldFrames.MNI152NLin6Asym,
-        SpaceId.MNI152NLin2009cAsym -> WorldFrames.MNI152NLin2009cAsym,
-        SpaceId.FsAverage -> WorldFrames.fsaverage,
-        SpaceId.FsAverage5 -> WorldFrames.fsaverage,
-        SpaceId.FsAverage6 -> WorldFrames.fsaverage,
-        SpaceId.FsLR32k -> WorldFrames.fsLR,
-        SpaceId.FsLR59k -> WorldFrames.fsLR,
-        SpaceId.FsLR164k -> WorldFrames.fsLR
-      )
-    )
 
   def domainId(space: AnySpaceId): DomainId =
     DomainId.unsafe(s"atlas-template:${SpaceId.normalize(space).value}")
@@ -130,11 +53,6 @@ object TemplateCatalog:
     SpaceId.kind(space) match
       case SpaceKindTag.Surface => DomainKind.Surface
       case SpaceKindTag.Volume | SpaceKindTag.Unknown => DomainKind.Volume
-
-  private def templateFrame(name: String): Frame[D3] =
-    FrameCatalog.frame(
-      WorldSpace.Template(TemplateName(name).fold(error => throw new IllegalArgumentException(error.message), identity))
-    )
 
 /** A transform manifest as a [[SpatialGraph]]: one unsampled domain per catalogued space, one morphism per step.
   *
@@ -165,11 +83,11 @@ final case class SpaceTransformGraph private (
           affine = Some(ProviderAffine.identity[D3])
         )
       val world = catalog.world(fromNorm)
-      Right(TransformPlan.build(fromNorm, toNorm, Vector(step), MorphismPath.identity(TemplateCatalog.domainId(fromNorm)), dataKind, world, world))
+      Right(TransformPlan.build(fromNorm, toNorm, Vector(step), MorphismPath.identity(TemplateDomains.domainId(fromNorm)), dataKind, world, world))
     else if !catalog.contains(fromNorm) || !catalog.contains(toNorm) then Left(AtlasError.NoTransformRoute(fromNorm, toNorm))
     else
       graph
-        .path(TemplateCatalog.domainId(fromNorm), TemplateCatalog.domainId(toNorm), RoutingPolicy.Shortest, allowInverses = true)
+        .path(TemplateDomains.domainId(fromNorm), TemplateDomains.domainId(toNorm), RoutingPolicy.Shortest, allowInverses = true)
         .left
         .map {
           case SpatialError.NoPath(_, _) => AtlasError.NoTransformRoute(fromNorm, toNorm)
@@ -210,7 +128,7 @@ object SpaceTransformGraph:
     val spaces = registry.flatMap(step => Vector(SpaceId.normalize(step.from), SpaceId.normalize(step.to))).distinct
     val fullCatalog = catalog.including(spaces)
     for
-      domains <- traverse(spaces)(fullCatalog.domain)
+      domains <- traverse(spaces)(space => TemplateDomains.domain(fullCatalog, space))
       edges <- traverse(registry.zipWithIndex) { (step, index) => morphism(step, index, fullCatalog) }
       graph <- SpatialGraph.build(domains, edges.map(_._1)).left.map(error => AtlasError.Provider(TransformGraphFailure(error)))
     yield SpaceTransformGraph(fullCatalog, graph, edges.map((edge, step) => edge.id -> step).toMap)
@@ -224,8 +142,8 @@ object SpaceTransformGraph:
     val to = SpaceId.normalize(step.to)
     val normalized = step.copy(from = from, to = to)
     for
-      source <- catalog.domain(from)
-      target <- catalog.domain(to)
+      source <- TemplateDomains.domain(catalog, from)
+      target <- TemplateDomains.domain(catalog, to)
       coordinateMap <- coordinateMapOf(normalized, source, target)
       morphism <- Morphism
         .between(

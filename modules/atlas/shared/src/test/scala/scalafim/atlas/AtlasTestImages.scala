@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import neuroatlas4s.*
+
 import image4s.Axis
 import image4s.AxisKind
 import image4s.ImageMetadata

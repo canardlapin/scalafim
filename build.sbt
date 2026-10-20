@@ -188,14 +188,14 @@ lazy val neuroim4sRoutingIoJVM = ProjectRef(neuroim4sBuild, "routingIoJVM")
 lazy val neuroim4sRoutingJVM = ProjectRef(neuroim4sBuild, "routingJVM")
 lazy val neuroim4sRoutingJS = ProjectRef(neuroim4sBuild, "routingJS")
 
-// neuroatlas4s-core owns atlas identities, releases, labels, hierarchies, the
-// standard catalog and the realized-assignment contract. It pins the same
-// locus4s revision as ScalaFIM; a ScalaFIM locus4s override is forwarded.
-lazy val neuroatlas4sRevision = "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+// neuroatlas4s owns atlas metadata/publication in core and volume realizations,
+// queries, reductions, template policy and loaders in optional volume/IO modules.
+// Forward explicit overrides so each provider has one owner across the graph.
+lazy val neuroatlas4sRevision = "799b3158a078da027cfd7da3dcb62b10ccc18cc4"
 lazy val neuroatlas4sBuild = {
-  sys.props
-    .get("scalafim.locus4s.build")
-    .foreach(System.setProperty("neuroatlas4s.locus4s.build", _))
+  Seq("locus4s", "neuroim4s", "image4s", "spatial4s", "reframe4s", "gale", "graph4s").foreach { provider =>
+    sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
+  }
   sys.props
     .get("scalafim.neuroatlas4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -203,6 +203,10 @@ lazy val neuroatlas4sBuild = {
 }
 lazy val neuroatlas4sCoreJVM = ProjectRef(neuroatlas4sBuild, "coreJVM")
 lazy val neuroatlas4sCoreJS  = ProjectRef(neuroatlas4sBuild, "coreJS")
+
+lazy val neuroatlas4sVolumeJVM = ProjectRef(neuroatlas4sBuild, "volumeJVM")
+lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
+lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 
 // mesh4s owns triangle topology, surface realizations and point fields. It
 // pins the same locus4s, spatial4s and graph4s revisions as ScalaFIM's other
@@ -873,8 +877,8 @@ lazy val atlas =
     )
     // Test-only: the real-asset fsLR fixtures (locked asset gate, SimpleITK inverse oracle, qualification inputs)
     // live in an unpublished fixture module; atlas drives the public standard-route entry point.
-    .jvmConfigure(_.dependsOn(neuroatlas4sCoreJVM, image4sGeometryJVM, graph4sAlgorithmsJVM, surfaceTestFixturesJVM % "test->compile"))
-    .jsConfigure(_.dependsOn(neuroatlas4sCoreJS, image4sGeometryJS, graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(neuroatlas4sCoreJVM, neuroatlas4sVolumeJVM, neuroatlas4sVolumeIoJVM, image4sGeometryJVM, graph4sAlgorithmsJVM, surfaceTestFixturesJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(neuroatlas4sCoreJS, neuroatlas4sVolumeJS, image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
     .jvmConfigure(_.dependsOn(neuroim4sCoreJVM, neuroim4sIoJVM))
     .jsConfigure(_.dependsOn(neuroim4sCoreJS))
@@ -1498,3 +1502,5 @@ addCommandAlias("neuroimTestAll", s";{${neuroim4sBuild}}spacesJVM/test;{${neuroi
 addCommandAlias("neuroimRoutingTestAll", s";{${neuroim4sBuild}}routingJVM/test;{${neuroim4sBuild}}routingJS/test;{${neuroim4sBuild}}routingIoJVM/test")
 
 addCommandAlias("neuroimTransformTestAll", s";{${neuroim4sBuild}}transformJVM/test;{${neuroim4sBuild}}transformJS/test;{${neuroim4sBuild}}transformIoJVM/test")
+
+addCommandAlias("neuroatlasVolumeTestAll", ";" + Seq("coreJVM", "coreJS", "volumeJVM", "volumeJS", "volumeIoJVM").map(p => s"{${neuroatlas4sBuild}}$p/test").mkString(";"))

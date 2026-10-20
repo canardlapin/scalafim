@@ -1,5 +1,7 @@
 package scalafim.atlas.io
 
+import neuroatlas4s.io.*
+
 import java.nio.file.Path
 
 import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kHemisphereInput, Fslr32kRoute, StandardRoutePolicy, StandardRouteRefusal, StandardSurfaceRoutes}

@@ -2,14 +2,17 @@
 
 Typed standard-atlas metadata and parcel operations for `scalafim`.
 
-The atlas module builds volume and surface atlases over the
-[neuroatlas4s](https://github.com/canardlapin/neuroatlas4s) core, which owns
-standard atlas identity, releases, provenance, region metadata, the standard
-catalog and the realization contract. This module adds lookup, parcel
-reduction, overlap, graph relationships, loaders, template routes and
-Neuropublish projection. It deliberately leaves
-plotting, Shiny-style interaction, and hidden TemplateFlow downloads out of the
-core.
+This module retains surface realizations, surface loaders, standard surface
+routes and the mixed volume/surface transform manifest. The standalone
+[neuroatlas4s](https://github.com/canardlapin/neuroatlas4s) libraries own atlas
+metadata and publication records (core), exact volume realizations, queries,
+reductions, overlap, adjacency and volume template routes (optional volume),
+and volume catalog/asset loading (optional JVM IO). Moved implementations have
+been deleted here; consumers import their actual owner.
+
+The examples below compose those libraries with the remaining surface
+integration. Neither standalone volume module depends on a surface/display
+runtime or ScalaFIM. Low-level formats and transform kernels remain upstream.
 
 `RegionGraph.contactCounts` keeps its efficient implicit voxel-neighborhood
 scan. `RegionGraph.relation` is the semantic reference
@@ -28,13 +31,14 @@ Shared, cross-platform atlas API:
 ```scala
 import neuroatlas4s.*
 import scalafim.atlas.*
-import scalafim.atlas.syntax.*
+import neuroatlas4s.syntax.*
 ```
 
 JVM-specific atlas IO and download-backed loaders:
 
 ```scala
-import scalafim.atlas.io.*
+import neuroatlas4s.io.*
+import scalafim.atlas.io.* // surface loaders only
 ```
 
 ## Shared Model
@@ -71,13 +75,13 @@ import scalafim.atlas.io.*
   `GlasserHcpMmp1Surface` provide typed standard-atlas descriptors.
 - `SpaceTransforms` is a manifest of known template-space steps. It populates
   a `scalafim.spatial.SpatialGraph` (`SpaceTransformGraph`) over unsampled
-  template domains from `TemplateCatalog`, and routes with the spatial graph's
+  template domains from `TemplateCatalog` (concrete surface domains via `TemplateDomains`), and routes with the spatial graph's
   forward-first, inverse-fallback search. Steps holding an internal affine or a
-  provider `TransformAsset` (a `scalafim.transform.WorldTransform`) carry
+  provider `TransformAsset` (a `neuroim4s.transform.WorldTransform`) carry
   points and lower to grid pullbacks; planned nonlinear and surface steps stay
   typed non-executable edges and are never silently executed.
 - `MniTemplateBridge` executes `MNI152NLin6Asym -> MNI152NLin2009cAsym` with
-  TemplateFlow's exact ANTs composite (`MniTemplateBridgeFiles.loadCached` on
+  TemplateFlow's exact ANTs composite (`MniTemplateBridgeFiles.loadCached(cacheRoots)` on
   the JVM, which hashes the bytes; the file is admitted only by its pinned
   SHA-256 and its 2009c res-01 displacement lattice; the ITK parity tests need
   the file locally and are skipped, not failed, without it). It pulls 2009c points to 6Asym and resamples 6Asym data
@@ -381,7 +385,8 @@ the network:
 import java.nio.file.Path
 import neuroatlas4s.*
 import scalafim.atlas.*
-import scalafim.atlas.io.*
+import neuroatlas4s.io.*
+import scalafim.atlas.io.* // surface loaders only
 
 val store = FileAtlasStore(Path.of("atlas-cache"))
 val atlas = SchaeferLoader.load(
@@ -428,7 +433,7 @@ val atlas = AsegLoader.loadFromPaths(
 Coordinate lookup returns typed region metadata. The default input coordinate
 space is the atlas coordinate space; pass `fromSpace` when the point needs an
 available affine transform first. `Point3D` is a source-compatible alias for
-`scalafim.image.SpatialPoint`, so atlas queries use the same finite 3D
+`neuroim4s.image.SpatialPoint`, so atlas queries use the same finite 3D
 coordinate value as image and surface code.
 
 ```scala
@@ -449,8 +454,8 @@ val labels =
 on the atlas's exact grid. Every atlas region is kept in the output.
 
 ```scala
-import scalafim.atlas.syntax.*
-import scalafim.image.*
+import neuroatlas4s.syntax.*
+import neuroim4s.image.*
 
 val values: ParcelValues = atlas.reduce(statMap)
 val checked: Either[AtlasError, ParcelValues] = atlas.reduceEither(statMap)
@@ -515,7 +520,7 @@ Set `NEUROATLAS_R=/path/to/neuroatlas` to use another checkout.
 
 ## Signed INT8 Label Volumes
 
-The pinned image4s revision (`2c0638fb`) decodes NIfTI datatype 256 (signed
+The pinned image4s revision decodes NIfTI datatype 256 (signed
 INT8) as signed bytes; datatype 2 (UInt8) stays unsigned. `AtlasLabelMaps.readIntVolume`
 therefore reads INT8 label volumes with 0 as background and 1..127 as region
 IDs, and rejects a negative stored label with `IllegalArgumentException`.
@@ -525,6 +530,7 @@ signed storage, boundaries, and scaling in the image adapter.
 ## Tests
 
 ```sh
+sbt neuroatlasVolumeTestAll
 sbt atlasJVM/test
 sbt atlasJS/test
 sbt imageJVM/test

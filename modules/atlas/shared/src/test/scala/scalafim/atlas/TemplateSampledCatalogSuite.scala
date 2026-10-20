@@ -17,7 +17,7 @@ class TemplateSampledCatalogSuite extends munit.FunSuite:
     assertEquals(spaces.map(SpaceId.kind), Vector.fill(6)(SpaceKindTag.Surface))
     spaces.foreach { space =>
       assertEquals(SpaceId.asSurface(SpaceId.normalize(space.value)), Right(space))
-      TemplateCatalog.standard.domain(space) match
+      TemplateDomains.domain(TemplateCatalog.standard, space) match
         case Right(domain) =>
           assertEquals(domain.kind, DomainKind.Surface)
           domain.geometry match

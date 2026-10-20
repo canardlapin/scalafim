@@ -1,5 +1,7 @@
 package scalafim.atlas.io
 
+import neuroatlas4s.io.*
+
 import java.nio.file.Path
 import scala.util.control.NonFatal
 import scalafim.atlas.*

@@ -1,5 +1,7 @@
 package scalafim.atlas.io
 
+import neuroatlas4s.io.*
+
 import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
 import image4s.geometry.{Affine, D3, Point}
 import ravel.NDArray
@@ -151,9 +153,9 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
       assertEqualsDouble(resampled.image.data.at(IArray(i, j, k)), pull(bridge, y)(0), 1e-9, s"target voxel ($i,$j,$k)")
 
   test("installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing"):
-    val registry = bridge.install(SpaceTransforms.manifest)
-    assertEquals(registry.length, SpaceTransforms.manifest.length)
-    val plan = ok(SpaceTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, DataKind.Voxel, registry))
+    val registry = bridge.install(VolumeTransforms.manifest)
+    assertEquals(registry.length, VolumeTransforms.manifest.length)
+    val plan = ok(VolumeTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, registry))
     assertEquals(plan.status, TransformStatus.Available)
     assertEquals(plan.steps.map(_.backend), Vector(TransformBackend.TemplateFlowAnts))
     assert(!plan.usedInverses)
@@ -166,7 +168,7 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
     oracle.zip(pulled).foreach: (row, point) =>
       assert(distance(point.toVector, row.output) <= PullTolerance, row.key)
     // no reverse route: TemplateFlow's reverse file is not an inverse, so the planned step stays typed non-executable
-    val reverse = ok(SpaceTransforms.plan(SpaceId.MNI152NLin2009cAsym, SpaceId.MNI152NLin6Asym, DataKind.Voxel, registry))
+    val reverse = ok(VolumeTransforms.plan(SpaceId.MNI152NLin2009cAsym, SpaceId.MNI152NLin6Asym, registry))
     assertEquals(reverse.status, TransformStatus.Planned)
     assert(reverse.steps.head.notes.exists(_.contains("not an inverse")), reverse.steps.head.notes.toString)
     assert(reverse.pullbackExecutability.isLeft)
@@ -204,12 +206,12 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
         assert(distance(pull(bridge, pushed), row.input) <= PushTolerance, s"${row.key}: round trip")
         (distance(pushed, row.output), distance(pull(bridge, pushed), row.input))
     println(f"forward map vs ITK fixed-point inverse: max ${errors.map(_._1).max}%.2e mm; round trip max ${errors.map(_._2).max}%.2e mm")
-    val registry = bridge.install(SpaceTransforms.manifest)
-    val forward = ok(SpaceTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, DataKind.Voxel, registry))
+    val registry = bridge.install(VolumeTransforms.manifest)
+    val forward = ok(VolumeTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, registry))
     assert(forward.isExecutable, forward.executability.toString)
     ok(forward.transform(oracle.map(row => point3(row.input)))).zip(oracle).foreach: (point, row) =>
       assert(distance(point.toVector, row.output) <= PushTolerance, row.key)
-    val reverse = ok(SpaceTransforms.plan(SpaceId.MNI152NLin2009cAsym, SpaceId.MNI152NLin6Asym, DataKind.Voxel, registry))
+    val reverse = ok(VolumeTransforms.plan(SpaceId.MNI152NLin2009cAsym, SpaceId.MNI152NLin6Asym, registry))
     assertEquals(reverse.status, TransformStatus.Available)
     assert(!reverse.usedInverses)
     val pulled = rows("pull_points.tsv")
