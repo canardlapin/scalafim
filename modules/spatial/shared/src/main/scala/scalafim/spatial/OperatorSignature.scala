@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 final case class OperatorShape private (rows: Int, cols: Int):
   require(rows >= 0 && cols >= 0, "operator shape dimensions must be non-negative")
 

@@ -55,6 +55,7 @@ run_batch core-js \
 
 run_batch neuroim neuroimTestAll
 run_batch neuroim-transforms neuroimTransformTestAll
+run_batch neuroim-routing neuroimRoutingTestAll
 
 run_batch image-surface-jvm \
   imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \

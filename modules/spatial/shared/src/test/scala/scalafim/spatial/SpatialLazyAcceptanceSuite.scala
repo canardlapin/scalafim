@@ -93,7 +93,9 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
 
   private def volumeGrid(domain: Domain): GridSpec[?] =
     domain.geometry match
-      case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
+      case SamplingGeometry.Volume(volumeGrid) =>
+        val space = volumeGrid.space
+        GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")
 
   private def surfaceAt(xs: Vector[Double], kind: SurfaceKind): SurfaceGeometry =

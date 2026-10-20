@@ -247,7 +247,9 @@ object TransformAssetLoader:
   private def volumes(descriptor: TransformDescriptor, source: Domain, target: Domain): Either[SpatialIoError, (Volume, Volume)] =
     def volume(domain: Domain): Option[Volume] =
       domain.geometry match
-        case SamplingGeometry.Volume(space, _) => Some(Volume(space.grid.frame, space.grid.shape, space.grid.indexToFrame))
+        case SamplingGeometry.Volume(volumeGrid) =>
+          val space = volumeGrid.space
+          Some(Volume(space.grid.frame, space.grid.shape, space.grid.indexToFrame))
         case _                                 => None
     if descriptor.source != source.id || descriptor.target != target.id then
       Left(

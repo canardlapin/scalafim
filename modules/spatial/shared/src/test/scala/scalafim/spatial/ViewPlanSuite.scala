@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 class ViewPlanSuite extends munit.FunSuite:
 
   private def domainId(name: String): DomainId =

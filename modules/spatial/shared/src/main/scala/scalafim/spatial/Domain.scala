@@ -4,13 +4,10 @@ import image4s.SomeSampleSpace
 
 import neuroim4s.spaces.{NativeContext, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
 
-import image4s.SampleSpace
 import image4s.geometry.D3
 import image4s.geometry.Frame
-import image4s.geometry.Grid
-import neuroim4s.image.{SampleSpaces, SomeMaskVolume}
-import neuroim4s.image.SampleSpaces.*
-import neuroim4s.image.SomeNeuroVolume.*
+import neuroim4s.image.SomeMaskVolume
+import neuroim4s.spatial.{VolumeGrid, VolumeGridError, VolumeReference}
 import scalafim.locus.DomainFactory
 import locus4s.{
   FiniteDomain,
@@ -62,8 +59,7 @@ enum SpaceRef:
     this match
       case SpaceRef.Template(name, _, _) =>
         Right(WorldSpace.Template(name))
-      case SpaceRef.Volume(subject, _, _) =>
-        Left(SpaceError.MissingNativeContext(s"subject ${subject.value}'s volume lives in subject-native coordinates"))
+      case SpaceRef.Volume(subject, session, _) => VolumeReference.Native(subject, session).world
       case SpaceRef.Surface(subject, _, _) =>
         Left(SpaceError.MissingNativeContext(s"subject ${subject.value}'s surface lives in subject-native coordinates"))
       case SpaceRef.Latent(_, _, _) =>
@@ -90,7 +86,7 @@ enum SpaceRef:
         )
       else Right(WorldSpace.SubjectNative(native.namespace, native.subject, native.session, native.reference))
     this match
-      case SpaceRef.Volume(subject, session, _) => subjectNative(subject, session)
+      case SpaceRef.Volume(subject, session, _) => VolumeReference.Native(subject, session).worldIn(native)
       case SpaceRef.Surface(subject, _, kind) =>
         kind match
           case SurfaceKind.White | SurfaceKind.Pial | SurfaceKind.SmoothWm | SurfaceKind.Midthickness =>
@@ -120,7 +116,7 @@ sealed trait SamplingGeometry:
   def nElements: Int =
     this match
       case volume: SamplingGeometry.Volume =>
-        volume.space.grid.shape.product
+        volume.grid.size
       case SamplingGeometry.Surface(geometry, _) =>
         geometry.vertexCount
       case SamplingGeometry.Hybrid(parts) =>
@@ -131,38 +127,9 @@ sealed trait SamplingGeometry:
         0
 
 object SamplingGeometry:
-  final class Volume private[SamplingGeometry] (
-      val space: SampleSpace[? <: Frame[D3], D3],
-      val mask: Option[SomeMaskVolume]
-  ) extends SamplingGeometry:
-    override def equals(other: Any): Boolean =
-      other match
-        case that: Volume =>
-          space == that.space && mask == that.mask
-        case _ =>
-          false
-
-    override def hashCode(): Int =
-      31 * space.hashCode() + mask.hashCode()
-
-    override def toString: String =
-      s"Volume($space,$mask)"
-
-  object Volume:
-    private[SamplingGeometry] def admitted(
-        space: SampleSpace[? <: Frame[D3], D3],
-        mask: Option[SomeMaskVolume]
-    ): Volume =
-      new Volume(space, mask)
-
-    def unapply(
-        geometry: SamplingGeometry
-    ): Option[(SampleSpace[? <: Frame[D3], D3], Option[SomeMaskVolume])] =
-      geometry match
-        case volume: Volume =>
-          Some((volume.space, volume.mask))
-        case _ =>
-          None
+  final case class Volume(grid: VolumeGrid) extends SamplingGeometry:
+    override def hashCode(): Int = grid.hashCode()
+    override def toString: String = grid.toString
 
   final case class Surface(
       geometry: SurfaceGeometry,
@@ -192,20 +159,10 @@ object SamplingGeometry:
     )
 
   def volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume] = None): Either[SpatialError, SamplingGeometry] =
-    for
-      admitted <- SampleSpaces.requireVolumeD3(space.typed.spatialOnly)
-        .left
-        .map(SpatialError.SampleSpaceAdmission.apply)
-      _ <- mask match
-        case Some(value) =>
-          Grid
-            .exactCongruence(admitted.grid, value.grid)
-            .left
-            .map(SpatialError.Geometry.apply)
-            .map(_ => ())
-        case None =>
-          Right(())
-    yield SamplingGeometry.Volume.admitted(admitted, mask)
+    VolumeGrid.from(space, mask).left.map:
+      case VolumeGridError.Admission(cause) => SpatialError.SampleSpaceAdmission(cause)
+      case VolumeGridError.Geometry(cause) => SpatialError.Geometry(cause)
+    .map(SamplingGeometry.Volume.apply)
 
   def surface(
     geometry: SurfaceGeometry,

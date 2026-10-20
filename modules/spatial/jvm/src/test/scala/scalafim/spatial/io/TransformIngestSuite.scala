@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import neuroim4s.spatial.SamplingPolicy
+
 import image4s.SomeSampleSpace
 
 import reframe4s.field.CoordinateBoundaryPolicy

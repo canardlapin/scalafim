@@ -77,7 +77,9 @@ class DomainSuite extends munit.FunSuite:
     val geometry = value(SamplingGeometry.volume(requested))
 
     geometry match
-      case SamplingGeometry.Volume(space, None) =>
+      case SamplingGeometry.Volume(volumeGrid) =>
+        val space = volumeGrid.space
+        val None = volumeGrid.mask
         assertEquals(space.spatialRank, 3)
         assert(space.grid.eq(requested.grid))
       case other =>

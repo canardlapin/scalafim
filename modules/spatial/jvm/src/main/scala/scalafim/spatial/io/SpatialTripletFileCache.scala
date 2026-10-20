@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import neuroim4s.spatial.SamplingPolicy
+
 import gale.sparse.{COO, CSR}
 import scalafim.spatial.*
 

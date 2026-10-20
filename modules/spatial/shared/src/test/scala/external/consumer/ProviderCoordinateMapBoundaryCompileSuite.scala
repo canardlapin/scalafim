@@ -20,7 +20,7 @@ class ProviderCoordinateMapBoundaryCompileSuite extends munit.FunSuite:
           """
             import image4s.geometry.{D3, Frame}
             import neuroim4s.image.SpatialPullback
-            import scalafim.spatial.ProviderMapBinding
+            import neuroim4s.spatial.ProviderMapBinding
 
             def forge(binding: ProviderMapBinding, replacement: SpatialPullback[Frame[D3], Frame[D3]]) =
               binding.copy(pullback = replacement)
@@ -36,7 +36,8 @@ class ProviderCoordinateMapBoundaryCompileSuite extends munit.FunSuite:
       """
         import image4s.geometry.{D3, Frame}
         import neuroim4s.image.SpatialPullback
-        import scalafim.spatial.{CoordinateMap, ProviderMapBinding}
+        import scalafim.spatial.CoordinateMap
+        import neuroim4s.spatial.ProviderMapBinding
 
         def provider(map: CoordinateMap): Option[SpatialPullback[Frame[D3], Frame[D3]]] =
           map match

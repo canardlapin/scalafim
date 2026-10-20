@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 opaque type FieldRootId = String
 
 object FieldRootId:

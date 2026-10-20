@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import neuroim4s.image.SpatialPoint
 import gale.linalg.DMat
 import gale.sparse.CSR

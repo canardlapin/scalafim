@@ -24,6 +24,35 @@ The design rationale is in
 [`plans/spatial-transform-parity.md`](plans/spatial-transform-parity.md) and
 [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 
+## Anatomical routing and scoped volume reads
+
+The optional `neuroim4s.spatial` API supplies `VolumeGrid`, `VolumeDomain`,
+`VolumeRegistration`, `VolumeGraph` and `VolumeExecution`. Registrations are
+anatomical affine or warp maps; node and edge IDs remain caller-owned. The
+reference contract contains native and template volume spaces only. An
+unsampled world can participate in a coordinate route, but compiling a sampled
+operator onto it returns `UnsampledDomain`.
+
+`VolumeGraph.path` prefers an existing forward route and consults geometric
+inverses only when no forward route exists. `allPaths` includes inverse
+alternatives when requested and ranks them by cost, length and caller edge
+label. Provider frame owners are checked at graph admission. Coordinate
+pullbacks run in reverse route order and values are sampled once.
+
+`VolumeExecution.compile` accepts ordered target rows and a `SamplingPolicy`
+(`Nearest` or `Trilinear`). The resulting operator can materialize only its
+source support and requested observations through a `VolumeSource`.
+`neuroim4s.spatial.io.NiftiVolumeSource` is the optional JVM implementation:
+preparation does no IO, terminal validation pins the file revision, reads return
+one compact block in request order, and every acquired channel is closed before
+returning. Changed files are reported as stale even when a downstream result
+cache contains values. Compressed sources require explicit staging.
+
+ScalaFIM `NiftiFieldSource` attaches functional field identity and provenance to
+that reader. The mixed spatial API uses the provider `VolumeGrid`,
+`ProviderMapBinding` and `SamplingPolicy` directly; it exports no compatibility
+aliases. See the [remaining ownership map](verification/neuroim-routing-20261020/ownership.md).
+
 ## World spaces and frames
 
 A `WorldSpace` names a continuous RAS-millimetre coordinate system:

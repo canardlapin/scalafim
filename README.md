@@ -61,6 +61,12 @@ cross-compiled sbt build.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
 - `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.
 
+Anatomical volume routing, provider-map admission, sampling and scoped reads live
+in optional `neuroim4s-routing` and `neuroim4s-routing-io` modules. ScalaFIM's
+`spatial` module composes them with surface, hybrid and functional field policy.
+`neuroimRoutingTestAll` runs the standalone JVM/JS consumers and optional JVM
+NIfTI source tests. See the [routing ownership map](docs/verification/neuroim-routing-20261020/ownership.md).
+
 Triangle topology and primitive surface point storage are owned by standalone
 [`mesh4s`](https://github.com/canardlapin/mesh4s). Surface sets share one ordered
 topology across white, pial, inflated and spherical realizations. ScalaFIM keeps

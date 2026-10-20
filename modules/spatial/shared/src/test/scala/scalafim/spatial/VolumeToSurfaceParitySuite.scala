@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import image4s.SomeSampleSpace
 
 import image4s.geometry.{Affine, D3}

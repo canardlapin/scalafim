@@ -1,7 +1,8 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import image4s.geometry.Grid
-import neuroim4s.image.SampleSpaces
 import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
@@ -268,19 +269,10 @@ object Field:
       actual: SamplingGeometry
   ): Either[SpatialError, Boolean] =
     (expected, actual) match
-      case (SamplingGeometry.Volume(expectedSpace, expectedMask), SamplingGeometry.Volume(actualSpace, actualMask)) =>
-        for
-          expectedD3 <- SampleSpaces.requireVolumeD3(expectedSpace.typed.spatialOnly)
-            .left
-            .map(error => SpatialError.FieldSourceSampleSpaceAdmission(source, error))
-          actualD3 <- SampleSpaces.requireVolumeD3(actualSpace.typed.spatialOnly)
-            .left
-            .map(error => SpatialError.FieldSourceSampleSpaceAdmission(source, error))
-          _ <- Grid
-            .exactCongruence(expectedD3.grid, actualD3.grid)
-            .left
-            .map(error => SpatialError.FieldSourceGridMismatch(source, error))
-        yield expectedMask == actualMask
+      case (SamplingGeometry.Volume(expected), SamplingGeometry.Volume(actual)) =>
+        Grid.exactCongruence(expected.space.grid, actual.space.grid)
+          .left.map(error => SpatialError.FieldSourceGridMismatch(source, error))
+          .map(_ => expected.mask == actual.mask)
       case _ =>
         Right(expected == actual)
 

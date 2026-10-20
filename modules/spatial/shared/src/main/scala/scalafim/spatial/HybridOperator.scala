@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError, LinearOperator}
 
 /** How per-part operators assemble around a hybrid domain.

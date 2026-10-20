@@ -43,9 +43,9 @@ response
 
 standalone locus4s
 +-- locus-data
-|   +-- surface       also depends on neuroim4s-core, neuroim4s-neuroim4s-transform, standalone graph4s
-|   +-- atlas         also depends on neuroim4s-core, surface, spatial, neuroim4s-neuroim4s-transform, standalone graph4s
-|   +-- spatial       also depends on standalone Gale, neuroim4s-core, surface, neuroim4s-transform
+|   +-- surface       also depends on neuroim4s-core, neuroim4s-transform, standalone graph4s
+|   +-- atlas         also depends on neuroim4s-core, surface, spatial, neuroim4s-transform, standalone graph4s
+|   +-- spatial       also depends on standalone Gale, neuroim4s-core, surface, neuroim4s-transform, neuroim4s-routing
 |   +-- dataset       also depends on response, neuroim4s-core, hrf
 |   +-- mvpa-spatial  also depends on mvpa4s, surface, threshold
 +-- latent            also depends on response, neuroim4s-core
@@ -510,3 +510,19 @@ Toolkit transform formats and anatomical interpretation now belong to standalone
 directly. There is no local `transform` module. The unpublished `providerSpike`
 test configuration retains the four ScenarioHarness registration workflows with
 strict compiler checks; its runtime compile contract remains independent of them.
+
+## Anatomical volume routing
+
+`neuroim4s-routing` depends on neuroim4s core/transform and graph4s algorithms.
+It admits provider-owned D3 grids and coordinate maps, routes anatomical volume
+registrations and assembles one sampling pass. It has no surface, atlas,
+response or dataset dependency. Its optional `neuroim4s-routing-io` JVM module
+adds scoped NIfTI reads over neuroim4s IO; core and basic IO do not depend on
+routing. graph4s owns directed shortest/simple-path algorithms, including
+parallel arc payload choices.
+
+ScalaFIM spatial retains the mixed-domain integration cases and functional field
+identity, demand, cache and provenance. Volume cases contain an admitted
+`VolumeGrid`; they do not repeat grid or mask admission. The remaining symbols
+have explicit [destinations](verification/neuroim-routing-20261020/ownership.md)
+for the later surface and functional splits.

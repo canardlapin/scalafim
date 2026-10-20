@@ -1,6 +1,10 @@
 package scalafim.spatial
 
 import scala.collection.mutable
+import cats.Hash
+import graph4s.{ArcInput, Digraph}
+import graph4s.data.{ArcField, WeightedDigraph}
+import graph4s.algorithms.{DirectedRoutes, RouteChoice}
 
 /** Weight of an inverse edge's quality deficit in routing: an inverse of `morphism` costs
   * `morphism.cost + penalty * (1 - inverse quality)`, as in neurofunctor's `find_path_with_inverses`.
@@ -52,7 +56,8 @@ final case class SpatialGraph private (
     allowInverses: Boolean = false,
     inversePenalty: InversePenalty = InversePenalty.default
   ): Either[SpatialError, MorphismPath] =
-    requireEndpoints(source, target).flatMap { _ =>
+    if VolumeRouting.supports(this, policy) then VolumeRouting.path(this, source, target, policy, allowInverses, inversePenalty)
+    else requireEndpoints(source, target).flatMap { _ =>
       if source == target then Right(MorphismPath.identity(source))
       else
         val forward = forwardEdges(policy)
@@ -88,6 +93,7 @@ final case class SpatialGraph private (
     inversePenalty: InversePenalty = InversePenalty.default
   ): Either[SpatialError, Vector[MorphismPath]] =
     if maxPaths <= 0 then Left(SpatialError.InvalidPathLimit(maxPaths))
+    else if VolumeRouting.supports(this, policy) then VolumeRouting.allPaths(this, source, target, policy, maxPaths, allowInverses, inversePenalty)
     else
       requireEndpoints(source, target).flatMap { _ =>
         if source == target then Right(Vector(MorphismPath.identity(source)))
@@ -95,28 +101,14 @@ final case class SpatialGraph private (
           val edges =
             if allowInverses then forwardEdges(policy) ++ inverseEdges(policy, inversePenalty)
             else forwardEdges(policy)
-          val adjacency = adjacencyOf(edges)
-          val found = Vector.newBuilder[Vector[RouteEdge]]
-          val visited = mutable.HashSet(source)
-
-          def walk(node: DomainId, trail: List[RouteEdge]): Unit =
-            adjacency.getOrElse(node, Vector.empty).foreach { edge =>
-              if edge.to == target then found += (edge :: trail).reverse.toVector
-              else if !visited(edge.to) then
-                visited += edge.to
-                walk(edge.to, edge :: trail)
-                visited -= edge.to
-            }
-
-          walk(source, Nil)
-          val ranked =
-            found.result().sortBy { route =>
-              (route.map(_.morphism.cost).sum, route.length, route.map(_.morphism.id.value).mkString("|"))
-            }
-          ranked.take(maxPaths).foldLeft[Either[SpatialError, Vector[MorphismPath]]](Right(Vector.empty)) {
-            (acc, route) =>
-              acc.flatMap(paths => MorphismPath.build(route.map(_.morphism), route.exists(_.inverted)).map(paths :+ _))
-          }
+          routeGraph(edges).flatMap: graph =>
+            DirectedRoutes.allSimplePaths(graph, source, target)
+              .left.map(_ => SpatialError.NoPath(source, target))
+              .flatMap: routes =>
+                val ranked = routes.sortBy: route =>
+                  (route.map(_.morphism.cost).sum, route.length, route.map(_.morphism.id.value).mkString("|"))
+                ranked.take(maxPaths).foldLeft[Either[SpatialError, Vector[MorphismPath]]](Right(Vector.empty)):
+                  (acc, route) => acc.flatMap(paths => MorphismPath.build(route.map(_.morphism), route.exists(_.inverted)).map(paths :+ _))
       }
 
   private def requireEndpoints(source: DomainId, target: DomainId): Either[SpatialError, Unit] =
@@ -125,46 +117,24 @@ final case class SpatialGraph private (
     else Right(())
 
   private def shortest(source: DomainId, target: DomainId, edges: Vector[RouteEdge]): Either[SpatialError, MorphismPath] =
-    val adjacency = adjacencyOf(edges)
+    routeGraph(edges).flatMap: graph =>
+      DirectedRoutes.shortest(graph, source, target)
+        .left.map(_ => SpatialError.NoPath(source, target))
+        .flatMap:
+          case Some(route) => MorphismPath.build(route.map(_.morphism), route.exists(_.inverted))
+          case None => Left(SpatialError.NoPath(source, target))
 
-    given Ordering[(Double, DomainId)] =
-      Ordering.by[(Double, DomainId), Double](_._1).reverse
-
-    val queue = mutable.PriorityQueue.empty[(Double, DomainId)]
-    val distance = mutable.HashMap.empty[DomainId, Double]
-    val previous = mutable.HashMap.empty[DomainId, (DomainId, RouteEdge)]
-    val visited = mutable.HashSet.empty[DomainId]
-
-    distance(source) = 0.0
-    queue.enqueue((0.0, source))
-
-    while queue.nonEmpty do
-      val (cost, node) = queue.dequeue()
-      if !visited(node) then
-        visited += node
-        if node == target then
-          val pathEdges = Vector.newBuilder[RouteEdge]
-          var current = target
-          while current != source do
-            val (prior, edge) = previous(current)
-            pathEdges += edge
-            current = prior
-          val route = pathEdges.result().reverse
-          return MorphismPath.build(route.map(_.morphism), route.exists(_.inverted))
-
-        adjacency.getOrElse(node, Vector.empty).foreach { edge =>
-          if !visited(edge.to) then
-            val candidate = cost + edge.morphism.cost
-            if candidate < distance.getOrElse(edge.to, Double.PositiveInfinity) then
-              distance(edge.to) = candidate
-              previous(edge.to) = (node, edge)
-              queue.enqueue((candidate, edge.to))
-        }
-
-    Left(SpatialError.NoPath(source, target))
-
-  private def adjacencyOf(edges: Vector[RouteEdge]): Map[DomainId, Vector[RouteEdge]] =
-    edges.groupBy(_.from)
+  private def routeGraph(edges: Vector[RouteEdge]): Either[SpatialError, WeightedDigraph[DomainId, Vector[RouteChoice[RouteEdge]]]] =
+    given Hash[DomainId] = Hash.fromUniversalHashCode
+    // Identity self-edges cannot improve a route; graph4s topology is loopless. Keep every other parallel choice.
+    val candidates = edges.filter(edge => edge.from != edge.to).zipWithIndex
+    Digraph.of(domains.keys, candidates.map((edge, _) => ArcInput(edge.from, edge.to))).toEither
+      .left.map(error => SpatialError.OperatorAssemblyFailed(s"invalid routing topology: $error"))
+      .map: topology =>
+        WeightedDigraph.from(ArcField.total(topology): arc =>
+          candidates.collect:
+            case (edge, order) if edge.from == arc.source && edge.to == arc.target => RouteChoice(edge, edge.morphism.cost, order)
+        )
 
   private def forwardEdges(policy: RoutingPolicy): Vector[RouteEdge] =
     morphisms.filter(morphismAllowed(_, policy)).map { morphism =>

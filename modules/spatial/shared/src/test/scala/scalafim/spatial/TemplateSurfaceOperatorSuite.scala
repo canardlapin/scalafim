@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import neuroim4s.image.{Mask, SampleSpaces}
 import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.{SubjectId, TemplateName}

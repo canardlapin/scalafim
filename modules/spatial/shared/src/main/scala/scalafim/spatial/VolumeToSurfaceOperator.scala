@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import image4s.SomeSampleSpace
 
 import neuroim4s.image.{GridSpec, Indexing, SomeMaskVolume, SpatialDims, SpatialPoint}
@@ -130,7 +132,9 @@ object VolumeToSurfaceOperatorCompiler:
 
   private def volumeSource(domain: Domain): Either[SpatialError, VolumeSource] =
     domain.geometry match
-      case SamplingGeometry.Volume(space, mask) =>
+      case SamplingGeometry.Volume(volumeGrid) =>
+        val space = volumeGrid.space
+        val mask = volumeGrid.mask
         Right(VolumeSource(space.typed.spatialOnly, mask))
       case _ =>
         Left(SpatialError.NonVolumeDomain(domain.id))
@@ -713,7 +717,10 @@ object MixedPullbackOperatorCompiler:
 
   private def volumeSource(domain: Domain): Either[SpatialError, VolumeSource] =
     domain.geometry match
-      case SamplingGeometry.Volume(space, mask) => Right(VolumeSource(space.typed.spatialOnly, mask))
+      case SamplingGeometry.Volume(volumeGrid) =>
+        val space = volumeGrid.space
+        val mask = volumeGrid.mask
+        Right(VolumeSource(space.typed.spatialOnly, mask))
       case _ => Left(SpatialError.NonVolumeDomain(domain.id))
 
   private def surfaceTarget(domain: Domain): Either[SpatialError, SurfaceTarget] =

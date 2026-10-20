@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.{SamplingPolicy, VolumeReadRequest}
+
 import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
@@ -324,7 +326,12 @@ final class LazyFieldRuntime private (
             if block.request == request then Right(())
             else Left(SpatialError.FieldSourceRequestMismatch(source.descriptor.id))
           _ <- FieldSourceBlock.make(source.descriptor.id, request, block.data)
-          expanded <- expandSourceBlock(field, request, block.data)
+          expanded <- graph.domain(field.root).flatMap: domain =>
+            domain.geometry match
+              case SamplingGeometry.Volume(_) =>
+                VolumeReadRequest.make(field.plan.rootSampleCount, field.plan.rootObservations, request.sourceRows, request.observations)
+                  .flatMap(_.expand(block.data)).left.map(VolumeReadErrors(source.descriptor.id))
+              case _ => expandSourceBlock(field, request, block.data)
         yield expanded
       case None =>
         field.data.materialized match

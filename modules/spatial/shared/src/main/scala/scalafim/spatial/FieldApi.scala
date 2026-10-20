@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 import gale.linalg.DMat
 import neuroim4s.image.{SpatialAxis, VoxelCoord}
 

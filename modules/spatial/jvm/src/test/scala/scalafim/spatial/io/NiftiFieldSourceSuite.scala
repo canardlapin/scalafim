@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import neuroim4s.spatial.io.NiftiVolumeSourceStats
+
 import image4s.SomeSampleSpace
 
 import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
@@ -60,7 +62,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         case Right(value) => value
         case Left(error) => fail(error.message)
 
-      assertEquals(source.stats, NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
+      assertEquals(source.stats, NiftiVolumeSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
 
       val values = (Array(0.0, 10.0, 20.0, 1.0, 11.0, 21.0, 2.0, 12.0, 22.0, 3.0, 13.0, 23.0)).clone()
       Nifti
@@ -76,7 +78,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
       assertEquals(second.toRows, first.toRows)
       assertEquals(
         source.stats,
-        NiftiFieldSourceStats(
+        NiftiVolumeSourceStats(
           validationCalls = 2L,
           readCalls = 1L,
           headerReads = 1L,

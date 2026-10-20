@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import neuroim4s.spatial.io.NiftiVolumeSourceStats
+
 import image4s.SomeSampleSpace
 
 import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
@@ -110,7 +112,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
       Vector(
         SpatialScenario.fact(
           "construction and explanation perform no IO",
-          before.phase == FieldExplanationPhase.Descriptive && sourceBefore == NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L),
+          before.phase == FieldExplanationPhase.Descriptive && sourceBefore == NiftiVolumeSourceStats(0L, 0L, 0L, 0L, 0L, 0L),
           s"phase=${before.phase} sourceStats=$sourceBefore"
         ),
         SpatialScenario.vector("external values", first.copyData.toVector, expected, 1e-12),

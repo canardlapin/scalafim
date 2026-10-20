@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neuroim4s.spatial.SamplingPolicy
+
 enum FieldExplanationPhase:
   case Descriptive, Planned, Evaluated
 

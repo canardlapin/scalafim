@@ -408,7 +408,9 @@ private def volumeDimensions(
   domain: Domain
 ): Either[DemandError, neuroim4s.image.SpatialDims] =
   domain.geometry match
-    case SamplingGeometry.Volume(space, _) => Right(SpatialDims.unsafeFromVector(space.grid.shape))
+    case SamplingGeometry.Volume(volumeGrid) =>
+      val space = volumeGrid.space
+      Right(SpatialDims.unsafeFromVector(space.grid.shape))
     case _ => Left(DemandError.DomainKindMismatch(selection, DomainKind.Volume, domain.kind))
 
 private def selectionLabel(selection: SpatialDemand): String =
