@@ -1,16 +1,17 @@
 # Toolkit transform extraction into neuroim4s
 
-This locally qualified candidate removes ScalaFIM's `transform` module. Portable toolkit codecs,
+This cutover removes ScalaFIM's `transform` module. Portable toolkit codecs,
 registration interpretation, conversion and warp policy move into optional
 `neuroim4s-transform` on JVM and Scala.js; file/HDF5 containers move into optional
 JVM `neuroim4s-transform-io`. Generic raw NIfTI-1 container IO moves into image4s.
 Generic transform algebra, inverse solvers and resampling remain in reframe4s/Gale.
 No surface, atlas, MVPA or ScalaFIM dependency enters neuroim4s.
 
-## Local source candidates
+## Published provider sources
 
-These source commits have **not** been published. Publication approval and a fresh
-ScalaFIM qualification against the published default pins remain outstanding.
+The user-approved commits are published on provider `main` branches by non-force
+fast-forward. Exact checkout/tracking/live-remote SHA equality is recorded in
+[publication.json](publication.json). Fresh default-pin qualification passed.
 
 | Repository | Candidate | Published parent |
 | --- | --- | --- |
@@ -18,10 +19,11 @@ ScalaFIM qualification against the published default pins remain outstanding.
 | reframe4s | `7ec7feff96d4057a86196b5e86d592688b7c7f84` | `e4df73969e1fccb7aa0153a9203927c6dd8b0e3d` |
 | neuroim4s | `018a9f2e80db4f2d2945c7eba867835ab9144135` | `0ca4d07fc021d21a7802929069396d4df5bf4cc3` |
 
-The prepared consumer is `59db6fbde6a2f6225f591998d2e686eee1617724` on `eco/transforms-20261020`, based on
-`d9d1c0113bc1e48944f1b92dd1829ab8cbabf680`. Verified Git bundles and a binary cutover patch preserve all four
-candidates. The active eco branch retains published provider pins until the separate
-publication step; ScalaFIM remains local and unpushed.
+The reviewed consumer is `59db6fbde6a2f6225f591998d2e686eee1617724` on `eco/transforms-20261020`, based on
+`d9d1c0113bc1e48944f1b92dd1829ab8cbabf680`. It is active locally as
+`33d136037000f7c48d83b49f008ea97e1d4ce3d3` on `eco/u3-topology-20261019`.
+All 1,851 qualified source/build/resource inputs are byte-identical. Verified Git bundles
+and a binary cutover patch preserve the reviewed candidates. ScalaFIM remains local and unpushed.
 
 ## Ownership and compatibility
 
@@ -71,20 +73,43 @@ used an oblique oracle and exposed floating-point roundoff in an unjustified exa
 assertion; its final specimen is a literal identity field and retains exact-zero checking.
 No existing numerical tolerance was loosened.
 
-This is source-migration qualification against explicit local provider checkouts. It is
-not hosted CI, an artifact release, a fresh native-tool oracle regeneration, graphical
-runtime acceptance, a fresh full-repository test run or a new scientific/performance claim.
+The earlier candidate run used explicit local provider checkouts. Fresh published-pin
+qualification below resolves GitHub sources. These are bounded source-migration checks;
+no hosted CI, artifact release, fresh native-tool oracle regeneration, graphical runtime
+acceptance, full-repository rerun or new scientific/performance qualification is claimed.
 Previous full core qualification remains separately documented in
 [the core receipt](../neuroim-core-20261019/README.md).
 
-## Evidence and next action
+## Publication and fresh default-pin qualification
+
+Fresh default-pin qualification passed **3,308 tests across 37 projects**, with zero
+failures/errors and the same two optional JavaScript skips. All modules and examples
+compile on JVM and Scala.js. Eight bounded gates cover all neuroim4s modules, surface
+and scenario tests, spatial/atlas, dataset/MVPA/workflows, the archive architecture guard
+and workflow examples. These fresh results supplement the earlier 3,455-case candidate
+run; the totals are not added together.
+
+The loaded graph has one immutable source revision for each of 18 providers. Downloaded
+image4s, reframe4s and neuroim4s sources match all 3,888 qualified inputs byte for byte.
+Ninety inspected consumer classpath entries contain no local provider checkout. The
+original Gale revision is retained. Compilation has no Scala source diagnostics;
+existing Intaglio and linops4s build-definition linter warnings are preserved.
+
+[publication.json](publication.json) records approval, non-force source pushes, exact
+SHA parity, consumer activation, graph/source proof, commands, fresh counts and skips.
+`eco-neuroim-transforms` acceptance is complete.
+
+## Evidence
 
 [receipt.json](receipt.json) binds candidates, gate commands/results, unique XML counts,
 review, source/resource inventories and recovery artifacts. Raw logs, exit-status sidecars,
 input SHA-256 manifests, XML archive, adverse runs and verified bundles live under the shared
 Git directory: `verification/neuroim-transforms-20261020/`.
 
-After approval, publish the three provider candidates in dependency order to
-`canardlapin/*` using non-force fast-forwards, verify exact live-remote SHAs, apply the
-preserved consumer candidate, then qualify fresh default pins before closing
-`eco-neuroim-transforms`. Do not push ScalaFIM as part of that provider approval.
+Volume routing (`eco-neuroim-routing`) is now unblocked. The broader
+`eco-unification` epic still requires the remaining I1/A1/U3–U6 gates.
+
+The tracker records 16 of 36 eco implementation tasks closed and 3 of 9 milestone
+gates closed at this acceptance. The epic remains open. The immutable Mote prefix
+is synchronized with the canonical store and passes `mote fsck`; the task claim
+and reservations are released.

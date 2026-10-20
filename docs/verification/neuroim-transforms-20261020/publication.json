@@ -1,0 +1,949 @@
+{
+  "approved_in_chat": true,
+  "scope": "exact three transform provider source commits; non-force main publication; no artifact release or ScalaFIM push",
+  "started_at": "2026-10-20T10:45:00.416071+00:00",
+  "preflight": {
+    "image4s": {
+      "candidate": "aef5e223169f0831c942694c4b109ab20d152217",
+      "live_parent": "7885f67798242412800a448eda68acfbfff4f751",
+      "remote": "git@github-canardlapin:canardlapin/image4s.git",
+      "qualified_inputs_verified": 124
+    },
+    "reframe4s": {
+      "candidate": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+      "live_parent": "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d",
+      "remote": "git@github-canardlapin:canardlapin/reframe4s.git",
+      "qualified_inputs_verified": 3008
+    },
+    "neuroim4s": {
+      "candidate": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+      "live_parent": "0ca4d07fc021d21a7802929069396d4df5bf4cc3",
+      "remote": "git@github-canardlapin:canardlapin/neuroim4s.git",
+      "qualified_inputs_verified": 756
+    }
+  },
+  "published": {
+    "image4s": {
+      "candidate": "aef5e223169f0831c942694c4b109ab20d152217",
+      "checkout": "aef5e223169f0831c942694c4b109ab20d152217",
+      "tracking": "aef5e223169f0831c942694c4b109ab20d152217",
+      "live_remote": "aef5e223169f0831c942694c4b109ab20d152217",
+      "parity": true,
+      "non_force": true,
+      "log": "publish-image4s.log",
+      "log_sha256": "6e685761763637ecbf8485ff16f8e09a4e30e8628f2898637a8b64925ecc0b4e",
+      "verified_at": "2026-10-20T10:45:06.850101+00:00"
+    },
+    "reframe4s": {
+      "candidate": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+      "checkout": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+      "tracking": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+      "live_remote": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+      "parity": true,
+      "non_force": true,
+      "log": "publish-reframe4s.log",
+      "log_sha256": "70f6e31b12170ced12cb210d9dbcddafb9cb24f8232684fd2db50a82ecdb78df",
+      "verified_at": "2026-10-20T10:45:10.045921+00:00"
+    },
+    "neuroim4s": {
+      "candidate": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+      "checkout": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+      "tracking": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+      "live_remote": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+      "parity": true,
+      "non_force": true,
+      "log": "publish-neuroim4s.log",
+      "log_sha256": "a9064ce0aa5ed7e2391c792adfdd97dc85fb7f66ace6db7cb12223fa4404b283",
+      "verified_at": "2026-10-20T10:45:13.580827+00:00"
+    }
+  },
+  "finished_at": "2026-10-20T10:45:13.581198+00:00",
+  "consumer_activation": {
+    "activated_at": "2026-10-20T10:46:05.076221+00:00",
+    "source_candidate": "59db6fbde6a2f6225f591998d2e686eee1617724",
+    "active_commit": "33d136037000f7c48d83b49f008ea97e1d4ce3d3",
+    "active_branch": "eco/u3-topology-20261019",
+    "qualified_inputs_verified": 1851,
+    "all_qualified_inputs_byte_identical": true,
+    "scalafim_pushed": false
+  },
+  "default_pin_graph": {
+    "provider_revisions": {
+      "alder": [
+        "7618c715002b3912f856c4d44468ae173fce4dec"
+      ],
+      "bids4s": [
+        "a33678390614a91fadbdef13f22970e78c26e091"
+      ],
+      "gale": [
+        "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+      ],
+      "graph4s": [
+        "6a72b58b564933234768f025e67228736ef2f7c5"
+      ],
+      "image4s": [
+        "aef5e223169f0831c942694c4b109ab20d152217"
+      ],
+      "intaglio": [
+        "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+      ],
+      "linops4s": [
+        "fec77db060b130b3c609a43d07ff0bfb31088aae"
+      ],
+      "locus4s": [
+        "e32b0aeba5c4d19c457b2329272b95b26c061943"
+      ],
+      "mesh4s": [
+        "54b7278880e6db38c543a4a565355afd864e576a"
+      ],
+      "multivar": [
+        "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+      ],
+      "mvpa4s": [
+        "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+      ],
+      "neuroatlas4s": [
+        "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+      ],
+      "neuroim4s": [
+        "018a9f2e80db4f2d2945c7eba867835ab9144135"
+      ],
+      "ravel": [
+        "195d71027423d5bda1c53ef1baa17e07670fe290"
+      ],
+      "reframe4s": [
+        "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+      ],
+      "resample4s": [
+        "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+      ],
+      "spatial4s": [
+        "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+      ],
+      "zarr4s": [
+        "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+      ]
+    },
+    "single_revision_per_provider": true,
+    "provider_source_proof": {
+      "image4s": {
+        "git_head": "aef5e223169f0831c942694c4b109ab20d152217",
+        "qualified_source_inputs_verified": 124,
+        "clean": true
+      },
+      "reframe4s": {
+        "git_head": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+        "qualified_source_inputs_verified": 3008,
+        "clean": true
+      },
+      "neuroim4s": {
+        "git_head": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+        "qualified_source_inputs_verified": 756,
+        "clean": true
+      }
+    },
+    "loaded_sources": [
+      {
+        "provider": "ravel",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+        "head": "195d71027423d5bda1c53ef1baa17e07670fe290"
+      },
+      {
+        "provider": "intaglio",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+        "head": "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+      },
+      {
+        "provider": "neuroatlas4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/13888b7dd8bc22e12ae8/neuroatlas4s",
+        "head": "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+      },
+      {
+        "provider": "mesh4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/169dde1ec5b6720cd043/mesh4s",
+        "head": "54b7278880e6db38c543a4a565355afd864e576a"
+      },
+      {
+        "provider": "gale",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+        "head": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+      },
+      {
+        "provider": "zarr4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+        "head": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+      },
+      {
+        "provider": "resample4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+        "head": "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+      },
+      {
+        "provider": "multivar",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+        "head": "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+      },
+      {
+        "provider": "bids4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+        "head": "a33678390614a91fadbdef13f22970e78c26e091"
+      },
+      {
+        "provider": "spatial4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+        "head": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+      },
+      {
+        "provider": "image4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+        "head": "aef5e223169f0831c942694c4b109ab20d152217"
+      },
+      {
+        "provider": "mvpa4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+        "head": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+      },
+      {
+        "provider": "neuroim4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/be338f4f58a6c02f0696/neuroim4s",
+        "head": "018a9f2e80db4f2d2945c7eba867835ab9144135"
+      },
+      {
+        "provider": "locus4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+        "head": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+      },
+      {
+        "provider": "alder",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+        "head": "7618c715002b3912f856c4d44468ae173fce4dec"
+      },
+      {
+        "provider": "reframe4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+        "head": "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+      },
+      {
+        "provider": "linops4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+        "head": "fec77db060b130b3c609a43d07ff0bfb31088aae"
+      },
+      {
+        "provider": "graph4s",
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/e6c88898cf2a580290f7/graph4s",
+        "head": "6a72b58b564933234768f025e67228736ef2f7c5"
+      }
+    ],
+    "consumer_classpath_entries_inspected": 90,
+    "local_provider_classpaths_present": false,
+    "gale_pin_retained": true
+  },
+  "default_pin_qualification": {
+    "status": "passed",
+    "run": {
+      "started_at": "2026-10-20T10:46:05.089259+00:00",
+      "consumer": "33d136037000f7c48d83b49f008ea97e1d4ce3d3",
+      "local_provider_overrides": false,
+      "qualified_consumer_inputs": 1851,
+      "gates": [
+        {
+          "name": "compile",
+          "commands": [
+            "projects",
+            "scalafimCompileAll",
+            "examplesCompile",
+            "show providerSpikeJVM / Test / fullClasspath",
+            "show providerSpikeJS / Test / fullClasspath"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-00-compile.log",
+          "exit_code": 0
+        },
+        {
+          "name": "neuroim",
+          "commands": [
+            "neuroimTestAll",
+            "neuroimTransformTestAll"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-01-neuroim.log",
+          "exit_code": 0
+        },
+        {
+          "name": "surface-jvm",
+          "commands": [
+            "providerSpikeJVM/test",
+            "surfaceJVM/test",
+            "surfaceTestFixturesJVM/test",
+            "surfaceViewJVM/test",
+            "surfaceViewRasterJVM/test",
+            "surfaceViewConnectivityJVM/test",
+            "surfaceViewExamplesJVM/test"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-02-surface-jvm.log",
+          "exit_code": 0
+        },
+        {
+          "name": "surface-js",
+          "commands": [
+            "providerSpikeJS/test",
+            "surfaceJS/test",
+            "surfaceTestFixturesJS/test",
+            "surfaceViewJS/test",
+            "surfaceViewRasterJS/test",
+            "surfaceViewConnectivityJS/test",
+            "surfaceViewExamplesJS/test"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-03-surface-js.log",
+          "exit_code": 0
+        },
+        {
+          "name": "spatial-atlas-jvm",
+          "commands": [
+            "spatialJVM/test",
+            "atlasJVM/test",
+            "archivedResponseInteropJVM/testOnly scalafim.architecture.ResponseArchiveBoundaryGuardSuite"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-04-spatial-atlas-jvm.log",
+          "exit_code": 0
+        },
+        {
+          "name": "spatial-atlas-js",
+          "commands": [
+            "spatialJS/test",
+            "atlasJS/test"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-05-spatial-atlas-js.log",
+          "exit_code": 0
+        },
+        {
+          "name": "workflow-jvm",
+          "commands": [
+            "mvpaSpatialJVM/test",
+            "datasetJVM/test",
+            "datasetZarrJVM/test",
+            "fmriWorkflowJVM/test",
+            "atlasExamplesJVM/test",
+            "workflowExamplesJVM/test",
+            "phrfComparisonJVM/testOnly scalafim.phrfcmp.exec.StampBuilderSuite"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-06-workflow-jvm.log",
+          "exit_code": 0
+        },
+        {
+          "name": "workflow-js",
+          "commands": [
+            "mvpaSpatialJS/test",
+            "datasetJS/test",
+            "datasetZarrJS/test",
+            "fmriWorkflowJS/test",
+            "workflowExamplesJS/test"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-transforms-20261020/default-pins-01-07-workflow-js.log",
+          "exit_code": 0
+        }
+      ],
+      "finished_at": "2026-10-20T10:58:20.628525+00:00",
+      "qualified_inputs_unchanged": true
+    },
+    "test_counts": {
+      "passed": 3308,
+      "skipped": 2,
+      "failures": 0,
+      "errors": 0
+    },
+    "projects": {
+      "scalafim:examples/atlas-jvm": {
+        "passed": 5,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:examples/workflows-js": {
+        "passed": 2,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:examples/workflows-jvm": {
+        "passed": 3,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/atlas/js": {
+        "passed": 74,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/atlas/jvm": {
+        "passed": 120,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/dataset/js": {
+        "passed": 64,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/dataset/jvm": {
+        "passed": 78,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/dataset-zarr/js": {
+        "passed": 7,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/dataset-zarr/jvm": {
+        "passed": 15,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/fmri-workflow/js": {
+        "passed": 31,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/fmri-workflow/jvm": {
+        "passed": 39,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/interop-archived-response/jvm": {
+        "passed": 4,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/mvpa-spatial/js": {
+        "passed": 25,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/mvpa-spatial/jvm": {
+        "passed": 25,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/phrf-comparison/jvm": {
+        "passed": 7,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/provider-spike/js": {
+        "passed": 16,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/provider-spike/jvm": {
+        "passed": 18,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/spatial/js": {
+        "passed": 206,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/spatial/jvm": {
+        "passed": 231,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface/js": {
+        "passed": 279,
+        "skipped": 2,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface/jvm": {
+        "passed": 322,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-test-fixtures/js": {
+        "passed": 7,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-test-fixtures/jvm": {
+        "passed": 21,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-view/js": {
+        "passed": 256,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-view/jvm": {
+        "passed": 256,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-view-connectivity/js": {
+        "passed": 2,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-view-connectivity/jvm": {
+        "passed": 2,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-view-raster/js": {
+        "passed": 69,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "scalafim:modules/surface-view-raster/jvm": {
+        "passed": 69,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-core/js": {
+        "passed": 335,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-core/jvm": {
+        "passed": 336,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-io/jvm": {
+        "passed": 30,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-spaces/js": {
+        "passed": 26,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-spaces/jvm": {
+        "passed": 26,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-transform/js": {
+        "passed": 137,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-transform/jvm": {
+        "passed": 137,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "neuroim4s:modules/neuroim4s-transform-io/jvm": {
+        "passed": 28,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      }
+    },
+    "skips": [
+      {
+        "project": "scalafim:modules/surface/js",
+        "suite": "scalafim.surface.reference.RealPointwiseJsSuite",
+        "test": "P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget"
+      },
+      {
+        "project": "scalafim:modules/surface/js",
+        "suite": "scalafim.surface.reference.RouteTimingJsSuite",
+        "test": "synthetic same-size hemisphere: placement at admission and prepare+map timings"
+      }
+    ],
+    "report_count": 574,
+    "fresh_selection": "latest XML emitted since fresh published-pin gates began; unique repository/project/test identities; no earlier candidate runs included",
+    "input_source_proof": {
+      "provider_revisions": {
+        "alder": [
+          "7618c715002b3912f856c4d44468ae173fce4dec"
+        ],
+        "bids4s": [
+          "a33678390614a91fadbdef13f22970e78c26e091"
+        ],
+        "gale": [
+          "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+        ],
+        "graph4s": [
+          "6a72b58b564933234768f025e67228736ef2f7c5"
+        ],
+        "image4s": [
+          "aef5e223169f0831c942694c4b109ab20d152217"
+        ],
+        "intaglio": [
+          "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+        ],
+        "linops4s": [
+          "fec77db060b130b3c609a43d07ff0bfb31088aae"
+        ],
+        "locus4s": [
+          "e32b0aeba5c4d19c457b2329272b95b26c061943"
+        ],
+        "mesh4s": [
+          "54b7278880e6db38c543a4a565355afd864e576a"
+        ],
+        "multivar": [
+          "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+        ],
+        "mvpa4s": [
+          "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+        ],
+        "neuroatlas4s": [
+          "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+        ],
+        "neuroim4s": [
+          "018a9f2e80db4f2d2945c7eba867835ab9144135"
+        ],
+        "ravel": [
+          "195d71027423d5bda1c53ef1baa17e07670fe290"
+        ],
+        "reframe4s": [
+          "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+        ],
+        "resample4s": [
+          "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+        ],
+        "spatial4s": [
+          "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+        ],
+        "zarr4s": [
+          "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+        ]
+      },
+      "single_revision_per_provider": true,
+      "provider_source_proof": {
+        "image4s": {
+          "git_head": "aef5e223169f0831c942694c4b109ab20d152217",
+          "qualified_source_inputs_verified": 124,
+          "clean": true
+        },
+        "reframe4s": {
+          "git_head": "7ec7feff96d4057a86196b5e86d592688b7c7f84",
+          "qualified_source_inputs_verified": 3008,
+          "clean": true
+        },
+        "neuroim4s": {
+          "git_head": "018a9f2e80db4f2d2945c7eba867835ab9144135",
+          "qualified_source_inputs_verified": 756,
+          "clean": true
+        }
+      },
+      "loaded_sources": [
+        {
+          "provider": "ravel",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+          "head": "195d71027423d5bda1c53ef1baa17e07670fe290"
+        },
+        {
+          "provider": "intaglio",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+          "head": "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+        },
+        {
+          "provider": "neuroatlas4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/13888b7dd8bc22e12ae8/neuroatlas4s",
+          "head": "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+        },
+        {
+          "provider": "mesh4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/169dde1ec5b6720cd043/mesh4s",
+          "head": "54b7278880e6db38c543a4a565355afd864e576a"
+        },
+        {
+          "provider": "gale",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+          "head": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+        },
+        {
+          "provider": "zarr4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+          "head": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+        },
+        {
+          "provider": "resample4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+          "head": "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+        },
+        {
+          "provider": "multivar",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+          "head": "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+        },
+        {
+          "provider": "bids4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+          "head": "a33678390614a91fadbdef13f22970e78c26e091"
+        },
+        {
+          "provider": "spatial4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+          "head": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+        },
+        {
+          "provider": "image4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+          "head": "aef5e223169f0831c942694c4b109ab20d152217"
+        },
+        {
+          "provider": "mvpa4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+          "head": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+        },
+        {
+          "provider": "neuroim4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/be338f4f58a6c02f0696/neuroim4s",
+          "head": "018a9f2e80db4f2d2945c7eba867835ab9144135"
+        },
+        {
+          "provider": "locus4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+          "head": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+        },
+        {
+          "provider": "alder",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+          "head": "7618c715002b3912f856c4d44468ae173fce4dec"
+        },
+        {
+          "provider": "reframe4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+          "head": "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+        },
+        {
+          "provider": "linops4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+          "head": "fec77db060b130b3c609a43d07ff0bfb31088aae"
+        },
+        {
+          "provider": "graph4s",
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/e6c88898cf2a580290f7/graph4s",
+          "head": "6a72b58b564933234768f025e67228736ef2f7c5"
+        }
+      ],
+      "consumer_classpath_entries_inspected": 90,
+      "local_provider_classpaths_present": false,
+      "gale_pin_retained": true
+    },
+    "build_diagnostics": {
+      "scala_source_diagnostics": [],
+      "retained_build_definition_warnings": [
+        "Intaglio lintUnused keys",
+        "linops4s streams lookup inside regular-task if"
+      ]
+    }
+  },
+  "raw_artifacts": [
+    {
+      "file": "publication-exact.json",
+      "sha256": "525bcd88442dac15e27f9e9cc63ac00a854f36dd70d33dcc34c52330d9ab15ac",
+      "bytes": 2601
+    },
+    {
+      "file": "consumer-activation.json",
+      "sha256": "4b0f06c99dd7bcbffb616939796e094264111c13dfd0cc9c4554e6ac848254df",
+      "bytes": 345
+    },
+    {
+      "file": "default-pin-gates-01.json",
+      "sha256": "f26323cd4d99c4fc88b60b5f6de696e55d3cb1f05d76732c2f35f996c421d6c7",
+      "bytes": 3474
+    },
+    {
+      "file": "default-pin-graph-proof.json",
+      "sha256": "f001a3a3a87446f48955564480f1073f037ab5b457eb4d4a512583e771b5f691",
+      "bytes": 5901
+    },
+    {
+      "file": "default-pin-loaded-provider-inputs.json",
+      "sha256": "d892430a7517b5644f2d78fc2b88662fb3774a278799a94509f3e412e8e0e24d",
+      "bytes": 660
+    },
+    {
+      "file": "default-pin-test-summary.json",
+      "sha256": "93c70613e2339c1f9e974de6a7badaa85946f445ddd57c111bbeab03181739d6",
+      "bytes": 235714
+    },
+    {
+      "file": "default-pin-test-reports.zip",
+      "sha256": "4bdc66a6ec4489c7c33627647f698a62a3576df21671c7bba2451bf83041a86a",
+      "bytes": 1191012
+    },
+    {
+      "file": "default-pin-build-diagnostics.json",
+      "sha256": "a86af4ae76480980b48e3b566f8d75c8e4fed9850cb8e855d8ade8cdad95829b",
+      "bytes": 54596
+    },
+    {
+      "file": "qualify-default-pins-01.py",
+      "sha256": "b2116bc884c856e514d7c064693a4b01651579b45e223985f6a3a323fc7f6cf6",
+      "bytes": 3190
+    },
+    {
+      "file": "verify-default-graph.py",
+      "sha256": "a01d5a80d5a32e99cdbe6afa633e3e7659725d1e87fd76235e0ebc571f99c28d",
+      "bytes": 2470
+    },
+    {
+      "file": "archive-default-reports.py",
+      "sha256": "ff2d9857a11538ab2d8e27448fc7dcd50ba7b32a3d42ad95afb7f925f4e30e93",
+      "bytes": 2618
+    },
+    {
+      "file": "default-pins-01-00-compile.log",
+      "sha256": "6352ec323ead373d321eb4cfc67ab5761122eb10fd3537ed47e6ef3ab4d0b3ed",
+      "bytes": 56917
+    },
+    {
+      "file": "default-pins-01-00-compile.log.meta.json",
+      "sha256": "a40801adca9ec19019a6f4e2a950ea0b5615eafb797acce1f121693a10e02285",
+      "bytes": 889
+    },
+    {
+      "file": "default-pins-01-01-neuroim.log",
+      "sha256": "94637fda8b910d579772423a4ade8dd1e6a2c8f543c379e48913f4dcb922f25b",
+      "bytes": 103715
+    },
+    {
+      "file": "default-pins-01-01-neuroim.log.meta.json",
+      "sha256": "fe572dd07961170d041f5ff46f55e223f25a53a3cc35c8dc11b55806c35af8ce",
+      "bytes": 774
+    },
+    {
+      "file": "default-pins-01-02-surface-jvm.log",
+      "sha256": "d57e8e320bf4958353f3e76df95b65c77b0692b589c59af2ec955d020e4e635a",
+      "bytes": 81734
+    },
+    {
+      "file": "default-pins-01-02-surface-jvm.log.meta.json",
+      "sha256": "143d00a9a3345918509f7886d612c6b534ab642ccbeb93217d8891ea4e4f96e1",
+      "bytes": 945
+    },
+    {
+      "file": "default-pins-01-03-surface-js.log",
+      "sha256": "bf0a25c965893aa1597f015abad1728a93df9c92777dbec898bb7bce9c7a4f6b",
+      "bytes": 76962
+    },
+    {
+      "file": "default-pins-01-03-surface-js.log.meta.json",
+      "sha256": "8da0aba5cb943e5acc1503ad04f00aed00f52b9969fa057687e1c7f4b2fd9b0c",
+      "bytes": 937
+    },
+    {
+      "file": "default-pins-01-04-spatial-atlas-jvm.log",
+      "sha256": "52262c9c04fdef27f36b5ed2132e6267f431a787573694db2b9de474a1c77e26",
+      "bytes": 41348
+    },
+    {
+      "file": "default-pins-01-04-spatial-atlas-jvm.log.meta.json",
+      "sha256": "f3b8ab6255a1c758f8a96983df50953d781e18ff521dcbe906c5a06029da0a3f",
+      "bytes": 874
+    },
+    {
+      "file": "default-pins-01-05-spatial-atlas-js.log",
+      "sha256": "b6ff594b16d7a56336e146c30d1953656d31d8856763287e691587e0eeb1e8ee",
+      "bytes": 32249
+    },
+    {
+      "file": "default-pins-01-05-spatial-atlas-js.log.meta.json",
+      "sha256": "5f1886575c1402a86df3aefc42ce6196c1db93d3d8726d6d5eabbb04b7ab23ec",
+      "bytes": 771
+    },
+    {
+      "file": "default-pins-01-06-workflow-jvm.log",
+      "sha256": "34c89de45523ad6a772e1a0435b3b5a4e498f9c6170e7f0790f78cd6204ed23a",
+      "bytes": 25558
+    },
+    {
+      "file": "default-pins-01-06-workflow-jvm.log.meta.json",
+      "sha256": "e1afe3dc0a724ce8f9b7c772440e7f9c394c7a7c77857916b7647d82ddb8d420",
+      "bytes": 965
+    },
+    {
+      "file": "default-pins-01-07-workflow-js.log",
+      "sha256": "8f469939501734704d3e88a834a394ac3ef0e752e9310369028a47d3b182341d",
+      "bytes": 21789
+    },
+    {
+      "file": "default-pins-01-07-workflow-js.log.meta.json",
+      "sha256": "51ad9e16fee1f67100d0d45d273627557541793d84fb7301212a81f883732ce5",
+      "bytes": 856
+    },
+    {
+      "file": "mote-publication-sync.json",
+      "sha256": "0649afbe35e8d2320db4b7e9c2c0461e9eeaffca9648074f9bbdc33c3dd9f4ce",
+      "bytes": 1614
+    },
+    {
+      "file": "mote-publication-fsck.json",
+      "sha256": "10a6662d49b30f0b898f4b501f841b6ec831f5af709c4d079417bda0d21187d0",
+      "bytes": 116
+    },
+    {
+      "file": "eco-status-after-publication.json",
+      "sha256": "6f126aab301b7c64452bd88ed6215525bbfcd05671d6df6427116b6500d9e6ed",
+      "bytes": 3253
+    },
+    {
+      "file": "publication-browser-audit.json",
+      "sha256": "3f885273cd9a7641709dc66ee6a0a6bbf945ad7bde06e7c435cceefb17e5df25",
+      "bytes": 246
+    }
+  ],
+  "accepted_at": "2026-10-20T10:59:09.637155+00:00",
+  "limits": [
+    "Source publication only; no artifact release",
+    "No hosted CI claim",
+    "ScalaFIM is local and unpushed",
+    "No fresh native-tool regeneration, GUI acceptance or new scientific/performance qualification",
+    "Fresh affected suites supplement the earlier local-candidate qualification; totals are not added"
+  ],
+  "tracker_acceptance": {
+    "issue": "eco-neuroim-transforms",
+    "status": "closed",
+    "claim_and_reservations_released": true,
+    "session_ended": true,
+    "authority_records": 2174,
+    "mote_fsck_exit": 0,
+    "epic_status": "open",
+    "epic_closed_tasks": 16,
+    "epic_total_tasks": 36,
+    "epic_closed_milestones": 3,
+    "epic_total_milestones": 9,
+    "next_direct_ready_task": "eco-neuroim-routing"
+  }
+}
