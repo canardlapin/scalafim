@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.transform.{TransformError, TransformFormat, TransformIoError}
+import neuroim4s.transform.{TransformError, TransformFormat, TransformIoError}
 
 import java.nio.file.Path
 

@@ -6,9 +6,9 @@ import image4s.geometry.{Affine, D3, Grid}
 import reframe4s.field.CoordinateBoundaryPolicy
 import neuroim4s.spaces.{Spaces as WorldFrames}
 import neuroim4s.image.world.ToolCoordinates
-import scalafim.transform.{AssetRef, Frames, InversionPolicy, PushAvailability, TransformError, WorldTransform}
-import scalafim.transform.field.DenseContext
-import scalafim.transform.itk.{ItkHdf5File, ItkHdf5Interpretation}
+import neuroim4s.transform.{AssetRef, Frames, InversionPolicy, PushAvailability, TransformError, WorldTransform}
+import neuroim4s.transform.field.DenseContext
+import neuroim4s.transform.itk.{ItkHdf5File, ItkHdf5Interpretation}
 
 /** Which way a transform file pulls points: the resampling direction, fixed (target) point to moving (source) point. */
 enum TemplatePull derives CanEqual:

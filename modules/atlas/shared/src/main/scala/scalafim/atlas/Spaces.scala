@@ -8,7 +8,7 @@ import image4s.geometry.Frame
 import neuroim4s.image.{GridSpec, SpatialPoint, SpatialPullback, SpatialPullbacks}
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
-import scalafim.transform.WorldTransform
+import neuroim4s.transform.WorldTransform
 
 type Point3D = SpatialPoint
 
@@ -28,7 +28,7 @@ enum TransformBackend:
 enum DataKind:
   case Parcel, Vertex, Voxel
 
-/** A provider transform implementing a manifest step: a `scalafim.transform` world transform between the catalog
+/** A provider transform implementing a manifest step: a `neuroim4s.transform` world transform between the catalog
   * frames of the step's spaces, and an identity that determines its values (e.g. asset SHA-256 digests plus every
   * loading policy). The identity keys non-affine maps, whose values cannot be fingerprinted structurally.
   */

@@ -22,7 +22,7 @@ import scalafim.spatial.{
   SpatialGraph,
   TemplateKind
 }
-import scalafim.transform.{PushAvailability, WorldTransform}
+import neuroim4s.transform.{PushAvailability, WorldTransform}
 import scalafim.surface.{SurfaceGeometry, TemplateSphere}
 
 /** Stable world frames for the template spaces a transform manifest names.

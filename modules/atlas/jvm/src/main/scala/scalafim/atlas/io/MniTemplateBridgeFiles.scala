@@ -6,7 +6,7 @@ import java.nio.file.Path
 
 import scalafim.atlas.{MniTemplateBridge, TemplateFlowXfm, TransformFailure}
 import scalafim.surface.io.TemplateFlowCache
-import scalafim.transform.{AssetRef, NativeTransform, TransformError, TransformFiles}
+import neuroim4s.transform.{AssetRef, NativeTransform, TransformError, TransformFiles}
 
 /** Loads the TemplateFlow MNI152NLin6Asym -> MNI152NLin2009cAsym composite from disk (about 200 MB; jHDF). */
 object MniTemplateBridgeFiles:

@@ -28,7 +28,7 @@ import oracle_common as oc
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", required=True, help="Immutable Docker image ID or repository digest")
-    parser.add_argument("--out", type=Path, default=Path(oc.ORACLE_ROOT) / "ants_native")
+    parser.add_argument("--out", type=Path, default=Path(oc.transform_oracle_root()) / "ants_native")
     args = parser.parse_args()
     if "@sha256:" not in args.image and not args.image.startswith("sha256:"):
         parser.error("--image must identify immutable bytes with sha256")
@@ -63,7 +63,7 @@ def main():
             np.savetxt(handle, np.column_stack([lps, np.zeros(len(lps))]), delimiter=",", fmt="%.17g")
         linear = ["affine", "euler", "euler_zyx", "versor_rigid", "similarity", "scale_skew_versor"]
         for name in linear:
-            shutil.copyfile(Path(oc.ORACLE_ROOT) / "itk_linear" / f"{name}.mat", work / f"{name}.mat")
+            shutil.copyfile(Path(oc.transform_oracle_root()) / "itk_linear" / f"{name}.mat", work / f"{name}.mat")
         commands.append(["antsRegistration", "--version"])
         commands.append([
             "antsRegistration", "--dimensionality", "3", "--float", "0", "--output", "[syn_,warped.nii.gz]",

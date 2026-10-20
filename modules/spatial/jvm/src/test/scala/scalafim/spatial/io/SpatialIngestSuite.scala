@@ -5,7 +5,7 @@ import neuroim4s.spaces.{SessionId, SubjectId}
 import neuroim4s.image.{SampleSpaces}
 import neuroim4s.image.SampleSpaces.*
 import scalafim.spatial.*
-import scalafim.transform.TransformFormat
+import neuroim4s.transform.TransformFormat
 
 import java.nio.file.Path
 

@@ -3,7 +3,7 @@ package scalafim.spatial.io
 import neuroim4s.spaces.{SessionId, SubjectId}
 
 import scalafim.spatial.*
-import scalafim.transform.TransformFormat
+import neuroim4s.transform.TransformFormat
 
 import java.nio.file.Path
 
@@ -20,7 +20,7 @@ enum TransformKind:
 
 /** The graph-level reading of a toolkit file format: which tool wrote it and which morphism kind it declares before
   * loading. Every numeric convention (LPS vs RAS, FSL scaled voxels, pullback vs forward storage) is intrinsic to the
-  * format and handled by its `scalafim.transform` interpretation, never by the descriptor.
+  * format and handled by its `neuroim4s.transform` interpretation, never by the descriptor.
   */
 extension (format: TransformFormat)
   def tool: TransformTool =

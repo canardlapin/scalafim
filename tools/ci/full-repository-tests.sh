@@ -54,6 +54,7 @@ run_batch core-js \
   scenarioTestkitJS/test designJS/test providerSpikeJS/test
 
 run_batch neuroim neuroimTestAll
+run_batch neuroim-transforms neuroimTransformTestAll
 
 run_batch image-surface-jvm \
   imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
@@ -64,12 +65,12 @@ run_batch image-surface-js \
   surfaceViewThreeJS/test
 
 run_batch data-jvm \
-  surfaceViewConnectivityJVM/test surfaceViewExamplesJVM/test transformJVM/test \
+  surfaceViewConnectivityJVM/test surfaceViewExamplesJVM/test \
   spatialJVM/test \
   atlasJVM/test archiveJVM/test archiveLnaJVM/test \
   archivedResponseInteropJVM/test datasetJVM/test
 run_batch data-js \
-  surfaceViewConnectivityJS/test surfaceViewExamplesJS/test transformJS/test \
+  surfaceViewConnectivityJS/test surfaceViewExamplesJS/test \
   spatialJS/test \
   atlasJS/test archiveJS/test archiveLnaJS/test \
   archivedResponseInteropJS/test datasetJS/test

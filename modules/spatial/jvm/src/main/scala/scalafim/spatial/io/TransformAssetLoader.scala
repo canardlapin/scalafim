@@ -4,18 +4,18 @@ import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.field.CoordinateBoundaryPolicy
 import neuroim4s.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
 import scalafim.spatial.*
-import scalafim.transform.*
-import scalafim.transform.afni.{Aff12Interpretation, AfniCardinal}
-import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
-import scalafim.transform.freesurfer.{LtaInterpretation, MniXfmInterpretation, RegisterDatInterpretation}
-import scalafim.transform.fsl.FlirtInterpretation
-import scalafim.transform.itk.{ItkHdf5Interpretation, ItkLinearInterpretation}
-import scalafim.transform.x5.X5Interpretation
+import neuroim4s.transform.*
+import neuroim4s.transform.afni.{Aff12Interpretation, AfniCardinal}
+import neuroim4s.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
+import neuroim4s.transform.freesurfer.{LtaInterpretation, MniXfmInterpretation, RegisterDatInterpretation}
+import neuroim4s.transform.fsl.FlirtInterpretation
+import neuroim4s.transform.itk.{ItkHdf5Interpretation, ItkLinearInterpretation}
+import neuroim4s.transform.x5.X5Interpretation
 
 import java.nio.file.Path
 
 /** Choices that change what a loaded map computes. None of them names a coordinate convention or a storage direction:
-  * those are intrinsic to each format and decided by its `scalafim.transform` interpretation.
+  * those are intrinsic to each format and decided by its `neuroim4s.transform` interpretation.
   *
   * @param boundary what a dense map does at target points outside its lattice. The default rejects them; ITK and ANTs
   *   themselves extend displacement fields by zero, which is `CoordinateBoundaryPolicy.PreserveSource`.

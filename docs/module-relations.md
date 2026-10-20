@@ -43,9 +43,9 @@ response
 
 standalone locus4s
 +-- locus-data
-|   +-- surface       also depends on neuroim4s-core, transform, standalone graph4s
-|   +-- atlas         also depends on neuroim4s-core, surface, spatial, transform, standalone graph4s
-|   +-- spatial       also depends on standalone Gale, neuroim4s-core, surface, transform
+|   +-- surface       also depends on neuroim4s-core, neuroim4s-neuroim4s-transform, standalone graph4s
+|   +-- atlas         also depends on neuroim4s-core, surface, spatial, neuroim4s-neuroim4s-transform, standalone graph4s
+|   +-- spatial       also depends on standalone Gale, neuroim4s-core, surface, neuroim4s-transform
 |   +-- dataset       also depends on response, neuroim4s-core, hrf
 |   +-- mvpa-spatial  also depends on mvpa4s, surface, threshold
 +-- latent            also depends on response, neuroim4s-core
@@ -354,7 +354,7 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 
 - **image4s-geometry** owns `Frame`, `Point`, `Vec`, `Affine` and `Grid`.
 - **reframe4s** (`lie`, `field`, `resample`, consumed by standalone `neuroim4s-core` and
-  `transform`) owns
+  `neuroim4s-transform`) owns
   generic transform algebra:
   - `SpatialMap` with frame-checked composition
   - `SmoothIso` and `FramedAffine`
@@ -364,12 +364,12 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
   - nonlinear registration and the experimental HalfFlow engine (not
     ScalaFIM dependencies)
 
-**ScalaFIM modules:**
+**Neuroimaging policy and ScalaFIM modules:**
 
 - **standalone `neuroim4s-core`** owns neuroimaging adapters over those providers: `GridSpec`,
   `SpatialPullbacks`, the ScalaFIM `ResamplingPlan` policy wrapper,
   `DenseVectorField` roles, and anatomical orientation. It defines no
-  morphism or affine algebra of its own; `imageAlgebraBoundaryCheck` rejects
+  morphism or affine algebra of its own; its `coreBoundaryCheck` rejects
   the retired `SpatialMorphism`/`Affine3DMorphism` family.
   - World-space identity (`WorldSpace`, `FrameCatalog`, `Spaces`,
     `SpaceResolver`) comes from neuroim4s-spaces and the linked-cursor
@@ -377,7 +377,7 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
     coordinate conventions (`ToolCoordinates`) and world-frame binding
     (`Placed`). Bare D3 geometry receives a fresh unknown-world
     scope; file admission requires explicit resolved evidence.
-- **`transform`** owns toolkit transform formats (ITK/ANTs, FSL, AFNI,
+- **standalone `neuroim4s-transform`** owns toolkit transform formats (ITK/ANTs, FSL, AFNI,
   FreeSurfer, X5), their interpretation as typed world-space transforms, and
   conversion between toolkits. Gated numerical inverses are qualified against
   native ANTs `InverseWarp` and FSL `invwarp` outputs
@@ -441,7 +441,7 @@ There are intentionally two layers:
 - Put general plotting, scene-description contracts, and concrete renderers in
   standalone Intaglio. ScalaFIM modules may adapt scientific values into that
   public API but must not recreate renderer or grammar internals.
-- Put pure image-space kernels in standalone `neuroim4s-core`; platform IO goes in `image/jvm`.
+- Put pure image-space kernels in standalone `neuroim4s-core`; volume IO goes in `neuroim4s-io`, and transform file IO in `neuroim4s-transform-io`.
 - Put nonlinear registration state, objectives, deformation geometry, and
   acceptance policy in standalone reframe4s. ScalaFIM retains no registration
   module and depends only on the reframe4s `lie`, `field` and `resample`
@@ -503,3 +503,10 @@ hash-pinned external Float64 leaves. Other profiles and resumable optimizer
 checkpoints are explicitly unsupported; there is no codec registry or upload.
 
 The unpublished `surface-test-fixtures` cross-project depends on `surface` Compile. Its JVM Compile configuration owns the fsLR asset/oracle helpers and resources; its Test configuration owns their qualification suites. `atlasJVM` Test depends on `surfaceTestFixturesJVM` Compile. `surface` never depends on the fixture project, so there is no project cycle and no production dependency on test support. JVM IO helpers have no JS implementation.
+
+Toolkit transform formats and anatomical interpretation now belong to standalone
+`neuroim4s-transform`; optional JVM files/HDF5/X5 belong to
+`neuroim4s-transform-io`. Surface, spatial and atlas use those provider APIs
+directly. There is no local `transform` module. The unpublished `providerSpike`
+test configuration retains the four ScenarioHarness registration workflows with
+strict compiler checks; its runtime compile contract remains independent of them.

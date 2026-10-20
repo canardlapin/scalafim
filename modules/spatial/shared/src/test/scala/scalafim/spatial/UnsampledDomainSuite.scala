@@ -4,7 +4,7 @@ import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
 import neuroim4s.image.SpatialPoint
 import neuroim4s.spaces.{FrameCatalog, TemplateName, WorldSpace}
-import scalafim.transform.{TransformProvenance, WorldTransform}
+import neuroim4s.transform.{TransformProvenance, WorldTransform}
 
 class UnsampledDomainSuite extends munit.FunSuite:
 

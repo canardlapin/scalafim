@@ -3,7 +3,7 @@ package scalafim.spatial
 import image4s.geometry.{Affine, D3, Frame}
 import neuroim4s.image.{SpatialPoint, SpatialPullback, SpatialPullbacks}
 import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
-import scalafim.transform.WorldTransform
+import neuroim4s.transform.WorldTransform
 import reframe4s.core.{FrameErasedMap, SpatialMap}
 import reframe4s.field.DenseMap
 
@@ -375,7 +375,7 @@ object CoordinateMap:
   ): Either[SpatialError, CoordinateMap] =
     ProviderMapBinding.dense(erase(pullback), inversePullback.map(erase)).map(CoordinateMap.Geometric.apply)
 
-  /** Admit a `scalafim.transform` world transform as a routing edge's map, stored as its pullback.
+  /** Admit a `neuroim4s.transform` world transform as a routing edge's map, stored as its pullback.
     *
     * Affines keep their exact inverse and fuse with neighbouring affines; analytic isomorphisms keep their analytic
     * inverse; dense and composite maps carry a forward direction only when the transform has one (an inverse asset).

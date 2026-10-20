@@ -5,7 +5,7 @@ import image4s.geometry.{Affine, D3}
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.control.NonFatal
 import scalafim.surface.SurfaceError
-import scalafim.transform.nifti.NiftiRaw
+import image4s.nifti.Nifti1Container
 
 /** The TemplateFlow file a point map was converted from. */
 final case class PointMapSource(archivePath: String, sha256: String, bytes: Long, catalogRevision: Option[String])
@@ -237,7 +237,7 @@ object DeclaredPointMap:
       else
         // The transform module owns the NIfTI payload decoder. This adapter
         // checks only the producer's narrower canonical stage contract.
-        NiftiRaw.parse(IArray.unsafeFromArray(raw)).left.map(e => ReferenceError.InvalidPointMap(s"$file: ${e.message}"))
+        Nifti1Container.parse(IArray.unsafeFromArray(raw)).left.map(e => ReferenceError.InvalidPointMap(s"$file: ${e.message}"))
           .map(decoded => Array.tabulate(count.toInt)(i => decoded.value(i.toLong)))
 
   private def sequence[A](values: Vector[Either[ReferenceError, A]]): Either[ReferenceError, Vector[A]] =

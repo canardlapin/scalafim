@@ -44,8 +44,7 @@ object FrameErasureGate {
     * relative to the repository root, so a same-named file elsewhere is still checked.
     */
   val Allowlist: Set[String] = Set(
-    "modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala",
-    "modules/transform/shared/src/main/scala/scalafim/transform/StageChain.scala"
+    "modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala"
   )
 
   final case class Violation(path: String, line: Int, text: String) {

@@ -14,7 +14,9 @@ import nibabel as nib
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-ORACLE = ROOT / "modules/transform/shared/src/test/resources/scalafim/transform/oracle"
+import oracle_common as oc
+
+ORACLE = Path(oc.transform_oracle_root())
 CASE = ORACLE / "neurotransform/fsl_coef_oracle/srcleft_refright_aff"
 IMAGE = "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2"
 

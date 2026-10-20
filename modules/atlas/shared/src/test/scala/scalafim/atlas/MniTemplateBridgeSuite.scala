@@ -5,9 +5,9 @@ import neuroatlas4s.*
 import image4s.geometry.{Affine, D3}
 import reframe4s.field.CoordinateBoundaryPolicy
 import neuroim4s.spaces.Spaces as WorldFrames
-import scalafim.transform.{AssetRef, PushAvailability, TransformProvenance, WorldTransform}
-import scalafim.transform.field.DenseLattice
-import scalafim.transform.itk.{ItkHdf5Component, ItkHdf5File}
+import neuroim4s.transform.{AssetRef, PushAvailability, TransformProvenance, WorldTransform}
+import neuroim4s.transform.field.DenseLattice
+import neuroim4s.transform.itk.{ItkHdf5Component, ItkHdf5File}
 
 /** Admission of the TemplateFlow bridge and pullback-only routes, without the 200 MB composite (see the JVM
   * `MniTemplateBridgeFilesSuite` for the real file against ITK).

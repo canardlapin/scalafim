@@ -7,7 +7,7 @@ import neuroim4s.spaces.SubjectId
 import neuroim4s.image.{SampleSpaces, SpatialPoint}
 import neuroim4s.image.SampleSpaces.*
 import scalafim.spatial.*
-import scalafim.transform.{TransformError, TransformFormat, TransformIoError, WorldTransform}
+import neuroim4s.transform.{TransformError, TransformFormat, TransformIoError, WorldTransform}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

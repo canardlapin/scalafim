@@ -34,7 +34,7 @@ cross-compiled sbt build.
 - `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
 - `surface-view-three`: retained Scala.js Three.js/WebGL backend, browser picking/snapshots, and optional GPU volume projection.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
-- `transform`: reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
+- `neuroim4s-transform` (standalone): reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
 - `atlas`: volume and surface atlas realizations, loaders and Neuropublish projection over the [neuroatlas4s](https://github.com/canardlapin/neuroatlas4s) core (atlas identities, releases, labels, hierarchies, standard catalog and realization contract), plus transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
@@ -92,7 +92,7 @@ neuroimaging integrations.
 
 Nonlinear registration and the experimental HalfFlow engine now live in
 standalone [`reframe4s`](https://github.com/canardlapin/reframe4s). ScalaFIM
-does not retain a registration module. Its standalone neuroim4s dependency and local `transform` module
+does not retain a registration module. Its standalone neuroim4s core and optional transform dependencies
 consume the reframe4s `lie`, `field` and `resample` capabilities (generic
 spatial maps, dense fields, numerical inverses and resampling execution)
 through an immutable source revision; the HalfFlow and registration modules
@@ -261,8 +261,7 @@ sbt surfaceViewJavafxJVM/test
 sbt surfaceViewThreeJS/test
 sbt surfaceViewConnectivityJVM/test
 sbt surfaceViewConnectivityJS/test
-sbt transformJVM/test
-sbt transformJS/test
+sbt neuroimTransformTestAll
 sbt spatialJVM/test
 sbt spatialJS/test
 sbt atlasJVM/test

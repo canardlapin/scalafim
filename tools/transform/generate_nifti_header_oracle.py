@@ -21,12 +21,12 @@ import oracle_common as oc  # noqa: E402
 OUT = oc.oracle_dir("nifti_headers")
 
 rows = []
-for root, _, names in sorted(os.walk(oc.ORACLE_ROOT)):
+for root, _, names in sorted(os.walk(oc.transform_oracle_root())):
     for name in sorted(names):
         if not (name.endswith(".nii") or name.endswith(".nii.gz")):
             continue
         path = os.path.join(root, name)
-        rel = os.path.relpath(path, oc.ORACLE_ROOT)
+        rel = os.path.relpath(path, oc.transform_oracle_root())
         img = nib.load(path)
         hdr = img.header
         dims = list(hdr["dim"][:8].astype(int))

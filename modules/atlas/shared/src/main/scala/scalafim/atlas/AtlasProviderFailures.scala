@@ -4,7 +4,7 @@ import neuroatlas4s.*
 
 import image4s.geometry.GeometryError
 import scalafim.spatial.SpatialError
-import scalafim.transform.TransformError
+import neuroim4s.transform.TransformError
 
 /** Image geometry refused an atlas operation, e.g. two label grids are not congruent. */
 final case class GeometryFailure(cause: GeometryError) extends AtlasProviderFailure:

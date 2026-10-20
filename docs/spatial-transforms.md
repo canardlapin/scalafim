@@ -14,12 +14,12 @@ Two ideas carry the design:
   needs. The forward direction exists exactly when it is known to exist.
 
 The transform examples below are compiled and executed by
-`modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala`.
+`neuroim4s/modules/neuroim4s-transform-io/jvm/src/test/scala/neuroim4s/transform/GuideExamplesSuite.scala`.
 The linked-cursor example runs on both JVM and JS in
 `modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala`.
 The pull-request workflow includes both suites through
 [`full-repository-tests.sh`](../tools/ci/full-repository-tests.sh):
-`transformJVM/test`, `surfaceViewJVM/test` and `surfaceViewJS/test`.
+`neuroimTransformTestAll`, `surfaceViewJVM/test` and `surfaceViewJS/test`.
 The design rationale is in
 [`plans/spatial-transform-parity.md`](plans/spatial-transform-parity.md) and
 [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
@@ -430,7 +430,7 @@ synthetic API example.
 
 The oracle fixtures, and the tools that produced them, are listed in each
 fixture directory's `manifest.json` under
-`modules/transform/shared/src/test/resources/scalafim/transform/oracle/`.
+`neuroim4s/modules/neuroim4s-transform/shared/src/test/resources/scalafim/transform/oracle/`.
 
 - **Native tools:** SimpleITK/ITK; AFNI 26.1.04 and FSL 5.0.9 via the
   neurotransform oracles; ANTs 2.6.5.dev1 and the frozen FSL 6 command packages

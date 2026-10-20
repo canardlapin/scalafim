@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import oracle_common as oc  # noqa: E402
 
 OUT = oc.oracle_dir("itk_field")
-warp_path = os.path.join(oc.ORACLE_ROOT, "neurotransform", "itk_oracle", "warp.nii.gz")
+warp_path = os.path.join(oc.transform_oracle_root(), "neurotransform", "itk_oracle", "warp.nii.gz")
 
 field = sitk.ReadImage(warp_path, sitk.sitkVectorFloat64)
 transform = sitk.DisplacementFieldTransform(sitk.Image(field))
