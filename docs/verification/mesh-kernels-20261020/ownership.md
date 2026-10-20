@@ -33,9 +33,10 @@ hemisphere policy remains downstream.
   Its custom nonnegative edge-cost contract is broader than the strict intrinsic
   triangle-metric contract. Decide the appropriate reusable solver owner without
   silently strengthening admissibility or duplicating a generic graph solver.
-- Investigate the existing geodesic cache key and repeated target-column handling
-  with independent regression witnesses before moving them. These are code-level
-  concerns, not validated failures in this slice.
+- The geodesic cache and repeated-target defects were subsequently reproduced
+  and repaired at `78acb531d`; see the
+  [geodesic correctness receipt](../geodesic-correctness-20261020/README.md).
+  Retain those witnesses through the solver cutover.
 - Complete the task's remaining acceptance and required independent review before
   declaring U3 or the eco epic complete.
 
