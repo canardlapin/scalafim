@@ -9,7 +9,7 @@ import scalafim.fmri.design.formula.{DerivedEventPlan, DerivedMissingRows}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.hrf.Hrfs
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import gale.linalg.Matrix
 
 class ModelBuilderSuite extends munit.FunSuite:

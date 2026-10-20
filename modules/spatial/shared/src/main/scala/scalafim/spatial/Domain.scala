@@ -1,14 +1,16 @@
 package scalafim.spatial
 
+import image4s.SomeSampleSpace
+
 import neuroim4s.spaces.{NativeContext, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
 
 import image4s.SampleSpace
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.Grid
-import scalafim.image.{SampleSpaces, SomeMaskVolume, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.SomeNeuroVolume.*
+import neuroim4s.image.{SampleSpaces, SomeMaskVolume}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.SomeNeuroVolume.*
 import scalafim.locus.DomainFactory
 import locus4s.{
   FiniteDomain,
@@ -118,7 +120,7 @@ sealed trait SamplingGeometry:
   def nElements: Int =
     this match
       case volume: SamplingGeometry.Volume =>
-        volume.space.spatialDims.product
+        volume.space.grid.shape.product
       case SamplingGeometry.Surface(geometry, _) =>
         geometry.vertexCount
       case SamplingGeometry.Hybrid(parts) =>
@@ -191,8 +193,7 @@ object SamplingGeometry:
 
   def volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume] = None): Either[SpatialError, SamplingGeometry] =
     for
-      admitted <- SampleSpaces
-        .requireSpatialD3(space)
+      admitted <- SampleSpaces.requireVolumeD3(space.typed.spatialOnly)
         .left
         .map(SpatialError.SampleSpaceAdmission.apply)
       _ <- mask match

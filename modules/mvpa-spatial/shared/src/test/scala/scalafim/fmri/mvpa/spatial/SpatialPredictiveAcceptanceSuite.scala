@@ -8,7 +8,7 @@ import resample4s.core.DigestAlgorithm
 import mvpa4s.*
 import mvpa4s.predictive.*
 import mvpa4s.measurement.*
-import scalafim.image.ExactVolumeSearchlight
+import neuroim4s.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, Searchlight}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 

@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.{DataSelection, DatasetId, GaleTestData, TimepointSelection, VoxelSelection}
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

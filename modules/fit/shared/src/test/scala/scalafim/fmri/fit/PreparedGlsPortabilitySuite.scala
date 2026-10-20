@@ -7,7 +7,7 @@ import scalafim.fmri.design.{DesignDiagnostic, DesignDiagnosticKind, DesignSchem
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Fixed rational source/design: foreign-platform artifacts must restore against
   * identical scientific inputs, without assuming identical AR-estimation rounding.

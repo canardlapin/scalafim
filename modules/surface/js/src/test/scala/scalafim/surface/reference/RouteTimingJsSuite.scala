@@ -1,7 +1,6 @@
 package scalafim.surface.reference
 
-import scalafim.image.*
-import scalafim.image.SampleSpaces.indexToGrid3D
+import neuroim4s.image.*
 import scalafim.surface.*
 
 import scala.scalajs.js
@@ -32,7 +31,7 @@ class RouteTimingJsSuite extends munit.FunSuite:
     val grid = PointMapFixtures.affine(2, 0, 0, -96.5, 0, 2, 0, -132.5, 0, 0, 2, -78.5, 0, 0, 0, 1)
     val space = SampleSpaces(Vector(97, 115, 97), affine = Some(grid))
     val values = Array.tabulate(97 * 115 * 97) { o =>
-      val g = space.indexToGrid3D(o)
+      val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, o)
       val (x, y, z) = ((g(0) - 48) / 40.0, (g(1) - 57) / 50.0, (g(2) - 48) / 40.0)
       if x * x + y * y + z * z <= 1.0 then math.sin(o.toDouble) else Double.NaN
     }

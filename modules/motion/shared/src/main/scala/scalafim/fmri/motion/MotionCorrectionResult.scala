@@ -1,8 +1,8 @@
 package scalafim.fmri.motion
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
-import scalafim.image.*
+import neuroim4s.image.*
 
 final case class MotionCorrectionResult(
     estimate: MotionEstimate,
@@ -43,7 +43,7 @@ object MotionCorrectionResult:
       packetCorrection <-
         if applyControl.acquisitionTiming.isVolume then Right(None)
         else PoseSpline
-          .packetCorrectionMagnitude(estimate.trace, applyControl.acquisitionTiming, run.space.spatialDims(2))
+          .packetCorrectionMagnitude(estimate.trace, applyControl.acquisitionTiming, run.space.grid.shape(2))
           .map(Some(_))
       qc <- MotionQc.from(
         run = run,

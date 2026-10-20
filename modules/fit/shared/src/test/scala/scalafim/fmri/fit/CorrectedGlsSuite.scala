@@ -10,7 +10,7 @@ import scalafim.fmri.fit.GaleTestSyntax.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArBiasCorrection, ArOptions, ArStructure, AutocorrelationConfig, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class CorrectedGlsSuite extends munit.FunSuite:
   private def matrix(rows: Vector[Vector[Double]]): DMat =

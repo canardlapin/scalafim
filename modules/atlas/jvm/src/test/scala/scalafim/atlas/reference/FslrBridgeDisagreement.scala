@@ -1,7 +1,7 @@
 package scalafim.atlas.reference
 
 import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kRoute}
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 import scalafim.surface.reference.*
 

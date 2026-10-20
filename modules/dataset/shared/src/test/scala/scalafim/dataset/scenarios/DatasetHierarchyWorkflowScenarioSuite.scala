@@ -1,9 +1,11 @@
 package scalafim.dataset.scenarios
 
+import image4s.SomeSampleSpace
+
 import gale.linalg.DMat
 import scalafim.dataset.*
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
+import neuroim4s.image.{SampleSpaces, VoxelCoord}
 
 class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
 

@@ -1,8 +1,7 @@
 package scalafim.fmri.fit.io
 
-import scalafim.image.SampleSpaces
-import scalafim.image.{apply, space, valueAtCanonicalOrdinal}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.{apply, space, valueAtCanonicalOrdinal}
 
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.fit.*
@@ -10,7 +9,7 @@ import scalafim.fmri.design.{DesignSchema, ModelSource}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
-import scalafim.image.io.Nifti
+import neuroim4s.image.io.Nifti
 import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 import gale.linalg.DVec
 
@@ -55,7 +54,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
     val coefficientImage =
       Nifti.readSeries(coefficientPath, readEvidence).fold(error => fail(error.message), _.image)
-    assertEquals(coefficientImage.space.dims.take(4), Vector(2, 1, 1, 2))
+    assertEquals(coefficientImage.space.logicalShape.take(4), Vector(2, 1, 1, 2))
     assertEqualsDouble(coefficientImage(0, 0, 0, 0), 2.0, 1e-12)
     assertEqualsDouble(coefficientImage(0, 0, 0, 1), 3.0, 1e-12)
     assertEqualsDouble(coefficientImage(1, 0, 0, 0), -1.0, 1e-12)
@@ -63,7 +62,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
     val contrastImage =
       Nifti.readSeries(contrastPath, readEvidence).fold(error => fail(error.message), _.image)
-    assertEquals(contrastImage.space.dims.take(4), Vector(2, 1, 1, 3))
+    assertEquals(contrastImage.space.logicalShape.take(4), Vector(2, 1, 1, 3))
     assertEqualsDouble(contrastImage(0, 0, 0, 0), t.estimates(0), 1e-12)
     assertEqualsDouble(contrastImage(1, 0, 0, 0), t.estimates(1), 1e-12)
 
@@ -122,7 +121,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
     val taskCoefficient =
       Nifti.readVolume(expectedNiftis.head, readEvidence).fold(error => fail(error.message), _.image)
-    assertEquals(taskCoefficient.space.dims, Vector(2, 1, 1))
+    assertEquals(taskCoefficient.space.logicalShape, Vector(2, 1, 1))
     assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(0), 2.0, 1e-12)
     assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(1), -1.0, 1e-12)
 

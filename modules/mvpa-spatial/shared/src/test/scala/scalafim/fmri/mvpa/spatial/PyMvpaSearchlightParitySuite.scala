@@ -1,11 +1,13 @@
 package scalafim.fmri.mvpa.spatial
 
+import image4s.locus.GridDomain
+
 import gale.linalg.DMat
 import locus4s.Region
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import image4s.geometry.{Affine, D3}
 import locus4s.{DomainRegistry, Region as VolumeRegion}
-import scalafim.image.{ExactVolumeSearchlight, GridDomain, SampleSpaces, SearchlightRadius}
+import neuroim4s.image.{ExactVolumeSearchlight, SampleSpaces, SearchlightRadius}
 import locus4s.{DomainId, Region as SurfaceRegion}
 import scalafim.surface.{DistanceMetric, Hemisphere, MeshTopology, SurfaceGeometry, SurfaceKind, SurfaceLocusDomain, SurfaceSearchlight, TriangleMesh}
 import mvpa4s.{AxisRef, EvidenceSource, Observations}

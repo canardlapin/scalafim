@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import munit.FunSuite
 import bids4s.{BidsQuery, BidsScope}
@@ -9,7 +9,7 @@ import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.formula.ModelFormula
 import scalafim.fmri.fit.SequentialChunkProgramInterpreter
 import scalafim.fmri.group.{GroupWeighting, InterceptPolicy}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 class AnalysisPlanSuite extends FunSuite:
   test("compile produces deterministic subject and group jobs from pure descriptors") {

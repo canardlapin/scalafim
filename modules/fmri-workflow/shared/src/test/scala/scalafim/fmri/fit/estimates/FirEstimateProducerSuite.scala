@@ -8,7 +8,7 @@ import scalafim.fmri.fit.{ChunkSize, EstimateOutput, EstimateUncertaintyRequest,
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Literal, bounded FIR fixture.  The response and analytic oracle are authored
   * independently of the compiled design, so changing FIR compilation cannot

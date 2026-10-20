@@ -5,9 +5,9 @@ import gale.linalg.DMat
 import image4s.geometry.{Affine, D3}
 import scalafim.archive.zarr.OpenedCanonicalBold
 import scalafim.dataset.*
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 import neuroim4s.image.NeuroAffineSyntax.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 import zarr4s.*
 
 final class ZarrResponseBlockSource private (
@@ -38,7 +38,7 @@ final class ZarrResponseBlockSource private (
       block: PrimitiveBlock,
       calibration: scalafim.archive.zarr.ScalarCalibration
   ): Either[DatasetError, Array[Double]] =
-    val values = PrimitiveBuffers.ofSize[Double](block.elementCount)
+    val values = Array.ofDim[Double](block.elementCount)
     var index = 0
     while index < block.elementCount do
       val stored = block match

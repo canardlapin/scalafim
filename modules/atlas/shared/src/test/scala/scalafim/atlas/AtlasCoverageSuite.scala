@@ -1,10 +1,12 @@
 package scalafim.atlas
 
+import image4s.SomeSampleSpace
+
 import neuroatlas4s.*
 
 import image4s.geometry.GeometryError
 import ravel.Shape
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.atlas.syntax.*
 
 class AtlasCoverageSuite extends munit.FunSuite:
@@ -40,7 +42,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
   private def labelVolume(values: Vector[Int]): SomeLabelVolume[Int] =
     AtlasTestImages.labelVolume(
       fixtureSpace(Vector(2, 2, 1)),
-      PrimitiveBuffers.fromArray(values.toArray),
+      (values.toArray).clone(),
       "coverage"
     )
 
@@ -50,7 +52,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
       regions,
       AtlasTestImages.labelVolume(
         space,
-        PrimitiveBuffers.fromArray(values.toArray),
+        (values.toArray).clone(),
         "coverage"
       )
     )
@@ -138,10 +140,10 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(err.getMessage.contains("atlas region ids must be unique: 1"), clue = err.getMessage)
 
   test("reducers define NaN handling and volume reductions match grouped oracle sums"):
-    assertEquals(Reducers.mean(PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 5.0))), 3.0)
-    assert(Reducers.mean(PrimitiveBuffers.fromArray(Array(Double.NaN, Double.NaN))).isNaN)
-    assert(Reducers.mean(PrimitiveBuffers.fromArray(Array.empty[Double])).isNaN)
-    assertEquals(Reducers.sum(PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 5.0))), 6.0)
+    assertEquals(Reducers.mean((Array(1.0, Double.NaN, 5.0)).clone()), 3.0)
+    assert(Reducers.mean((Array(Double.NaN, Double.NaN)).clone()).isNaN)
+    assert(Reducers.mean((Array.empty[Double]).clone()).isNaN)
+    assertEquals(Reducers.sum((Array(1.0, Double.NaN, 5.0)).clone()), 6.0)
 
     val regions =
       RegionIndex(
@@ -154,7 +156,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val data =
       AtlasTestImages.scalarVolume(
         a,
-        PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0))
+        (Array(1.0, 10.0, 3.0, 20.0)).clone()
       )
     val reduced = a.reduce(data, Reducers.sum)
     val checkedReduced = AtlasReduce.summarizeVolumeEither(a, data, Reducers.sum)
@@ -174,7 +176,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val data =
       AtlasTestImages.scalarSeries(
         a,
-        PrimitiveBuffers.fromArray(Array(1.0, 2.0, 10.0, 30.0, 3.0, 4.0, 20.0, 40.0)),
+        (Array(1.0, 2.0, 10.0, 30.0, 3.0, 4.0, 20.0, 40.0)).clone(),
         tLen,
         "timeseries"
       )
@@ -189,7 +191,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val mask =
       AtlasTestImages.maskVolume(
         a,
-        PrimitiveBuffers.fromArray(Array(true, false, false, true)),
+        (Array(true, false, false, true)).clone(),
         "mask"
       )
     val masked = a.reduce(data, mask, Reducers.sum).data

@@ -2,7 +2,7 @@ package scalafim.fmri.fit.profile
 
 import gale.linalg.Matrix
 import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, InMemoryDatasetBackend}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.design.{RowLayout, ScanIndex}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, DctCutoffPeriod, Intercept}
 import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule, ParametricHrfFamily, ShapePoint}

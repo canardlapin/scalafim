@@ -5,8 +5,8 @@ import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.SpaceEvidence
 
 class AtlasIoSuite extends munit.FunSuite:
@@ -115,7 +115,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
   test("AtlasLabelMaps converts finite integer-valued volumes") {
     val sp = SampleSpaces(Vector(2, 2, 1))
-    val data = PrimitiveBuffers.fillConst[Double](4, 0.0)
+    val data = Array.fill[Double](4)(0.0)
     data(0) = 1.0
     data(1) = 2.0
     data(2) = 0.0
@@ -135,7 +135,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
   test("AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback") {
     val sp = SampleSpaces(Vector(2, 2, 1))
-    val fallbackData = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 0.0, 2.0))
+    val fallbackData = (Array(1.0, 2.0, 0.0, 2.0)).clone()
     val fallback = AtlasLabelMaps.fromDouble(SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](fallbackData, sp, "source-label"))
     assertEquals(fallback.metadata.label, "source-label")
     assertEquals(AtlasTestImages.labelAtCanonicalOrdinal(fallback, 1), 2)
@@ -143,12 +143,12 @@ class AtlasIoSuite extends munit.FunSuite:
     val explicit = AtlasLabelMaps.fromDouble(SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](fallbackData, sp, "source-label"), "explicit-label")
     assertEquals(explicit.metadata.label, "explicit-label")
 
-    val nonFinite = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
+    val nonFinite = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double]((Array(1.0, Double.NaN, 0.0, 2.0)).clone(), sp)
     interceptMessage[IllegalArgumentException]("label volume contains non-finite value at linear index 1") {
       AtlasLabelMaps.fromDouble(nonFinite)
     }
 
-    val negative = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
+    val negative = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double]((Array(1.0, -1.0, 0.0, 2.0)).clone(), sp)
     interceptMessage[IllegalArgumentException]("label volume contains negative region id -1 at linear index 1") {
       AtlasLabelMaps.fromDouble(negative)
     }
@@ -360,7 +360,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
   test("AtlasLabelMaps builds VolumeAtlas from label volume and regions") {
     val sp = SampleSpaces(Vector(2, 2, 1))
-    val data = PrimitiveBuffers.fillConst[Int](4, 0)
+    val data = Array.fill[Int](4)(0)
     data(0) = 1
     data(1) = 2
     data(2) = 1
@@ -407,7 +407,7 @@ class AtlasIoSuite extends munit.FunSuite:
       labelPath
     )
 
-    assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
+    assertEquals(atlas.space.grid.shape, Vector(2, 2, 1))
     assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.regions.ids, Vector(RegionId(1), RegionId(2)))
     assertEquals(atlas.region(RegionId(1)).map(_.network), Some(Some(NetworkId("Vis"))))
@@ -434,7 +434,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
     val atlas = GlasserLoader.loadFromPaths(GlasserHcpMmp1(GlasserSource.Mni2009c), volumePath, labelPath)
 
-    assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
+    assertEquals(atlas.space.grid.shape, Vector(2, 2, 1))
     assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.regions.labels, Vector("V1", "7Pm"))
     assertEquals(atlas.ref.source, Some("mni2009c"))

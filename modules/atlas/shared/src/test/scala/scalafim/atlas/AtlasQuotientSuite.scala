@@ -1,10 +1,12 @@
 package scalafim.atlas
 
+import image4s.SomeSampleSpace
+
 import neuroatlas4s.*
 
 import image4s.geometry.GeometryError
 import scalafim.atlas.syntax.*
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.{
   Hemisphere as SurfaceHemisphere,
   LabelInfo,
@@ -49,7 +51,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
       RegionIndex(metadata),
       AtlasTestImages.labelVolume(
         space,
-        PrimitiveBuffers.fromArray(Array(1, 1, 2, 2)),
+        (Array(1, 1, 2, 2)).clone(),
         "quotient"
       )
     )
@@ -210,7 +212,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val data =
       AtlasTestImages.scalarVolume(
         atlas,
-        PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 10.0, 20.0)),
+        (Array(1.0, Double.NaN, 10.0, 20.0)).clone(),
       )
     val means = atlas.reduce(data, Reducers.mean)
     val sums = atlas.reduce(data, Reducers.sum)

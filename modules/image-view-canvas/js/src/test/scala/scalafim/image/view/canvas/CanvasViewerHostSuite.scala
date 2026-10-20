@@ -3,8 +3,8 @@ package scalafim.image.view.canvas
 import scala.scalajs.js
 import intaglio.*
 import intaglio.canvas.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.image.view.*
 
 class CanvasViewerHostSuite extends munit.FunSuite:
@@ -13,7 +13,7 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     SampleSpaces.requireVolumeD3(SampleSpaces(Vector(3, 3, 3))).toOption.get
   private val space = sampleSpace.grid
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-    PrimitiveBuffers.tabulate[Double](space.nVoxels)(_.toDouble),
+    Array.tabulate[Double](space.shape.product)(_.toDouble),
     sampleSpace,
     "canvas"
   )
@@ -21,7 +21,7 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     LayerId.unsafe("anatomy"),
     volume,
     SliceSampling.Linear(),
-    ScalarColorizer(DisplayWindow.unsafe(0.0, space.nVoxels.toDouble - 1.0))
+    ScalarColorizer(DisplayWindow.unsafe(0.0, space.shape.product.toDouble - 1.0))
   )
   private val model = ViewerModel.unsafe(space, Vector(layer))
   private val session = ViewerSession(

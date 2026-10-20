@@ -3,8 +3,8 @@ package scalafim.spatial
 import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.GeometryError
-import scalafim.image.{SampleSpaceError, SampleSpaces, Mask, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaceError, SampleSpaces, Mask}
+import neuroim4s.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DomainSuite extends munit.FunSuite:
@@ -45,14 +45,14 @@ class DomainSuite extends munit.FunSuite:
     val geometry = value(SamplingGeometry.volume(space))
     assertEquals(geometry.nElements, 8)
 
-    val mask = Mask.fromIndices(space, scalafim.image.PrimitiveBuffers.fromArray(Array(0, 3, 7)), "mask")
+    val mask = Mask.fromIndices(space, (Array(0, 3, 7)).clone(), "mask")
     val masked = value(SamplingGeometry.volume(space, Some(mask)))
     assertEquals(masked.nElements, 8)
 
     val world = SampleSpaces.worldOf(space).fold(e => fail(e.message), identity)
     val other = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1), affine = Some(ProviderAffines.identity)), world)
       .fold(e => fail(e.message), identity)
-    val badMask = Mask.fromIndices(other, scalafim.image.PrimitiveBuffers.fromArray(Array(0)), "bad")
+    val badMask = Mask.fromIndices(other, (Array(0)).clone(), "bad")
     assertEquals(
       SamplingGeometry.volume(space, Some(badMask)).left.toOption,
       Some(SpatialError.Geometry(GeometryError.GridsNotCongruent(0.0)))

@@ -12,7 +12,7 @@ import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule, ParametricHrfFamily, ShapePoint}
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitPlan, FmriModel, ProfileCriterion, ProfileHrfPlan, ProfileTrialDrive, VolumeWeighting}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class ProfileHrfFitSuite extends munit.FunSuite:
   protected val rows = 120

@@ -2,7 +2,7 @@ package scalafim.image.view
 
 import intaglio.DeviceContext
 import image4s.geometry.{D3, Frame, Point}
-import scalafim.image.*
+import neuroim4s.image.*
 
 opaque type SliceStep = Double
 

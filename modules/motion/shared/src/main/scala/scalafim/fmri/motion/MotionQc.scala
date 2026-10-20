@@ -1,8 +1,8 @@
 package scalafim.fmri.motion
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
-import scalafim.image.*
+import neuroim4s.image.*
 
 final case class MotionQcThresholds(
     fdSpike: FramewiseDisplacementMm,
@@ -146,8 +146,8 @@ object MotionQc:
     if trace.length != run.nVolumes then Left(MotionError.TraceLengthMismatch(trace.length, run.nVolumes))
     else
       corrected match
-        case Some(corr) if corr.space.dims.take(4) != run.space.dims.take(4) =>
-          Left(MotionError.ShapeMismatch("corrected", run.space.dims.take(4), corr.space.dims.take(4)))
+        case Some(corr) if corr.space.logicalShape.take(4) != run.space.logicalShape.take(4) =>
+          Left(MotionError.ShapeMismatch("corrected", run.space.logicalShape.take(4), corr.space.logicalShape.take(4)))
         case _ =>
           val nt = run.nVolumes
           val frameCount = FrameCount.unsafe(nt)

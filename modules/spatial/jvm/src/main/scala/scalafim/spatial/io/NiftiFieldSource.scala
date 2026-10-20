@@ -1,8 +1,10 @@
 package scalafim.spatial.io
 
+import image4s.nifti.NiftiHeader
+
 import image4s.geometry.Grid
-import scalafim.image.{SampleSpaceError, SampleSpaces}
-import scalafim.image.io.{Nifti, NiftiHeader}
+import neuroim4s.image.{SampleSpaceError, SampleSpaces}
+import neuroim4s.image.io.{Nifti}
 import neuroim4s.spaces.SpaceEvidence
 import scalafim.spatial.*
 
@@ -113,7 +115,7 @@ final class NiftiFieldSource private (
   private def readAndValidateHeader(stamp: NiftiFileStamp): Either[SpatialError, ValidatedNiftiState] =
     try
       headerReadCount += 1L
-      Nifti
+      image4s.nifti.Nifti
         .readHeader(path)
         .left
         .map(error => SpatialError.FieldSourceReadFailed(descriptor.id, error.message))
@@ -124,42 +126,42 @@ final class NiftiFieldSource private (
         Left(SpatialError.FieldSourceReadFailed(descriptor.id, detail(error)))
 
   private def validateHeader(header: NiftiHeader): Either[SpatialError, Unit] =
-    val bytesPerValue = header.bitpix / 8
+    val bytesPerValue = header.datatype.bitsPerValue / 8
     val supported =
-      (header.datatype == 2 && bytesPerValue == 1) ||
-        (header.datatype == 4 && bytesPerValue == 2) ||
-        (header.datatype == 8 && bytesPerValue == 4) ||
-        (header.datatype == 16 && bytesPerValue == 4) ||
-        (header.datatype == 64 && bytesPerValue == 8)
+      (header.datatype.code == 2 && bytesPerValue == 1) ||
+        (header.datatype.code == 4 && bytesPerValue == 2) ||
+        (header.datatype.code == 8 && bytesPerValue == 4) ||
+        (header.datatype.code == 16 && bytesPerValue == 4) ||
+        (header.datatype.code == 64 && bytesPerValue == 8)
     descriptor.geometry match
       case SamplingGeometry.Volume(expectedSpace, _) =>
         val admittedHeaderSpace =
-          if header.dims.length < 3 then
+          if header.dimensions.length < 3 then
             Left(
               SampleSpaceError.ExpectedDimensionality(
                 "D3 sample space",
                 expected = 3,
-                actual = header.dims.length
+                actual = header.dimensions.length
               )
             )
           else
-            header.spaceIn(evidence)
+            Nifti.spaceIn(header, evidence)
               .left
               .map(error => SampleSpaceError.InvalidArgument(error.message))
-              .flatMap(SampleSpaces.requireSpatialD3)
+              .flatMap(space => SampleSpaces.requireVolumeD3(space.typed.spatialOnly))
         admittedHeaderSpace
           .left
           .map(error => SpatialError.FieldSourceSampleSpaceAdmission(descriptor.id, error))
           .flatMap: actualSpace =>
-            if header.dims.length > 4 then
-              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"expected a 3D or 4D NIfTI, got ${header.dims.mkString("x")}"))
+            if header.dimensions.length > 4 then
+              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"expected a 3D or 4D NIfTI, got ${header.dimensions.mkString("x")}"))
             else if !supported then
-              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"unsupported NIfTI datatype ${header.datatype} with bitpix ${header.bitpix}"))
-            else if header.voxOffset < 0 then
-              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"negative vox_offset ${header.voxOffset}"))
+              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"unsupported NIfTI datatype ${header.datatype.code} with bitpix ${header.datatype.bitsPerValue}"))
+            else if header.voxelOffset < 0 then
+              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"negative vox_offset ${header.voxelOffset}"))
             else
-              val actualRows = header.dims.take(3).product
-              val actualObservations = if header.dims.length == 4 then header.dims(3) else 1
+              val actualRows = header.dimensions.take(3).product
+              val actualObservations = if header.dimensions.length == 4 then header.dimensions(3) else 1
               if actualRows != descriptor.rows then
                 Left(SpatialError.FieldSourceShapeMismatch(descriptor.id, descriptor.rows, actualRows))
               else if actualObservations != descriptor.observations then
@@ -188,10 +190,13 @@ final class NiftiFieldSource private (
       )
     else
       try
-        val bytesPerValue = header.bitpix / 8
-        val windows = readWindows(request.sourceRows, header.dims.take(3))
+        val bytesPerValue = header.datatype.bitsPerValue / 8
+        val windows = readWindows(request.sourceRows, header.dimensions.take(3))
         val maximumBytes = windows.map(_.byteCount(bytesPerValue)).max
-        val buffer = ByteBuffer.allocateDirect(maximumBytes).order(header.byteOrder)
+        val buffer = ByteBuffer.allocateDirect(maximumBytes).order(header.byteOrder match
+          case image4s.nifti.NiftiByteOrder.LittleEndian => java.nio.ByteOrder.LITTLE_ENDIAN
+          case image4s.nifti.NiftiByteOrder.BigEndian => java.nio.ByteOrder.BIG_ENDIAN
+        )
         val values = new Array[Double](valueCount.toInt)
         val slope = if header.slope == 0.0 then 1.0 else header.slope
 
@@ -206,7 +211,7 @@ final class NiftiFieldSource private (
               val window = windows(windowIndex)
               val firstElement = Math.addExact(frameElement, window.startVoxel.toLong)
               val byteOffset = Math.multiplyExact(firstElement, bytesPerValue.toLong)
-              val position = Math.addExact(header.voxOffset.toLong, byteOffset)
+              val position = Math.addExact(header.voxelOffset.toLong, byteOffset)
               val bytes = window.byteCount(bytesPerValue)
               buffer.clear()
               buffer.limit(bytes)
@@ -218,7 +223,7 @@ final class NiftiFieldSource private (
               while voxelOffset < window.voxelCount do
                 val outputRow = window.outputRows(voxelOffset)
                 values(outputRow * request.columns + outputColumn) =
-                  decodeAt(buffer, header.datatype, voxelOffset * bytesPerValue) * slope + header.intercept
+                  decodeAt(buffer, header.datatype.code, voxelOffset * bytesPerValue) * slope + header.intercept
                 voxelOffset += 1
               windowIndex += 1
             outputColumn += 1

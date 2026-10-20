@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import image4s.geometry.Grid
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
@@ -270,12 +270,10 @@ object Field:
     (expected, actual) match
       case (SamplingGeometry.Volume(expectedSpace, expectedMask), SamplingGeometry.Volume(actualSpace, actualMask)) =>
         for
-          expectedD3 <- SampleSpaces
-            .requireSpatialD3(expectedSpace)
+          expectedD3 <- SampleSpaces.requireVolumeD3(expectedSpace.typed.spatialOnly)
             .left
             .map(error => SpatialError.FieldSourceSampleSpaceAdmission(source, error))
-          actualD3 <- SampleSpaces
-            .requireSpatialD3(actualSpace)
+          actualD3 <- SampleSpaces.requireVolumeD3(actualSpace.typed.spatialOnly)
             .left
             .map(error => SpatialError.FieldSourceSampleSpaceAdmission(source, error))
           _ <- Grid

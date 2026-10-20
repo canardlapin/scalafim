@@ -2,7 +2,7 @@ package scalafim.image.view.canvas
 
 import scala.scalajs.js
 import intaglio.canvas.*
-import scalafim.image.AnatomicalPlane
+import neuroim4s.image.AnatomicalPlane
 import scalafim.image.view.*
 
 enum CanvasViewerError:

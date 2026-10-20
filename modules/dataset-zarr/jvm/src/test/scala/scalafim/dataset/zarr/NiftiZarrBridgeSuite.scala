@@ -2,14 +2,14 @@ package scalafim.dataset.zarr
 
 import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
-import scalafim.image.valueAtCanonicalOrdinal
+import neuroim4s.image.valueAtCanonicalOrdinal
 
 import java.nio.file.Files
 import scalafim.archive.zarr.{AcquisitionTiming, CanonicalChunkProfile, NeuroArchiveZarr, TimeUnits}
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.fmri.fit.{FitChunkPlan, FitChunkingStrategy}
-import scalafim.image.io.Nifti
+import neuroim4s.image.io.Nifti
 import zarr4s.{IndexLocation, JvmCodecRuntime, JvmFileStore, JvmGzip, PhysicalLayout, Shape}
 
 class NiftiZarrBridgeSuite extends munit.FunSuite:
@@ -48,10 +48,10 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     ))
 
     val exported = fixture.exportRoot.resolve(NiftiRoundTripFixture.relativePath)
-    val header = Nifti.readHeader(exported).toOption.get
-    assertEquals(header.datatype, 4)
-    assertEquals(header.bitpix, 16)
-    assertEquals(header.dims, Vector(3, 2, 2, 2))
+    val header = image4s.nifti.Nifti.readHeader(exported).toOption.get
+    assertEquals(header.datatype.code, 4)
+    assertEquals(header.datatype.bitsPerValue, 16)
+    assertEquals(header.dimensions, Vector(3, 2, 2, 2))
     assertEquals(header.slope, 0.25)
     assertEquals(header.intercept, -2.0)
     assertEquals(header.sformCode, 1)

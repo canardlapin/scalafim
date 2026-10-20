@@ -2,8 +2,8 @@ package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
 import gale.linalg.DMat
-import scalafim.image.SomeSampleSpace
-import scalafim.image.SampleSpaces.*
+import image4s.SomeSampleSpace
+import neuroim4s.image.SampleSpaces.*
 
 object LnaPipeline:
   def quantArchive(
@@ -45,7 +45,7 @@ object LnaPipeline:
             runs = Vector(LnaRun(runLabel, shape, dataPath)),
             datasets = Vector(dataRef, scaleRef, offsetRef),
             header = Map(
-              "space.dims" -> space.spatialDims.mkString("x"),
+              "space.dims" -> space.grid.shape.mkString("x"),
               "timepoints" -> data.rows.toString
             )
           ),
@@ -93,7 +93,7 @@ object LnaPipeline:
             runs = Vector(LnaRun(runLabel, shape, deltaPath)),
             datasets = Vector(deltaRef, firstRef),
             header = Map(
-              "space.dims" -> space.spatialDims.mkString("x"),
+              "space.dims" -> space.grid.shape.mkString("x"),
               "timepoints" -> data.rows.toString
             )
           ),
@@ -158,7 +158,7 @@ object LnaPipeline:
             runs = Vector(LnaRun(runLabel, shape, dataPath)),
             datasets = Vector(firstRef, dataRef, scaleRef, offsetRef),
             header = Map(
-              "space.dims" -> space.spatialDims.mkString("x"),
+              "space.dims" -> space.grid.shape.mkString("x"),
               "timepoints" -> data.rows.toString
             )
           ),
@@ -216,7 +216,7 @@ object LnaPipeline:
             runs = Vector(LnaRun(runLabel, shape, coeffPath)),
             datasets = Vector(basisRef, coeffRef),
             header = Map(
-              "space.dims" -> space.spatialDims.mkString("x"),
+              "space.dims" -> space.grid.shape.mkString("x"),
               "timepoints" -> data.rows.toString,
               "basis.components" -> basis.rows.toString
             )
@@ -321,7 +321,7 @@ object LnaPipeline:
                 runs = Vector(LnaRun(runLabel, shape, coeffPath)),
                 datasets = Vector(coeffRef) ++ offsetRef.toVector,
                 header = Map(
-                  "space.dims" -> space.spatialDims.mkString("x"),
+                  "space.dims" -> space.grid.shape.mkString("x"),
                   "timepoints" -> coefficients.rows.toString,
                   "basis.shared.id" -> basisId.value,
                   "basis.shared.checksum" -> validBasis.checksum.value,

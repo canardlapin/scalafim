@@ -8,7 +8,7 @@ import image4s.geometry.Grid
 import intaglio.*
 import reframe4s.core.MapError
 import reframe4s.core.SpatialMap
-import scalafim.image.*
+import neuroim4s.image.*
 
 import scala.reflect.ClassTag
 

@@ -4,7 +4,7 @@ import scala.concurrent.duration.Duration
 
 import gale.linalg.Matrix
 import scalafim.fmri.threshold.*
-import scalafim.image.valueAtCanonicalOrdinal
+import neuroim4s.image.valueAtCanonicalOrdinal
 import scalafim.scenarios.{ScenarioHarness, ScenarioResult}
 
 import SignFlipWorld.*

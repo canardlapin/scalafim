@@ -1,8 +1,10 @@
 package scalafim.atlas.fixtures
 
+import image4s.SomeSampleSpace
+
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.image.*
+import neuroim4s.image.*
 
 object AtlasParityFixtures:
   final case class RegionExpected(
@@ -150,26 +152,26 @@ object AtlasParityFixtures:
   def fullMask(atlas: VolumeAtlas): SomeMaskVolume =
     AtlasTestImages.maskVolume(
       atlas,
-      PrimitiveBuffers.fillConst[Boolean](dims.product, true),
+      Array.fill[Boolean](dims.product)(true),
       label = "full"
     )
 
   def emptyMask(atlas: VolumeAtlas): SomeMaskVolume =
     AtlasTestImages.maskVolume(
       atlas,
-      PrimitiveBuffers.fillConst[Boolean](dims.product, false),
+      Array.fill[Boolean](dims.product)(false),
       label = "empty"
     )
 
   def labelData(): Array[Int] =
-    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
+    val out = Array.fill[Int](dims.product)(0)
     fillBlock(out, 0 to 1, 0 to 1, 0 to 1, 10)
     fillBlock(out, 3 to 4, 3 to 4, 3 to 4, 50)
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 90)
     out
 
   private def comparisonLabelData(): Array[Int] =
-    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
+    val out = Array.fill[Int](dims.product)(0)
     fillBlock(out, 0 to 0, 0 to 1, 0 to 1, 101)
     fillBlock(out, 3 to 4, 3 to 4, 3 to 4, 202)
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 303)

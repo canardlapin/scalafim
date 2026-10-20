@@ -2,8 +2,8 @@ package scalafim.spatial.io
 
 import neuroim4s.spaces.{SessionId, SubjectId}
 
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 import scalafim.spatial.*
 import scalafim.transform.TransformFormat
 

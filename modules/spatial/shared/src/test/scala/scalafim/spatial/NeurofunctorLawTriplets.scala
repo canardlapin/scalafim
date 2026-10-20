@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, SpatialPoint}
+import neuroim4s.image.{SampleSpaces, SpatialPoint}
 import neuroim4s.spaces.SubjectId
 import scalafim.spatial.fixtures.NeurofunctorLawFixtures
 

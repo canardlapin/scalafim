@@ -23,7 +23,7 @@ It introduces no second shipping identity or predictive-lifecycle system.
 The estimate artifact modules form a separate reader boundary:
 
 ```text
-estimates     -> archive, image
+estimates     -> archive, standalone neuroim4s-core
 estimates-io  -> estimates
 mvpa-artifacts -> mvpa4s, estimates, archive
 fmri-workflow -> fit, group
@@ -43,21 +43,20 @@ response
 
 standalone locus4s
 +-- locus-data
-|   +-- image
-|   +-- surface       also depends on image, transform, standalone graph4s
-|   +-- atlas         also depends on image, surface, spatial, transform, standalone graph4s
-|   +-- spatial       also depends on standalone Gale, image, surface, transform
-|   +-- dataset       also depends on response, image, hrf
+|   +-- surface       also depends on neuroim4s-core, transform, standalone graph4s
+|   +-- atlas         also depends on neuroim4s-core, surface, spatial, transform, standalone graph4s
+|   +-- spatial       also depends on standalone Gale, neuroim4s-core, surface, transform
+|   +-- dataset       also depends on response, neuroim4s-core, hrf
 |   +-- mvpa-spatial  also depends on mvpa4s, surface, threshold
-+-- latent            also depends on response, image
-+-- threshold         also depends on image
++-- latent            also depends on response, neuroim4s-core
++-- threshold         also depends on neuroim4s-core
 +-- connectivity      also depends on standalone graph4s
 
 standalone graph4s
 +-- pipeline
 +-- connectivity      also depends on locus-data
-+-- surface           also depends on image, locus-data
-+-- atlas             also depends on image, surface, locus-data
++-- surface           also depends on neuroim4s-core, locus-data
++-- atlas             also depends on neuroim4s-core, surface, locus-data
 
 standalone mvpa4s (pinned; core over Gale, locus4s, Multivar, Resample4s;
                    optional mvpa4s-predictive over Alder)
@@ -66,19 +65,19 @@ standalone mvpa4s (pinned; core over Gale, locus4s, Multivar, Resample4s;
 standalone Gale
 +-- ar
 +-- design           also depends on hrf
-+-- threshold         also depends on image
-+-- motion            also depends on image
-+-- spatial           also depends on image, surface
++-- threshold         also depends on neuroim4s-core
++-- motion            also depends on neuroim4s-core
++-- spatial           also depends on neuroim4s-core, surface
 +-- model             also depends on design, dataset
 +-- fit               also depends on model, ar
-+-- group             also depends on image, dataset, design, estimates
++-- group             also depends on neuroim4s-core, dataset, design, estimates
 
 pipeline + mvpa4s
 +-- mvpa-pipeline     optional interpreter; mvpa4s core has no pipeline dependency
 
 standalone Intaglio core
 +-- design                 also depends on hrf, standalone Gale
-+-- image-view             also depends on image
++-- image-view             also depends on neuroim4s-core
 |   +-- image-view-canvas  also depends on Intaglio Canvas
 |   +-- image-view-java2d  also depends on Intaglio Java2D
 |   +-- image-view-javafx  also depends on Intaglio JavaFX
@@ -94,7 +93,7 @@ hrf
         +-- fit
             +-- group
 
-image
+standalone neuroim4s-core
 +-- image-view        also depends on Intaglio core
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-data, and standalone Gale
@@ -102,20 +101,21 @@ image
 |   +-- mvpa-dataset  also depends on mvpa4s
 +-- transform        also depends on image4s-geometry, reframe4s
 +-- surface          also depends on transform
-|   +-- spatial        also depends on standalone Gale, image, transform
-|   +-- atlas          also depends on image, spatial, transform
+|   +-- spatial        also depends on standalone Gale, neuroim4s-core, transform
+|   +-- atlas          also depends on neuroim4s-core, spatial, transform
 |   +-- mvpa-spatial   also depends on mvpa4s, threshold
 |   +-- surface-view   also depends on Intaglio core
 +-- threshold         also depends on standalone Gale
 +-- motion            also depends on image4s-geometry; bids4s on JVM
 +-- group             also depends on standalone Gale, dataset, design, estimates
 
-standalone image4s + reframe4s (lie, field, resample)
-+-- image             also depends on locus-data, standalone Gale
+standalone image4s + reframe4s + locus4s + Ravel + Gale
++-- standalone neuroim4s-core (also neuroim4s-spaces; no ScalaFIM dependency)
+    +-- standalone neuroim4s-io JVM (also image4s-nifti)
     +-- transform     also depends on image4s-geometry and reframe4s directly
-        +-- surface   also depends on image, locus-data, mesh4s-geometry, image4s-geometry, graph4s, zarr4s
-        +-- spatial   also depends on image, surface, locus-data, standalone Gale
-        +-- atlas     also depends on image, surface, spatial, locus-data, graph4s
+        +-- surface   also depends on locus-data, mesh4s-geometry, image4s-geometry, graph4s, zarr4s
+        +-- spatial   also depends on surface, locus-data, standalone Gale
+        +-- atlas     also depends on surface, spatial, locus-data, graph4s
 
 standalone image4s + locus4s + Ravel + Gale + reframe4s
 +-- provider-spike    unpublished direct-composition compile contract
@@ -131,10 +131,10 @@ bids4s + dataset + model + fit + group
 
 standalone zarr4s
 +-- archive-zarr      also depends on archive
-    +-- dataset-zarr  also depends on dataset, image, standalone bids4s
+    +-- dataset-zarr  also depends on dataset, neuroim4s-core, standalone bids4s
 
 archive
-+-- archive-lna       also depends on image
++-- archive-lna       also depends on neuroim4s-core
 +-- archive-zarr      also depends on standalone zarr4s
 +-- interop-archived-response
     +-- also depends on response, latent, archive-lna, archive-zarr, and dataset
@@ -182,29 +182,29 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | standalone Gale | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, standalone Gale, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `phrf-comparison` | Unpublished comparative-evaluation preparation/scoring and JVM runners/custody. | `model`, `ar`, `hrf`, `fit`, standalone Gale | Production workflow orchestration or claims of completed S10 rehearsal/pilot qualification. |
-| `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, toolkit coordinate conventions and world-frame binding (`scalafim.image.world`, over neuroim4s-spaces world identities), neuroimaging adapters over provider geometry and resampling, clustering, and metric searchlight construction. | `locus-data`; standalone Gale, image4s (core, geometry, locus, filter; NIfTI on JVM) and reframe4s (`lie`, `field`, `resample`), neuroim4s-spaces | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code, toolkit transform file formats, or a local morphism/affine algebra (`imageAlgebraBoundaryCheck`). |
+| standalone `neuroim4s-core` / optional `neuroim4s-io` | Volumes, time series, masks, selected images, sampling, orientation, world binding and neuroimaging policy. The local image module is removed. | neuroim4s-spaces; image4s, locus4s, Ravel, Gale, reframe4s; optional image4s NIfTI on JVM | ScalaFIM, atlas, surface, MVPA or rendering dependencies; duplicate provider geometry, axes, finite domains or codecs. |
 | `provider-spike` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
-| `transform` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | `image`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), frame identity (`image`), platform IO in shared sources (`transformBoundaryCheck`), or graph routing (`spatial`). |
-| `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
+| `transform` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | standalone `neuroim4s-core`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), generic frame identity (`spatial4s`) or anatomical world identity (`neuroim4s-spaces`), platform IO in shared sources (`transformBoundaryCheck`), or graph routing (`spatial`). |
+| `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | standalone `neuroim4s-core`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
 | `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
-| `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
-| `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, standalone image4s-geometry; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
-| `surface` | Neuro-surface composition over strict mesh4s topology/points, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | `image`, `transform`, `locus-data`; standalone mesh4s-geometry, graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | standalone `neuroim4s-core`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
+| `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | standalone `neuroim4s-core`, standalone image4s-geometry; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
+| `surface` | Neuro-surface composition over strict mesh4s topology/points, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | standalone `neuroim4s-core`, `transform`, `locus-data`; standalone mesh4s-geometry, graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, standalone Intaglio core | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view`, Intaglio core | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
 | `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, Intaglio core; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
 | `surface-view-three` | Scala.js Three.js/WebGL plan interpretation, retained GPU resources, native picks/snapshots, and feature-gated GPU volume projection. | `surface-view`, Intaglio core; host-injected Three.js | DOM/bundler ownership, shared scientific semantics, or an assumption that WebGL2 float targets exist. |
 | `surface-view-connectivity` | Typed conversion from connectivity edge spaces/vectors to renderer-neutral surface-network inputs and provenance. | `surface-view`, `connectivity` | Estimation/inference, backend objects, or alternate node identity. |
-| `spatial` | Neurofunctor-style domains with locus packages, domain-specific morphism routing, exact/crisp/sampled transport distinctions, selections, route policies, sampled operators, adjoints, provenance, QC, caches, and lazy fields. | standalone Gale, `image`, `surface`, `transform`, `locus-data` | Low-level image interpolation kernels, atlas-specific route catalogs, or another finite-space/region implementation. |
-| `atlas` | Volume and surface atlas realizations, loaders and publication over the neuroatlas4s core (atlas references, releases, provenance, labels, hierarchies, standard catalog, realization contract), typed locus parcellations, parcel/network quotient operations, explicit display order, one-pass reduction, explicit-alignment overlap, graph4s region interop, and transform route descriptors. | neuroatlas4s-core, standalone graph4s and image4s-geometry, `image`, `surface`, `spatial`, `transform`, `locus-data` | Generic spatial operator compilation, low-level transform kernels, or extensional region identity in labels/metadata. |
+| `spatial` | Neurofunctor-style domains with locus packages, domain-specific morphism routing, exact/crisp/sampled transport distinctions, selections, route policies, sampled operators, adjoints, provenance, QC, caches, and lazy fields. | standalone Gale, standalone `neuroim4s-core`, `surface`, `transform`, `locus-data` | Low-level image interpolation kernels, atlas-specific route catalogs, or another finite-space/region implementation. |
+| `atlas` | Volume and surface atlas realizations, loaders and publication over the neuroatlas4s core (atlas references, releases, provenance, labels, hierarchies, standard catalog, realization contract), typed locus parcellations, parcel/network quotient operations, explicit display order, one-pass reduction, explicit-alignment overlap, graph4s region interop, and transform route descriptors. | neuroatlas4s-core, standalone graph4s and image4s-geometry, standalone `neuroim4s-core`, `surface`, `spatial`, `transform`, `locus-data` | Generic spatial operator compilation, low-level transform kernels, or extensional region identity in labels/metadata. |
 | `archive` | Format-neutral revision/publication envelopes; separately versioned archive, object, and representation identities; exact canonical manifest values and encoding; namespaced payload roles and logical identities; transactional canonical write orchestration; typed payload plans/executors; resource-safe open archives; and archive-native physical receipts. | No internal module; Cats Core and Cats Effect externally. | Physical LNA or Zarr sinks/schemas, dataset selection APIs, scientific reconstruction, untyped manifest values, secretly owned handles, or model-level decoding policy. |
-| `archive-lna` | Typed LNA 2 paths, manifests, descriptors, validation, quant/delta payload codecs, shared-basis artifacts and registries, pure manifest normalization, JVM HDF5 stores, and the eager whole-payload driver. | `archive`, `image`; jHDF on JVM. | Scientific reconstruction, latent encoders, dataset discovery, response interpretation, runtime family assembly, or ownership of the canonical manifest writer. |
+| `archive-lna` | Typed LNA 2 paths, manifests, descriptors, validation, quant/delta payload codecs, shared-basis artifacts and registries, pure manifest normalization, JVM HDF5 stores, and the eager whole-payload driver. | `archive`, standalone `neuroim4s-core`; jHDF on JVM. | Scientific reconstruction, latent encoders, dataset discovery, response interpretation, runtime family assembly, or ownership of the canonical manifest writer. |
 | `response-laws` | Typed, framework-neutral JVM/Scala.js checks for response ordering, shape, selected/whole and partition decode consistency, raw-bit persistence, axis-keyed receipt conformance, and provenance derivation. | `response` | Runtime execution, representation mathematics, archive bindings, fixtures, effect interpretation, or ownership of production response types. |
-| `latent` | Archive-independent response-representation contracts, typed inspectable decode plans, temporal bases, transport and BOLDZip response semantics, radial/HRBF mathematics, and exact locus-backed active/full-grid selection order. | `response`, `image`, `locus-data`; Gale on each platform. | Archive values or paths, physical execution, checksums, dataset storage backends, model execution, a general tensor API, or another spatial selection algebra. |
+| `latent` | Archive-independent response-representation contracts, typed inspectable decode plans, temporal bases, transport and BOLDZip response semantics, radial/HRBF mathematics, and exact locus-backed active/full-grid selection order. | `response`, standalone `neuroim4s-core`, `locus-data`; Gale on each platform. | Archive values or paths, physical execution, checksums, dataset storage backends, model execution, a general tensor API, or another spatial selection algebra. |
 | `interop-archived-response` | Typed logical-read lowering between representations and LNA/Zarr archives, LNA pipeline reconstruction and representation-specific latent codecs, archive/latent dataset adapters, first-class narrow persisted envelopes, canonical dense-BOLD response binding, immutable registries, and resource-safe runtime assembly. | `response`, `latent`, `archive`, `archive-lna`, `archive-zarr`, `dataset`; standalone bids4s and zarr4s | New reconstruction mathematics, core dataset query semantics, manifest attribute scraping, global mutable/plugin-loaded registries, central codec facades, or a universal payload/tensor carrier. |
-| `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `locus-data`; standalone Gale | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
+| `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, standalone `neuroim4s-core`, `hrf`, `locus-data`; standalone Gale | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`; standalone Gale | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `model`, `ar`; standalone Gale | Model description, dataset storage, hidden blocking readers, or group inference. |
 | `mvpa4s` (standalone, pinned) | Identified MVPA evidence, axes and reindexing, relational/pattern analyses, measurement and execution contracts; `mvpa4s-testkit` supplies test-scope fixture identities and R parity reference data. | standalone Gale, locus4s core/provenance, Multivar, Multivar inference, Resample4s | Response, pipeline, imaging, surface, atlas, dataset or fMRI-fit types; ScalaFIM dependencies of any kind. |
@@ -213,11 +213,11 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed dataset adapters and the fit-dependent soft-LDA Alder lifecycle, which delegates to the single-fit `mvpa-fit` kernel; generic Alder adapters live in `mvpa4s-predictive`. | `mvpa4s`, `mvpa4s-predictive`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface objects into MVPA feature-set plans. | `mvpa4s`, `surface`, `threshold` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
-| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
+| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | standalone `neuroim4s-core`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, result references, estimate production, and the eager fit-to-group adapter; generic pipeline lowering is a future orchestration slice. | `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
-| `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
+| `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, standalone `neuroim4s-core`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
 
 The single-layer typed operator core, language-neutral IR, mathematical
 contracts, and validation matrix are authoritative in the standalone
@@ -300,7 +300,7 @@ locus-data --------------+          |    +--> spatial <-- surface
                                     +-------> atlas  <-- spatial, surface
 ```
 
-`image` owns world identity and neuroimaging adapters over provider volume
+standalone `neuroim4s-core` owns world identity and neuroimaging adapters over provider volume
 geometry; `transform` owns toolkit transform files and typed world-space
 transforms. `surface` owns mesh geometry.
 `atlas` names standard spaces and attaches metadata to locus parcels.
@@ -353,7 +353,7 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 **Providers:**
 
 - **image4s-geometry** owns `Frame`, `Point`, `Vec`, `Affine` and `Grid`.
-- **reframe4s** (`lie`, `field`, `resample`, consumed by `image` and
+- **reframe4s** (`lie`, `field`, `resample`, consumed by standalone `neuroim4s-core` and
   `transform`) owns
   generic transform algebra:
   - `SpatialMap` with frame-checked composition
@@ -366,14 +366,14 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 
 **ScalaFIM modules:**
 
-- **`image`** owns neuroimaging adapters over those providers: `GridSpec`,
+- **standalone `neuroim4s-core`** owns neuroimaging adapters over those providers: `GridSpec`,
   `SpatialPullbacks`, the ScalaFIM `ResamplingPlan` policy wrapper,
   `DenseVectorField` roles, and anatomical orientation. It defines no
   morphism or affine algebra of its own; `imageAlgebraBoundaryCheck` rejects
   the retired `SpatialMorphism`/`Affine3DMorphism` family.
   - World-space identity (`WorldSpace`, `FrameCatalog`, `Spaces`,
     `SpaceResolver`) comes from neuroim4s-spaces and the linked-cursor
-    `WorldLink` from reframe4s; `scalafim.image.world` keeps toolkit
+    `WorldLink` from reframe4s; `neuroim4s.image.world` keeps toolkit
     coordinate conventions (`ToolCoordinates`) and world-frame binding
     (`Placed`). Bare D3 geometry receives a fresh unknown-world
     scope; file admission requires explicit resolved evidence.
@@ -404,7 +404,7 @@ There are intentionally two layers:
 
 **Points:**
 
-- `scalafim.image.SpatialPoint` is the unlabelled finite 3D coordinate at
+- `neuroim4s.image.SpatialPoint` is the unlabelled finite 3D coordinate at
   format and kernel boundaries. `scalafim.surface.Point3D` and
   `scalafim.atlas.Point3D` are aliases of it.
 - Where voxel or world roles matter, prefer `VoxelPoint` and `WorldPoint`.
@@ -441,7 +441,7 @@ There are intentionally two layers:
 - Put general plotting, scene-description contracts, and concrete renderers in
   standalone Intaglio. ScalaFIM modules may adapt scientific values into that
   public API but must not recreate renderer or grammar internals.
-- Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
+- Put pure image-space kernels in standalone `neuroim4s-core`; platform IO goes in `image/jvm`.
 - Put nonlinear registration state, objectives, deformation geometry, and
   acceptance policy in standalone reframe4s. ScalaFIM retains no registration
   module and depends only on the reframe4s `lie`, `field` and `resample`
@@ -469,8 +469,8 @@ There are intentionally two layers:
   forms and certificates, row measures/centering, singular policies, explicit
   row relationships, direct-sum objectives, sparse-aware preprocessing,
   decomposition artifacts, and language-neutral IR in standalone `multivar`.
-  Keep dataset, image, MVPA, bindings, and scheduler-specific execution in
-  their ScalaFIM modules.
+  Keep dataset, MVPA, bindings, and scheduler-specific execution in their
+  ScalaFIM modules, and image policy in standalone neuroim4s.
 - Put perturbation targets, resampling/null actions, Monte Carlo programs,
   latent-unit stability, validity, and evidence provenance in the external
   `multivar-inference` artifact. ScalaFIM may add only domain-specific adapters;

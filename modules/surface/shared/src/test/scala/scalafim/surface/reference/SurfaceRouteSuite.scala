@@ -1,9 +1,11 @@
 package scalafim.surface.reference
 
+import image4s.SomeSampleSpace
+
 import image4s.{NonSpatialAxes, SampleSpace}
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, FrameMetadata, Grid, LengthUnit}
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.WorldSpace
 import scalafim.surface.*
 
@@ -41,8 +43,8 @@ class SurfaceRouteSuite extends munit.FunSuite:
 
   /** Values are placed by voxel coordinate, independent of the canonical ordinal order. */
   private def volumeOf(value: (Int, Int, Int) => Double, on: SomeSampleSpace = space): SomeScalarVolume[Double] =
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(on.spatialDims.product) { ordinal =>
-      val g = on.indexToGrid3D(ordinal)
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(on.grid.shape.product) { ordinal =>
+      val g = neuroim4s.image.Indexing.indexToGrid3D(on.grid.shape, ordinal)
       value(g(0), g(1), g(2))
     }, on, "route-fixture")
 
@@ -298,7 +300,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     assertEquals(allNaN.count(VertexCoverage.NoSupport), 5)
 
     val support = SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.tabulate(dims.product) { ordinal =>
-      val g = space.indexToGrid3D(ordinal)
+      val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
       (g(0), g(1), g(2)) != voxels(0)
     }, space, "support")
     val supported = VolumeReference.make(frameA, space, Some(support)).toOption.get
@@ -432,7 +434,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val at = (f: Double) => Vector.tabulate(3)(a => midIndices(0)(a) + f * depth(a))
     val voxels = fractions.map(f => expectedVoxel(at(f)).get)
     val support = SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.tabulate(dims.product) { ordinal =>
-      val g = space.indexToGrid3D(ordinal)
+      val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
       (g(0), g(1), g(2)) != voxels(0)
     }, space, "support")
     val supported = VolumeReference.make(frameA, space, Some(support)).toOption.get

@@ -11,7 +11,7 @@ import scalafim.fmri.hrf.{Hrf, HrfDescriptor, HrfKind, PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{FamilySummaryError, GaussianFamily, NormalizationRule, ParametricHrfFamily, ShapeChart, ShapePoint, ShapeSummary}
 import scalafim.fmri.model.{FitConfig, FitPlan, FmriModel, ProfileHrfPlan, ProfileTrialDrive}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class SummaryPreparationSuite extends munit.FunSuite:
   private def checked[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)

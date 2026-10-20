@@ -1,9 +1,11 @@
 package scalafim.spatial.io
 
+import image4s.SomeSampleSpace
+
 import reframe4s.field.CoordinateBoundaryPolicy
 import neuroim4s.spaces.SubjectId
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces, SpatialPoint}
+import neuroim4s.image.SampleSpaces.*
 import scalafim.spatial.*
 import scalafim.transform.{TransformError, TransformFormat, TransformIoError, WorldTransform}
 

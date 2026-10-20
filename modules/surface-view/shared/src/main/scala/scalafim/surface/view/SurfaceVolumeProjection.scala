@@ -1,9 +1,9 @@
 package scalafim.surface.view
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import intaglio.*
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 
 opaque type SurfaceMinimumSamples = Int
@@ -14,7 +14,7 @@ object SurfaceMinimumSamples:
     else Left(SurfaceViewError.InvalidProjection(s"minimum sample count must be positive; got $value"))
 
   def unsafe(value: Int): SurfaceMinimumSamples =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (count: SurfaceMinimumSamples)
     def value: Int = count
@@ -141,7 +141,7 @@ object SurfaceVolumeProjection:
           case SurfaceProjectionFill.NaN => Double.NaN
           case SurfaceProjectionFill.Constant(value) => value
       vertex += 1
-    val volumeValues = volume.space.spatialDims.iterator.map(_.toLong).product
+    val volumeValues = volume.space.grid.shape.iterator.map(_.toLong).product
     SurfaceProjectionResult(
       SurfaceField.full(sampled.values.geometry, values.toIndexedSeq, sampled.values.label),
       SurfaceField.full(sampled.values.geometry, counts.toIndexedSeq, sampled.sampleCounts.label),

@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold.scenarios
 
 import scalafim.fmri.threshold.*
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume}
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume}
 import scalafim.scenarios.{ScenarioHarness, ScenarioObservation}
 
 /** The simulated sign-flip world shared by the calibration protocols in
@@ -129,7 +129,7 @@ private[scenarios] object SignFlipWorld:
       mean / math.sqrt(ss / (n - 1) / n)
 
   def volume(data: Array[Double]): SomeScalarVolume[Double] =
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(Vector(side, side, side)))
+    SomeScalarVolume.unsafeCopyFromCanonicalArray((data).clone(), SampleSpaces(Vector(side, side, side)))
 
   def notLiberal(name: String, errors: Int, r: Int, alpha: Alpha): ScenarioObservation =
     val tail = Binomial.upperTail(r, alpha.value, errors)

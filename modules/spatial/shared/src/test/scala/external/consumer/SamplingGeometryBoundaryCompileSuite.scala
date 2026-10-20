@@ -7,7 +7,7 @@ class SamplingGeometryBoundaryCompileSuite extends munit.FunSuite:
   test("external consumers cannot bypass checked volume-geometry admission"):
     val applyErrors = typeCheckErrors(
       """
-        import scalafim.image.SampleSpaces
+        import neuroim4s.image.SampleSpaces
         import scalafim.spatial.SamplingGeometry
 
         val admitted =
@@ -25,7 +25,7 @@ class SamplingGeometryBoundaryCompileSuite extends munit.FunSuite:
     )
     val constructorErrors = typeCheckErrors(
       """
-        import scalafim.image.SampleSpaces
+        import neuroim4s.image.SampleSpaces
         import scalafim.spatial.SamplingGeometry
 
         val admitted =

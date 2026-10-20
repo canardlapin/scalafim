@@ -10,9 +10,8 @@ import scalafim.dataset.{
   TimepointSelection,
   VoxelSelection
 }
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
-import scalafim.image.SampleSpaces.addDim
-import scalafim.image.io.Nifti
+import neuroim4s.image.{SampleSpaces, SomeScalarSeries}
+import neuroim4s.image.io.Nifti
 import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 import scalafim.response.*
 import locus4s.provenance.*
@@ -252,19 +251,17 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
   }
 
   private def writeSeries(path: Path): Path =
-    val values = PrimitiveBuffers.fromArray(
-      Array(
+    val values = (Array(
         0.0, 4.0, 8.0,
         1.0, 5.0, 9.0,
         2.0, 6.0, 10.0,
         3.0, 7.0, 11.0
-      )
-    )
+      )).clone()
     val space =
       SampleSpaces
         .inWorld(SampleSpaces(Vector(2, 2, 1)), fixtureWorld)
         .fold(error => fail(error.message), identity)
-        .addDim(ProviderAxes.time(3))
+        .typed.appendNonSpatial(ProviderAxes.time(3)).fold(error => throw new IllegalArgumentException(error.message), value => value)
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
       .fold(error => fail(error.message), _ => path)

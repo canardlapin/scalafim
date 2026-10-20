@@ -3,8 +3,8 @@ package scalafim.spatial
 import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 
 class AffineFusionSuite extends munit.FunSuite:
 

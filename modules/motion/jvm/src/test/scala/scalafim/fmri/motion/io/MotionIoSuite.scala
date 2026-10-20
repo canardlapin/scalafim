@@ -4,8 +4,8 @@ import bids4s.*
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import scalafim.fmri.motion.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
 
 import java.nio.ByteBuffer
@@ -26,7 +26,7 @@ class MotionIoSuite extends munit.FunSuite:
     val run = MotionNiftiIo.readRun(runPath, evidence).fold(err => fail(err.message), identity)
     val mask = MotionNiftiIo.readMask(maskPath, evidence).fold(err => fail(err.message), identity)
 
-    assertEquals(run.space.dims.take(4), Vector(2, 1, 1, 3))
+    assertEquals(run.space.logicalShape.take(4), Vector(2, 1, 1, 3))
     assertEquals(run.nVolumes, 3)
     assertEqualsDouble(run.valueAtCanonicalOrdinal(0), 1.0, 1e-12)
     assertEqualsDouble(run.valueAtCanonicalOrdinal(5), 6.0, 1e-12)
@@ -268,16 +268,16 @@ class MotionIoSuite extends munit.FunSuite:
         origin = Some(Vector(10.0, 20.0, 30.0)),
         affine = Some(affine)
       )
-    val data = PrimitiveBuffers.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.addDim(ProviderAxes.time(2)), "motion-io-fixture")
+    val data = Array.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.typed.appendNonSpatial(ProviderAxes.time(2)).fold(error => throw new IllegalArgumentException(error.message), value => value), "motion-io-fixture")
 
   private def estimatorRun(): SomeScalarSeries[Double] =
     val dims = Vector(7, 5, 5)
     val nxyz = dims.product
     val space = SampleSpaces(dims)
     val frame =
-      PrimitiveBuffers.tabulate[Double](nxyz) { lin =>
-        val voxel = space.indexToVoxel3D(lin)
+      Array.tabulate[Double](nxyz) { lin =>
+        val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         val dx = voxel.x.toDouble - 3.0
         val dy = voxel.y.toDouble - 2.0
         val dz = voxel.z.toDouble - 2.0
@@ -286,7 +286,7 @@ class MotionIoSuite extends munit.FunSuite:
           0.2 * voxel.y.toDouble -
           0.15 * voxel.z.toDouble
       }
-    val data = PrimitiveBuffers.ofSize[Double](nxyz * 2)
+    val data = Array.ofDim[Double](nxyz * 2)
     var lin = 0
     while lin < nxyz do
       var t = 0
@@ -294,7 +294,7 @@ class MotionIoSuite extends munit.FunSuite:
         data(lin * 2 + t) = frame(lin)
         t += 1
       lin += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(2)), "motion-cli-estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.typed.appendNonSpatial(ProviderAxes.time(2)).fold(error => throw new IllegalArgumentException(error.message), value => value), "motion-cli-estimate-fixture")
 
   private def writeFloat32Nifti(path: Path, dims: Vector[Int], values: Vector[Double]): Unit =
     Files.createDirectories(path.getParent)

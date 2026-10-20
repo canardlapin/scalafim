@@ -19,7 +19,7 @@ class ProviderCoordinateMapBoundaryCompileSuite extends munit.FunSuite:
         typeCheckErrors(
           """
             import image4s.geometry.{D3, Frame}
-            import scalafim.image.SpatialPullback
+            import neuroim4s.image.SpatialPullback
             import scalafim.spatial.ProviderMapBinding
 
             def forge(binding: ProviderMapBinding, replacement: SpatialPullback[Frame[D3], Frame[D3]]) =
@@ -35,7 +35,7 @@ class ProviderCoordinateMapBoundaryCompileSuite extends munit.FunSuite:
     val errors = typeCheckErrors(
       """
         import image4s.geometry.{D3, Frame}
-        import scalafim.image.SpatialPullback
+        import neuroim4s.image.SpatialPullback
         import scalafim.spatial.{CoordinateMap, ProviderMapBinding}
 
         def provider(map: CoordinateMap): Option[SpatialPullback[Frame[D3], Frame[D3]]] =

@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
 
 class NullReferenceSuite extends munit.FunSuite:
 
@@ -245,7 +245,7 @@ class NullReferenceSuite extends munit.FunSuite:
       if x >= 2 && y >= 2 && z >= 2 then sign * (6.0 + (i % 3).toDouble) else 0.3 * rng.nextGaussian()
 
   private def cube(data: Array[Double]): SomeScalarVolume[Double] =
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(Vector(4, 4, 4)))
+    SomeScalarVolume.unsafeCopyFromCanonicalArray((data).clone(), SampleSpaces(Vector(4, 4, 4)))
 
   private def scanConfig(alpha: Double): HierScanConfig =
     HierScanConfig(

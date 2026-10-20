@@ -8,7 +8,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArCoefficientSpec, AutocorrelationConfig, FitControls, FitPlan, FitStrategy, FmriModel, MissingDataPolicy, ReducedRankBootstrapConfig, ReducedRankComponentSpec, ReducedRankGlsConfig, ReducedRankInferencePolicy}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestSyntax.*
 import scalafim.fmri.fit.fixtures.ReducedRankGlsFmriregFixtures as Fixture
 import ReducedRankGlsProjection.*

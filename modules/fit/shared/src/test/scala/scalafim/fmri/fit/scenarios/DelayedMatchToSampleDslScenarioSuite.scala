@@ -9,7 +9,7 @@ import scalafim.fmri.fit.fixtures.CorrectedSpmgDmsRFixture as DmsRFixture
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec, ModelError}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** The delayed-match-to-sample design as an ordinary ScalaFIM consumer program.
   *

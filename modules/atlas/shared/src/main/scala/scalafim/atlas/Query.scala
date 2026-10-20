@@ -2,8 +2,8 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import scalafim.image.Indexing
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.Indexing
+import neuroim4s.image.NeuroAffineSyntax.*
 
 final case class QueryHit(
   pointIndex: Int,
@@ -20,6 +20,12 @@ final case class QueryHit(
     region.map(_.label)
 
 object AtlasQuery:
+  // Keep the established summation order for voxel ties and radius admission.
+  private def queryCoordinates(affine: image4s.geometry.Affine[image4s.geometry.D3], point: Vector[Double]): Vector[Double] =
+    val matrix = affine.matrix
+    Vector.tabulate(3): row =>
+      (((0.0 + matrix(row, 0) * point(0)) + matrix(row, 1) * point(1)) + matrix(row, 2) * point(2)) + matrix(row, 3) * 1.0
+
   def exactEither(
     atlas: VolumeAtlas,
     point: Point3D,
@@ -81,7 +87,7 @@ object AtlasQuery:
     }
 
   private def exactOne(atlas: VolumeAtlas, input: Point3D, atlasPoint: Point3D, pointIndex: Int): QueryHit =
-    val grid = atlas.space.coordToIndex(atlasPoint.toVector).map(v => math.round(v).toInt)
+    val grid = queryCoordinates(atlas.space.grid.indexToFrame.inverse, atlasPoint.toVector).map(v => math.round(v).toInt)
     val id = labelAtGrid(atlas, grid)
     QueryHit(pointIndex, input, atlasPoint, atlas.name, id.flatMap(atlas.region), Some(0.0))
 
@@ -92,13 +98,13 @@ object AtlasQuery:
     pointIndex: Int,
     radiusMm: Double
   ): Vector[QueryHit] =
-    val center = atlas.space.coordToIndex(atlasPoint.toVector).map(v => math.round(v).toInt)
+    val center = queryCoordinates(atlas.space.grid.indexToFrame.inverse, atlasPoint.toVector).map(v => math.round(v).toInt)
     val offsets = radiusOffsets(atlas, radiusMm)
     var hits = Map.empty[RegionId, Double]
     offsets.foreach { off =>
       val grid = Vector(center(0) + off(0), center(1) + off(1), center(2) + off(2))
       if inBounds(atlas, grid) then
-        val world = Point3D.fromVector(atlas.space.indexToCoord(grid.map(_.toDouble)))
+        val world = Point3D.fromVector(queryCoordinates(atlas.space.grid.indexToFrame, grid.map(_.toDouble)))
         val dist = distance(world, atlasPoint)
         if dist <= radiusMm + 1e-12 then
           labelAtGrid(atlas, grid).foreach { id =>
@@ -119,21 +125,21 @@ object AtlasQuery:
   private def labelAtGrid(atlas: VolumeAtlas, grid: Vector[Int]): Option[RegionId] =
     if !inBounds(atlas, grid) then None
     else
-      val lin = Indexing.gridToIndex3D(atlas.space.spatialDims, grid(0), grid(1), grid(2))
+      val lin = Indexing.gridToIndex3D(atlas.space.grid.shape, grid(0), grid(1), grid(2))
       val realization = atlas.realization
       val voxel = realization.domain.space.indexAtValidatedOrdinal(lin)
       realization.parcelAssignment(voxel).map: parcel =>
         realization.metadata(parcel).id
 
   private def inBounds(atlas: VolumeAtlas, grid: Vector[Int]): Boolean =
-    val dims = atlas.space.spatialDims
+    val dims = atlas.space.grid.shape
     grid.length == 3 &&
       grid(0) >= 0 && grid(0) < dims(0) &&
       grid(1) >= 0 && grid(1) < dims(1) &&
       grid(2) >= 0 && grid(2) < dims(2)
 
   private def radiusOffsets(atlas: VolumeAtlas, radiusMm: Double): Vector[Vector[Int]] =
-    val spacing = atlas.space.spacing
+    val spacing = atlas.space.grid.indexToFrame.neuroVoxelSizes
     val rx = math.ceil(radiusMm / spacing(0)).toInt + 1
     val ry = math.ceil(radiusMm / spacing(1)).toInt + 1
     val rz = math.ceil(radiusMm / spacing(2)).toInt + 1

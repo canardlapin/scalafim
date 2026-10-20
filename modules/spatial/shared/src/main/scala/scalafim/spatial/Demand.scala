@@ -1,7 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{Indexing, SpatialAxis, VoxelCoord}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{Indexing, SpatialAxis, SpatialDims, VoxelCoord}
+import neuroim4s.image.SampleSpaces.*
 
 enum DemandError:
   case EmptySelection(label: String)
@@ -406,9 +406,9 @@ private def requireKind(
 private def volumeDimensions(
   selection: String,
   domain: Domain
-): Either[DemandError, scalafim.image.SpatialDims] =
+): Either[DemandError, neuroim4s.image.SpatialDims] =
   domain.geometry match
-    case SamplingGeometry.Volume(space, _) => Right(space.spatialShape)
+    case SamplingGeometry.Volume(space, _) => Right(SpatialDims.unsafeFromVector(space.grid.shape))
     case _ => Left(DemandError.DomainKindMismatch(selection, DomainKind.Volume, domain.kind))
 
 private def selectionLabel(selection: SpatialDemand): String =

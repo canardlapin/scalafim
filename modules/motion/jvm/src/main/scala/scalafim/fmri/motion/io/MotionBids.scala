@@ -3,7 +3,7 @@ package scalafim.fmri.motion.io
 import bids4s.*
 import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
-import scalafim.image.*
+import neuroim4s.image.*
 import neuroim4s.spaces.SpaceEvidence
 
 import java.nio.file.{Path, Paths}

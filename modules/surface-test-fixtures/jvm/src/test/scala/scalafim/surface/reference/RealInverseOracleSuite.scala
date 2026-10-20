@@ -2,7 +2,7 @@ package scalafim.surface.reference
 
 import scalafim.testkit.RealAssetGate
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import scalafim.surface.*
 
 /** The all-vertex oracle is complete, converged, inside the displacement support, and consistent with the

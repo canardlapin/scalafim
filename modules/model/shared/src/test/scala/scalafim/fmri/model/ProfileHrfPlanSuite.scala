@@ -9,7 +9,7 @@ import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisSpec, TrialMembershi
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.GaussianFamily
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class ProfileHrfPlanSuite extends munit.FunSuite:
   private val frame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))

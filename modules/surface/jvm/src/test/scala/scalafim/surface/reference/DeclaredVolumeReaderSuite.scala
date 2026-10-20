@@ -2,9 +2,9 @@ package scalafim.surface.reference
 
 import image4s.geometry.{Affine, D3}
 import image4s.nifti.NiftiCoordinateSystem
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
-import scalafim.image.io.Nifti
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.io.Nifti
 import neuroim4s.spaces.WorldSpace
 
 import java.nio.file.{Files, Path}
@@ -17,7 +17,7 @@ class DeclaredVolumeReaderSuite extends munit.FunSuite:
   private val space = SampleSpaces.inWorld(SampleSpaces(Vector(3, 4, 5), affine = Some(affine)),
     WorldSpace.template("MNI152NLin2009cAsym").toOption.get).toOption.get
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(60) { ordinal =>
-    val g = space.indexToGrid3D(ordinal)
+    val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
     (g(0) + 10 * g(1) + 100 * g(2)).toDouble
   }, space, "group")
 
@@ -25,7 +25,7 @@ class DeclaredVolumeReaderSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("scalafim-declared-volume-")
     val path = dir.resolve(name)
     try
-      assert(Nifti.writeVolume(path, volume, Nifti.WriteOptions.default.withCoordinateSystem(NiftiCoordinateSystem.TemplateOther)).isRight)
+      assert(Nifti.writeVolume(path, volume, image4s.nifti.NiftiWriteOptions.default.withCoordinateSystem(NiftiCoordinateSystem.TemplateOther)).isRight)
       f(path)
     finally
       Files.deleteIfExists(path)

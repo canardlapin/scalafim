@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError}
 import gale.sparse.{COO, CSR}
-import scalafim.image.SpatialPoint
+import neuroim4s.image.SpatialPoint
 
 final case class QcTolerance private (absolute: Double, relative: Double):
   require(absolute.isFinite && absolute >= 0.0, "absolute tolerance must be finite and non-negative")

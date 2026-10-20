@@ -4,7 +4,7 @@ import java.nio.file.Path
 import scalafim.atlas.*
 import neuroatlas4s.*
 import scalafim.atlas.io.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 final case class LoadedAtlasSummary(
   name: String,
@@ -55,7 +55,7 @@ object LoadAtlasFromPaths:
     LoadedAtlasSummary(
       name = atlas.name,
       nRegions = atlas.regions.size,
-      spatialDims = atlas.space.spatialDims,
+      spatialDims = atlas.space.grid.shape,
       sourceArtifacts = atlas.provenance.sourceArtifacts.map(source => source.localPath.getOrElse(source.sourceRef)),
       strictIssues = atlas.provenance.validate(strict = true)
     )

@@ -1,12 +1,14 @@
 package scalafim.spatial.io
 
+import image4s.SomeSampleSpace
+
 import neuroim4s.spaces.{SpaceEvidence, SubjectId, WorldSpace}
 
 import image4s.geometry.GeometryError
-import scalafim.image.io.Nifti
-import scalafim.image.{SampleSpaceError, SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import neuroim4s.image.io.Nifti
+import neuroim4s.image.{SampleSpaceError, SampleSpaces, SomeScalarSeries}
 import scalafim.spatial.{ProviderAffines, ProviderAxes}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.spatial.*
 
 import java.nio.ByteBuffer
@@ -60,9 +62,9 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
       assertEquals(source.stats, NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
 
-      val values = PrimitiveBuffers.fromArray(Array(0.0, 10.0, 20.0, 1.0, 11.0, 21.0, 2.0, 12.0, 22.0, 3.0, 13.0, 23.0))
+      val values = (Array(0.0, 10.0, 20.0, 1.0, 11.0, 21.0, 2.0, 12.0, 22.0, 3.0, 13.0, 23.0)).clone()
       Nifti
-        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(ProviderAxes.time(3)), "bold"))
+        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.typed.appendNonSpatial(ProviderAxes.time(3)).fold(error => throw new IllegalArgumentException(error.message), value => value), "bold"))
         .fold(error => fail(error.message), _ => ())
       val runtime = LazyFieldRuntime(summon[SpatialGraph])
       given FieldRuntime = runtime
@@ -122,9 +124,9 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         case _ => false
       })
 
-      val values = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0))
+      val values = (Array(1.0, 2.0, 3.0, 4.0)).clone()
       Nifti
-        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(ProviderAxes.time(1))))
+        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.typed.appendNonSpatial(ProviderAxes.time(1)).fold(error => throw new IllegalArgumentException(error.message), value => value)))
         .fold(error => fail(error.message), _ => ())
       assertEquals(apiValue(field.value).toRows, Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
       Files.write(path, Array(0.toByte), APPEND)
@@ -155,8 +157,8 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         .writeSeries(
           path,
           SomeScalarSeries.unsafeCopyFromCanonicalArray(
-            PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
-            identity.addDim(ProviderAxes.time(1))
+            (Array(1.0, 2.0, 3.0, 4.0)).clone(),
+            identity.typed.appendNonSpatial(ProviderAxes.time(1)).fold(error => throw new IllegalArgumentException(error.message), value => value)
           )
         )
         .fold(error => fail(error.message), _ => ())
@@ -201,8 +203,8 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         .writeSeries(
           path,
           SomeScalarSeries.unsafeCopyFromCanonicalArray(
-            PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
-            spatial.addDim(ProviderAxes.time(1))
+            (Array(1.0, 2.0, 3.0, 4.0)).clone(),
+            spatial.typed.appendNonSpatial(ProviderAxes.time(1)).fold(error => throw new IllegalArgumentException(error.message), value => value)
           )
         )
         .fold(error => fail(error.message), _ => ())

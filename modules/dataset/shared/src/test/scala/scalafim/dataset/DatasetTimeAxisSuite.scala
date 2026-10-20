@@ -2,7 +2,7 @@ package scalafim.dataset
 
 import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 
 class DatasetTimeAxisSuite extends munit.FunSuite:
 

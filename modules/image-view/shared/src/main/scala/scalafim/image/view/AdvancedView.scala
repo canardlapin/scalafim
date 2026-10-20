@@ -1,7 +1,7 @@
 package scalafim.image.view
 
 import intaglio.RasterImage
-import scalafim.image.*
+import neuroim4s.image.*
 
 private[view] final case class SliceGeometryKey(
   anatomicalPlane: AnatomicalPlane,

@@ -4,9 +4,8 @@ import neuroatlas4s.*
 
 import scala.collection.mutable
 
-import scalafim.image.Indexing
-import scalafim.image.PrimitiveBuffers
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.Indexing
+import neuroim4s.image.{SampleSpaces}
 
 class GraphDifferentialSuite extends munit.FunSuite:
   private val dimensions = Vector(3, 3, 2)
@@ -42,7 +41,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
       regions,
       AtlasTestImages.labelVolume(
         space,
-        PrimitiveBuffers.fromArray(labels.toArray),
+        (labels.toArray).clone(),
         "graph-differential"
       )
     )

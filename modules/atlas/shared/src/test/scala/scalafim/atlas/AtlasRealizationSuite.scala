@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import image4s.SomeSampleSpace
+
 import neuroatlas4s.*
 
 import image4s.locus.GridDomain
@@ -7,10 +9,10 @@ import locus4s.Bijection
 import locus4s.DomainRegistry
 import locus4s.TotalMap
 import ravel.DType.given
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.NeuroVolume
-import scalafim.image.SomeLabelVolume
-import scalafim.image.SomeNeuroVolume
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.NeuroVolume
+import neuroim4s.image.SomeLabelVolume
+import neuroim4s.image.SomeNeuroVolume
 import scalafim.surface.Hemisphere as SurfaceHemisphere
 import scalafim.surface.HemispherePair
 import scalafim.surface.LabelInfo

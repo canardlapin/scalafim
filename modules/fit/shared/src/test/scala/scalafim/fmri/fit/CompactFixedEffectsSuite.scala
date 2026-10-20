@@ -3,7 +3,7 @@ package scalafim.fmri.fit
 import munit.FunSuite
 import scalafim.fmri.fit.fixtures.MixedTrFixedEffectsRFixture as R
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.design.{FactorLevelRegistry, EmptyCellPolicy}
 import scalafim.fmri.design.baseline.Intercept

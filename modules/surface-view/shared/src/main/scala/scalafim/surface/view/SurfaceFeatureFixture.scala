@@ -1,9 +1,9 @@
 package scalafim.surface.view
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import intaglio.*
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 
 /** Small asymmetric integration fixture shared by backend conformance tests.
@@ -24,8 +24,8 @@ object SurfaceFeatureFixture:
     val pial = geometry(2.0, SurfaceKind.Pial)
     val space = SampleSpaces(Vector(5, 5, 5))
     val volume = SomeNeuroVolume.unsafeCopyFromCanonicalArray[Double, image4s.Continuous](
-      PrimitiveBuffers.tabulate[Double](125): index =>
-        val grid = space.indexToGrid3D(index)
+      Array.tabulate[Double](125): index =>
+        val grid = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, index)
         grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
       space,
       "advanced-volume"

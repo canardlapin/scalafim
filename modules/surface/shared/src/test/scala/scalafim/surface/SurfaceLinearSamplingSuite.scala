@@ -1,8 +1,8 @@
 package scalafim.surface
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class SurfaceLinearSamplingSuite extends munit.FunSuite:
 
@@ -14,7 +14,7 @@ class SurfaceLinearSamplingSuite extends munit.FunSuite:
   private def volume(values: (Int, Int, Int) => Double = affine): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
       Array.tabulate(27): ordinal =>
-        val grid = space.indexToGrid3D(ordinal)
+        val grid = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
         values(grid(0), grid(1), grid(2)),
       space,
       "linear-sampling"
@@ -35,7 +35,7 @@ class SurfaceLinearSamplingSuite extends munit.FunSuite:
     val shifted = SampleSpaces(Vector(3, 3, 3), affine = Some(translation(10.0, -2.0, 4.0)))
     val shiftedVolume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
       Array.tabulate(27): ordinal =>
-        val grid = shifted.indexToGrid3D(ordinal)
+        val grid = neuroim4s.image.Indexing.indexToGrid3D(shifted.grid.shape, ordinal)
         affine(grid(0), grid(1), grid(2)),
       shifted,
       "shifted-linear"
@@ -110,7 +110,7 @@ class SurfaceLinearSamplingSuite extends munit.FunSuite:
   test("linear sampling rejects a masked or non-finite positive-weight corner as a whole point"):
     val points = Vector(Vector(0.5, 0.0, 0.0), Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0))
     val flags = Array.fill(27)(true)
-    flags(space.gridToIndex3D(1, 0, 0)) = false
+    flags(neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 0)) = false
     val mask = SomeMaskVolume.unsafeCopyFromCanonicalArray(flags, space, "corner-mask")
     val masked = sampler(points).sample(volume(), Some(mask))
     assertEquals(masked.tally, SurfaceSampleTally(3, 0, 1, 0, 2))
@@ -124,7 +124,7 @@ class SurfaceLinearSamplingSuite extends munit.FunSuite:
   test("zero-weight neighbours do not affect an exact voxel-centre linear sample"):
     val points = Vector(Vector(0.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0))
     val flags = Array.fill(27)(true)
-    flags(space.gridToIndex3D(1, 0, 0)) = false
+    flags(neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 0)) = false
     val mask = SomeMaskVolume.unsafeCopyFromCanonicalArray(flags, space, "zero-weight-mask")
     val maskedNeighbour = sampler(points).sample(volume(), Some(mask))
     assertEquals(maskedNeighbour.tally, SurfaceSampleTally(3, 0, 0, 0, 3))

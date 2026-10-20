@@ -1,9 +1,11 @@
 package scalafim.dataset
 
+import image4s.SomeSampleSpace
+
 import gale.linalg.DMat
 import image4s.geometry.GeometryError
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
+import neuroim4s.image.{SampleSpaces, VoxelCoord}
 
 class SegmentedFmriSeriesSuite extends munit.FunSuite:
 

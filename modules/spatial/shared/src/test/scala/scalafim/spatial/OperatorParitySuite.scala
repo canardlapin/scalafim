@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.{SampleSpaces, SpatialPoint}
+import neuroim4s.image.{SampleSpaces, SpatialPoint}
 import neuroim4s.spaces.{SubjectId, TemplateName}
 
 /** neurofunctor QC and operator parity: round trips, commutativity, projection metrics, field backprojection and

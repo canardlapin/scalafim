@@ -12,7 +12,7 @@ import scalafim.fmri.hrf.{Hrf, HrfDescriptor, PositiveSeconds, Seconds, Support}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.*
 import scalafim.fmri.model.*
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import neuroim4s.spaces.{TemplateName, WorldSpace}
 
 class ProfileFitIdentitySuite extends munit.FunSuite:

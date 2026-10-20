@@ -8,7 +8,7 @@ import reframe4s.field.{CoverageReportingMap, Displacement, InversionSettings, P
 import reframe4s.lie.FramedAffine
 import ravel.DType.given
 import ravel.NDArray
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 
 enum PointMapError:
   case InvalidField(reason: String)

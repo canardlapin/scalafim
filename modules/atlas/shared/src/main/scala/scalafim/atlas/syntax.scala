@@ -2,7 +2,7 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import scalafim.image.*
+import neuroim4s.image.*
 
 object syntax:
   extension (atlas: VolumeAtlas)

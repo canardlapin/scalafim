@@ -1,10 +1,10 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
-import scalafim.image.SampleSpaces.{gridToIndex3D, spatialDims}
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.SampleSpaces.{gridToIndex3D, spatialDims}
 
 import scalafim.archive.lna.SharedBasisId
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class RadialBasisSuite extends munit.FunSuite:
@@ -212,7 +212,7 @@ class RadialBasisSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     val artifact =
       basis
-        .toSharedBasisArtifact(space.spatialDims, params = Map("source" -> "suite"))
+        .toSharedBasisArtifact(space.grid.shape, params = Map("source" -> "suite"))
         .fold(err => fail(err.message), identity)
 
     assertEquals(basis.activeIndices, Some(Vector(3, 1)))
@@ -223,7 +223,7 @@ class RadialBasisSuite extends munit.FunSuite:
     assertEquals(order.activeToFullGrid, Vector(3, 1))
     assertEquals(order.activeRowsInMaskOrder, Vector(1, 0))
     assertEquals(order.maskOrderSelection.ordinals.toVector, Vector(1, 0))
-    assertEquals(order.maskValues(space.spatialDims.product), Right(Vector(false, true, false, true)))
+    assertEquals(order.maskValues(space.grid.shape.product), Right(Vector(false, true, false, true)))
     assertEquals(order.activeRowsForFullGrid(Vector(1, 3)), Right(Vector(1, 0)))
     assertEquals(
       order.vectorInActiveOrderFromMaskOrder(DVec.fromSeq(Vector(10.0, 20.0))).map(_.toVector),
@@ -299,7 +299,7 @@ class RadialBasisSuite extends munit.FunSuite:
         .encode(
           data = data,
           radialBasis = radial,
-          maskDims = space.spatialDims,
+          maskDims = space.grid.shape,
           basisId = SharedBasisId.unsafe("hrbf_suite_basis"),
           center = false,
           metadata = Map("experiment" -> "synthetic")
@@ -363,10 +363,10 @@ class RadialBasisSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(4, 4, 2))
     val active =
       Vector(
-        space.gridToIndex3D(0, 0, 0),
-        space.gridToIndex3D(2, 3, 0),
-        space.gridToIndex3D(3, 1, 1),
-        space.gridToIndex3D(1, 2, 1)
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 0, 0, 0),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 2, 3, 0),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 3, 1, 1),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 2, 1)
       )
     val radial =
       RadialBasis
@@ -405,7 +405,7 @@ class RadialBasisSuite extends munit.FunSuite:
       1e-12
     )
     assert(RadialDecodeSelection.checked(fullGridVoxels = Some(Vector(active(0), active(0)))).flatMap(radial.decode(coefficients, _)).isLeft)
-    assert(RadialDecodeSelection.checked(fullGridVoxels = Some(Vector(space.gridToIndex3D(0, 1, 0)))).flatMap(radial.decode(coefficients, _)).isLeft)
+    assert(RadialDecodeSelection.checked(fullGridVoxels = Some(Vector(neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 0, 1, 0)))).flatMap(radial.decode(coefficients, _)).isLeft)
   }
 
   test("radial encoding exposes partial decode with centered offsets") {
@@ -432,7 +432,7 @@ class RadialBasisSuite extends munit.FunSuite:
         .encode(
           data = raw,
           radialBasis = radial,
-          maskDims = space.spatialDims,
+          maskDims = space.grid.shape,
           basisId = SharedBasisId.unsafe("partial_decode_hrbf"),
           center = true
         )
@@ -459,11 +459,11 @@ class RadialBasisSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(5, 5, 5))
     val active =
       Vector(
-        space.gridToIndex3D(0, 0, 0),
-        space.gridToIndex3D(2, 3, 1),
-        space.gridToIndex3D(4, 1, 4),
-        space.gridToIndex3D(1, 4, 3),
-        space.gridToIndex3D(3, 2, 2)
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 0, 0, 0),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 2, 3, 1),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 4, 1, 4),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 4, 3),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 3, 2, 2)
       )
     val spec =
       RadialBasisSpec(sigma0 = 1.0, levels = 0, radiusFactor = 2.5, seed = 19L)
@@ -484,7 +484,7 @@ class RadialBasisSuite extends munit.FunSuite:
     val basisId = SharedBasisId.unsafe("fmrilatent_tiny_sparse_hrbf")
     val encoding =
       RadialBasisEncoder
-        .encode(data, radial, space.spatialDims, basisId, center = false)
+        .encode(data, radial, space.grid.shape, basisId, center = false)
         .fold(err => fail(err.message), identity)
 
     assertRowsEqual(encoding.coefficients.toRows, coefficients.toRows, 1e-8)
@@ -493,7 +493,7 @@ class RadialBasisSuite extends munit.FunSuite:
 
     val archive =
       RadialBasisArchiveCodec
-        .toArchive(data, space, radial, space.spatialDims, basisId, center = false)
+        .toArchive(data, space, radial, space.grid.shape, basisId, center = false)
         .fold(err => fail(err.message), identity)
     val decoded =
       LatentArchiveRegistry.standard
@@ -503,7 +503,7 @@ class RadialBasisSuite extends munit.FunSuite:
       case LatentArchiveResponse.SharedBasis(shared) =>
         val artifact =
           radial
-            .toSharedBasisArtifact(space.spatialDims)
+            .toSharedBasisArtifact(space.grid.shape)
             .fold(err => fail(err.message), identity)
         val materialized =
           shared
@@ -522,11 +522,11 @@ class RadialBasisSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(5, 5, 5))
     val active =
       Vector(
-        space.gridToIndex3D(0, 0, 0),
-        space.gridToIndex3D(2, 3, 1),
-        space.gridToIndex3D(4, 1, 4),
-        space.gridToIndex3D(1, 4, 3),
-        space.gridToIndex3D(3, 2, 2)
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 0, 0, 0),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 2, 3, 1),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 4, 1, 4),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 4, 3),
+        neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 3, 2, 2)
       )
     val spec =
       RadialBasisSpec(sigma0 = 1.0, levels = 0, seed = 19L)

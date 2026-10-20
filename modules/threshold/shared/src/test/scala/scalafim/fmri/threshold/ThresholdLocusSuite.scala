@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
+import neuroim4s.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdLocusSuite extends munit.FunSuite:
 

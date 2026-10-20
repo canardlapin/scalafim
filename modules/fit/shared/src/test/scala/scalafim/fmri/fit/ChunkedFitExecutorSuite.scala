@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.fmri.fit.GaleTestSyntax.*
 

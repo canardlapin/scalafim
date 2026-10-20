@@ -2,7 +2,7 @@ package scalafim.transform.fsl
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.{FslHeaderPolicy, FslVolumeGeometry, ToolCoordinates}
+import neuroim4s.image.world.{FslHeaderPolicy, FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.*
 import scalafim.transform.nifti.NiftiRaw
 

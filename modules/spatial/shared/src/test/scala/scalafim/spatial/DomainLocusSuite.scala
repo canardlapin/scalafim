@@ -2,8 +2,8 @@ package scalafim.spatial
 
 import neuroim4s.spaces.SubjectId
 
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 import locus4s.{Region, Relation, Selection, TotalMap}
 import scalafim.surface.{
   Hemisphere,

@@ -1,6 +1,6 @@
 package scalafim.surface.reference
 
-import scalafim.image.SomeScalarVolume
+import neuroim4s.image.SomeScalarVolume
 
 /** A source volume whose template frame is bound to the exact bytes it was
   * decoded from. Grid identity alone cannot say which template a volume is

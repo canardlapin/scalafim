@@ -19,7 +19,7 @@ import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{GaussianFamily, JetLayout, NormalizationRule, ShapePoint}
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** PHRF-12: the condition profile fit composed over a real `FitPlan`, checked against the compact runtime on the same
   * data and against a direct oracle.

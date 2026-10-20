@@ -1,6 +1,6 @@
 package scalafim.archive.io
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import io.jhdf.HdfFile
 import io.jhdf.api.WritableGroup
@@ -9,7 +9,7 @@ import scalafim.archive.ArchivePath
 import scalafim.archive.lna.{LnaArchive, LnaDType, LnaExplicitLatent, LnaManifestCodec, LnaPipeline, LnaTemporalDct, LnaValidator, Payload, QuantMethod, QuantParams, QuantScaleScope, TemporalDctNorm, TemporalDctParams, TransformKind, TransformParams, TransformReport}
 import gale.linalg.DMat
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 import java.nio.file.Files
 

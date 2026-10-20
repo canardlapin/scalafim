@@ -1,14 +1,14 @@
 package scalafim.fmri.motion
 
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class MotionQcSuite extends munit.FunSuite:
 
   private def run(values: Vector[Double]): SomeScalarSeries[Double] =
     SomeScalarSeries.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](values.length)(values),
-      SampleSpaces(Vector(1, 1, 1)).addDim(ProviderAxes.time(values.length)),
+      Array.tabulate[Double](values.length)(values),
+      SampleSpaces(Vector(1, 1, 1)).typed.appendNonSpatial(ProviderAxes.time(values.length)).fold(error => throw new IllegalArgumentException(error.message), value => value),
       "qc-fixture"
     )
 

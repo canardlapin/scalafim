@@ -2,7 +2,7 @@ package scalafim.surface.view
 
 import image4s.geometry.{D3, Frame}
 import intaglio.*
-import scalafim.image.{WorldBox, WorldPoint, x, y, z}
+import neuroim4s.image.{WorldBox, WorldPoint, x, y, z}
 import scalafim.surface.*
 import scala.util.hashing.MurmurHash3
 

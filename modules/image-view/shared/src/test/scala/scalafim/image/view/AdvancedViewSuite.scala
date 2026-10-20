@@ -9,7 +9,7 @@ import image4s.geometry.GeometryError
 import image4s.geometry.Point
 import intaglio.*
 import ravel.NDArray as RavelArray
-import scalafim.image.*
+import neuroim4s.image.*
 
 class AdvancedViewSuite extends munit.FunSuite:
 
@@ -21,7 +21,7 @@ class AdvancedViewSuite extends munit.FunSuite:
     label: String
   )(value: (Int, Int, Int) => Double): SomeScalarVolume[Double] =
     val shape = space.grid.shape
-    val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
+    val data = Array.tabulate[Double](shape.product) { index =>
       val z = index % shape(2)
       val xy = index / shape(2)
       val y = xy % shape(1)
@@ -116,7 +116,8 @@ class AdvancedViewSuite extends munit.FunSuite:
 
     foreignAffines.foreach { case (label, affine) =>
       val foreign =
-        SampleSpaces.derivedD3(declared, Vector(2, 2, 1), affine)
+        image4s.geometry.Grid.forFrame(declared.grid.frame)(Vector(2, 2, 1), affine)
+          .map(grid => SampleSpace.create(grid, declared.nonSpatialAxes))
           .fold(error => fail(error.message), identity)
       val frame = volume(foreign, label)((x, y, _) => x + y)
       val source = VolumeSource.lazyFrames(declared.grid, 1)(_ => Right(frame)).toOption.get

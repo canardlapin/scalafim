@@ -2,7 +2,7 @@ package scalafim.surface
 
 import image4s.geometry.Affine
 import image4s.geometry.D3
-import scalafim.image.SpatialPoint
+import neuroim4s.image.SpatialPoint
 import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceCoreSuite extends munit.FunSuite:

@@ -12,7 +12,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.Cascade34Family
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, ProfileHrfPlan, ProfileTrialDrive}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Frozen stress geometry only: successful preparation does not admit decoding,
   * original-family certification, throughput or total engine peak memory.

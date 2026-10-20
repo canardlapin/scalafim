@@ -2,7 +2,7 @@ package scalafim.fmri.group.scenarios
 
 import scalafim.fmri.fit.estimates.FitGroupAdapter
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend, SubjectId}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
@@ -20,7 +20,7 @@ import scalafim.fmri.group.GroupTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.{DMat, Matrix}
 
 class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:

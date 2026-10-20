@@ -1,10 +1,10 @@
 package scalafim.interop.archive.lna
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.{CanonicalValue, RepresentationMetadata, RunLabel}
 import scalafim.archive.lna.{DatasetRole, Payload}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.interop.archive.{PayloadCatalog, RepresentationEnvelope}
 import scalafim.latent.{
   DctNorm,
@@ -263,7 +263,7 @@ private[lna] object TemporalDctLnaFixtures:
     val whole =
       ResolvedResponseSelection
         .all(schema)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val source =
       ResponseBlock
         .copyFromRowMajor(
@@ -275,11 +275,11 @@ private[lna] object TemporalDctLnaFixtures:
           ),
           whole
         )
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val bounds =
       ReconstructionErrorBounds
         .make(1e-10, 1e-10)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val model =
       TemporalDctRepresentation
         .make(
@@ -291,11 +291,11 @@ private[lna] object TemporalDctLnaFixtures:
           ReconstructionContract.DeterministicBounded(bounds),
           DecodeConsistency.ExactBits
         )
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val materialized =
       model
         .encode(source)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     Fixture(
       schema,
       whole,
@@ -313,14 +313,14 @@ private[lna] object TemporalDctLnaFixtures:
     val timepoints =
       OrderedIndices
         .fromInts(schema.time.id, schema.time.count, times)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val sampleIndices =
       OrderedIndices
         .fromInts(schema.samples.id, schema.samples.count, samples)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     ResolvedResponseSelection
       .make(schema, timepoints, sampleIndices)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def responseSchema(id: String): ResponseSchema =
     val time =

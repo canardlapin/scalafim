@@ -1,10 +1,10 @@
 package scalafim.dataset
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import gale.linalg.DMat
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.{Mask, SomeSampleSpace}
+import neuroim4s.image.{Mask}
 import scalafim.latent.ExplicitLatentResponse
 
 class LatentResponseDatasetBackendSuite extends munit.FunSuite:

@@ -2,9 +2,9 @@ package scalafim.spatial
 
 import neuroim4s.spaces.SubjectId
 
-import scalafim.image.{SampleSpaces, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.valueAtCanonicalOrdinal
+import neuroim4s.image.{SampleSpaces, Mask, SomeMaskVolume, SomeScalarVolume}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.valueAtCanonicalOrdinal
 import scalafim.surface.*
 
 class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
@@ -12,8 +12,8 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(3, 3, 3))
   private val volume =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](27) { idx =>
-        val g = space.indexToGrid3D(idx)
+      Array.tabulate[Double](27) { idx =>
+        val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
       },
       space,
@@ -66,7 +66,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     value(SpatialGraph.build(Vector(source, target), Vector(volumeToSurface(source, target))))
 
   private def sourceMatrix: DoubleMatrix =
-    DoubleMatrix.fromRows(Vector.tabulate(space.spatialDims.product)(i => Vector(volume.valueAtCanonicalOrdinal(i))))
+    DoubleMatrix.fromRows(Vector.tabulate(space.grid.shape.product)(i => Vector(volume.valueAtCanonicalOrdinal(i))))
 
   private def compile(source: Domain, target: Domain, request: VolumeToSurfaceRequest): SpatialOperator =
     value(VolumeToSurfaceOperatorCompiler.compile(graph(source, target), request))
@@ -97,7 +97,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 
   test("interior trilinear sample points report coverage no greater than one"):
     // corner weights can sum to 1.0000000000000002; the reported coverage is a fraction and is clamped
-    val grid = scalafim.image.GridSpec.fromSpace(space)
+    val grid = neuroim4s.image.GridSpec.fromSpace(space)
     val tenths = (1 to 9).map(_ / 10.0)
     for
       x <- tenths
@@ -105,7 +105,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
       z <- tenths
     do
       val weights =
-        VolumeToSurfaceOperatorCompiler.sourcePointWeights(grid, None, scalafim.image.SpatialPoint(x, y, z), SamplingPolicy.Trilinear)
+        VolumeToSurfaceOperatorCompiler.sourcePointWeights(grid, None, neuroim4s.image.SpatialPoint(x, y, z), SamplingPolicy.Trilinear)
       assert(weights.coverage <= 1.0, clue = s"point ($x, $y, $z) coverage ${weights.coverage}")
       assertEqualsDouble(weights.coverage, 1.0, 1e-12)
       assertEqualsDouble(weights.values.sum, 1.0, 1e-12)
@@ -128,8 +128,8 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     assertEquals(row0, Vector(0 -> 0.5, 2 -> 0.5))
 
   test("source masks keep valid ribbon samples normalized and report partial coverage"):
-    val pialVertex0 = space.gridToIndex3D(0, 0, 2)
-    val mask = Mask.fromIndices(space, PrimitiveBuffers.fromArray(Array(pialVertex0)), "pial-only")
+    val pialVertex0 = neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 0, 0, 2)
+    val mask = Mask.fromIndices(space, (Array(pialVertex0)).clone(), "pial-only")
     val source = volumeDomain(Some(mask))
     val target = surfaceDomain()
     val request = VolumeToSurfaceRequest.ribbon(source.id, target.id, pair, fractions = Vector(0.0, 1.0))

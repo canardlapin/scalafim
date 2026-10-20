@@ -1,5 +1,7 @@
 package scalafim.latent
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.locus.GridComponents
@@ -7,8 +9,8 @@ import image4s.locus.GridConnectivity
 import image4s.locus.GridDomain
 import locus4s.DomainRegistry
 import locus4s.Selection
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 import gale.linalg.{DMat, DVec}
 
 sealed trait RadialActiveVoxels:
@@ -45,8 +47,7 @@ object RadialActiveVoxels:
       activeIndices: IndexedSeq[Int]
   ): Either[RadialBasisError, RadialActiveVoxels] =
     for
-      spatial <- SampleSpaces
-        .requireSpatialD3(space)
+      spatial <- space.requireD3.map(_.spatialOnly)
         .left
         .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
       _ <- RadialMaskOrder.checked(

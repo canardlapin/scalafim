@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import image4s.geometry.GeometryError
-import scalafim.image.{SampleSpaceError, VoxelCoord}
+import neuroim4s.image.{SampleSpaceError, VoxelCoord}
 import scalafim.response.ReadError
 import locus4s.provenance.OperationId
 

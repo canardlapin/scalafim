@@ -1,5 +1,7 @@
 package scalafim.latent
 
+import image4s.SomeSampleSpace
+
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{
   DatasetRole,
@@ -13,8 +15,8 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{Mask, PrimitiveBuffers, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{Mask}
+import neuroim4s.image.SampleSpaces.*
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -95,15 +97,15 @@ object SharedBasisLatentArchive:
       space: SomeSampleSpace,
       artifact: SharedBasisArtifact
   ): Either[LatentError, Mask.MaskVol] =
-    if artifact.mask.values.length != space.spatialDims.product then
-      Left(LatentError.DimensionMismatch("shared basis mask size", space.spatialDims.product, artifact.mask.values.length))
+    if artifact.mask.values.length != space.grid.shape.product then
+      Left(LatentError.DimensionMismatch("shared basis mask size", space.grid.shape.product, artifact.mask.values.length))
     else
       val indices = Array.newBuilder[Int]
       var i = 0
       while i < artifact.mask.values.length do
         if artifact.mask.values(i) then indices += i
         i += 1
-      Right(Mask.fromIndices(space, PrimitiveBuffers.fromArray(indices.result()), label = s"shared-basis:${artifact.kind}"))
+      Right(Mask.fromIndices(space, (indices.result()).clone(), label = s"shared-basis:${artifact.kind}"))
 
   private def validateArtifact(
       archive: SharedBasisLatentArchive,
@@ -120,8 +122,8 @@ object SharedBasisLatentArchive:
           Left(LatentError.DimensionMismatch("shared basis offset length", artifact.nVoxels, values.length))
         case _ =>
           space match
-            case Some(value) if artifact.mask.values.length != value.spatialDims.product =>
-              Left(LatentError.DimensionMismatch("shared basis mask size", value.spatialDims.product, artifact.mask.values.length))
+            case Some(value) if artifact.mask.values.length != value.grid.shape.product =>
+              Left(LatentError.DimensionMismatch("shared basis mask size", value.grid.shape.product, artifact.mask.values.length))
             case _ =>
               firstNonFinite("shared-basis loadings", artifact.loadings) match
                 case Some(error) => Left(error)

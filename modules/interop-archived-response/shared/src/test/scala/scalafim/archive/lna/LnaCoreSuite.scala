@@ -1,10 +1,10 @@
 package scalafim.archive.lna
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, RunScopedPath, TransformName, TransformPort}
 import gale.linalg.DMat
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 class LnaCoreSuite extends munit.FunSuite:
 

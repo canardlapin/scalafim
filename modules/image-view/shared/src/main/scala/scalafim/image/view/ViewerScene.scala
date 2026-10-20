@@ -1,10 +1,10 @@
 package scalafim.image.view
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import image4s.geometry.{ContinuousIndex, D3, Frame, GeometryError, Grid, Point as GeoPoint}
 import intaglio.*
-import scalafim.image.*
+import neuroim4s.image.*
 import neuroim4s.image.NeuroAffineSyntax.*
 import scala.collection.mutable
 
@@ -58,16 +58,16 @@ object ViewerState:
     referenceSpace: Grid[? <: Frame[D3], D3],
     convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft
   ): ViewerState =
-    val shape = referenceSpace.spatialShape
+    val shape = referenceSpace.shape
     val center = referenceSpace.pointAt(
       ContinuousIndex
         .fromVector[D3](Vector(
-          (shape.x - 1).toDouble / 2.0,
-          (shape.y - 1).toDouble / 2.0,
-          (shape.z - 1).toDouble / 2.0
+          (shape(0) - 1).toDouble / 2.0,
+          (shape(1) - 1).toDouble / 2.0,
+          (shape(2) - 1).toDouble / 2.0
         ))
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
-    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
+    ).fold(error => throw new IllegalArgumentException(error.message), value => value)
     val nativeStep = referenceSpace.indexToFrame.neuroVoxelSizes.min
     ViewerState(
       cursor = center,
@@ -393,7 +393,8 @@ object ViewerCompiler:
       case Some(value) => Left(value)
       case None =>
         decorationGrobs(state, panel, theme).flatMap { overlay =>
-          model.referenceSpace.worldToVoxel(state.cursor.toWorldPoint)
+          model.referenceSpace.indexToFrame.inverse(state.cursor.coordinates)
+            .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
             .left.map(ImageViewError.GeometryFailure.apply)
             .map { referenceVoxel =>
               val group = Grob.group(background +: (images.result() ++ overlay), viewport = Some(viewport))

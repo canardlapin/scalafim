@@ -7,7 +7,7 @@ import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
 import locus4s.{FiniteDomain, Relation, RelationError}
 import locus4s.data.Field
-import scalafim.image.Indexing
+import neuroim4s.image.Indexing
 
 enum VoxelConnectivity:
   case Connect6, Connect18, Connect26

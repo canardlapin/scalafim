@@ -4,7 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 
 import image4s.geometry.{Affine, D3}
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
-import scalafim.image.world.FreeSurferVolumeGeometry
+import neuroim4s.image.world.FreeSurferVolumeGeometry
 import scalafim.transform.Conversion.EncodedTransform
 import scalafim.transform.freesurfer.VolGeom
 import scalafim.transform.fsl.FslHeaderGeometry

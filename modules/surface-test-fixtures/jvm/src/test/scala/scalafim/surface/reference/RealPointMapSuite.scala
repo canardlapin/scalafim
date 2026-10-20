@@ -2,7 +2,7 @@ package scalafim.surface.reference
 
 import scalafim.testkit.RealAssetGate
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 
 import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream

@@ -4,7 +4,7 @@ import image4s.geometry.{Affine, D3, Frame, FrameAlignment, GeometryError, Point
 import reframe4s.core.{MapError, SpatialMap}
 import reframe4s.lie.FramedAffine
 import neuroim4s.spaces.{FrameCatalog, SpaceError, WorldSpace}
-import scalafim.image.world.{FreeSurferVolumeGeometry, Placed, Rebind}
+import neuroim4s.image.world.{FreeSurferVolumeGeometry, Placed, Rebind}
 
 /** Failures of placing surface vertices in a world frame or moving them between frames. */
 enum SurfaceFrameError derives CanEqual:

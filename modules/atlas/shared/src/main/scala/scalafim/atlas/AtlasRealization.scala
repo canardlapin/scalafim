@@ -27,10 +27,10 @@ import locus4s.TotalMapError
 import locus4s.data.Field
 import locus4s.data.FieldConstructionError
 import locus4s.data.VectorField
-import scalafim.image.SomeNeuroVolume
-import scalafim.image.SomeLabelVolume
-import scalafim.image.VolumeParcellation
-import scalafim.image.VolumeParcellationError
+import neuroim4s.image.SomeNeuroVolume
+import neuroim4s.image.SomeLabelVolume
+import neuroim4s.image.VolumeParcellation
+import neuroim4s.image.VolumeParcellationError
 import scalafim.surface.Hemisphere as SurfaceHemisphere
 
 /** An atlas realization with its Neuropublish projection: the optional publication adapter. */
@@ -165,7 +165,7 @@ object AtlasRealizations:
       regions,
       labels,
       atlasProvenance
-    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    ).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   /** Build against a caller-owned exact grid domain. The image must share the
     * same live grid owner; serialized geometry equality is not enough.
@@ -332,7 +332,7 @@ object AtlasRealizations:
       regions,
       payload,
       atlasProvenance
-    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    ).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def surfaceValidatedIn(
       registry: DomainRegistry,

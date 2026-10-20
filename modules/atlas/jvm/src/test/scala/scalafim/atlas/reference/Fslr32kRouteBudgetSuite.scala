@@ -4,7 +4,7 @@ import scalafim.testkit.RealAssetGate
 
 import scalafim.atlas.{Fslr32kFrom2009c, StandardRoutePolicy, StandardRouteRefusal}
 import scalafim.atlas.io.StandardSurfaceRouteFiles
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 import scalafim.surface.io.GiftiSurfaceReader
 import scalafim.surface.reference.*

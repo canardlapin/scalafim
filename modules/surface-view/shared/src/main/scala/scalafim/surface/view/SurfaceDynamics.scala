@@ -1,9 +1,9 @@
 package scalafim.surface.view
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import intaglio.*
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 
 opaque type SurfaceSeconds = Double
@@ -14,7 +14,7 @@ object SurfaceSeconds:
     else Left(SurfaceViewError.InvalidTimeAxis(s"time must be finite; got $value"))
 
   def unsafe(value: Double): SurfaceSeconds =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (time: SurfaceSeconds)
     def value: Double = time
@@ -81,7 +81,7 @@ object SurfaceTemporalFieldId:
     else Right(normalized)
 
   def unsafe(value: String): SurfaceTemporalFieldId =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (id: SurfaceTemporalFieldId)
     def value: String = id
@@ -259,7 +259,7 @@ object SurfaceFrameCache:
     else Right(new SurfaceFrameCache(capacity, Map.empty, Vector.empty))
 
   def empty(capacity: Int): SurfaceFrameCache =
-    make(capacity).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(capacity).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 final case class SurfaceCachedSample(
   frame: SurfaceDoubleFrame,
@@ -278,7 +278,7 @@ object SurfacePlaybackRate:
     else Left(SurfaceViewError.InvalidPlaybackRate(value))
 
   def unsafe(value: Double): SurfacePlaybackRate =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (rate: SurfacePlaybackRate)
     def value: Double = rate
@@ -398,7 +398,7 @@ object SurfaceMorphFraction:
     else Left(SurfaceViewError.InvalidMorphFraction(value))
 
   def unsafe(value: Double): SurfaceMorphFraction =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (fraction: SurfaceMorphFraction)
     def value: Double = fraction
@@ -411,7 +411,7 @@ object SurfaceLensRadius:
     else Left(SurfaceViewError.InvalidLensRadius(value))
 
   def unsafe(value: Double): SurfaceLensRadius =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (radius: SurfaceLensRadius)
     def value: Double = radius
@@ -424,7 +424,7 @@ object SurfaceLensRelaxationSteps:
     else Left(SurfaceViewError.InvalidLensRelaxationSteps(value))
 
   def unsafe(value: Int): SurfaceLensRelaxationSteps =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (steps: SurfaceLensRelaxationSteps)
     def value: Int = steps
@@ -910,7 +910,7 @@ object SurfaceLinkRadius:
     else Left(SurfaceViewError.InvalidLinkRadius(value))
 
   def unsafe(value: Double): SurfaceLinkRadius =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (radius: SurfaceLinkRadius)
     def value: Double = radius
@@ -970,7 +970,7 @@ object SurfaceAnnotationId:
     else Right(normalized)
 
   def unsafe(value: String): SurfaceAnnotationId =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (id: SurfaceAnnotationId)
     def value: String = id

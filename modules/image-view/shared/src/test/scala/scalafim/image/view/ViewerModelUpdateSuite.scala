@@ -1,12 +1,12 @@
 package scalafim.image.view
 
 import intaglio.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class ViewerModelUpdateSuite extends munit.FunSuite:
   private val support = SampleSpaces.requireVolumeD3(SampleSpaces(Vector(3, 3, 3))).toOption.get
-  private val volume = SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](27, true), support, "mask")
+  private val volume = SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.fill[Boolean](27)(true), support, "mask")
   private val red = Rgba32.unsafe(255, 0, 0, 255)
   private val blue = Rgba32.unsafe(0, 0, 255, 255)
   private val green = Rgba32.unsafe(0, 255, 0, 255)

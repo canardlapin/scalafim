@@ -8,8 +8,7 @@ import image4s.geometry.{D3, Frame}
 import image4s.nifti.{NiftiCoordinateSystem, NiftiDatatype, NiftiScalarWriter, NiftiWriteOptions}
 import scalafim.archive.io.StagedFile
 import scalafim.estimates.*
-import scalafim.image.SampleSpaces
-import scalafim.image.io.Nifti
+import neuroim4s.image.SampleSpaces
 
 private[io] final class NiftiOutput(
     val product: ProductDescriptor,
@@ -153,8 +152,8 @@ private[io] final class NiftiEstimateSink(
               case (previous, (output, ordinal)) => previous.flatMap: refs =>
                 val prefix = s"units/${unit.revision.value}/product-$ordinal"
                 for
-                  dataHeader <- Nifti.readHeader(output.valueStage.path).left.map(e => EstimateError.Integrity(e.message))
-                  validityHeader <- Nifti.readHeader(output.validityStage.path).left.map(e => EstimateError.Integrity(e.message))
+                  dataHeader <- image4s.nifti.Nifti.readHeader(output.valueStage.path).left.map(e => EstimateError.Integrity(e.message))
+                  validityHeader <- image4s.nifti.Nifti.readHeader(output.validityStage.path).left.map(e => EstimateError.Integrity(e.message))
                   _ <- NiftiEstimateSource.validateHeader(unit, output.product, dataHeader, false)
                   _ <- NiftiEstimateSource.validateHeader(unit, output.product, validityHeader, true)
                   data <- store.objects.publishStaged(output.valueStage, s"${prefix}_values.nii").left.map(store.fromStore)
@@ -199,8 +198,8 @@ private[io] object NiftiEstimateSink:
                     dataStage <- store.objects.stage(".nii").left.map(store.fromStore)
                     validStage <- store.objects.stage(".nii").left.map(store.fromStore)
                     coverageStage <- store.objects.stage(".coverage").left.map(store.fromStore)
-                    data <- Nifti.openScalarWriter(dataStage.path, SampleSpace.create(volume.grid, axes), options).left.map(e => EstimateError.Io(e.message))
-                    valid <- Nifti.openScalarWriter(validStage.path, SampleSpace.create(volume.grid, axes), validityOptions).left.map: e =>
+                    data <- image4s.nifti.Nifti.openScalarWriter(dataStage.path, volume.grid, axes, options).left.map(e => EstimateError.Io(e.message))
+                    valid <- image4s.nifti.Nifti.openScalarWriter(validStage.path, volume.grid, axes, validityOptions).left.map: e =>
                       data.close()
                       EstimateError.Io(e.message)
                     _ <- store.protect:

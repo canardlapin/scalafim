@@ -8,18 +8,18 @@ import image4s.SampleSpace
 import ravel.DType.given
 import ravel.NDArray
 import ravel.Shape
-import scalafim.image.NeuroSeries
-import scalafim.image.SomeSampleSpace
-import scalafim.image.NeuroVolume
-import scalafim.image.Indexing
-import scalafim.image.SomeLabelVolume
-import scalafim.image.SomeMaskVolume
-import scalafim.image.SomeNeuroSeries
-import scalafim.image.SomeNeuroVolume
-import scalafim.image.SomeScalarSeries
-import scalafim.image.SomeScalarVolume
-import scalafim.image.SampleSpaces
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.NeuroSeries
+import image4s.SomeSampleSpace
+import neuroim4s.image.NeuroVolume
+import neuroim4s.image.Indexing
+import neuroim4s.image.SomeLabelVolume
+import neuroim4s.image.SomeMaskVolume
+import neuroim4s.image.SomeNeuroSeries
+import neuroim4s.image.SomeNeuroVolume
+import neuroim4s.image.SomeScalarSeries
+import neuroim4s.image.SomeScalarVolume
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.SampleSpaces.*
 
 private[atlas] object AtlasTestImages:
   def labelVolume(
@@ -41,7 +41,7 @@ private[atlas] object AtlasTestImages:
         ImageMetadata.named(label)
       )
       .map(SomeNeuroVolume.eraseSpace)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def labelAtCanonicalOrdinal(
       volume: SomeLabelVolume[Int],
@@ -67,7 +67,7 @@ private[atlas] object AtlasTestImages:
         ImageMetadata.named(label)
       )
       .map(SomeNeuroVolume.eraseSpace)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def scalarSeries(
       atlas: VolumeAtlas,
@@ -78,11 +78,11 @@ private[atlas] object AtlasTestImages:
     val time =
       Axis
         .create("time", timeCount, AxisKind.Time)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val axes =
       NonSpatialAxes
         .from(Vector(time))
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val sampleSpace =
       SampleSpace.create(atlas.realization.domain.grid, axes)
     val shape = atlas.realization.domain.grid.shape
@@ -98,7 +98,7 @@ private[atlas] object AtlasTestImages:
         ImageMetadata.named(label)
       )
       .map(SomeNeuroSeries.eraseSpace)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def maskVolume(
       atlas: VolumeAtlas,
@@ -117,4 +117,4 @@ private[atlas] object AtlasTestImages:
         ImageMetadata.named(label)
       )
       .map(SomeNeuroVolume.eraseSpace)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)

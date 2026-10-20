@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import gale.linalg.DMat
-import scalafim.image.{SpatialAxis, VoxelCoord}
+import neuroim4s.image.{SpatialAxis, VoxelCoord}
 
 enum FieldApiError:
   case Spatial(error: SpatialError)

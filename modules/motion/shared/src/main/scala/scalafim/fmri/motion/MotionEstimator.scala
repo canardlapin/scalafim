@@ -1,8 +1,9 @@
 package scalafim.fmri.motion
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.NeuroAffineSyntax.*
+import neuroim4s.image.SampleSpaces.*
 
-import scalafim.image.*
+import neuroim4s.image.*
 import gale.linalg.{CholeskyOptions, Matrix}
 
 object MotionEstimator:
@@ -42,7 +43,7 @@ object MotionEstimator:
       plan: MotionPlan
   ): Either[MotionError, MotionEstimate] =
     for
-      _ <- plan.acquisitionTiming.validateSlices(run.space.spatialDims(2))
+      _ <- plan.acquisitionTiming.validateSlices(run.space.grid.shape(2))
       refIndex <- referenceIndex(run, plan.reference)
       rigid <- estimateRigid(run, mask, plan.copy(engine = MotionEngine.RigidRobust, acquisitionTiming = AcquisitionTiming.Volume))
       spline <- PoseSpline.smooth(rigid.trace)
@@ -59,14 +60,14 @@ object MotionEstimator:
       referenceIndex: Int,
       levels: Vector[PyramidLevel]
   ):
-    val dims: Vector[Int] = run.space.spatialDims
+    val dims: Vector[Int] = run.space.grid.shape
     val nx: Int = dims(0)
     val ny: Int = dims(1)
     val nz: Int = dims(2)
     val nxyz: Int = nx * ny * nz
-    val px: Double = run.space.spacing(0)
-    val py: Double = run.space.spacing(1)
-    val pz: Double = run.space.spacing(2)
+    val px: Double = run.grid.indexToFrame.neuroVoxelSizes(0)
+    val py: Double = run.grid.indexToFrame.neuroVoxelSizes(1)
+    val pz: Double = run.grid.indexToFrame.neuroVoxelSizes(2)
     val diagnosticLevel: PyramidLevel = levels.last
 
   private final case class CostResult(cost: Double, overlap: Double)
@@ -586,13 +587,13 @@ object MotionEstimator:
     )
 
   private def buildTemplate(run: SomeScalarSeries[Double], reference: ReferenceStrategy, refIndex: Int): Array[Double] =
-    val nxyz = run.space.spatialDims.product
+    val nxyz = run.space.grid.shape.product
     val out = Array.ofDim[Double](nxyz)
     reference match
       case ReferenceStrategy.RobustMean =>
         var lin = 0
         while lin < nxyz do
-          val voxel = run.space.indexToVoxel3D(lin)
+          val voxel = Indexing.indexToGrid(SpatialDims.unsafeFromVector(run.grid.shape), lin)
           var t = 0
           var sum = 0.0
           while t < run.nVolumes do
@@ -603,7 +604,7 @@ object MotionEstimator:
       case _ =>
         var lin = 0
         while lin < nxyz do
-          val voxel = run.space.indexToVoxel3D(lin)
+          val voxel = Indexing.indexToGrid(SpatialDims.unsafeFromVector(run.grid.shape), lin)
           out(lin) = run(voxel.x, voxel.y, voxel.z, refIndex)
           lin += 1
     out
@@ -778,7 +779,7 @@ object MotionEstimator:
       mask: Option[SomeMaskVolume],
       control: MotionControl
   ): Either[MotionError, Vector[SamplePoint]] =
-    val dims = run.space.spatialDims
+    val dims = run.space.grid.shape
     val nx = dims(0)
     val ny = dims(1)
     val nz = dims(2)
@@ -825,7 +826,7 @@ object MotionEstimator:
     val target = math.min(samples.length, stencil.sampleCount)
     if target >= samples.length then samples
     else
-      val dims = run.space.spatialDims
+      val dims = run.space.grid.shape
       val nx = dims(0)
       val ny = dims(1)
       val nz = dims(2)
@@ -894,7 +895,7 @@ object MotionEstimator:
     else math.abs(center - sum / n.toDouble)
 
   private def meanAt(run: SomeScalarSeries[Double], linear: Int): Double =
-    val voxel = run.space.indexToVoxel3D(linear)
+    val voxel = Indexing.indexToGrid(SpatialDims.unsafeFromVector(run.grid.shape), linear)
     var t = 0
     var sum = 0.0
     while t < run.nVolumes do
@@ -945,7 +946,7 @@ object MotionEstimator:
       out.result()
 
   private def validateFiniteRun(run: SomeScalarSeries[Double]): Either[MotionError, Unit] =
-    val dims = run.space.spatialDims
+    val dims = run.space.grid.shape
     var linear = 0
     var t = 0
     while t < run.nVolumes do

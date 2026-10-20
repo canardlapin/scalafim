@@ -1,8 +1,8 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 /** The Gauss-Newton step must not depend on the image intensity scale, and a
   * singular normal system must not be reported as convergence.
@@ -22,12 +22,12 @@ class MotionSolverScalingSuite extends munit.FunSuite:
 
   private def frame(offsetX: Double, scale: Double): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val v = space.indexToVoxel3D(lin)
+      val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       scale * baseValueAt(v.x.toDouble + offsetX, v.y.toDouble, v.z.toDouble)
     }
 
   private def run(frames: Vector[Array[Double]]): SomeScalarSeries[Double] =
-    val out = PrimitiveBuffers.ofSize[Double](nxyz * frames.length)
+    val out = Array.ofDim[Double](nxyz * frames.length)
     var i = 0
     while i < nxyz do
       var t = 0
@@ -35,12 +35,12 @@ class MotionSolverScalingSuite extends munit.FunSuite:
         out(i * frames.length + t) = frames(t)(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(ProviderAxes.time(frames.length)), "solver-scaling")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.typed.appendNonSpatial(ProviderAxes.time(frames.length)).fold(error => throw new IllegalArgumentException(error.message), value => value), "solver-scaling")
 
   private def interiorMask: SomeMaskVolume =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
-        val v = space.indexToVoxel3D(lin)
+      Array.tabulate[Boolean](nxyz) { lin =>
+        val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         v.x >= 1 && v.x < dims(0) - 1 && v.y >= 1 && v.y < dims(1) - 1 && v.z >= 1 && v.z < dims(2) - 1
       },
       space,

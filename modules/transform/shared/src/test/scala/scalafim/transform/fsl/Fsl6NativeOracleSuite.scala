@@ -3,7 +3,7 @@ package scalafim.transform.fsl
 import image4s.geometry.{Affine, D3, Frame, Grid, Point}
 import reframe4s.field.{CoordinateBoundaryPolicy, DeterminantValue}
 import neuroim4s.spaces.{FrameCatalog, SpaceError, WorldSpace}
-import scalafim.image.world.ToolCoordinates
+import neuroim4s.image.world.ToolCoordinates
 import scalafim.transform.*
 import scalafim.transform.field.{FnirtCoefficientInterpretation, FnirtCoefficientContext, FnirtCoefficientsCodec, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, VectorFieldNiftiCodec}
 import scalafim.transform.nifti.NiftiRaw
@@ -116,7 +116,7 @@ class Fsl6NativeOracleSuite extends munit.FunSuite:
       val rejectedNames = Set("fsl_case0.nii", "fsl_case1.nii", "flirt_fresh_src.nii")
       val sourceResult = FslHeaderGeometry(raw(s"conventions/$sourceName"))
       val referenceResult = FslHeaderGeometry(raw(s"conventions/$referenceName"))
-      def checkAdmission(name: String, result: Either[TransformError, scalafim.image.world.FslVolumeGeometry]): Unit =
+      def checkAdmission(name: String, result: Either[TransformError, neuroim4s.image.world.FslVolumeGeometry]): Unit =
         if rejectedNames.contains(name) then
           result match
             case Left(TransformError.Space(SpaceError.FslHandednessConflict(_, qdet, _, sdet))) =>
@@ -136,8 +136,8 @@ class Fsl6NativeOracleSuite extends munit.FunSuite:
   private def checkNativeCoordinates(
       key: String,
       matrix: String,
-      sourceGeometry: scalafim.image.world.FslVolumeGeometry,
-      referenceGeometry: scalafim.image.world.FslVolumeGeometry,
+      sourceGeometry: neuroim4s.image.world.FslVolumeGeometry,
+      referenceGeometry: neuroim4s.image.world.FslVolumeGeometry,
       output: Vector[Vector[Double]]
   ): Unit =
       val transform = ok(FlirtInterpretation.interpret(ok(FlirtCodec.decode(TransformSource.Text(OracleFixtures.text(s"conventions/$matrix")))), FslGrids[source.type, reference.type](source, sourceGeometry, reference, referenceGeometry)))

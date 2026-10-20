@@ -1,8 +1,10 @@
 package scalafim.surface.reference
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid, LengthUnit}
-import scalafim.image.{SomeMaskVolume, SomeSampleSpace}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.{SomeMaskVolume}
+import neuroim4s.image.SampleSpaces
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 
 /** Failures admitting a spatial reference. Admission never guesses: an
@@ -83,7 +85,7 @@ object TemplateId:
     else Right(value)
 
   def unsafe(value: String): TemplateId =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (id: TemplateId)
     def value: String = id
@@ -98,7 +100,7 @@ object TemplateRelease:
     if value.trim.isEmpty || value.trim != value then Left(ReferenceError.InvalidRelease(value)) else Right(value)
 
   def unsafe(value: String): TemplateRelease =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (release: TemplateRelease)
     def value: String = release
@@ -119,7 +121,7 @@ object TemplateFrame:
   def unsafe(template: String, release: String, cohort: Option[String] = None): TemplateFrame =
     TemplateId.make(template)
       .flatMap(id => TemplateRelease.make(release).flatMap(r => make(id, r, cohort)))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 /** The declared reference of a group-analysis volume: its template frame, its
   * exact voxel grid (dims and voxel-to-world affine in millimetres, RAS) and the

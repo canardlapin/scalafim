@@ -1,7 +1,7 @@
 package scalafim.surface
 
 import image4s.geometry.{Affine, D3, Frame}
-import scalafim.image.world.*
+import neuroim4s.image.world.*
 import neuroim4s.spaces.*
 
 class FramedSurfaceSuite extends munit.FunSuite:

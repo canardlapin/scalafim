@@ -2,8 +2,8 @@ package scalafim.image.view
 
 import intaglio.*
 import image4s.geometry.Point
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class InteractionSuite extends munit.FunSuite:
 
@@ -13,7 +13,7 @@ class InteractionSuite extends munit.FunSuite:
 
   private def constantVolume(value: Double, label: String): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.fillConst[Double](space.nVoxels, value),
+      Array.fill[Double](space.shape.product)(value),
       sampleSpace,
       label
     )
@@ -31,7 +31,7 @@ class InteractionSuite extends munit.FunSuite:
     SliceLayer(
       maskId,
       SomeMaskVolume.unsafeCopyFromCanonicalArray(
-        PrimitiveBuffers.fillConst[Boolean](space.nVoxels, true),
+        Array.fill[Boolean](space.shape.product)(true),
         sampleSpace,
         "mask"
       ),

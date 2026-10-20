@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
+import neuroim4s.image.{SomeMaskVolume, SomeScalarVolume}
 
 /** Threshold methods with an implemented decision path. Methods are added
   * here only together with their implementation.

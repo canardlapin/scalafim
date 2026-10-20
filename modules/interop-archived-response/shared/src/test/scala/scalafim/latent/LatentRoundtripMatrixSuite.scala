@@ -1,10 +1,10 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.DMat
 
 class LatentRoundtripMatrixSuite extends munit.FunSuite:

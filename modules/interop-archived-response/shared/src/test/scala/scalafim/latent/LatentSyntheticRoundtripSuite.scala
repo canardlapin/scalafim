@@ -1,11 +1,10 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
-import scalafim.image.SampleSpaces.spatialDims
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class LatentSyntheticRoundtripSuite extends munit.FunSuite:
@@ -234,7 +233,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       LatentEncodingSpec
         .radialBasis(
           radialBasis = radial,
-          maskDims = space.spatialDims,
+          maskDims = space.grid.shape,
           basisId = SharedBasisId.unsafe(s"synthetic_radial_$caseIndex"),
           center = true,
           metadata = Map("case" -> id)

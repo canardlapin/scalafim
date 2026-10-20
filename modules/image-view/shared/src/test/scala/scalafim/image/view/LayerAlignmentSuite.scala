@@ -1,15 +1,17 @@
 package scalafim.image.view
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.Affine
 import image4s.geometry.D3
-import scalafim.image.*
+import neuroim4s.image.*
 import neuroim4s.spaces.{DatasetNamespace, GeometryDigest, ReferenceAcquisition, SubjectId, TemplateName, WorldSpace}
 
 class LayerAlignmentSuite extends munit.FunSuite:
   private def volumeIn(space: SomeSampleSpace, label: String): SomeScalarVolume[Double] =
     val typed = SampleSpaces.requireVolumeD3(space).fold(error => fail(error.message), identity)
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](typed.grid.shape.product)(_.toDouble),
+      Array.tabulate[Double](typed.grid.shape.product)(_.toDouble),
       typed,
       label
     )

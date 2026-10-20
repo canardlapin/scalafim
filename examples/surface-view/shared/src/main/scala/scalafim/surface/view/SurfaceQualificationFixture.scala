@@ -2,8 +2,8 @@ package scalafim.surface.view
 
 import image4s.geometry.{Affine, D3, Frame, Vec}
 import intaglio.*
-import scalafim.image.{SampleSpaces, SomeScalarVolume}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume}
+import neuroim4s.image.SampleSpaces.*
 import scalafim.surface.*
 import scalafim.surface.view.raster.{SurfaceRasterStyle, TriangleCulling}
 
@@ -362,7 +362,7 @@ object SurfaceQualificationFixture:
       // SurfViewJS source arrays are x-fastest; the image provider's canonical
       // ordinal is explicit and must not be inferred from a cubic specimen.
       canonical = Array.tabulate(values.length): ordinal =>
-        val grid = space.indexToGrid3D(ordinal)
+        val grid = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
         values(grid(0) + dims(0) * (grid(1) + dims(1) * grid(2)))
       volume <- either(SomeScalarVolume.unsafeCopyFromCanonicalArray(canonical, space, id.value), path)
       mappingObj <- field(obj, "mapping", path).flatMap(objectAt(_, path))

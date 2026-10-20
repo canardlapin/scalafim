@@ -1,12 +1,12 @@
 package scalafim.surface
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import image4s.{BoundaryPolicy, Continuous, ImageError, SampleSpace, Sampled}
 import image4s.geometry.{D3, Frame, GeometryError, Point}
 import reframe4s.resample.{Interpolation, SampledInterpolator}
 import ravel.Rank
-import scalafim.image.*
+import neuroim4s.image.*
 import scala.util.control.NonFatal
 
 final case class SurfaceGeometryPair private (white: SurfaceGeometry, pial: SurfaceGeometry):
@@ -32,7 +32,7 @@ object SurfaceGeometryPair:
     require(white.hemisphere == pial.hemisphere, "white and pial surfaces must have the same hemisphere")
     require(white.mesh.hasSameTopology(pial.mesh), "white and pial surfaces must share ordered triangle topology")
     val mesh = pial.mesh.sharingTopology(white.mesh)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     new SurfaceGeometryPair(white, SurfaceGeometry(mesh, pial.hemisphere, pial.kind, pial.surfaceToWorld))
 
   def fromEither(white: SurfaceGeometry, pial: SurfaceGeometry): Either[SurfaceError, SurfaceGeometryPair] =
@@ -315,9 +315,12 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
       SurfaceSampleTally(requested, outsideVolume, masked, nonFinite, accepted)
 
   private def nearestGrid(volume: SomeScalarVolume[Double], point: Vector[Double]): Option[Vector[Int]] =
-    val index = volume.space.coordToIndex(point)
+    // Preserve the established spatial-terms-first sum at nearest-voxel ties.
+    val matrix = volume.grid.indexToFrame.inverse.matrix
+    val index = Vector.tabulate(3): row =>
+      (((0.0 + matrix(row, 0) * point(0)) + matrix(row, 1) * point(1)) + matrix(row, 2) * point(2)) + matrix(row, 3) * 1.0
     val rounded = index.map(v => math.round(v))
-    val dims = volume.space.spatialDims
+    val dims = volume.space.grid.shape
     // A far-outside Long can wrap into the grid when narrowed to Int.
     if rounded.indices.forall(i => index(i).isFinite && rounded(i) >= 0L && rounded(i) < dims(i).toLong) then
       Some(rounded.map(_.toInt))
@@ -333,7 +336,7 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     val index = providerContinuousIndex(volume, point) match
       case Left(_) => return None
       case Right(value) => value
-    val dims = volume.space.spatialDims
+    val dims = volume.space.grid.shape
     if !index.indices.forall(axis => index(axis).isFinite && index(axis) >= 0.0 && index(axis) <= dims(axis).toDouble - 1.0) then None
     else
       val lower = index.map(math.floor(_).toInt)

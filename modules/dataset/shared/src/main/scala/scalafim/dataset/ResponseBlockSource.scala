@@ -6,8 +6,8 @@ import image4s.geometry.Frame
 import image4s.geometry.Grid
 import image4s.geometry.GridCongruence
 import gale.linalg.DMat
-import scalafim.image.{Mask, PrimitiveBuffers}
-import scalafim.image.space
+import neuroim4s.image.{Mask}
+import neuroim4s.image.space
 
 /** A scheduler-neutral, bounded read boundary for time-by-voxel response data.
   * Implementations may open local files, archives, or remote objects, but no
@@ -20,7 +20,7 @@ trait ResponseBlockSource:
   lazy val acquisitionDomain: DatasetAcquisitionDomain =
     DatasetAcquisitionDomain
       .structuralCompatibility(shape, voxelDomain)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   final def readBlock(
       selection: DataSelection = DataSelection.All
@@ -58,7 +58,7 @@ final class CompositeResponseBlockSource private (
     val assignments = assignTimepoints(selection.timepointIndices)
     val nRows = selection.nTimepoints
     val nCols = selection.nVoxels
-    val values = PrimitiveBuffers.ofSize[Double](nRows * nCols)
+    val values = Array.ofDim[Double](nRows * nCols)
     var failure = Option.empty[DatasetError]
     var runIndex = 0
 
@@ -149,7 +149,7 @@ object CompositeResponseBlockSource:
       runs: Vector[RunResponseBlockSource],
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): CompositeResponseBlockSource =
-    make(runs, metadata).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(runs, metadata).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def makeCongruent(
       runs: Vector[RunResponseBlockSource],
@@ -231,7 +231,7 @@ object ResponseBlockDatasetBackend:
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): ResponseBlockDatasetBackend =
     make(id, source, mask, metadata)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def makeCongruent(
       id: DatasetId,

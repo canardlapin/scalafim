@@ -1,8 +1,10 @@
 package scalafim.dataset.io
 
+import image4s.SomeSampleSpace
+
 import scalafim.dataset.{DataSelection, DatasetBackend, DatasetError, DatasetId, DatasetMetadata, DatasetShape, FmriSeries, VoxelDomain}
 import gale.linalg.DMat
-import scalafim.image.{Mask, SomeSampleSpace}
+import neuroim4s.image.{Mask}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path

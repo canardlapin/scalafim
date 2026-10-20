@@ -3,8 +3,8 @@ package scalafim.spatial
 import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces, SpatialPoint}
+import neuroim4s.image.SampleSpaces.*
 
 class PullbackCompilerSuite extends munit.FunSuite:
 

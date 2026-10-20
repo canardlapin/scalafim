@@ -7,12 +7,12 @@ import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
 import image4s.geometry.Grid
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import munit.FunSuite
 import bids4s.*
 import scalafim.dataset.{DatasetId, DatasetShape}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 class BidsStudyCompilerSuite extends FunSuite:
 

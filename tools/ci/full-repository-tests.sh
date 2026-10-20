@@ -53,11 +53,13 @@ run_batch core-js \
   latentJS/test arJS/test hrfJS/test \
   scenarioTestkitJS/test designJS/test providerSpikeJS/test
 
+run_batch neuroim neuroimTestAll
+
 run_batch image-surface-jvm \
-  imageJVM/test imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
+  imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
   motionJVM/test surfaceJVM/test surfaceTestFixturesJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
 run_batch image-surface-js \
-  imageJS/test imageViewJS/test imageViewCanvasJS/test thresholdJS/test \
+  imageViewJS/test imageViewCanvasJS/test thresholdJS/test \
   motionJS/test surfaceJS/test surfaceTestFixturesJS/test surfaceViewJS/test surfaceViewRasterJS/test \
   surfaceViewThreeJS/test
 

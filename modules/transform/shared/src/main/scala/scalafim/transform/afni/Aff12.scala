@@ -2,7 +2,7 @@ package scalafim.transform.afni
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.ToolCoordinates
+import neuroim4s.image.world.ToolCoordinates
 import scalafim.transform.*
 
 /** An AFNI `.aff12.1D` file: one or more 3x4 affines in RAI/DICOM (numerically LPS) millimetres, each mapping base

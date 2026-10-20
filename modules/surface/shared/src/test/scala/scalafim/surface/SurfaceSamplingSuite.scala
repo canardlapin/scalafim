@@ -1,17 +1,19 @@
 package scalafim.surface
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.Affine
 import image4s.geometry.D3
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class SurfaceSamplingSuite extends munit.FunSuite:
 
   private val space = SampleSpaces(Vector(3, 3, 3))
   private val volume =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](27) { idx =>
-        val g = space.indexToGrid3D(idx)
+      Array.tabulate[Double](27) { idx =>
+        val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
       },
       space,
@@ -105,7 +107,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
   test("masking can produce explicit empty samples"):
     val mask =
       SomeMaskVolume.unsafeCopyFromCanonicalArray(
-        PrimitiveBuffers.fillConst[Boolean](27, false),
+        Array.fill[Boolean](27)(false),
         space,
         "empty-mask"
       )
@@ -214,7 +216,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
     val badMask =
       SomeMaskVolume.unsafeCopyFromCanonicalArray(
-        PrimitiveBuffers.fillConst[Boolean](8, true),
+        Array.fill[Boolean](8)(true),
         SampleSpaces(Vector(2, 2, 2)),
         "bad-mask"
       )
@@ -229,7 +231,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     assertEquals(ribbon.tally.requested, 9L)
     assertEquals(ribbon.tally.accepted, 9L)
 
-    val emptyMask = SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](27, false), space, "empty-mask")
+    val emptyMask = SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.fill[Boolean](27)(false), space, "empty-mask")
     val masked = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair)).sample(volume, Some(emptyMask))
     assertEquals(masked.tally, SurfaceSampleTally(requested = 3, outsideVolume = 0, masked = 3, nonFinite = 0, accepted = 0))
 
@@ -241,8 +243,8 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     // Vertex 0 samples voxel (0, 0, 1) at the midpoint.
     val withNaN =
       SomeScalarVolume.unsafeCopyFromCanonicalArray(
-        PrimitiveBuffers.tabulate[Double](27) { idx =>
-          val g = space.indexToGrid3D(idx)
+        Array.tabulate[Double](27) { idx =>
+          val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, idx)
           if g == Vector(0, 0, 1) then Double.NaN else g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
         },
         space,
@@ -260,8 +262,8 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     // The ribbon of vertex 0 reads voxels (0, 0, 0), (0, 0, 1) and (0, 0, 2); only (0, 0, 1) is NaN.
     val withNaN =
       SomeScalarVolume.unsafeCopyFromCanonicalArray(
-        PrimitiveBuffers.tabulate[Double](27) { idx =>
-          val g = space.indexToGrid3D(idx)
+        Array.tabulate[Double](27) { idx =>
+          val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, idx)
           if g == Vector(0, 0, 1) then Double.NaN else g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
         },
         space,
@@ -282,8 +284,8 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
   private def volumeWithNaNAt(voxels: Vector[Int]*): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](27) { idx =>
-        val g = space.indexToGrid3D(idx)
+      Array.tabulate[Double](27) { idx =>
+        val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, idx)
         if voxels.contains(g) then Double.NaN else g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
       },
       space,
@@ -331,7 +333,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     test(s"eager nearest sampling has absolute half-up ties and support boundaries on axis $axis"):
       val grid = SampleSpaces(Vector(3, 4, 5))
       val encoded = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-        PrimitiveBuffers.tabulate[Double](60): ordinal =>
+        Array.tabulate[Double](60): ordinal =>
           val x = ordinal / 20
           val y = (ordinal / 5) % 4
           val z = ordinal % 5
@@ -363,6 +365,27 @@ class SurfaceSamplingSuite extends munit.FunSuite:
             assertEqualsDouble(result.values.valueAt(vertex).get, p(0) + 10.0 * p(1) + 100.0 * p(2), 0.0)
           case None => assert(result.values.valueAt(vertex).exists(_.isNaN))
       assertEquals(result.tally, SurfaceSampleTally(9, 3, 0, 0, 6))
+
+  test("nearest admission preserves spatial-first affine cancellation at a half-voxel tie"):
+    val affine = Affine.fromRowMajor[D3](Vector(
+      1.0, -1.0, 0.0, 1e16,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0
+    )).toOption.get
+    val sampling = SampleSpaces(Vector(2, 3, 2), affine = Some(affine))
+    val input = SomeScalarVolume.unsafeCopyFromCanonicalArray(
+      Array.tabulate[Double](12)(i => 100.0 * (i / 6) + 10.0 * ((i / 2) % 3) + i % 2), sampling)
+    val point = Vector(1e16, 0.5, 0.0)
+    // The provider evaluates translation first: using it here would select x=1.
+    assertEqualsDouble(affine.inverse(point).toOption.get(0), 0.5, 0.0)
+    val mesh = TriangleMesh.fromRows(Vector(point, Vector(1e16, 0.5, 1.0), Vector(1e16, 1.5, 0.0)), Vector((0, 1, 2)))
+    val surfaces = SurfaceGeometryPair(
+      SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.White),
+      SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Pial))
+    val result = VolumeSurfaceSampler.sample(input, surfaces, SurfaceSamplingPath.White)
+    assertEqualsDouble(result.values.valueAt(VertexId(0)).get, 10.0, 0.0)
+    assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(1))
 
   private def surfaceAtZ(z: Double, kind: SurfaceKind): SurfaceGeometry =
     SurfaceGeometry(

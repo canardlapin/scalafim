@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import scalafim.surface.*
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory

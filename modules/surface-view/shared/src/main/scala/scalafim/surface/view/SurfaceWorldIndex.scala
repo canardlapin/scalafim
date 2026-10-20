@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import scalafim.surface.*
 
 /** An immutable snapshot of one surface's transformed vertex coordinates.

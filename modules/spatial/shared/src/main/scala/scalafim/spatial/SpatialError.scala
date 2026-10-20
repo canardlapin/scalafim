@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import image4s.geometry.GeometryError
-import scalafim.image.SampleSpaceError
+import neuroim4s.image.SampleSpaceError
 import neuroim4s.spaces.SpaceError
 import reframe4s.core.MapError
 

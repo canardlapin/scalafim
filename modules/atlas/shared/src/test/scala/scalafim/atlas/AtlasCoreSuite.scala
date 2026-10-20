@@ -5,8 +5,8 @@ import neuroatlas4s.*
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import ravel.Shape
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.atlas.syntax.*
 
 class AtlasCoreSuite extends munit.FunSuite:
@@ -24,10 +24,10 @@ class AtlasCoreSuite extends munit.FunSuite:
       spacing = Some(Vector(2.0, 2.0, 2.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))
     )
-    val labels = PrimitiveBuffers.fillConst[Int](sp.spatialDims.product, 0)
+    val labels = Array.fill[Int](sp.grid.shape.product)(0)
 
     def set(x: Int, y: Int, z: Int, id: Int): Unit =
-      labels(Indexing.gridToIndex3D(sp.spatialDims, x, y, z)) = id
+      labels(Indexing.gridToIndex3D(sp.grid.shape, x, y, z)) = id
 
     for y <- 0 to 1; z <- 0 to 1 do set(0, y, z, 1)
     for y <- 0 to 1; z <- 0 to 1 do set(1, y, z, 2)
@@ -182,7 +182,7 @@ class AtlasCoreSuite extends munit.FunSuite:
 
   test("reduceVolume and reduceVec summarize parcel data") {
     val atlas = toyAtlas()
-    val volData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product, 0.0)
+    val volData = Array.fill[Double](atlas.space.grid.shape.product)(0.0)
     var lin = 0
     val labelVol = atlas.labelVolume
     while lin < volData.length do
@@ -196,11 +196,11 @@ class AtlasCoreSuite extends munit.FunSuite:
     assertEquals(values.value(RegionId(3)), Some(3.0))
 
     val tLen = 3
-    val vecData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product * tLen, 0.0)
+    val vecData = Array.fill[Double](atlas.space.grid.shape.product * tLen)(0.0)
     var t = 0
     while t < tLen do
       lin = 0
-      while lin < atlas.space.spatialDims.product do
+      while lin < atlas.space.grid.shape.product do
         val id = AtlasTestImages.labelAtCanonicalOrdinal(labelVol, lin)
         vecData(lin * tLen + t) = id.toDouble * (t + 1).toDouble
         lin += 1
@@ -216,10 +216,10 @@ class AtlasCoreSuite extends munit.FunSuite:
   test("reduceVec preserves all parcels and writes NaN for parcels outside mask") {
     val atlas = toyAtlas()
     val tLen = 2
-    val vecData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product * tLen, 1.0)
+    val vecData = Array.fill[Double](atlas.space.grid.shape.product * tLen)(1.0)
     val vec = AtlasTestImages.scalarSeries(atlas, vecData, tLen)
 
-    val maskFlags = PrimitiveBuffers.fillConst[Boolean](atlas.space.spatialDims.product, false)
+    val maskFlags = Array.fill[Boolean](atlas.space.grid.shape.product)(false)
     atlas.realization.region(RegionId(1)).get.foreachIndex: voxel =>
       maskFlags(voxel.ordinal) = true
     val mask = AtlasTestImages.maskVolume(atlas, maskFlags)

@@ -1,8 +1,8 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class MotionEstimatorSuite extends munit.FunSuite:
 
@@ -28,20 +28,20 @@ class MotionEstimatorSuite extends munit.FunSuite:
 
   private def baseFrame: Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val voxel = space.indexToVoxel3D(lin)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       baseValue(voxel.x, voxel.y, voxel.z)
     }
 
   private def shiftedMovingFramePlusOneX(fixed: Array[Double]): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val voxel = space.indexToVoxel3D(lin)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       val srcI = math.min(dims(0) - 1, voxel.x + 1)
-      fixed(space.gridToIndex3D(srcI, voxel.y, voxel.z))
+      fixed(neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, srcI, voxel.y, voxel.z))
     }
 
   private def shiftedMovingFrameX(offset: Double): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val voxel = space.indexToVoxel3D(lin)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       baseValueAt(voxel.x.toDouble + offset, voxel.y.toDouble, voxel.z.toDouble)
     }
 
@@ -54,7 +54,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
     val cos = math.cos(rotation)
     val sin = math.sin(rotation)
     Array.tabulate(nxyz) { lin =>
-      val voxel = space.indexToVoxel3D(lin)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       val dx = voxel.x.toDouble - cx
       val dy = voxel.y.toDouble - cy
       val targetX = cx + cos * dx - sin * dy
@@ -64,12 +64,12 @@ class MotionEstimatorSuite extends munit.FunSuite:
 
   private def outlierFrame(fixed: Array[Double]): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val voxel = space.indexToVoxel3D(lin)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       fixed(lin) + 35.0 + 4.0 * voxel.x.toDouble - 3.0 * voxel.y.toDouble + 2.0 * voxel.z.toDouble
     }
 
   private def runFromFrames(frames: Vector[Array[Double]]): SomeScalarSeries[Double] =
-    val out = PrimitiveBuffers.ofSize[Double](nxyz * frames.length)
+    val out = Array.ofDim[Double](nxyz * frames.length)
     var i = 0
     while i < nxyz do
       var t = 0
@@ -77,12 +77,12 @@ class MotionEstimatorSuite extends munit.FunSuite:
         out(i * frames.length + t) = frames(t)(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(ProviderAxes.time(frames.length)), "estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.typed.appendNonSpatial(ProviderAxes.time(frames.length)).fold(error => throw new IllegalArgumentException(error.message), value => value), "estimate-fixture")
 
   private def interiorMask: SomeMaskVolume =
     val data =
-      PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
-        val voxel = space.indexToVoxel3D(lin)
+      Array.tabulate[Boolean](nxyz) { lin =>
+        val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         voxel.x >= 1 && voxel.x < dims(0) - 1 &&
           voxel.y >= 1 && voxel.y < dims(1) - 1 &&
           voxel.z >= 1 && voxel.z < dims(2) - 1
@@ -90,7 +90,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
     SomeMaskVolume.unsafeCopyFromCanonicalArray(data, space, "interior")
 
   private def emptyMask: SomeMaskVolume =
-    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](nxyz, false), space, "empty")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.fill[Boolean](nxyz)(false), space, "empty")
 
   private def plan: MotionPlan =
     MotionPlan(

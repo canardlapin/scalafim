@@ -1,7 +1,7 @@
 package scalafim.surface.view
 
 import intaglio.*
-import scalafim.image.{x, y, z}
+import neuroim4s.image.{x, y, z}
 import scalafim.surface.*
 import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream}
 import java.nio.file.{Files, Path}
@@ -69,14 +69,14 @@ object SurfacePlanAffineFixtureProbe:
     )
     val layer = SurfaceLayer.packedRgba(
       layerId, surface, geometry, original.rgba.toVector.map(Rgba32.fromPackedInt)
-    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    ).fold(error => throw new IllegalArgumentException(error.message), value => value)
     val asset = SurfaceAsset.make(surface, geometry)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val model = SurfaceViewerModel.make(Vector(asset), Vector(layer))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val state = SurfaceViewerState.initial(model).copy(lighting = SurfaceLighting.Unlit)
     val plan = SurfaceCompiler.compile(model, state)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     require(plan.lighting == SurfaceLighting.Unlit && plan.clipping == SurfaceClipping.Disabled,
       s"$name has unsupported lighting or clipping")
     require(plan.slots.length == 1 && plan.meshes.length == 1 && plan.layers.length == 1 && plan.drawPasses.length == 1,

@@ -3,7 +3,7 @@ package scalafim.fmri.fit
 import java.lang.management.ManagementFactory
 import com.sun.management.ThreadMXBean
 import scalafim.dataset.DatasetShape
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class ResultArtifactsAllocationSuite extends munit.FunSuite:
   private def allocationCounter: ThreadMXBean =

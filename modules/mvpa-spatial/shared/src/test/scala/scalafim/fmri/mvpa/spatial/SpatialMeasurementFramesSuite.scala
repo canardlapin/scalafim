@@ -7,7 +7,7 @@ import gale.linalg.DMat
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import mvpa4s.{AxisRef, EvidenceSource, Observations}
 import mvpa4s.measurement.{MeasuredObservations, MeasurementFailure, MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor, PackedMeasurementEntry}
-import scalafim.image.ExactVolumeSearchlight
+import neuroim4s.image.ExactVolumeSearchlight
 import scalafim.locus.{CenteredSearchlight, Searchlight}
 import locus4s.data.VectorField
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}

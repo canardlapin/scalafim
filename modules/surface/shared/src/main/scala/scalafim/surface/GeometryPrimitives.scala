@@ -1,6 +1,6 @@
 package scalafim.surface
 
-import scalafim.image.SpatialPoint
+import neuroim4s.image.SpatialPoint
 
 type Point3D = SpatialPoint
 

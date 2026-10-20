@@ -1,8 +1,8 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 /** With `HuberScale.RobustResidual` the Huber threshold is a multiple of a
   * robust residual scale, so robust weighting and the estimated motion do not
@@ -25,14 +25,14 @@ class MotionHuberScaleSuite extends munit.FunSuite:
   /** A shifted frame with a bright artefact block, so large residuals exist and Huber is active. */
   private def frame(offsetX: Double, scale: Double, artefact: Boolean): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val v = space.indexToVoxel3D(lin)
+      val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       val clean = baseValueAt(v.x.toDouble + offsetX, v.y.toDouble, v.z.toDouble)
       val spike = if artefact && v.x >= 1 && v.x <= 2 && v.y >= 1 && v.y <= 2 && v.z == 2 then 40.0 else 0.0
       scale * (clean + spike)
     }
 
   private def run(frames: Vector[Array[Double]]): SomeScalarSeries[Double] =
-    val out = PrimitiveBuffers.ofSize[Double](nxyz * frames.length)
+    val out = Array.ofDim[Double](nxyz * frames.length)
     var i = 0
     while i < nxyz do
       var t = 0
@@ -40,12 +40,12 @@ class MotionHuberScaleSuite extends munit.FunSuite:
         out(i * frames.length + t) = frames(t)(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(ProviderAxes.time(frames.length)), "huber-scale")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.typed.appendNonSpatial(ProviderAxes.time(frames.length)).fold(error => throw new IllegalArgumentException(error.message), value => value), "huber-scale")
 
   private def interiorMask: SomeMaskVolume =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
-        val v = space.indexToVoxel3D(lin)
+      Array.tabulate[Boolean](nxyz) { lin =>
+        val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
         v.x >= 1 && v.x < dims(0) - 1 && v.y >= 1 && v.y < dims(1) - 1 && v.z >= 1 && v.z < dims(2) - 1
       },
       space,
@@ -111,13 +111,13 @@ class MotionHuberScaleSuite extends munit.FunSuite:
 
   private def bigFrame(offsetX: Double, scale: Double, artefact: Boolean): Array[Double] =
     Array.tabulate(bigN) { lin =>
-      val v = bigSpace.indexToVoxel3D(lin)
+      val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(bigSpace.grid.shape), lin)
       val spike = if artefact && v.x >= 9 && v.x <= 11 && v.y >= 5 && v.y <= 7 && v.z >= 6 && v.z <= 7 then 80.0 else 0.0
       scale * (anatomy(v.x.toDouble + offsetX, v.y.toDouble, v.z.toDouble) + spike)
     }
 
   private def bigRun(frames: Vector[Array[Double]]): SomeScalarSeries[Double] =
-    val out = PrimitiveBuffers.ofSize[Double](bigN * frames.length)
+    val out = Array.ofDim[Double](bigN * frames.length)
     var i = 0
     while i < bigN do
       var t = 0
@@ -125,12 +125,12 @@ class MotionHuberScaleSuite extends munit.FunSuite:
         out(i * frames.length + t) = frames(t)(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, bigSpace.addDim(ProviderAxes.time(frames.length)), "huber-big")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, bigSpace.typed.appendNonSpatial(ProviderAxes.time(frames.length)).fold(error => throw new IllegalArgumentException(error.message), value => value), "huber-big")
 
   private def bigMask: SomeMaskVolume =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Boolean](bigN) { lin =>
-        val v = bigSpace.indexToVoxel3D(lin)
+      Array.tabulate[Boolean](bigN) { lin =>
+        val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(bigSpace.grid.shape), lin)
         v.x >= 2 && v.x < bigDims(0) - 2 && v.y >= 2 && v.y < bigDims(1) - 2 && v.z >= 2 && v.z < bigDims(2) - 2
       },
       bigSpace,
@@ -169,7 +169,7 @@ class MotionHuberScaleSuite extends munit.FunSuite:
   private def patternedFrame(t: Int, offsetX: Double, scale: Double, artefact: Boolean): Array[Double] =
     val clean = bigFrame(offsetX, 1.0, artefact)
     Array.tabulate(bigN) { lin =>
-      val v = bigSpace.indexToVoxel3D(lin)
+      val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(bigSpace.grid.shape), lin)
       scale * (clean(lin) + 1.5 * math.sin(1.7 * v.x + 2.3 * v.y + 0.9 * v.z + 1.3 * t))
     }
 
@@ -203,7 +203,7 @@ class MotionHuberScaleSuite extends munit.FunSuite:
   /** Zero background outside a central blob: more than half the residuals match exactly. */
   private def blobFrame(offsetX: Double, scale: Double): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val v = space.indexToVoxel3D(lin)
+      val v = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), lin)
       val inside = v.x >= 2 && v.x <= 4 && v.y >= 1 && v.y <= 3 && v.z >= 1 && v.z <= 3
       if inside then scale * baseValueAt(v.x.toDouble + offsetX, v.y.toDouble, v.z.toDouble) else 0.0
     }

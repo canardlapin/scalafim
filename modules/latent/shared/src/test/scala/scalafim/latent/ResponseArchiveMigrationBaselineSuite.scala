@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import gale.linalg.{DMat, DVec, LinAlgError}
 import scalafim.archive.ArchiveError
@@ -12,7 +12,7 @@ import scalafim.archive.lna.{
   SharedBasisMask
 }
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 enum MigrationComparator:
   case RawBits

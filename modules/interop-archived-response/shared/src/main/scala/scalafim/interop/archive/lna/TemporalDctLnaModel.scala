@@ -22,7 +22,7 @@ import scalafim.archive.lna.{
   TemporalDctParams
 }
 import gale.linalg.DMat
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import scalafim.interop.archive.RepresentationEnvelope
 import scalafim.latent.{
   DctNorm,

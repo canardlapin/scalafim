@@ -2,7 +2,7 @@ package scalafim.transform.itk
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.ToolCoordinates
+import neuroim4s.image.world.ToolCoordinates
 import scalafim.transform.*
 
 /** What a linear ITK file means. ITK stores the resampling pullback in LPS: `TransformPoint` maps a point of the fixed

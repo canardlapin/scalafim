@@ -3,8 +3,8 @@ package scalafim.surface
 import image4s.SampleSpace
 import image4s.geometry.{D3, Frame}
 import ravel.DType.given
-import scalafim.image.{GridSpec, MaskVolume, NeuroVolume, ScalarVolume, SomeScalarVolume}
-import scalafim.image.SomeNeuroVolume.*
+import neuroim4s.image.{GridSpec, MaskVolume, NeuroVolume, ScalarVolume, SomeScalarVolume}
+import neuroim4s.image.SomeNeuroVolume.*
 
 /** Failures of compiling or applying a cortical-ribbon operator or mask. */
 enum RibbonError derives CanEqual:
@@ -431,7 +431,7 @@ private object RibbonGrid:
     else if expected.affine.rowMajor != actual.affine.rowMajor then Left(RibbonError.VolumeGridMismatch("voxel-to-world affines differ"))
     else
       Frame
-        .alignOwners[D3, Frame[D3], Frame[D3]](expected.providerFrame, actual.providerFrame)
+        .alignOwners[D3, Frame[D3], Frame[D3]](expected.grid.frame, actual.grid.frame)
         .left
         .map(error => RibbonError.VolumeGridMismatch(error.message))
         .map(_ => ())

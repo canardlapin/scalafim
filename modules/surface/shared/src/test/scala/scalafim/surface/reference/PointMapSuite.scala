@@ -1,6 +1,6 @@
 package scalafim.surface.reference
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import PointMapFixtures.*
 
 class PointMapSuite extends munit.FunSuite:

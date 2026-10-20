@@ -1,6 +1,6 @@
 package scalafim.surface.reference
 
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 import scalafim.surface.io.GiftiSurfaceReader
 

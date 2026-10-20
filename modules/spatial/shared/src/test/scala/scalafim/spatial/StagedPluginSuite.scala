@@ -3,8 +3,8 @@ package scalafim.spatial
 import neuroim4s.spaces.{SubjectId, TemplateName}
 
 import gale.linalg.DMat as GaleDMat
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 
 class StagedPluginSuite extends munit.FunSuite:
 

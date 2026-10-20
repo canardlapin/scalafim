@@ -5,7 +5,7 @@ import scalafim.fmri.fit.estimates.FitGroupAdapter
 import gale.linalg.DVec
 import scalafim.dataset.SubjectId
 import scalafim.fmri.fit.{ResidualDegreesOfFreedom, TContrastResult}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class FirstLevelBridgeSuite extends munit.FunSuite:
 

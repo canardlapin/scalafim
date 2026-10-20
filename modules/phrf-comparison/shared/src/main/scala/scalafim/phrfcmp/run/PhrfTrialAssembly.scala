@@ -12,7 +12,7 @@ import scalafim.fmri.hrf.Seconds
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.ProfileTrialDrive
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.phrfcmp.ingest.{CellKind, FitInputs, Matrix}
 import scalafim.phrfcmp.prep.{CommonPrep, PrepRefusal, WhiteningSpec}
 

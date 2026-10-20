@@ -1,15 +1,10 @@
 package scalafim.dataset
 
-import scalafim.image.{
-  Indexing,
-  Mask,
-  SampleSpaces,
-  SomeSampleSpace,
-  VoxelCoord
-}
-import scalafim.image.GridDomainOps.*
-import scalafim.image.SampleSpaces.*
-import scalafim.image.space
+import image4s.SomeSampleSpace
+
+import neuroim4s.image.{Indexing, Mask, SampleSpaces, VoxelCoord}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.space
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.Grid
@@ -27,7 +22,7 @@ object TimepointIndex:
     else Right(value)
 
   def unsafe(value: Int): TimepointIndex =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (index: TimepointIndex)
     inline def value: Int = index
@@ -42,7 +37,7 @@ object VoxelIndex:
     else Right(value)
 
   def unsafe(value: Int): VoxelIndex =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (index: VoxelIndex)
     inline def value: Int = index
@@ -73,7 +68,7 @@ object TimepointSelection:
       .map(TimepointSelection.Indices.apply)
 
   def indices(values: Int*): TimepointSelection =
-    fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
+    fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def window(start: Int, length: Int): Either[DatasetError, TimepointSelection] =
     for
@@ -86,7 +81,7 @@ object TimepointSelection:
     yield TimepointSelection.Window(startIndex, length)
 
   def unsafeWindow(start: Int, length: Int): TimepointSelection =
-    window(start, length).fold(error => throw new IllegalArgumentException(error.message), identity)
+    window(start, length).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def fromExcludedInts(values: Int*): Either[DatasetError, TimepointSelection] =
     buildTypedSelection(DatasetAxis.Timepoint, values.toVector, TimepointIndex.make)
@@ -95,7 +90,7 @@ object TimepointSelection:
   /** Select every scan except the declared zero-based acquisition indices. */
   def excluding(values: Int*): TimepointSelection =
     fromExcludedInts(values*)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 enum VoxelSelection:
   case All
@@ -120,7 +115,7 @@ object VoxelSelection:
       .map(VoxelSelection.Indices.apply)
 
   def indices(values: Int*): VoxelSelection =
-    fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
+    fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def coords(values: VoxelCoord*): VoxelSelection =
     VoxelSelection.Coords(values.toVector)
@@ -225,7 +220,7 @@ final class VoxelDomain private (
       var failure = Option.empty[DatasetError]
       while index < values.length && failure.isEmpty do
         val coordinate = values(index)
-        Indexing.gridToIndexChecked(space.spatialShape, coordinate) match
+        Indexing.gridToIndexChecked(neuroim4s.image.SpatialDims.unsafeFromVector(space.grid.shape), coordinate) match
           case Left(error) =>
             failure = Some(DatasetError.InvalidVoxelCoordinate(coordinate, error.message))
           case Right(linear) =>
@@ -255,7 +250,7 @@ object VoxelDomain:
     )
 
   def fullUnsafe(shape: DatasetShape): VoxelDomain =
-    full(shape).fold(error => throw new IllegalArgumentException(error.message), identity)
+    full(shape).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def active(
       spatialSize: Int,
@@ -267,7 +262,7 @@ object VoxelDomain:
       spatialSize: Int,
       voxels: Vector[VoxelIndex]
   ): VoxelDomain =
-    active(spatialSize, voxels).fold(error => throw new IllegalArgumentException(error.message), identity)
+    active(spatialSize, voxels).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def fromMask(mask: Mask.MaskVol, shape: DatasetShape): Either[DatasetError, VoxelDomain] =
     Grid
@@ -347,7 +342,7 @@ final class DataSelection private (
     domain.resolve(time, voxels)
 
   def resolve(shape: DatasetShape): ResolvedDataSelection =
-    resolveEither(shape).fold(error => throw new IllegalArgumentException(error.message), identity)
+    resolveEither(shape).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   override def equals(other: Any): Boolean =
     other match
@@ -380,7 +375,7 @@ object DataSelection:
         untyped match
           case IndexSelection.All => TimepointSelection.All
           case IndexSelection.Indices(values) =>
-            TimepointSelection.fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
+            TimepointSelection.fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def toVoxelSelection(selection: VoxelInput): VoxelSelection =
     selection match
@@ -389,7 +384,7 @@ object DataSelection:
         untyped match
           case IndexSelection.All => VoxelSelection.All
           case IndexSelection.Indices(values) =>
-            VoxelSelection.fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
+            VoxelSelection.fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 final class ResolvedDataSelection private (
     val timepointIndices: Vector[TimepointIndex],
@@ -467,7 +462,7 @@ object ResolvedDataSelection:
       timepoints: Vector[TimepointIndex],
       voxels: Vector[VoxelIndex]
   ): ResolvedDataSelection =
-    make(timepoints, voxels).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(timepoints, voxels).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 private def resolveAllTimepoints(size: Int): Either[DatasetError, Vector[TimepointIndex]] =
   if size <= 0 then Left(DatasetError.NonPositiveAxisSize(DatasetAxis.Timepoint, size))

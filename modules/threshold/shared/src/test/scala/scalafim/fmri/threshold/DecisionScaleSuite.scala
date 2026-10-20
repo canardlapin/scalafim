@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.Matrix
-import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
+import neuroim4s.image.{Mask, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
 
 class DecisionScaleSuite extends munit.FunSuite:
 
@@ -182,7 +182,7 @@ class DecisionScaleSuite extends munit.FunSuite:
     )
 
   private def volume(data: Array[Double]): SomeScalarVolume[Double] =
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(dims))
+    SomeScalarVolume.unsafeCopyFromCanonicalArray((data).clone(), SampleSpaces(dims))
 
   private final class FixedNullDraw(
       rows: Vector[Array[Double]],

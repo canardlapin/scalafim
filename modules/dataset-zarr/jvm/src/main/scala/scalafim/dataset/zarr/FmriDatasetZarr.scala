@@ -3,7 +3,7 @@ package scalafim.dataset.zarr
 import java.nio.file.Path
 import scalafim.archive.zarr.NeuroArchiveZarr
 import scalafim.dataset.*
-import scalafim.image.{Mask, PrimitiveBuffers}
+import neuroim4s.image.{Mask}
 import zarr4s.{JvmCodecRuntime, JvmFileStore, ReadLimits}
 
 final case class ZarrDatasetOpenOptions(
@@ -55,7 +55,7 @@ private def maskFor(source: ZarrResponseBlockSource): Mask.MaskVol =
   else
     Mask.fromIndices(
       source.shape.space,
-      PrimitiveBuffers.fromArray(source.voxelDomain.indices.toArray),
+      (source.voxelDomain.indices.toArray).clone(),
       label = "neuroarchive-zarr-domain"
     )
 

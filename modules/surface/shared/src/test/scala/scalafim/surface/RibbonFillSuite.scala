@@ -1,10 +1,10 @@
 package scalafim.surface
 
 import image4s.geometry.{Affine, D3, Frame}
-import scalafim.image.{GridSpec, SpatialDims}
-import scalafim.image.SomeNeuroVolume
-import scalafim.image.SomeNeuroVolume.*
-import scalafim.image.world.*
+import neuroim4s.image.{GridSpec, SpatialDims}
+import neuroim4s.image.SomeNeuroVolume
+import neuroim4s.image.SomeNeuroVolume.*
+import neuroim4s.image.world.*
 import neuroim4s.spaces.*
 import scalafim.surface.fixtures.{RibbonRFixture, SphereMeshes}
 

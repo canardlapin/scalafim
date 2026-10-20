@@ -9,7 +9,7 @@ import scalafim.archive.lna.{
   SharedBasisLocator,
   SharedBasisMask
 }
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 extension (radialBasis: RadialBasis)
   def sharedBasisParams(

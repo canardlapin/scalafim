@@ -1,6 +1,6 @@
 package scalafim.surface
 
-import scalafim.image.*
+import neuroim4s.image.*
 
 opaque type SurfaceDomainId = String
 

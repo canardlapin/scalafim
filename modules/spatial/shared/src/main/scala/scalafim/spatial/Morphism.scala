@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import image4s.geometry.{Affine, D3, Frame}
-import scalafim.image.{SpatialPoint, SpatialPullback, SpatialPullbacks}
+import neuroim4s.image.{SpatialPoint, SpatialPullback, SpatialPullbacks}
 import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
 import scalafim.transform.WorldTransform
 import reframe4s.core.{FrameErasedMap, SpatialMap}
@@ -349,19 +349,19 @@ object CoordinateMap:
     yield CoordinateMap.Geometric(binding)
 
   private[spatial] def affine(
-      source: scalafim.image.GridSpec[?],
-      target: scalafim.image.GridSpec[?],
+      source: neuroim4s.image.GridSpec[?],
+      target: neuroim4s.image.GridSpec[?],
       operator: Affine[D3]
   ): Either[SpatialError, CoordinateMap] =
-    affineBetween(source.providerFrame, target.providerFrame, operator).map(CoordinateMap.Geometric.apply)
+    affineBetween(source.grid.frame, target.grid.frame, operator).map(CoordinateMap.Geometric.apply)
 
   private[spatial] def affineBetween(
       outputFrame: Frame[D3],
       inputFrame: Frame[D3],
       operator: Affine[D3]
   ): Either[SpatialError, ProviderMapBinding] =
-    val pullback = SpatialPullbacks.affineBetween(outputFrame, inputFrame, operator)
-    val inverse = SpatialPullbacks.affineBetween(inputFrame, outputFrame, operator.inverse)
+    val pullback = reframe4s.lie.FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](inputFrame, outputFrame)(operator)
+    val inverse = reframe4s.lie.FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](outputFrame, inputFrame)(operator.inverse)
     ProviderMapBinding.affine(pullback, inverse, operator)
 
   /** Admit a dense provider map into the routing graph.

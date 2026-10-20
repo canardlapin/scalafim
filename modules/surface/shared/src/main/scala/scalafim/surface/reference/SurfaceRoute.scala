@@ -1,7 +1,7 @@
 package scalafim.surface.reference
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 import scala.util.control.NonFatal
 

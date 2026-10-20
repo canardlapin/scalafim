@@ -1,7 +1,7 @@
 package scalafim.surface.reference
 
-import scalafim.image.*
-import scalafim.image.SampleSpaces.{indexToGrid3D, spatialDims}
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.{indexToGrid3D, spatialDims}
 import neuroim4s.spaces.WorldSpace
 import scalafim.surface.*
 import PointMapFixtures.*
@@ -107,8 +107,8 @@ class PointwiseInverseBridgeSuite extends munit.FunSuite:
   private val space = SampleSpaces.inWorld(SampleSpaces(Vector(8, 8, 8), affine = Some(translation(-4.0, -4.0, -4.0))),
     WorldSpace.template("MNI152NLin2009cAsym").toOption.get).toOption.get
   private val code: (Int, Int, Int) => Double = (i, j, k) => 1.0 + i + 10.0 * j + 100.0 * k
-  private val ramp = SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(space.spatialDims.product) { ordinal =>
-    val g = space.indexToGrid3D(ordinal)
+  private val ramp = SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(space.grid.shape.product) { ordinal =>
+    val g = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
     code(g(0), g(1), g(2))
   }, space, "pointwise-route-fixture")
 

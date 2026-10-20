@@ -1,8 +1,10 @@
 package scalafim.spatial
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.{Affine, D3}
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.SubjectId
 import scalafim.surface.*
 
@@ -17,8 +19,8 @@ class VolumeToSurfaceParitySuite extends munit.FunSuite:
 
   private def volume(grid: SomeSampleSpace = space): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](grid.spatialDims.product): ordinal =>
-        val p = grid.indexToGrid3D(ordinal)
+      Array.tabulate[Double](grid.grid.shape.product): ordinal =>
+        val p = neuroim4s.image.Indexing.indexToGrid3D(grid.grid.shape, ordinal)
         polynomial(p(0), p(1), p(2)),
       grid,
       "multiaffine-oracle"
@@ -53,16 +55,16 @@ class VolumeToSurfaceParitySuite extends munit.FunSuite:
     val point = SpatialPoint(0.25, 0.5, 0.75)
     val weights = VolumeToSurfaceOperatorCompiler.sourcePointWeights(grid, None, point, SamplingPolicy.Trilinear)
     val impulse = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](60)(i => if i == space.gridToIndex3D(1, 0, 1) then 1.0 else 0.0),
+      Array.tabulate[Double](60)(i => if i == neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 1) then 1.0 else 0.0),
       space,
       "impulse"
     )
     assertEqualsDouble(sampled(weights, impulse), 0.25 * 0.5 * 0.75, 1e-12)
 
-    val mask = Mask.fromIndices(space, PrimitiveBuffers.fromArray(Array(
-      space.gridToIndex3D(1, 0, 0), space.gridToIndex3D(1, 1, 0),
-      space.gridToIndex3D(1, 0, 1), space.gridToIndex3D(1, 1, 1)
-    )), "x-one-plane")
+    val mask = Mask.fromIndices(space, (Array(
+      neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 0), neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 1, 0),
+      neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 1), neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 1, 1)
+    )).clone(), "x-one-plane")
     val masked = VolumeToSurfaceOperatorCompiler.sourcePointWeights(grid, Some(mask), point, SamplingPolicy.Trilinear)
     assertEqualsDouble(masked.coverage, 0.25, 1e-12)
     assertEqualsDouble(sampled(masked, volume()), polynomial(1.0, 0.5, 0.75), 1e-12)
@@ -103,7 +105,7 @@ class VolumeToSurfaceParitySuite extends munit.FunSuite:
       SurfaceSamplingPath.NormalLine(Vector(-0.5, 0.0, 0.5)) -> 3
     )
     val input = volume()
-    val mask = Mask.fromIndices(space, PrimitiveBuffers.fromArray((0 until 60).filter(i => i % 5 != 0).toArray), "omit-z-zero")
+    val mask = Mask.fromIndices(space, ((0 until 60).filter(i => i % 5 != 0).toArray).clone(), "omit-z-zero")
     val matrix = DoubleMatrix.fromRows(Vector.tabulate(60)(i => Vector(input.valueAtCanonicalOrdinal(i))))
     for
       (path, requested) <- paths

@@ -22,7 +22,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import alder.kernel.DataFingerprint
 import mvpa4s.*
 import mvpa4s.predictive.*
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.response.{InMemoryResponseSource, NonFinitePolicy, ResponseSchemaId, UnitId}
 import locus4s.provenance.SourceId
 

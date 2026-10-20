@@ -4,7 +4,7 @@ import image4s.geometry.{Affine, ContinuousIndex, D3, Frame, Point}
 import ravel.NDArray
 import reframe4s.core.MapError
 import reframe4s.field.{BSplineField, BSplineOrder, CoordinateBoundaryPolicy, CoverageReportingMap, CoveredPoint, KnotLattice, SupportOutcome}
-import scalafim.image.world.ToolCoordinates
+import neuroim4s.image.world.ToolCoordinates
 import scalafim.transform.*
 import scalafim.transform.fsl.FlirtMatrix
 import scalafim.transform.nifti.{NiftiRaw, NiftiWriter}

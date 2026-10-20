@@ -1,10 +1,14 @@
 package scalafim.dataset.io
 
-import scalafim.image.SampleSpaces.*
+import image4s.nifti.NiftiHeader
+
+import image4s.SomeSampleSpace
+
+import neuroim4s.image.SampleSpaces.*
 
 import scalafim.dataset.*
-import scalafim.image.{PrimitiveBuffers, SomeSampleSpace}
-import scalafim.image.io.{Nifti, NiftiHeader}
+
+import neuroim4s.image.io.{Nifti}
 import neuroim4s.spaces.SpaceEvidence
 
 import java.io.BufferedInputStream
@@ -81,7 +85,7 @@ object NiftiStagingCache:
         Left(DatasetError.StorageFailure(s"cannot create NIfTI staging root '$normalized': ${error.getMessage}"))
 
   def unsafe(root: Path): NiftiStagingCache =
-    make(root).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(root).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 final class NiftiResponseBlockSource private (
     val sourcePath: Path,
@@ -99,7 +103,7 @@ final class NiftiResponseBlockSource private (
   ): Either[DatasetError, FmriSeries] =
     val rows = selection.nTimepoints
     val columns = selection.nVoxels
-    val bytesPerValue = header.bitpix / 8
+    val bytesPerValue = header.datatype.bitsPerValue / 8
     val valueCount = rows.toLong * columns.toLong
     if valueCount > Int.MaxValue.toLong then
       Left(DatasetError.StorageFailure(s"requested NIfTI block has $valueCount values and exceeds the supported array size"))
@@ -107,12 +111,15 @@ final class NiftiResponseBlockSource private (
       NiftiReadPlan
         .fromCanonicalVoxels(
           selection.voxels,
-          shape.space.spatialDims,
+          shape.space.grid.shape,
           bytesPerValue
         )
         .flatMap { plan =>
-          val values = PrimitiveBuffers.ofSize[Double](valueCount.toInt)
-          val buffer = ByteBuffer.allocateDirect(plan.maxBufferBytes).order(header.byteOrder)
+          val values = Array.ofDim[Double](valueCount.toInt)
+          val buffer = ByteBuffer.allocateDirect(plan.maxBufferBytes).order(header.byteOrder match
+            case image4s.nifti.NiftiByteOrder.LittleEndian => java.nio.ByteOrder.LITTLE_ENDIAN
+            case image4s.nifti.NiftiByteOrder.BigEndian => java.nio.ByteOrder.BIG_ENDIAN
+          )
           val slope = if header.slope == 0.0 then 1.0 else header.slope
 
           try
@@ -126,7 +133,7 @@ final class NiftiResponseBlockSource private (
                   val window = plan.windows(windowIndex)
                   val firstElement = Math.addExact(frameElement, window.startVoxel.toLong)
                   val byteOffset = Math.multiplyExact(firstElement, bytesPerValue.toLong)
-                  val position = Math.addExact(header.voxOffset.toLong, byteOffset)
+                  val position = Math.addExact(header.voxelOffset.toLong, byteOffset)
                   buffer.clear()
                   buffer.limit(window.byteCount)
                   readFully(open, buffer, position)
@@ -136,7 +143,7 @@ final class NiftiResponseBlockSource private (
                     val scalarOffset = window.voxelOffsets(selectedIndex) * bytesPerValue
                     val outputColumn = window.outputColumns(selectedIndex)
                     values(row * columns + outputColumn) =
-                      decodeAt(buffer, header.datatype, scalarOffset) * slope + header.intercept
+                      decodeAt(buffer, header.datatype.code, scalarOffset) * slope + header.intercept
                     selectedIndex += 1
                   windowIndex += 1
                 row += 1
@@ -202,7 +209,7 @@ object NiftiResponseBlockSource:
 
   private def readHeader(path: Path): Either[DatasetError, NiftiHeader] =
     try
-      Nifti
+      image4s.nifti.Nifti
         .readHeader(path)
         .left
         .map(error => DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.message}"))
@@ -210,25 +217,25 @@ object NiftiResponseBlockSource:
       case NonFatal(error) => Left(DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.getMessage}"))
 
   private def validateHeader(header: NiftiHeader, evidence: SpaceEvidence): Either[DatasetError, (SomeSampleSpace, Int)] =
-    val bytesPerValue = header.bitpix / 8
+    val bytesPerValue = header.datatype.bitsPerValue / 8
     val supported =
-      (header.datatype == 2 && bytesPerValue == 1) ||
-        (header.datatype == 4 && bytesPerValue == 2) ||
-        (header.datatype == 8 && bytesPerValue == 4) ||
-        (header.datatype == 16 && bytesPerValue == 4) ||
-        (header.datatype == 64 && bytesPerValue == 8)
-    if header.dims.length < 3 || header.dims.length > 4 then
-      Left(DatasetError.StorageFailure(s"NIfTI response must be 3D or 4D, got dimensions ${header.dims.mkString("x")}"))
+      (header.datatype.code == 2 && bytesPerValue == 1) ||
+        (header.datatype.code == 4 && bytesPerValue == 2) ||
+        (header.datatype.code == 8 && bytesPerValue == 4) ||
+        (header.datatype.code == 16 && bytesPerValue == 4) ||
+        (header.datatype.code == 64 && bytesPerValue == 8)
+    if header.dimensions.length < 3 || header.dimensions.length > 4 then
+      Left(DatasetError.StorageFailure(s"NIfTI response must be 3D or 4D, got dimensions ${header.dimensions.mkString("x")}"))
     else if !supported then
-      Left(DatasetError.StorageFailure(s"unsupported NIfTI datatype ${header.datatype} with bitpix ${header.bitpix}"))
-    else if header.voxOffset < 0 then
-      Left(DatasetError.StorageFailure(s"NIfTI vox_offset must be non-negative, got ${header.voxOffset}"))
+      Left(DatasetError.StorageFailure(s"unsupported NIfTI datatype ${header.datatype.code} with bitpix ${header.datatype.bitsPerValue}"))
+    else if header.voxelOffset < 0 then
+      Left(DatasetError.StorageFailure(s"NIfTI vox_offset must be non-negative, got ${header.voxelOffset}"))
     else
       try
-        val timepoints = if header.dims.length == 4 then header.dims(3) else 1
-        header.spaceIn(evidence)
+        val timepoints = if header.dimensions.length == 4 then header.dimensions(3) else 1
+        Nifti.spaceIn(header, evidence)
           .left
           .map(error => DatasetError.StorageFailure(s"NIfTI space evidence failed: ${error.message}"))
-          .map(_.spatialSpace -> timepoints)
+          .map(_.typed.spatialOnly -> timepoints)
       catch
         case NonFatal(error) => Left(DatasetError.StorageFailure(s"invalid NIfTI geometry: ${error.getMessage}"))

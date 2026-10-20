@@ -1,6 +1,5 @@
 package scalafim.surface
 
-import scalafim.image.PrimitiveBuffers
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
@@ -61,8 +60,8 @@ object SurfaceField:
   ): SurfaceField[A] =
     SurfaceField(
       geometry = geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
-      data = PrimitiveBuffers.fromArray(data.toArray),
+      indices = (SurfaceData.vertexArray(indices)).clone(),
+      data = (data.toArray).clone(),
       label = label
     )
 
@@ -130,8 +129,8 @@ object SurfaceMatrix:
     require(rows.forall(_.length == columns), "surface matrix rows must have equal length")
     SurfaceMatrix(
       geometry = geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
-      data = PrimitiveBuffers.fromArray(rows.iterator.flatten.toArray),
+      indices = (SurfaceData.vertexArray(indices)).clone(),
+      data = (rows.iterator.flatten.toArray).clone(),
       columns = columns,
       label = label
     )
@@ -165,8 +164,8 @@ object SurfaceRoi:
     }
     SurfaceRoi(
       geometry = field.geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(vertices)),
-      data = PrimitiveBuffers.fromArray(values.toArray),
+      indices = (SurfaceData.vertexArray(vertices)).clone(),
+      data = (values.toArray).clone(),
       label = label
     )
 
@@ -217,8 +216,8 @@ object LabeledSurface:
   ): LabeledSurface =
     LabeledSurface(
       geometry = geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
-      labels = PrimitiveBuffers.fromArray(labels.toArray),
+      indices = (SurfaceData.vertexArray(indices)).clone(),
+      labels = (labels.toArray).clone(),
       table = table.toVector,
       label = label
     )
@@ -293,7 +292,7 @@ object SurfaceSet:
     require(surfaces.values.forall(_.mesh.hasSameTopology(owner)), "all surface geometries must share ordered triangle topology")
     val shared = surfaces.map: (kind, geometry) =>
       val mesh = geometry.mesh.sharingTopology(owner)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
       kind -> SurfaceGeometry(mesh, geometry.hemisphere, geometry.kind, geometry.surfaceToWorld)
     new SurfaceSet(shared, defaultKind)
 

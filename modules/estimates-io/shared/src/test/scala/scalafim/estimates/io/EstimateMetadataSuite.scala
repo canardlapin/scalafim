@@ -2,7 +2,7 @@ package scalafim.estimates.io
 
 import scalafim.estimates.*
 import scalafim.archive.ContentDigest
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class EstimateMetadataSuite extends munit.FunSuite:
   private val model = ModelRevisionId("00000000-0000-4000-8000-000000000001")

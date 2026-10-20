@@ -7,7 +7,7 @@ import image4s.geometry.{Affine, D3, Frame, Grid}
 import ravel.{NDArray, Rank}
 import reframe4s.field.{CoordinateBoundaryPolicy, DenseMap}
 import reframe4s.resample.Interpolation
-import scalafim.image.world.{FslVolumeGeometry, ToolCoordinates}
+import neuroim4s.image.world.{FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.*
 import scalafim.transform.afni.AfniCardinal as Aff12Cardinal
 import scalafim.transform.fsl.FslHeaderGeometry

@@ -4,7 +4,7 @@ import neuroatlas4s.*
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
-import scalafim.image.{GridSpec, SpatialPullbacks}
+import neuroim4s.image.{GridSpec, SpatialPullbacks}
 import neuroim4s.spaces.{FrameCatalog, TemplateName, WorldSpace}
 import scalafim.spatial.{CoordinateMap, DomainKind, MorphismKind, SamplingGeometry}
 import scalafim.transform.{TransformProvenance, WorldTransform}
@@ -31,7 +31,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
   /** A small grid in the world a catalogued space's coordinates live in, on a fresh frame of that world. */
   private def gridIn(space: AnySpaceId): GridSpec[?] =
     val world = value(TemplateCatalog.standard.world(space))
-    GridSpec.in(FrameCatalog.frame(world))(scalafim.image.SpatialDims(2, 2, 2), Affine.identity[D3]).fold(error => fail(error.message), identity)
+    GridSpec.in(FrameCatalog.frame(world))(neuroim4s.image.SpatialDims(2, 2, 2), Affine.identity[D3]).fold(error => fail(error.message), identity)
 
   private def affineStep(from: AnySpaceId, to: AnySpaceId, forward: Affine[D3], reversible: Boolean = true): TransformStep =
     TransformStep(

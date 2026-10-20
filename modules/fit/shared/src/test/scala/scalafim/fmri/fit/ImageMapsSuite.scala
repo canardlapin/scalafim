@@ -1,8 +1,8 @@
 package scalafim.fmri.fit
 
 import image4s.SamplingAlignment
-import scalafim.image.SampleSpaces
-import scalafim.image.{space, timeSeries}
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.{space, timeSeries}
 
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
@@ -105,8 +105,8 @@ class ImageMapsSuite extends munit.FunSuite:
         .get
         .dense
 
-    val adaptedSpace = SampleSpaces.requireD3(adapted.space).toOption.get
-    val legacySpace = SampleSpaces.requireD3(legacy.space).toOption.get
+    val adaptedSpace = (adapted.space).requireD3.toOption.get
+    val legacySpace = (legacy.space).requireD3.toOption.get
     assert(SamplingAlignment.exact(adaptedSpace, legacySpace).isRight)
     assert(SamplingAlignment.exact(adaptedSpace.spatialOnly, source.shape.space).isRight)
     assertVectorClose(adapted.timeSeries(0).iterator.toVector, legacy.timeSeries(0).iterator.toVector, 1e-10)
@@ -126,7 +126,7 @@ class ImageMapsSuite extends munit.FunSuite:
     val maps = ResultManifest.fromDenseFit(result, source.shape).toOption.get.parameterMaps(ParameterMapKind.Coefficient)
     val foreignMaps = ResultManifest.fromDenseFit(result, unrelated.shape).toOption.get.parameterMaps(ParameterMapKind.Coefficient)
     val adapted = FitImageMaps.fromParameterMaps(maps).toOption.get.dense
-    val adaptedSpace = SampleSpaces.requireD3(adapted.space).toOption.get.spatialOnly
+    val adaptedSpace = (adapted.space).requireD3.toOption.get.spatialOnly
     assert(SamplingAlignment.exact(adaptedSpace, source.shape.space).isRight)
     assert(SamplingAlignment.exact(adaptedSpace, unrelated.shape.space).isLeft)
     assert(FitImageMaps.fromParameterMaps(Vector(maps.head, foreignMaps.last)).isLeft)

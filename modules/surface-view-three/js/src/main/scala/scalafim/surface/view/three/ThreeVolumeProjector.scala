@@ -1,11 +1,11 @@
 package scalafim.surface.view.three
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Float32Array
 
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 
@@ -75,10 +75,12 @@ object ThreeVolumeProjector:
             )
             // Resolve nearest ties in double precision, as the shared CPU sampler does.
             // Uploading fractional float32 coordinates can cross a half-voxel boundary.
-            val continuous = volume.space.coordToIndex(world)
+            val inverse = volume.grid.indexToFrame.inverse.matrix
+            val continuous = Vector.tabulate(3): row =>
+              (((0.0 + inverse(row, 0) * world(0)) + inverse(row, 1) * world(1)) + inverse(row, 2) * world(2)) + inverse(row, 3) * 1.0
             val voxel = continuous.map(v => math.round(v))
             val valid = voxel.indices.forall: axis =>
-              continuous(axis).isFinite && voxel(axis) >= 0L && voxel(axis) < volume.space.spatialDims(axis).toLong
+              continuous(axis).isFinite && voxel(axis) >= 0L && voxel(axis) < volume.space.grid.shape(axis).toLong
             val offset = vertex * 4
             coordinates(offset) = voxel(0).toFloat
             coordinates(offset + 1) = voxel(1).toFloat
@@ -87,7 +89,7 @@ object ThreeVolumeProjector:
             if valid then accepted += 1
             vertex += 1
 
-          val dimensions = volume.space.spatialDims
+          val dimensions = volume.space.grid.shape
           val volumeValues = dimensions.product
           val volumeData = new Float32Array(volumeValues)
           // Canonical ScalaFIM ordinals are Z-fast; WebGL texels are X-fast.
@@ -248,7 +250,7 @@ object ThreeVolumeProjector:
         finally renderer.applyDynamic("dispose")()
 
   private def float32Representable(volume: SomeScalarVolume[Double]): Boolean =
-    val count = volume.space.spatialDims.product
+    val count = volume.space.grid.shape.product
     var ordinal = 0
     var representable = true
     while representable && ordinal < count do
@@ -259,7 +261,7 @@ object ThreeVolumeProjector:
 
   private def worldPoint(geometry: SurfaceGeometry, vertex: VertexId): WorldPoint =
     SurfaceWorldLink.worldPoint(geometry, vertex)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def attempt[A](operation: String)(body: => A): Either[ThreeSurfaceError, A] =
     try Right(body)

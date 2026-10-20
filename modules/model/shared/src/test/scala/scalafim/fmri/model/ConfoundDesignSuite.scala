@@ -5,7 +5,7 @@ import scalafim.fmri.design.{RunIndex, ScanIndex}
 import scalafim.fmri.design.baseline.NuisanceCheck
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import gale.linalg.Matrix
 
 class ConfoundDesignSuite extends munit.FunSuite:

@@ -3,8 +3,8 @@ package scalafim.spatial
 import neuroim4s.spaces.SubjectId
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
+import neuroim4s.image.SampleSpaces.*
 import scalafim.surface.*
 
 enum ScenarioStatus:

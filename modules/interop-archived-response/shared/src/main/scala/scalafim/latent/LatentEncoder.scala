@@ -2,7 +2,7 @@ package scalafim.latent
 
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, SharedBasisArtifact, SharedBasisId, SharedBasisLocator}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.DMat
 
 enum LatentEncodingSpec:

@@ -1,6 +1,6 @@
 package scalafim.archive.io
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -22,7 +22,7 @@ import scalafim.archive.lna.{
 }
 import gale.linalg.DMat
 import scalafim.archive.lna.GaleArchiveTestData
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 
 import java.nio.file.Files
 import scala.concurrent.Future

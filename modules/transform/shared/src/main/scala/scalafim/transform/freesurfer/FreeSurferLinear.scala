@@ -2,7 +2,7 @@ package scalafim.transform.freesurfer
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry, ToolCoordinates}
+import neuroim4s.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.*
 
 /** A FreeSurfer volume geometry block (`VOL_GEOM`): dims, voxel sizes, column direction cosines and centre RAS. */
@@ -281,7 +281,7 @@ private[freesurfer] object FreeSurferText:
 
   def diagonal(scale: Vector[Double]): Affine[D3] =
     Affine.fromRowMajor[D3](Vector(scale(0), 0, 0, 0, 0, scale(1), 0, 0, 0, 0, scale(2), 0, 0, 0, 0, 1))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   /** Apply `steps` in order (first applied first). */
   def chain(steps: Affine[D3]*): Either[TransformError, Affine[D3]] =

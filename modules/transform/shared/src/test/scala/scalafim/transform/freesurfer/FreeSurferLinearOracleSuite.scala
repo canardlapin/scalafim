@@ -2,7 +2,7 @@ package scalafim.transform.freesurfer
 
 import image4s.geometry.{Affine, D3, Frame, Point}
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
-import scalafim.image.world.FreeSurferVolumeGeometry
+import neuroim4s.image.world.FreeSurferVolumeGeometry
 import scalafim.transform.*
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}

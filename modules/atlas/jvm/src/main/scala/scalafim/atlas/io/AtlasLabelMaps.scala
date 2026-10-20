@@ -1,13 +1,13 @@
 package scalafim.atlas.io
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import java.nio.file.Path
 import image4s.ImageMetadata
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.image.*
-import scalafim.image.io.Nifti
+import neuroim4s.image.*
+import neuroim4s.image.io.Nifti
 import neuroim4s.spaces.SpaceEvidence
 
 object AtlasLabelMaps:
@@ -32,7 +32,7 @@ object AtlasLabelMaps:
     val out = Array.ofDim[Int](vol.values.size)
     var i = 0
     while i < out.length do
-      val voxel = vol.space.indexToVoxel3D(i)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(vol.space.grid.shape), i)
       val value = vol(voxel)
       if !value.isFinite then
         throw new IllegalArgumentException(s"label volume contains non-finite value at linear index $i")

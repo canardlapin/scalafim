@@ -3,7 +3,7 @@ package scalafim.transform
 import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.field.CoordinateBoundaryPolicy
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
-import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry, ToolCoordinates}
+import neuroim4s.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.afni.{Aff12Codec, Aff12Expression, Aff12Interpretation, AfniCardinal}
 import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
 import scalafim.transform.freesurfer.{LtaCodec, LtaExpression, LtaGeometry, LtaInterpretation, MniXfm, MniXfmCodec, MniXfmInterpretation, RegisterDat, RegisterDatCodec, RegisterDatInterpretation, VolGeom}

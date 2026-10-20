@@ -8,7 +8,7 @@ import image4s.geometry.Frame
 import locus4s.data.Field as LocusField
 import ravel.NDArray as RavelArray
 import ravel.Shape
-import scalafim.image.*
+import neuroim4s.image.*
 
 final case class ParcelValue(
     region: AtlasRegionMetadata,
@@ -71,7 +71,7 @@ object AtlasReduce:
       reducer: Array[Double] => Double = Reducers.mean
   ): ParcelValues =
     summarizeVolumeEither(atlas, data, reducer)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def reduceSeriesEither(
       atlas: VolumeAtlas,
@@ -120,7 +120,7 @@ object AtlasReduce:
         EmptyParcelPolicy.Fill(Double.NaN)
   ): SomeScalarParcelSeries[Double] =
     reduceSeriesEither(atlas, data, mask, reducer, empty)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def summarizeStandard[
       F0 <: Frame[D3],

@@ -1,9 +1,11 @@
 package scalafim.atlas
 
+import image4s.SomeSampleSpace
+
 import neuroatlas4s.*
 
 import locus4s.DomainRegistry
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import neuroim4s.image.{SampleSpaces}
 import scalafim.surface.Hemisphere as SurfaceHemisphere
 import scalafim.surface.HemispherePair
 import scalafim.surface.LabelInfo

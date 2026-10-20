@@ -1,6 +1,6 @@
 package scalafim.surface.reference
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import scalafim.surface.{SurfaceGeometry, TriangleMesh}
 
 import java.nio.{ByteBuffer, ByteOrder}

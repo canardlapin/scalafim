@@ -3,7 +3,7 @@ package scalafim.surface.view
 import scala.util.hashing.MurmurHash3
 
 import intaglio.*
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import scalafim.surface.*
 
 opaque type SurfaceNetworkNodeId = String
@@ -15,7 +15,7 @@ object SurfaceNetworkNodeId:
     else Right(normalized)
 
   def unsafe(value: String): SurfaceNetworkNodeId =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (id: SurfaceNetworkNodeId)
     def value: String = id
@@ -57,7 +57,7 @@ object SurfaceNetworkEdge:
     else Right(new SurfaceNetworkEdge(source, target, weight))
 
   def unsafe(source: SurfaceNetworkNodeId, target: SurfaceNetworkNodeId, weight: Double): SurfaceNetworkEdge =
-    make(source, target, weight).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(source, target, weight).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 final case class SurfaceNetwork private (
   nodes: Vector[SurfaceNetworkNode],
@@ -92,7 +92,7 @@ object SurfaceNetworkThreshold:
     else Left(SurfaceViewError.InvalidNetwork(s"absolute edge threshold must be finite and non-negative; got $value"))
 
   def unsafe(value: Double): SurfaceNetworkThreshold =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (threshold: SurfaceNetworkThreshold)
     def value: Double = threshold
@@ -105,7 +105,7 @@ object SurfaceNetworkTopN:
     else Left(SurfaceViewError.InvalidNetwork(s"top-N edge count must be positive; got $value"))
 
   def unsafe(value: Int): SurfaceNetworkTopN =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (top: SurfaceNetworkTopN)
     def value: Int = top
@@ -118,7 +118,7 @@ object SurfaceNetworkRadius:
     else Left(SurfaceViewError.InvalidNetwork(s"edge radius must be finite and positive; got $value"))
 
   def unsafe(value: Double): SurfaceNetworkRadius =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(value).fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   extension (radius: SurfaceNetworkRadius)
     def value: Double = radius

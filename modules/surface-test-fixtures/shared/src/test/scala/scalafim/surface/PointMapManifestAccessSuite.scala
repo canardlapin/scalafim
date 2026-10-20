@@ -18,7 +18,7 @@ class PointMapManifestAccessSuite extends munit.FunSuite:
       PointMapManifest.fromBytes(bytes, AssetSha256.of(bytes).value)
     val manifest = parse(text).fold(e => fail(e.message), identity)
     val map = DeclaredPointMap.fromManifest(manifest, "0" * 64, _ => None).fold(e => fail(e.message), identity)
-    val point = map.map.forward(scalafim.image.WorldPoint(1, 2, 3)).placed.get
+    val point = map.map.forward(neuroim4s.image.WorldPoint(1, 2, 3)).placed.get
     assertEqualsDouble(point.x, 6.0, 1e-12)
     assertEqualsDouble(point.y, 0.0, 1e-12)
     assertEqualsDouble(point.z, 3.5, 1e-12)

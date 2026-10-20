@@ -1,7 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{Mask, SampleSpaces}
+import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.{SubjectId, TemplateName}
 import scalafim.surface.*
 
@@ -139,7 +139,7 @@ class TemplateSurfaceOperatorSuite extends munit.FunSuite:
 
   test("masked volume ribbon followed by weighted template resampling matches staged native resampling and reports bounded coverage"):
     val volumeSpace = SampleSpaces(Vector(6, 6, 6))
-    val mask = Mask.fromIndices(volumeSpace, PrimitiveBuffers.fromArray(Array.tabulate(216)(identity).filter(_ % 2 == 0)), "checkerboard")
+    val mask = Mask.fromIndices(volumeSpace, (Array.tabulate(216)(identity).filter(_ % 2 == 0)).clone(), "checkerboard")
     val root = ok(Domain.build(ok(DomainId("volume-root")), SpaceRef.Volume(ok(SubjectId("sub-template").asSpatial), None, ok(Modality("bold"))), ok(SamplingGeometry.volume(volumeSpace, Some(mask)))))
     def display(mesh: TriangleMesh, kind: SurfaceKind, isPial: Boolean = false): SurfaceGeometry =
       val coordinates = mesh.coordinates.clone()

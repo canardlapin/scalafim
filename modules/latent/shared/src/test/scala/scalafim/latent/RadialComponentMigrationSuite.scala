@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Recorded against the original private six-face traversal before provider migration. */
 class RadialComponentMigrationSuite extends munit.FunSuite:

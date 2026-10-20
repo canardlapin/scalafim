@@ -10,7 +10,7 @@ import mvpa4s.*
 import mvpa4s.measurement.*
 import mvpa4s.predictive.*
 import scalafim.fmri.mvpa.spatial.*
-import scalafim.image.*
+import neuroim4s.image.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import ravel.DType.given
 
@@ -91,10 +91,10 @@ object AtlasMvpaWorkflows:
       AtlasRegionMetadata(RegionId(2), "Somatomotor", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("Somatomotor"))),
       AtlasRegionMetadata(RegionId(3), "Default", hemisphere = Some(Hemisphere.Bilateral), network = Some(NetworkId("Default")))
     ))
-  private def space = SampleSpaces.regular(dims, VoxelSpacing.unsafe(2.0, 2.0, 2.0), WorldPoint.Origin).fold(error => throw new IllegalArgumentException(error.message), identity)
+  private def space = SampleSpaces.regular(dims, VoxelSpacing.unsafe(2.0, 2.0, 2.0), WorldPoint.Origin).fold(error => throw new IllegalArgumentException(error.message), value => value)
   private def labelVolume() = SomeLabelVolume.unsafeCopyFromCanonicalArray(labelData(), space, "workflow-labels")
   private def labelData() =
-    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
+    val out = Array.fill[Int](dims.product)(0)
     def fill(xs: Range, ys: Range, zs: Range, id: Int): Unit =
       for
         x <- xs

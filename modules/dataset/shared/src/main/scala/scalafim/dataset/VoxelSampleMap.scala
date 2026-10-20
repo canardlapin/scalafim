@@ -1,9 +1,9 @@
 package scalafim.dataset
 
 import ravel.Array1
-import scalafim.image.Mask
-import scalafim.image.SampleSpaces
-import scalafim.image.space
+import neuroim4s.image.Mask
+import neuroim4s.image.SampleSpaces
+import neuroim4s.image.space
 
 final class VoxelSampleMap private (
     val sampleVoxels: Vector[VoxelIndex],

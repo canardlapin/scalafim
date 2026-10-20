@@ -2,8 +2,8 @@ package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel, RunScopedPath}
 import gale.linalg.DMat
-import scalafim.image.SomeSampleSpace
-import scalafim.image.SampleSpaces.*
+import image4s.SomeSampleSpace
+import neuroim4s.image.SampleSpaces.*
 
 object LnaExplicitLatent:
   val MetadataKindKey: String =
@@ -86,7 +86,7 @@ object LnaExplicitLatent:
           datasets = refs,
           header = Map(
             "response.kind" -> MetadataKindValue,
-            "space.dims" -> space.spatialDims.mkString("x"),
+            "space.dims" -> space.grid.shape.mkString("x"),
             "timepoints" -> valid.timepoints.toString,
             "samples" -> valid.samples.toString,
             "coefficients" -> valid.coefficients.toString,
@@ -201,8 +201,8 @@ object LnaExplicitLatent:
               Left(ArchiveError.NonFiniteValue(index))
             case None =>
               space match
-                case Some(value) if value.spatialDims.product != response.samples =>
-                  Left(ArchiveError.ShapeMismatch(s"space has ${value.spatialDims.product} samples but loadings have ${response.samples} rows"))
+                case Some(value) if value.grid.shape.product != response.samples =>
+                  Left(ArchiveError.ShapeMismatch(s"space has ${value.grid.shape.product} samples but loadings have ${response.samples} rows"))
                 case _ =>
                   Right(response)
 

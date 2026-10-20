@@ -3,8 +3,8 @@ package scalafim.transform
 import image4s.Continuous
 import image4s.geometry.{Affine, D3}
 import ravel.NDArray
-import scalafim.image.{AxisCodes, Reorientation, SampleSpaces, SomeNeuroVolume}
-import scalafim.image.SomeNeuroVolume.*
+import neuroim4s.image.{AxisCodes, Reorientation, SampleSpaces, SomeNeuroVolume}
+import neuroim4s.image.SomeNeuroVolume.*
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.OracleFixtures
 

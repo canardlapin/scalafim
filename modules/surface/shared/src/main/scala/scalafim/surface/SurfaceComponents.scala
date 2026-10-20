@@ -1,7 +1,5 @@
 package scalafim.surface
 
-import scalafim.image.PrimitiveBuffers
-
 final case class SurfaceThreshold(low: Double, high: Double):
   require(low <= high, "threshold low must be <= high")
 
@@ -54,8 +52,8 @@ object SurfaceComponents:
       i += 1
 
     SurfaceComponentResult(
-      index = SurfaceField(field.geometry, PrimitiveBuffers.fromArray(indices), PrimitiveBuffers.fromArray(indexData), field.label),
-      size = SurfaceField(field.geometry, PrimitiveBuffers.fromArray(indices), PrimitiveBuffers.fromArray(sizeData), field.label)
+      index = SurfaceField(field.geometry, (indices).clone(), (indexData).clone(), field.label),
+      size = SurfaceField(field.geometry, (indices).clone(), (sizeData).clone(), field.label)
     )
 
   def clusterThreshold(
@@ -75,7 +73,7 @@ object SurfaceComponents:
         if components.size.data(i) >= minSize then field.data(i) else fill
       i += 1
 
-    SurfaceField(field.geometry, PrimitiveBuffers.fromArray(indices), PrimitiveBuffers.fromArray(out), field.label)
+    SurfaceField(field.geometry, (indices).clone(), (out).clone(), field.label)
 
   private def copyIndices[A](field: SurfaceField[A]): Array[Int] =
     Array.tabulate(field.size)(i => field.indices(i))

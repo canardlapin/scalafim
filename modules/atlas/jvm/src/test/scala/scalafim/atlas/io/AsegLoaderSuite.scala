@@ -4,7 +4,7 @@ import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.Files
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 class AsegLoaderSuite extends munit.FunSuite:
 
@@ -60,7 +60,7 @@ class AsegLoaderSuite extends munit.FunSuite:
 
     val atlas = AsegLoader.loadFromPaths(FreeSurferAseg.default, volumePath)
 
-    assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
+    assertEquals(atlas.space.grid.shape, Vector(2, 2, 1))
     assertEquals(atlas.regions.ids.map(_.value), Vector(10, 16, 49))
     assertEquals(atlas.regions.ids, Vector(RegionId(10), RegionId(16), RegionId(49)))
     assertEquals(atlas.region(RegionId(10)).map(_.label), Some("Thalamus"))

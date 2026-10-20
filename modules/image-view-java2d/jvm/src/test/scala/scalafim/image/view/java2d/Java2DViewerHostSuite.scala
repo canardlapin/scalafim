@@ -2,8 +2,8 @@ package scalafim.image.view.java2d
 
 import intaglio.*
 import intaglio.java2d.Java2DProgram
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.image.view.*
 
 class Java2DViewerHostSuite extends munit.FunSuite:
@@ -12,7 +12,7 @@ class Java2DViewerHostSuite extends munit.FunSuite:
     SampleSpaces.requireVolumeD3(SampleSpaces(Vector(3, 3, 3))).toOption.get
   private val space = sampleSpace.grid
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-    PrimitiveBuffers.fillConst[Double](space.nVoxels, 1.0),
+    Array.fill[Double](space.shape.product)(1.0),
     sampleSpace,
     "java2d"
   )

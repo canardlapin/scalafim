@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.SpatialPoint
+import neuroim4s.image.SpatialPoint
 import neuroim4s.spaces.TemplateName
 import scalafim.spatial.NeurofunctorLawTriplets.*
 

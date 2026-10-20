@@ -4,8 +4,8 @@ import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.Point
 import intaglio.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 
 class ViewerSceneSuite extends munit.FunSuite:
 
@@ -18,7 +18,7 @@ class ViewerSceneSuite extends munit.FunSuite:
 
   private val anatomy =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](referenceSpace.nVoxels)(_.toDouble),
+      Array.tabulate[Double](referenceSpace.shape.product)(_.toDouble),
       referenceSampleSpace,
       "anatomy"
     )
@@ -32,12 +32,13 @@ class ViewerSceneSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
-    SampleSpaces.derivedD3(referenceSampleSpace, Vector(1, 1, 1), affine)
+    image4s.geometry.Grid.forFrame(referenceSampleSpace.grid.frame)(Vector(1, 1, 1), affine)
+      .map(grid => image4s.SampleSpace.create(grid, referenceSampleSpace.nonSpatialAxes))
       .fold(error => fail(error.message), identity)
 
   private val shiftedMask =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.fillConst[Boolean](1, true),
+      Array.fill[Boolean](1)(true),
       shiftedMaskSampleSpace,
       "mask"
     )
@@ -47,7 +48,7 @@ class ViewerSceneSuite extends munit.FunSuite:
       LayerId.unsafe("anatomy"),
       anatomy,
       SliceSampling.Linear(),
-      ScalarColorizer(DisplayWindow.unsafe(0.0, referenceSpace.nVoxels.toDouble - 1.0))
+      ScalarColorizer(DisplayWindow.unsafe(0.0, referenceSpace.shape.product.toDouble - 1.0))
     )
 
   private val maskLayer =

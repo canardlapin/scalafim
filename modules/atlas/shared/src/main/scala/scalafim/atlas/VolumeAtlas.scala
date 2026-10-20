@@ -6,7 +6,7 @@ import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.geometry.D3
 import locus4s.DomainRegistry
-import scalafim.image.*
+import neuroim4s.image.*
 
 /** A volumetric atlas whose sole membership owner is its exact realization.
   *

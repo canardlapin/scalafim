@@ -2,7 +2,7 @@ package scalafim.spatial.io
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.field.CoordinateBoundaryPolicy
-import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
+import neuroim4s.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
 import scalafim.spatial.*
 import scalafim.transform.*
 import scalafim.transform.afni.{Aff12Interpretation, AfniCardinal}

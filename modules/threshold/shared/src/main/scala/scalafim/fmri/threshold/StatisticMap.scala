@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
+import neuroim4s.image.{SomeMaskVolume, SomeScalarVolume}
 
 final case class StatisticMap private (
     volume: SomeScalarVolume[Double],

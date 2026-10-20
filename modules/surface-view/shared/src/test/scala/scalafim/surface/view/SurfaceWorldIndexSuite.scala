@@ -1,7 +1,7 @@
 package scalafim.surface.view
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 import scalafim.surface.*
 
 class SurfaceWorldIndexSuite extends munit.FunSuite:

@@ -1,8 +1,10 @@
 package scalafim.examples.atlas
 
+import image4s.SomeSampleSpace
+
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.image.*
+import neuroim4s.image.*
 import ravel.DType.given
 
 object AtlasExampleData:
@@ -12,7 +14,7 @@ object AtlasExampleData:
   val space: SomeSampleSpace =
     SampleSpaces
       .regular(dims, VoxelSpacing.unsafe(2.0, 2.0, 2.0), WorldPoint.Origin)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   val regions: RegionIndex =
     RegionIndex(
@@ -80,7 +82,7 @@ object AtlasExampleData:
     SomeScalarVolume.unsafeCopyFromCanonicalArray(out, space, "toy-stat")
 
   private def labelData(): Array[Int] =
-    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
+    val out = Array.fill[Int](dims.product)(0)
     fillBlock(out, 0 to 1, 0 to 1, 0 to 0, 1)
     fillBlock(out, 2 to 3, 0 to 1, 0 to 0, 2)
     fillBlock(out, 1 to 2, 2 to 3, 1 to 1, 3)

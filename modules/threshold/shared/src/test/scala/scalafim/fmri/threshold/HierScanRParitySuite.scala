@@ -2,7 +2,7 @@ package scalafim.fmri.threshold
 
 import scalafim.fmri.threshold.fixtures.HierScanRParityFixtures
 import scalafim.fmri.threshold.fixtures.HierScanRParityFixtures.RHit
-import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
+import neuroim4s.image.{SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
 
 /** HierScan against `neurothresh::hier_descend` (step-down, whole brain) on
   * fixed statistic maps and null matrices; see
@@ -36,7 +36,7 @@ class HierScanRParitySuite extends munit.FunSuite:
       priorEta: Double,
       prior: Vector[Double]
   ): HierScanResult =
-    def vol(values: Vector[Double]) = SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(toCanonical(dims, values)), SampleSpaces(dims))
+    def vol(values: Vector[Double]) = SomeScalarVolume.unsafeCopyFromCanonicalArray((toCanonical(dims, values)).clone(), SampleSpaces(dims))
     val volume = vol(stat)
     val draws = new NullDraw:
       override val nPermutations: PermutationCount = PermutationCount.unsafe(nulls.length)

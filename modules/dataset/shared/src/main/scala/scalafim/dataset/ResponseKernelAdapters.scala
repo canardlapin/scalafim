@@ -3,7 +3,7 @@ package scalafim.dataset
 import cats.data.EitherT
 import cats.effect.kernel.Sync
 import cats.syntax.all.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.NeuroAffineSyntax.*
 import scalafim.response.*
 import locus4s.provenance.*
 
@@ -170,9 +170,9 @@ object DatasetResponseSchema:
 
   private def exactSpaceReference(shape: DatasetShape): String =
     val space = shape.space
-    val dimensions = space.dims.mkString("x")
-    val spacing = space.spacing.map(rawHex).mkString(",")
-    val origin = space.origin.map(rawHex).mkString(",")
+    val dimensions = space.logicalShape.mkString("x")
+    val spacing = space.grid.indexToFrame.neuroVoxelSizes.map(rawHex).mkString(",")
+    val origin = Vector.tabulate(3)(axis => space.grid.indexToFrame.matrix(axis, 3)).map(rawHex).mkString(",")
     val transform = space.grid.indexToFrame.rowMajor.map(rawHex)
     s"$dimensions:$spacing:$origin:${transform.mkString(",")}"
 

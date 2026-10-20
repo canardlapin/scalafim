@@ -1,8 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.DMat
-import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
-import scalafim.image.SampleSpaces.spatialDims
+import neuroim4s.image.{SomeMaskVolume, SomeScalarVolume}
 
 enum CorrectionPolicy:
   case WestfallYoungStepDown
@@ -138,7 +137,7 @@ object MaxT:
       cutoff <- MaxNull.cutoff(nulls, alpha)
       reject <- field.maskFromMaskSpace(rejectedIndices(p, alpha), "MaxT")
     yield
-      val full = Array.fill(statistic.volume.space.spatialDims.product)(Double.NaN)
+      val full = Array.fill(statistic.volume.space.grid.shape.product)(Double.NaN)
       var i = 0
       while i < field.size do
         full(field.originalIndex(i)) = p(i).value

@@ -1,6 +1,6 @@
 package scalafim.surface.reference
 
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 
 import java.util.Base64
 

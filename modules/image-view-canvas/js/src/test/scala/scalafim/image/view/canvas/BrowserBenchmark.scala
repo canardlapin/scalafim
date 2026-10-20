@@ -9,7 +9,7 @@ import image4s.geometry.Frame
 import intaglio.*
 import intaglio.canvas.*
 import ravel.NDArray as RavelArray
-import scalafim.image.*
+import neuroim4s.image.*
 import scalafim.image.view.*
 
 /** Opt-in real-browser performance receipt. Timings are diagnostic and are
@@ -68,7 +68,7 @@ object BrowserBenchmark:
     val phaseProgram = render(phaseRuntime, affine.model, affine.session, context).compiled
     val warmCompileOnly = measureBatch("warm-compile-only", 1000) {
       phaseRuntime.compile(affine.model, affine.session)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
     }
     val warmDrawOnly = measureBatch("warm-draw-only", 1000) {
       CanvasRenderer.drawCached(phaseProgram.program, context, phaseRuntime.rasterCache)
@@ -183,7 +183,7 @@ object BrowserBenchmark:
     val source = VolumeSource.lazyFrames(space, 1) { _ =>
       reads += 1
       Right(volume)
-    }.fold(error => throw new IllegalArgumentException(error.message), identity)
+    }.fold(error => throw new IllegalArgumentException(error.message), value => value)
     val anatomy = SliceLayer.fromSource(
       LayerId.unsafe("anatomy"),
       source,
@@ -225,7 +225,7 @@ object BrowserBenchmark:
       grid,
       grid,
       field
-    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    ).fold(error => throw new IllegalArgumentException(error.message), value => value)
     val layer = SliceLayer(
       LayerId.unsafe("warped"),
       volume,
@@ -244,7 +244,7 @@ object BrowserBenchmark:
     label: String
   ): SomeScalarVolume[Double] =
     val shape = space.grid.shape
-    val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
+    val data = Array.tabulate[Double](shape.product) { index =>
       val x = index % shape(0)
       val y = (index / shape(0)) % shape(1)
       val z = index / (shape(0) * shape(1))
@@ -259,7 +259,7 @@ object BrowserBenchmark:
 
   private def makeRuntime(): CanvasViewerRuntime =
     CanvasViewerHost.runtime(viewerCacheCapacity = 96, rasterCacheCapacity = 48)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def renderOnce(
     model: ViewerModel,
@@ -278,21 +278,21 @@ object BrowserBenchmark:
       session,
       viewerCacheCapacity = 24,
       rasterCacheCapacity = 12
-    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    ).fold(error => throw new IllegalArgumentException(error.message), value => value)
     val initial = controller.snapshot()
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val overlay = LayerId.unsafe("overlay")
     val threshold = DisplayThreshold.transparentBand(450.0, 900.0)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val view = PanelView.unsafe(ZoomLevel.unsafe(2.0), centerX = 0.55, centerY = 0.45)
     controller.dispatch(ViewerAction.SetVisibility(overlay, visible = true))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     controller.dispatch(ViewerAction.SetThreshold(overlay, threshold))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     controller.dispatch(ViewerAction.SetPanelView(AnatomicalPlane.Axial, view))
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val compiled = controller.compile()
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val orientationAndHandedness = compiled.frame.panels.all.forall { panel =>
       val actual = panel.grid.plane
       val expected = SlicePlane.canonical(
@@ -308,15 +308,15 @@ object BrowserBenchmark:
     val deviceX = (panel.rect.left + panel.rect.width / 2.0) * session.device.width
     val deviceY = (1.0 - panel.rect.bottom - panel.rect.height / 2.0) * session.device.height
     controller.pick(deviceX, deviceY)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val picked = controller.session
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     controller.scroll(deviceX, deviceY, 1)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val rendered = controller.render(context)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val current = controller.session
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val expectedCursor = ViewerState.move(
       picked.state.cursor,
       AnatomicalPlane.Axial.positiveNormal.unit.scaled(picked.state.sliceStep.millimeters)
@@ -330,7 +330,7 @@ object BrowserBenchmark:
         current.state.presentation(overlay).threshold.contains(threshold) &&
         rendered.compiled.frame.readouts.axial.layers.map(_.layer) == model.layers.map(_.id)
     controller.restore(initial)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
     val restored = controller.session.contains(initial.session)
     controller.close()
     val lifecycleClosed = controller.compile() == Left(CanvasViewerError.ControllerClosed)
@@ -347,7 +347,7 @@ object BrowserBenchmark:
     context: CanvasRenderingContext2D
   )(using CanvasRasterFactory): CanvasViewerRender =
     runtime.render(model, session, context)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   private def measure(
     name: String,
@@ -404,7 +404,7 @@ object BrowserBenchmark:
     var index = 0
     while index < repetitions do
       runtime.prefetchSlices(model, current, AnatomicalPlane.Axial, Vector(1))
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .fold(error => throw new IllegalArgumentException(error.message), value => value)
       val next = current.copy(
         state = current.state.copy(
           cursor = ViewerState.move(current.state.cursor, AnatomicalDirection.Superior.unit.scaled(current.state.sliceStep.millimeters)).toOption.get

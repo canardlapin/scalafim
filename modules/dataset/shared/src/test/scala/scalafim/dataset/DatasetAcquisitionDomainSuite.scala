@@ -1,11 +1,10 @@
 package scalafim.dataset
 
+import image4s.SomeSampleSpace
+
 import gale.linalg.DMat
 import image4s.locus.GridDomain
-import scalafim.image.{
-  SampleSpaces,
-  SomeSampleSpace,
-}
+import neuroim4s.image.{SampleSpaces}
 
 class DatasetAcquisitionDomainSuite extends munit.FunSuite:
 

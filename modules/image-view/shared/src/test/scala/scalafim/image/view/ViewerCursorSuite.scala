@@ -2,7 +2,7 @@ package scalafim.image.view
 
 import image4s.geometry.{Affine, D3, Point}
 import reframe4s.lie.FramedAffine
-import scalafim.image.*
+import neuroim4s.image.*
 import neuroim4s.spaces.{FrameCatalog, Spaces, TemplateName, WorldSpace}
 import reframe4s.core.WorldLink
 
@@ -14,7 +14,7 @@ class ViewerCursorSuite extends munit.FunSuite:
   private def volumeIn(template: String): SomeScalarVolume[Double] =
     val space = ok(SampleSpaces.inWorld(SampleSpaces(Vector(5, 5, 5)), WorldSpace.Template(TemplateName(template).toOption.get)))
     val typed = ok(SampleSpaces.requireVolumeD3(space))
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.tabulate[Double](typed.grid.shape.product)(_.toDouble), typed, template)
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate[Double](typed.grid.shape.product)(_.toDouble), typed, template)
 
   private val reference = volumeIn("MNI152NLin2009cAsym")
   private val model = ok(

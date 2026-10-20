@@ -14,8 +14,8 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.SomeSampleSpace
-import scalafim.image.SampleSpaces.*
+import image4s.SomeSampleSpace
+import neuroim4s.image.SampleSpaces.*
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -39,8 +39,8 @@ object BoldZipLatentArchiveCodec:
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-latent"
   ): Either[ArchiveError, LnaArchive] =
-    if response.shape.samples != space.spatialDims.product then
-      Left(ArchiveError.ShapeMismatch(s"BOLDZip response has ${response.shape.samples} samples but space has ${space.spatialDims.product} voxels"))
+    if response.shape.samples != space.grid.shape.product then
+      Left(ArchiveError.ShapeMismatch(s"BOLDZip response has ${response.shape.samples} samples but space has ${space.grid.shape.product} voxels"))
     else
       val base = ArchivePath(s"/scans/${runLabel.value}/step_00_boldzip_sr")
       val temporalPath = base / "temporal_basis"
@@ -149,7 +149,7 @@ object BoldZipLatentArchiveCodec:
             datasets = refs,
             header = Map(
               "response.kind" -> KindValue,
-              "space.dims" -> space.spatialDims.mkString("x"),
+              "space.dims" -> space.grid.shape.mkString("x"),
               "timepoints" -> response.shape.timepoints.toString,
               "samples" -> response.shape.samples.toString,
               "carriers" -> response.shape.coefficients.toString,

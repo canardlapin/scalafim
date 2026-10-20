@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import neuroim4s.spaces.SubjectId
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Routing parity with neurofunctor `find_path_with_inverses`, `inspect_path` and `all_paths`.
   *

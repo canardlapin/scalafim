@@ -4,8 +4,8 @@ import reframe4s.core.WorldLink
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import intaglio.*
-import scalafim.image.*
-import scalafim.image.world.*
+import neuroim4s.image.*
+import neuroim4s.image.world.*
 import neuroim4s.spaces.*
 import scalafim.surface.*
 

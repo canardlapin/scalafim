@@ -1,7 +1,7 @@
 package scalafim.estimates
 
 import scalafim.archive.ContentDigest
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class EstimateContractSuite extends munit.FunSuite:
   private val dataset = DatasetId("00000000-0000-4000-8000-000000000001")

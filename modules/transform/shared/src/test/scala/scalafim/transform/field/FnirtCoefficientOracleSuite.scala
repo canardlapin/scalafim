@@ -3,7 +3,7 @@ package scalafim.transform.field
 import image4s.geometry.{ContinuousIndex, D3, Frame, Point}
 import reframe4s.field.{BSplineOrder, CoordinateBoundaryPolicy}
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
-import scalafim.image.world.{FslVolumeGeometry, ToolCoordinates}
+import neuroim4s.image.world.{FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.*
 import scalafim.transform.Conversion.EncodedTransform
 import scalafim.transform.fsl.{FlirtCodec, FlirtMatrix, FslHeaderGeometry}

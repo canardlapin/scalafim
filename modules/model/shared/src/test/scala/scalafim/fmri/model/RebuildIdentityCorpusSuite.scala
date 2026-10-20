@@ -6,7 +6,7 @@ import scalafim.fmri.design.{DesignError, MissingValuePolicy}
 import scalafim.fmri.design.baseline.{BaselineBasis, DctCutoffPeriod, Intercept}
 import scalafim.fmri.design.formula.{DerivedEventPlan, DerivedMissingRows, FormulaParser}
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** A printed formula, a portable build spec and a saved model document are
   * second views of one model: each must rebuild the design the original spec

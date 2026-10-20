@@ -3,8 +3,8 @@ package scalafim.surface.view
 import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.core.{LinkDirection, WorldLink, WorldLinkError}
 import reframe4s.lie.FramedAffine
-import scalafim.image.{GridSpec, SpatialDims, VoxelPoint}
-import scalafim.image.world.*
+import neuroim4s.image.{GridSpec, SpatialDims, VoxelPoint}
+import neuroim4s.image.world.*
 import neuroim4s.spaces.*
 import scalafim.surface.*
 

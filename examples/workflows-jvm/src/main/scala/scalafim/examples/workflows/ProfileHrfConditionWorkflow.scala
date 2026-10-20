@@ -10,7 +10,7 @@ import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule, ShapePoint}
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** One voxel's condition-profile output as the workflow reports it. */
 final case class ProfileHrfVoxelRow(

@@ -1,7 +1,7 @@
 package scalafim.transform
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.world.{FreeSurferVolumeGeometry, FslAffineSource, FslHeaderPolicy, FslVolumeGeometry, ToolCoordinates}
+import neuroim4s.image.world.{FreeSurferVolumeGeometry, FslAffineSource, FslHeaderPolicy, FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.oracle.OracleTable
 
 /** Convention kernel against reference implementations (fslpy, nibabel); see oracle/conventions/manifest.json. */

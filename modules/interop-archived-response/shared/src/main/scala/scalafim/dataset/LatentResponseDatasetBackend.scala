@@ -1,8 +1,10 @@
 package scalafim.dataset
 
+import image4s.SomeSampleSpace
+
 import image4s.geometry.Grid
-import scalafim.image.{Mask, SomeSampleSpace}
-import scalafim.image.space
+import neuroim4s.image.{Mask}
+import neuroim4s.image.space
 import scalafim.latent.{LatentResponse, LatentSelection}
 import locus4s.provenance.OperationId
 
@@ -92,7 +94,7 @@ object LatentResponseDatasetBackend:
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): LatentResponseDatasetBackend =
     make(id, response, space, mask, metadata)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def unsafe(
       id: DatasetId,
@@ -101,7 +103,7 @@ object LatentResponseDatasetBackend:
       metadata: DatasetMetadata
   ): LatentResponseDatasetBackend =
     make(id, response, space, metadata)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
   def unsafe(
       id: DatasetId,
@@ -109,7 +111,7 @@ object LatentResponseDatasetBackend:
       space: SomeSampleSpace
   ): LatentResponseDatasetBackend =
     make(id, response, space)
-      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .fold(error => throw new IllegalArgumentException(error.message), value => value)
 
 private def validateMaskSpace(
     mask: Mask.MaskVol,

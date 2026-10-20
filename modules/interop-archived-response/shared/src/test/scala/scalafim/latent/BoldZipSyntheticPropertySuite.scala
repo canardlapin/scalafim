@@ -1,9 +1,9 @@
 package scalafim.latent
 
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 import scalafim.archive.lna.{DatasetRole, Payload}
-import scalafim.image.SomeSampleSpace
+import image4s.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class BoldZipSyntheticPropertySuite extends munit.FunSuite:

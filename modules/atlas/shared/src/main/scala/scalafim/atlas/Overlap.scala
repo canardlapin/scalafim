@@ -2,10 +2,10 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.SampleSpaces.*
 
 import image4s.geometry.Grid
-import scalafim.image.*
+import neuroim4s.image.*
 
 final case class RegionOverlap(
   region1: AtlasRegionMetadata,
@@ -99,7 +99,7 @@ object AtlasOverlap:
 
     var i = 0
     while i < vol1.values.size do
-      val voxel = atlas1.space.indexToVoxel3D(i)
+      val voxel = neuroim4s.image.Indexing.indexToGrid(neuroim4s.image.SpatialDims.unsafeFromVector(atlas1.space.grid.shape), i)
       val a = vol1(voxel)
       val b = vol2(voxel)
       accumulate(a, b, n1, n2, both)

@@ -18,7 +18,7 @@ import scalafim.fmri.model.{
   MissingDataPolicy,
   ModelBuildSpec
 }
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
 

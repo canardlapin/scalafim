@@ -1,7 +1,7 @@
 package scalafim.surface.reference
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.WorldPoint
+import neuroim4s.image.WorldPoint
 
 import java.nio.{ByteBuffer, ByteOrder}
 

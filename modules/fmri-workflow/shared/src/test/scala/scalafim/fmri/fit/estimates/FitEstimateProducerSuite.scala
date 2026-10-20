@@ -10,7 +10,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModel}
 import scalafim.fmri.fit.{ChunkSize, EstimateOutput, EstimateUncertaintyRequest, FirstLevelEstimateRequest, FirstLevelEstimates}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 object ProducerFixture:
   private def checked[E, A](value: Either[E, A]): A = value.fold(e => throw new IllegalArgumentException(e.toString), value => value)

@@ -2,8 +2,8 @@ package scalafim.spatial
 
 import neuroim4s.spaces.SubjectId
 
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialAxis, VoxelCoord}
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.{SampleSpaces, SpatialAxis, VoxelCoord}
+import neuroim4s.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DemandSuite extends munit.FunSuite:

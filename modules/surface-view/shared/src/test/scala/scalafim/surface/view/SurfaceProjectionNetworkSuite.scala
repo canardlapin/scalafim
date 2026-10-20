@@ -3,8 +3,8 @@ package scalafim.surface.view
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import intaglio.*
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.surface.*
 
 class SurfaceProjectionNetworkSuite extends munit.FunSuite:
@@ -42,8 +42,8 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
   private val pair = SurfaceGeometryPair(white, pial)
   private val volumeSpace = SampleSpaces(Vector(5, 5, 5))
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-    PrimitiveBuffers.tabulate[Double](125): index =>
-      val grid = volumeSpace.indexToGrid3D(index)
+    Array.tabulate[Double](125): index =>
+      val grid = neuroim4s.image.Indexing.indexToGrid3D(volumeSpace.grid.shape, index)
       grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
     volumeSpace,
     "asymmetric-volume"
@@ -78,7 +78,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
 
   test("projection quality and fill policy preserve rejected samples explicitly"):
     val emptyMask = SomeMaskVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.fillConst[Boolean](125, false),
+      Array.fill[Boolean](125)(false),
       volumeSpace,
       "empty"
     )
@@ -101,8 +101,8 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
   test("receipts count non-finite samples as rejected, not accepted"):
     // Vertex 0's midpoint (1, 0, 1) reads a NaN voxel.
     val withNaN = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-      PrimitiveBuffers.tabulate[Double](125): index =>
-        val grid = volumeSpace.indexToGrid3D(index)
+      Array.tabulate[Double](125): index =>
+        val grid = neuroim4s.image.Indexing.indexToGrid3D(volumeSpace.grid.shape, index)
         if grid == Vector(1, 0, 1) then Double.NaN
         else grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
       volumeSpace,
@@ -118,8 +118,8 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
     assertEquals(projection.receipt.tally.nonFinite, 1L)
 
   private val volumeWithNaNAt101 = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-    PrimitiveBuffers.tabulate[Double](125): index =>
-      val grid = volumeSpace.indexToGrid3D(index)
+    Array.tabulate[Double](125): index =>
+      val grid = neuroim4s.image.Indexing.indexToGrid3D(volumeSpace.grid.shape, index)
       if grid == Vector(1, 0, 1) then Double.NaN
       else grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
     volumeSpace,

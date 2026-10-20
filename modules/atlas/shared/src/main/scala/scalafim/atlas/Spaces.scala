@@ -5,12 +5,7 @@ import neuroatlas4s.*
 import image4s.geometry.Affine as ProviderAffine
 import image4s.geometry.D3
 import image4s.geometry.Frame
-import scalafim.image.{
-  GridSpec,
-  SpatialPoint,
-  SpatialPullback,
-  SpatialPullbacks
-}
+import neuroim4s.image.{GridSpec, SpatialPoint, SpatialPullback, SpatialPullbacks}
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
 import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
 import scalafim.transform.WorldTransform

@@ -20,7 +20,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, NormalizationRule, ShapePoint}
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, ProfileCriterion, ProfileHrfPlan, ProfileTrialDrive}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 
 /** Diagnostic public-path workload. It cannot qualify PHRF-33 while original-family certification is unavailable.
   * Fixture construction, preparation, execution and sink work remain separate measurements; no truth coordinates enter

@@ -4,7 +4,7 @@ import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.core.SpatialMap
 import reframe4s.field.CoordinateBoundaryPolicy
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.ToolCoordinates
+import neuroim4s.image.world.ToolCoordinates
 import scalafim.transform.*
 import scalafim.transform.field.{DenseContext, DenseLattice}
 

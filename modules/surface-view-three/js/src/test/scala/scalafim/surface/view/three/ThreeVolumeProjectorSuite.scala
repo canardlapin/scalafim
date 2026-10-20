@@ -2,16 +2,16 @@ package scalafim.surface.view.three
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scalafim.image.*
-import scalafim.image.SampleSpaces.*
+import neuroim4s.image.*
+import neuroim4s.image.SampleSpaces.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 
 class ThreeVolumeProjectorSuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(3, 2, 4))
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
-    PrimitiveBuffers.tabulate[Double](24): ordinal =>
-      val grid = space.indexToGrid3D(ordinal)
+    Array.tabulate[Double](24): ordinal =>
+      val grid = neuroim4s.image.Indexing.indexToGrid3D(space.grid.shape, ordinal)
       grid(0).toDouble + 10.0 * grid(1) + 100.0 * grid(2),
     space,
     "asymmetric-ramp"
@@ -106,8 +106,8 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
     assertEquals(result.projection.receipt.tally, SurfaceSampleTally(7, 2, 0, 0, 5))
 
   test("valid zero and non-finite texels keep the shared sample-accounting policy"):
-    val data = PrimitiveBuffers.tabulate[Double](24): ordinal =>
-      if ordinal == space.gridToIndex3D(1, 0, 0) then Double.NaN else 0.0
+    val data = Array.tabulate[Double](24): ordinal =>
+      if ordinal == neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 0) then Double.NaN else 0.0
     val input = SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "zero-and-nan")
     val result = project(Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(3.0, 0.0, 0.0)), input)
     assertEqualsDouble(result.projection.values.valueAt(VertexId(0)).get, 0.0, 0.0)
@@ -131,8 +131,8 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
 
   test("GPU refuses finite volume values that float32 cannot represent instead of dropping them"):
     // 1e300 is a finite observation on the CPU path but would upload as an infinite texel.
-    val data = PrimitiveBuffers.tabulate[Double](24): ordinal =>
-      if ordinal == space.gridToIndex3D(1, 0, 0) then 1e300 else 0.0
+    val data = Array.tabulate[Double](24): ordinal =>
+      if ordinal == neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 0) then 1e300 else 0.0
     val input = SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "float32-overflow")
     val points = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0))
     val cpu = SurfaceVolumeProjection.materialize(morphism(points), input)
@@ -142,8 +142,8 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
       case other => fail(s"expected a float32 range refusal; got $other")
 
   test("GPU and CPU fill a NaN-only vertex identically"):
-    val data = PrimitiveBuffers.tabulate[Double](24): ordinal =>
-      if ordinal == space.gridToIndex3D(1, 0, 0) then Double.NaN else 7.0
+    val data = Array.tabulate[Double](24): ordinal =>
+      if ordinal == neuroim4s.image.Indexing.gridToIndex3D(space.grid.shape, 1, 0, 0) then Double.NaN else 7.0
     val input = SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "nan")
     val points = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0))
     val policy = SurfaceProjectionPolicy(fill = SurfaceProjectionFill.constant(-1.0).toOption.get)

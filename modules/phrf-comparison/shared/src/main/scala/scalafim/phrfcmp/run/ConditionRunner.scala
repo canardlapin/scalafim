@@ -15,7 +15,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{GaussianFamily, ShapePoint}
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ProfileCriterion, ProfileHrfPlan, ProfileTrialDrive}
-import scalafim.image.SampleSpaces
+import neuroim4s.image.SampleSpaces
 import scalafim.phrfcmp.ingest.{CellKind, FitInputs}
 import scalafim.phrfcmp.prep.{CommonPrep, FirPrefit, NativeArm, Nuisance, Whiten, WhiteningSpec}
 import scalafim.phrfcmp.score.{EResp, ResponseGrid}

@@ -19,7 +19,7 @@ cross-compiled sbt build.
 - `first-level-laws`: HRF kernel and parametric-family law checks, plus non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
-- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, toolkit coordinate conventions and world-frame binding over neuroim4s-spaces world identities, provider-backed (image4s/reframe4s) resampling, statistics, clustering, and image IO.
+- `neuroim4s` (standalone): neuroimaging volumes and time series, masks and ordered selections, sampling, orientation, reslicing, image statistics and world binding. Optional JVM IO uses image4s codecs directly; ScalaFIM has no local `image` module.
 - `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
 - `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
@@ -92,7 +92,7 @@ neuroimaging integrations.
 
 Nonlinear registration and the experimental HalfFlow engine now live in
 standalone [`reframe4s`](https://github.com/canardlapin/reframe4s). ScalaFIM
-does not retain a registration module. Its `image` and `transform` modules
+does not retain a registration module. Its standalone neuroim4s dependency and local `transform` module
 consume the reframe4s `lie`, `field` and `resample` capabilities (generic
 spatial maps, dense fields, numerical inverses and resampling execution)
 through an immutable source revision; the HalfFlow and registration modules
@@ -239,8 +239,7 @@ sbt scenarioTestkitJVM/test
 sbt scenarioTestkitJS/test
 sbt designJVM/test
 sbt designJS/test
-sbt imageJVM/test
-sbt imageJS/test
+sbt neuroimTestAll  # provider core JVM/JS and optional JVM IO
 sbt imageViewJVM/test
 sbt imageViewJS/test
 sbt imageViewCanvasJS/test

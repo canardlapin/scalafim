@@ -1,7 +1,7 @@
 package scalafim.transform
 
 import image4s.geometry.{D3, Frame}
-import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
+import neuroim4s.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
 
 /** File content handed to a codec. Decompression and HDF5 parsing are platform container concerns; what reaches a
   * codec is already platform-neutral.

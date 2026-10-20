@@ -5,7 +5,7 @@ import image4s.geometry.{Affine, D3, Point}
 import ravel.NDArray
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.image.{GridSpec, SpatialDims}
+import neuroim4s.image.{GridSpec, SpatialDims}
 import neuroim4s.spaces.Spaces as WorldFrames
 import scalafim.surface.io.TemplateFlowCache
 

@@ -2,7 +2,7 @@ package scalafim.surface.view
 
 import image4s.geometry.{D3, Frame}
 import intaglio.*
-import scalafim.image.{WorldBox, WorldPoint}
+import neuroim4s.image.{WorldBox, WorldPoint}
 import scalafim.surface.*
 
 /** Private render coordinates for camera bounds; these are not a scientific world-space identity. */

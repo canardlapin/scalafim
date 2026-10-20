@@ -1,15 +1,10 @@
 package scalafim.spatial
 
-import scalafim.image.{
-  GridSpec,
-  Indexing,
-  SomeMaskVolume,
-  SomeSampleSpace,
-  SpatialDims,
-  SpatialPoint
-}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.SomeNeuroVolume.*
+import image4s.SomeSampleSpace
+
+import neuroim4s.image.{GridSpec, Indexing, SomeMaskVolume, SpatialDims, SpatialPoint}
+import neuroim4s.image.SampleSpaces.*
+import neuroim4s.image.SomeNeuroVolume.*
 import gale.linalg.LinAlgError
 import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId, VolumeSurfaceSamplingPlan}
 
@@ -136,7 +131,7 @@ object VolumeToSurfaceOperatorCompiler:
   private def volumeSource(domain: Domain): Either[SpatialError, VolumeSource] =
     domain.geometry match
       case SamplingGeometry.Volume(space, mask) =>
-        Right(VolumeSource(space.spatialSpace, mask))
+        Right(VolumeSource(space.typed.spatialOnly, mask))
       case _ =>
         Left(SpatialError.NonVolumeDomain(domain.id))
 
@@ -718,7 +713,7 @@ object MixedPullbackOperatorCompiler:
 
   private def volumeSource(domain: Domain): Either[SpatialError, VolumeSource] =
     domain.geometry match
-      case SamplingGeometry.Volume(space, mask) => Right(VolumeSource(space.spatialSpace, mask))
+      case SamplingGeometry.Volume(space, mask) => Right(VolumeSource(space.typed.spatialOnly, mask))
       case _ => Left(SpatialError.NonVolumeDomain(domain.id))
 
   private def surfaceTarget(domain: Domain): Either[SpatialError, SurfaceTarget] =
