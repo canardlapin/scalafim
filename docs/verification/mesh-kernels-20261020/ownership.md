@@ -25,9 +25,8 @@ hemisphere policy remains downstream.
 
 ## Remaining work
 
-- Obtain approval for this new mesh4s candidate; verify exact main/tracking/local
-  parity after a non-force publication and rerun the consumer gates with default
-  mesh4s pins. The earlier mesh4s publication approval covered an older change.
+- mesh4s `b9e0553` is published and public mesh-pin surface JVM/JS gates pass.
+  Its candidate/local/tracking/remote SHA parity is recorded in the receipt.
 - The preceding neuroatlas4s volume candidate remains separately awaiting its
   existing publication answer. Preserve its qualified checkout and receipts.
 - Continue generic geodesic extraction under the existing `eco-u3-kernels` issue.

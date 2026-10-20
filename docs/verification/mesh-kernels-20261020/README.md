@@ -1,6 +1,7 @@
 # Mesh lookup and sphere qualification — 2026-10-20
 
-Locally qualified, unpublished bounded slice of `eco-u3-kernels`.
+Published mesh4s candidate and public mesh-pin qualified bounded slice of
+`eco-u3-kernels`. ScalaFIM remains local; the atlas override is still required.
 
 - ScalaFIM source: `4c357723979a63e151ca2e9b02f493c140b8c119`
 - mesh4s candidate: `b9e0553b85113d52fc758747d62ddc0fa343e033`
@@ -42,7 +43,8 @@ retention. Existing R/neurotransform and Workbench parity tests remain intact.
 `scalafimCompileAll` passes for all modules/examples on JVM and JS, with no
 compiler warnings. Provider formatting and dependency-pin checks pass. The
 loaded build has 19 clean source checkouts (including ScalaFIM), one revision
-per provider; mesh4s and neuroatlas4s are the two explicit local overrides.
+per provider; the original qualification used mesh4s and neuroatlas4s as explicit local overrides.
+The subsequent public mesh-pin gate uses only the atlas override.
 Gale remains `779ed3d8169cdd9f4eb9ab10b1ca9defadc27715`.
 
 The skipped cases are the existing synthetic same-size placement/performance
@@ -64,7 +66,6 @@ known sbt-git/JGit `NoWorkTreeException`; its source backup remains at
 
 ```sh
 sbt -batch -J-Xmx4g \
-  -Dscalafim.mesh4s.build=../mesh4s-eco-kernels-20261020 \
   -Dscalafim.neuroatlas4s.build=../neuroatlas4s-eco-volume-20261020 \
   surfaceJVM/test surfaceJS/test surfaceViewJVM/test surfaceViewJS/test \
   scalafimCompileAll
@@ -85,7 +86,14 @@ Retained adverse evidence:
 - `consumer-surface-01.log`: initial consumer gates pass (325/282, two skips).
 - `qualified-consumer-02.log`: final source gates, view tests, and compile pass.
 
-Publication remains a separate step: this new mesh4s candidate needs approval,
-and the previously qualified atlas candidate still awaits its existing answer.
-After publication, verify exact remote/tracking/local parity and rerun without
-the corresponding source override before claiming default-pin qualification.
+mesh4s publication was approved in chat and completed non-force. Candidate HEAD,
+local main, tracking main, and live GitHub main all match
+`b9e0553b85113d52fc758747d62ddc0fa343e033`, with 0/0 divergence.
+`published-mesh-consumer-03.log` then qualifies the public mesh4s pin at
+ScalaFIM `95fdcbe8e`: 325 JVM and 282 JS surface tests pass, with the same two
+existing skips and no compiler warnings. The build loads mesh4s from immutable
+staging, not a sibling checkout. The JSON receipt retains the publication
+receipt and all loaded source revisions.
+
+The previously qualified atlas candidate still awaits its existing publication
+answer; no all-default-provider qualification or hosted CI is claimed.
