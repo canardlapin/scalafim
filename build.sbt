@@ -207,7 +207,7 @@ lazy val neuroatlas4sCoreJS  = ProjectRef(neuroatlas4sBuild, "coreJS")
 // mesh4s owns triangle topology, surface realizations and point fields. It
 // pins the same locus4s, spatial4s and graph4s revisions as ScalaFIM's other
 // providers; ScalaFIM overrides for those are forwarded.
-lazy val mesh4sRevision = "54b7278880e6db38c543a4a565355afd864e576a"
+lazy val mesh4sRevision = "53973bf8f764ed280b639fa36df469eb1891c642"
 lazy val mesh4sBuild = {
   Seq("locus4s", "spatial4s", "graph4s").foreach { provider =>
     sys.props

@@ -41,6 +41,22 @@ for provider in alder graph4s image4s mvpa4s reframe4s; do
     exit 1
   fi
 done
+# Mesh topology and anatomical routing exchange graph4s values. Local checkout
+# overrides can hide stale transitive pins, so also check their default graph.
+graph_revision=$(sed -n 's/^lazy val graph4sRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
+for provider in mesh4s neuroim4s; do
+  revision=$(sed -n "s/^lazy val ${provider}Revision = \"\\([0-9a-f]*\\)\".*/\\1/p" "$repo_root/build.sbt")
+  [ "${#revision}" -eq 40 ] || { echo "Invalid ${provider}Revision in build.sbt" >&2; exit 1; }
+  git clone --quiet --no-checkout --filter=blob:none \
+    "https://github.com/canardlapin/$provider.git" "$provider_tmp/$provider"
+  provider_graph=$(git -C "$provider_tmp/$provider" show "$revision:build.sbt" |
+    sed -n -e 's/^lazy val graph4sRevision = "\([0-9a-f]*\)".*/\1/p' \
+      -e '/^lazy val graph4sRevision =$/{n;s/^ *"\([0-9a-f]*\)".*/\1/p;}')
+  if [ "${#graph_revision}" -ne 40 ] || [ "$provider_graph" != "$graph_revision" ]; then
+    echo "graph4s revision mismatch: ScalaFIM=$graph_revision $provider=$provider_graph" >&2
+    exit 1
+  fi
+done
 GALE_CACHE="$provider_tmp/gale" \
   "$provider_tmp/multivar/tools/publish-gale-local.sh"
 RESAMPLE4S_CACHE="$provider_tmp/resample4s" \
