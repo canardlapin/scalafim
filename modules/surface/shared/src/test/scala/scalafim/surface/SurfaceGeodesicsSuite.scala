@@ -161,3 +161,98 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
 
     interceptMessage[IllegalArgumentException]("requirement failed: geodesic edgeWeights must contain at least one positive value"):
       SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(VertexId(0)), Vector(VertexId(1)), edgeWeights = Some(Vector.fill(tetraTopology.edgeCount)(0.0)))
+
+  test("distance matrices retain repeated sources and target columns in request order"):
+    val topology = SurfaceTestFixtures.sphericalTopology
+    val sources = Vector(VertexId(1), VertexId(0), VertexId(1))
+    val targets = Vector(VertexId(2), VertexId(0), VertexId(2), VertexId(3))
+    DistanceMetric.values.foreach: metric =>
+      val matrix = SurfaceGeodesics.distanceMatrix(topology, sources, targets, metric, chunkSize = 1)
+      assertEquals(matrix.rowVertices, sources)
+      assertEquals(matrix.colVertices, targets)
+      sources.indices.foreach: row =>
+        targets.indices.foreach: col =>
+          val single = SurfaceGeodesics.distances(topology, sources(row), Vector(targets(col)), metric).head
+          assertEqualsDouble(matrix(row, col), single, 1e-12)
+
+  test("cache distinguishes same-sized meshes with different connectivity"):
+    val first = SurfaceTestFixtures.sheetTopology
+    val second = MeshTopology.from(TriangleMesh.fromRows(
+      first.mesh.coordinates.toVector.grouped(3).toVector,
+      Vector((0, 1, 3), (0, 3, 2))
+    ))
+    assertEquals(first.edgeCount, second.edgeCount)
+    val cache = GeodesicCache()
+    def distance(topology: MeshTopology): Double =
+      SurfaceGeodesics.distanceMatrix(topology, Vector(VertexId(0)), Vector(VertexId(3)),
+        edgeWeights = Some(Vector.fill(topology.edgeCount)(1.0)), cachePolicy = CachePolicy.Use(cache))(0, 0)
+    assertEqualsDouble(distance(first), 2.0, 1e-12)
+    assertEqualsDouble(distance(second), 1.0, 1e-12)
+    assertEquals(cache.size, 2)
+
+  test("cache distinguishes coordinate changes for direct and spherical metrics"):
+    val first = SurfaceTestFixtures.sphericalTopology
+    val coordinates = first.mesh.coordinates.toArray
+    coordinates(3) = math.sqrt(0.5)
+    coordinates(4) = math.sqrt(0.5)
+    val second = MeshTopology.from(first.mesh.withCoordinates(coordinates))
+    Vector(DistanceMetric.Euclidean, DistanceMetric.Spherical).foreach: metric =>
+      val cache = GeodesicCache()
+      def distance(topology: MeshTopology): Double =
+        SurfaceGeodesics.distanceMatrix(topology, Vector(VertexId(0)), Vector(VertexId(1)), metric,
+          edgeWeights = Some(Vector.fill(topology.edgeCount)(1.0)), cachePolicy = CachePolicy.Use(cache))(0, 0)
+      val expectedFirst = if metric == DistanceMetric.Spherical then math.Pi / 2 else math.sqrt(2)
+      val expectedSecond = if metric == DistanceMetric.Spherical then math.Pi / 4 else math.sqrt(2 - math.sqrt(2))
+      assertEqualsDouble(distance(first), expectedFirst, 1e-12)
+      assertEqualsDouble(distance(second), expectedSecond, 1e-12)
+      assertEquals(cache.size, 2)
+      // Equal immutable mesh values still reuse the same entry, even if restored
+      // into a fresh runtime topology/frame owner.
+      val equal = MeshTopology.from(TriangleMesh.fromArrays(second.mesh.coordinates.toArray, second.mesh.faceIndices.toArray))
+      assertEqualsDouble(distance(equal), expectedSecond, 1e-12)
+      assertEquals(cache.size, 2)
+
+  test("cache verifies full weights even when their 32-bit hashes collide"):
+    val cache = GeodesicCache()
+    val a = 1.0
+    val b = java.lang.Double.longBitsToDouble(java.lang.Double.doubleToLongBits(a) ^ 0x0000000100000001L)
+    assert(b > a && b < 1.01)
+    // Reproduce the legacy cache's explicit bit fold. Boxed Double.hashCode
+    // differs across JVM and JS and was never the cache's hash contract.
+    def legacyHash(value: Double): Int =
+      val bits = java.lang.Double.doubleToLongBits(value)
+      (bits ^ (bits >>> 32)).toInt
+    assertEquals(legacyHash(a), legacyHash(b))
+    val edge = tetraTopology.edges.head
+    def distance(weight: Double): Double =
+      val weights = Vector.tabulate(tetraTopology.edgeCount)(i => if i == 0 then weight else 2.0)
+      SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(edge.a), Vector(edge.b), edgeWeights = Some(weights),
+        cachePolicy = CachePolicy.Use(cache))(0, 0)
+    assertEqualsDouble(distance(a), a, 1e-12)
+    assertEqualsDouble(distance(b), b, 1e-12)
+    assertEquals(cache.size, 2)
+
+  test("nonnegative custom costs match Floyd-Warshall including zero paths and disconnected repeated targets"):
+    Vector(tetraTopology, SurfaceTestFixtures.sheetTopology, SurfaceTestFixtures.disconnectedTopology).foreach: topology =>
+      (0 until 12).foreach: seed =>
+        val weights = Vector.tabulate(topology.edgeCount): edge =>
+          if (edge + seed) % 4 == 0 then 0.0 else 0.25 * (1 + (7 * edge + 3 * seed) % 9)
+        val count = topology.mesh.vertexCount
+        // Independent all-pairs dynamic program; no priority queue or visited set.
+        val expected = Array.fill(count, count)(Double.PositiveInfinity)
+        (0 until count).foreach(i => expected(i)(i) = 0.0)
+        topology.edges.zip(weights).foreach: (edge, weight) =>
+          expected(edge.a.index)(edge.b.index) = weight
+          expected(edge.b.index)(edge.a.index) = weight
+        (0 until count).foreach: k =>
+          (0 until count).foreach: i =>
+            (0 until count).foreach: j =>
+              expected(i)(j) = math.min(expected(i)(j), expected(i)(k) + expected(k)(j))
+        val sources = (0 until count).reverse.map(VertexId.apply).toVector :+ VertexId(0)
+        val targets = Vector(VertexId(0), VertexId(2), VertexId(0), VertexId(count - 1), VertexId(count - 1))
+        val actual = SurfaceGeodesics.distanceMatrix(topology, sources, targets, edgeWeights = Some(weights), chunkSize = 2)
+        sources.indices.foreach: row =>
+          targets.indices.foreach: col =>
+            val wanted = expected(sources(row).index)(targets(col).index)
+            if wanted.isPosInfinity then assert(actual(row, col).isPosInfinity)
+            else assertEqualsDouble(actual(row, col), wanted, 1e-12)

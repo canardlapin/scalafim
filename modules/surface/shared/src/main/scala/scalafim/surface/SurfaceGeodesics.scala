@@ -40,13 +40,13 @@ final class GeodesicCache:
     value
 
 object GeodesicCache:
+  /** Hashes accelerate lookup; full immutable values decide cache equality. */
   final case class Key(
     metric: DistanceMetric,
     rows: Vector[Int],
     cols: Vector[Int],
-    weightsHash: Int,
-    vertexCount: Int,
-    edgeCount: Int
+    mesh: TriangleMesh,
+    weights: Vector[Double]
   )
 
 enum CachePolicy:
@@ -77,18 +77,9 @@ object SurfaceGeodesics:
     validateVertices(topology, tgt, "target")
 
     val weights = weightsFor(topology, edgeWeights, metric)
-    val key =
-      GeodesicCache.Key(
-        metric = metric,
-        rows = src.map(_.index),
-        cols = tgt.map(_.index),
-        weightsHash = weightsHash(weights),
-        vertexCount = topology.mesh.vertexCount,
-        edgeCount = topology.edgeCount
-      )
-
     cachePolicy match
       case CachePolicy.Use(cache) =>
+        val key = GeodesicCache.Key(metric, src.map(_.index), tgt.map(_.index), topology.mesh, weights)
         cache.get(key).getOrElse {
           cache.put(key, computeMatrix(topology, src, tgt, metric, weights, chunkSize))
         }
@@ -143,7 +134,6 @@ object SurfaceGeodesics:
     chunkSize: Int
   ): DistanceMatrix =
     val out = Array.fill(sources.length * targets.length)(Double.PositiveInfinity)
-    val targetIndex = targets.zipWithIndex.map { case (id, i) => id.index -> i }.toMap
 
     var chunkStart = 0
     while chunkStart < sources.length do
@@ -157,9 +147,10 @@ object SurfaceGeodesics:
             fillDirect(topology, sources(row), targets, row, out, sphericalDistance(topology))
           case DistanceMetric.Geodesic =>
             val d = dijkstra(topology, sources(row), weights)
-            targetIndex.foreach { case (vertex, col) =>
-              out(row * targets.length + col) = d(vertex)
-            }
+            var col = 0
+            while col < targets.length do
+              out(row * targets.length + col) = d(targets(col).index)
+              col += 1
         row += 1
       chunkStart = chunkEnd
 
@@ -251,14 +242,6 @@ object SurfaceGeodesics:
     vertices.foreach { vertex =>
       require(vertex.index >= 0 && vertex.index < topology.mesh.vertexCount, s"$role vertex id out of range")
     }
-
-  private def weightsHash(weights: Vector[Double]): Int =
-    var h = 1
-    weights.foreach { weight =>
-      val bits = java.lang.Double.doubleToLongBits(if weight == 0.0 then 0.0 else weight)
-      h = 31 * h + (bits ^ (bits >>> 32)).toInt
-    }
-    h
 
   private def clamp(value: Double, low: Double, high: Double): Double =
     math.max(low, math.min(high, value))
