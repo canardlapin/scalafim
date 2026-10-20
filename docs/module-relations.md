@@ -191,7 +191,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | standalone `neuroim4s-core`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | standalone `neuroim4s-core`, standalone image4s-geometry; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
-| `surface` | Neuro-surface composition over strict mesh4s topology/points and upstream nearest/radial lookup and sphere geometry, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | standalone `neuroim4s-core`, `transform`, `locus-data`; standalone mesh4s-geometry, graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `surface` | Neuro-surface composition over strict mesh4s topology/points and upstream nearest/radial lookup and sphere geometry, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | standalone `neuroim4s-core`, `transform`, `locus-data`; standalone mesh4s-geometry, mesh4s-graph4s, graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, standalone Intaglio core | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view`, Intaglio core | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
 | `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, Intaglio core; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
@@ -533,5 +533,8 @@ ScalaFIM retains the registered-coordinate interpretation, radius 100 and
 sphericity tolerance 1.001, sparse plan construction, normalization, and the
 nearest fallback when no admitted face is hit. Barycentric planning now reports
 degenerate geometry as `SurfaceError.InvalidGeometry`; it does not hide failed
-geometric admission behind that fallback. Generic geodesic extraction remains
-part of the open `eco-u3-kernels` task.
+geometric admission behind that fallback. Graph-cost geodesics now use the owner-preserving `mesh4s-graph4s` adapter over
+prepared graph4s single-source distances. The generic solver lives only in
+graph4s; ScalaFIM retains custom-cost validation, matrix/cache policy and its
+infinity convention. Coordinated pin publication and the remaining U3 acceptance
+and review remain open.

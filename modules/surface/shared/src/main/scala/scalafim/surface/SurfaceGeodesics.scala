@@ -1,5 +1,8 @@
 package scalafim.surface
 
+import locus4s.data.VectorField
+import mesh4s.graph4s.MeshShortestPaths
+
 enum DistanceMetric:
   case Euclidean, Geodesic, Spherical
 
@@ -134,6 +137,16 @@ object SurfaceGeodesics:
     chunkSize: Int
   ): DistanceMatrix =
     val out = Array.fill(sources.length * targets.length)(Double.PositiveInfinity)
+    val owner = topology.mesh.topology
+    // Prepare one typed graph-cost snapshot for every source in this matrix.
+    // All-zero rejection and other neuro-facing validation remain in weightsFor.
+    val paths =
+      if metric == DistanceMetric.Geodesic then
+        val costs = VectorField.fromValues(owner.edges, weights)
+          .fold(error => throw new IllegalStateException(error.message), identity)
+        Some(MeshShortestPaths.create(owner)(costs)
+          .fold(error => throw new IllegalStateException(error.message), identity))
+      else None
 
     var chunkStart = 0
     while chunkStart < sources.length do
@@ -146,10 +159,12 @@ object SurfaceGeodesics:
           case DistanceMetric.Spherical =>
             fillDirect(topology, sources(row), targets, row, out, sphericalDistance(topology))
           case DistanceMetric.Geodesic =>
-            val d = dijkstra(topology, sources(row), weights)
+            val d = paths.get.distancesFrom(owner.vertices.indexAtValidatedOrdinal(sources(row).index))
             var col = 0
             while col < targets.length do
-              out(row * targets.length + col) = d(targets(col).index)
+              // Preserve the existing matrix convention for disconnected paths
+              // and unrepresentable sums, while upstream distinguishes them.
+              out(row * targets.length + col) = d.distanceOrInfinity(owner.vertices.indexAtValidatedOrdinal(targets(col).index))
               col += 1
         row += 1
       chunkStart = chunkEnd
@@ -169,42 +184,6 @@ object SurfaceGeodesics:
     while col < targets.length do
       out(row * targets.length + col) = distance(srcPoint, topology.mesh.vertex(targets(col)))
       col += 1
-
-  private def dijkstra(topology: MeshTopology, source: VertexId, weights: Vector[Double]): Array[Double] =
-    val adjacency = weightedAdjacency(topology, weights)
-    val distances = Array.fill(topology.mesh.vertexCount)(Double.PositiveInfinity)
-    val visited = Array.fill(topology.mesh.vertexCount)(false)
-    val queue =
-      scala.collection.mutable.PriorityQueue.empty[(Double, Int)](
-        using Ordering.by[(Double, Int), Double](entry => -entry._1)
-      )
-
-    distances(source.index) = 0.0
-    queue.enqueue((0.0, source.index))
-
-    while queue.nonEmpty do
-      val (dist, vertex) = queue.dequeue()
-      if !visited(vertex) then
-        visited(vertex) = true
-        adjacency(vertex).foreach { case (neighbor, weight) =>
-          val alt = dist + weight
-          if alt < distances(neighbor) then
-            distances(neighbor) = alt
-            queue.enqueue((alt, neighbor))
-        }
-
-    distances
-
-  private def weightedAdjacency(topology: MeshTopology, weights: Vector[Double]): Vector[Vector[(Int, Double)]] =
-    val rows = Array.fill(topology.mesh.vertexCount)(Vector.newBuilder[(Int, Double)])
-    var i = 0
-    while i < topology.edges.length do
-      val edge = topology.edges(i)
-      val w = weights(i)
-      rows(edge.a.index) += ((edge.b.index, w))
-      rows(edge.b.index) += ((edge.a.index, w))
-      i += 1
-    rows.toVector.map(_.result())
 
   private def euclideanDistance(a: Point3D, b: Point3D): Double =
     (a - b).norm

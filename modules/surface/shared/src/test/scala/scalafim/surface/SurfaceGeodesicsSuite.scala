@@ -256,3 +256,13 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
             val wanted = expected(sources(row).index)(targets(col).index)
             if wanted.isPosInfinity then assert(actual(row, col).isPosInfinity)
             else assertEqualsDouble(actual(row, col), wanted, 1e-12)
+
+  test("graph-cost overflow preserves the matrix infinity convention and duplicate columns"):
+    val topology = SurfaceTestFixtures.sheetTopology
+    val matrix = SurfaceGeodesics.distanceMatrix(
+      topology, Vector(VertexId(0)), Vector(VertexId(3), VertexId(1), VertexId(3)),
+      edgeWeights = Some(Vector.fill(topology.edgeCount)(Double.MaxValue))
+    )
+    assert(matrix(0, 0).isPosInfinity)
+    assertEqualsDouble(matrix(0, 1), Double.MaxValue, 0.0)
+    assert(matrix(0, 2).isPosInfinity)
