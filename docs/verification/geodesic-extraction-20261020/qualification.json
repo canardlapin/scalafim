@@ -1,0 +1,321 @@
+{
+  "status": "locally-qualified-review-blocked-unpublished",
+  "captured_utc": "2026-10-20T18:46:26.050517+00:00",
+  "issue": "eco-u3-kernels",
+  "qualified_root_source": "380476951300985979aefe67a903885b4f5d62cf",
+  "passed": 1969,
+  "skipped": 2,
+  "all_module_jvm_js_compile": "passed",
+  "scala_compiler_warnings": 0,
+  "native_advisory": "Installed clang15 is deprecated by Scala Native; Native algorithm tests nevertheless passed.",
+  "checks": [
+    {
+      "log": "graph-provider-final-03.log",
+      "sha256": "27916e41cdd84870916d9f2bb256cfb3c8885978b239a1abf8a0d2f43d036010",
+      "exit_code": 0,
+      "passed_groups": [
+        23,
+        23,
+        23
+      ],
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "scalafmtAll",
+        "scalafmtCheckAll",
+        "algorithmsJVM/test",
+        "algorithmsJS/test",
+        "algorithmsNative/test"
+      ]
+    },
+    {
+      "log": "mesh-provider-final-02.log",
+      "sha256": "c4ccdd230463d31d52fadac1926f7ee69860390561198258b235198b8df93b8e",
+      "exit_code": 0,
+      "passed_groups": [
+        3,
+        3,
+        19,
+        19
+      ],
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dmesh4s.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "scalafmtAll",
+        "scalafmtCheckAll",
+        "dependencyPins",
+        "mesh4s-graph4sJVM/test",
+        "mesh4s-graph4sJS/test",
+        "mesh4s-lawsJVM/test",
+        "mesh4s-lawsJS/test"
+      ]
+    },
+    {
+      "log": "neuroim-routing-01.log",
+      "sha256": "08807acb9dada317880cc9eb542e04b8d8dcd2863249f8a52a54dd9d6d3411f2",
+      "exit_code": 0,
+      "passed_groups": [
+        14,
+        14
+      ],
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dneuroim4s.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "routingJVM/test",
+        "routingJS/test"
+      ]
+    },
+    {
+      "log": "atlas-volume-01.log",
+      "sha256": "1f3f1563e36d0778048a6615abc17cfec3b09a9fcf3367ec1aaf4791bc677158",
+      "exit_code": 0,
+      "passed_groups": [
+        21,
+        21,
+        26
+      ],
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dneuroatlas4s.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dneuroatlas4s.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "volumeJVM/test",
+        "volumeJS/test",
+        "volumeIoJVM/test"
+      ]
+    },
+    {
+      "log": "root-surface-view-01.log",
+      "sha256": "7689af219b3e8fc86b6f2268e8b2e47d0b7244d2e666a9ff45466ce0173ae2f2",
+      "exit_code": 0,
+      "passed_groups": [
+        331,
+        288,
+        256,
+        256
+      ],
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+        "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "surfaceJVM/test",
+        "surfaceJS/test",
+        "surfaceViewJVM/test",
+        "surfaceViewJS/test"
+      ]
+    },
+    {
+      "log": "root-integrations-compile-02.log",
+      "sha256": "156c315b8cbe7ff79717690af6ed9ebc91a696cfb0f8f8e35b52c26d20562f38",
+      "exit_code": 0,
+      "passed_groups": [
+        231,
+        206,
+        81,
+        61,
+        25,
+        25
+      ],
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+        "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "spatialJVM/test",
+        "spatialJS/test",
+        "atlasJVM/test",
+        "atlasJS/test",
+        "mvpaSpatialJVM/test",
+        "mvpaSpatialJS/test",
+        "scalafimCompileAll"
+      ]
+    }
+  ],
+  "loaded_source_builds": [
+    {
+      "name": "ravel",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+      "sha": "195d71027423d5bda1c53ef1baa17e07670fe290"
+    },
+    {
+      "name": "intaglio",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+      "sha": "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+    },
+    {
+      "name": "gale",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+      "sha": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+    },
+    {
+      "name": "zarr4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+      "sha": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+    },
+    {
+      "name": "resample4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+      "sha": "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+    },
+    {
+      "name": "multivar",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+      "sha": "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+    },
+    {
+      "name": "bids4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+      "sha": "a33678390614a91fadbdef13f22970e78c26e091"
+    },
+    {
+      "name": "spatial4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+      "sha": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+    },
+    {
+      "name": "image4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+      "sha": "aef5e223169f0831c942694c4b109ab20d152217"
+    },
+    {
+      "name": "mvpa4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+      "sha": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+    },
+    {
+      "name": "locus4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+      "sha": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+    },
+    {
+      "name": "alder",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+      "sha": "7618c715002b3912f856c4d44468ae173fce4dec"
+    },
+    {
+      "name": "reframe4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+      "sha": "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+    },
+    {
+      "name": "linops4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+      "sha": "fec77db060b130b3c609a43d07ff0bfb31088aae"
+    },
+    {
+      "name": "graph4s-eco-distances-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+      "sha": "613371f3bd0b12ce99352db0c637645eb62c6283"
+    },
+    {
+      "name": "mesh4s-eco-distances-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "sha": "5ed45de9ab39deb22865438d65abcd50f9f8eb4a"
+    },
+    {
+      "name": "neuroatlas4s-eco-distances-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+      "sha": "7a662192a1a5769e92c9809feec0286f47728419"
+    },
+    {
+      "name": "neuroim4s-eco-distances-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "sha": "6d20f52e6701f10126f36a4fc97bf97eeb99fa24"
+    },
+    {
+      "name": "scalafim-eco-mesh-kernels-20261020",
+      "path": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "sha": "380476951300985979aefe67a903885b4f5d62cf"
+    }
+  ],
+  "providers": [
+    {
+      "provider": "graph4s",
+      "path": "/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+      "base": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "candidate": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "commits": 2,
+      "bundle": "graph4s-geodesic-extraction.bundle",
+      "bundle_sha256": "3680bccacb404ee5cd51d5c37888b81a4d661b3ea915514966ceeaa90c13cf86",
+      "verification": "The bundle contains this ref:\n613371f3bd0b12ce99352db0c637645eb62c6283 HEAD\nThe bundle requires this ref:\n856e6fb770cf5f4c5512b0607d8c3733e75e7460 \nThe bundle uses this hash algorithm: sha1\n/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020/graph4s-geodesic-extraction.bundle is okay\n"
+    },
+    {
+      "provider": "mesh4s",
+      "path": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "base": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+      "candidate": "5ed45de9ab39deb22865438d65abcd50f9f8eb4a",
+      "commits": 2,
+      "bundle": "mesh4s-geodesic-extraction.bundle",
+      "bundle_sha256": "145e0a48a82f861187e76d5307b3e3fe2b7ac7788806273b5625c648563f41bd",
+      "verification": "The bundle contains this ref:\n5ed45de9ab39deb22865438d65abcd50f9f8eb4a HEAD\nThe bundle requires this ref:\nb9e0553b85113d52fc758747d62ddc0fa343e033 \nThe bundle uses this hash algorithm: sha1\n/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020/mesh4s-geodesic-extraction.bundle is okay\n"
+    },
+    {
+      "provider": "neuroim4s",
+      "path": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "base": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "candidate": "6d20f52e6701f10126f36a4fc97bf97eeb99fa24",
+      "commits": 2,
+      "bundle": "neuroim4s-geodesic-extraction.bundle",
+      "bundle_sha256": "57ca58309c06f575683e3c2c4fa976dfef9e0d1ee960bde7024534a2d6c1b408",
+      "verification": "The bundle contains this ref:\n6d20f52e6701f10126f36a4fc97bf97eeb99fa24 HEAD\nThe bundle requires this ref:\n7ed49f12b1a90e18ea5ed67d48343e98a7b9547b \nThe bundle uses this hash algorithm: sha1\n/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020/neuroim4s-geodesic-extraction.bundle is okay\n"
+    },
+    {
+      "provider": "neuroatlas4s",
+      "path": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+      "base": "375ceb229f707a6e9fb447a3e24564e8c5cd3036",
+      "candidate": "7a662192a1a5769e92c9809feec0286f47728419",
+      "commits": 4,
+      "bundle": "neuroatlas4s-geodesic-extraction.bundle",
+      "bundle_sha256": "8ca6698385434830c441d762d9d5a08a7e28a9322ba327586133a1b45a53879f",
+      "verification": "The bundle contains this ref:\n7a662192a1a5769e92c9809feec0286f47728419 HEAD\nThe bundle requires this ref:\n375ceb229f707a6e9fb447a3e24564e8c5cd3036 \nThe bundle uses this hash algorithm: sha1\n/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020/neuroatlas4s-geodesic-extraction.bundle is okay\n"
+    }
+  ],
+  "review": {
+    "attempt": "opus-review-01.log",
+    "requested_model": "opus",
+    "status": "not-executed",
+    "reason": "usage_limit_reached",
+    "http_status": 429,
+    "model_tokens": 0,
+    "verdict": null,
+    "replacement_question": "dashboard Q10: independent Astra replacement requires user answer"
+  },
+  "limits": [
+    "Four explicit source overrides; no default-pin qualification or new provider publication.",
+    "No full repository test run, hosted CI, new native viewer acceptance or measured speedup/allocation claim.",
+    "Independent review unmet; Opus attempt produced no verdict.",
+    "U3 acceptance audit and coordinated publication/default-pin gates remain."
+  ],
+  "raw_evidence": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020"
+}
