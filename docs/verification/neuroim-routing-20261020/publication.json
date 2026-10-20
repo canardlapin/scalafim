@@ -1,0 +1,542 @@
+{
+  "schema": "scalafim-routing-publication-v1",
+  "recorded_at_utc": "2026-10-20T14:47:42.608719+00:00",
+  "status": "approved_two_providers_published_mesh_pin_candidate_qualified_awaiting_authorization",
+  "approved_publications": {
+    "graph4s": {
+      "local_head": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "tracking_main": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "live_main": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "clean": true,
+      "verified_at_utc": "2026-10-20T14:44:13.209518+00:00"
+    },
+    "neuroim4s": {
+      "local_head": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "tracking_main": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "live_main": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "clean": true,
+      "verified_at_utc": "2026-10-20T14:44:14.014916+00:00"
+    }
+  },
+  "scalafim_qualified_source": "d3e7d6067c64c527b04c2ea9afd01ef1ef4f7bbb",
+  "scalafim_branch": "eco/neuroim-routing-20261020",
+  "accepted_branch_preserved": {
+    "branch": "eco/u3-topology-20261019",
+    "head": "e98cc987041c3ea013c3637ba3f48cb7e24877a3"
+  },
+  "mesh4s_candidate": {
+    "commit": "53973bf8f764ed280b639fa36df469eb1891c642",
+    "published_parent": "54b7278880e6db38c543a4a565355afd864e576a",
+    "path": "/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020",
+    "scope": "One immutable graph4s revision line in build.sbt; no Scala production, API, numerical, resource or wire-format changes.",
+    "published": false,
+    "bundle": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020/mesh4s-graph-pin.bundle",
+    "bundle_sha256": "1098e8579b8398f0c3c79bc0e408c1cfbef76d42b2185d2e0a24d616b9620bbb"
+  },
+  "loaded_builds_with_mesh_candidate": {
+    "scalafim": [
+      {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+        "commit": "d3e7d6067c64c527b04c2ea9afd01ef1ef4f7bbb"
+      }
+    ],
+    "mesh4s": [
+      {
+        "path": "/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020",
+        "commit": "53973bf8f764ed280b639fa36df469eb1891c642"
+      }
+    ],
+    "alder": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+        "commit": "7618c715002b3912f856c4d44468ae173fce4dec"
+      }
+    ],
+    "bids4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+        "commit": "a33678390614a91fadbdef13f22970e78c26e091"
+      }
+    ],
+    "gale": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+        "commit": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+      }
+    ],
+    "graph4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/ae0fc8f94feb05e0d662/graph4s",
+        "commit": "856e6fb770cf5f4c5512b0607d8c3733e75e7460"
+      }
+    ],
+    "image4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+        "commit": "aef5e223169f0831c942694c4b109ab20d152217"
+      }
+    ],
+    "intaglio": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+        "commit": "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+      }
+    ],
+    "linops4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+        "commit": "fec77db060b130b3c609a43d07ff0bfb31088aae"
+      }
+    ],
+    "locus4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+        "commit": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+      }
+    ],
+    "multivar": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+        "commit": "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+      }
+    ],
+    "mvpa4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+        "commit": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+      }
+    ],
+    "neuroatlas4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/13888b7dd8bc22e12ae8/neuroatlas4s",
+        "commit": "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+      }
+    ],
+    "neuroim4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/96c50b025d799c245ede/neuroim4s",
+        "commit": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b"
+      }
+    ],
+    "ravel": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+        "commit": "195d71027423d5bda1c53ef1baa17e07670fe290"
+      }
+    ],
+    "reframe4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+        "commit": "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+      }
+    ],
+    "resample4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+        "commit": "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+      }
+    ],
+    "spatial4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+        "commit": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+      }
+    ],
+    "zarr4s": [
+      {
+        "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+        "commit": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+      }
+    ]
+  },
+  "initial_default_graph_rejected": {
+    "reason": "mesh4s54b7278 pins graph4s6a72b58 while ScalaFIM and neuroim4s use856e6fb. Local graph overrides had masked this transitive mismatch.",
+    "loaded_builds": {
+      "scalafim": [
+        {
+          "path": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+          "commit": "d3e7d6067c64c527b04c2ea9afd01ef1ef4f7bbb"
+        }
+      ],
+      "alder": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+          "commit": "7618c715002b3912f856c4d44468ae173fce4dec"
+        }
+      ],
+      "bids4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+          "commit": "a33678390614a91fadbdef13f22970e78c26e091"
+        }
+      ],
+      "gale": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+          "commit": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+        }
+      ],
+      "graph4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/ae0fc8f94feb05e0d662/graph4s",
+          "commit": "856e6fb770cf5f4c5512b0607d8c3733e75e7460"
+        },
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/e6c88898cf2a580290f7/graph4s",
+          "commit": "6a72b58b564933234768f025e67228736ef2f7c5"
+        }
+      ],
+      "image4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+          "commit": "aef5e223169f0831c942694c4b109ab20d152217"
+        }
+      ],
+      "intaglio": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+          "commit": "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+        }
+      ],
+      "linops4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+          "commit": "fec77db060b130b3c609a43d07ff0bfb31088aae"
+        }
+      ],
+      "locus4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+          "commit": "e32b0aeba5c4d19c457b2329272b95b26c061943"
+        }
+      ],
+      "mesh4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/169dde1ec5b6720cd043/mesh4s",
+          "commit": "54b7278880e6db38c543a4a565355afd864e576a"
+        }
+      ],
+      "multivar": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+          "commit": "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+        }
+      ],
+      "mvpa4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+          "commit": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+        }
+      ],
+      "neuroatlas4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/13888b7dd8bc22e12ae8/neuroatlas4s",
+          "commit": "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+        }
+      ],
+      "neuroim4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/96c50b025d799c245ede/neuroim4s",
+          "commit": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b"
+        }
+      ],
+      "ravel": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+          "commit": "195d71027423d5bda1c53ef1baa17e07670fe290"
+        }
+      ],
+      "reframe4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+          "commit": "7ec7feff96d4057a86196b5e86d592688b7c7f84"
+        }
+      ],
+      "resample4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+          "commit": "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+        }
+      ],
+      "spatial4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+          "commit": "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+        }
+      ],
+      "zarr4s": [
+        {
+          "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+          "commit": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+        }
+      ]
+    },
+    "test_exit_status_was_zero_but_coherence_failed": true
+  },
+  "tests_passed": 1532,
+  "skipped_existing_optional_js_tests": 2,
+  "skip_names": [
+    "P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget",
+    "synthetic same-size hemisphere: placement at admission and prepare+map timings"
+  ],
+  "all_modules_examples_compile_jvm_js": true,
+  "source_overrides_for_coherent_consumer_gates": {
+    "mesh4s": "/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020"
+  },
+  "published_producers_use_default_remote_pins": true,
+  "evidence": [
+    {
+      "log": "published-producers-01.log",
+      "sha256": "de82df92550a35a998150a282901e84c859de9a24e2474e3b63f5722f9319221",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "{https://github.com/canardlapin/graph4s.git#856e6fb770cf5f4c5512b0607d8c3733e75e7460}algorithmsJVM/test",
+        "{https://github.com/canardlapin/graph4s.git#856e6fb770cf5f4c5512b0607d8c3733e75e7460}algorithmsJS/test",
+        "neuroimRoutingTestAll",
+        "show spatialJVM / Compile / dependencyClasspath",
+        "show spatialJS / Compile / dependencyClasspath"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "test_summaries": [
+        {
+          "total": 18,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 18,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 14,
+          "passed": 14,
+          "skipped": 0
+        },
+        {
+          "total": 14,
+          "passed": 14,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "passed": 4,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "log": "mesh-graph-pin-01.log",
+      "sha256": "1531fd9ce990c281e6318a461cf8fd2c0dd0d0e59b6ab21985ab18f6436b270c",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "mesh4sCheckAll"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020",
+      "test_summaries": [
+        {
+          "total": 39,
+          "passed": 39,
+          "skipped": 0
+        },
+        {
+          "total": 37,
+          "passed": 37,
+          "skipped": 0
+        },
+        {
+          "total": 19,
+          "passed": 19,
+          "skipped": 0
+        },
+        {
+          "total": 19,
+          "passed": 19,
+          "skipped": 0
+        },
+        {
+          "total": 27,
+          "passed": 27,
+          "skipped": 0
+        },
+        {
+          "total": 23,
+          "passed": 23,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "log": "coherent-mesh-surface-01.log",
+      "sha256": "4e727b296dd8643e0d002d75f51fef7a9571c703939c7ad5aa296e36bad8ddc4",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020",
+        "surfaceJVM/test",
+        "surfaceJS/test",
+        "show surfaceJVM / Compile / dependencyClasspath",
+        "show surfaceJS / Compile / dependencyClasspath"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "test_summaries": [
+        {
+          "total": 322,
+          "passed": 322,
+          "skipped": 0
+        },
+        {
+          "total": 281,
+          "passed": 279,
+          "skipped": 2
+        }
+      ]
+    },
+    {
+      "log": "coherent-consumer-jvm-01.log",
+      "sha256": "e9f13ddd9aba57ca342235772579d67acfe0cacee2b7c8147b36c23cbc2089fc",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020",
+        "spatialJVM/test",
+        "atlasJVM/test",
+        "mvpaSpatialJVM/test",
+        "atlasExamplesJVM/test",
+        "workflowExamplesJVM/test",
+        "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "test_summaries": [
+        {
+          "total": 231,
+          "passed": 231,
+          "skipped": 0
+        },
+        {
+          "total": 120,
+          "passed": 120,
+          "skipped": 0
+        },
+        {
+          "total": 25,
+          "passed": 25,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "passed": 3,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "log": "coherent-consumer-js-01.log",
+      "sha256": "9c71bb8570a558773a856ed575fd8acf49ee751ffa3d6faadbfe13225366e0db",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-graph-pin-20261020",
+        "spatialJS/test",
+        "atlasJS/test",
+        "mvpaSpatialJS/test",
+        "workflowExamplesJS/test",
+        "scalafimCompileAll",
+        "examplesCompile"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "test_summaries": [
+        {
+          "total": 206,
+          "passed": 206,
+          "skipped": 0
+        },
+        {
+          "total": 74,
+          "passed": 74,
+          "skipped": 0
+        },
+        {
+          "total": 25,
+          "passed": 25,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "passed": 2,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "log": "pinned-guard-after-01.log",
+      "sha256": "b7e5b4288c63e6884b04ebb890e83e7a7d71079dbad9b8ea7f27e5da79ef840b",
+      "exit_code": 0,
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/ci",
+        "-p",
+        "test_pinned_dependencies.py"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "test_summaries": [
+        {
+          "total": 8,
+          "passed": 8,
+          "skipped": 0
+        }
+      ]
+    }
+  ],
+  "raw_log_root": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-routing-20261020",
+  "regression_guard": {
+    "script": "tools/prepare-pinned-dependencies.sh",
+    "tests": "tools/ci/test_pinned_dependencies.py",
+    "checks": "Mesh4s and neuroim4s default graph4s pins equal ScalaFIM before dependency bootstrap publication. Both multiline and single-line declarations are covered.",
+    "before_fix_expected_regression_failure_log": "pinned-guard-before-01.log",
+    "after_fix_tests_passed": 8
+  },
+  "caveats": [
+    "Mesh53973bf needs separate publication authorization; full no-override default-pin acceptance remains pending.",
+    "No all-repository test run, hosted CI verdict, independent review, new native visual qualification or optional timing budget claim. Existing native atlas oracle and numerical/parity/allocation courts are included.",
+    "The 68 independent graph4s/neuroim4s provider tests ran using published sources before the root mesh coherence correction; their own dependency closures do not depend on mesh4s.",
+    "Production Scala LOC deltas remain ScalaFIM-662, neuroim4s+1194, graph4s+94: ecosystem+626; dead ScalaFIM meta-build helper deletion removes274 more build lines. The extraction is not an ecosystem-wide LOC/module-count reduction yet."
+  ],
+  "next_action": "Obtain approval for exact mesh4s53973bf; publish non-force fast-forward; verify checkout/tracking/live SHA parity and fresh no-override consumer gates; then accept/close eco-neuroim-routing. ScalaFIM source publication is not authorized."
+}
