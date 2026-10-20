@@ -15,7 +15,7 @@ enum MeshAdmissionError:
     case Coordinates(error) => error.message
 
 /** Read-only primitive access to the point field's own storage. */
-final class MeshCoordinates private[surface] (private val field: PointField[?, D3, Frame[D3]]):
+final class MeshCoordinates private[surface] (private[surface] val field: PointField[?, D3, Frame[D3]]):
   val length: Int = field.space.size * 3
   def apply(offset: Int): Double = field.packedValue(offset)
   def toArray: Array[Double] = field.interleavedDoubles

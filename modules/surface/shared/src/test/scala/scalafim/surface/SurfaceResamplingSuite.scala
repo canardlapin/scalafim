@@ -90,3 +90,39 @@ class SurfaceResamplingSuite extends munit.FunSuite:
   test("input of the wrong length is a typed failure"):
     val plan = ok(SurfaceResampling.plan(coarse, fine))
     assert(SurfaceResampling.apply(plan, Array(1.0, 2.0)).isLeft)
+
+  test("nearest lookup compares physical distance across anisotropic buckets"):
+    // 1002 vertices give six cells per axis. A physically close vertex sits
+    // three x cells away; the nearby x buckets contain only distant y values.
+    val coordinates = Array.fill(3006)(0.0)
+    (0 until 1002).foreach: i =>
+      coordinates(3 * i) = -0.9
+      coordinates(3 * i + 1) = 300.0 + i * 0.01
+    coordinates(0) = 0.2
+    coordinates(1) = 0.0
+    coordinates(3) = -1.0
+    coordinates(4) = -1000.0
+    coordinates(6) = 1.0
+    coordinates(7) = 1000.0
+    val moving = TriangleMesh.fromArrays(coordinates, Array.tabulate(1002)(identity))
+    val reference = TriangleMesh.fromRows(Vector(Vector(-0.9, 0.0, 0.0), Vector(-0.9, 0.1, 0.0), Vector(-0.9, 0.0, 0.1)), Vector((0, 1, 2)))
+    val plan = ok(SurfaceResampling.plan(reference, moving, SurfaceResampling.Method.Nearest, spherical = false))
+    assertEquals(plan.cols.toVector, Vector(0, 0, 0))
+
+  test("radial lookup visits the whole positive ray beyond unrelated nearby buckets"):
+    val points = Vector(Vector(-1.0, -1.0, 1.0), Vector(1.0, -1.0, 1.0), Vector(0.0, 1.0, 1.0)) ++
+      Vector(Vector(1.0, 1.0, 100.0), Vector(3.0, 1.0, 100.0), Vector(1.0, 3.0, 100.0)) ++
+      Vector.fill(254)(Vector(Vector(99.0, 99.0, 100.0), Vector(100.0, 99.0, 100.0), Vector(99.0, 100.0, 100.0))).flatten
+    val moving = TriangleMesh.fromRows(points, (0 until 256).map(i => (3 * i, 3 * i + 1, 3 * i + 2)))
+    val reference = TriangleMesh.fromRows(Vector(Vector(0.0, 0.0, 10000.0), Vector(0.1, 0.0, 10000.0), Vector(0.0, 0.1, 10000.0)), Vector((0, 1, 2)))
+    val plan = ok(SurfaceResampling.plan(reference, moving, spherical = false))
+    val first = plan.rows.indices.filter(plan.rows(_) == 0)
+    assertEquals(first.map(plan.cols(_)).toVector, Vector(0, 1, 2))
+    first.map(plan.vals(_)).zip(Vector(0.25, 0.25, 0.5)).foreach((actual, expected) => assertEqualsDouble(actual, expected, 1e-12))
+
+  test("barycentric resampling reports degenerate geometry instead of silently falling back"):
+    val collapsed = TriangleMesh.fromRows(Vector(Vector(0.0, 0.0, 1.0), Vector(1.0, 0.0, 1.0), Vector(2.0, 0.0, 1.0)), Vector((0, 1, 2)))
+    SurfaceResampling.plan(coarse, collapsed, spherical = false) match
+      case Left(_: SurfaceError.InvalidGeometry) => ()
+      case other => fail(s"expected a geometric admission failure, got $other")
+    assert(SurfaceResampling.plan(coarse, collapsed, SurfaceResampling.Method.Nearest, spherical = false).isRight)
