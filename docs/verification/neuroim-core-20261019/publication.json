@@ -1,0 +1,1692 @@
+{
+  "authorization": "User approved exact three source main fast-forwards; no artifact release or ScalaFIM push",
+  "started_at": "2026-10-20T01:56:51.366269+00:00",
+  "providers": [
+    {
+      "repository": "image4s",
+      "cwd": "/private/tmp/scalafim-image4s-components-20261019",
+      "candidate": "7885f67798242412800a448eda68acfbfff4f751",
+      "parent": "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df",
+      "commands": [
+        {
+          "argv": [
+            "git",
+            "status",
+            "--porcelain"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "7885f67798242412800a448eda68acfbfff4f751\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "HEAD^"
+          ],
+          "exit_code": 0,
+          "stdout": "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "ls-remote",
+            "github",
+            "refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "ba7ca3dae7181b4b3267b2d3220f0c50f06b93df\trefs/heads/main\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "push",
+            "github",
+            "7885f67798242412800a448eda68acfbfff4f751:refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "To github-canardlapin:canardlapin/image4s.git\n   ba7ca3d..7885f67  7885f67798242412800a448eda68acfbfff4f751 -> main\n"
+        },
+        {
+          "argv": [
+            "git",
+            "fetch",
+            "github",
+            "refs/heads/main:refs/remotes/github/main"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "refs/remotes/github/main"
+          ],
+          "exit_code": 0,
+          "stdout": "7885f67798242412800a448eda68acfbfff4f751\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "ls-remote",
+            "github",
+            "refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "7885f67798242412800a448eda68acfbfff4f751\trefs/heads/main\n",
+          "stderr": ""
+        }
+      ],
+      "parity_verified": true
+    },
+    {
+      "repository": "reframe4s",
+      "cwd": "/private/tmp/scalafim-reframe-components-20261019",
+      "candidate": "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d",
+      "parent": "a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295",
+      "commands": [
+        {
+          "argv": [
+            "git",
+            "status",
+            "--porcelain"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "HEAD^"
+          ],
+          "exit_code": 0,
+          "stdout": "a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "ls-remote",
+            "github",
+            "refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295\trefs/heads/main\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "push",
+            "github",
+            "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d:refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "To github-canardlapin:canardlapin/reframe4s.git\n   a9134f2..e4df739  e4df73969e1fccb7aa0153a9203927c6dd8b0e3d -> main\n"
+        },
+        {
+          "argv": [
+            "git",
+            "fetch",
+            "github",
+            "refs/heads/main:refs/remotes/github/main"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "refs/remotes/github/main"
+          ],
+          "exit_code": 0,
+          "stdout": "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "ls-remote",
+            "github",
+            "refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d\trefs/heads/main\n",
+          "stderr": ""
+        }
+      ],
+      "parity_verified": true
+    },
+    {
+      "repository": "neuroim4s",
+      "cwd": "/private/tmp/scalafim-neuroim-core-20261019",
+      "candidate": "0ca4d07fc021d21a7802929069396d4df5bf4cc3",
+      "parent": "9780bcab6c061284a3c8864d9599b0534c71a97f",
+      "commands": [
+        {
+          "argv": [
+            "git",
+            "status",
+            "--porcelain"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "0ca4d07fc021d21a7802929069396d4df5bf4cc3\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "HEAD^"
+          ],
+          "exit_code": 0,
+          "stdout": "9780bcab6c061284a3c8864d9599b0534c71a97f\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "ls-remote",
+            "github",
+            "refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "9780bcab6c061284a3c8864d9599b0534c71a97f\trefs/heads/main\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "push",
+            "github",
+            "0ca4d07fc021d21a7802929069396d4df5bf4cc3:refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": "To github-canardlapin:canardlapin/neuroim4s.git\n   9780bca..0ca4d07  0ca4d07fc021d21a7802929069396d4df5bf4cc3 -> main\n"
+        },
+        {
+          "argv": [
+            "git",
+            "fetch",
+            "github",
+            "refs/heads/main:refs/remotes/github/main"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "rev-parse",
+            "refs/remotes/github/main"
+          ],
+          "exit_code": 0,
+          "stdout": "0ca4d07fc021d21a7802929069396d4df5bf4cc3\n",
+          "stderr": ""
+        },
+        {
+          "argv": [
+            "git",
+            "ls-remote",
+            "github",
+            "refs/heads/main"
+          ],
+          "exit_code": 0,
+          "stdout": "0ca4d07fc021d21a7802929069396d4df5bf4cc3\trefs/heads/main\n",
+          "stderr": ""
+        }
+      ],
+      "parity_verified": true
+    }
+  ],
+  "finished_at": "2026-10-20T01:57:03.324457+00:00",
+  "consumer_activation": {
+    "reviewed_source_candidate": "7ec3d6f26c39e904b41f71384d99cb328acc8fe5",
+    "active_commit": "84f8d36dadf9f013493f06f81ed40d1e17c39c57",
+    "branch": "eco/u3-topology-20261019",
+    "pushed": false,
+    "input_proof": {
+      "neuroim4s": {
+        "verified": 124,
+        "mismatches": []
+      },
+      "image4s": {
+        "verified": 122,
+        "mismatches": []
+      },
+      "reframe4s": {
+        "verified": 251,
+        "mismatches": []
+      },
+      "scalafim": {
+        "verified": 2509,
+        "mismatches": []
+      }
+    },
+    "default_pin_gate": "passed"
+  },
+  "retained_adverse_default_pin_gate": {
+    "log": "default-pins-00-compile.log",
+    "exit_code": 1,
+    "reason": "Host disk full at sbt project loading; no compilation or tests started",
+    "recovery": {
+      "reason": "Default-pin gate failed at project load: no space left on device",
+      "scope": "Session-owned ignored JS linked output, isolated provider generated targets and deleted image-module generated targets only",
+      "archive": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/pre-disk-recovery-test-reports.zip",
+      "removed": [
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/hrf/js/target/scala-3.7.4/scalafim-fmri-hrf-test-fastopt",
+          "allocated_kib": 11708
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/design/js/target/scala-3.7.4/scalafim-fmri-design-test-fastopt",
+          "allocated_kib": 32200
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/pipeline/js/target/scala-3.7.4/scalafim-pipeline-test-fastopt",
+          "allocated_kib": 6020
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/surface-view/js/target/scala-3.7.4/scalafim-surface-view-test-fastopt",
+          "allocated_kib": 19888
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/archive-zarr/js/target/scala-3.7.4/scalafim-archive-zarr-test-fastopt",
+          "allocated_kib": 10408
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/response-laws/js/target/scala-3.7.4/scalafim-response-laws-test-fastopt",
+          "allocated_kib": 6220
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/scenario-testkit/js/target/scala-3.7.4/scalafim-scenario-testkit-test-fastopt",
+          "allocated_kib": 4340
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/response/js/target/scala-3.7.4/scalafim-response-test-fastopt",
+          "allocated_kib": 6252
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/archive/js/target/scala-3.7.4/scalafim-archive-test-fastopt",
+          "allocated_kib": 6984
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/fit/js/target/scala-3.7.4/scalafim-fmri-fit-test-fastopt",
+          "allocated_kib": 51336
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/connectivity/js/target/scala-3.7.4/scalafim-connectivity-test-fastopt",
+          "allocated_kib": 7532
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/estimates-io/js/target/scala-3.7.4/scalafim-estimates-io-test-fastopt",
+          "allocated_kib": 8400
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/group/js/target/scala-3.7.4/scalafim-fmri-group-test-fastopt",
+          "allocated_kib": 7992
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/estimates/js/target/scala-3.7.4/scalafim-estimates-test-fastopt",
+          "allocated_kib": 6340
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-artifacts/js/target/scala-3.7.4/scalafim-fmri-mvpa-artifacts-test-fastopt",
+          "allocated_kib": 5100
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/scala-3.7.4/scalafim-dataset-test-fastopt",
+          "allocated_kib": 10820
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/surface-view-connectivity/js/target/scala-3.7.4/scalafim-surface-view-connectivity-test-fastopt",
+          "allocated_kib": 5548
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/locus-data/js/target/scala-3.7.4/scalafim-locus-data-test-fastopt",
+          "allocated_kib": 5052
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/surface-test-fixtures/js/target/scala-3.7.4/scalafim-surface-test-fixtures-test-fastopt",
+          "allocated_kib": 7040
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-spatial/js/target/scala-3.7.4/scalafim-fmri-mvpa-spatial-test-fastopt",
+          "allocated_kib": 12004
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/surface/js/target/scala-3.7.4/scalafim-surface-test-fastopt",
+          "allocated_kib": 16620
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/scala-3.7.4/scalafim-fmri-motion-test-fastopt",
+          "allocated_kib": 7912
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/image/js/target/scala-3.7.4/scalafim-image-test-fastopt",
+          "allocated_kib": 28468
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-group/js/target/scala-3.7.4/scalafim-fmri-mvpa-group-test-fastopt",
+          "allocated_kib": 9648
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/scala-3.7.4/scalafim-fmri-threshold-test-fastopt",
+          "allocated_kib": 8680
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/phrf-comparison/js/target/scala-3.7.4/scalafim-phrf-comparison-test-fastopt",
+          "allocated_kib": 26732
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-fit/js/target/scala-3.7.4/scalafim-fmri-mvpa-fit-test-fastopt",
+          "allocated_kib": 35272
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt",
+          "allocated_kib": 38032
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/ar/js/target/scala-3.7.4/scalafim-fmri-ar-test-fastopt",
+          "allocated_kib": 9596
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/model/js/target/scala-3.7.4/scalafim-fmri-model-test-fastopt",
+          "allocated_kib": 20388
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-pipeline/js/target/scala-3.7.4/scalafim-mvpa-pipeline-test-fastopt",
+          "allocated_kib": 6104
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/provider-spike/js/target/scala-3.7.4/scalafim-provider-spike-test-fastopt",
+          "allocated_kib": 3624
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/surface-view-raster/js/target/scala-3.7.4/scalafim-surface-view-raster-test-fastopt",
+          "allocated_kib": 12624
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/scala-3.7.4/scalafim-fmri-workflow-test-fastopt",
+          "allocated_kib": 25780
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/image-view-canvas/js/target/scala-3.7.4/scalafim-image-view-canvas-test-fastopt",
+          "allocated_kib": 9084
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/scala-3.7.4/scalafim-atlas-test-fastopt",
+          "allocated_kib": 12820
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/interop-archived-response/js/target/scala-3.7.4/scalafim-interop-archived-response-test-fastopt",
+          "allocated_kib": 24988
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/scala-3.7.4/scalafim-spatial-test-fastopt",
+          "allocated_kib": 13996
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/scala-3.7.4/scalafim-image-view-test-fastopt",
+          "allocated_kib": 8956
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-foundation-spike/js/target/scala-3.7.4/scalafim-mvpa-foundation-admission-test-fastopt",
+          "allocated_kib": 6984
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/latent/js/target/scala-3.7.4/scalafim-fmri-latent-test-fastopt",
+          "allocated_kib": 8372
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/js/target/scala-3.7.4/scalafim-dataset-zarr-test-fastopt",
+          "allocated_kib": 6228
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/transform/js/target/scala-3.7.4/scalafim-transform-test-fastopt",
+          "allocated_kib": 13104
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/archive-lna/js/target/scala-3.7.4/scalafim-archive-lna-test-fastopt",
+          "allocated_kib": 6696
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/surface-view-three/js/target/scala-3.7.4/scalafim-surface-view-three-test-fastopt",
+          "allocated_kib": 17924
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/js/target/scala-3.7.4/scalafim-fmri-mvpa-dataset-test-fastopt",
+          "allocated_kib": 13692
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/examples/surface-view/js/target/scala-3.7.4/scalafim-examples-surface-view-test-fastopt",
+          "allocated_kib": 21156
+        },
+        {
+          "path": "/private/tmp/scalafim-neuroim-core-20261019/modules/neuroim4s-spaces/js/target",
+          "allocated_kib": 6668
+        },
+        {
+          "path": "/private/tmp/scalafim-neuroim-core-20261019/modules/neuroim4s-spaces/jvm/target",
+          "allocated_kib": 968
+        },
+        {
+          "path": "/private/tmp/scalafim-neuroim-core-20261019/modules/neuroim4s-io/jvm/target",
+          "allocated_kib": 1500
+        },
+        {
+          "path": "/private/tmp/scalafim-neuroim-core-20261019/modules/neuroim4s-core/js/target",
+          "allocated_kib": 45192
+        },
+        {
+          "path": "/private/tmp/scalafim-neuroim-core-20261019/modules/neuroim4s-core/jvm/target",
+          "allocated_kib": 9520
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-geometry/js/target",
+          "allocated_kib": 1904
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-geometry/jvm/target",
+          "allocated_kib": 1224
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-core/js/target",
+          "allocated_kib": 4316
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-core/jvm/target",
+          "allocated_kib": 2644
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-nifti/js/target",
+          "allocated_kib": 15264
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-nifti/jvm/target",
+          "allocated_kib": 3536
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-reference/js/target",
+          "allocated_kib": 384
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-reference/jvm/target",
+          "allocated_kib": 328
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-ops-core/js/target",
+          "allocated_kib": 1328
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-ops-core/jvm/target",
+          "allocated_kib": 896
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-locus/js/target",
+          "allocated_kib": 12912
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-locus/jvm/target",
+          "allocated_kib": 2244
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-filter/js/target",
+          "allocated_kib": 984
+        },
+        {
+          "path": "/private/tmp/scalafim-image4s-components-20261019/modules/image4s-filter/jvm/target",
+          "allocated_kib": 724
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-field/js/target",
+          "allocated_kib": 2900
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-field/jvm/target",
+          "allocated_kib": 1920
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-resample/js/target",
+          "allocated_kib": 8944
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-resample/jvm/target",
+          "allocated_kib": 1520
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-core/js/target",
+          "allocated_kib": 2340
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-core/jvm/target",
+          "allocated_kib": 1536
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-laws/js/target",
+          "allocated_kib": 10644
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-laws/jvm/target",
+          "allocated_kib": 968
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-lie/js/target",
+          "allocated_kib": 7548
+        },
+        {
+          "path": "/private/tmp/scalafim-reframe-components-20261019/modules/reframe4s-lie/jvm/target",
+          "allocated_kib": 760
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/image/jvm/target",
+          "allocated_kib": 10364
+        },
+        {
+          "path": "/private/tmp/scalafim-simplify-a-20261019/modules/image/js/target",
+          "allocated_kib": 44776
+        }
+      ]
+    }
+  },
+  "default_pin_qualification": {
+    "gates": {
+      "started_at": "2026-10-20T01:59:28.264642+00:00",
+      "consumer": "84f8d36dadf9f013493f06f81ed40d1e17c39c57",
+      "local_provider_overrides": false,
+      "gates": [
+        {
+          "name": "compile",
+          "commands": [
+            "projects",
+            "scalafimCompileAll",
+            "examplesCompile",
+            "show mvpaDatasetJVM / Compile / fullClasspath",
+            "show mvpaDatasetJS / Compile / fullClasspath"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-00-compile.log",
+          "exit_code": 0,
+          "metadata": {
+            "schema_version": 1,
+            "started_utc": "2026-10-20T01:59:28.347813+00:00",
+            "finished_utc": "2026-10-20T02:02:19.080571+00:00",
+            "duration_seconds": 170.731241,
+            "command": [
+              "sbt",
+              "-batch",
+              "-Djava.awt.headless=true",
+              "-Dsbt.supershell=false",
+              "-Dsbt.log.noformat=true",
+              "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+              "projects",
+              "scalafimCompileAll",
+              "examplesCompile",
+              "show mvpaDatasetJVM / Compile / fullClasspath",
+              "show mvpaDatasetJS / Compile / fullClasspath"
+            ],
+            "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+            "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-00-compile.log",
+            "exit_code": 0,
+            "child_returncode": 0,
+            "reason": "exited",
+            "detail": null,
+            "timeout_seconds": 3600.0,
+            "log_bytes": 59653
+          }
+        },
+        {
+          "name": "neuroim",
+          "commands": [
+            "neuroimTestAll"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-01-neuroim.log",
+          "exit_code": 0,
+          "metadata": {
+            "schema_version": 1,
+            "started_utc": "2026-10-20T02:02:19.137260+00:00",
+            "finished_utc": "2026-10-20T02:03:13.308449+00:00",
+            "duration_seconds": 54.170655,
+            "command": [
+              "sbt",
+              "-batch",
+              "-Djava.awt.headless=true",
+              "-Dsbt.supershell=false",
+              "-Dsbt.log.noformat=true",
+              "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+              "neuroimTestAll"
+            ],
+            "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+            "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-01-neuroim.log",
+            "exit_code": 0,
+            "child_returncode": 0,
+            "reason": "exited",
+            "detail": null,
+            "timeout_seconds": 3600.0,
+            "log_bytes": 73024
+          }
+        },
+        {
+          "name": "adapters-jvm",
+          "commands": [
+            "imageViewJVM/test",
+            "thresholdJVM/test",
+            "motionJVM/test",
+            "spatialJVM/test",
+            "atlasJVM/test",
+            "datasetJVM/test",
+            "estimatesIoJVM/test",
+            "archivedResponseInteropJVM/testOnly scalafim.architecture.ResponseArchiveBoundaryGuardSuite"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-02-adapters-jvm.log",
+          "exit_code": 0,
+          "metadata": {
+            "schema_version": 1,
+            "started_utc": "2026-10-20T02:03:13.398384+00:00",
+            "finished_utc": "2026-10-20T02:05:49.866959+00:00",
+            "duration_seconds": 156.467193,
+            "command": [
+              "sbt",
+              "-batch",
+              "-Djava.awt.headless=true",
+              "-Dsbt.supershell=false",
+              "-Dsbt.log.noformat=true",
+              "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+              "imageViewJVM/test",
+              "thresholdJVM/test",
+              "motionJVM/test",
+              "spatialJVM/test",
+              "atlasJVM/test",
+              "datasetJVM/test",
+              "estimatesIoJVM/test",
+              "archivedResponseInteropJVM/testOnly scalafim.architecture.ResponseArchiveBoundaryGuardSuite"
+            ],
+            "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+            "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-02-adapters-jvm.log",
+            "exit_code": 0,
+            "child_returncode": 0,
+            "reason": "exited",
+            "detail": null,
+            "timeout_seconds": 3600.0,
+            "log_bytes": 83628
+          }
+        },
+        {
+          "name": "adapters-js",
+          "commands": [
+            "imageViewJS/test",
+            "thresholdJS/test",
+            "motionJS/test",
+            "spatialJS/test",
+            "atlasJS/test",
+            "datasetJS/test",
+            "estimatesIoJS/test",
+            "archivedResponseInteropJS/testOnly scalafim.architecture.ResponseArchiveBoundaryGuardSuite"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-03-adapters-js.log",
+          "exit_code": 0,
+          "metadata": {
+            "schema_version": 1,
+            "started_utc": "2026-10-20T02:05:49.948421+00:00",
+            "finished_utc": "2026-10-20T02:07:14.191568+00:00",
+            "duration_seconds": 84.242391,
+            "command": [
+              "sbt",
+              "-batch",
+              "-Djava.awt.headless=true",
+              "-Dsbt.supershell=false",
+              "-Dsbt.log.noformat=true",
+              "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+              "imageViewJS/test",
+              "thresholdJS/test",
+              "motionJS/test",
+              "spatialJS/test",
+              "atlasJS/test",
+              "datasetJS/test",
+              "estimatesIoJS/test",
+              "archivedResponseInteropJS/testOnly scalafim.architecture.ResponseArchiveBoundaryGuardSuite"
+            ],
+            "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+            "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-03-adapters-js.log",
+            "exit_code": 0,
+            "child_returncode": 0,
+            "reason": "exited",
+            "detail": null,
+            "timeout_seconds": 3600.0,
+            "log_bytes": 72806
+          }
+        },
+        {
+          "name": "workflows-jvm",
+          "commands": [
+            "mvpaDatasetJVM/test",
+            "datasetZarrJVM/test",
+            "fmriWorkflowJVM/test",
+            "workflowExamplesJVM/test",
+            "atlasExamplesJVM/test"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-04-workflows-jvm.log",
+          "exit_code": 0,
+          "metadata": {
+            "schema_version": 1,
+            "started_utc": "2026-10-20T02:07:14.283822+00:00",
+            "finished_utc": "2026-10-20T02:07:53.708825+00:00",
+            "duration_seconds": 39.424561,
+            "command": [
+              "sbt",
+              "-batch",
+              "-Djava.awt.headless=true",
+              "-Dsbt.supershell=false",
+              "-Dsbt.log.noformat=true",
+              "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+              "mvpaDatasetJVM/test",
+              "datasetZarrJVM/test",
+              "fmriWorkflowJVM/test",
+              "workflowExamplesJVM/test",
+              "atlasExamplesJVM/test"
+            ],
+            "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+            "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-04-workflows-jvm.log",
+            "exit_code": 0,
+            "child_returncode": 0,
+            "reason": "exited",
+            "detail": null,
+            "timeout_seconds": 3600.0,
+            "log_bytes": 17103
+          }
+        },
+        {
+          "name": "workflows-js",
+          "commands": [
+            "mvpaDatasetJS/test",
+            "datasetZarrJS/test",
+            "fmriWorkflowJS/test",
+            "workflowExamplesJS/test"
+          ],
+          "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-05-workflows-js.log",
+          "exit_code": 0,
+          "metadata": {
+            "schema_version": 1,
+            "started_utc": "2026-10-20T02:07:53.780456+00:00",
+            "finished_utc": "2026-10-20T02:08:33.963940+00:00",
+            "duration_seconds": 40.183036,
+            "command": [
+              "sbt",
+              "-batch",
+              "-Djava.awt.headless=true",
+              "-Dsbt.supershell=false",
+              "-Dsbt.log.noformat=true",
+              "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+              "mvpaDatasetJS/test",
+              "datasetZarrJS/test",
+              "fmriWorkflowJS/test",
+              "workflowExamplesJS/test"
+            ],
+            "cwd": "/private/tmp/scalafim-simplify-a-20261019",
+            "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pins-02-05-workflows-js.log",
+            "exit_code": 0,
+            "child_returncode": 0,
+            "reason": "exited",
+            "detail": null,
+            "timeout_seconds": 3600.0,
+            "log_bytes": 15037
+          }
+        }
+      ],
+      "finished_at": "2026-10-20T02:08:33.971405+00:00"
+    },
+    "test_reports": {
+      "cutoff_utc": "2026-10-20T01:59:28.347813+00:00",
+      "projects": [
+        {
+          "project": "imageViewJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.AdvancedViewSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.ColorizerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.InteractionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.LayerAlignmentSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.ViewerCursorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.ViewerModelUpdateSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/jvm/target/test-reports/TEST-scalafim.image.view.ViewerSceneSuite.xml"
+          ],
+          "tests": 42,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "thresholdJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.DecisionScaleSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.HierScanRParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.HierScanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.MaxNullDecisionOracleSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.NullReferenceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.StatKindSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.ThresholdCoreSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.ThresholdLocusSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.scenarios.HierScanCalibrationScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.scenarios.HierScanReallocationScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/jvm/target/test-reports/TEST-scalafim.fmri.threshold.scenarios.NullCalibrationScenarioSuite.xml"
+          ],
+          "tests": 90,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "motionJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionApiShapeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionApplierSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionControlSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionEstimatorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionHuberScaleSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionMetricsSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionQcSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionSolverScalingSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionSplineSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.MotionTraceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.RigidPoseSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.VolreggerParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.VolreggerResourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.benchmark.MotionBenchmarkSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/jvm/target/test-reports/TEST-scalafim.fmri.motion.io.MotionIoSuite.xml"
+          ],
+          "tests": 105,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "imageViewJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.AdvancedViewSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.ColorizerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.InteractionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.LayerAlignmentSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.ViewerCursorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.ViewerModelUpdateSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/image-view/js/target/test-reports/TEST-scalafim.image.view.ViewerSceneSuite.xml"
+          ],
+          "tests": 42,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "thresholdJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.DecisionScaleSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.HierScanRParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.HierScanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.MaxNullDecisionOracleSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.NullReferenceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.StatKindSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.ThresholdCoreSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.ThresholdLocusSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.scenarios.HierScanCalibrationScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.scenarios.HierScanReallocationScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/threshold/js/target/test-reports/TEST-scalafim.fmri.threshold.scenarios.NullCalibrationScenarioSuite.xml"
+          ],
+          "tests": 90,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "motionJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionApiShapeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionApplierSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionControlSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionEstimatorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionHuberScaleSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionMetricsSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionQcSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionSolverScalingSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionSplineSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.MotionTraceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.RigidPoseSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/motion/js/target/test-reports/TEST-scalafim.fmri.motion.VolreggerParitySuite.xml"
+          ],
+          "tests": 92,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "spatialJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-external.consumer.ProviderCoordinateMapBoundaryCompileSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-external.consumer.SamplingGeometryBoundaryCompileSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.AffineFusionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.DemandSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.DomainLocusSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.DomainSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.FieldApiSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.FieldExplanationSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.FieldRuntimeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.FieldSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.LazyFieldRuntimeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.MixedPullbackSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.NeurofunctorLawFixtureFilesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.NeurofunctorLawParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.NonlinearPullbackSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.OperatorCompilerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.OperatorParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.ProviderMapCompositionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.PullbackCompilerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.RoutingParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.SpaceRefWorldSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.SpatialGraphSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.SpatialLazyAcceptanceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.SpatialLazyContractSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.SpatialLazyPerformanceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.SpatialQcSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.StagedPluginSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.TemplateSurfaceOperatorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.UnsampledDomainSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.ViewPlanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.VolumeToSurfaceOperatorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.VolumeToSurfaceParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.io.NiftiFieldSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.io.SpatialIngestSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.io.SpatialLazyExternalScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.io.SpatialTripletFileCacheSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/jvm/target/test-reports/TEST-scalafim.spatial.io.TransformIngestSuite.xml"
+          ],
+          "tests": 231,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "atlasJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.AtlasCoreSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.AtlasCoverageSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.AtlasParityCorpusSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.AtlasPublicationSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.AtlasQuotientSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.AtlasRealizationSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.GraphDifferentialSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.MniTemplateBridgeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.SpaceTransformGraphSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.StandardSurfaceRoutesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.SurfaceAtlasSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.TemplateSampledCatalogSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.io.AsegLoaderSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.io.AtlasIoSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.io.BrainnetomeLoaderSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.io.MniTemplateBridgeFilesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.io.StandardSurfaceRouteFilesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.io.SurfaceGiftiAtlasLoaderSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/jvm/target/test-reports/TEST-scalafim.atlas.reference.Fslr32kRouteBudgetSuite.xml"
+          ],
+          "tests": 120,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "archivedResponseInteropJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/interop-archived-response/jvm/target/test-reports/TEST-scalafim.architecture.ResponseArchiveBoundaryGuardSuite.xml"
+          ],
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "datasetJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DataSelectionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetAcquisitionDomainSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetCongruenceBindingSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetEventsSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetIndexSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetMultiRunFixtureSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.DatasetTimeAxisSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.OpenedDatasetSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.ResponseBlockSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.ResponseKernelAdaptersSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.SegmentedFmriSeriesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.io.MatrixFileDatasetBackendSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.io.NiftiReadPlanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.io.NiftiResponseBlockSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/jvm/target/test-reports/TEST-scalafim.dataset.scenarios.DatasetHierarchyWorkflowScenarioSuite.xml"
+          ],
+          "tests": 78,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "spatialJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-external.consumer.ProviderCoordinateMapBoundaryCompileSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-external.consumer.SamplingGeometryBoundaryCompileSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.AffineFusionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.DemandSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.DomainLocusSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.DomainSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.FieldApiSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.FieldExplanationSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.FieldRuntimeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.FieldSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.LazyFieldRuntimeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.MixedPullbackSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.NeurofunctorLawParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.NonlinearPullbackSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.OperatorCompilerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.OperatorParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.ProviderMapCompositionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.PullbackCompilerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.RoutingParitySuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.SpaceRefWorldSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.SpatialGraphSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.SpatialLazyAcceptanceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.SpatialLazyContractSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.SpatialQcSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.StagedPluginSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.TemplateSurfaceOperatorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.UnsampledDomainSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.ViewPlanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.VolumeToSurfaceOperatorSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/spatial/js/target/test-reports/TEST-scalafim.spatial.VolumeToSurfaceParitySuite.xml"
+          ],
+          "tests": 206,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "atlasJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.AtlasCoreSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.AtlasCoverageSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.AtlasParityCorpusSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.AtlasPublicationSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.AtlasQuotientSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.AtlasRealizationSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.GraphDifferentialSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.MniTemplateBridgeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.SpaceTransformGraphSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.StandardSurfaceRoutesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.SurfaceAtlasSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/atlas/js/target/test-reports/TEST-scalafim.atlas.TemplateSampledCatalogSuite.xml"
+          ],
+          "tests": 74,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "datasetJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DataSelectionSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetAcquisitionDomainSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetCongruenceBindingSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetEventsSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetIndexSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetMultiRunFixtureSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.DatasetTimeAxisSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.OpenedDatasetSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.ResponseBlockSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.ResponseKernelAdaptersSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.SegmentedFmriSeriesSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset/js/target/test-reports/TEST-scalafim.dataset.scenarios.DatasetHierarchyWorkflowScenarioSuite.xml"
+          ],
+          "tests": 64,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "estimatesIoJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/estimates-io/jvm/target/test-reports/TEST-scalafim.estimates.io.EstimateMetadataSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/estimates-io/jvm/target/test-reports/TEST-scalafim.estimates.io.LocalEstimateStoreSuite.xml"
+          ],
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "estimatesIoJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/estimates-io/js/target/test-reports/TEST-scalafim.estimates.io.EstimateMetadataSuite.xml"
+          ],
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "mvpaDatasetJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/jvm/target/test-reports/TEST-scalafim.fmri.mvpa.dataset.DatasetObservationEvidenceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/jvm/target/test-reports/TEST-scalafim.fmri.mvpa.dataset.ResponseProvenanceLineageSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/jvm/target/test-reports/TEST-scalafim.fmri.mvpa.dataset.predictive.AlderSoftLdaSuite.xml"
+          ],
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "fmriWorkflowJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.fit.estimates.FirEstimateProducerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.fit.estimates.FitEstimateProducerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.fit.estimates.FitEstimateReadbackSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.group.FirstLevelBridgeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.workflow.AnalysisPlanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.workflow.BidsStudyCompilerJvmSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.workflow.BidsStudyCompilerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.workflow.FirstLevelUnitSourceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.workflow.WorkflowIngestAcceptanceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/jvm/target/test-reports/TEST-scalafim.fmri.workflow.WorkflowTypesSuite.xml"
+          ],
+          "tests": 39,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "datasetZarrJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/jvm/target/test-reports/TEST-scalafim.dataset.zarr.CanonicalBoldSamplingSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/jvm/target/test-reports/TEST-scalafim.dataset.zarr.FmriDatasetZarrSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/jvm/target/test-reports/TEST-scalafim.dataset.zarr.NiftiZarrBridgeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/jvm/target/test-reports/TEST-scalafim.dataset.zarr.ZarrSelectionLoweringSuite.xml"
+          ],
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "mvpaDatasetJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/js/target/test-reports/TEST-scalafim.fmri.mvpa.dataset.DatasetObservationEvidenceSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/js/target/test-reports/TEST-scalafim.fmri.mvpa.dataset.ResponseProvenanceLineageSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/mvpa-dataset/js/target/test-reports/TEST-scalafim.fmri.mvpa.dataset.predictive.AlderSoftLdaSuite.xml"
+          ],
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "fmriWorkflowJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.fit.estimates.FirEstimateProducerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.fit.estimates.FitEstimateProducerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.group.FirstLevelBridgeSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.workflow.AnalysisPlanSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.workflow.BidsStudyCompilerSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/fmri-workflow/js/target/test-reports/TEST-scalafim.fmri.workflow.WorkflowTypesSuite.xml"
+          ],
+          "tests": 31,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "datasetZarrJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/js/target/test-reports/TEST-scalafim.dataset.zarr.CanonicalBoldSamplingSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/modules/dataset-zarr/js/target/test-reports/TEST-scalafim.dataset.zarr.ZarrSelectionLoweringSuite.xml"
+          ],
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "atlasExamplesJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/examples/atlas-jvm/target/test-reports/TEST-scalafim.examples.atlas.AtlasExamplesSmokeSuite.xml"
+          ],
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "workflowExamplesJVM",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/examples/workflows-jvm/target/test-reports/TEST-scalafim.examples.workflows.AtlasMvpaWorkflowSuite.xml",
+            "/private/tmp/scalafim-simplify-a-20261019/examples/workflows-jvm/target/test-reports/TEST-scalafim.examples.workflows.ProfileHrfConditionWorkflowSuite.xml"
+          ],
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "workflowExamplesJS",
+          "reports": [
+            "/private/tmp/scalafim-simplify-a-20261019/examples/workflows-js/target/test-reports/TEST-scalafim.examples.workflows.AtlasMvpaWorkflowSuite.xml"
+          ],
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "neuroim4s/spacesJVM",
+          "reports": [
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-spaces/jvm/target/test-reports/TEST-neuroim4s.spaces.IdentifiersSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-spaces/jvm/target/test-reports/TEST-neuroim4s.spaces.SpaceResolverSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-spaces/jvm/target/test-reports/TEST-neuroim4s.spaces.WorldSpaceSuite.xml"
+          ],
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "neuroim4s/spacesJS",
+          "reports": [
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-spaces/js/target/test-reports/TEST-neuroim4s.spaces.IdentifiersSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-spaces/js/target/test-reports/TEST-neuroim4s.spaces.SpaceResolverSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-spaces/js/target/test-reports/TEST-neuroim4s.spaces.WorldSpaceSuite.xml"
+          ],
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "neuroim4s/coreJVM",
+          "reports": [
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.consumer.ProviderAxisBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.consumer.ProviderCongruenceBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.consumer.ProviderSampleSpaceBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.consumer.ProviderSpaceBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.consumer.ProviderTransformBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.consumer.UnsafeSpaceRefinementCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.neuroim.consumer.ImageWorkflowSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-external.neuroim.consumer.NeuroAffineSyntaxSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.CatsEffectSharedBoundarySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ConnectedComponentsSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.CoreSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.DomainValiditySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ExactVoxelRegionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.FunctionalImageSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.GridDomainSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.GridSpecFrameSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.Image4sAdmissionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.KMeansParcellationSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.KernelLayoutSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.NativeDenseImageSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.NativeImageAllocationSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.NeuroImageErrorContractSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.NeuroVolumeRegressionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.OrientationResampleSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.OwnerPreservingSeriesSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.OwnerPreservingVolumeSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.OwnershipSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ProviderAdmissionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ProviderAffineContractSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ProviderCongruenceContractSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ProviderDimensionRefinementSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ResamplingPlanSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SearchlightCenterSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SelectedImageSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SeriesAxisSemanticsSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SliceCompatibilityParitySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SliceGeometrySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SliceOrientationOracleSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SliceSamplingSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SpaceUtilsEitherSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SpaceUtilsSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SpatialCoordinatesSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.StatsMaskCompareSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.SubVectorSyntaxSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.TypedImageCoreSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.ValueSemanticsCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.VolumeAdmissionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.VolumeParcellationSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.VolumeSearchlightSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.WorldBoxSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.consumer.DynamicImageRefinementCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.consumer.OwnerPreservingSeriesCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.consumer.OwnerPreservingVolumeCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.world.PlacedProbeSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.world.PlacedSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.world.ToolCoordinatesSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/jvm/target/test-reports/TEST-neuroim4s.image.world.WorldSpaceSuite.xml"
+          ],
+          "tests": 336,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "neuroim4s/coreJS",
+          "reports": [
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.consumer.ProviderAxisBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.consumer.ProviderCongruenceBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.consumer.ProviderSampleSpaceBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.consumer.ProviderSpaceBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.consumer.ProviderTransformBoundaryCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.consumer.UnsafeSpaceRefinementCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.neuroim.consumer.ImageWorkflowSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-external.neuroim.consumer.NeuroAffineSyntaxSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.CatsEffectSharedBoundarySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ConnectedComponentsSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.CoreSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.DomainValiditySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ExactVoxelRegionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.FunctionalImageSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.GridDomainSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.GridSpecFrameSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.Image4sAdmissionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.KMeansParcellationSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.KernelLayoutSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.NativeDenseImageSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.NeuroImageErrorContractSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.NeuroVolumeRegressionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.OrientationResampleSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.OwnerPreservingSeriesSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.OwnerPreservingVolumeSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.OwnershipSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ProviderAdmissionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ProviderAffineContractSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ProviderCongruenceContractSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ProviderDimensionRefinementSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ResamplingPlanSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SearchlightCenterSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SelectedImageSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SeriesAxisSemanticsSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SliceCompatibilityParitySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SliceGeometrySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SliceOrientationOracleSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SliceSamplingSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SpaceUtilsEitherSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SpaceUtilsSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SpatialCoordinatesSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.StatsMaskCompareSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.SubVectorSyntaxSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.TypedImageCoreSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.ValueSemanticsCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.VolumeAdmissionSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.VolumeParcellationSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.VolumeSearchlightSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.WorldBoxSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.consumer.DynamicImageRefinementCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.consumer.OwnerPreservingSeriesCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.consumer.OwnerPreservingVolumeCompileSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.world.PlacedProbeSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.world.PlacedSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.world.ToolCoordinatesSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-core/js/target/test-reports/TEST-neuroim4s.image.world.WorldSpaceSuite.xml"
+          ],
+          "tests": 335,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        },
+        {
+          "project": "neuroim4s/ioJVM",
+          "reports": [
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-io/jvm/target/test-reports/TEST-neuroim4s.image.io.ImageLibraryParitySuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-io/jvm/target/test-reports/TEST-neuroim4s.image.io.NativeNiftiAllocationSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-io/jvm/target/test-reports/TEST-neuroim4s.image.io.NiftiIncrementalOutputSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-io/jvm/target/test-reports/TEST-neuroim4s.image.io.NiftiResliceOracleSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-io/jvm/target/test-reports/TEST-neuroim4s.image.io.NiftiSpaceEvidenceSuite.xml",
+            "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s/modules/neuroim4s-io/jvm/target/test-reports/TEST-neuroim4s.image.io.NiftiSuite.xml"
+          ],
+          "tests": 30,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "skipped_cases": []
+        }
+      ],
+      "totals": {
+        "tests": 2137,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "graph_proof": {
+      "provider_revisions": {
+        "resample4s": [
+          "6bc4172a966c92f1b06811eac64ac2bada9fef9b"
+        ],
+        "linops4s": [
+          "fec77db060b130b3c609a43d07ff0bfb31088aae"
+        ],
+        "image4s": [
+          "7885f67798242412800a448eda68acfbfff4f751"
+        ],
+        "zarr4s": [
+          "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+        ],
+        "ravel": [
+          "195d71027423d5bda1c53ef1baa17e07670fe290"
+        ],
+        "spatial4s": [
+          "77037a7e6ced044b92d0a70b713c0a32a94f680d"
+        ],
+        "locus4s": [
+          "e32b0aeba5c4d19c457b2329272b95b26c061943"
+        ],
+        "reframe4s": [
+          "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d"
+        ],
+        "mesh4s": [
+          "54b7278880e6db38c543a4a565355afd864e576a"
+        ],
+        "graph4s": [
+          "6a72b58b564933234768f025e67228736ef2f7c5"
+        ],
+        "neuroim4s": [
+          "0ca4d07fc021d21a7802929069396d4df5bf4cc3"
+        ],
+        "intaglio": [
+          "d553c327824f9916b1c0a055226c6c5e8f77bc59"
+        ],
+        "mvpa4s": [
+          "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a"
+        ],
+        "bids4s": [
+          "a33678390614a91fadbdef13f22970e78c26e091"
+        ],
+        "multivar": [
+          "7afdeea290fdcc80b81a4126aa303f93a5348c0e"
+        ],
+        "gale": [
+          "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715"
+        ],
+        "alder": [
+          "7618c715002b3912f856c4d44468ae173fce4dec"
+        ],
+        "neuroatlas4s": [
+          "375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+        ]
+      },
+      "single_revision_per_provider": true,
+      "source_build_uris": [
+        "file:/private/tmp/scalafim-simplify-a-20261019/",
+        "https://github.com/canardlapin/resample4s.git#6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+        "https://github.com/canardlapin/linops4s.git#fec77db060b130b3c609a43d07ff0bfb31088aae",
+        "https://github.com/canardlapin/image4s.git#7885f67798242412800a448eda68acfbfff4f751",
+        "https://github.com/canardlapin/zarr4s.git#2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+        "https://github.com/canardlapin/ravel.git#195d71027423d5bda1c53ef1baa17e07670fe290",
+        "https://github.com/canardlapin/spatial4s.git#77037a7e6ced044b92d0a70b713c0a32a94f680d",
+        "https://github.com/canardlapin/locus4s.git#e32b0aeba5c4d19c457b2329272b95b26c061943",
+        "https://github.com/canardlapin/reframe4s.git#e4df73969e1fccb7aa0153a9203927c6dd8b0e3d",
+        "https://github.com/canardlapin/mesh4s.git#54b7278880e6db38c543a4a565355afd864e576a",
+        "https://github.com/canardlapin/graph4s.git#6a72b58b564933234768f025e67228736ef2f7c5",
+        "https://github.com/canardlapin/neuroim4s.git#0ca4d07fc021d21a7802929069396d4df5bf4cc3",
+        "https://github.com/canardlapin/intaglio.git#d553c327824f9916b1c0a055226c6c5e8f77bc59",
+        "https://github.com/canardlapin/mvpa4s.git#b8259ab7eb00b4ad48cf26e3f5da49f398eae58a",
+        "https://github.com/canardlapin/bids4s.git#a33678390614a91fadbdef13f22970e78c26e091",
+        "https://github.com/canardlapin/multivar.git#7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+        "https://github.com/canardlapin/gale.git#779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+        "https://github.com/canardlapin/alder.git#7618c715002b3912f856c4d44468ae173fce4dec",
+        "https://github.com/canardlapin/neuroatlas4s.git#375ceb229f707a6e9fb447a3e24564e8c5cd3036"
+      ],
+      "provider_source_proof": {
+        "image4s": {
+          "git_head": "7885f67798242412800a448eda68acfbfff4f751",
+          "qualified_source_inputs_verified": 122,
+          "clean": true
+        },
+        "reframe4s": {
+          "git_head": "e4df73969e1fccb7aa0153a9203927c6dd8b0e3d",
+          "qualified_source_inputs_verified": 251,
+          "clean": true
+        },
+        "neuroim4s": {
+          "git_head": "0ca4d07fc021d21a7802929069396d4df5bf4cc3",
+          "qualified_source_inputs_verified": 124,
+          "clean": true
+        }
+      },
+      "consumer_classpath_entries_inspected": 128,
+      "local_provider_classpaths_present": false,
+      "scala_source_diagnostics": []
+    },
+    "scala_source_diagnostics": [],
+    "test_reports_archive": {
+      "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/neuroim-core-20261019/default-pin-test-reports.zip",
+      "sha256": "827ca68e145a8696e1376c1b15f754090ddbabd67f8fbb7e0299a4878ab9ee96"
+    },
+    "hosted_ci_claimed": false,
+    "artifact_release_claimed": false,
+    "scientific_study_acceptance_claimed": false,
+    "new_performance_qualification_claimed": false
+  },
+  "tracking": {
+    "canonical": "/Users/bbuchsbaum/code/scala/scalafim/.mote",
+    "private": "/private/tmp/scalafim-simplify-a-20261019/.mote",
+    "preserved_prefix_records": 2133,
+    "authority_records": 2145,
+    "last_record": "00000000000000002144.json",
+    "referenced_ops": 26070,
+    "added_files": [
+      ".mote/authority/00000000000000002133.json",
+      ".mote/authority/00000000000000002134.json",
+      ".mote/authority/00000000000000002135.json",
+      ".mote/authority/00000000000000002136.json",
+      ".mote/authority/00000000000000002137.json",
+      ".mote/authority/00000000000000002138.json",
+      ".mote/authority/00000000000000002139.json",
+      ".mote/authority/00000000000000002140.json",
+      ".mote/authority/00000000000000002141.json",
+      ".mote/authority/00000000000000002142.json",
+      ".mote/authority/00000000000000002143.json",
+      ".mote/authority/00000000000000002144.json",
+      ".mote/ops/20261020T015610.750186Z-p19689-c0000-rae37-h9cdf7b.json",
+      ".mote/ops/20261020T015629.785309Z-p21330-c0000-red4f-hdfd069.json",
+      ".mote/ops/20261020T015635.277467Z-p21330-c0001-rc964-h2d25bf.json",
+      ".mote/ops/20261020T015638.952266Z-p21330-c0002-rc8fe-h67c7b2.json",
+      ".mote/ops/20261020T015758.001108Z-p28230-c0000-r6c25-h57b6f4.json",
+      ".mote/ops/20261020T015924.643124Z-p35150-c0000-r3cde-hcee472.json",
+      ".mote/ops/20261020T020023.345673Z-p40173-c0000-re2d4-hbdafd6.json",
+      ".mote/ops/20261020T020932.928949Z-p85683-c0000-r3523-h75e65e.json",
+      ".mote/ops/20261020T020935.537143Z-p85683-c0001-r8b17-h55300f.json",
+      ".mote/ops/20261020T020938.813685Z-p85683-c0002-rf714-h0233a2.json",
+      ".mote/ops/20261020T020943.832030Z-p85683-c0003-r8f9c-h49a9e2.json",
+      ".mote/ops/20261020T020953.154450Z-p87840-c0000-r0298-hb35615.json"
+    ],
+    "policy": "Project AGENTS versions authority; copied immutable canonical prefix and referenced ops exactly, without rewriting records or interpreting hashes."
+  },
+  "mote_core_status": "closed",
+  "tracking_validation": {
+    "bad_filename": [],
+    "bad_hash": [],
+    "bad_json": [],
+    "bad_op_shape": [],
+    "ops_checked": 26070,
+    "tmp_cleaned": 0,
+    "tmp_total": 0
+  },
+  "browser_audit": "No automated top-level browser processes found."
+}

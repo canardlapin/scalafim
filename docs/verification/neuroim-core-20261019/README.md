@@ -1,6 +1,6 @@
 # Complete neuroim4s core extraction
 
-The prepared candidate removes ScalaFIM's local `image` module. Its neuroimaging values,
+The active cutover removes ScalaFIM's local `image` module. Its neuroimaging values,
 selected-image storage, masks, sampling/orientation/reslicing policy, statistics,
 searchlights and retained parity tests move to independent `neuroim4s-core`.
 Optional JVM anatomical IO moves to `neuroim4s-io`, around image4s codecs.
@@ -15,11 +15,13 @@ module, package aliases or header wrapper remain. Two dead facade files,
 The migration inventory accounts for 104 original source/test paths, with only
 those two intentional deletions; all five IO resources are byte-identical.
 
-## Provider candidates
+## Published providers
 
-These commits are local and unpublished:
+The user-approved source commits are published on `main`. Non-force fast-forward
+publication and exact checkout/tracking/live-remote SHA equality are recorded in
+[publication.json](publication.json):
 
-| Repository | Candidate | Published parent observed before review |
+| Repository | Candidate | Published parent |
 | --- | --- | --- |
 | image4s | `7885f67798242412800a448eda68acfbfff4f751` | `ba7ca3dae7181b4b3267b2d3220f0c50f06b93df` |
 | reframe4s | `e4df73969e1fccb7aa0153a9203927c6dd8b0e3d` | `a9134f2cd92e884fa3c9ceafcbcfe52cf60f8295` |
@@ -30,8 +32,7 @@ unchanged; four new public API tests join the existing NIfTI suite (67 JVM and
 46 JS tests passed). reframe4s only aligns that image4s source pin; its resampling
 suites passed 13 JVM and 11 JS tests. neuroim4s clean standalone qualification
 passed 753 tests under `-Werror`: 26 world-space tests per platform, 336 JVM and
-335 JS core tests, and 30 JVM IO tests, plus full compilation. Source publication
-and artifact release are separate; neither is claimed for these candidates.
+335 JS core tests, and 30 JVM IO tests, plus full compilation. These are source publications; no artifact release is claimed.
 
 ## Correctness boundaries
 
@@ -76,15 +77,28 @@ needed a focused rerun.
 The consumer source candidate is `7ec3d6f26c39e904b41f71384d99cb328acc8fe5` on
 `eco/neuroim-core-ready-20261019`. Its 2,509 qualified source/build/resource inputs match
 the frozen manifest byte for byte. A verified Git bundle and binary cutover
-patch are retained in the raw evidence directory. The active eco worktree was
-returned to its working published-pin baseline `a01ed0a21a17461bce493fa93d54ba18b593c464`;
-no unpublished GitHub pin is left active. ScalaFIM remains local and unpushed.
+patch are retained in the raw evidence directory. After approved provider publication, the reviewed source candidate was cherry-picked
+as `84f8d36dadf9f013493f06f81ed40d1e17c39c57` on `eco/u3-topology-20261019`. All qualified
+source/build/resource inputs remain byte-identical. ScalaFIM remains local and unpushed.
 
-Provider publication still needs approval. After the three exact provider
-fast-forwards, apply the qualified consumer commit and run a fresh default-pin
-gate without local overrides before closing `eco-neuroim-core`. No hosted CI,
-artifact release, scientific-study acceptance or new performance qualification
-is claimed here.
+Fresh qualification against the published default pins passed **2,137 tests**
+across 29 projects, with zero failures/errors/skips and no Scala source warnings.
+All modules and examples compile on JVM and JS. Six bounded gates cover compile,
+neuroim4s spaces/core/IO, JVM/JS image views, thresholding, motion, spatial, atlas,
+dataset and estimate IO, the JVM archive boundary guard, and JVM/JS MVPA dataset,
+Zarr, fMRI workflows and workflow examples (plus JVM atlas examples). The JS
+archive boundary test selector has no tests because that guard is JVM-only.
+
+The fresh build graph has one immutable source revision for each of 18 providers.
+The staged published provider sources match the qualified input manifests;
+consumer classpaths contain no local provider checkout. Full commands, source
+proof, exact test reports and publication receipts are in
+[publication.json](publication.json). This gate supplements the earlier full
+headless recipe qualification above; those results are not added together.
+
+`eco-neuroim-core` acceptance is complete. No hosted CI, artifact release,
+scientific-study acceptance or new performance qualification is claimed here.
+The separate transform-format/policy extraction is `eco-neuroim-transforms`.
 
 ## Raw evidence and recovery
 
@@ -117,3 +131,10 @@ The full-suite first-level fixtures retain their non-gated scientific reports,
 including low-SNR Gaussian admission and LWU admission below its 95% target.
 These observations remain in the raw logs; this source extraction does not
 resolve or close those scientific acceptance gaps.
+
+The initial published-pin gate stopped during sbt project loading because the
+host disk was full; no compilation or tests started. Recovery removed only 78
+session-owned ignored generated directories, accounting for about 831 MiB, after
+archiving provider test reports. Source, Git history and prior qualification
+artifacts were preserved. The failed log and exact recovery inventory are kept
+alongside the successful attempt-02 logs.

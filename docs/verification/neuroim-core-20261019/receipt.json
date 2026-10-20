@@ -1289,8 +1289,15 @@
   "local_overrides": true,
   "hosted_ci_claimed": false,
   "artifact_release_claimed": false,
-  "active_source_baseline": "a01ed0a21a17461bce493fa93d54ba18b593c464",
-  "default_pin_gate": "pending approved provider publication",
+  "default_pin_gate": {
+    "status": "passed",
+    "receipt": "publication.json",
+    "tests": 2137,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "local_provider_overrides": false
+  },
   "excluded_runtime_tests": "JavaFX display tests outside the existing headless CI recipe; sources compiled",
   "toolchain": {
     "scala": "3.7.4",
@@ -1491,5 +1498,9 @@
     "jvm_tests": 13,
     "js_tests": 11,
     "change": "image4s pin only"
-  }
+  },
+  "prepublication_active_source_baseline": "a01ed0a21a17461bce493fa93d54ba18b593c464",
+  "active_consumer_commit": "84f8d36dadf9f013493f06f81ed40d1e17c39c57",
+  "qualification_phase": "Historical full prepublication source-composite qualification; fresh published-pin qualification is separate in publication.json",
+  "provider_source_publication": "All three approved candidates published on main; exact parity in publication.json"
 }
