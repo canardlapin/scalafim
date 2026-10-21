@@ -1,0 +1,128 @@
+{
+  "sourceCommit": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+  "callerSetStatus": "Minimum affected callers identified by independent acceptance review; systematic completeness audit still required.",
+  "callers": [
+    {
+      "caller": "LegacyResultImport",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/LegacyResultImport.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "TaskBrainMap",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/TaskBrainMap.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "NamedSpatialMap",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/NamedSpatialMap.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "BidsFirstLevelService",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "GroupResponses",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/GroupResponses.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "ParticipantExplorerInputs",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/ParticipantExplorerInputs.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "ResultPresentation",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultPresentation.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "StudyMethodContribution",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyMethodContribution.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "StudyResultArtifact",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyResultArtifact.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "StudyPane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyPane.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "ParticipantExplorerPane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantExplorerPane.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "ParticipantPane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantPane.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "TaskResultPane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/TaskResultPane.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "ResultSurfaceView",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "SurfaceReverseLookup",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceReverseLookup.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller"
+    }
+  ],
+  "liveHandoff": {
+    "chain": [
+      "GroupResponses.resultGeometry",
+      "ParticipantExplorerInputs",
+      "ResultPresentation.ResponseCohort",
+      "StudyPane"
+    ],
+    "status": "unproven",
+    "blocker": "ModelBuildSpec.responseSupport and related retained first-level provider contracts unavailable in active Root pin."
+  },
+  "independentComposition": {
+    "requirement": "Independent image IO -> typed transform -> slice display, no ScalaFIM/surface dependency, one scenario result",
+    "status": "missing combined specimen",
+    "existingEvidence": "Reuse accepted eco-neuroim-transforms and native viewer corpus; do not repeat standalone subcomponent proofs as combined acceptance."
+  },
+  "separateHistoricalAdoption": "bd-01M52AQ9JQS51XFMB17X4BDQJX remains responsible for broader full PLS compilation/native/scientific/performance qualification. Repair necessary provider capabilities only when an affected I1 caller cannot otherwise be qualified.",
+  "review": "volume_view_astra_review: keep eco-neuroim-integrations/I1 open; passing8-probe imaging source closure is insufficient for all known callers."
+}

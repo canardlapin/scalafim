@@ -2,20 +2,20 @@
 
 The tranche covers `eco-u3-kernels`, `eco-u3-consumers`,
 `eco-neuroatlas-volume`, `eco-neuroim-display` and
-`eco-neuroim-integrations`. Published-pin and ScalaFIM functional workflow gates pass. The mesh/kernel/atlas-volume cutovers are qualified. I1 display and integration remain open while existing focused-layout capabilities and the actual PLS Neuro consumer are recovered; provider-only tests do not establish external compatibility.
+`eco-neuroim-integrations`. Published-pin and ScalaFIM functional workflow gates pass. The mesh/kernel/atlas-volume cutovers are qualified. The display extraction is accepted at neuroim4s `21df6416e4e28e97cfbe39e20d7303349be7e4cf`; integration and the I1 milestone remain open for the remaining affected caller handoffs and independent combined scenario. Provider-only tests do not establish external compatibility.
 
 ## Source and publication
 
-ScalaFIM production source remains `17aee3f9b096f8b9d8c3f024a221e9ef61fde51c`, with the descendant provider pins below; [pin gates](layout-descendant-pin-gates.json) bind the exact build-file hash and default-pin checks.
+The geometry cutover is `17aee3f9b096f8b9d8c3f024a221e9ef61fde51c`. Reviewed optional QC companion recovery is `b898b69aa94eb063880caff8bd27e6ea4177b9fe`; its 42 JVM/33 JS workflow checks are recorded in [QC recovery](qc-consumer-recovery.json). The current provider-pin source is `bf84f9d8c897d274cb1bde9811b71b574b677ec6`. Earlier [pin gates](layout-descendant-pin-gates.json) and the [new atlas pin gate](atlas-boundary-default-pin.json) retain their exact source and execution scope.
 Reviewed and published provider revisions:
 
 | Provider | Exact main revision |
 |---|---|
 | mesh4s | `35db08f864c86f211a14155fcaf6ef2fd811bcca` |
 | neuroim4s | `21df6416e4e28e97cfbe39e20d7303349be7e4cf` |
-| neuroatlas4s | `fe1e8f29942e7f0bc3b570e63b8ec4b4b5d8cd98` |
+| neuroatlas4s | `07e3d24d58d196c82c24429aefa7b7d65a671a34` |
 
-[Publication receipts](provider-publication.json) record non-force pushes and
+[Publication receipts](provider-publication.json) and the [boundary-query publication](atlas-boundary-publication.json) record non-force pushes and
 exact live remote-main parity. Graph4s remains `613371f3bd0b12ce99352db0c637645eb62c6283`;
 Gale remains the deliberate `779ed3d8169cdd9f4eb9ab10b1ca9defadc27715`.
 These are source publications, not Maven artifact releases or hosted CI results.
@@ -86,7 +86,7 @@ insets, visible panel/readout enumeration, and typed volume/cursor adoption.
 The prior source review approves the extraction delta only; it does not waive
 known-consumer acceptance. The narrow provider recovery is the three-file delta
 from ScalaFIM `b77c946ce2d4ee2962cf843610462fbdb66bb336`, preserving the default
-layout and all frame-owner checks. The recovered provider delta is now qualified and published at `21df6416e4e28e97cfbe39e20d7303349be7e4cf`; [layout/IO qualification](layout-io-qualification.json) records 106 portable/backend test executions, 31 IO tests, and native sampled drawing of all five arrangements (36 gray pixels). Standalone unresolved inspection was faithfully recovered from `56d0cbcbfa55c7edb8651d19153b9e8c7897d88d`; each read owns a fresh unresolved world and strict evidence-required reads are unchanged. ScalaFIM/atlas descendant pins and actual PLS acceptance remain pending.
+layout and all frame-owner checks. The recovered provider delta is now qualified and published at `21df6416e4e28e97cfbe39e20d7303349be7e4cf`; [layout/IO qualification](layout-io-qualification.json) records 106 portable/backend test executions, 31 IO tests, and native sampled drawing of all five arrangements (36 gray pixels). Standalone unresolved inspection was faithfully recovered from `56d0cbcbfa55c7edb8651d19153b9e8c7897d88d`; each read owns a fresh unresolved world and strict evidence-required reads are unchanged. ScalaFIM/atlas descendant pin checks passed; the later consumer qualification is described below.
 
 The existing consumer recovery source `656bd6095b94d34a6677eebb96b92b54829fd69b`
 is retained in the external PLS Git store. It already preserves reversible
@@ -116,8 +116,10 @@ and two fault-injection modes are reviewed at
 private provider outputs passed normal, after-stage failure and cleanup failure
 modes, each with bounded process exit zero. No full PLS qualification is claimed.
 
-Remaining I1 boundaries are the real application's provider/build/preparation
-wiring, standalone `VolumePane` loading, `ResultGeometry`/ordered scatter and
-legacy ordinal conversion, and `SpatialResponsePane` linked cursor interaction.
-Historical application/native/cold-open/performance issues remain separately
-open. Neither I1 task is closed by the 22-file component alone.
+The later source `5db208c81b5494337d918cbc5cb6d579ae8c7c50` passes [fresh expanded qualification](fresh-expanded-qualification.json): real checked geometry/ordered scatter and legacy ordinals, standalone `VolumePane` NIfTI loading, viewer behavior and both cleanup fault modes. Its scope predates the linked workspace.
+
+PLS source `dcc0892bd882908abde8d747ee6a4fefb9e1c750` wires the direct neuroatlas provider and the real linked workspace. Its [reviewed native development checks](linked-consumer-development.json) pass atlas boundary queries, independent persisted surface-byte goldens, actual cursor callbacks, physical regions, ordered response cells and checked inspection persistence. The retained red run proves a foreign-world admission bug; checked admission now occurs before cancelling inspection I/O or replacing current state. Source paths are canonicalized before project references, so symlink spellings do not create duplicate provider builds. The actual 13-provider preparation and 12 preparation regression tests pass.
+
+The standalone boundary-query provider port passes 40 JVM/40 JS/26 IO JVM cases. ScalaFIM's new default atlas pin passes 81 JVM/61 JS cases. The independent review approves source fidelity, with no new proof of the historical numerical bounds.
+
+The [final eight-probe qualification](fresh-linked-qualification.json) passed from clean committed PLS source `dcc0892bd882908abde8d747ee6a4fefb9e1c750`, with fresh private provider checkouts and a new sbt global/output directory. Normal viewing, both cleanup fault modes, geometry/scatter, standalone loading, atlas query, persisted surface digest and linked-region persistence checks all executed. The [older whole-application diagnostic receipt](pls-full-consumer-diagnostics.json) retains all 67 errors. The [refreshed build](pls-full-consumer-diagnostics-04.json) reports 41 errors: the 20 atlas, four region and two mesh-view diagnostics are gone. First-level support/provenance, fixed-effects metadata and a missing morphometry reader still prevent a full application compile; downstream errors may remain hidden. These results do not imply a full application, cold-open, performance or scientific pass. The [display acceptance](display-acceptance.json) approves closure of that extraction only. The [caller evidence ledger](i1-caller-evidence.json) records fifteen review-identified production caller boundaries outside the passing component; its completeness audit, live handoff compilation and independent combined IO/transform/view specimen remain open. I1 remains open pending those requirements; broader historical PLS adoption remains separately tracked.

@@ -1,0 +1,34 @@
+{
+  "status": "planning evidence only; no provider recovery implemented by this receipt",
+  "reason": "Qualify actual affected GroupResponses -> ParticipantExplorerInputs -> ResultPresentation/StudyPane handoff without stubs, partial production files or compatibility facades.",
+  "recoveryCandidates": [
+    {
+      "revision": "b72a29e38cadad783dc6d693082a4008e7347d65",
+      "scope": "Derived event declarations and missing-row build input; assess actual prerequisite against current Root before porting."
+    },
+    {
+      "revision": "14cbaf01f5e0975329673502ed5cae775f8325f7",
+      "scope": "Response-support model/design contracts, convolution/support kernels and focused existing tests;22files,1126insertions/57deletions. Requires full source review/current-domain adaptation, JVM+JS checks and independent numerical review."
+    },
+    {
+      "revision": "b664cc576cc1a842e1342de25b02b01f43e402f5",
+      "scope": "Explicit run sampling and selected companion tables; FirstLevelTables/SamplingReference and tests."
+    },
+    {
+      "revision": "af7679d3095ac150d1386c7cc4fc337f6073dd34",
+      "scope": "Deferred first-level dataset/source opening and response access. Semantic donor on divergent retained line; locate current-provider form before adapting."
+    },
+    {
+      "revision": "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15",
+      "scope": "Bounded study spatial/timing support with explicit grid ownership and focused existing tests."
+    }
+  ],
+  "constraints": [
+    "Preflight exact paths against canonical Mote before edits; preserve other workstreams.",
+    "Do not blindly restore broad historical702ecd9a6feature or merge entire retained branch.",
+    "Do not reinterpret existing tests/commits as current acceptance.",
+    "Fixed-effects and morphometry failures remain on broader PLS recovery unless needed to qualify a specific I1 caller.",
+    "Independent provider-only IO->typedtransform->slice display scenario can proceed separately; reuse accepted transform corpus."
+  ],
+  "nextAction": "Audit caller-set completeness, inspect necessary existing provider source dependencies and live path ownership; add/locate independent combined specimen. Keep eco-neuroim-integrations/I1 open."
+}
