@@ -1,0 +1,14 @@
+{
+  "timeUtc": "2026-10-21T03:31:50.412269+00:00",
+  "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging",
+  "externalTarget": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/dc58d8731036fb76-staging",
+  "verifiedTree": {
+    "sha256": "0e38abab7d73189d0615fdc0585da473bf507f364b17851c54c2f897b53bffea",
+    "files": 182470,
+    "bytes": 2186950203
+  },
+  "sourceNowSymlink": true,
+  "removedOnlyVerifiedCopiedRegenerableCache": true,
+  "activeBuildPrecondition": "No JVM using this private global base",
+  "repositorySourceTrackerAndRawEvidenceTouched": false
+}

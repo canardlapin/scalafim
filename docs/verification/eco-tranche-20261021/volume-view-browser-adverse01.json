@@ -1,0 +1,203 @@
+{
+  "browserProfile": "lean-browser-playwright",
+  "browserVersion": "151.0.7922.34",
+  "startedAt": "2026-10-21T02:53:39.688Z",
+  "artifactSha256": "b3e534633e8cb6c277ce459f651755b11641af9fe317870c6786a881006f62c6",
+  "htmlSha256": "475cff3441aef33eb2974bb20218a772a64ac7508acaca082a9764cdb44f652b",
+  "benchmark": {
+    "schema": "scalafim-image-view-browser-benchmark-v1",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "canvasWidth": 960,
+    "canvasHeight": 720,
+    "affineShape": [
+      160,
+      192,
+      128
+    ],
+    "nonlinearShape": [
+      80,
+      80,
+      64
+    ],
+    "coldSourceReads": 16,
+    "cold": {
+      "scenario": "cold-render",
+      "repetitions": 8,
+      "medianMs": 38.30000000447035,
+      "p95Ms": 47.20000000298023,
+      "minMs": 37.5,
+      "maxMs": 47.20000000298023,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 0,
+        "rasterMisses": 6,
+        "sampleHits": 0,
+        "sampleMisses": 6,
+        "sampledPixels": 151552,
+        "colorizedPixels": 151552,
+        "sourceReads": 2
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 0,
+        "cacheMisses": 6,
+        "uploadedBytes": 2997968
+      }
+    },
+    "warm": {
+      "scenario": "warm-redraw",
+      "repetitions": 80,
+      "medianMs": 0.20000000298023224,
+      "p95Ms": 0.3999999985098839,
+      "minMs": 0,
+      "maxMs": 0.7000000029802322,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 6,
+        "rasterMisses": 0,
+        "sampleHits": 0,
+        "sampleMisses": 0,
+        "sampledPixels": 0,
+        "colorizedPixels": 0,
+        "sourceReads": 0
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 6,
+        "cacheMisses": 0,
+        "uploadedBytes": 0
+      }
+    },
+    "warmCompileOnly": {
+      "scenario": "warm-compile-only",
+      "repetitions": 1000,
+      "elapsedMs": 88,
+      "meanMs": 0.088
+    },
+    "warmDrawOnly": {
+      "scenario": "warm-draw-only",
+      "repetitions": 1000,
+      "elapsedMs": 723.2000000029802,
+      "meanMs": 0.7232000000029802
+    },
+    "scroll": {
+      "scenario": "axial-scroll",
+      "repetitions": 24,
+      "medianMs": 18.200000002980232,
+      "p95Ms": 18.899999998509884,
+      "minMs": 17.899999998509884,
+      "maxMs": 19,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 4,
+        "rasterMisses": 2,
+        "sampleHits": 0,
+        "sampleMisses": 2,
+        "sampledPixels": 61440,
+        "colorizedPixels": 61440,
+        "sourceReads": 2
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 4,
+        "cacheMisses": 2,
+        "uploadedBytes": 764784
+      }
+    },
+    "prefetchedScroll": {
+      "scenario": "prefetched-axial-scroll",
+      "repetitions": 24,
+      "medianMs": 2.0999999940395355,
+      "p95Ms": 2.3000000044703484,
+      "minMs": 1.8000000044703484,
+      "maxMs": 159.70000000298023,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 6,
+        "rasterMisses": 0,
+        "sampleHits": 0,
+        "sampleMisses": 0,
+        "sampledPixels": 0,
+        "colorizedPixels": 0,
+        "sourceReads": 0
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 4,
+        "cacheMisses": 2,
+        "uploadedBytes": 764784
+      }
+    },
+    "window": {
+      "scenario": "window-recolor",
+      "repetitions": 24,
+      "medianMs": 7.5,
+      "p95Ms": 12.599999994039536,
+      "minMs": 7.199999995529652,
+      "maxMs": 28.799999997019768,
+      "viewer": {
+        "layerRequests": 6,
+        "rasterHits": 3,
+        "rasterMisses": 3,
+        "sampleHits": 3,
+        "sampleMisses": 0,
+        "sampledPixels": 0,
+        "colorizedPixels": 75776,
+        "sourceReads": 0
+      },
+      "canvas": {
+        "imageRequests": 6,
+        "cacheHits": 3,
+        "cacheMisses": 3,
+        "uploadedBytes": 1498984
+      }
+    },
+    "nonlinear": {
+      "scenario": "nonlinear-scroll",
+      "repetitions": 16,
+      "medianMs": 49.5,
+      "p95Ms": 50.20000000298023,
+      "minMs": 48.599999994039536,
+      "maxMs": 50.20000000298023,
+      "viewer": {
+        "layerRequests": 3,
+        "rasterHits": 2,
+        "rasterMisses": 1,
+        "sampleHits": 0,
+        "sampleMisses": 1,
+        "sampledPixels": 6400,
+        "colorizedPixels": 6400,
+        "sourceReads": 1
+      },
+      "canvas": {
+        "imageRequests": 3,
+        "cacheHits": 2,
+        "cacheMisses": 1,
+        "uploadedBytes": 458328
+      }
+    },
+    "interactive": {
+      "applicationWorkflow": true,
+      "orthogonalOrientationAndHandedness": true,
+      "axialSliceDirection": false,
+      "allPass": false
+    },
+    "contracts": {
+      "coldSourceReadCoalescing": true,
+      "warmZeroSamplingColorizationAndUpload": true,
+      "axialScrollReusesTwoPlanesPerLayer": true,
+      "prefetchedAxialScrollHasNoVisibleSampling": true,
+      "windowChangeReusesSamples": true,
+      "nonlinearScrollReusesTwoPlanes": true,
+      "interactiveViewerWorkflow": true,
+      "orthogonalOrientationAndHandedness": true,
+      "axialSliceDirection": false,
+      "checksumPresent": true
+    },
+    "allContractsPass": false,
+    "canvasChecksum": "5bec4f18"
+  },
+  "errors": [],
+  "auditBefore": "No automated top-level browser processes found.\n",
+  "auditAfter": "No automated top-level browser processes found.\n"
+}

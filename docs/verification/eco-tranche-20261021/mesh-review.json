@@ -1,0 +1,40 @@
+{
+  "reviewer": "independent Astra lean_expert geodesic_astra_review",
+  "initialVerdict": {
+    "verdict": "CHANGES_REQUIRED",
+    "mesh": "16d925032905ffd0eb96d833ee5ef6da1d5ebb58",
+    "root": "621abfcf0fdf441f135c4abe1015e3fc3f4e7af0",
+    "severity": "P2",
+    "finding": "The smallest-positive-double diagonal direction rounded its unscaled hypot norm to one component, returning zero rather than pi/4."
+  },
+  "finalVerdict": {
+    "verdict": "APPROVE source",
+    "mesh": "35db08f864c86f211a14155fcaf6ef2fd811bcca",
+    "root": "17aee3f9b096f8b9d8c3f024a221e9ef61fde51c",
+    "repair": "Validate original endpoint norms, scale each distinct direction by its maximum absolute component, then normalize and clamp its dot product. Validate before exact same-index zero.",
+    "findings": [
+      "Minimum-subnormal analytic pi/4 and unit-direction agreement regression covers the reported P2.",
+      "Exact singleton owner annotations preserve path-dependent types without casts or weakened guarantees.",
+      "Checked area and edge delegation preserve previously reviewed intermediate failure policy."
+    ]
+  },
+  "evidence": {
+    "geometry": {
+      "JVM": 43,
+      "JS": 39,
+      "log": "mesh-spherical-area-05.log",
+      "exitCode": 0
+    },
+    "laws": {
+      "JVM": 19,
+      "JS": 19,
+      "log": "mesh-spherical-area-03.log",
+      "freshAfterFinalRepair": false
+    }
+  },
+  "limits": [
+    "Reviewer ran no builds.",
+    "Root integration gate was pending when reviewed.",
+    "No publication, default-pin, optional-view, or broader U3 acceptance claim from this source verdict."
+  ]
+}

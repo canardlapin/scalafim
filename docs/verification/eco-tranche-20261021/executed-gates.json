@@ -1,0 +1,510 @@
+[
+  {
+    "log": "default-providers-jvm-01.log",
+    "logSha256": "ec9c17836e48e0e15042f95b6171db45e79985df6e40340fcd799aa3368afe63",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:36:51.527505+00:00",
+      "finished_utc": "2026-10-21T02:40:26.458609+00:00",
+      "duration_seconds": 214.918289,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "surfaceJVM/test",
+        "spatialJVM/test",
+        "atlasJVM/test",
+        "mvpaSpatialJVM/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/default-providers-jvm-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1500.0,
+      "log_bytes": 75491
+    }
+  },
+  {
+    "log": "default-providers-js-01.log",
+    "logSha256": "5bde6a36b6a1048ad4520d71b145ebf3b0c202600bd858c8620383f4be83d95f",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:41:34.966585+00:00",
+      "finished_utc": "2026-10-21T02:42:49.738733+00:00",
+      "duration_seconds": 74.770908,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "surfaceJS/test",
+        "spatialJS/test",
+        "atlasJS/test",
+        "mvpaSpatialJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/default-providers-js-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 62725
+    }
+  },
+  {
+    "log": "neuroim-view-transfer-01.log",
+    "logSha256": "6d63ae342f931ea45ce2426bae158e9d1b3a51b6bc638fae1555ee3ac2a02d53",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:43:28.632732+00:00",
+      "finished_utc": "2026-10-21T02:44:02.509254+00:00",
+      "duration_seconds": 33.87593,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewJVM/test",
+        "viewJava2dJVM/test",
+        "viewJavafxJVM/test",
+        "viewJS/test",
+        "viewCanvasJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/neuroim-view-transfer-01.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 8656
+    }
+  },
+  {
+    "log": "neuroim-view-transfer-02.log",
+    "logSha256": "b51738b5af036d58a1b3b194d0ac3e30ae6ee03ef199352356c2edfca91e1b2e",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:46:36.305600+00:00",
+      "finished_utc": "2026-10-21T02:47:00.833808+00:00",
+      "duration_seconds": 24.527779,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewJVM/test",
+        "viewJava2dJVM/test",
+        "viewJavafxJVM/test",
+        "viewJS/test",
+        "viewCanvasJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/neuroim-view-transfer-02.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 11755
+    }
+  },
+  {
+    "log": "neuroim-view-transfer-03.log",
+    "logSha256": "cb3b9cdf8e7af5b2be5c1b230bd6d070653fd42e33005d41bf38cec255ac056c",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:47:48.704001+00:00",
+      "finished_utc": "2026-10-21T02:48:06.971520+00:00",
+      "duration_seconds": 18.267126,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewJavafxJVM/test",
+        "viewJS/test",
+        "viewCanvasJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/neuroim-view-transfer-03.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 6716
+    }
+  },
+  {
+    "log": "neuroim-view-transfer-04.log",
+    "logSha256": "4c287c6e4d8326a016138b2096f819fdfc15de4d4b7985ee9ab802f4697a82ac",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:49:32.234889+00:00",
+      "finished_utc": "2026-10-21T02:50:05.385864+00:00",
+      "duration_seconds": 33.150438,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewJavafxJVM/test",
+        "viewJS/test",
+        "viewCanvasJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/neuroim-view-transfer-04.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 12445
+    }
+  },
+  {
+    "log": "view-native-browser-link-01.log",
+    "logSha256": "645c648c5efc14cd28490a2db74184fe83e30bfb5cd12289c4e40348f46390a7",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:50:34.678285+00:00",
+      "finished_utc": "2026-10-21T02:50:53.333862+00:00",
+      "duration_seconds": 18.655198,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewJavafxJVM/Test/runMain consumer.volumeview.NativeCanvasProbe",
+        "set viewCanvasJS / Test / scalaJSLinkerConfig ~= (_.withModuleKind(org.scalajs.linker.interface.ModuleKind.NoModule))",
+        "viewCanvasJS/Test/fullLinkJS"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/view-native-browser-link-01.log",
+      "exit_code": 134,
+      "child_returncode": -6,
+      "reason": "signaled",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 8490
+    }
+  },
+  {
+    "log": "view-native-browser-link-02.log",
+    "logSha256": "fb11f288046e82a13e607b8acab9380403cb5b9b4ec20d46bde1677826cc26dc",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:51:23.775697+00:00",
+      "finished_utc": "2026-10-21T02:51:40.668076+00:00",
+      "duration_seconds": 16.892002,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewJavafxJVM/Test/runMain consumer.volumeview.NativeCanvasProbe",
+        "set viewCanvasJS / Test / scalaJSLinkerConfig ~= (_.withModuleKind(org.scalajs.linker.interface.ModuleKind.NoModule))",
+        "viewCanvasJS/Test/fullLinkJS"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/view-native-browser-link-02.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 6709
+    }
+  },
+  {
+    "log": "view-browser-link-03.log",
+    "logSha256": "90dc211ac5a685d1421099688329518d6b3618dca86f4f9305aeccefe1e99e1e",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:52:26.314946+00:00",
+      "finished_utc": "2026-10-21T02:52:50.930932+00:00",
+      "duration_seconds": 24.615537,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "set LocalProject(\"viewCanvasJS\") / Test / scalaJSLinkerConfig ~= (_.withModuleKind(org.scalajs.linker.interface.ModuleKind.NoModule))",
+        "viewCanvasJS/Test/fullLinkJS"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/view-browser-link-03.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 6592
+    }
+  },
+  {
+    "log": "view-browser-requalification-01.log",
+    "logSha256": "83148d69f86ee7ac8e6d0422487693b2683a0d571df2dbe2cb20bdd61491bf8b",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:58:06.169169+00:00",
+      "finished_utc": "2026-10-21T02:59:02.480193+00:00",
+      "duration_seconds": 56.310237,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "viewCanvasJS/test",
+        "set LocalProject(\"viewCanvasJS\") / Test / scalaJSLinkerConfig ~= (_.withModuleKind(org.scalajs.linker.interface.ModuleKind.NoModule))",
+        "viewCanvasJS/Test/fullLinkJS"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/view-browser-requalification-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 7759
+    }
+  },
+  {
+    "log": "mesh-spherical-area-01.log",
+    "logSha256": "42ee44c0b5d571a0e16639a6bda1910db575530fa4a95239b33351dcbf4167e7",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:53:33.180693+00:00",
+      "finished_utc": "2026-10-21T02:53:55.472908+00:00",
+      "duration_seconds": 22.291802,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "mesh4s-geometryJVM/test",
+        "mesh4s-geometryJS/test",
+        "mesh4s-lawsJVM/test",
+        "mesh4s-lawsJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/mesh-spherical-area-01.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 3291
+    }
+  },
+  {
+    "log": "mesh-spherical-area-02.log",
+    "logSha256": "ac7df7d38353edaae0c45fbfa47c94414e4e0bf800dd9e40793e0c3028e44168",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:56:00.095940+00:00",
+      "finished_utc": "2026-10-21T02:56:18.695796+00:00",
+      "duration_seconds": 18.599473,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "mesh4s-geometryJVM/test",
+        "mesh4s-geometryJS/test",
+        "mesh4s-lawsJVM/test",
+        "mesh4s-lawsJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/mesh-spherical-area-02.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 5533
+    }
+  },
+  {
+    "log": "mesh-spherical-area-03.log",
+    "logSha256": "c249b8ded1283b3217a6d80772f9a012d790cc4bcdfd5737a8824a37cd6809f4",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:57:12.209461+00:00",
+      "finished_utc": "2026-10-21T02:57:46.329015+00:00",
+      "duration_seconds": 34.11899,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "mesh4s-geometryJVM/test",
+        "mesh4s-geometryJS/test",
+        "mesh4s-lawsJVM/test",
+        "mesh4s-lawsJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/mesh-spherical-area-03.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 9750
+    }
+  },
+  {
+    "log": "mesh-spherical-area-04.log",
+    "logSha256": "6ba330f1cf07c1fe3d35edfe5ceee8b1f797f5f78eff62936f3de33c356c6092",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:01:48.381279+00:00",
+      "finished_utc": "2026-10-21T03:02:14.504951+00:00",
+      "duration_seconds": 26.123236,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "mesh4s-geometryJVM/test",
+        "mesh4s-geometryJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/mesh-spherical-area-04.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 2880
+    }
+  },
+  {
+    "log": "mesh-spherical-area-05.log",
+    "logSha256": "f131c0a9603ab93d95de5041d7db5a00ee73cb125b7abde6d32613afcb600b3a",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:02:48.982013+00:00",
+      "finished_utc": "2026-10-21T03:03:12.889059+00:00",
+      "duration_seconds": 23.903999,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "mesh4s-geometryJVM/test",
+        "mesh4s-geometryJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/mesh-spherical-area-05.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 6562
+    }
+  },
+  {
+    "log": "root-provider-cutover-01.log",
+    "logSha256": "c2b2ed39a024e8f2e53dd63efb4e5eb88559a76656804eb9e27b2ef571a4810c",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T02:59:28.212326+00:00",
+      "finished_utc": "2026-10-21T03:00:23.853115+00:00",
+      "duration_seconds": 55.639954,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+        "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "surfaceJVM/test",
+        "surfaceJS/test",
+        "surfaceViewJVM/test",
+        "surfaceViewJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-provider-cutover-01.log",
+      "exit_code": 1,
+      "child_returncode": 1,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 13526
+    }
+  },
+  {
+    "log": "root-provider-cutover-02.log",
+    "logSha256": "535d112cadf26953bc228fada73f361b1f91bec6c63e37a94a92866949fbb71f",
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:03:59.530133+00:00",
+      "finished_utc": "2026-10-21T03:08:28.920913+00:00",
+      "duration_seconds": 269.387298,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+        "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "surfaceJVM/test",
+        "surfaceJS/test",
+        "surfaceViewJVM/test",
+        "surfaceViewJS/test",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/root-provider-cutover-02.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 126917
+    }
+  }
+]

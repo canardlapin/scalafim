@@ -1,0 +1,358 @@
+[
+  {
+    "log": "final-default-jvm-01.log",
+    "logSha256": "3ab73fc1667de7adb9667df6a33119e69ddd92b9c89b857362a59b9aad0bfa7d",
+    "testsInCommandOrder": [
+      {
+        "total": 338,
+        "passed": 338,
+        "skipped": 0
+      },
+      {
+        "total": 231,
+        "passed": 231,
+        "skipped": 0
+      },
+      {
+        "total": 81,
+        "passed": 81,
+        "skipped": 0
+      },
+      {
+        "total": 25,
+        "passed": 25,
+        "skipped": 0
+      },
+      {
+        "total": 42,
+        "passed": 42,
+        "skipped": 0
+      },
+      {
+        "total": 2,
+        "passed": 2,
+        "skipped": 0
+      },
+      {
+        "total": 2,
+        "passed": 2,
+        "skipped": 0
+      }
+    ],
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:09:25.640274+00:00",
+      "finished_utc": "2026-10-21T03:13:33.338077+00:00",
+      "duration_seconds": 247.694621,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "surfaceJVM/test",
+        "spatialJVM/test",
+        "atlasJVM/test",
+        "mvpaSpatialJVM/test",
+        "neuroimViewJvmTestAll",
+        "{https://github.com/canardlapin/neuroim4s.git#2c57d1592a98ba9f6ef416446a8c54e69a29a595}viewJavafxJVM/Test/runMain consumer.volumeview.NativeCanvasProbe",
+        "show buildDependencies"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/final-default-jvm-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 90187
+    }
+  },
+  {
+    "log": "final-default-js-01.log",
+    "logSha256": "8f205688e48aae00378f1f58018d6a574710881248c6a51bba39f360faa2ae9d",
+    "testsInCommandOrder": [
+      {
+        "total": 297,
+        "passed": 295,
+        "skipped": 2
+      },
+      {
+        "total": 206,
+        "passed": 206,
+        "skipped": 0
+      },
+      {
+        "total": 61,
+        "passed": 61,
+        "skipped": 0
+      },
+      {
+        "total": 25,
+        "passed": 25,
+        "skipped": 0
+      }
+    ],
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:14:55.367368+00:00",
+      "finished_utc": "2026-10-21T03:16:20.884784+00:00",
+      "duration_seconds": 85.516236,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "surfaceJS/test",
+        "spatialJS/test",
+        "atlasJS/test",
+        "mvpaSpatialJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/final-default-js-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 62412
+    }
+  },
+  {
+    "log": "final-default-view-atlas-01.log",
+    "logSha256": "55cb31fce15382edb612d7f92f41f93e0fbad04e7bb22f73d564141cee4b9ce7",
+    "testsInCommandOrder": [
+      {
+        "total": 42,
+        "passed": 42,
+        "skipped": 0
+      },
+      {
+        "total": 8,
+        "passed": 8,
+        "skipped": 0
+      },
+      {
+        "total": 13,
+        "passed": 13,
+        "skipped": 0
+      },
+      {
+        "total": 13,
+        "passed": 13,
+        "skipped": 0
+      },
+      {
+        "total": 24,
+        "passed": 24,
+        "skipped": 0
+      },
+      {
+        "total": 24,
+        "passed": 24,
+        "skipped": 0
+      },
+      {
+        "total": 26,
+        "passed": 26,
+        "skipped": 0
+      }
+    ],
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:16:20.964727+00:00",
+      "finished_utc": "2026-10-21T03:17:33.938873+00:00",
+      "duration_seconds": 72.973101,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "neuroimViewJsTestAll",
+        "neuroatlasVolumeTestAll"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/final-default-view-atlas-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 25584
+    }
+  },
+  {
+    "log": "functional-jvm-01.log",
+    "logSha256": "48dc769e3a9928008f780bdc4554443858c4feb9db8427e36dc7eea00d312f9e",
+    "testsInCommandOrder": [
+      {
+        "total": 78,
+        "passed": 78,
+        "skipped": 0
+      },
+      {
+        "total": 762,
+        "passed": 762,
+        "skipped": 0
+      },
+      {
+        "total": 105,
+        "passed": 105,
+        "skipped": 0
+      },
+      {
+        "total": 15,
+        "passed": 15,
+        "skipped": 0
+      },
+      {
+        "total": 105,
+        "passed": 105,
+        "skipped": 0
+      },
+      {
+        "total": 90,
+        "passed": 90,
+        "skipped": 0
+      },
+      {
+        "total": 39,
+        "passed": 39,
+        "skipped": 0
+      }
+    ],
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:17:34.201718+00:00",
+      "finished_utc": "2026-10-21T03:19:57.558359+00:00",
+      "duration_seconds": 143.354723,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "datasetJVM/test",
+        "fitJVM/test",
+        "groupJVM/test",
+        "archiveJVM/test",
+        "motionJVM/test",
+        "thresholdJVM/test",
+        "fmriWorkflowJVM/test",
+        "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/functional-jvm-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 137196
+    }
+  },
+  {
+    "log": "functional-js-01.log",
+    "logSha256": "81205c0a558089d8d6dfcb94769330b2da2b9c7a148df3eb070bf4610ff6dfe5",
+    "testsInCommandOrder": [
+      {
+        "total": 64,
+        "passed": 64,
+        "skipped": 0
+      },
+      {
+        "total": 704,
+        "passed": 704,
+        "skipped": 0
+      },
+      {
+        "total": 104,
+        "passed": 104,
+        "skipped": 0
+      },
+      {
+        "total": 10,
+        "passed": 10,
+        "skipped": 0
+      }
+    ],
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:19:57.691770+00:00",
+      "finished_utc": "2026-10-21T03:21:35.218614+00:00",
+      "duration_seconds": 97.525502,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "datasetJS/test",
+        "fitJS/test",
+        "groupJS/test",
+        "archiveJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/functional-js-01.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 95053
+    }
+  },
+  {
+    "log": "functional-js-02.log",
+    "logSha256": "355dbd7797538e60d79d791257a366339878ff58823ed865d8c5eae02abd8fce",
+    "testsInCommandOrder": [
+      {
+        "total": 92,
+        "passed": 92,
+        "skipped": 0
+      },
+      {
+        "total": 90,
+        "passed": 90,
+        "skipped": 0
+      },
+      {
+        "total": 31,
+        "passed": 31,
+        "skipped": 0
+      }
+    ],
+    "metadata": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T03:21:35.300928+00:00",
+      "finished_utc": "2026-10-21T03:23:04.197906+00:00",
+      "duration_seconds": 88.895717,
+      "command": [
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+        "motionJS/test",
+        "thresholdJS/test",
+        "fmriWorkflowJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/functional-js-02.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1200.0,
+      "log_bytes": 42045
+    }
+  }
+]
