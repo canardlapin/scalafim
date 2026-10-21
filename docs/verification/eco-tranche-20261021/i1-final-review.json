@@ -1,0 +1,11 @@
+{
+  "schema": "scalafim.i1-final-review.v1",
+  "reviewer": "volume_view_astra_review",
+  "verdict": "APPROVE closure",
+  "candidate": "61ff7d8a3342fdbf7402d8acb6ce7689ef790b5b",
+  "production": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "verified": "22prescribed batches/110nonemptytasks, log/gzip/hash equivalence, same original PID exit0 via recorded observer, source/tests/build/tools equivalence, ownership/deletion/composition/caller/native/lifecycle evidence; no remaining I1finding.",
+  "limitsPreserved": true,
+  "acceptanceReceiptSha256": "84d551a44ffefe2eb56ddc0b7aa1797b56f6199fb9ae0072ce248a5c197e3035",
+  "verbatimConclusion": "No remaining I1 acceptance finding. Approval preserves recorded scientific caveats, skipped studies, separate24.339ms timingfailure, and limits on broaderPLS/device/performance/publication/main-branchqualification."
+}

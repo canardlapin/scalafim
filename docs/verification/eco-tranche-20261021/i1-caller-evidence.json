@@ -612,7 +612,7 @@
     "evidence": "native-runtime-qualification-10.json",
     "sourceCommit": "5f7bee9521d5b03fff9546488a12f6d00881b4d9"
   },
-  "remainingAcceptance": "Final exact-source I1 acceptance review only; full22batch/110task campaign passed10670tests with8skips5ignored, exit0. Scientific/native/performance limits preserved.",
+  "remainingAcceptance": null,
   "discoveredDirectFiles": [
     "modules/adapters/src/main/scala/plsneuro/adapters/AnatomicalBackground.scala",
     "modules/adapters/src/main/scala/plsneuro/adapters/AtlasCursorQuery.scala",
@@ -788,5 +788,10 @@
     "limit": "Direct scan completeness is exact for these tracked modules; behavioral evidence is bounded to named operations/fixtures, not every branch or future external caller.",
     "executionEvidence": "transitive-caller-qualification-13.json"
   },
-  "probeSourceCommit": "27792846f99ee64ccd286698be77e93a55465c79"
+  "probeSourceCommit": "27792846f99ee64ccd286698be77e93a55465c79",
+  "finalAcceptance": {
+    "status": "APPROVED I1closure",
+    "evidence": "i1-final-review.json",
+    "candidate": "61ff7d8a3342fdbf7402d8acb6ce7689ef790b5b"
+  }
 }

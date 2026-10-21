@@ -1,7 +1,7 @@
 {
   "schema": "scalafim.i1-acceptance.v1",
   "recorded": "2026-10-21T15:06:39.565424+00:00",
-  "status": "candidate complete; final independent I1 acceptance review pending",
+  "status": "ACCEPTED: independent approval to close eco-neuroim-integrations and eco-neuroim",
   "task": "eco-neuroim-integrations",
   "milestone": "eco-neuroim",
   "rootEvidenceParent": "ddc81ef07cf3400795b787ad30bfd5e6281c0c5b",
@@ -67,7 +67,7 @@
         "i1-bounded-evidence-review.json",
         "i1-caller-review-13.json"
       ],
-      "finding": "CompileAll pass; full110headless tasks pass; separate65JavaFXtests/native probes pass. Exact final acceptance review is the sole pending closure action."
+      "finding": "CompileAll passed;110headless tasks passed; separate65JavaFXtests/nativeprobes passed. Final independent I1closure review APPROVE at61ff7d8a3."
     }
   ],
   "totals": {
@@ -95,5 +95,14 @@
     "full-repository-qualification-10.json": "b665ec7cbaf837c7c66f080ff21bb8dec4bd3fd5203565ad52bab7493bc76ca7",
     "independent-composition.json": "715d885a197d9b9a3b6ef9cab1f3e7cc2e909b32cae500d2559294db379f195d",
     "i1-caller-evidence.json": "def6ce5725fc2e77530dcbe0dbd10b20eb040c88d383047d362d1e79cf47ea9c"
+  },
+  "acceptedUtc": "2026-10-21T15:09:01.463465+00:00",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE closure",
+    "candidate": "61ff7d8a3342fdbf7402d8acb6ce7689ef790b5b",
+    "production": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+    "verified": "22prescribed batches/110nonemptytasks, log/gzip/hash equivalence, same original PID exit0 via recorded observer, source/tests/build/tools equivalence, ownership/deletion/composition/caller/native/lifecycle evidence; no remaining I1finding.",
+    "limitsPreserved": true
   }
 }
