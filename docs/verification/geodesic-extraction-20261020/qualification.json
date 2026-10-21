@@ -302,26 +302,39 @@
     }
   ],
   "review": {
-    "attempt": "opus-review-01.log",
-    "requested_model": "opus",
-    "status": "not-executed",
-    "reason": "usage_limit_reached",
-    "http_status": 429,
-    "model_tokens": 0,
-    "verdict": null,
-    "replacement_question": "dashboard Q12: explicit independent Astra substitution requested; pending user answer",
-    "attempts": [
-      "opus-review-01.log",
-      "opus-review-02.log"
-    ],
-    "latest_attempt": {
-      "log_sha256": "897c8f6b42b88b6349d43059da0f9ae90025c23f0c77d0dd2c8581361e288004",
-      "metadata_sha256": "1e4f49219bf0a581602b2d9c4073ef89be5076b4eba5ddc2f226dba4e350c7a9",
-      "exit_code": 1,
-      "finished_utc": "2026-10-21T01:40:54.627121+00:00",
-      "api_error": "usage_limit_reached",
-      "model_tokens": 0
-    }
+    "status": "approved",
+    "requested_reviewer": "independent Astra",
+    "substitution_authority": "User explicitly answered yes in chat after Opus-specific substitution question",
+    "subject_root": "3f0b901d2d344e15defc19634e6239e4751c19ec",
+    "production_root": "380476951300985979aefe67a903885b4f5d62cf",
+    "reviewer_task": "geodesic_astra_review",
+    "verdict": "approve",
+    "prior_opus_attempts": {
+      "attempt": "opus-review-01.log",
+      "requested_model": "opus",
+      "status": "not-executed",
+      "reason": "usage_limit_reached",
+      "http_status": 429,
+      "model_tokens": 0,
+      "verdict": null,
+      "replacement_question": "dashboard Q12: explicit independent Astra substitution requested; pending user answer",
+      "attempts": [
+        "opus-review-01.log",
+        "opus-review-02.log"
+      ],
+      "latest_attempt": {
+        "log_sha256": "897c8f6b42b88b6349d43059da0f9ae90025c23f0c77d0dd2c8581361e288004",
+        "metadata_sha256": "1e4f49219bf0a581602b2d9c4073ef89be5076b4eba5ddc2f226dba4e350c7a9",
+        "exit_code": 1,
+        "finished_utc": "2026-10-21T01:40:54.627121+00:00",
+        "api_error": "usage_limit_reached",
+        "model_tokens": 0
+      }
+    },
+    "limits": "Bounded source approval plus atlasf032 addendum; repaired atlas implementation also approved separately. Publication/default-pin qualification and U3 closure remain separate.",
+    "receipt": "independent-review.json",
+    "atlas_repair_receipt": "atlas-volume-review.json",
+    "updated_atlas_candidate": "f03287dd870bb65394914e69be0ecfcc4b9334d9"
   },
   "limits": [
     "Four explicit source overrides; no default-pin qualification or new provider publication.",

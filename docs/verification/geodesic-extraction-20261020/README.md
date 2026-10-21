@@ -1,7 +1,7 @@
 # Generic geodesic extraction — 2026-10-20
 
 Locally qualified at ScalaFIM `380476951300985979aefe67a903885b4f5d62cf`.
-Independent review is blocked; all new provider candidates remain unpublished.
+Independent Astra source review approves; all new provider candidates remain unpublished.
 This does not close U3 or the eco epic.
 
 ScalaFIM no longer contains its private Dijkstra or weighted-adjacency builder.
@@ -10,7 +10,7 @@ and existing directed routes. mesh4s supplies the owner-preserving adapter.
 ScalaFIM retains validation, cache, ordered matrix requests, legacy direct/
 spherical policy and its infinity convention. See [ownership](ownership.md).
 
-| Candidate | Exact SHA |
+| Original qualification candidate | Exact SHA |
 | --- | --- |
 | graph4s | `613371f3bd0b12ce99352db0c637645eb62c6283` |
 | mesh4s | `5ed45de9ab39deb22865438d65abcd50f9f8eb4a` |
@@ -20,6 +20,9 @@ spherical policy and its infinity convention. See [ownership](ownership.md).
 The latter two are pin-only descendants of their prior qualified implementation.
 Relative to public neuroatlas4s main, its candidate also includes the previously
 qualified volume extraction. Its old `7cfe136` checkout remains untouched.
+Atlas source review subsequently required a refusal-contract repair;
+`f03287dd870bb65394914e69be0ecfcc4b9334d9` now supersedes the atlas candidate
+in this table. Its additional qualification is recorded below.
 
 ## Correctness evidence
 
@@ -61,14 +64,22 @@ The loaded build has 19 source builds, with one graph4s revision throughout.
 Four explicit provider checkout overrides select the candidates above. Gale
 remains `779ed3d8169cdd9f4eb9ab10b1ca9defadc27715`.
 
-## Review blocker
+## Independent review
 
 Both requested restricted read-only Opus CLI attempts returned
 `usage_limit_reached` (429), zero model tokens and no review verdict. The retry
 reported the account's monthly spend limit; billing and permission settings
-were unchanged. Fray's daemon remains unavailable. The explicit independent
-Astra substitution question is pending in chat and dashboard Q12 (following Q10);
-silence does not waive the requirement.
+were unchanged. Fray's daemon remains unavailable. The user explicitly approved
+independent Astra substitution in chat; dashboard Q12 and the earlier Q10 are
+answered. The SHA-bound review approves Root `3f0b901d2` and the exact four
+provider candidates above, with no blocking findings. The
+[review receipt](independent-review.json) records file-level evidence and limits.
+The reviewer independently verified six main log hashes and exit metadata;
+no sbt tests were run by the reviewer. Concurrent README/qualification edits
+are outside that source verdict. The addendum approves replacing the atlas
+candidate with `f03287d`, after verifying unchanged dependency/solver artifacts.
+Atlas-volume implementation review is recorded separately. Publication, immutable-pin
+acceptance and broader U3 acceptance remain required.
 
 The resumed admission preflight confirms clean provider candidates, correct
 repo-local GitHub identity, and unchanged public main revisions at the recorded
@@ -89,6 +100,23 @@ distance while passing length/numerical validation. All 17 geodesic cases pass
 on each of JVM and JS. This is guidance and regression evidence; the public
 positional API still depends on the caller's edge correspondence. No production
 solver or persisted identity changed. Broader U3 consumer acceptance stays open.
+
+## Atlas review repair
+
+The separate atlas reviewer objected to `7a66219`: an unsupported custom
+coordinate endpoint leaked a provider `MissingDomain` failure instead of the
+former `NoTransformRoute`. Two new regression cases reproduced that failure.
+Repair `f03287d` restores the refusal after successful graph admission, preserving
+genuine malformed-provider failures, identity routes, and custom endpoints
+explicitly declared by the transform registry.
+
+Independent Astra review approves the cumulative extraction and repair. All
+24 volume JVM, 24 volume JS and 26 JVM IO tests pass. The
+[atlas review receipt](atlas-volume-review.json) retains the initial objection,
+before/after logs and verified thin repair bundle. ScalaFIM atlas callers also
+pass 81 JVM and 61 JS tests with the four explicit provider checkout overrides.
+These are local development
+gates; default immutable-pin consumer acceptance is still required.
 
 ## Reproduction and evidence custody
 
@@ -117,7 +145,7 @@ warning. The import was removed; final graph log03 passes warning-clean at its
 final SHA. No regression failures or weakened numerical tolerances were hidden.
 The failed Opus attempt and its exit metadata are also retained.
 
-Next: obtain a real SHA-bound independent review; then, with explicit publication
-authorization, publish the coherent provider set in dependency order and rerun
+Next: with publication authorization, publish the reviewed provider set (including
+atlas `f03287d`) in dependency order and rerun
 without source overrides. Complete the remaining U3 acceptance/review gates
 before closing the task. ScalaFIM publication remains separate.
