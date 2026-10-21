@@ -120,6 +120,28 @@ vertex owner. This does not assert persistent identity for edges or faces.
 `MeshTopology` is a derived view over the mesh4s owner. Its edge vector uses
 mesh4s edge ordinals, so custom weights must follow that vector rather than an
 assumed lexicographic edge order. Neighbors are materialized on request.
+
+When migrating custom geodesic costs, retain each edge's endpoint pair and
+rebuild the vector from the destination topology. For example, with zero-based
+vertex ordinals and canonical undirected pairs `(minVertex, maxVertex)`:
+
+```scala
+val costsByEndpoints: Map[(Int, Int), Double] = suppliedCosts
+val edgeKeys = topology.edges.map(edge => (edge.a.index, edge.b.index))
+require(costsByEndpoints.keySet == edgeKeys.toSet, "costs must cover exactly this mesh's edges")
+val weights = edgeKeys.map(costsByEndpoints)
+val distances = SurfaceGeodesics.distanceMatrix(
+  topology, sources, targets, edgeWeights = Some(weights)
+)
+```
+
+The endpoint ordinals must refer to the same vertex ordering. Rebuild the vector
+after changing face order or loading another topology. A saved positional vector
+without its original edge correspondence cannot be safely migrated by length;
+recover its original endpoint mapping or refuse it. The positional API checks
+length and numerical admissibility, so an incorrectly ordered vector can still
+pass validation. This rule also applies to `SurfaceParcels.geodesicMedoidVertex`.
+
 `MeshTopology.toGraph` materializes an immutable graph on demand; callers may
 reuse that value, but `MeshTopology` does not retain a parallel full topology.
 Thresholded components share one surface-local filtered traversal rather than

@@ -6,6 +6,31 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
 
   private val tetraTopology = SurfaceTestFixtures.tetraTopology
 
+  test("endpoint-keyed custom costs survive face-order changes while positional reuse is unsafe"):
+    val reordered = MeshTopology.from(TriangleMesh.fromRows(
+      SurfaceTestFixtures.tetraVertices, SurfaceTestFixtures.tetraFaces.reverse))
+    val costs = Map((0, 1) -> 2.0, (0, 2) -> 7.0, (0, 3) -> 20.0,
+      (1, 2) -> 3.0, (1, 3) -> 9.0, (2, 3) -> 4.0)
+    def weights(topology: MeshTopology): Vector[Double] =
+      val keys = topology.edges.map(edge => (edge.a.index, edge.b.index))
+      assertEquals(costs.keySet, keys.toSet)
+      keys.map(costs)
+    assertNotEquals(tetraTopology.edges, reordered.edges)
+    val all = Vector.tabulate(4)(VertexId.unsafe)
+    // Independent hand calculation: 0->2 uses 0-1-2, and 0->3 uses 0-1-2-3.
+    val expected = Vector(0.0, 2.0, 5.0, 9.0, 2.0, 0.0, 3.0, 7.0,
+      5.0, 3.0, 0.0, 4.0, 9.0, 7.0, 4.0, 0.0)
+    for topology <- Vector(tetraTopology, reordered) do
+      val matrix = SurfaceGeodesics.distanceMatrix(topology, all, all, edgeWeights = Some(weights(topology)))
+      matrix.data.zip(expected).foreach((actual, reference) => assertEqualsDouble(actual, reference, 1e-12))
+      val subset = SurfaceGeodesics.distanceMatrix(topology,
+        Vector(VertexId(0), VertexId(2), VertexId(0)), Vector(VertexId(3), VertexId(1), VertexId(3)),
+        edgeWeights = Some(weights(topology)), chunkSize = 1)
+      subset.data.zip(Vector(9.0, 2.0, 9.0, 4.0, 3.0, 4.0, 9.0, 2.0, 9.0)).foreach:
+        (actual, reference) => assertEqualsDouble(actual, reference, 1e-12)
+    val wrong = SurfaceGeodesics.distanceMatrix(reordered, all, all, edgeWeights = Some(weights(tetraTopology)))
+    assertEqualsDouble(wrong(0, 1), 4.0, 1e-12)
+
   test("geodesic distance matrix matches tetrahedron edge distances"):
     val matrix = SurfaceGeodesics.allPairsDistanceMatrix(tetraTopology)
 
