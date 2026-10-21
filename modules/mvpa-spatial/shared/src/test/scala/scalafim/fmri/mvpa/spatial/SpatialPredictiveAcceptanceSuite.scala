@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa.spatial
 
+import mvpa4s.locus.*
+
 import alder.kernel.DataFingerprint
 import gale.linalg.DMat
 import locus4s.{Relation, Region, Selection}
@@ -134,5 +136,5 @@ class SpatialPredictiveAcceptanceSuite extends munit.FunSuite:
       Vector(Vector(0, 1), Vector(1), Vector(1, 2), Vector.empty, Vector.empty).iterator.map(_.iterator)))
     val patches = right(CenteredSearchlight.validate(right(Searchlight.make(centers, relation))))
     val names = Vector("first", "failure", "last")
-    val frame = right(SpatialMeasurementFrames.surfacePatches(fixture.neural, declaration, patches, index => Some(names(index.ordinal))))
+    val frame = right(SurfaceMeasurementFrames.surfacePatches(fixture.neural, declaration, patches, index => Some(names(index.ordinal))))
     fixture.assertScatter(fixture.run(frame, Map("first" -> Vector(0, 1), "failure" -> Vector(1), "last" -> Vector(1, 2))))

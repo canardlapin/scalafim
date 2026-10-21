@@ -110,6 +110,8 @@ lazy val mvpa4sCoreJVM    = ProjectRef(mvpa4sBuild, "coreJVM")
 lazy val mvpa4sCoreJS     = ProjectRef(mvpa4sBuild, "coreJS")
 lazy val mvpa4sTestkitJVM = ProjectRef(mvpa4sBuild, "testkitJVM")
 lazy val mvpa4sTestkitJS  = ProjectRef(mvpa4sBuild, "testkitJS")
+lazy val mvpa4sLocusJVM = ProjectRef(mvpa4sBuild, "locusJVM")
+lazy val mvpa4sLocusJS = ProjectRef(mvpa4sBuild, "locusJS")
 lazy val mvpa4sPredictiveJVM = ProjectRef(mvpa4sBuild, "predictiveJVM")
 lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
 
@@ -1186,8 +1188,8 @@ lazy val mvpaSpatial =
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-spatial"))
     .dependsOn(surface, threshold)
-    .jvmConfigure(_.dependsOn(mvpa4sCoreJVM, mvpa4sTestkitJVM % Test, mvpa4sPredictiveJVM % "test->compile"))
-    .jsConfigure(_.dependsOn(mvpa4sCoreJS, mvpa4sTestkitJS % Test, mvpa4sPredictiveJS % "test->compile"))
+    .jvmConfigure(_.dependsOn(mvpa4sLocusJVM, mvpa4sTestkitJVM % Test, mvpa4sPredictiveJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(mvpa4sLocusJS, mvpa4sTestkitJS % Test, mvpa4sPredictiveJS % "test->compile"))
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-spatial"

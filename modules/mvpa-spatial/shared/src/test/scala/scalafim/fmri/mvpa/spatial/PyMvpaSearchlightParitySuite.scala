@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa.spatial
 
+import mvpa4s.locus.*
+
 import image4s.locus.GridDomain
 
 import gale.linalg.DMat

@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa.spatial
 
+import mvpa4s.locus.*
+
 import com.sun.management.ThreadMXBean
 import gale.linalg.DMat
 import gale.optim.{FirstOrderConfig, FirstOrderTolerance}
