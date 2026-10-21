@@ -309,7 +309,19 @@
     "http_status": 429,
     "model_tokens": 0,
     "verdict": null,
-    "replacement_question": "dashboard Q10: independent Astra replacement requires user answer"
+    "replacement_question": "dashboard Q12: explicit independent Astra substitution requested; pending user answer",
+    "attempts": [
+      "opus-review-01.log",
+      "opus-review-02.log"
+    ],
+    "latest_attempt": {
+      "log_sha256": "897c8f6b42b88b6349d43059da0f9ae90025c23f0c77d0dd2c8581361e288004",
+      "metadata_sha256": "1e4f49219bf0a581602b2d9c4073ef89be5076b4eba5ddc2f226dba4e350c7a9",
+      "exit_code": 1,
+      "finished_utc": "2026-10-21T01:40:54.627121+00:00",
+      "api_error": "usage_limit_reached",
+      "model_tokens": 0
+    }
   },
   "limits": [
     "Four explicit source overrides; no default-pin qualification or new provider publication.",
@@ -317,5 +329,71 @@
     "Independent review unmet; Opus attempt produced no verdict.",
     "U3 acceptance audit and coordinated publication/default-pin gates remain."
   ],
-  "raw_evidence": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020"
+  "raw_evidence": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/geodesic-extraction-20261020",
+  "admission_preflight": {
+    "captured_utc": "2026-10-21T01:44:34.429193+00:00",
+    "published": false,
+    "providers": [
+      {
+        "provider": "graph4s",
+        "observed_remote_main": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+        "candidate": "613371f3bd0b12ce99352db0c637645eb62c6283",
+        "base_is_ancestor": true,
+        "clean": true,
+        "github_account": "canardlapin"
+      },
+      {
+        "provider": "mesh4s",
+        "observed_remote_main": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+        "candidate": "5ed45de9ab39deb22865438d65abcd50f9f8eb4a",
+        "base_is_ancestor": true,
+        "clean": true,
+        "github_account": "canardlapin"
+      },
+      {
+        "provider": "neuroim4s",
+        "observed_remote_main": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+        "candidate": "6d20f52e6701f10126f36a4fc97bf97eeb99fa24",
+        "base_is_ancestor": true,
+        "clean": true,
+        "github_account": "canardlapin"
+      },
+      {
+        "provider": "neuroatlas4s",
+        "observed_remote_main": "375ceb229f707a6e9fb447a3e24564e8c5cd3036",
+        "candidate": "7a662192a1a5769e92c9809feec0286f47728419",
+        "base_is_ancestor": true,
+        "clean": true,
+        "github_account": "canardlapin"
+      }
+    ]
+  },
+  "consumer_order_followup": {
+    "source": "e3076c7503fd0b2b82ea02ef08ea5ec01f24c19d",
+    "issue": "eco-u3-consumers",
+    "scope": "migration guidance and regression only; production solver/identity unchanged",
+    "passed": {
+      "JVM": 17,
+      "JS": 17
+    },
+    "log_sha256": "0a493eb61d665571704884b70420dbe97c512fa3d8b2eba049be12228714788a",
+    "metadata_sha256": "6044d1a14db9c927ab081b0a2e7b962f893c4df9762cc3ba1f5cfd3e94d15f75",
+    "argv": [
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+      "-Dscalafim.graph4s.build=/Users/bbuchsbaum/code/scala/graph4s-eco-distances-20261020",
+      "-Dscalafim.mesh4s.build=/Users/bbuchsbaum/code/scala/mesh4s-eco-distances-20261020",
+      "-Dscalafim.neuroim4s.build=/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+      "-Dscalafim.neuroatlas4s.build=/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+      "surfaceJVM/testOnly scalafim.surface.SurfaceGeodesicsSuite",
+      "surfaceJS/testOnly scalafim.surface.SurfaceGeodesicsSuite"
+    ],
+    "exit_code": 0,
+    "legacy_risk": "length validation cannot detect positional costs from another edge ordering; endpoint/vertex correspondence must be recovered or rejected",
+    "remaining": "Full U3 consumer acceptance and required independent solver review remain open"
+  }
 }

@@ -63,11 +63,32 @@ remains `779ed3d8169cdd9f4eb9ab10b1ca9defadc27715`.
 
 ## Review blocker
 
-The requested restricted read-only Opus CLI run returned
-`usage_limit_reached` (429), zero model tokens and no review verdict. Fray's
-daemon was unavailable. The user has been asked whether an independent Astra
-review can replace Opus (dashboard Q10); silence does not waive the requirement.
-No permission or billing settings were changed.
+Both requested restricted read-only Opus CLI attempts returned
+`usage_limit_reached` (429), zero model tokens and no review verdict. The retry
+reported the account's monthly spend limit; billing and permission settings
+were unchanged. Fray's daemon remains unavailable. The explicit independent
+Astra substitution question is pending in chat and dashboard Q12 (following Q10);
+silence does not waive the requirement.
+
+The resumed admission preflight confirms clean provider candidates, correct
+repo-local GitHub identity, and unchanged public main revisions at the recorded
+bases. Each public base is an ancestor of its candidate. This is preparation
+for publication, not publication or immutable-pin acceptance.
+
+## Consumer edge-order follow-through
+
+Local source `e3076c750` addresses the earlier topology review's migration-guidance
+follow-up under `eco-u3-consumers`. The surface README now shows endpoint-keyed
+cost reconstruction and requires the same vertex ordering. It explicitly refuses
+to treat an unlabelled saved positional vector as safely migratable by length.
+
+The added asymmetric-cost tetrahedron witness pins a hand-calculated full matrix
+and repeated source/target requests under reversed face order. It retains a
+negative witness: blindly reusing the original positional vector changes a
+distance while passing length/numerical validation. All 17 geodesic cases pass
+on each of JVM and JS. This is guidance and regression evidence; the public
+positional API still depends on the caller's edge correspondence. No production
+solver or persisted identity changed. Broader U3 consumer acceptance stays open.
 
 ## Reproduction and evidence custody
 
