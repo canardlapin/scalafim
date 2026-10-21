@@ -8,8 +8,8 @@
   },
   "status": "PASS focused source-composite checks; published-pin and milestone qualification pending",
   "providerFull": {
-    "passed": 0,
-    "skipped": 0,
+    "passed": 1226,
+    "skipped": 10,
     "nonemptyTestTasks": 8,
     "consumerProjects": "consumerJVM/JS compiled public API examples; no behavior tests there. example.LocusConsumerSuite executes within both locus test tasks."
   },
@@ -39,8 +39,18 @@
         "log_bytes": 12204
       },
       "summaries": [
-        {},
-        {}
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        },
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        }
       ]
     },
     {
@@ -106,11 +116,36 @@
         "log_bytes": 26062
       },
       "summaries": [
-        {},
-        {},
-        {},
-        {},
-        {}
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        },
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        },
+        {
+          "Total": 14,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 14
+        },
+        {
+          "Total": 14,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 14
+        },
+        {
+          "Total": 5,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 5
+        }
       ]
     },
     {
@@ -140,9 +175,30 @@
         "log_bytes": 15615
       },
       "summaries": [
-        {},
-        {},
-        {}
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 15,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 15
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        }
       ]
     },
     {
@@ -177,10 +233,30 @@
         "log_bytes": 7614
       },
       "summaries": [
-        {},
-        {},
-        {},
-        {}
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 13,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 13
+        },
+        {
+          "Total": 7,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 7
+        },
+        {
+          "Total": 7,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 7
+        }
       ]
     },
     {
@@ -212,8 +288,18 @@
         "log_bytes": 13046
       },
       "summaries": [
-        {},
-        {}
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        },
+        {
+          "Total": 1,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 1
+        }
       ]
     },
     {
@@ -242,9 +328,24 @@
         "log_bytes": 5826
       },
       "summaries": [
-        {},
-        {},
-        {}
+        {
+          "Total": 10,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 10
+        },
+        {
+          "Total": 10,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 10
+        },
+        {
+          "Total": 2,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 2
+        }
       ]
     },
     {
@@ -273,14 +374,56 @@
         "log_bytes": 121113
       },
       "summaries": [
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-        {}
+        {
+          "Total": 495,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 490,
+          "Skipped": 5
+        },
+        {
+          "Total": 495,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 490,
+          "Skipped": 5
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 3,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 3
+        },
+        {
+          "Total": 103,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 103
+        },
+        {
+          "Total": 103,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 103
+        },
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        },
+        {
+          "Total": 17,
+          "Failed": 0,
+          "Errors": 0,
+          "Passed": 17
+        }
       ]
     }
   ],
