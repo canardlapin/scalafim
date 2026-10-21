@@ -2,13 +2,12 @@ package scalafim.fmri.mvpa.spatial
 
 import mvpa4s.locus.*
 
-import locus4s.{Relation, Region, Selection}
+import locus4s.{CenteredNeighborhoodSystem, Relation, Region, Selection}
 import gale.linalg.DMat
 import multivar.core.{SemanticSpace, SpaceRole, ValueId, ValueIdentity}
 import mvpa4s.{AxisRef, EvidenceSource, Observations}
 import mvpa4s.measurement.{MeasuredObservations, MeasurementFailure, MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor, PackedMeasurementEntry}
 import neuroim4s.image.ExactVolumeSearchlight
-import scalafim.locus.{CenteredSearchlight, Searchlight}
 import locus4s.data.VectorField
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 
@@ -89,19 +88,18 @@ class SpatialMeasurementCompositionSuite extends munit.FunSuite:
 
   test("empty centered surface patches are an explicit frame error"):
     val neural = axis("spatial-empty-surface")
-    val searchlight = right(Searchlight.make(Region.empty(neural.locus), Relation.empty(neural.locus, neural.locus)))
-    val centered = right(CenteredSearchlight.validate(searchlight))
+    val centers = right(Selection.fromOrdinals(neural.locus, Vector.empty))
+    val centered = right(CenteredNeighborhoodSystem.fromSelection(centers, Relation.empty(centers.positions, neural.locus)))
     val result = SurfaceMeasurementFrames.surfacePatches(neural, declaration, centered)
     assertEquals(result.left.toOption, Some(SpatialMeasurementFrameError.EmptyFrame))
 
   test("surface adapter preserves frozen padded ambient IDs and frame fingerprint"):
     val neural = right(AxisRef.fromStableKeys("padded-volume", SpaceRole.Observed,
       Vector.tabulate(12)(i => s"v$i"), "voxel-order", "psc", "raw"))
-    val centers = right(Region.fromOrdinals(neural.locus, Vector(10, 2)))
-    val rows = Vector.tabulate(12): i =>
-      if i == 2 then Vector(0, 2) else if i == 10 then Vector(9, 10) else Vector.empty[Int]
-    val relation = right(Relation.fromOrdinalRows(neural.locus, neural.locus, rows))
-    val patches = right(CenteredSearchlight.validate(right(Searchlight.make(centers, relation))))
+    val centers = right(Selection.fromOrdinals(neural.locus, Vector(10, 2)))
+    val rows = Vector(Vector(9, 10), Vector(0, 2))
+    val relation = right(Relation.fromOrdinalRows(centers.positions, neural.locus, rows))
+    val patches = right(CenteredNeighborhoodSystem.fromSelection(centers, relation))
     val frame = right(SurfaceMeasurementFrames.surfacePatches(neural, declaration, patches))
     // tools/measurement-identity-reference.py in mvpa4s calculates these
     // literals using Python hashlib and the pre-extraction wire grammar.
