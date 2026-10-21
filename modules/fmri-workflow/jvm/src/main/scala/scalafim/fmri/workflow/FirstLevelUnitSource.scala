@@ -34,12 +34,17 @@ final case class OpenedFirstLevelUnit(
       metadata
     )
 
+/** Whether response storage is prepared now or only at an actual read. */
+enum FirstLevelResponseAccess:
+  case Immediate, OnFirstRead
+
 object FirstLevelUnitSource:
   def open(
       unit: FirstLevelUnit,
       evidenceFor: ArtifactLocation => Either[DatasetError, SpaceEvidence],
       staging: Option[NiftiStagingCache] = None,
-      metadata: DatasetMetadata = DatasetMetadata.Empty
+      metadata: DatasetMetadata = DatasetMetadata.Empty,
+      responseAccess: FirstLevelResponseAccess = FirstLevelResponseAccess.Immediate
   ): Either[DatasetError, OpenedFirstLevelUnit] =
     for
       mask <- readMask(unit.mask, evidenceFor)
@@ -51,10 +56,30 @@ object FirstLevelUnitSource:
       openedRuns <- traverse(unit.runs) { run =>
         for
           path <- filePath(run.bold.location)
-          evidence <- evidenceFor(run.bold.location)
-          source <- NiftiResponseBlockSource.open(path, evidence, staging, Some(voxelDomain), metadata)
-          congruence <- validateRunSource(unit, run, source)
-        yield RunResponseBlockSource(run.id, source) -> congruence
+          opened <-
+            def openNow = for
+              evidence <- evidenceFor(run.bold.location)
+              source <- NiftiResponseBlockSource.open(path, evidence, staging, Some(voxelDomain), metadata)
+              congruence <- validateRunSource(unit, run, source)
+            yield source -> congruence
+            responseAccess match
+              case FirstLevelResponseAccess.Immediate =>
+                openNow.map((source, congruence) => RunResponseBlockSource(run.id, source) -> congruence)
+              case FirstLevelResponseAccess.OnFirstRead =>
+                for
+                  declared <- DatasetShape.make(unit.shape.space, run.timepoints)
+                  deferred <- DeferredResponseBlockSource.make(declared, voxelDomain, metadata)(() =>
+                    openNow.flatMap { (source, congruence) =>
+                      // The certificate is checked against the actual reopened
+                      // grid before values are bound to the reviewed grid.
+                      CompositeResponseBlockSource.makeCongruent(
+                        Vector(RunResponseBlockSource(run.id, source)), unit.shape.space,
+                        Vector(congruence), metadata)
+                    })
+                  congruence <- Grid.exactCongruence(unit.shape.grid, deferred.shape.grid)
+                    .left.map(DatasetError.Geometry.apply)
+                yield RunResponseBlockSource(run.id, deferred) -> congruence
+        yield opened
       }
       composite <- CompositeResponseBlockSource.makeCongruent(
         openedRuns.map(_._1),
