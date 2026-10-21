@@ -197,6 +197,22 @@ class EventTrialSummarySuite extends munit.FunSuite:
     assertEquals(values(1).onsetOffset, Some(EventTimingSummary(2.0.s, 3.0.s, 4.0.s)))
   }
 
+  test("the same original parent label in different runs has distinct literal offsets"):
+    val parent = TrialId.unsafe("trial-1")
+    val phase = EventPhase.fromParts(PhaseId.unsafe("probe"), Vector(3.0.s, 6.0.s),
+      Vector(0.0.s, 0.0.s), Vector(0, 1), Vector(parent, parent), Vector(0, 1))
+      .fold(error => fail(error.message), identity)
+    val term = phase.term(Vector(Event.factor(Vector("face", "face"), "stimulus")), Some("memory"))
+      .fold(error => fail(error.message), identity)
+    val model = EventModel.build(Vector(term.convolve(Hrfs.SPMG1, twoRuns)), twoRuns)
+    val timing = ParentTrialOnsets.validated(Vector(
+      ParentTrialOnset(ParentTrialKey(RunIndex.unsafeOneBased(1), parent), 1.0.s),
+      ParentTrialOnset(ParentTrialKey(RunIndex.unsafeOneBased(2), parent), 2.0.s))).toOption.get
+    val values = EventTrialSummary.forModel(model, Some(timing)).fold(error => fail(error.message), identity)
+    assertEquals(values.map(_.run.oneBased), Vector(1, 2))
+    assertEquals(values.map(_.onsetOffset), Vector(
+      Some(EventTimingSummary(2.0.s, 2.0.s, 2.0.s)), Some(EventTimingSummary(4.0.s, 4.0.s, 4.0.s))))
+
   test("a phase earlier than its parent onset is rejected, including global-clock parent timing") {
     val model = twoRunModel(Vector(3.0, 9.0, 4.0, 12.0))
     EventTrialSummary.forModel(model, Some(runOnsets((1, "one", 1.0), (1, "two", 9.5), (2, "one", 0.0), (2, "two", 10.0)))) match

@@ -39,8 +39,8 @@ object EventPhase:
   ): Either[DesignError, EventPhase] =
     if parentTrialIds.length != schedule.size then
       Left(DesignError.InvalidSchedule(s"phase '${id.value}' parent ids have length ${parentTrialIds.length} but expected ${schedule.size}"))
-    else if parentTrialIds.distinct.length != parentTrialIds.length then
-      Left(DesignError.InvalidSchedule(s"phase '${id.value}' parent trial ids must be unique"))
+    else if schedule.blockIds.zip(parentTrialIds).distinct.length != parentTrialIds.length then
+      Left(DesignError.InvalidSchedule(s"phase '${id.value}' parent trial ids must be unique within each run"))
     else if sourceRows.length != schedule.size then
       Left(DesignError.InvalidSchedule(s"phase '${id.value}' source rows have length ${sourceRows.length} but expected ${schedule.size}"))
     else if sourceRows.distinct.length != sourceRows.length then
@@ -110,6 +110,8 @@ object MultiphaseEventTerm:
       Left(DesignError.InvalidSchedule("all events must match phase row count"))
     else if phases.exists(_.parentTrialIds != phases.head.parentTrialIds) then
       Left(DesignError.InvalidSchedule("all phases must preserve the same parent trial ordering"))
+    else if phases.exists(_.blockIds != phases.head.blockIds) then
+      Left(DesignError.InvalidSchedule("all phases must preserve the same run ordering"))
     else if phases.exists(_.sourceRows != phases.head.sourceRows) then
       Left(DesignError.InvalidSchedule("all phases must preserve the same source-row ordering"))
     else

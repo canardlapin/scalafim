@@ -65,9 +65,9 @@ final case class EventModel(
 
   def withResponseSupportEvidence(receipts: Vector[EventSupportReceipt]): Either[DesignError, EventModel] =
     val schema = designSchema
-    val exclusions = receipts.flatMap(_.decisions.collect {
+    val exclusions = receipts.flatMap(receipt => receipt.decisions.collect {
       case row if row.disposition == EventSupportDisposition.Excluded =>
-        EventExclusion(row.sourceRow, "response-support-unobserved", None)
+        EventExclusion(row.sourceRow, "response-support-unobserved", receipt.term.map(TermId.unsafe))
     })
     DesignSchema.validated(schema.matrix, schema.rows, schema.columns,
       schema.audit.copy(
@@ -108,7 +108,9 @@ final case class EventModel(
     val outside = (terms.flatMap(_._2 match
       case ct: ConvolvedTerm => ct.term.sourceRowIndices
       case _ => Vector.empty
-    ) ++ designSchema.audit.eventProvenance.map(_.sourceRow) ++ designSchema.audit.sourceEvents.map(_.sourceRow) ++
+    ) ++ designSchema.audit.responseSupport.flatMap(_.decisions.map(_.sourceRow)) ++
+      designSchema.audit.excludedEvents.filter(_.reason == "response-support-unobserved").map(_.eventIndex) ++
+      designSchema.audit.eventProvenance.map(_.sourceRow) ++ designSchema.audit.sourceEvents.map(_.sourceRow) ++
       degenerateModulatorReceipts.flatMap(_.sourceRows) ++
       orthogonalizationReceipts.flatMap(_.steps.flatMap(_.groups.flatMap(_.sourceRows)))).find(row => row < 0 || row >= rows.length)
     outside match

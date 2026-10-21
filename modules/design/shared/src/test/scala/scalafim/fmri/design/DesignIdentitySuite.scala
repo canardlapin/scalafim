@@ -33,6 +33,42 @@ class DesignIdentitySuite extends munit.FunSuite:
     assert(audit.canonical.contains("rank=PivotedQr:1:1:1:ScaleAware:4457293557087583675:pivots=x:independent=x:aliased=:diagonal=4611686018427387904:condition=4607182418800017408"))
   }
 
+  test("ordinary convolved legacy receipts exclude only the new source, recipe and support evidence"):
+    val original = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
+    val legacy = "design-schema/v2:8f2ee67682098523"
+    assert(original.audit.responseSupport.isEmpty)
+    assertEquals(original.audit.policyReceipts.map(_.name), Vector("hrf"))
+    assert(original.audit.convolutionReceipts.nonEmpty)
+    def withAudit(audit: DesignAudit): DesignSchema =
+      DesignSchema.validated(original.matrix, original.rows, original.columns, audit).toOption.get
+    val source = SourceEventRow(TermId.unsafe("task"), 0, 2, 0, Seconds(1.0), Seconds(0.0))
+    val changedSources = withAudit(original.audit.copy(sourceEvents = Vector(source)))
+    val recipe = original.audit.convolutionReceipts.head
+    val changedRecipe = withAudit(original.audit.copy(convolutionReceipts =
+      recipe.copy(recipe = recipe.recipe + ";different-captured-recipe") +: original.audit.convolutionReceipts.tail))
+    val request = ResponseSupportRequest(original.rows.selectedRows, EventSupportPolicy.RejectUnobservedAllowPartial)
+    val support = EventSupportReceipt(Some("task"), request, Vector.empty)
+    val changedSupport = withAudit(original.audit.copy(responseSupport = Vector(support)))
+    for current <- Vector(original, changedSources, changedRecipe, changedSupport) do
+      assertEquals(DesignFingerprintCompatibility.compareSavedValue(current, legacy),
+        Right(SavedDesignFingerprintMatch.LegacyV2DigestMatch))
+    assertEquals(Vector(original, changedSources, changedRecipe, changedSupport).map(_.fingerprint).distinct.size, 4)
+    val combined = withAudit(changedSources.audit.copy(convolutionReceipts = changedRecipe.audit.convolutionReceipts,
+      responseSupport = Vector(support)))
+    val encoding = combined.audit.canonical
+    assert(encoding.indexOf(";source-events=") < encoding.indexOf(";convolution="))
+    assert(encoding.indexOf(";convolution=") < encoding.indexOf(";response-support="))
+    val changed = original.matrix.data.clone()
+    changed(0) = java.lang.Double.longBitsToDouble(1L)
+    val matrix = scalafim.fmri.hrf.linalg.Mat.unsafe(original.matrix.rows, original.matrix.cols, changed)
+    val changedMatrix = DesignSchema.validated(matrix, original.rows, original.columns, original.audit).toOption.get
+    val changedLayout = DesignSchema.validated(original.matrix,
+      original.rows.copy(acquisitionTimes = original.rows.acquisitionTimes.updated(0, Seconds(-1.0))),
+      original.columns, original.audit).toOption.get
+    val changedHistoricalAudit = withAudit(original.audit.copy(policyReceipts = Vector(PolicyReceipt("old-policy", "changed"))))
+    for value <- Vector(changedMatrix, changedLayout, changedHistoricalAudit) do
+      assertEquals(DesignFingerprintCompatibility.compareSavedValue(value, legacy), Left(SavedDesignFingerprintError.Mismatch))
+
   test("legacy column identities are incompatible and a one-ULP change retains distinct content identity") {
     val schema = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
     val legacyColumns = schema.columns.zip(legacyFirColumnIds).map { case (column, id) => column.copy(id = ColumnId.unsafe(id)) }
