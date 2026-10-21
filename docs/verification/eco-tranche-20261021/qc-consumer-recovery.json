@@ -1,0 +1,45 @@
+{
+  "reviewedBaseline": "32b6afc1b91fbb275944af0c375a41686e767eec",
+  "cancellationRefinement": "662f88d5bf6cdb067e8cb08917d0f00a2cace854",
+  "purpose": "Restore existing optional raw QC companion API required by actual GLM consumer; no new scientific or nuisance policy.",
+  "sourceReview": "Independent review: no blocking source findings after exact cancellation fixture repair.",
+  "files": {
+    "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/FirstLevelCompanionReview.scala": "d29d7a5d16d914f137b7fbd792a50b852b40c3d6111ac69055deec5fd602e0be",
+    "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/FirstLevelCompanionReviewSuite.scala": "4727e2e54aaefde647a112463c8542ea832fa46e559c36f02bd100ec44779951",
+    "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelCompanionReviewJvm.scala": "4e0d68b7b7ae77c12ba94a77aac79e57511e4d4c8d03b6bf2da762292bc62180",
+    "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelCompanionReviewJvmSuite.scala": "9296c6ea6cc49603df89695a45fe523f8777cab19d996b630c55f72512d7a275",
+    "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/workflow/BidsStudyCompiler.scala": "a5fc71c456a9dff85f001562deeb29c02bf1cc6c80f81cab9732ab114617b95b"
+  },
+  "gates": {
+    "jvm": 42,
+    "js": 33,
+    "execution": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T04:44:59.702700+00:00",
+      "finished_utc": "2026-10-21T04:46:03.278364+00:00",
+      "duration_seconds": 63.575259,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "python3",
+        "tools/build/sbt-warm",
+        "fmriWorkflowJVM/test",
+        "fmriWorkflowJS/test"
+      ],
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/qc-current-workflow-02.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 900.0,
+      "log_bytes": 13941
+    },
+    "logSha256": "c29d28b08c958591dc74abd468e60bdc4565cc5f298bd78fe655abfd915eba22"
+  },
+  "adverse": "Initial workflow01 failed compiling malformed copied cancellation test; no tests ran. Exact historical fixture restored with only neuroim4s import; workflow02 passed.",
+  "limits": [
+    "Cancellation is cooperative, with before-IO refusal for already-interrupted callers; no universal prompt IO interruption claim.",
+    "Fresh full consumer compile and linked spatial-response native acceptance remain pending."
+  ]
+}
