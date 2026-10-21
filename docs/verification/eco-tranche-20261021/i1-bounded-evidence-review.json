@@ -1,0 +1,12 @@
+{
+  "reviewer": "volume_view_astra_review",
+  "verdict": "APPROVE bounded ownership/deletion and native-runtime evidence",
+  "source": "0be3b64e720107d9b36ae6239daa650fbcdb980e",
+  "productionEquivalent": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "reviewedEvidence": {
+    "native-runtime-qualification-10.json": "46d755538bd566811f0bb3fd789d3d5503c3c574ad8a1dcad29f7256355f622a",
+    "i1-final-ownership-audit.json": "ccd2d6e4a1b24495b31767bb4610a9399aacd0177a997565f5723b661a68ef1e"
+  },
+  "verified": "All deleted-family inventories,772production files, build/CI hashes,11gate log/meta hashes/exit statuses,148frozen inputs, custody archive, twin/manifest consistency. Component vs log hashes clarified.",
+  "limit": "Not I1 closure; focused caller gates and full campaign pending. No broad latency/scientific/native/device/main qualification."
+}

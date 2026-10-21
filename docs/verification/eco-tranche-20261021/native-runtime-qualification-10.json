@@ -1,0 +1,377 @@
+{
+  "schema": "scalafim.i1-native-runtime-qualification.v1",
+  "recorded": "2026-10-21T13:16:43.443394+00:00",
+  "status": "qualified bounded I1 native handoffs; I1 closure awaits caller audit and full campaign",
+  "source": {
+    "plsneuro": "5f7bee9521d5b03fff9546488a12f6d00881b4d9",
+    "scalafimProduction": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+    "scalafimEvidenceHead": "0be3b64e720107d9b36ae6239daa650fbcdb980e",
+    "applicationBuildDigest": "sha256:582bd0dc927068ccb918f81c50feefe5f66d4350ea5cec168eb95fd55d18afd5",
+    "productionCompile": {
+      "adapters": 88,
+      "glmReviewJavafx": 22,
+      "desktop": 107,
+      "unfilteredProduction": true,
+      "selectedTestSources": 6
+    }
+  },
+  "runtime": {
+    "jdk": "OpenJDK25.0.1 mac-aarch64",
+    "javafx": "24.0.1 named modules",
+    "backend": "ES2",
+    "renderer": "legacy",
+    "affineRenderer": "explicit request refused; not qualified",
+    "componentSha256": "3410cf25be9d1f61f3967f14879cc52fc3bf938e460cacbc6d004d2cf1b21734",
+    "patchSha256": "cf1d60f5eb277f180875dacc2a80674d33f692229ee9259ee8dcbf4eade460a7",
+    "origin": "ScalaFIM PR66 source44c687ddcccad45651846fb274745329783f1cfb, merge d13897efd18c7cdb8978146dbab3cc790f193a63",
+    "qualificationBoundary": "Only verified launcher validates this module/component closure. MeshUtil tangent fallback applies whenever patched module is loaded; sampler policy flag is separate. Historical component NOTICE is not the MeshUtil activation contract. Default ScalaFIM JavaFX21 unchanged."
+  },
+  "frozenRuntime": {
+    "root": "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-eco-native09-egkkrdwk",
+    "classpath": "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-eco-native09-egkkrdwk/classpath.txt",
+    "runtimeBytes": 269140106,
+    "receipt": "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-eco-native09-egkkrdwk/runtime/input-receipt.json",
+    "receiptSha256": "bc92763d47d402d766447e705d35aa727e451f173a0b6f0e6a60b9e8adff5f6d",
+    "sourceRevision": "5f7bee9521d5b03fff9546488a12f6d00881b4d9",
+    "identicalBytesVerified": true
+  },
+  "postRunIntegrityAndCustody": {
+    "schema": "scalafim.native-runtime-postcheck.v1",
+    "recorded": "2026-10-21T13:15:11.282660+00:00",
+    "sourceRevision": "5f7bee9521d5b03fff9546488a12f6d00881b4d9",
+    "runtimeRoot": "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-eco-native09-egkkrdwk",
+    "receiptSha256": "bc92763d47d402d766447e705d35aa727e451f173a0b6f0e6a60b9e8adff5f6d",
+    "allFrozenBytesVerifiedAfterNativeRuns": true,
+    "oldComponentControl": {
+      "exitCode": 1,
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-old-component-launch-refused-10.log",
+      "expectedRefusal": "Compatibility component differs from the qualified build",
+      "componentSha256": "6025860c1a41b589737511d30607f6bb745480bc41d7b7711476d986725a7194",
+      "logSha256": "227ca84f6f93afbe673fcf35328e0065a8b6e697dffba8f43903522d2666b86f"
+    },
+    "custodyArchive": {
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/native-frozen-runtime-09.tar.gz",
+      "bytes": 159541895,
+      "sha256": "eb8cbde2f86f6adbe3bd70a5267b669a7fe930247876e681041b4fbc949c0697"
+    }
+  },
+  "gates": [
+    {
+      "name": "pls-tangent-component-build-09",
+      "exitCode": 0,
+      "durationSeconds": 2.092126,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-tangent-component-build-09.log",
+        "bytes": 285,
+        "sha256": "9ab4cd32fd380a45bfc345e08e1806103b641787f51f7ac7f5a19f32e5a5d618"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-tangent-component-build-09.log.meta.json",
+        "bytes": 1003,
+        "sha256": "80cb0eda9d13674b9bd50b8645b3e652e88e44ee892db6885a08fbad266a59fc"
+      }
+    },
+    {
+      "name": "pls-named-runtime-compile-09",
+      "exitCode": 0,
+      "durationSeconds": 433.483012,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-runtime-compile-09.log",
+        "bytes": 14814,
+        "sha256": "d138592d30f3ce28b0da8930f7150a9e6d19d98f8cc86e2b367a007063c9e656"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-runtime-compile-09.log.meta.json",
+        "bytes": 1597,
+        "sha256": "07ee5966f2aec2ca5a2d9583d3468e156951c4365a2b28104ba4af2afc0ad7de"
+      }
+    },
+    {
+      "name": "pls-retained-surface-named-native-09",
+      "exitCode": 1,
+      "durationSeconds": 5.618244,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-retained-surface-named-native-09.log",
+        "bytes": 3854,
+        "sha256": "0391531701839bd2efedc4f1cfcc5a78fcc80c3e7ddd82a9aef14625c7082d70"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-retained-surface-named-native-09.log.meta.json",
+        "bytes": 1278,
+        "sha256": "f9ca5738816651ea1560263bf379167fbcde5ee9b3be74ea7008b37e6afc484c"
+      }
+    },
+    {
+      "name": "pls-named-provenance-09",
+      "exitCode": 0,
+      "durationSeconds": 2.039442,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-provenance-09.log",
+        "bytes": 867,
+        "sha256": "9477bda62d3e0de1dc728881282bbed5b5496cfca408f4c060f7417611601664"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-provenance-09.log.meta.json",
+        "bytes": 1242,
+        "sha256": "06ae2284069fe371f12badf0a3b96a6e206cfd087b0e71f1812ac33b0da3c206"
+      }
+    },
+    {
+      "name": "pls-named-viewer-scene-09",
+      "exitCode": 0,
+      "durationSeconds": 3.203577,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-viewer-scene-09.log",
+        "bytes": 564,
+        "sha256": "bbb61c46b8fd3efd387caaeae186dbf221d1e4481c8e4b59463b53882427c3d7"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-viewer-scene-09.log.meta.json",
+        "bytes": 1133,
+        "sha256": "5c02851832a6878af6c4c870b06334e7089e4904812dd70f293b7764fb7b2c3c"
+      }
+    },
+    {
+      "name": "pls-named-renderer-legacy-09",
+      "exitCode": 0,
+      "durationSeconds": 0.946625,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-renderer-legacy-09.log",
+        "bytes": 37,
+        "sha256": "78d6c793bbc5ed3b2e457c1230e67633937b4e3e2f94b26dbac2b461126fdf94"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-renderer-legacy-09.log.meta.json",
+        "bytes": 1153,
+        "sha256": "db2509a3d4827fa1ebd98ceffd5e5975596cd4270e7eb633124d3c4a79ad6c4f"
+      }
+    },
+    {
+      "name": "pls-named-renderer-affine-refused-09",
+      "exitCode": 0,
+      "durationSeconds": 0.932966,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-renderer-affine-refused-09.log",
+        "bytes": 49,
+        "sha256": "ece7097a04f1961566f0fa0904dd381d26b845a136671e57a4e22bd1cc867af6"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-renderer-affine-refused-09.log.meta.json",
+        "bytes": 1173,
+        "sha256": "4f6410a4c9cf0d37b22d8a51f2b128392c21d71782d01c11c97eb0f901b7ebc9"
+      }
+    },
+    {
+      "name": "pls-named-study-handoff-09",
+      "exitCode": 1,
+      "durationSeconds": 4.062774,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-study-handoff-09.log",
+        "bytes": 2391,
+        "sha256": "81302f3fbad0ed117105ed7db1116bfe48a0378dc8354e0b582aadbedaf1aa7e"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-named-study-handoff-09.log.meta.json",
+        "bytes": 1372,
+        "sha256": "f58d6b7c61cd0b056e887010c813a58bcc12186b75729b3fb8596027b55110d1"
+      }
+    },
+    {
+      "name": "pls-frozen-surface-10",
+      "exitCode": 0,
+      "durationSeconds": 4.699877,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-frozen-surface-10.log",
+        "bytes": 568,
+        "sha256": "b094085f2aea0f428d72a88d637d81509ffa7e1c3da1f98db1caf0003c05fc94"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-frozen-surface-10.log.meta.json",
+        "bytes": 1256,
+        "sha256": "d3418ea3422b98729493f2c03ea31870afffe0aa19307da11a1f241679ce2d93"
+      }
+    },
+    {
+      "name": "pls-frozen-study-10",
+      "exitCode": 0,
+      "durationSeconds": 18.360612,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-frozen-study-10.log",
+        "bytes": 607,
+        "sha256": "ed47007db7efa8c4d2e585f152a8a6e11d776d3667ef470c80bffe3e0f98f8d5"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-frozen-study-10.log.meta.json",
+        "bytes": 1359,
+        "sha256": "2d5b0f54d1c81eb9664636b9059df3831259ee7bde7b5eb12862186109be2a95"
+      }
+    },
+    {
+      "name": "pls-frozen-provenance-10",
+      "exitCode": 0,
+      "durationSeconds": 2.052407,
+      "log": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-frozen-provenance-10.log",
+        "bytes": 752,
+        "sha256": "04e3afab19714561b46e2ac7a5a57131c93447311530ce4c544d1804a2fbf22e"
+      },
+      "metadata": {
+        "path": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-frozen-provenance-10.log.meta.json",
+        "bytes": 1236,
+        "sha256": "dbd18d34425e1e9e0cdf69019ffbf91bebf4c46b588e42fb505bfc5fb7893444"
+      }
+    }
+  ],
+  "nativeAssertions": {
+    "study": "Actual beta/FIR participant fitting without group method; group reuse, selected-unit invalidation, draft edit inspection and drain/disposal pass.",
+    "viewerScene": "Actual fixed/morph save-reopen, family/scene binding, provenance/content refusal, canonical save, legacy downgrade and map/statistics/artifact fingerprints pass.",
+    "surface": {
+      "ticket": "bd-01M236KQ69JKD3CPE0ZNPW0M45",
+      "bilateral": true,
+      "subSceneRetained": true,
+      "controllerRetained": true,
+      "cameraSelectionAndPresentationRetained": true,
+      "scalarAndMissingnessAtomic": true,
+      "rejectedUpdateRetainedPreviousGeneration": true,
+      "recoveryAfterRejection": true,
+      "worker": {
+        "submitted": "35",
+        "completed": "6",
+        "published": "6",
+        "coalesced": "29",
+        "invalidated": "0"
+      },
+      "retainedApplyMs": {
+        "n": 5,
+        "p50": 0.918125,
+        "p95": 6.676042,
+        "max": 6.676042
+      },
+      "firstRefinement": null,
+      "additionalGeometryRefinements": 0,
+      "stableWarmApplyMs": {
+        "n": 5,
+        "p50": 0.918125,
+        "p95": 6.676042,
+        "max": 6.676042
+      },
+      "stableWarmBackendMs": {
+        "n": 5,
+        "p50": 0.323333,
+        "p95": 0.71775,
+        "max": 0.71775
+      },
+      "stableWarmGeometryUpdates": 0,
+      "backendPublicationGate": {
+        "p95LimitMs": 4,
+        "observedP95Ms": 0.71775,
+        "passed": true
+      },
+      "warmGate": {
+        "providerLighting": "unlit",
+        "p95LimitMs": 20,
+        "observedP95Ms": 6.676042,
+        "passed": true,
+        "shadedP95LimitMs": 50,
+        "shadedEvaluated": false
+      },
+      "inputToObservedSnapshotMs": {
+        "n": 6,
+        "p50": 38.031708,
+        "p95": 702.793792,
+        "max": 702.793792
+      },
+      "coalescedOrUnobservedAtPulse": 0,
+      "asyncSnapshot": {
+        "requestedAtGeneration": "35",
+        "capturedGeneration": "35",
+        "capturedImageSha256": "16d55d7939d8417363a07b8454e36d7e5fa1756b82d0c111564f846f0d7c476a",
+        "coolChromaticPixels": 221030,
+        "missingChromaticPixels": 0,
+        "distanceToRequestedFrame": 0,
+        "distanceToLaterFrame": 31.2984375,
+        "attribution": "nearest captured-pixel content match against observed generation images, not submission time"
+      },
+      "painted": [
+        {
+          "generation": "1",
+          "layerContentSha256": "e998f4c4875a88674878b515f870c3475c4d09d4766edd99e06aa4d073582088",
+          "imageSha256": "d0ac7cf69aaf949af99b547267a18b0c74c4c3508e5e6cdc60b68749167e4147",
+          "inkPixels": 187056,
+          "inputToSnapshotMs": 702.793792,
+          "publicationToPulseMs": 1.874042,
+          "snapshotInstrumentationMs": 88.15725
+        },
+        {
+          "generation": "2",
+          "layerContentSha256": "5b5435990fdb18d4872ff9554c9fb5caa4705ed0f287b1baae5821ad13ef75b0",
+          "imageSha256": "4fd2c7f38da152f0a5c9d0a05c50c175e1bc992550051bf20d5005d6e6408da2",
+          "inkPixels": 221456,
+          "inputToSnapshotMs": 72.508833,
+          "publicationToPulseMs": 0.637625,
+          "snapshotInstrumentationMs": 43.179416
+        },
+        {
+          "generation": "3",
+          "layerContentSha256": "e4d2818efcdf5d9df07347c2d920ace6ae30a8398865fce7ee0e208ad0ca113d",
+          "imageSha256": "8f72e70db28d414420f5f791c939a8cdd9c69a8d8397455c802dc795ca99fa7c",
+          "inkPixels": 221456,
+          "inputToSnapshotMs": 43.099292,
+          "publicationToPulseMs": 1.660916,
+          "snapshotInstrumentationMs": 16.692042
+        },
+        {
+          "generation": "5",
+          "layerContentSha256": "e998f4c4875a88674878b515f870c3475c4d09d4766edd99e06aa4d073582088",
+          "imageSha256": "833a6824f4659778befa51c896d480a8e48a8faa0aa2cf0a7a9726ab9ae45c3c",
+          "inkPixels": 221456,
+          "inputToSnapshotMs": 36.264791,
+          "publicationToPulseMs": 5.382209,
+          "snapshotInstrumentationMs": 20.145791
+        },
+        {
+          "generation": "35",
+          "layerContentSha256": "8220e22075428b6fe2410e0456cd06ec4e75e49454d1e8f27866010348d184f4",
+          "imageSha256": "16d55d7939d8417363a07b8454e36d7e5fa1756b82d0c111564f846f0d7c476a",
+          "inkPixels": 221456,
+          "inputToSnapshotMs": 38.031708,
+          "publicationToPulseMs": 6.113958,
+          "snapshotInstrumentationMs": 18.216208
+        },
+        {
+          "generation": "36",
+          "layerContentSha256": "e4d2818efcdf5d9df07347c2d920ace6ae30a8398865fce7ee0e208ad0ca113d",
+          "imageSha256": "8f72e70db28d414420f5f791c939a8cdd9c69a8d8397455c802dc795ca99fa7c",
+          "inkPixels": 221456,
+          "inputToSnapshotMs": 34.168625,
+          "publicationToPulseMs": 2.001417,
+          "snapshotInstrumentationMs": 21.457833
+        }
+      ]
+    },
+    "provenance": "276 source/resource/build inputs, 13 exact provider revisions, one Gale origin pass.",
+    "policy": "Verified legacy launch passes; explicit affine renderer request refused; old tangentless component rejected before launch."
+  },
+  "adverseEvidence": [
+    {
+      "gate": "pls-retained-surface-diagnostics-08",
+      "finding": "Old tangentless runtime produces black scalar surface despite chromatic CPU packets; retained diagnostic PNGs and sampling/plan JSON."
+    },
+    {
+      "gate": "pls-retained-surface-named-native-09",
+      "exitCode": 1,
+      "finding": "Colour/state/attribution and backend<=4ms assertions complete; full warm publication p95=24.339ms fails unchanged20ms limit. No overall PASS receipt.",
+      "classification": "Separate retained-atlas performance finding bd-01M24EQFARZKYMZ71BJP91C9XS. Later frozen pass is one observation and does not erase failure or establish broad latency qualification."
+    },
+    {
+      "gate": "pls-named-study-handoff-09",
+      "exitCode": 1,
+      "finding": "Inter font URL loading fails from loose classpath resource directory with spaces. Exact same frozen bytes copied to no-space path pass study10; no font source change or general font portability qualification."
+    }
+  ],
+  "limits": [
+    "No broad PLS statistical calibration or full PLS test campaign claim; bd-01M52AQ9JQS51XFMB17X4BDQJX remains separate.",
+    "No stock/unpatched Metal/ES2 device matrix, affine rendering or general performance acceptance.",
+    "No canonical-main landing or hosted CI claim."
+  ]
+}
