@@ -1,0 +1,73 @@
+{
+  "provider": "neuroatlas4s",
+  "revision": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+  "remoteMainVerified": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+  "donorScalaFIM": "27a79246ed8b4527a4201695dd84b769f998b63b",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE",
+    "boundRevision": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+    "findings": "No source blockers. Provider affine-column spacing and fixed D3 sample-space admission preserve donor behavior; source/test namespaces adapted."
+  },
+  "checks": [
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T05:14:40.887565+00:00",
+        "finished_utc": "2026-10-21T05:15:34.008037+00:00",
+        "duration_seconds": 53.119926,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "sbt",
+          "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/boundary-neuroatlas-global",
+          "-J-Xmx4g",
+          "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+          "volumeJVM/test",
+          "volumeJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020/.git/verification/eco-tranche-20261021/boundary-neuroatlas-03-volume-jvm-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 21905
+      },
+      "sha256": "c6275b2597fc76153a1092a2f98d6b9095aea56b168793da34afdd3180c2112f"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T05:15:36.260518+00:00",
+        "finished_utc": "2026-10-21T05:16:01.888697+00:00",
+        "duration_seconds": 25.627822,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "sbt",
+          "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/boundary-neuroatlas-global",
+          "-J-Xmx4g",
+          "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+          "volumeIoJVM/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-distances-20261020/.git/verification/eco-tranche-20261021/boundary-neuroatlas-04-volume-io-jvm.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 10442
+      },
+      "sha256": "ba6270973219eb21e5ceb12d1d815a9e722929325a336dab456bb1473a7005a0"
+    }
+  ],
+  "scope": "Faithful volume-atlas boundary-query port; 40 JVM, 40 JS, 26 volume-IO JVM cases passed.",
+  "limits": [
+    "Logs precede commit and do not embed candidate SHA; independent source review is commit-bound.",
+    "Root default-pin integration and PLS linked/native acceptance remain pending.",
+    "No full application or new numerical-bounds qualification claimed."
+  ]
+}

@@ -197,7 +197,7 @@ lazy val neuroim4sViewJavafxJVM = ProjectRef(neuroim4sBuild, "viewJavafxJVM")
 // neuroatlas4s owns atlas metadata/publication in core and volume realizations,
 // queries, reductions, template policy and loaders in optional volume/IO modules.
 // Forward explicit overrides so each provider has one owner across the graph.
-lazy val neuroatlas4sRevision = "fe1e8f29942e7f0bc3b570e63b8ec4b4b5d8cd98"
+lazy val neuroatlas4sRevision = "07e3d24d58d196c82c24429aefa7b7d65a671a34"
 lazy val neuroatlas4sBuild = {
   Seq("locus4s", "neuroim4s", "image4s", "spatial4s", "reframe4s", "gale", "graph4s", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
