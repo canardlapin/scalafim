@@ -21,7 +21,9 @@ object NeuroimCompositionConsumer:
   private val providerRevision = "21df6416e4e28e97cfbe39e20d7303349be7e4cf"
   private val dimensions = Vector(5, 4, 3)
   private val targetIndex = Vector(3, 1, 1)
+  private val expectedWorldCoordinates = Vector(14.5, -2.0, 9.5)
   private val expectedValue = 311.0
+  private val expectedPixel = 0xff9f9f9f
   private val translation = Vector(2.0, -3.0, 1.0)
 
   def main(args: Array[String]): Unit =
@@ -70,6 +72,9 @@ object NeuroimCompositionConsumer:
         ),
         "target world point"
       )
+      target.coordinates.zip(expectedWorldCoordinates).zipWithIndex.foreach:
+        case ((actual, expected), axis) =>
+          requireClose(actual, expected, 1e-12, s"NIfTI world affine target axis $axis")
       val queryFrame = requireRight(Frame.named[D3]("composition consumer query world"), "query frame")
       val targetFrame = loaded.grid.frame
       val transform = WorldTransform.Linear(
@@ -110,7 +115,7 @@ object NeuroimCompositionConsumer:
       val deviceX = rootX * session.device.width
       val deviceY = (1.0 - rootY) * session.device.height
       val pixel = image.getRGB(math.round(deviceX).toInt, math.round(deviceY).toInt)
-      require(((pixel >>> 24) & 0xff) > 0, "Java2D rendered an unexpectedly transparent picked pixel")
+      require(pixel == expectedPixel, f"Java2D picked pixel: expected 0x$expectedPixel%08x, got 0x$pixel%08x")
 
       val action = requireRight(Java2DViewerHost.pickAction(compiled, deviceX, deviceY), "pick rendered axial panel")
       val picked = requireRight(ViewerReducer.reduce(model, session, action), "apply rendered pick")
@@ -149,8 +154,8 @@ object NeuroimCompositionConsumer:
     val entries = System.getProperty("java.class.path", "").split(java.io.File.pathSeparator).toVector.filter(_.nonEmpty)
     val forbidden = entries.filter: entry =>
       val lower = entry.replace('\\', '/').toLowerCase
-      lower.matches(".*(?:^|/)(?:scalafim|surface)[^/]*(?:\\.jar|/target/.*|/classes).*" )
-    require(forbidden.isEmpty, s"refusing ScalaFIM/surface runtime artifact(s): ${forbidden.mkString(", ")}")
+      lower.matches(".*(?:^|/)(?:scalafim|surface|neuroatlas4s|neurosurf4s|mvpa4s)[^/]*(?:\\.jar|/target/.*|/classes).*")
+    require(forbidden.isEmpty, s"refusing unrelated runtime artifact(s): ${forbidden.mkString(", ")}")
     entries.size
 
   private def requireClose(actual: Double, expected: Double, tolerance: Double, label: String): Unit =
