@@ -57,9 +57,18 @@ for provider in mesh4s neuroim4s; do
     exit 1
   fi
 done
+# Optional volume views and surface views exchange Intaglio scene values.
+# Check the provider default even when no sibling override is selected.
+intaglio_revision=$(sed -n 's/^lazy val intaglioRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
+neuroim_revision=$(sed -n 's/^lazy val neuroim4sRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
+neuroim_intaglio=$(git -C "$provider_tmp/neuroim4s" show "$neuroim_revision:build.sbt" |
+  sed -n 's/^lazy val intaglioRevision = "\([0-9a-f]*\)".*/\1/p')
+if [ "${#intaglio_revision}" -ne 40 ] || [ "$neuroim_intaglio" != "$intaglio_revision" ]; then
+  echo "Intaglio revision mismatch: ScalaFIM=$intaglio_revision neuroim4s=$neuroim_intaglio" >&2
+  exit 1
+fi
 # Atlas volume policy exchanges neuroim4s values with ScalaFIM's mixed consumers.
 # Check its immutable default as well; sibling overrides must not hide drift.
-neuroim_revision=$(sed -n 's/^lazy val neuroim4sRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
 atlas_revision=$(sed -n 's/^lazy val neuroatlas4sRevision = "\([0-9a-f]*\)".*/\1/p' "$repo_root/build.sbt")
 [ "${#atlas_revision}" -eq 40 ] || { echo 'Invalid neuroatlas4sRevision in build.sbt' >&2; exit 1; }
 git clone --quiet --no-checkout --filter=blob:none \

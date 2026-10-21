@@ -56,13 +56,15 @@ run_batch core-js \
 run_batch neuroim neuroimTestAll
 run_batch neuroim-transforms neuroimTransformTestAll
 run_batch neuroim-routing neuroimRoutingTestAll
+run_batch neuroim-view-jvm neuroimViewJvmTestAll
+run_batch neuroim-view-js neuroimViewJsTestAll
 run_batch neuroatlas-volume neuroatlasVolumeTestAll
 
 run_batch image-surface-jvm \
-  imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
+  thresholdJVM/test \
   motionJVM/test surfaceJVM/test surfaceTestFixturesJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
 run_batch image-surface-js \
-  imageViewJS/test imageViewCanvasJS/test thresholdJS/test \
+  thresholdJS/test \
   motionJS/test surfaceJS/test surfaceTestFixturesJS/test surfaceViewJS/test surfaceViewRasterJS/test \
   surfaceViewThreeJS/test
 
@@ -96,8 +98,8 @@ run_batch downstream-js \
   mvpaFoundationAdmissionJS/test groupJS/test mvpaGroupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 
-# The JavaFX host tests require a display and are intentionally absent. Their
-# source still compiles in scalafimCompileAll; portable examples run here.
+# The surface JavaFX host tests require a display and are intentionally absent.
+# Volume JavaFX contract tests run in neuroim-view-jvm without the toolkit.
 run_batch examples \
   surfaceExamplesJVM/test atlasExamplesJVM/test workflowExamplesJVM/test
 run_batch examples-js \

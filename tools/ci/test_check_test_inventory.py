@@ -39,11 +39,18 @@ class TestInventorySuite(unittest.TestCase):
     def test_documented_display_exclusions_are_allowed(self) -> None:
         _, errors = inspect_inventory(
             build(
-                "coreJVM/test;imageViewJavafxJVM/test;surfaceViewJavafxJVM/test"
+                "coreJVM/test;surfaceViewJavafxJVM/test"
             ),
             "run_batch core coreJVM/test\n",
         )
         self.assertEqual(errors, [])
+
+    def test_optional_provider_view_tests_are_required(self) -> None:
+        _, errors = inspect_inventory(
+            build("coreJVM/test;neuroimViewJvmTestAll;neuroimViewJsTestAll"),
+            "run_batch core coreJVM/test\nrun_batch views neuroimViewJvmTestAll\n",
+        )
+        self.assertIn("missing release targets: neuroimViewJsTestAll", errors)
 
     def test_extra_examples_are_reported_and_required(self) -> None:
         inventory, errors = inspect_inventory(

@@ -2,6 +2,7 @@ package scalafim.surface
 
 import locus4s.data.VectorField
 import mesh4s.graph4s.MeshShortestPaths
+import mesh4s.geometry.SphereGeometry
 
 enum DistanceMetric:
   case Euclidean, Geodesic, Spherical
@@ -157,7 +158,7 @@ object SurfaceGeodesics:
           case DistanceMetric.Euclidean =>
             fillDirect(topology, sources(row), targets, row, out, euclideanDistance)
           case DistanceMetric.Spherical =>
-            fillDirect(topology, sources(row), targets, row, out, sphericalDistance(topology))
+            fillSpherical(topology, sources(row), targets, row, out)
           case DistanceMetric.Geodesic =>
             val d = paths.get.distancesFrom(owner.vertices.indexAtValidatedOrdinal(sources(row).index))
             var col = 0
@@ -188,13 +189,30 @@ object SurfaceGeodesics:
   private def euclideanDistance(a: Point3D, b: Point3D): Double =
     (a - b).norm
 
-  private def sphericalDistance(topology: MeshTopology)(a: Point3D, b: Point3D): Double =
+  private def fillSpherical(
+    topology: MeshTopology,
+    source: VertexId,
+    targets: Vector[VertexId],
+    row: Int,
+    out: Array[Double]
+  ): Unit =
+    val mesh = topology.mesh
+    val owner = mesh.topology
+    // Mean-radius choice and the established endpoint admission are anatomical
+    // policy. Direction normalization and angular geometry have one owner.
     val radius = sphereRadius(topology)
-    val an = a.norm
-    val bn = b.norm
-    require(an > 0.0 && bn > 0.0, "spherical distance requires non-zero vertex coordinates")
-    val cosine = clamp(a.dot(b) / (an * bn), -1.0, 1.0)
-    radius * math.acos(cosine)
+    val an = mesh.vertex(source).norm
+    val first = owner.vertices.indexAtValidatedOrdinal(source.index)
+    var col = 0
+    while col < targets.length do
+      val target = targets(col)
+      val bn = mesh.vertex(target).norm
+      require(an > 0.0 && bn > 0.0, "spherical distance requires non-zero vertex coordinates")
+      val second = owner.vertices.indexAtValidatedOrdinal(target.index)
+      val angle = SphereGeometry.angularDistance(mesh.points, first, second)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      out(row * targets.length + col) = radius * angle
+      col += 1
 
   private def sphereRadius(topology: MeshTopology): Double =
     val radii = topology.mesh.vertices.map(_.norm)
@@ -221,6 +239,3 @@ object SurfaceGeodesics:
     vertices.foreach { vertex =>
       require(vertex.index >= 0 && vertex.index < topology.mesh.vertexCount, s"$role vertex id out of range")
     }
-
-  private def clamp(value: Double, low: Double, high: Double): Double =
-    math.max(low, math.min(high, value))

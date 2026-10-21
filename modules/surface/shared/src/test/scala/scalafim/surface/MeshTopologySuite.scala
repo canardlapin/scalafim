@@ -4,6 +4,35 @@ import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class MeshTopologySuite extends munit.FunSuite:
 
+  test("provider area retains thin triangles and unsigned winding"):
+    val points = Array(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1e-10, 0.0)
+    Vector(Array(0, 1, 2), Array(0, 2, 1)).foreach: faces =>
+      val topology = MeshTopology.from(TriangleMesh.fromArrays(points, faces))
+      assertEqualsDouble(topology.faceArea(FaceId(0)), 5e-11, 1e-25)
+
+  test("provider delegation preserves intermediate refusal and norm overflow"):
+    val differences = MeshTopology.from(TriangleMesh.fromArrays(
+      Array(-1e308, 0, 0, 1e308, 0, 0, 0, 1, 0), Array(0, 1, 2)
+    ))
+    intercept[IllegalArgumentException](differences.edgeLengths)
+    intercept[IllegalArgumentException](differences.faceArea(FaceId(0)))
+    val cross = MeshTopology.from(TriangleMesh.fromArrays(
+      Array(0.0, 0, 0, 1e200, 0, 0, 0, 1e200, 0), Array(0, 1, 2)
+    ))
+    intercept[IllegalArgumentException](cross.faceArea(FaceId(0)))
+    val norm = MeshTopology.from(TriangleMesh.fromArrays(
+      Array(0.0, 0, 0, 1e100, 0, 0, 0, 1e100, 0), Array(0, 1, 2)
+    ))
+    assert(norm.faceArea(FaceId(0)).isPosInfinity)
+
+  test("public pair length still accepts a chord absent from topology"):
+    val topology = MeshTopology.from(TriangleMesh.fromArrays(
+      Array(0.0, 0, 0, 1.0, 0, 0, 0, 1.0, 0, 3.0, 4.0, 0), Array(0, 1, 2, 1, 3, 2)
+    ))
+    val chord = Edge.between(VertexId(0), VertexId(3))
+    assert(!topology.edges.contains(chord))
+    assertEqualsDouble(topology.edgeLength(chord), 5.0, 1e-12)
+
   test("MeshTopology derives unique edges and neighbor rows"):
     val topology = SurfaceTestFixtures.tetraTopology
 

@@ -246,11 +246,9 @@ sbt scenarioTestkitJS/test
 sbt designJVM/test
 sbt designJS/test
 sbt neuroimTestAll  # provider core JVM/JS and optional JVM IO
-sbt imageViewJVM/test
-sbt imageViewJS/test
-sbt imageViewCanvasJS/test
-sbt imageViewJava2dJVM/test
-sbt imageViewJavafxJVM/test
+# Optional volume-view tests run in the pinned neuroim4s provider.
+sbt neuroimViewJvmTestAll
+sbt neuroimViewJsTestAll
 sbt thresholdJVM/test
 sbt thresholdJS/test
 sbt motionJVM/test

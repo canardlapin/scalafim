@@ -164,9 +164,9 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
 // neuroim4s-spaces owns the anatomical world identities (template, subject
 // scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
 // pins the same spatial4s revision as image4s and reframe4s.
-lazy val neuroim4sRevision = "6d20f52e6701f10126f36a4fc97bf97eeb99fa24"
+lazy val neuroim4sRevision = "2c57d1592a98ba9f6ef416446a8c54e69a29a595"
 lazy val neuroim4sBuild = {
-  Seq("spatial4s", "image4s", "gale", "ravel", "locus4s", "reframe4s", "graph4s").foreach { provider =>
+  Seq("spatial4s", "image4s", "gale", "ravel", "locus4s", "reframe4s", "graph4s", "intaglio").foreach { provider =>
     sys.props
       .get(s"scalafim.$provider.build")
       .foreach(System.setProperty(s"neuroim4s.$provider.build", _))
@@ -187,13 +187,19 @@ lazy val neuroim4sTransformIoJVM = ProjectRef(neuroim4sBuild, "transformIoJVM")
 lazy val neuroim4sRoutingIoJVM = ProjectRef(neuroim4sBuild, "routingIoJVM")
 lazy val neuroim4sRoutingJVM = ProjectRef(neuroim4sBuild, "routingJVM")
 lazy val neuroim4sRoutingJS = ProjectRef(neuroim4sBuild, "routingJS")
+// Optional volume display belongs to neuroim4s; there are no local bridge artifacts.
+lazy val neuroim4sViewJVM = ProjectRef(neuroim4sBuild, "viewJVM")
+lazy val neuroim4sViewJS = ProjectRef(neuroim4sBuild, "viewJS")
+lazy val neuroim4sViewCanvasJS = ProjectRef(neuroim4sBuild, "viewCanvasJS")
+lazy val neuroim4sViewJava2dJVM = ProjectRef(neuroim4sBuild, "viewJava2dJVM")
+lazy val neuroim4sViewJavafxJVM = ProjectRef(neuroim4sBuild, "viewJavafxJVM")
 
 // neuroatlas4s owns atlas metadata/publication in core and volume realizations,
 // queries, reductions, template policy and loaders in optional volume/IO modules.
 // Forward explicit overrides so each provider has one owner across the graph.
-lazy val neuroatlas4sRevision = "f03287dd870bb65394914e69be0ecfcc4b9334d9"
+lazy val neuroatlas4sRevision = "2b6a1a4c1a811d77316b5e2f6a1fdb9a06e5cb78"
 lazy val neuroatlas4sBuild = {
-  Seq("locus4s", "neuroim4s", "image4s", "spatial4s", "reframe4s", "gale", "graph4s").foreach { provider =>
+  Seq("locus4s", "neuroim4s", "image4s", "spatial4s", "reframe4s", "gale", "graph4s", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
   }
   sys.props
@@ -211,7 +217,7 @@ lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 // mesh4s owns triangle topology, surface realizations and point fields. It
 // pins the same locus4s, spatial4s and graph4s revisions as ScalaFIM's other
 // providers; ScalaFIM overrides for those are forwarded.
-lazy val mesh4sRevision = "5ed45de9ab39deb22865438d65abcd50f9f8eb4a"
+lazy val mesh4sRevision = "16d925032905ffd0eb96d833ee5ef6da1d5ebb58"
 lazy val mesh4sBuild = {
   Seq("locus4s", "spatial4s", "graph4s").foreach { provider =>
     sys.props
@@ -266,12 +272,10 @@ lazy val multivarJS    = ProjectRef(multivarBuild, "coreJS")
 // explicit local-development override.
 lazy val intaglioRevision = "d553c327824f9916b1c0a055226c6c5e8f77bc59"
 lazy val intaglioBuild =
-  uri(
-    sys.props.getOrElse(
-      "scalafim.intaglio.build",
-      s"https://github.com/canardlapin/intaglio.git#$intaglioRevision"
-    )
-  )
+  sys.props
+    .get("scalafim.intaglio.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/intaglio.git#$intaglioRevision"))
 lazy val intaglioCoreJVM   = ProjectRef(intaglioBuild, "coreJVM")
 lazy val intaglioCoreJS    = ProjectRef(intaglioBuild, "coreJS")
 lazy val intaglioSvgJVM    = ProjectRef(intaglioBuild, "svgJVM")
@@ -581,67 +585,6 @@ lazy val hrfBenchJVM =
       name := "scalafim-hrf-benchmarks",
       publish / skip := true
     )
-
-lazy val imageView =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view"))
-    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
-    .jsConfigure(_.dependsOn(intaglioCoreJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view"
-    )
-    .jsSettings(jsSettingsBase)
-    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM))
-    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
-
-lazy val imageViewJS  = imageView.js
-lazy val imageViewJVM = imageView.jvm
-
-lazy val imageViewCanvas =
-  crossProject(JSPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view-canvas"))
-    .dependsOn(imageView)
-    .jsConfigure(_.dependsOn(intaglioCanvasJS))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view-canvas"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val imageViewCanvasJS = imageViewCanvas.js
-
-lazy val imageViewJava2d =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view-java2d"))
-    .dependsOn(imageView)
-    .jvmConfigure(_.dependsOn(intaglioJava2dJVM))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view-java2d"
-    )
-
-lazy val imageViewJava2dJVM = imageViewJava2d.jvm
-
-lazy val imageViewJavafx =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/image-view-javafx"))
-    .dependsOn(imageView)
-    .jvmConfigure(_.dependsOn(intaglioJavafxJVM))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-view-javafx",
-      libraryDependencies ++= Seq(
-        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
-        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
-      )
-    )
-
-lazy val imageViewJavafxJVM = imageViewJavafx.jvm
 
 lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
@@ -1409,11 +1352,11 @@ lazy val root =
       designJVM,
       providerSpikeJS,
       providerSpikeJVM,
-      imageViewJS,
-      imageViewJVM,
-      imageViewCanvasJS,
-      imageViewJava2dJVM,
-      imageViewJavafxJVM,
+      neuroim4sViewJS,
+      neuroim4sViewJVM,
+      neuroim4sViewCanvasJS,
+      neuroim4sViewJava2dJVM,
+      neuroim4sViewJavafxJVM,
       thresholdJS,
       thresholdJVM,
       motionJS,
@@ -1490,8 +1433,8 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("scalafimCompileAll", ";locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceTestFixturesJVM/compile;surfaceTestFixturesJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaPipelineJVM/compile;mvpaPipelineJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;mvpaFoundationAdmissionJVM/compile;mvpaFoundationAdmissionJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;neuroimTestAll;neuroimTransformTestAll;neuroimRoutingTestAll;providerSpikeJVM/test;providerSpikeJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaPipelineJVM/test;mvpaPipelineJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;mvpaFoundationAdmissionJVM/test;mvpaFoundationAdmissionJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("scalafimCompileAll", ";neuroimViewCompileAll;locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceTestFixturesJVM/compile;surfaceTestFixturesJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaPipelineJVM/compile;mvpaPipelineJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;mvpaFoundationAdmissionJVM/compile;mvpaFoundationAdmissionJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;neuroimTestAll;neuroimTransformTestAll;neuroimRoutingTestAll;neuroatlasVolumeTestAll;neuroimViewJvmTestAll;neuroimViewJsTestAll;providerSpikeJVM/test;providerSpikeJS/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaPipelineJVM/test;mvpaPipelineJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;mvpaFoundationAdmissionJVM/test;mvpaFoundationAdmissionJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile;workflowExamplesJS/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test;workflowExamplesJS/test")
 addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceTestFixturesJVM/test;surfaceTestFixturesJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")
@@ -1506,3 +1449,11 @@ addCommandAlias("neuroimRoutingTestAll", s";{${neuroim4sBuild}}routingJVM/test;{
 addCommandAlias("neuroimTransformTestAll", s";{${neuroim4sBuild}}transformJVM/test;{${neuroim4sBuild}}transformJS/test;{${neuroim4sBuild}}transformIoJVM/test")
 
 addCommandAlias("neuroatlasVolumeTestAll", ";" + Seq("coreJVM", "coreJS", "volumeJVM", "volumeJS", "volumeIoJVM").map(p => s"{${neuroatlas4sBuild}}$p/test").mkString(";"))
+
+// Provider-qualified commands remain explicit in the bounded test inventory.
+addCommandAlias("neuroimViewCompileAll", Seq("viewJVM", "viewJS", "viewCanvasJS", "viewJava2dJVM", "viewJavafxJVM")
+  .flatMap(project => Seq(s"{${neuroim4sBuild}}$project/compile", s"{${neuroim4sBuild}}$project/Test/compile")).mkString(";", ";", ""))
+addCommandAlias("neuroimViewJvmTestAll", Seq("viewJVM", "viewJava2dJVM", "viewJavafxJVM")
+  .map(project => s"{${neuroim4sBuild}}$project/test").mkString(";", ";", ""))
+addCommandAlias("neuroimViewJsTestAll", Seq("viewJS", "viewCanvasJS")
+  .map(project => s"{${neuroim4sBuild}}$project/test").mkString(";", ";", ""))

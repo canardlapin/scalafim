@@ -104,6 +104,40 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     assert(matrix(0, 1).isFinite)
     assert(matrix(0, 2).isFinite)
 
+  test("spherical policy retains unequal radii and repeated target order"):
+    val topology = MeshTopology.from(TriangleMesh.fromArrays(
+      Array(2.0, 0, 0, 0, 4.0, 0, -6.0, 0, 0), Array(0, 1, 2)
+    ))
+    val matrix = SurfaceGeodesics.distanceMatrix(
+      topology, Vector(VertexId(0), VertexId(0)),
+      Vector(VertexId(2), VertexId(1), VertexId(2), VertexId(0)), DistanceMetric.Spherical
+    )
+    val expected = Vector(4 * math.Pi, 2 * math.Pi, 4 * math.Pi, 0.0)
+    assertEquals(matrix.rows, 2)
+    matrix.data.grouped(4).foreach: row =>
+      row.zip(expected).foreach((actual, value) => assertEqualsDouble(actual, value, 1e-12))
+
+  test("spherical policy preserves zero, underflowed endpoint and overflowed radius refusals"):
+    Vector(0.0, 1e-200, 1e200).foreach: magnitude =>
+      val topology = MeshTopology.from(TriangleMesh.fromArrays(
+        Array(magnitude, 0, 0, 0, 1.0, 0, 0, 0, 1.0), Array(0, 1, 2)
+      ))
+      intercept[IllegalArgumentException]:
+        SurfaceGeodesics.distanceMatrix(
+          topology, Vector(VertexId(0)), Vector(VertexId(1)), DistanceMetric.Spherical
+        )
+
+  test("normalized provider angle corrects the admitted subnormal cosine collapse"):
+    val topology = MeshTopology.from(TriangleMesh.fromArrays(
+      Array(2e-162, 2e-162, 0, 2e-162, 0, 0, 0, 1.0, 0), Array(0, 1, 2)
+    ))
+    val distance = SurfaceGeodesics.distances(
+      topology, VertexId(0), Vector(VertexId(1)), DistanceMetric.Spherical
+    ).head
+    // The unit-radius third vertex makes the policy mean 1/3. Both queried
+    // tiny endpoints passed the legacy admission, whose cosine rounded to 1.
+    assertEqualsDouble(distance, math.Pi / 12, 1e-12)
+
   test("unreachable vertices remain Infinity for geodesic metric"):
     val topology = SurfaceTestFixtures.disconnectedTopology
 

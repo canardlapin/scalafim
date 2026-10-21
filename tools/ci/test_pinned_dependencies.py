@@ -16,7 +16,7 @@ GRAPH_CONSUMERS = ("mesh4s", "neuroim4s")
 
 
 class PinnedDependenciesTest(unittest.TestCase):
-    def run_bootstrap(self, local_gale, provider_gale, source_gale=None, mismatched="", source_graph="d" * 40, source_neuroim="d" * 40):
+    def run_bootstrap(self, local_gale, provider_gale, source_gale=None, mismatched="", source_graph="d" * 40, source_neuroim="d" * 40, source_intaglio="e" * 40):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "tools").mkdir()
@@ -24,6 +24,7 @@ class PinnedDependenciesTest(unittest.TestCase):
             (root / "build.sbt").write_text(
                 f'lazy val multivarRevision = "{MULTIVAR}"\n'
                 f'lazy val galeRevision = "{local_gale}"\n'
+                f'lazy val intaglioRevision = "{"e" * 40}"\n'
                 + "".join(f'lazy val {name}Revision = "{"d" * 40}"\n' for name in SOURCE_PROVIDERS + GRAPH_CONSUMERS + ("neuroatlas4s",))
             )
             executable = root / "git"
@@ -42,7 +43,8 @@ if sys.argv[1] == "clone":
     graph = os.environ["SOURCE_GRAPH"] if repo.name != os.environ["MISMATCHED"] else "c" * 40
     graph_pin = 'lazy val graph4sRevision =\\n  "' + graph + '"\\n' if repo.name == "mesh4s" else 'lazy val graph4sRevision = "' + graph + '"\\n'
     neuroim_pin = 'lazy val neuroim4sRevision = "' + os.environ["SOURCE_NEUROIM"] + '"\\n'
-    (repo / "source-build.sbt").write_text(pin + graph_pin + neuroim_pin)
+    intaglio_pin = 'lazy val intaglioRevision = "' + os.environ["SOURCE_INTAGLIO"] + '"\\n'
+    (repo / "source-build.sbt").write_text(pin + graph_pin + neuroim_pin + intaglio_pin)
     for provider in ("gale", "resample4s"):
         script = repo / "tools" / ("publish-" + provider + "-local.sh")
         script.write_text('#!/bin/sh\\necho ' + provider + ' >> "$PROVIDER_CALL_LOG"\\n')
@@ -62,6 +64,7 @@ elif sys.argv[3:6] != ["checkout", "--quiet", "--detach"]:
                          TMPDIR=str(root), PROVIDER_GALE=provider_gale,
                          SOURCE_GALE=provider_gale if source_gale is None else source_gale,
                          SOURCE_GRAPH=source_graph, SOURCE_NEUROIM=source_neuroim,
+                         SOURCE_INTAGLIO=source_intaglio,
                          MISMATCHED=mismatched,
                          PROVIDER_MULTIVAR=MULTIVAR, PROVIDER_CALL_LOG=str(calls)),
                 capture_output=True, text=True,
@@ -122,6 +125,14 @@ elif sys.argv[3:6] != ["checkout", "--quiet", "--detach"]:
         result, calls = self.run_bootstrap(GALE, "")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(calls, [])
+
+    def test_volume_view_intaglio_mismatch_refuses_before_publishing(self):
+        for pin in ("c" * 40, ""):
+            with self.subTest(pin=pin):
+                result, calls = self.run_bootstrap(GALE, GALE, source_intaglio=pin)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Intaglio revision mismatch", result.stderr)
+                self.assertEqual(calls, [])
 
     def test_equal_but_truncated_pins_refuse(self):
         result, calls = self.run_bootstrap("b" * 12, "b" * 12)

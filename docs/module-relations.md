@@ -77,10 +77,10 @@ pipeline + mvpa4s
 
 standalone Intaglio core
 +-- design                 also depends on hrf, standalone Gale
-+-- image-view             also depends on neuroim4s-core
-|   +-- image-view-canvas  also depends on Intaglio Canvas
-|   +-- image-view-java2d  also depends on Intaglio Java2D
-|   +-- image-view-javafx  also depends on Intaglio JavaFX
++-- standalone neuroim4s-view             also depends on neuroim4s-core
+|   +-- standalone neuroim4s-view-canvas  also depends on Intaglio Canvas
+|   +-- standalone neuroim4s-view-java2d  also depends on Intaglio Java2D
+|   +-- standalone neuroim4s-view-javafx  also depends on Intaglio JavaFX
 +-- surface-view           also depends on surface
     +-- surface-view-raster
     +-- surface-view-javafx  also depends on external OpenJFX
@@ -94,7 +94,7 @@ hrf
             +-- group
 
 standalone neuroim4s-core
-+-- image-view        also depends on Intaglio core
++-- standalone neuroim4s-view        also depends on Intaglio core
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-data, and standalone Gale
 +-- dataset          also depends on response, hrf, locus-data
@@ -185,10 +185,10 @@ adjacent checkout is selected automatically during extraction; an explicit
 | standalone `neuroim4s-core` / optional `neuroim4s-io` | Volumes, time series, masks, selected images, sampling, orientation, world binding and neuroimaging policy. The local image module is removed. | neuroim4s-spaces; image4s, locus4s, Ravel, Gale, reframe4s; optional image4s NIfTI on JVM | ScalaFIM, atlas, surface, MVPA or rendering dependencies; duplicate provider geometry, axes, finite domains or codecs. |
 | `provider-spike` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
 | `transform` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | standalone `neuroim4s-core`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), generic frame identity (`spatial4s`) or anatomical world identity (`neuroim4s-spaces`), platform IO in shared sources (`transformBoundaryCheck`), or graph routing (`spatial`). |
-| `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | standalone `neuroim4s-core`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
-| `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
-| `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
-| `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
+| standalone `neuroim4s-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | standalone `neuroim4s-core`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
+| `standalone neuroim4s-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | standalone `neuroim4s-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
+| `standalone neuroim4s-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | standalone `neuroim4s-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
+| `standalone neuroim4s-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | standalone `neuroim4s-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | standalone `neuroim4s-core`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | standalone `neuroim4s-core`, standalone image4s-geometry; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
 | `surface` | Neuro-surface composition over strict mesh4s topology/points and upstream nearest/radial lookup and sphere geometry, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | standalone `neuroim4s-core`, `transform`, `locus-data`; standalone mesh4s-geometry, mesh4s-graph4s, graph4s, image4s-geometry and zarr4s core | Atlas metadata, MVPA plans, or whole spatial graph compilation. |

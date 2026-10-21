@@ -15,10 +15,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BUILD = REPO_ROOT / "build.sbt"
 DEFAULT_RUNNER = REPO_ROOT / "tools" / "ci" / "full-repository-tests.sh"
 
-# These modules need native OpenJFX plus a display. They remain in the compile
-# court and are the only supported tests omitted from the headless release run.
+# Surface host tests need native OpenJFX plus a display. Volume-view JavaFX
+# contract tests compile scenes and events without starting the toolkit.
 DISPLAY_EXCLUSIONS = {
-    "imageViewJavafxJVM/test": "requires OpenJFX natives and a display",
     "surfaceViewJavafxJVM/test": "requires OpenJFX natives and a display",
 }
 

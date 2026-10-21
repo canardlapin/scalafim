@@ -3,6 +3,7 @@ package scalafim.surface
 import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
+import mesh4s.geometry.SurfaceRealization
 import scala.util.control.NonFatal
 
 final case class Edge private (a: VertexId, b: VertexId):
@@ -28,7 +29,20 @@ final case class MeshTopology private (
       Edge.between(VertexId.unsafe(endpoints.first.ordinal), VertexId.unsafe(endpoints.second.ordinal))
     .toVector
 
-  lazy val edgeLengths: Vector[Double] = edges.map(edgeLength)
+  private lazy val realization =
+    SurfaceRealization.fromPointField(mesh.topology, mesh.points)
+      .fold(error => throw new IllegalStateException(error.message), identity)
+
+  lazy val edgeLengths: Vector[Double] =
+    val owner = realization.topology
+    owner.edges.indices.map: edge =>
+      // edgeVector retains the old finite-difference admission; squared norms
+      // may still overflow, as they did through Point3D.norm.
+      try realization.edgeVector(edge)
+      catch case _: IllegalStateException =>
+        throw new IllegalArgumentException("requirement failed: spatial point coordinates must be finite")
+      realization.edgeLength(edge)
+    .toVector
 
   def edgeCount: Int =
     edges.length
@@ -84,11 +98,9 @@ final case class MeshTopology private (
     (a - b).norm
 
   def faceArea(face: FaceId): Double =
-    val tri = mesh.face(face)
-    val a = mesh.vertex(tri.a)
-    val b = mesh.vertex(tri.b)
-    val c = mesh.vertex(tri.c)
-    ((b - a).cross(c - a)).norm / 2.0
+    require(face.index < mesh.faceCount, "face id out of range")
+    realization.unsignedFaceAreaChecked(realization.topology.faces.indexAtValidatedOrdinal(face.index))
+      .fold(_ => throw new IllegalArgumentException("requirement failed: spatial point coordinates must be finite"), identity)
 
   def faceAreas: Vector[Double] =
     Vector.tabulate(mesh.faceCount)(i => faceArea(FaceId.unsafe(i)))
