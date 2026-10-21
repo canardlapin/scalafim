@@ -43,7 +43,7 @@ final case class ModelDocument(
   */
 object ModelDocumentJsonCodec:
   val Schema: String = "scalafim.model-document"
-  val Version: Int = 2
+  val Version: Int = 3
 
   private val documentFields = Set("schema", "version", "formula", "derived", "build", "confounds", "runCombination")
 
@@ -54,7 +54,7 @@ object ModelDocumentJsonCodec:
       confounds <- PortableJson.optional(document.confounds)(spec => confoundsValue(spec, "$.confounds"))
       runCombination <- ModelJsonCodec.runCombinationValue(document.runCombination, "$.runCombination")
       text <- PortableJson.render(Obj(
-        "schema" -> Str(Schema), "version" -> Num(if document.build.strategy.config.autocorrelation.fgls.nonEmpty then Version else 1), "formula" -> formula,
+        "schema" -> Str(Schema), "version" -> Num(ModelBuildSpecJsonCodec.versionFor(document.build)), "formula" -> formula,
         "derived" -> ModelJsonCodec.derivedEventsValue(document.build.derived),
         "build" -> Obj.from(body), "confounds" -> confounds, "runCombination" -> runCombination
       ))
@@ -74,11 +74,11 @@ object ModelDocumentJsonCodec:
     for
       _ <- root.fields(documentFields)
       version <- root.field("version").flatMap(_.integer)
-      _ <- ensure(version == 1 || version == Version, "$.version", s"unsupported model document version (expected $Version)")
+      _ <- ensure(version >= 1 && version <= Version, "$.version", s"unsupported model document version (expected $Version)")
       formula <- root.field("formula").flatMap(ModelBuildSpecJsonCodec.readFormula)
       derived <- root.field("derived").flatMap(ModelJsonCodec.readDerivedEvents)
       build <- root.field("build")
-      _ <- build.fields(ModelBuildSpecJsonCodec.bodyFields)
+      _ <- build.fields(ModelBuildSpecJsonCodec.fieldsForVersion(version))
       spec <- ModelBuildSpecJsonCodec.readBody(build, formula, readStrategy)
       _ <- ensure(version >= 2 || spec.strategy.config.autocorrelation.fgls.isEmpty, "$.version", "voxelwise FGLS requires model document version 2")
       confounds <- root.field("confounds").flatMap(_.nullable(readConfounds))

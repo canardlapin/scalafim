@@ -783,7 +783,8 @@ class EventModelBuilderParitySuite extends munit.FunSuite:
     val firstEvent = convolved(first).term.events.collectFirst { case e: ContinuousEvent => e }.get
     assertEquals(firstEvent.value.data.toVector, Vector(-1.0, 1.0))
     assertEquals(first.designMatrix.data.toVector, permuted.designMatrix.data.toVector)
-    assertEquals(first.designSchema.audit.copy(sourceEvents = Vector.empty), permuted.designSchema.audit.copy(sourceEvents = Vector.empty))
+    assertEquals(first.designSchema.audit.copy(sourceEvents = Vector.empty, convolutionReceipts = Vector.empty),
+      permuted.designSchema.audit.copy(sourceEvents = Vector.empty, convolutionReceipts = Vector.empty))
     val original = first.designSchema
     val reordered = permuted.designSchema
     assertEquals(DesignFingerprint.legacyV2Value(original.matrix, original.rows, original.columns, original.audit),

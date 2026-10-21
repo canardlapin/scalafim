@@ -1,7 +1,7 @@
 package scalafim.fmri.design.formula
 
 import scalafim.fmri.design.{BasisOrthogonalizationReceipt, CellAssignment, CellKey, CenteringOutcome, CenteringPolicy, CenteringReceipt, CenteringGroupReceipt, ColumnId, DegenerateModulatorOutcome, DegenerateModulatorPolicy, DegenerateModulatorReceipt, DesignError, EmptyCellAudit, EmptyCellDisposition, EmptyCellPolicy, EmptyCellScope, EventRowProvenance, FactorLevelAudit, FactorLevelRegistry, FactorId, FactorPartitionAudit, FactorSchemaBinding, HrfAssignment, HrfByCell, HrfByPhase, HrfColumnScale, HrfColumnScaling, MissingValuePolicy, MissingValueResolution, ModulatorId, ModulatorOrthogonalization, ModulatorOrthogonalizationPlan, Names, OrthogonalizationGroupReceipt, OrthogonalizationOutcome, OrthogonalizationReceipt, OrthogonalizationScope, OrthogonalizationStepReceipt, PhaseId, PolicyReceipt, PortableNumber, RunIndex, TermId, TrialId}
-import scalafim.fmri.design.ObservedModulator
+import scalafim.fmri.design.{ObservedModulator, EventSupportReceipt, ResponseSupportRequest, EventResponseSupport}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.contrast.{LevelId, TermCells}
 import scalafim.fmri.design.data.{Column, DataTable}
@@ -31,7 +31,8 @@ object EventModelBuilder:
       hrfByCell: Option[HrfByCell] = None,
       hrfByPhase: Option[HrfByPhase] = None,
       degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
-      orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
+      orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None,
+      responseSupport: Option[ResponseSupportRequest] = None
   ):
     def validate: Either[DesignError, Unit] =
       for
@@ -323,7 +324,7 @@ object EventModelBuilder:
       _ <- request.options.validate
       rows <- prepareRows(request)
       model <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions,
-        runs = Some(rows.runs))
+        runs = Some(rows.runs)).left.map(rows.sourceError)
       evidenced <- rows.attach(model)
     yield evidenced
 
@@ -350,6 +351,14 @@ object EventModelBuilder:
       runs: Vector[Int],
       receipt: Option[DerivedRowsReceipt]
   ):
+    def sourceError(error: DesignError): DesignError = (receipt, error) match
+      case (Some(derived), DesignError.ResponseSupportRejected(support)) =>
+        if support.decisions.exists(row => row.sourceRow < 0 || row.sourceRow >= derived.retainedRows.length) then
+          DesignError.InvalidSchema("response-support source row is outside the derived table")
+        else DesignError.ResponseSupportRejected(support.copy(decisions = support.decisions.map(row =>
+          row.copy(sourceRow = derived.retainedRows(row.sourceRow)))))
+      case _ => error
+
     def attach(model: EventModel): Either[DesignError, EventModel] =
       receipt.fold[Either[DesignError, EventModel]](Right(model))(model.withDerivedRowsEither)
 
@@ -410,7 +419,7 @@ object EventModelBuilder:
       _ <- request.options.validate
       rows <- prepareRows(request)
       compiled <- compile(request.formula, rows.env, request.samplingFrame, rows.blockIds, rows.durations, request.options, request.extensions, Some(cache),
-        runs = Some(rows.runs))
+        runs = Some(rows.runs)).left.map(rows.sourceError)
       model <- rows.attach(compiled)
     yield new IncrementalDesign(request, cache.entries.toMap, model, cache.compiledCount, cache.reusedCount)
 
@@ -515,7 +524,8 @@ object EventModelBuilder:
       policyReceipts: Vector[PolicyReceipt] = Vector.empty,
       factorLevels: Vector[FactorLevelAudit] = Vector.empty,
       emptyCells: Vector[CellKey] = Vector.empty,
-      emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty
+      emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty,
+      responseSupport: Vector[EventSupportReceipt] = Vector.empty
   )
 
   private final class TermCache(previous: Map[TermCall, CompiledTerm]):
@@ -542,7 +552,8 @@ object EventModelBuilder:
         val events = c.term.events.map:
           case e: ContinuousEvent => e.copy(value = copyMatrix(e.value))
           case e => e
-        c.copy(term = c.term.copy(events = events), data = copyMatrix(c.data))
+        val detached = c.copy(term = c.term.copy(events = events), data = copyMatrix(c.data))
+        detached.copy(convolutionRecipe = c.convolutionRecipe.flatMap(_.remapSources(c, detached)).orElse(c.convolutionRecipe))
       case c: CovariateConvolvedTerm => c.copy(data = copyMatrix(c.data))
       case other => throw new IllegalArgumentException(s"incremental compiler cannot detach ${other.getClass.getName}")
     value.copy(term = term)
@@ -631,7 +642,8 @@ object EventModelBuilder:
       policyReceipts: Vector[PolicyReceipt] = Vector.empty,
       factorLevels: Vector[FactorLevelAudit] = Vector.empty,
       emptyCells: Vector[CellKey] = Vector.empty,
-      emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty
+      emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty,
+      responseSupport: Vector[EventSupportReceipt] = Vector.empty
   )
 
   private def compile(
@@ -724,6 +736,7 @@ object EventModelBuilder:
     val factorLevels = Vector.newBuilder[FactorLevelAudit]
     val emptyCells = Vector.newBuilder[CellKey]
     val emptyCellAudits = Vector.newBuilder[EmptyCellAudit]
+    val responseSupport = Vector.newBuilder[EventSupportReceipt]
     var failed: Option[DesignError] = None
     var i = 0
     while i < formula.terms.length && failed.isEmpty do
@@ -747,6 +760,7 @@ object EventModelBuilder:
           factorLevels ++= compiled.factorLevels
           emptyCells ++= compiled.emptyCells
           emptyCellAudits ++= compiled.emptyCellAudits
+          responseSupport ++= compiled.responseSupport
       i += 1
 
     failed match
@@ -765,7 +779,8 @@ object EventModelBuilder:
             policyReceipts = policyReceipts.result(),
             factorLevels = factorLevels.result(),
             emptyCells = emptyCells.result(),
-            emptyCellAudits = emptyCellAudits.result()
+            emptyCellAudits = emptyCellAudits.result(),
+            responseSupport = responseSupport.result()
           )
         )
 
@@ -803,7 +818,7 @@ object EventModelBuilder:
         else Left(DesignError.FormulaBinding("a modulator may have only one observed-value policy in each term"))
       events0 = expressions.map(_.event)
       centering0 = expressions.map(_.centering)
-      basisDiagnostics = expressions.flatMap(_.diagnostics)
+      initialBasisDiagnostics = expressions.flatMap(_.diagnostics)
       termOnsets <- h.onsets.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultOnsets)) { ref =>
         resolveSecondsEither(ref, env.eventData, nEvents, argName = "onsets")
       }
@@ -812,11 +827,23 @@ object EventModelBuilder:
       }
       phase0 <- resolvePhase(h.phase, env.eventData, nEvents)
       subsetMask <- resolveSubsetMaskEither(h.subset, env.eventData, nEvents)
-      originalSub0 = if subsetMask.forall(identity) then env.eventData else env.eventData.filterRows(subsetMask)
+      formulaData = if subsetMask.forall(identity) then env.eventData else env.eventData.filterRows(subsetMask)
       rows0 = TermRows(events0, termOnsets, termDurs, schedule.blockIds0, Vector.tabulate(nEvents)(identity))
-      subset0 = if subsetMask.forall(identity) then rows0 else subsetTerm(rows0, subsetMask)
+      formulaRows = if subsetMask.forall(identity) then rows0 else subsetTerm(rows0, subsetMask)
+      formulaPhase <- resolveEventPhase(phase0, formulaRows)
+      supportReceipt <- assessResponseSupport(formulaRows, formulaPhase, termTag, options.responseSupport) { potential =>
+        convolveHrfTermEither(h, potential, formulaData, samplingFrame, options, extensions)
+      }
+      supportMask = supportReceipt.fold(Vector.fill(formulaRows.sourceRows.length)(true))(_.keepMask)
+      originalSub0 = if supportMask.forall(identity) then formulaData else formulaData.filterRows(supportMask)
+      supportedRows = if supportMask.forall(identity) then formulaRows else subsetTerm(formulaRows, supportMask)
+      selectedExpressions <- if options.responseSupport.isEmpty then Right(Vector.empty[EventExpression])
+        else toEvents(h.vars, originalSub0, termTag, options.factorRegistry, supportedRows.blockIds)
+      subset0 = if options.responseSupport.isEmpty then supportedRows else supportedRows.copy(events = selectedExpressions.map(_.event))
+      basisDiagnostics = if options.responseSupport.isEmpty then initialBasisDiagnostics else selectedExpressions.flatMap(_.diagnostics)
       phase0s <- resolveEventPhase(phase0, subset0)
-      centering0s = subsetCenteringRequests(centering0, subsetMask)
+      centering0s = if options.responseSupport.isEmpty then subsetCenteringRequests(centering0, subsetMask)
+        else selectedExpressions.map(_.centering)
       observedMissingMask = observedDropMask(subset0.events, observedPlans, options.missingValuePolicy)
       productMissingMask =
         if options.missingValuePolicy == MissingValuePolicy.DropFromTerm then
@@ -917,6 +944,17 @@ object EventModelBuilder:
       termDiagnostics = basisDiagnostics ++ nonFiniteDiagnostics ++ diagnoseTerm(term, samplingFrame)
       _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
       conv0 <- convolveHrfTermEither(h, term, originalSub, samplingFrame, options, extensions)
+      finalSupport <- assessResponseSupport(subset.copy(events = eventsClean), phase, termTag, options.responseSupport) { potential =>
+        convolveHrfTermEither(h, potential, originalSub, samplingFrame, options, extensions)
+      }
+      _ <- if finalSupport.exists(_.keepMask.contains(false)) then
+        Left(DesignError.InvalidSchedule("Response support changed after event selection; remaining rows cannot be silently excluded"))
+        else Right(())
+      supportEvidence = supportReceipt.map { initial =>
+        val finalRows = finalSupport.toVector.flatMap(_.decisions).map(row => row.sourceRow -> row).toMap
+        initial.copy(decisions = initial.decisions.map(row =>
+          if row.disposition == scalafim.fmri.design.EventSupportDisposition.Retained then finalRows.getOrElse(row.sourceRow, row) else row))
+      }
       basisOrthogonalized <- applyBasisOrthogonalization(conv0, h.orthogonalizeBasis.getOrElse(false))
       conv = basisOrthogonalized.term
       schemaBindingReceipt = options.factorSchemaBinding.toVector.map { binding =>
@@ -949,6 +987,7 @@ object EventModelBuilder:
       conv,
       h.contrasts,
       termDiagnostics,
+      responseSupport = supportEvidence.toVector,
       missingValues = droppedMissing ++ prepared.missingValues ++ cleaned.missingValues,
       centeringReceipts = centered.receipts,
       degenerateModulatorReceipts = rawDegenerateModulators,
@@ -1030,7 +1069,17 @@ object EventModelBuilder:
       phase0 <- resolveTrialwisePhase(t.phase, env.eventData, nEvents, schedule.blockIds0, subsetMask)
       trialEvent <- catchBuild(DesignError.fromThrowable)(Event.factor(trialIds, name = "trial"))
       rows0 = TermRows(Vector(trialEvent), termOnsets, termDurs, schedule.blockIds0, Vector.tabulate(nEvents)(identity))
-      rows = if subsetMask.forall(identity) then rows0 else subsetTerm(rows0, subsetMask)
+      basisName = t.basis.getOrElse("spmg1")
+      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag, basisParams = t.basisParams)
+      formulaRows = if subsetMask.forall(identity) then rows0 else subsetTerm(rows0, subsetMask)
+      formulaPhase <- resolveEventPhase(phase0, formulaRows)
+      supportReceipt <- assessResponseSupport(formulaRows, formulaPhase, Some(termTag), options.responseSupport) { potential =>
+        catchBuild(DesignError.fromThrowable) {
+          potential.convolve(hrf0, samplingFrame, precision = options.precision,
+            dropEmpty = effectiveDropEmpty(options), summate = options.summate)
+        }
+      }
+      rows = supportReceipt.fold(formulaRows)(receipt => subsetTerm(formulaRows, receipt.keepMask))
       phase <- resolveEventPhase(phase0, rows)
       term <- eventTermEither(
         events = rows.events,
@@ -1043,8 +1092,6 @@ object EventModelBuilder:
       )
       termDiagnostics = diagnoseTerm(term, samplingFrame)
       _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
-      basisName = t.basis.getOrElse("spmg1")
-      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag, basisParams = t.basisParams)
       conv0 <- catchBuild(DesignError.fromThrowable) {
         term.convolve(
           hrf0,
@@ -1060,7 +1107,7 @@ object EventModelBuilder:
         columnRoles = Vector.fill(conv0.columnNames.length)(EventTermColumnRole.Trial)
       )
       out = if t.addSum.getOrElse(false) then addMeanColumn(conv, label = label0) else conv
-    yield CompiledTerm(out, None, termDiagnostics)
+    yield CompiledTerm(out, None, termDiagnostics, responseSupport = supportReceipt.toVector)
 
   private def compileCovariateCall(
       c: CovariateCall,
@@ -1108,7 +1155,8 @@ object EventModelBuilder:
         orthogonalization = compiled.orthogonalizationReceipts,
         basisOrthogonalization = compiled.basisOrthogonalizationReceipts
       )
-    yield evidenced.copy(contrastSetsByTerm = attached)
+      supported <- evidenced.withResponseSupportEvidence(compiled.responseSupport)
+    yield supported.copy(contrastSetsByTerm = attached)
 
   /** One receipt per run naming the instant its samples refer to (see
     * [[SamplingReference]]: `TR / 2` is mid-volume, `0` volume-onset, any
@@ -1161,6 +1209,27 @@ object EventModelBuilder:
     */
   private def throwableMessage(t: Throwable): String =
     Option(t.getMessage).filter(_.nonEmpty).getOrElse(t.toString)
+
+  private def assessResponseSupport(
+      rows: TermRows,
+      phase: Option[EventPhase],
+      termTag: Option[String],
+      request: Option[ResponseSupportRequest]
+  )(convolve: EventTerm => Either[DesignError, ConvolvedTerm]): Either[DesignError, Option[EventSupportReceipt]] =
+    request match
+      case None => Right(None)
+      case Some(policy) =>
+        val potentialEvents = rows.events.map {
+          case continuous: ContinuousEvent =>
+            continuous.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(continuous.value.rows, continuous.value.cols,
+              Array.fill(continuous.value.rows * continuous.value.cols)(1.0)))
+          case categorical: CategoricalEvent => categorical
+        }
+        for
+          term <- eventTermEither(potentialEvents, rows.onsets, rows.durations, rows.blockIds, termTag, phase, rows.sourceRows)
+          potential <- convolve(term)
+          receipt <- EventResponseSupport.assess(potential, policy)
+        yield Some(receipt)
 
   private def eventTermEither(
       events: Vector[Event],
@@ -1518,7 +1587,7 @@ object EventModelBuilder:
       System.arraycopy(left.data, row * left.cols, out, row * (left.cols + right.cols), left.cols)
       System.arraycopy(right.data, row * right.cols, out, row * (left.cols + right.cols) + left.cols, right.cols)
       row += 1
-    main.copy(
+    val joined = main.copy(
       term = term,
       data = scalafim.fmri.hrf.linalg.Mat.unsafe(left.rows, left.cols + right.cols, out),
       columnNames = main.columnNames ++ slope.columnNames,
@@ -1530,6 +1599,7 @@ object EventModelBuilder:
       columnScales = main.columnScales ++ slope.columnScales,
       columnEventScales = main.columnEventScales ++ slope.columnEventScales
     )
+    joined.copy(convolutionRecipe = ConvolutionRecipe.joinColumns(main, slope, joined))
 
   private def withoutMainEffect(event: ContinuousEvent): ContinuousEvent =
     val keep = (0 until event.value.cols).filterNot(event.mainEffectColumn.contains).toVector

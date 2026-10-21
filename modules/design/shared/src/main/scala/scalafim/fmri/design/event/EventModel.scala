@@ -59,6 +59,23 @@ final case class EventModel(
       case Some(schema) => schema.validate
       case None         => Right(())
 
+  def validateResponseSupportSelection(scans: Vector[ScanIndex]): Either[DesignError, Unit] =
+    if designSchema.audit.responseSupport.forall(_.request.retainedScans == scans) then Right(())
+    else Left(DesignError.InvalidSchedule("Fit scan selection differs from event support policy; rebuild the model for the intended scans"))
+
+  def withResponseSupportEvidence(receipts: Vector[EventSupportReceipt]): Either[DesignError, EventModel] =
+    val schema = designSchema
+    val exclusions = receipts.flatMap(_.decisions.collect {
+      case row if row.disposition == EventSupportDisposition.Excluded =>
+        EventExclusion(row.sourceRow, "response-support-unobserved", None)
+    })
+    DesignSchema.validated(schema.matrix, schema.rows, schema.columns,
+      schema.audit.copy(
+        eventsSeen = schema.audit.eventsSeen + exclusions.length,
+        excludedEvents = schema.audit.excludedEvents ++ exclusions,
+        responseSupport = schema.audit.responseSupport ++ receipts))
+      .map(value => copy(compiledSchema = Some(value)))
+
   /** Compatibility wrapper over [[withDiagnosticsEither]]. Compiler paths use
     * the total method so schema-validation failures retain their typed cause.
     */
@@ -104,15 +121,16 @@ final case class EventModel(
         def orthogonalized(value: OrthogonalizationReceipt): OrthogonalizationReceipt =
           value.copy(steps = value.steps.map(step => step.copy(groups = step.groups.map(group => group.copy(sourceRows = group.sourceRows.map(rows))))))
         val terms1 = terms.map:
-          case (key, ct: ConvolvedTerm) => key -> ct.copy(term = ct.term.copy(
-            eventProvenance = ct.term.eventProvenance.map(provenance),
-            sourceRows = ct.term.sourceRows.map(rows)
-          ))
+          case (key, ct: ConvolvedTerm) => key -> ct.remapSourceRows(rows)
           case other => other
         val schema0 = designSchema
         val audit0 = schema0.audit.copy(
           eventProvenance = schema0.audit.eventProvenance.map(provenance),
           sourceEvents = schema0.audit.sourceEvents.map(value => value.copy(sourceRow = rows(value.sourceRow))),
+          responseSupport = schema0.audit.responseSupport.map(receipt => receipt.copy(
+            decisions = receipt.decisions.map(row => row.copy(sourceRow = rows(row.sourceRow))))),
+          excludedEvents = schema0.audit.excludedEvents.map(event =>
+            if event.reason == "response-support-unobserved" then event.copy(eventIndex = rows(event.eventIndex)) else event),
           missingValues = schema0.audit.missingValues.map(missing),
           degenerateModulatorReceipts = schema0.audit.degenerateModulatorReceipts.map(degenerate),
           orthogonalizationReceipts = schema0.audit.orthogonalizationReceipts.map(orthogonalized),
@@ -394,6 +412,10 @@ object EventModel:
       eventsUsed = seen,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
       sourceEvents = sourceEvents,
+      convolutionReceipts = terms.flatMap {
+        case (key, ct: ConvolvedTerm) => ct.convolutionRecipe.map(recipe => ConvolutionReceipt(key, recipe.canonical))
+        case _ => None
+      },
       policyReceipts = policies,
       diagnostics = diagnostics.map(toDesignDiagnostic),
       eventResponseScales = eventResponseScales(terms)

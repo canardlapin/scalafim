@@ -420,6 +420,9 @@ final case class SourceEventRow(
   def canonical: String =
     s"term=${term.value}|event=$eventIndex|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
 
+final case class ConvolutionReceipt(term: String, recipe: String):
+  def canonical: String = s"term=$term;recipe=$recipe"
+
 /** Policy for non-finite continuous event/modulator values.
   *
   * This is deliberately separate from fit-time response missingness: it is a
@@ -811,7 +814,9 @@ final case class DesignAudit(
     eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty,
     /** Rows retained and dropped by derived-column declarations, when the build had any. */
     derivedRows: Vector[DerivedRowsReceipt] = Vector.empty,
-    sourceEvents: Vector[SourceEventRow] = Vector.empty
+    sourceEvents: Vector[SourceEventRow] = Vector.empty,
+    convolutionReceipts: Vector[ConvolutionReceipt] = Vector.empty,
+    responseSupport: Vector[EventSupportReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -822,7 +827,9 @@ final case class DesignAudit(
 
   def canonical: String =
     val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
-    legacyV2Canonical + sources
+    val convolution = if convolutionReceipts.isEmpty then "" else convolutionReceipts.map(_.canonical).mkString(";convolution=", "|", "")
+    val support = if responseSupport.isEmpty then "" else responseSupport.map(_.canonical).mkString(";response-support=", "|", "")
+    legacyV2Canonical + sources + convolution + support
 
   /** Frozen pre-source-row audit encoding for explicit legacy receipt checks.
     * New identity evidence belongs in canonical, never in this v2 projection.
@@ -1407,7 +1414,9 @@ object DesignSchema:
       diagnostics = left.diagnostics ++ right.diagnostics,
       eventResponseScales = left.eventResponseScales ++ right.eventResponseScales,
       derivedRows = left.derivedRows ++ right.derivedRows,
-      sourceEvents = left.sourceEvents ++ right.sourceEvents
+      sourceEvents = left.sourceEvents ++ right.sourceEvents,
+      convolutionReceipts = left.convolutionReceipts ++ right.convolutionReceipts,
+      responseSupport = left.responseSupport ++ right.responseSupport
     )
 
   private[design] def validate(
