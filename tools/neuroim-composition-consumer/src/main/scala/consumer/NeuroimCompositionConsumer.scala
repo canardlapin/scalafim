@@ -117,12 +117,24 @@ object NeuroimCompositionConsumer:
       val pixel = image.getRGB(math.round(deviceX).toInt, math.round(deviceY).toInt)
       require(pixel == expectedPixel, f"Java2D picked pixel: expected 0x$expectedPixel%08x, got 0x$pixel%08x")
 
+      // Start elsewhere within the same axial plane: a no-op reducer must not satisfy the oracle.
+      val initialCursor = requireRight(Point.in(targetFrame)(11.5, -2.0, 9.5), "initial in-plane cursor")
+      val initialSession = session.copy(state = state.copy(cursor = initialCursor))
+      val initialFrame = requireRight(initialSession.frame(model), "compile initial cursor frame")
+      require(initialFrame.panels.axial.rect == axial.rect, "pick and initial session panel geometry differ")
+      def axialValue(frame: ViewerFrame): Double =
+        frame.readouts.axial.layers.collectFirst {
+          case LayerReadout(id, LayerSampleValue.Scalar(value)) if id == LayerId.unsafe("analytic") => value
+        }.getOrElse(throw new IllegalStateException("axial readout lacks analytic scalar layer"))
+      requireClose(axialValue(initialFrame), 111.0, 1e-9, "initial cursor independent value")
       val action = requireRight(Java2DViewerHost.pickAction(compiled, deviceX, deviceY), "pick rendered axial panel")
-      val picked = requireRight(ViewerReducer.reduce(model, session, action), "apply rendered pick")
+      val picked = requireRight(ViewerReducer.reduce(model, initialSession, action), "apply rendered pick")
+      require(picked.state.cursor.frame eq targetFrame, "picked cursor lost the loaded frame owner")
+      picked.state.cursor.coordinates.zip(Vector(14.5, -2.0, 9.5)).foreach { (actual, expected) =>
+        requireClose(actual, expected, 1e-9, "picked cursor independent world coordinate")
+      }
       val pickedFrame = requireRight(picked.frame(model), "compile picked cursor frame")
-      val sampled = pickedFrame.readouts.axial.layers.collectFirst {
-        case LayerReadout(id, LayerSampleValue.Scalar(value)) if id == LayerId.unsafe("analytic") => value
-      }.getOrElse(throw new IllegalStateException("picked axial readout lacks analytic scalar layer"))
+      val sampled = axialValue(pickedFrame)
       requireClose(sampled, expectedValue, 1e-9, "transform-derived rendered pick analytic value")
 
       val foreignFrame = requireRight(Frame.named[D3]("composition consumer foreign world"), "foreign frame")
