@@ -5,6 +5,7 @@ import scalafim.testkit.RealAssetGate
 import scalafim.atlas.{Fslr32kFrom2009c, StandardRoutePolicy, StandardRouteRefusal}
 import scalafim.atlas.io.StandardSurfaceRouteFiles
 import neuroim4s.image.*
+import spatial4s.Xyz
 import neurosurf4s.surface.*
 import neurosurf4s.surface.io.GiftiSurfaceReader
 import neurosurf4s.surface.reference.*
@@ -21,7 +22,7 @@ class Fslr32kRouteBudgetSuite extends munit.FunSuite, RealAssetGate:
   import scala.concurrent.duration.*
   override val munitTimeout: Duration = 10.minutes
 
-  private def distance(p: WorldPoint, q: WorldPoint): Double =
+  private def distance(p: Xyz, q: Xyz): Double =
     math.sqrt(math.pow(p.x - q.x, 2) + math.pow(p.y - q.y, 2) + math.pow(p.z - q.z, 2))
 
   private def receipt(name: String, fields: (String, ujson.Value)*): Unit =
@@ -41,7 +42,7 @@ class Fslr32kRouteBudgetSuite extends munit.FunSuite, RealAssetGate:
       (lock, admitted, admitted.map(gm).fold(e => fail(e.message), identity))
     val seconds = (System.nanoTime() - start) / 1e9
     val grids = Vector("res-01" -> (Vector(-96.0, -132.0, -78.0), 1.0), "res-02" -> (Vector(-96.5, -132.5, -78.5), 2.0))
-    def voxel(p: WorldPoint, origin: Vector[Double], spacing: Double) =
+    def voxel(p: Xyz, origin: Vector[Double], spacing: Double) =
       Vector(p.x, p.y, p.z).zip(origin).map((c, o) => math.floor((c - o) / spacing + 0.5).toInt)
     for (lock, admitted, mapped) <- routes do
       val label = PublicFslrRoute.label(lock.hemisphere)

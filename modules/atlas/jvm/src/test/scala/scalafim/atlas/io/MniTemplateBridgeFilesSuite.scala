@@ -1,6 +1,5 @@
 package scalafim.atlas.io
 
-import spatial4s.Xyz
 import neuroatlas4s.io.*
 
 import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
@@ -8,7 +7,7 @@ import image4s.geometry.{Affine, D3, Point}
 import ravel.NDArray
 import scalafim.atlas.*
 import neuroatlas4s.*
-import neuroim4s.image.{GridSpec, SpatialDims}
+import neuroim4s.image.{GridSpec, SpatialDims, SpatialPoint}
 import neuroim4s.spaces.Spaces as WorldFrames
 import neurosurf4s.surface.io.TemplateFlowCache
 
@@ -87,7 +86,7 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
     val point = Point.in(WorldFrames.MNI152NLin6Asym)(ras(0), ras(1), ras(2)).fold(error => fail(error.message), identity)
     on.transform.mapPoint(point).fold(error => fail(error.message), identity).coordinates
 
-  private def point3(values: Vector[Double]): Xyz = Xyz(values(0), values(1), values(2))
+  private def point3(values: Vector[Double]): SpatialPoint = SpatialPoint(values(0), values(1), values(2))
 
   test("the committed oracle matches its manifest and pins the inspected composites"):
     val manifest = text("manifest.json")
@@ -161,7 +160,7 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
     assertEquals(plan.steps.map(_.backend), Vector(TransformBackend.TemplateFlowAnts))
     assert(!plan.usedInverses)
     assert(plan.pullbackExecutability.isRight)
-    plan.transform(Vector(Xyz.Origin)) match
+    plan.transform(Vector(SpatialPoint.Origin)) match
       case Left(AtlasError.TransformNotExecutable(_, _, reason)) => assert(reason.contains("pullback only"), reason)
       case other                                                 => fail(s"expected a pullback-only refusal, got $other")
     val oracle = rows("pull_points.tsv")

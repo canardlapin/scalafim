@@ -2,6 +2,7 @@ package scalafim.atlas.reference
 
 import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kRoute}
 import neuroim4s.image.*
+import spatial4s.Xyz
 import neurosurf4s.surface.*
 import neurosurf4s.surface.reference.*
 
@@ -36,7 +37,7 @@ object FslrBridgeDisagreement:
     val inputs = FslrQualification.readInputs(specPath)
     val source = inputs.source
     val toVoxel = source.voxelToWorld
-    def voxelOf(p: WorldPoint): Option[Vector[Int]] =
+    def voxelOf(p: Xyz): Option[Vector[Int]] =
       toVoxel.inverse(Vector(p.x, p.y, p.z)).toOption.map(_.map(c => math.floor(c + 0.5).toInt))
 
     val hemispheres = ujson.Obj()
@@ -98,7 +99,7 @@ object FslrBridgeDisagreement:
     Files.writeString(outPath, ujson.write(result, indent = 2), StandardCharsets.UTF_8)
     println(ujson.write(result))
 
-  private def distance(p: WorldPoint, q: WorldPoint): Double =
+  private def distance(p: Xyz, q: Xyz): Double =
     math.sqrt(math.pow(p.x - q.x, 2) + math.pow(p.y - q.y, 2) + math.pow(p.z - q.z, 2))
 
   private def nearestRank(sorted: Vector[Double], q: Double): Double =

@@ -678,7 +678,7 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(locusData, spatial)
+    .dependsOn(locusData, spatial, scenarioTestkit % "test->compile")
     .jvmConfigure(_.dependsOn(neurosurf4sVolumeJVM, neurosurf4sSpatialIoJVM, neurosurf4sVolumeIoJVM))
     .jsConfigure(_.dependsOn(neurosurf4sVolumeJS))
     .settings(commonSettings)
