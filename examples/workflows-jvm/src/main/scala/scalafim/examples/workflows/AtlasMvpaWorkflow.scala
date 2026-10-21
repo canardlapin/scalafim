@@ -9,7 +9,7 @@ import neuroatlas4s.*
 import mvpa4s.*
 import mvpa4s.measurement.*
 import mvpa4s.predictive.*
-import scalafim.fmri.mvpa.spatial.*
+import mvpa4s.locus.*
 import neuroim4s.image.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import ravel.DType.given

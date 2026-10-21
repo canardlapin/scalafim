@@ -54,6 +54,7 @@ neurosurf4s beneath the volume stack.
 | `atlas` surface catalogs/loaders, `StandardSurfaceRoutes`, `SpaceTransformGraph` | neuroatlas4s surface/routing over neurosurf4s; volume routes additionally consume neuroim4s transforms. Atlas-specific confidence, assets and version policy stay here. |
 | `mvpa` scientific plans, evidence, methods and finite-family execution | mvpa4s core. Remove response/facade/pipeline dependencies before extraction. |
 | MVPA interpreter in `execution/LocalExecution.scala` | Optional ScalaFIM `mvpa-pipeline` integration. Core retains deterministic addresses, resource/commit contract and local execution; pipeline wraps one admitted unit without duplicating scientific scheduling or resource cleanup. |
+| Generic locus measurements and scatter | Optional `mvpa4s-locus`: region/ordered-selection frames, centered neighborhood IDs, explicit scatter outcomes/algebras and exact integer-grid support graphs. Surface-only measurement/adjacency composition stays downstream until U6; functional threshold interpretation stays ScalaFIM. No image/neuroim/surface dependency enters this optional provider module. |
 | MVPA fit/dataset/group/archive integrations | Keep ScalaFIM-specific readers and policy. Move generic predictive machinery to mvpa4s predictive and generic locus/image/surface/atlas measurement adapters to optional mvpa4s integrations. |
 
 Default rule for a moved family: its tests, fixtures, generators, examples and

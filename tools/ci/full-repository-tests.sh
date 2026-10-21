@@ -59,6 +59,9 @@ run_batch neuroim-routing neuroimRoutingTestAll
 run_batch neuroim-view-jvm neuroimViewJvmTestAll
 run_batch neuroim-view-js neuroimViewJsTestAll
 run_batch neuroatlas-volume neuroatlasVolumeTestAll
+run_batch mvpa4s-core mvpa4sCoreTestAll
+run_batch mvpa4s-predictive mvpa4sPredictiveTestAll
+run_batch mvpa4s-locus mvpa4sLocusTestAll
 
 run_batch image-surface-jvm \
   thresholdJVM/test \

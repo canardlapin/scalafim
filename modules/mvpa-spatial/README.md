@@ -1,14 +1,16 @@
 # scalafim-fmri-mvpa-spatial
 
-Thin spatial adapters for the portable MVPA core.
+Surface composition and functional threshold policy over the portable MVPA providers.
 
-Package root:
+Import the provider measurements separately from the surface adapters:
 
 ```scala
-import scalafim.fmri.mvpa.spatial.*
+import mvpa4s.locus.*
+import scalafim.fmri.mvpa.spatial.{SurfaceMeasurementFrames, SurfaceSupportGraphs}
 ```
 
-`SpatialMeasurementFrames` binds spatial supports to an identified neural
+`mvpa4s-locus` owns generic frames, locus neighborhoods, scatter, and exact
+integer-grid support graphs. `SpatialMeasurementFrames` binds spatial supports to an identified neural
 axis and produces typed, lazy `MeasurementFrame` entries. Regions preserve
 ambient domain order; explicit selections preserve their supplied order.
 Runtime owner checks reject supports from a different live domain before a
@@ -18,6 +20,10 @@ Native prediction uses `AlderPredictiveAdmission.nativeMeasurement` and a
 method-owned Alder head over each entry. See the executable
 [atlas workflow](../../examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala),
 which is tested on JVM and Scala.js.
+
+`SurfaceMeasurementFrames.surfacePatches` composes surface searchlights through
+the provider frame API; `SurfaceSupportGraphs.surface` retains anatomical mesh
+adjacency. `FamilyThreshold` retains functional inference policy.
 
 Spatial regions, selections, volume neighborhoods, and surface patches are
 all expressed as typed measurement-frame entries. Local numerical work is

@@ -47,7 +47,7 @@ standalone locus4s
 |   +-- atlas         also depends on neuroim4s-core, surface, spatial, neuroim4s-transform, standalone graph4s
 |   +-- spatial       also depends on standalone Gale, neuroim4s-core, surface, neuroim4s-transform, neuroim4s-routing
 |   +-- dataset       also depends on response, neuroim4s-core, hrf
-|   +-- mvpa-spatial  also depends on mvpa4s, surface, threshold
+|   +-- mvpa-spatial  also depends on mvpa4s-locus, surface, threshold
 +-- latent            also depends on response, neuroim4s-core
 +-- threshold         also depends on neuroim4s-core
 +-- connectivity      also depends on standalone graph4s
@@ -59,7 +59,7 @@ standalone graph4s
 +-- atlas             also depends on neuroim4s-core, surface, locus-data
 
 standalone mvpa4s (pinned; core over Gale, locus4s, Multivar, Resample4s;
-                   optional mvpa4s-predictive over Alder)
+                   optional mvpa4s-predictive over Alder; mvpa4s-locus over locus4s-data)
 +-- mvpa-dataset      also depends on mvpa4s-predictive, dataset, mvpa-fit
 
 standalone Gale
@@ -103,7 +103,7 @@ standalone neuroim4s-core
 +-- surface          also depends on transform
 |   +-- spatial        also depends on standalone Gale, neuroim4s-core, transform
 |   +-- atlas          also depends on neuroim4s-core, spatial, transform
-|   +-- mvpa-spatial   also depends on mvpa4s, threshold
+|   +-- mvpa-spatial   also depends on mvpa4s-locus, threshold
 |   +-- surface-view   also depends on Intaglio core
 +-- threshold         also depends on standalone Gale
 +-- motion            also depends on image4s-geometry; bids4s on JVM

@@ -1,5 +1,6 @@
 package scalafim.fmri.mvpa.dataset
 
+import scalafim.scenarios.{ScenarioHarness, ScenarioTolerance}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import gale.linalg.{DMat, Matrix}
@@ -20,6 +21,7 @@ import scalafim.dataset.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import alder.kernel.DataFingerprint
+import mvpa4s.measurement.*
 import mvpa4s.*
 import mvpa4s.predictive.*
 import neuroim4s.image.SampleSpaces
@@ -182,6 +184,42 @@ class DatasetObservationEvidenceSuite extends FunSuite:
     assertEquals(sampleKeys(evidence), Vector("dataset-row:0", "dataset-row:1", "dataset-row:2", "dataset-row:3"))
     assertEquals(evidence.metadata.rows.flatMap(_.block).map(_.value), Vector("a", "a", "b", "b"))
   }
+
+  test("dataset to identified prediction preserves literal values and training-only probabilities as one scenario"):
+    val evidence = right(DatasetObservationEvidence.fromDataset(fixtureDataset(), DatasetPatternRequest(
+      selection = DataSelection(voxels = IndexSelection.indices(0, 1)),
+      metadata = SampleMetadataRequest.labeled(Vector("face", "scene", "face", "scene"),
+        blocks = Some(Vector("a", "a", "b", "b"))),
+      featureSpaceId = FeatureSpaceId.unsafe("classification-voxels"))))
+    val prediction = classify(evidence)
+    var closed = 0
+    val leg = right(MeasurementLeg.identity(evidence.neural, MeasurementId.unsafe("dataset-identity")))
+    val frame = right(MeasurementFrame(evidence.neural, Vector(PackedMeasurementEntry(leg, ()))))
+    val visitor = new MeasurementVisitor[evidence.samples.Id, evidence.neural.Id, String, Unit, DMat]:
+      def visit[L <: multivar.core.SemanticSpace](entry: PackedMeasurementEntry[evidence.neural.Id, String, Unit] { type Local = L }, measured: MeasuredObservations[evidence.samples.Id, L]): Either[MeasurementFailure, DMat] =
+        measured.patterns(DMat.eye(measured.localAxis.size)).left.map(MeasurementFailure.Measure.apply)
+    val traversed = frame.traverse(1)(Right(MeasurementResource(evidence.observations) { closed += 1 }))(visitor)
+    // Independent scalar calculation: training rows are +/- one point, so
+    // sample-SD standardization gives log-odds x1/train1 + x2/train2.
+    val p = 1.0 / (1.0 + math.exp(-(2.0 / 3.0 + 2.0 / 1.8)))
+    val q = 1.0 / (1.0 + math.exp(-(3.0 / 2.0 + 1.8 / 2.0)))
+    val expected = Vector(p, 1.0 - p, 1.0 - p, p, q, 1.0 - q, 1.0 - q, q)
+    val actual = Vector.tabulate(8)(i => prediction.probabilities(i / 2, i % 2))
+    val values = matrixRows(right(evidence.observations.patterns(DMat.eye(2)))).flatten
+    val keys = sampleKeys(evidence)
+    val heldOutSeparated = prediction.rows.forall(row => row.assessments.forall: assessment =>
+      !assessment.trainingStableKeys.contains(row.stableKey) &&
+        assessment.trainingStableKeys.toSet == (if keys.indexOf(row.stableKey) < 2 then Set(keys(2), keys(3)) else Set(keys(0), keys(1))))
+    val result = ScenarioHarness.result("u4-dataset-identified-prediction",
+      ScenarioHarness.values("selected-values", values, Vector(2.0, 2.0, -2.0, -2.0, 3.0, 1.8, -3.0, -1.8), ScenarioTolerance.absolute(0.0)) ++
+      ScenarioHarness.values("held-out-probabilities", actual, expected, ScenarioTolerance.absolute(1e-12)) ++ Vector(
+        ScenarioHarness.fact("sample-order", keys == Vector("dataset-row:0", "dataset-row:1", "dataset-row:2", "dataset-row:3"), keys.toString),
+        ScenarioHarness.fact("feature-order", neuralKeys(evidence) == Vector("feature:0", "feature:1"), neuralKeys(evidence).toString),
+        ScenarioHarness.fact("held-out-training-separation", heldOutSeparated, "each prediction excludes its entire held-out block"),
+        ScenarioHarness.fact("measurement-resource-release", closed == 1 && traversed.error.isEmpty &&
+          traversed.value.size == 1 && traversed.value.head.value.toOption.exists(matrixRows(_).flatten == values),
+          s"closed=$closed error=${traversed.error}")))
+    assert(result.ciPass, result.render)
 
   test("opened-dataset attachment returns native observations at the effectful boundary") {
     val dataset = fixtureDataset()
