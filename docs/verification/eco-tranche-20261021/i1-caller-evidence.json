@@ -8,7 +8,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "AtlasCursorQuery",
@@ -16,15 +22,27 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "BidsFirstLevelService",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "FirstLevelFeatures",
@@ -32,37 +50,67 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "GroupResponses",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/GroupResponses.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "LegacyResultImport",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/LegacyResultImport.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "NamedSpatialMap",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/NamedSpatialMap.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ParticipantExplorerInputs",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/ParticipantExplorerInputs.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "RegionExtraction",
@@ -70,7 +118,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ResultArtifactFile",
@@ -78,7 +132,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ResultGeometry",
@@ -86,7 +146,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "SpatialResultMap",
@@ -94,7 +160,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "SurfaceDisplayResource",
@@ -102,7 +174,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": false,
       "evidence": "Successful complete production source boundary still needed; failed whole-application compile cannot establish this.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "SurfaceProjection",
@@ -110,23 +188,41 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "SurfaceReverseLookup",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceReverseLookup.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "TaskBrainMap",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/TaskBrainMap.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "AutomaticAnatomy",
@@ -134,7 +230,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "OrientationMarks",
@@ -142,23 +244,41 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ParticipantExplorerPane",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantExplorerPane.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ParticipantPane",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantPane.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "RegionOverlay",
@@ -166,22 +286,40 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ResultPresentation",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultPresentation.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ResultSurfaceView",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ResultVolumeView",
@@ -189,7 +327,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "SpatialResponsePane",
@@ -197,37 +341,67 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "StudyMethodContribution",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyMethodContribution.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "StudyPane",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyPane.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "StudyResultArtifact",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyResultArtifact.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "TaskResultPane",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/TaskResultPane.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller",
-      "discovery": "independent reviewer + direct provider use"
+      "status": "complete production compiled; native caller acceptance pending",
+      "discovery": "independent reviewer + direct provider use",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "ViewerScene",
@@ -235,7 +409,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": false,
       "evidence": "Successful complete production source boundary still needed; failed whole-application compile cannot establish this.",
-      "status": "unproven affected caller"
+      "status": "complete production compiled; native caller acceptance pending",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "VolumePane",
@@ -243,7 +423,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     },
     {
       "caller": "VoxelReadout",
@@ -251,7 +437,13 @@
       "discovery": "direct neuroim4s/image4s use in maintained production sources",
       "componentCompiled": true,
       "evidence": "fresh-linked-qualification.json",
-      "status": "qualified component source"
+      "status": "qualified component source",
+      "completeProductionCompile": {
+        "status": "passed whole desktop and all dependent production sources",
+        "evidence": "pls-full-consumer-diagnostics-06.json",
+        "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+        "provider": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38"
+      }
     }
   ],
   "liveHandoff": {
@@ -261,8 +453,8 @@
       "ResultPresentation.ResponseCohort",
       "StudyPane"
     ],
-    "status": "unproven",
-    "blocker": "ModelBuildSpec.responseSupport and related retained first-level provider contracts unavailable in active Root pin."
+    "status": "complete production compiles; actual participant estimates and group fitting reached artifact capture, which failed runtime provenance admission",
+    "blocker": "Runtime provider allowlist still had11names; exact13-name fix9896a30 independently approved. Fresh native rerun07 active."
   },
   "independentComposition": {
     "requirement": "Independent image IO -> typed transform -> slice display with no ScalaFIM/surface dependencies, single clean scenario result",
@@ -281,5 +473,13 @@
     "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
     "--",
     "modules/**/src/main/**/*.scala"
-  ]
+  ],
+  "latestCompileBoundary": {
+    "compiledCallers": 32,
+    "allAdapterSources": 88,
+    "allGlmReviewJavafxSources": 22,
+    "allDesktopSources": 107,
+    "desktopStatus": "passed complete production; native artifact capture refused stale runtime provider allowlist",
+    "evidence": "pls-full-consumer-diagnostics-06.json"
+  }
 }

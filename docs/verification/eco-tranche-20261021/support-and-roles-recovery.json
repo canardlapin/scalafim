@@ -1,0 +1,164 @@
+{
+  "sourceCommits": [
+    "a8bca09ea0db383b0bab68a9bc0279abdcdb57a9",
+    "6fd58d293486812d22e001a19b1ca94b7d917230",
+    "57364690ac75eeadf73e10f9de03b48eda59731b"
+  ],
+  "status": "qualified bounded support, explicit-role and run-scoped provenance recovery",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "initial": "CHANGES_REQUIRED a8bca09e: omitted excluded-source-row bounds, lost exclusion term attribution",
+    "final": "APPROVE 6fd58d29 and57364690 after real-red regressions and source fixes"
+  },
+  "gates": [
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:22:06.290326+00:00",
+        "finished_utc": "2026-10-21T06:22:24.362318+00:00",
+        "duration_seconds": 18.071626,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=4g",
+          "python3",
+          "tools/build/sbt-warm",
+          "hrfJVM/test",
+          "hrfJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/response-support-hrf-jvm-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 61088
+      },
+      "sha256": "b6f2573225cb4b1e1d448381fe50823dc5be5096055634e42d33881721c23c9d"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:22:26.516294+00:00",
+        "finished_utc": "2026-10-21T06:22:48.324593+00:00",
+        "duration_seconds": 21.807904,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=4g",
+          "python3",
+          "tools/build/sbt-warm",
+          "modelJVM/test",
+          "modelJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/response-support-model-jvm-js.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 19149
+      },
+      "sha256": "f68afa47105d1d6f9a47da84fb66cfa0fb6d520a384521af366be18cf1c8b355"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:30:44.308976+00:00",
+        "finished_utc": "2026-10-21T06:31:20.643774+00:00",
+        "duration_seconds": 36.334248,
+        "command": [
+          "env",
+          "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+          "SBT_WARM_HEAP=4g",
+          "python3",
+          "tools/build/sbt-warm",
+          "designJVM/test",
+          "designJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/explicit-roles-design-jvm-js-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1800.0,
+        "log_bytes": 100814
+      },
+      "sha256": "2933bfe61608165aa90e3a61b4292496f5093e5570cc667021faa6142759c265"
+    }
+  ],
+  "finalPassed": {
+    "hrfJVM": 412,
+    "hrfJS": 412,
+    "modelJVM": 105,
+    "modelJS": 105,
+    "designJVM": 607,
+    "designJS": 606
+  },
+  "red": [
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:26:24.972072+00:00",
+        "finished_utc": "2026-10-21T06:26:31.093023+00:00",
+        "duration_seconds": 6.120681,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "designJVM/testOnly scalafim.fmri.design.EventPhaseSuite scalafim.fmri.design.EventTrialSummarySuite"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/run-scoped-phase-red.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 600.0,
+        "log_bytes": 4950
+      },
+      "sha256": "d48fe8f8352da071f819f9764400e1eedfca249e6c49758d36dfac9b41f14346"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:29:58.792390+00:00",
+        "finished_utc": "2026-10-21T06:30:06.237828+00:00",
+        "duration_seconds": 7.445222,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "designJVM/testOnly scalafim.fmri.design.EventResponseSupportSuite scalafim.fmri.design.DesignIdentitySuite"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/support-review-regressions-red.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 600.0,
+        "log_bytes": 4958
+      },
+      "sha256": "3177639a017c9c5cb91b14f3fc6c6663a2b35b1af29b4d1ffefb75a32a23df7a"
+    }
+  ],
+  "contracts": [
+    "Per-event numerical sampled support before cancellation; no borrowing a censored run; exact retained scan selection enforced at fit.",
+    "Exclusion before refitting centering/scaling/products; original source row evidence retained and remapping total.",
+    "Explicit categorical and continuous roles preserve original rows and existing missing/degenerate policies.",
+    "Original parent labels are keyed by run; phases preserve identical run/source-row ordering.",
+    "Frozen legacyV2Canonical unchanged; literal convolved8f2ee67682098523 matches separately while source/recipe/support changes distinguish currentv3; changed actual matrix/layout/historical audit fails legacy."
+  ],
+  "limits": [
+    "Observed sampled response is not estimability or physiological completeness.",
+    "New currentv3 recipe/support evidence legitimately changes current fingerprints; no silent prior-v3 equivalence.",
+    "LegacyV2DigestMatch remains weak digest evidence; not current identity or coefficient compatibility.",
+    "Full external caller acceptance remains pending."
+  ],
+  "adverse": [
+    "Initial support test/API adaptation failures retained in response-support-*.log.",
+    "Initial new identity test incorrectly expected empty historical policies; corrected to the existing hrf-only receipt, without a production identity change."
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "sourceCommit": "1ef81ed7cdffbe1ae4baa9503c4f7964299a467d",
+  "scalafimRevision": "896dda088b26fbaa2aedecc8cdedcfd6a9ea2c38",
+  "fullProductionCompilation": {
+    "status": "PASS",
+    "adapters": 88,
+    "glmReviewJavafx": 22,
+    "desktop": 107,
+    "productionFiltering": null,
+    "successAt": "2026-10-21T07:21:34Z"
+  },
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T07:19:35.369040+00:00",
+    "finished_utc": "2026-10-21T07:22:49.920067+00:00",
+    "duration_seconds": 194.548121,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-integration-global",
+      "-Dplsneuro.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+      "desktop/compile",
+      "set adapters / Test / unmanagedSources := Seq(file(\"modules/adapters/src/test/scala/plsneuro/adapters/SpatialFixtures.scala\"))",
+      "set desktop / Test / unmanagedSources := Seq(\"NativeParticipantExplorerStudyProbe.scala\", \"InspectionTestSources.scala\", \"ViewerSceneProbe.scala\", \"NativeSurfaceLayerTransactionProbe.scala\").map(name => file(\"modules/desktop/src/test/scala/plsneuro/desktop/\" + name))",
+      "desktop/Test/runMain plsneuro.desktop.NativeParticipantExplorerStudyProbe \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/first-level-consumer-fixture-06\" \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/study-handoff-native-06\"",
+      "desktop/Test/runMain plsneuro.desktop.ViewerSceneProbe",
+      "desktop/Test/runMain plsneuro.desktop.NativeSurfaceLayerTransactionProbe \"/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/surface-transactions-native-06\""
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-06",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-main-desktop-handoff-06.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 21310
+  },
+  "logSha256": "76b2308198b3106fbaf7f7a8bc25da0fc505a590100fff135499c61121c5e85f",
+  "nativeStatus": "FAIL after discovery, preparation, participant estimates and group fitting reached artifact capture",
+  "runtimeFailure": "RuntimeProvenance.current requires old11-provider set while actual declared/build-stamped closure correctly includes13 with neuroim4s and neuroatlas4s.",
+  "fixCandidate": "9896a300c43702cc7252577fb74302c56a1053d8",
+  "unexecuted": [
+    "ViewerSceneProbe",
+    "NativeSurfaceLayerTransactionProbe"
+  ],
+  "limits": [
+    "Do not equate the passing complete production compile with native handoff acceptance",
+    "StudyPane did not complete; native diagnostics and partial screenshots retained"
+  ]
+}

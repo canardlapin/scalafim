@@ -1,0 +1,149 @@
+{
+  "sourceCommit": "62c5b33e91f166f633f34f70546090343ea99889",
+  "donors": [
+    "af7679d3095ac150d1386c7cc4fc337f6073dd34",
+    "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15"
+  ],
+  "status": "qualified bounded current-provider access and study recovery",
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE all14files; first-read changed-affine refusal/retry and after-operation interruption guard added"
+  },
+  "gates": [
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:20:36.854829+00:00",
+        "finished_utc": "2026-10-21T06:21:18.769380+00:00",
+        "duration_seconds": 41.914038,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "datasetJVM/test",
+          "datasetJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/deferred-dataset-jvm-js-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 14669
+      },
+      "sha256": "3776206b0713c5b48ff5403aef51f09325ee316d2b0733c7b45be0cc7eb555eb"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:37:27.733607+00:00",
+        "finished_utc": "2026-10-21T06:37:57.475195+00:00",
+        "duration_seconds": 29.740975,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "fmriWorkflowJVM/test",
+          "fmriWorkflowJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/first-level-access-study-jvm-js-04.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 13991
+      },
+      "sha256": "08959d5816310ab98d37865597f11a8b03d0cdf51103a7795fdd18ef9d25e1f7"
+    }
+  ],
+  "passed": {
+    "datasetJVM": 82,
+    "datasetJS": 68,
+    "workflowJVM": 73,
+    "workflowJS": 54
+  },
+  "limits": [
+    "Preview reads selected masks and companion tables, but no BOLD response access or staging.",
+    "Deferred source admission is not header revalidation after every subsequent read.",
+    "Bounded read width is not a total JVM memory bound or cache-size enforcement.",
+    "Cancellation checks preserve flags and propagate interruption, without claiming instant decompression cancellation.",
+    "Synthetic MNI/FIR fixtures qualify the declared contracts, not population/scientific product readiness."
+  ],
+  "adverse": [
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:32:19.514180+00:00",
+        "finished_utc": "2026-10-21T06:32:27.757334+00:00",
+        "duration_seconds": 8.242865,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "fmriWorkflowJVM/test",
+          "fmriWorkflowJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/first-level-access-study-jvm-js-01.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 963
+      },
+      "sha256": "4fe6200dbe0510801563e4fd953a51e0b81811f19e42b00d031220681acfdfd9"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:33:46.951309+00:00",
+        "finished_utc": "2026-10-21T06:33:56.137072+00:00",
+        "duration_seconds": 9.184818,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "fmriWorkflowJVM/test",
+          "fmriWorkflowJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/first-level-access-study-jvm-js-02.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 1730
+      },
+      "sha256": "1f1302e7e5ed78566f0cd1e6f98ea305355e1d4f6a86c1f5c6bd32dc93bc95e5"
+    },
+    {
+      "execution": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T06:36:21.350891+00:00",
+        "finished_utc": "2026-10-21T06:36:36.040725+00:00",
+        "duration_seconds": 14.689528,
+        "command": [
+          "python3",
+          "tools/build/sbt-warm",
+          "fmriWorkflowJVM/test",
+          "fmriWorkflowJS/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/first-level-access-study-jvm-js-03.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 10394
+      },
+      "sha256": "635fbd270111eb4ed55eb8b078398d94b7f1978c04037ed93b0c813da6fa353e"
+    }
+  ],
+  "adverseExplanation": [
+    "01: old donor header facade API; migrated to image4s header and typed neuroim placement.",
+    "02: stale donor cache-test helper API; tests now measure owned cache directory bytes via existing public root.",
+    "03: InterruptedException intentionally not caught by MUnit intercept; explicit catch test harness preserves and clears flags correctly. Actual workflow contracts passed."
+  ]
+}

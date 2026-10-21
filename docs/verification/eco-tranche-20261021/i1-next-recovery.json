@@ -30,7 +30,7 @@
     "Fixed-effects and morphometry failures remain on broader PLS recovery unless needed to qualify a specific I1 caller.",
     "Independent provider-only IO->typedtransform->slice display scenario can proceed separately; reuse accepted transform corpus."
   ],
-  "nextAction": "Complete response-support typed audit adaptation and current-provider dataset/deferred opener; restore explicit categorical/continuous formula roles; qualify native source membership, study support and actual full caller handoff. Keep eco-neuroim-integrations/I1 open.",
+  "nextAction": "Compile complete maintained PLS desktop from clean PLS1ef81ed and exact Root896dda088 provider closure; execute unchanged actual beta/FIR StudyPane and retained surface/scene caller scenarios; reconcile all caller evidence before independent I1 review.",
   "completed": [
     {
       "scope": "Independent provider-only IO -> typed transform -> Java2D display and actual cursor transition",
@@ -47,7 +47,35 @@
     {
       "scope": "Signed run-clock response correction",
       "evidence": "signed-onset-correction.json"
+    },
+    {
+      "scope": "Response-support, explicit event roles and run-scoped parent identity",
+      "evidence": "support-and-roles-recovery.json"
+    },
+    {
+      "scope": "Deferred dataset/source opening and bounded study support/timing",
+      "evidence": "first-level-access-study-recovery.json"
+    },
+    {
+      "scope": "Selected fixed-effects policy metadata",
+      "evidence": "selected-policy-fit-jvm-js-01.log"
+    },
+    {
+      "scope": "FreeSurfer scalar morphometry reader",
+      "evidence": "morphometry-surface-jvm-js-01.log"
+    },
+    {
+      "scope": "Bounded NIfTI staging with receipt/free-floor repair",
+      "evidence": "nifti-staging-recovery.json"
+    },
+    {
+      "scope": "Actual beta/FIR adapter workflow",
+      "evidence": "first-level-actual-consumer.json"
+    },
+    {
+      "scope": "Transactional surface colour, paired cameras and complete scene geometry families",
+      "evidence": "surface-consumer-contract-recovery.json"
     }
   ],
-  "nativeCaller": "All GLM review production compiled; runtime explicit-role capability missing (native-membership-initial.json)."
+  "nativeCaller": "Unchanged actual native membership probe passed; complete StudyPane handoff remains pending."
 }

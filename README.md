@@ -21,10 +21,7 @@ cross-compiled sbt build.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `neuroim4s` (standalone): neuroimaging volumes and time series, masks and ordered selections, sampling, orientation, reslicing, image statistics and world binding. Optional JVM IO uses image4s codecs directly; ScalaFIM has no local `image` module.
 - `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
-- `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
-- `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
-- `image-view-java2d`: thin JVM Java2D host with direct `Graphics2D` and `BufferedImage` rendering.
-- `image-view-javafx`: thin JVM JavaFX Canvas host behind the existing toolkit-free drawing contract.
+- `neuroim4s-view` (standalone): renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts. Optional `neuroim4s-view-canvas`, `neuroim4s-view-java2d` and `neuroim4s-view-javafx` modules provide the Scala.js Canvas, JVM Java2D and JVM JavaFX hosts. See [the volume viewer guide](docs/image-viewer.md).
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
 - `surface`: mesh4s-backed topology and point storage with strict manifold admission, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.

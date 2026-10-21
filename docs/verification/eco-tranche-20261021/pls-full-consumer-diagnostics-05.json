@@ -1,0 +1,161 @@
+{
+  "sourceCommit": "0855cb9fa8b81f5ff1dbe83967e3337494fb4400",
+  "scalafimRevision": "e4e55d59cb7599168c97739abf84c8ffc95d3c07",
+  "atlasRevision": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T06:46:04.975436+00:00",
+    "finished_utc": "2026-10-21T06:48:47.019393+00:00",
+    "duration_seconds": 162.041577,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-integration-global",
+      "-Dplsneuro.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/main-imaging-providers",
+      "desktop/compile"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-main-fresh-compile-05.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 27786
+  },
+  "logSha256": "84f71058a02beb9bcce39c28e24ec5517dd64ed7bf83540717269b044c4d7d21",
+  "reportedErrorCount": 20,
+  "diagnostics": [
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 427,
+      "column": 26,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:427:26 \n[error] 427 |      transaction: Option[SurfaceLayerTransaction] = None,\n[error]     |                          ^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                          Not found: type SurfaceLayerTransaction\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 428,
+      "column": 27,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:428:27 \n[error] 428 |      nativeColors: Option[JavaFxPreparedColorUpdate] = None)\n[error]     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                           Not found: type JavaFxPreparedColorUpdate\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 511,
+      "column": 41,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:511:41 \n[error] 511 |  private def retainedColorBasis: Option[JavaFxColorPreparationBasis] = backend.map: renderer =>\n[error]     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                           Not found: type JavaFxColorPreparationBasis\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 794,
+      "column": 25,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:794:25 \n[error] 794 |      colorBasis: Option[JavaFxColorPreparationBasis] = None): Prepared =\n[error]     |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                         Not found: type JavaFxColorPreparationBasis\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 512,
+      "column": 13,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:512:13 \n[error] 512 |    renderer.colorPreparationBasis.fold(error => throw IllegalStateException(error.message), identity)\n[error]     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value colorPreparationBasis is not a member of scalafim.surface.view.javafx.JavaFxSurfaceBackend"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 581,
+      "column": 44,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:581:44 \n[error] 581 |    applyActions(Vector(SurfaceViewerAction.SetSurfaceViewpoints(viewpoints)))\n[error]     |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value SetSurfaceViewpoints is not a member of object scalafim.surface.view.SurfaceViewerAction"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 846,
+      "column": 8,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:846:8 \n[error] 846 |        SurfaceLayerTransaction.prepare(base, baseState, entries.flatMap(_._6)) match\n[error]     |        ^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |        Not found: SurfaceLayerTransaction\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 848,
+      "column": 20,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:848:20 \n[error] 848 |            model = transaction.nextModel,\n[error]     |                    ^^^^^^^^^^^\n[error]     |                    Not found: transaction\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 849,
+      "column": 19,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:849:19 \n[error] 849 |            plan = transaction.preparedPlan,\n[error]     |                   ^^^^^^^^^^^\n[error]     |                   Not found: transaction\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 851,
+      "column": 31,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:851:31 \n[error] 851 |            transaction = Some(transaction)\n[error]     |                               ^^^^^^^^^^^\n[error]     |                               Not found: transaction\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 950,
+      "column": 17,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:950:17 \n[error] 950 |    transaction: SurfaceLayerTransaction\n[error]     |                 ^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |                 Not found: type SurfaceLayerTransaction\n[error]     |\n[error]     | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 956,
+      "column": 42,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:956:42 \n[error] 956 |        prepared.nativeColors.fold(active.applyLayerTransaction(transaction))(\n[error]     |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value applyLayerTransaction is not a member of scalafim.surface.view.javafx.JavaFxSurfaceController"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
+      "line": 1251,
+      "column": 28,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala:1251:28 \n[error] 1251 |          val camera = plan.cameraFor(slot.surface)\n[error]      |                       ^^^^^^^^^^^^^^\n[error]      |value cameraFor is not a member of scalafim.surface.view.SurfaceRenderPlan - did you mean plan.camera?"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+      "line": 12,
+      "column": 14,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala:12:14 \n[error] 12 |  def limits: NiftiStagingLimits =\n[error]    |              ^^^^^^^^^^^^^^^^^^\n[error]    |              Not found: type NiftiStagingLimits\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+      "line": 4,
+      "column": 47,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala:4:47 \n[error] 4 |import scalafim.dataset.io.{NiftiStagingCache, NiftiStagingLimits}\n[error]   |                                               ^^^^^^^^^^^^^^^^^^\n[error]   |           value NiftiStagingLimits is not a member of scalafim.dataset.io"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+      "line": 17,
+      "column": 4,
+      "raw": "[error] -- [E006] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala:17:4 \n[error] 17 |    NiftiStagingLimits(bytes(imageGiB), bytes(freeGiB), bytes(cacheGiB))\n[error]    |    ^^^^^^^^^^^^^^^^^^\n[error]    |    Not found: NiftiStagingLimits\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+      "line": 46,
+      "column": 47,
+      "raw": "[error] -- [E007] Type Mismatch Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala:46:47 \n[error] 46 |            val cache = NiftiStagingCache.make(directory, limits).fold(e => throw IllegalArgumentException(e.message), identity)\n[error]    |                                               ^^^^^^^^^^^^^^^^^\n[error]    |                                 Found:    (java.nio.file.Path, Nothing)\n[error]    |                                 Required: java.nio.file.Path\n[error]    |\n[error]    | longer explanation available when compiling with `-explain`"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala",
+      "line": 74,
+      "column": 26,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/StudyStaging.scala:74:26 \n[error] 74 |        val bytes = cache.sizeBytes.fold(e => throw IllegalArgumentException(e.message), identity)\n[error]    |                    ^^^^^^^^^^^^^^^\n[error]    |value sizeBytes is not a member of scalafim.dataset.io.NiftiStagingCache"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ViewerScene.scala",
+      "line": 65,
+      "column": 14,
+      "raw": "[error] -- Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ViewerScene.scala:65:14 \n[error] 65 |      layers, geometry), entries)\n[error]    |              ^^^^^^^^\n[error]    |   too many arguments for method apply in object SurfaceSceneBindings: (\n[error]    |     surfaces:\n[error]    |       Map[scalafim.surface.view.SurfaceId,\n[error]    |         scalafim.surface.view.SurfaceExternalReference]\n[error]    |     ,\n[error]    |   layers:\n[error]    |     Map[scalafim.surface.view.SurfaceLayerId,\n[error]    |       scalafim.surface.view.SurfaceExternalReference]\n[error]    |   ): scalafim.surface.view.SurfaceSceneBindings"
+    },
+    {
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ViewerScene.scala",
+      "line": 206,
+      "column": 64,
+      "raw": "[error] -- [E008] Not Found Error: /Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-main-qualified-05/modules/desktop/src/main/scala/plsneuro/desktop/ViewerScene.scala:206:64 \n[error] 206 |    val complete = document.revision == SurfaceDocumentRevision.V9 &&\n[error]     |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n[error]     |value V9 is not a member of object scalafim.surface.view.SurfaceDocumentRevision - did you mean SurfaceDocumentRevision.V1? or perhaps SurfaceDocumentRevision.V2 or SurfaceDocumentRevision.V3 or SurfaceDocumentRevision.V4?"
+    }
+  ],
+  "deltaFromCompile04": "All41previousdiagnostics cleared. Complete88-source adapters and22-source GLM review JavaFX production compile succeeds. Compilation then reaches complete107-source desktop and exposes20 surface-view/staging capability errors.",
+  "limits": [
+    "Desktop remains uncompiled; later errors may remain hidden.",
+    "Compile success of all adapters is not full native or scientific acceptance."
+  ]
+}
