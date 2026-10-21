@@ -148,7 +148,8 @@ class JavaFxAdaptiveAtlasSuite extends munit.FunSuite:
     assertEquals(JavaFxAdaptiveAtlas.anchor(grey(0).toPackedInt,grey(1).toPackedInt,grey(2).toPackedInt),1)
     val render = JavaFxSurfaceProbe.compile(plan(model(grey,copies=300)),config=adaptive).toOption.get
     assertEquals(render.receipt.facesUploaded,300)
-    assertEquals(render.receipt.verticesUploaded,900) // three distinct source vertices per original face
+    // Adaptive chunks retain the complete 900-vertex source buffer independently.
+    assertEquals(render.receipt.verticesUploaded,1800)
     assertEquals(render.chunks.map(_.renderedFaceCount),Vector(256,44))
     for chunk <- render.chunks; face <- 0 until chunk.renderedFaceCount do
       assertEquals(chunk.packetFace(face),Some(chunk.faceStart+face))
@@ -157,12 +158,15 @@ class JavaFxAdaptiveAtlasSuite extends munit.FunSuite:
   test("saturated RGB uses midpoint fallback and morphs distinct source plus synthetic vertices"):
     val render = JavaFxSurfaceProbe.compile(plan(model(rgb,copies=300)),config=adaptive).toOption.get
     assertEquals(render.receipt.facesUploaded,1200)
-    assertEquals(render.receipt.verticesUploaded,1800)
+    // Two full source buffers plus 300 faces' three fallback midpoints.
+    assertEquals(render.receipt.verticesUploaded,2700)
     val receipt = render.updateGeometry(plan(model(rgb,copies=300,shift=3))).toOption.get
-    assertEquals(receipt.verticesUpdated,1800)
+    assertEquals(receipt.verticesUpdated,2700)
     for chunk <- render.chunks; face <- 0 until chunk.renderedFaceCount do
       assertEquals(chunk.packetFace(face),Some(chunk.faceStart+face/4))
-    assertEqualsDouble(render.chunks.head.mesh.getPoints.get(9).toDouble,3.5,0)
+    val mesh = render.chunks.head.mesh
+    val firstChildMidpoint = mesh.getFaces.get(3)
+    assertEqualsDouble(mesh.getPoints.get(firstChildMidpoint * 3).toDouble,3.5,0)
 
   test("anchor-only colour changes reuse geometry; split changes refuse before mutation"):
     val grey = Vector(Rgba32.unsafe(0,0,0),Rgba32.unsafe(255,255,255),Rgba32.unsafe(255,255,255))
@@ -206,7 +210,8 @@ class JavaFxAdaptiveAtlasSuite extends munit.FunSuite:
     val fixture = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface,geometry).toOption.get),Vector(layer)).toOption.get
     val render = JavaFxSurfaceProbe.compile(plan(fixture),config=adaptive).toOption.get
     assertEquals(render.receipt.facesUploaded,600)
-    assertEquals(render.receipt.verticesUploaded,1200)
+    // Both chunks retain all 900 sources; only the 100 RGB faces add midpoints.
+    assertEquals(render.receipt.verticesUploaded,2100)
     for chunk <- render.chunks do
       var native = 0
       for face <- chunk.faceStart until chunk.faceStart+chunk.faceCount do

@@ -324,7 +324,8 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assertEquals(result.chunks.map(_.faceCount), Vector(256, 44))
     assertEquals(result.receipt.chunks, 2)
     assertEquals(result.receipt.facesUploaded, 300)
-    assertEquals(result.receipt.verticesUploaded, 900)
+    // Legacy chunks retain the complete 900-vertex source buffer independently.
+    assertEquals(result.receipt.verticesUploaded, 1800)
     assertEquals(result.receipt.atlasPixels, 4864L)
 
   test("face tuples retain point, normal, and face-local atlas indices"):
