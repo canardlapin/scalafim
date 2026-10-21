@@ -1,0 +1,51 @@
+{
+  "root_source": "b140f0d31",
+  "provider_revision": "4657ed670c496a36af6ebecef22ec95156529172",
+  "provider_remote_branch": "eco/u5-core-20261021",
+  "provider_remote_parity_verified": true,
+  "compile_all": {
+    "exit_code": 0,
+    "all_root_and_26_provider_targets": true
+  },
+  "connectivity_tests": {
+    "JVM": 2,
+    "JS": 2,
+    "skipped": 0
+  },
+  "adverse_evidence": "surface-cutover.json",
+  "log": "scalafim-eco-u5-compile-all-06.log.gz",
+  "raw_sha256": "3d4c4a115c31c2a6765ab3920beaca2690ab77e3fcf3df30943671bc43d7df2c",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T21:13:17.815453+00:00",
+    "finished_utc": "2026-10-21T21:18:25.682894+00:00",
+    "duration_seconds": 307.991163,
+    "command": [
+      "env",
+      "-u",
+      "JAVA_TOOL_OPTIONS",
+      "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+      "SBT_WARM_HEAP=6g",
+      "python3",
+      "tools/build/sbt-warm",
+      "scalafimCompileAll",
+      "surfaceViewConnectivityJVM/test",
+      "surfaceViewConnectivityJS/test"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "log": "/tmp/scalafim-eco-u5-compile-all-06.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 2400.0,
+    "log_bytes": 29826
+  },
+  "original_eco_tasks_closed": [
+    "eco-u5-core",
+    "eco-u5-display",
+    "eco-u5-javafx",
+    "eco-u5-threejs"
+  ],
+  "limits": "Core/IO/display/backend cutovers accepted. Optional mixed routing, surface atlas composition and U5/U6 integration/acceptance remain open. Native named-runtime and browser bounded-specimen qualification limitations remain in provider receipts."
+}
