@@ -217,7 +217,7 @@ lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
 lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 
 // Surface anatomy, formats, scenes and backends have one independent provider.
-lazy val neurosurf4sRevision = "157d47c9733d770d71ebd00ed39bf43c401041e8"
+lazy val neurosurf4sRevision = "4657ed670c496a36af6ebecef22ec95156529172"
 lazy val neurosurf4sBuild = {
   Seq("spatial4s", "locus4s", "mesh4s", "image4s", "graph4s", "zarr4s", "neuroim4s", "reframe4s", "gale", "ravel", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neurosurf4s.$provider.build", _))
