@@ -112,8 +112,9 @@ layout plans, four focus modes and 24 map pixels, cursor ownership, saved focus
 and foreign-world anatomy refusal. These are development component results.
 A reviewer identified failure-path cleanup gaps in the new probe. The repair
 and two fault-injection modes are reviewed at
-`c9cd664cc3ea0f597e763d0edec04a5b0e3d35f6`; fresh committed qualification with
-private provider outputs is in progress. No full PLS qualification is claimed.
+`c9cd664cc3ea0f597e763d0edec04a5b0e3d35f6`; [Fresh committed qualification](fresh-imaging-component.json) with
+private provider outputs passed normal, after-stage failure and cleanup failure
+modes, each with bounded process exit zero. No full PLS qualification is claimed.
 
 Remaining I1 boundaries are the real application's provider/build/preparation
 wiring, standalone `VolumePane` loading, `ResultGeometry`/ordered scatter and

@@ -1,0 +1,48 @@
+{
+  "candidate": "c9cd664cc3ea0f597e763d0edec04a5b0e3d35f6",
+  "freshCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-qualified",
+  "privateGlobalBase": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-imaging-global",
+  "privateProviders": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-imaging-providers",
+  "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-imaging-fresh-c9cd664-01.log",
+  "sha256": "6afe5a8300f1b6970f7fd12d41923937841c08a348f01c63ab429ccfb5079695",
+  "metadata": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T04:11:34.245010+00:00",
+    "finished_utc": "2026-10-21T04:13:31.416732+00:00",
+    "duration_seconds": 117.170403,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "sbt",
+      "-batch",
+      "-J-Xmx4g",
+      "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+      "-Dsbt.supershell=false",
+      "-Dsbt.log.noformat=true",
+      "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/fresh-imaging-global",
+      "-Dimaging.providers=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/qualified-imaging-providers",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe after-stage",
+      "Test/runMain plsneuro.desktop.ImagingConsumerProbe cleanup"
+    ],
+    "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/plsneuro-imaging-qualified/tools/imaging-consumer",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/pls-imaging-fresh-c9cd664-01.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 22543
+  },
+  "modes": [
+    "normal: actual22-filecompile,12layoutplans,4focusmodes,24map pixels,cursor owner,savedfocus,foreign-world refusal",
+    "after-stage: injectedsetupfailure;cleanup,workertermination,boundedexit0",
+    "cleanup: successfulbody theninjectedcleanupfailure;latercleanup,workertermination,boundedexit0"
+  ],
+  "sourceReview": "Astra APPROVE c9cd664 probe-only delta; production anatomy/declaration seams approved atc6ae1db",
+  "limits": [
+    "Component qualification only",
+    "VolumePane and ResultGeometry/orderedscatter and linkedSpatialResponsePane stillpending",
+    "Mainapplicationbuild/providerpreparation and fullnative/performance acceptance stillpending"
+  ]
+}
