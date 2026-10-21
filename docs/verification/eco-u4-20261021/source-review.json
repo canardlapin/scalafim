@@ -1,0 +1,26 @@
+{
+  "schema": "scalafim.eco-source-review.v1",
+  "reviewer": "/root/volume_view_astra_review",
+  "provider": "fe9ce3272fce97c4c3b400b373db2a2336c24a7d",
+  "root": "8998f93be048df27d0bb7e2126bd589a4a59ae30",
+  "verdict": "APPROVE bounded source repair",
+  "reviewed": [
+    "locus frame/scatter/volume-graph extraction and surface adapters",
+    "soft-LDA/Alder lifecycle and held-out subject ownership moves",
+    "unchanged scientific audit/hash framing and explicit capability refusal semantics",
+    "portable independent numerical/type/owner/lifetime cases and default-PassOnly workflow scenarios",
+    "test-only cross-domain graph and source deletion",
+    "corrected production workflow import and public ownership documentation"
+  ],
+  "qualificationPending": [
+    "published-pin consumers",
+    "full Root compilation",
+    "bounded full repository campaign"
+  ],
+  "notAdmitted": [
+    "durable numerical group serialization",
+    "broad scientific calibration",
+    "native rendering or performance expansion",
+    "hosted CI or main landing"
+  ]
+}
