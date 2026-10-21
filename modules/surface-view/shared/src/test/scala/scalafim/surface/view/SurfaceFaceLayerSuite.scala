@@ -4,6 +4,7 @@ import intaglio.*
 import scalafim.surface.*
 
 class SurfaceFaceLayerSuite extends munit.FunSuite:
+  private def preV9(json: String): String = json.replaceAll(",\"surfaceViewpoints\":\\[\\],\"geometryStates\":.*}$", "}")
   private val fixture = SurfaceFaceFixture
 
   test("face colors lower to separate render corners with original identity"):
@@ -110,8 +111,8 @@ class SurfaceFaceLayerSuite extends munit.FunSuite:
     val provenance = SurfaceProvenance.make("test", "1", "2026-09-07").toOption.get
     val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
     val decoded = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)).toOption.get
-    val v2 = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)
-      .replace(",\"legends\":[]", "").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":2")
+    val v2 = SurfaceSceneCodec.decode(preV9(SurfaceSceneCodec.encode(document))
+      .replace(",\"legends\":[]", "").replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":9", "\"revision\":2")
       .replace(",\"scalarInterpolation\":false", "")
       .replace(",\"scalarMappingKey\":null", "")
       .replace(",\"vertexInterpolation\":\"color\"", "")).toOption.get
@@ -120,7 +121,7 @@ class SurfaceFaceLayerSuite extends munit.FunSuite:
     assert(v2.restore(model, bindings).isRight)
     assertEquals(decoded.layers.head.association, SurfaceSampleAssociation.Face)
     assertEquals(decoded.selection, state.selection)
-    assertEquals(decoded.revision, SurfaceDocumentRevision.V8)
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V9)
     val unsupported = SurfaceBackendCapabilities(SurfaceBackendId.unsafe("vertex-only"), SurfacePlanRevision.Current, Set.empty)
     assert(decoded.admit(unsupported).isLeft)
     assert(decoded.admit(unsupported.copy(features = Set(SurfaceBackendFeature.FacewiseData))).isRight)

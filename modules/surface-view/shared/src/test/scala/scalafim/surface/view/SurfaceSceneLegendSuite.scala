@@ -3,6 +3,7 @@ package scalafim.surface.view
 import intaglio.*
 
 class SurfaceSceneLegendSuite extends munit.FunSuite:
+  private def preV9(json: String): String = json.replaceAll(",\"surfaceViewpoints\":\\[\\],\"geometryStates\":.*}$", "}")
   private val surface = SurfaceFaceFixture.Surface
   private val scalarId = SurfaceLayerId.unsafe("scalar")
   private val splitId = SurfaceLayerId.unsafe("split")
@@ -39,7 +40,7 @@ class SurfaceSceneLegendSuite extends munit.FunSuite:
     val document = capture(viewer, state)
     val json = SurfaceSceneCodec.encode(document)
     val restored = SurfaceSceneCodec.decode(json).toOption.get
-    assertEquals(restored.revision, SurfaceDocumentRevision.V8)
+    assertEquals(restored.revision, SurfaceDocumentRevision.V9)
     assertEquals(SurfaceSceneCodec.encode(restored), json)
     assertEquals(restored.legends.map(_.canonicalKey), document.legends.map(_.canonicalKey))
     assertEquals(restored.restore(viewer, bindings), Right(state))
@@ -80,12 +81,12 @@ class SurfaceSceneLegendSuite extends munit.FunSuite:
     assert(SurfaceSceneCodec.decode(extended).isLeft)
     val decoded = SurfaceSceneCodec.decode(extended, SurfaceSceneReadPolicy(SurfaceUnknownFieldPolicy.Ignore)).toOption.get
     assertEquals(decoded.restore(viewer, bindings), Right(SurfaceFaceFixture.state(viewer)))
-    assert(SurfaceSceneCodec.decode(json.replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":5")).isLeft)
+    assert(SurfaceSceneCodec.decode(preV9(json).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":9", "\"revision\":5")).isLeft)
 
   test("revision 5 documents without legends remain readable and preserve their JSON shape"):
     val viewer = model()
     val document = SurfaceSceneDocument.capture(viewer, SurfaceFaceFixture.state(viewer), bindings, provenance).toOption.get
-    val old = SurfaceSceneCodec.encode(document).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":8", "\"revision\":5").replace(",\"legends\":[]", "")
+    val old = preV9(SurfaceSceneCodec.encode(document)).replaceAll(",\"aspectRatio\":1(?:[.]0)?", "").replace(",\"framing\":\"bounds-fit\"", "").replace("\"revision\":9", "\"revision\":5").replace(",\"legends\":[]", "")
     val decoded = SurfaceSceneCodec.decode(old).toOption.get
     assertEquals(decoded.legends, Vector.empty)
     assertEquals(SurfaceSceneCodec.encode(decoded), old)

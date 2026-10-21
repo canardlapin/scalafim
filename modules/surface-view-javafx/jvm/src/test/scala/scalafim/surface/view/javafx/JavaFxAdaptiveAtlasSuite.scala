@@ -76,6 +76,22 @@ class JavaFxAdaptiveAtlasSuite extends munit.FunSuite:
       face += 1
     fail(s"sample ($x,$y) did not intersect an uploaded child")
 
+  private val sharedSquareRgb = Vector(
+    Rgba32.unsafe(255, 0, 0), Rgba32.unsafe(0, 255, 0),
+    Rgba32.unsafe(0, 0, 255), Rgba32.unsafe(0, 255, 0)
+  )
+
+  private def sharedSquare(colors: Vector[Rgba32], shift: Double = 0): SurfaceViewerModel =
+    val vertices = Vector(
+      Vector(shift, 0.0, 0.0), Vector(1.0 + shift, 0.0, 0.0),
+      Vector(1.0 + shift, 1.0, 0.0), Vector(shift, 1.0, 0.0)
+    )
+    val geometry = scalafim.surface.SurfaceGeometry(
+      scalafim.surface.TriangleMesh.fromRows(vertices, Vector((0, 1, 2), (0, 2, 3))),
+      scalafim.surface.Hemisphere.Left, scalafim.surface.SurfaceKind.Inflated)
+    val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("shared-square"), surface, geometry, colors).toOption.get
+    SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(layer)).toOption.get
+
   test("actual affine tiles preserve saturated colours and cyclic face ordering including diagonal edges"):
     val random = new scala.util.Random(20260909)
     val triples = Vector(Vector(Rgba32.unsafe(0,0,0), Rgba32.unsafe(255,255,255), Rgba32.unsafe(255,255,255)), rgb) ++
@@ -93,23 +109,57 @@ class JavaFxAdaptiveAtlasSuite extends munit.FunSuite:
         assertEqualsDouble(sample(render.chunks.head,x,y,shift),expected,0.50001)
 
 
-  test("cyclic anchors avoid needless subdivision without duplicating source vertices"):
+  test("shared square retains four source vertices without adaptive fallback"):
+    val uniform = Vector.fill(4)(Rgba32.unsafe(70, 80, 90))
+    val render = JavaFxSurfaceProbe.compile(plan(sharedSquare(uniform)), config=adaptive).toOption.get
+    assertEquals(render.receipt.facesUploaded,2)
+    assertEquals(render.receipt.verticesUploaded,4)
+    assertEquals(render.chunks.map(_.renderedFaceCount),Vector(2))
+    assertEquals(Vector.tabulate(2)(render.chunks.head.packetFace),Vector(Some(0),Some(1)))
+
+  test("shared square retains source deduplication and appends only RGB fallback midpoints"):
+    val render = JavaFxSurfaceProbe.compile(plan(sharedSquare(sharedSquareRgb)), config=adaptive).toOption.get
+    assertEquals(render.receipt.facesUploaded,8)
+    assertEquals(render.receipt.verticesUploaded,10)
+    assertEquals(render.chunks.map(_.renderedFaceCount),Vector(8))
+    assertEquals(Vector.tabulate(8)(render.chunks.head.packetFace),Vector.fill(4)(Some(0)) ++ Vector.fill(4)(Some(1)))
+    val faces = render.chunks.head.mesh.getFaces
+    val points = render.chunks.head.mesh.getPoints
+    for face <- 0 until 8 do
+      val a = faces.get(face * 9) * 3
+      val b = faces.get(face * 9 + 3) * 3
+      val c = faces.get(face * 9 + 6) * 3
+      val area = (points.get(b) - points.get(a)) * (points.get(c + 1) - points.get(a + 1)) -
+        (points.get(b + 1) - points.get(a + 1)) * (points.get(c) - points.get(a))
+      assertEqualsDouble(area.toDouble,0.25,1e-9)
+    val receipt = render.updateGeometry(plan(sharedSquare(sharedSquareRgb, shift=3))).toOption.get
+    assertEquals(receipt.verticesUpdated,10)
+    def childCoordinates(face: Int): Vector[(Float,Float)] =
+      Vector(0,3,6).map: corner =>
+        val point = render.chunks.head.mesh.getFaces.get(face * 9 + corner) * 3
+        (render.chunks.head.mesh.getPoints.get(point),render.chunks.head.mesh.getPoints.get(point + 1))
+    assertEquals(childCoordinates(0),Vector((3f,0f),(3.5f,0f),(3.5f,0.5f)))
+    assertEquals(childCoordinates(1),Vector((4f,0f),(4f,0.5f),(3.5f,0f)))
+    assertEquals(childCoordinates(2),Vector((4f,1f),(3.5f,0.5f),(4f,0.5f)))
+    assertEquals(childCoordinates(6),Vector((3f,1f),(3f,0.5f),(3.5f,1f)))
+
+  test("cyclic anchors avoid needless subdivision for distinct chunk sources"):
     val grey = Vector(Rgba32.unsafe(0,0,0),Rgba32.unsafe(255,255,255),Rgba32.unsafe(255,255,255))
     assertEquals(JavaFxAdaptiveAtlas.anchor(grey(0).toPackedInt,grey(1).toPackedInt,grey(2).toPackedInt),1)
     val render = JavaFxSurfaceProbe.compile(plan(model(grey,copies=300)),config=adaptive).toOption.get
     assertEquals(render.receipt.facesUploaded,300)
-    assertEquals(render.receipt.verticesUploaded,6) // three shared vertices per atlas chunk
+    assertEquals(render.receipt.verticesUploaded,900) // three distinct source vertices per original face
     assertEquals(render.chunks.map(_.renderedFaceCount),Vector(256,44))
     for chunk <- render.chunks; face <- 0 until chunk.renderedFaceCount do
       assertEquals(chunk.packetFace(face),Some(chunk.faceStart+face))
     assertEqualsDouble(sample(render.chunks.head,0.5,0.5,16),255,1e-8)
 
-  test("saturated RGB uses midpoint fallback and morphs shared source plus synthetic vertices"):
+  test("saturated RGB uses midpoint fallback and morphs distinct source plus synthetic vertices"):
     val render = JavaFxSurfaceProbe.compile(plan(model(rgb,copies=300)),config=adaptive).toOption.get
     assertEquals(render.receipt.facesUploaded,1200)
-    assertEquals(render.receipt.verticesUploaded,906)
+    assertEquals(render.receipt.verticesUploaded,1800)
     val receipt = render.updateGeometry(plan(model(rgb,copies=300,shift=3))).toOption.get
-    assertEquals(receipt.verticesUpdated,906)
+    assertEquals(receipt.verticesUpdated,1800)
     for chunk <- render.chunks; face <- 0 until chunk.renderedFaceCount do
       assertEquals(chunk.packetFace(face),Some(chunk.faceStart+face/4))
     assertEqualsDouble(render.chunks.head.mesh.getPoints.get(9).toDouble,3.5,0)
@@ -140,15 +190,23 @@ class JavaFxAdaptiveAtlasSuite extends munit.FunSuite:
 
   test("mixed one/four-child layouts preserve winding and source identities across chunk boundaries"):
     val grey = Vector(Rgba32.unsafe(0,0,0),Rgba32.unsafe(255,255,255),Rgba32.unsafe(255,255,255))
-    val vertices = Vector.fill(3)(Vector(Vector(0.0,0.0,0.0),Vector(1.0,0.0,0.0),Vector(0.0,1.0,0.0))).flatten
-    val indices = Vector.tabulate(300)(f => ((f%3)*3,(f%3)*3+1,(f%3)*3+2))
+    val colorsByFace = Vector(grey, rgb, grey.reverse)
+    // Keep each original face physically coincident and colour-discriminating,
+    // while assigning it unique vertex indices for strict mesh ownership.
+    val vertices = Vector.fill(300)(Vector(
+      Vector(0.0,0.0,0.0), Vector(1.0,0.0,0.0), Vector(0.0,1.0,0.0)
+    )).flatten
+    val indices = Vector.tabulate(300): face =>
+      val offset = face * 3
+      (offset, offset + 1, offset + 2)
     val geometry = scalafim.surface.SurfaceGeometry(scalafim.surface.TriangleMesh.fromRows(vertices,indices),
       scalafim.surface.Hemisphere.Left,scalafim.surface.SurfaceKind.Inflated)
-    val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("mixed"),surface,geometry,grey++rgb++grey.reverse).toOption.get
+    val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("mixed"),surface,geometry,
+      Vector.tabulate(300)(face => colorsByFace(face % 3)).flatten).toOption.get
     val fixture = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface,geometry).toOption.get),Vector(layer)).toOption.get
     val render = JavaFxSurfaceProbe.compile(plan(fixture),config=adaptive).toOption.get
     assertEquals(render.receipt.facesUploaded,600)
-    assertEquals(render.receipt.verticesUploaded,318)
+    assertEquals(render.receipt.verticesUploaded,1200)
     for chunk <- render.chunks do
       var native = 0
       for face <- chunk.faceStart until chunk.faceStart+chunk.faceCount do

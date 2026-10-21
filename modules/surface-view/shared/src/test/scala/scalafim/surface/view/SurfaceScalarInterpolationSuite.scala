@@ -65,7 +65,7 @@ class SurfaceScalarInterpolationSuite extends munit.FunSuite:
       SurfaceProvenance.make("scalar-test", "1", "2026-09-07").toOption.get).toOption.get
     val json = SurfaceSceneCodec.encode(doc)
     val decoded = SurfaceSceneCodec.decode(json).toOption.get
-    assertEquals(decoded.revision, SurfaceDocumentRevision.V8)
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V9)
     assert(decoded.layers.head.scalarInterpolation)
     assert(decoded.restore(model, bindings).isRight)
     val unsupported = SurfaceBackendCapabilities(SurfaceBackendId.unsafe("no-scalars"), SurfacePlanRevision.Current, Set.empty)

@@ -102,12 +102,16 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     )
 
   private def geometry(faceCopies: Int = 1): SurfaceGeometry =
-    val faces = Vector.fill(faceCopies)((0, 1, 2))
+    // Coincident coordinates preserve the rendering oracle; distinct indices
+    // retain one valid topology face per requested copy.
+    val vertices = Vector.fill(faceCopies)(Vector(
+      Seq(-1.0, -1.0, 0.0), Seq(1.0, -1.0, 0.0), Seq(-0.5, 1.0, 0.0)
+    )).flatten
+    val faces = Vector.tabulate(faceCopies): copy =>
+      val offset = copy * 3
+      (offset, offset + 1, offset + 2)
     SurfaceGeometry(
-      TriangleMesh.fromRows(
-        Seq(Seq(-1.0, -1.0, 0.0), Seq(1.0, -1.0, 0.0), Seq(-0.5, 1.0, 0.0)),
-        faces
-      ),
+      TriangleMesh.fromRows(vertices, faces),
       Hemisphere.Left,
       SurfaceKind.Inflated
     )
@@ -320,7 +324,7 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assertEquals(result.chunks.map(_.faceCount), Vector(256, 44))
     assertEquals(result.receipt.chunks, 2)
     assertEquals(result.receipt.facesUploaded, 300)
-    assertEquals(result.receipt.verticesUploaded, 6)
+    assertEquals(result.receipt.verticesUploaded, 900)
     assertEquals(result.receipt.atlasPixels, 4864L)
 
   test("face tuples retain point, normal, and face-local atlas indices"):

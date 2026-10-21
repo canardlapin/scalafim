@@ -319,7 +319,9 @@ object SurfaceRasterizer:
 
   private def validatePlan(plan: SurfaceRenderPlan): Either[SurfaceRasterError, Unit] =
     SurfaceThresholdEdgeValidation.validate(plan).left.map(SurfaceRasterError.InvalidPlan.apply).flatMap: _ =>
-      if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
+      if !plan.validCameraBuffers then
+        Left(SurfaceRasterError.InvalidPlan("invalid surface camera packets"))
+      else if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
         Left(SurfaceRasterError.InvalidPlan("scalar policy and payload disagree"))
       else if plan.layers.exists(layer => layer.scalarField.nonEmpty && !plan.fragmentSurfaces(layer.surface)) then
         Left(SurfaceRasterError.InvalidPlan("scalar interpolation requires fragment composition"))
@@ -536,7 +538,7 @@ object SurfaceRasterizer:
     val baryB = new Array[Float](pixelCount)
     val baryC = new Array[Float](pixelCount)
     val composedColors = plan.meshes.zipWithIndex.map: (mesh, slot) =>
-      val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
+      val context = contexts.lift(slot).getOrElse(SlotContext(plan.cameraFor(mesh.surface), plan.lighting, plan.clipping,
         plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface), surfaceBase = plan.surfaceBase))
       val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.toPackedInt)
       var layerIndex = 0
@@ -565,7 +567,7 @@ object SurfaceRasterizer:
     var slot = 0
     while slot < plan.meshes.length do
       val mesh = plan.meshes(slot)
-      val context = contexts.lift(slot).getOrElse(SlotContext(plan.camera, plan.lighting, plan.clipping,
+      val context = contexts.lift(slot).getOrElse(SlotContext(plan.cameraFor(mesh.surface), plan.lighting, plan.clipping,
         plan.layers.filter(_.surface == mesh.surface), plan.fragmentSurfaces(mesh.surface), surfaceBase = plan.surfaceBase))
       val viewport = fittedSlots(slot).viewport
       val colors = composedColors(slot)

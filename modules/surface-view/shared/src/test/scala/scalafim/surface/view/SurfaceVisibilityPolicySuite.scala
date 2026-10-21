@@ -40,7 +40,7 @@ class SurfaceVisibilityPolicySuite extends munit.FunSuite:
     val document = SurfaceSceneDocument.capture(model, configured, bindings, provenance).toOption.get
     val json = SurfaceSceneCodec.encode(document)
     val decoded = SurfaceSceneCodec.decode(json).toOption.get
-    assertEquals(decoded.revision, SurfaceDocumentRevision.V8)
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V9)
     assertEquals(decoded.colorPipeline, SurfaceColorPipeline.DisplaySrgbLinearLight)
     assertEquals(decoded.surfaceOpacities, Map(SurfaceFaceFixture.Surface -> DisplayOpacity.unsafe(0.4)))
     assertEquals(decoded.surfaceBase, intaglio.Rgba32.unsafe(0, 0, 0, 0))

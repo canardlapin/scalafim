@@ -49,7 +49,7 @@ final case class JavaFxInteractionReceipt(
 )
 
 final class JavaFxSurfaceController private (
-  model: SurfaceViewerModel,
+  private var model: SurfaceViewerModel,
   backend: JavaFxSurfaceBackend,
   scene: SubScene,
   private var currentState: SurfaceViewerState,
@@ -129,6 +129,32 @@ final class JavaFxSurfaceController private (
           atlasUploads += interpreted.atlasUpdates
           interpreted
       navigationNanos :+= System.nanoTime() - started
+      result.left.foreach(record)
+      result
+
+  /** Publish only after the backend accepts the complete prepared update. */
+  def applyLayerTransaction(transaction: SurfaceLayerTransaction): Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
+    applyLayerTransaction(transaction, None)
+
+  def applyLayerTransaction(transaction: SurfaceLayerTransaction, colors: JavaFxPreparedColorUpdate)
+      : Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
+    applyLayerTransaction(transaction, Some(colors))
+
+  private def applyLayerTransaction(transaction: SurfaceLayerTransaction, colors: Option[JavaFxPreparedColorUpdate])
+      : Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
+    if isDisposed then Left(JavaFxInteractionError.Disposed)
+    else if !Platform.isFxApplicationThread then
+      Left(JavaFxInteractionError.Backend(JavaFxSurfaceError.IncompatiblePlan("transaction publication must run on the Application Thread")))
+    else
+      val result = for
+        next <- transaction.rebase(model, currentState, currentPlan).left.map(JavaFxInteractionError.View.apply)
+        receipt <- colors.fold(backend.render(next))(backend.render(next, _)).left.map(JavaFxInteractionError.Backend.apply)
+      yield
+        model = transaction.nextModel
+        currentPlan = next
+        if receipt.dirty.geometry then meshUploads += next.meshes.length
+        atlasUploads += receipt.atlasUpdates
+        receipt
       result.left.foreach(record)
       result
 

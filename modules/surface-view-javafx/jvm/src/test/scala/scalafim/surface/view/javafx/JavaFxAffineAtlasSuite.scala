@@ -11,10 +11,17 @@ private[javafx] object JavaFxAffineFixture:
 
   def model(colors: Vector[Rgba32], rotation: Int = 0, copies: Int = 1, shift: Double = 0): SurfaceViewerModel =
     val order = Vector(0, 1, 2).drop(rotation) ++ Vector(0, 1, 2).take(rotation)
-    val geometry = SurfaceGeometry(TriangleMesh.fromRows(
-      Vector(Vector(shift, 0.0, 0.0), Vector(1.0 + shift, 0.0, 0.0), Vector(shift, 1.0, 0.0)),
-      Vector.fill(copies)((order(0), order(1), order(2)))), Hemisphere.Left, SurfaceKind.Inflated)
-    val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("rgb"), surface, geometry, colors).toOption.get
+    // Every copy remains physically coincident for the atlas/pick oracle, but
+    // owns a distinct topological face under strict mesh admission.
+    val vertices = Vector.fill(copies)(Vector(
+      Vector(shift, 0.0, 0.0), Vector(1.0 + shift, 0.0, 0.0), Vector(shift, 1.0, 0.0)
+    )).flatten
+    val faces = Vector.tabulate(copies): copy =>
+      val offset = copy * 3
+      (offset + order(0), offset + order(1), offset + order(2))
+    val geometry = SurfaceGeometry(TriangleMesh.fromRows(vertices, faces), Hemisphere.Left, SurfaceKind.Inflated)
+    val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("rgb"), surface, geometry,
+      Vector.fill(copies)(colors).flatten).toOption.get
     SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(layer)).toOption.get
 
   def plan(model: SurfaceViewerModel): SurfaceRenderPlan =
@@ -177,11 +184,12 @@ object JavaFxAffineAtlasProbe:
             for chunk <- backend.chunks; local <- 0 until chunk.renderedFaceCount do
               val xy = Vector((0.1,0.1),(0.8,0.1),(0.1,0.8),(0.4,0.3))(local % 4)
               val pick = controller.pick(new PickResult(chunk.view,new Point3D(xy._1,xy._2,0),1,local,Point2D.ZERO)).toOption.get
-              require(pick.face.index == chunk.faceStart + local/4)
+              val sourceFace = chunk.faceStart + local/4
+              require(pick.face.index == sourceFace)
               require(math.abs(pick.barycentricA-(1-xy._1-xy._2)) < 1e-7)
               require(math.abs(pick.barycentricB-xy._1) < 1e-7)
               require(math.abs(pick.barycentricC-xy._2) < 1e-7)
-              require(pick.vertex.index == Vector(0,1,2,1)(local % 4))
+              require(pick.vertex.index == sourceFace * 3 + Vector(0,1,2,1)(local % 4))
               checked += 1
             println(s"PASS: $checked child picks preserve original face, vertex and barycentric identity across atlas chunks; no Stage shown")
           finally controller.dispose()
