@@ -6,7 +6,7 @@ import neuroim4s.spaces.SubjectId
 
 import neuroim4s.image.{SampleSpaces, SpatialAxis, VoxelCoord}
 import neuroim4s.image.SampleSpaces.*
-import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
+import neurosurf4s.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DemandSuite extends munit.FunSuite:
 

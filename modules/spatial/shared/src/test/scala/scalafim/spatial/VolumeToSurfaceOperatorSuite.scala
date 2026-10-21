@@ -7,7 +7,7 @@ import neuroim4s.spaces.SubjectId
 import neuroim4s.image.{SampleSpaces, Mask, SomeMaskVolume, SomeScalarVolume}
 import neuroim4s.image.SampleSpaces.*
 import neuroim4s.image.valueAtCanonicalOrdinal
-import scalafim.surface.*
+import neurosurf4s.surface.*
 
 class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 

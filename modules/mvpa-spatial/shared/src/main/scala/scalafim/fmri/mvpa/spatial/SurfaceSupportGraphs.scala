@@ -3,7 +3,7 @@ package scalafim.fmri.mvpa.spatial
 import mvpa4s.locus.SupportWeightPolicy
 import mvpa4s.AxisRef
 import mvpa4s.pattern.*
-import scalafim.surface.{TriangleMesh, VertexId}
+import neurosurf4s.surface.{TriangleMesh, VertexId}
 
 /** Geometry adapters build only supplied anatomical adjacency. Spatially close
   * vertices on opposing sulcal banks are never linked by Euclidean proximity.

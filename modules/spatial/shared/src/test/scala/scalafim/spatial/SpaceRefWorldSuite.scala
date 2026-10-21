@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import neuroim4s.spaces.{DatasetNamespace, GeometryDigest, NativeContext, ReferenceAcquisition, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
-import scalafim.surface.{Hemisphere, SurfaceKind}
+import neurosurf4s.surface.{Hemisphere, SurfaceKind}
 
 class SpaceRefWorldSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =

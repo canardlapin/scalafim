@@ -7,7 +7,7 @@ import neuroatlas4s.*
 import image4s.geometry.GeometryError
 import neuroatlas4s.syntax.*
 import neuroim4s.image.*
-import scalafim.surface.{
+import neurosurf4s.surface.{
   Hemisphere as SurfaceHemisphere,
   LabelInfo,
   LabeledSurface,

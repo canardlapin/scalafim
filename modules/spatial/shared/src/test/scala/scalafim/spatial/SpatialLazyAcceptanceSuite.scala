@@ -5,7 +5,7 @@ import neuroim4s.spaces.SubjectId
 import ravel.NDArray as RavelArray
 import neuroim4s.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
 import neuroim4s.image.SampleSpaces.*
-import scalafim.surface.*
+import neurosurf4s.surface.*
 
 enum ScenarioStatus:
   case Pass, Fail

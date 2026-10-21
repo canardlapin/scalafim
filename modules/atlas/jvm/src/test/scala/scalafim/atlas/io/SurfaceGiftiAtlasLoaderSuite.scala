@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.surface.{Hemisphere as SurfaceHemisphere, *}
+import neurosurf4s.surface.{Hemisphere as SurfaceHemisphere, *}
 
 class SurfaceGiftiAtlasLoaderSuite extends munit.FunSuite:
 

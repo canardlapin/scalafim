@@ -6,7 +6,7 @@ import scalafim.testkit.RealAssetGate
 
 import scalafim.atlas.{Fslr32kFrom2009c, StandardRouteRefusal, StandardSurfaceRoutes}
 import scalafim.atlas.reference.{Fslr32kRouteExample, PublicFslrRoute}
-import scalafim.surface.reference.*
+import neurosurf4s.surface.reference.*
 
 import java.nio.file.{Files, Path}
 

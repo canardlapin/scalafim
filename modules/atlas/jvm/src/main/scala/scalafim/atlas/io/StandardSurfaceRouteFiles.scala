@@ -5,9 +5,9 @@ import neuroatlas4s.io.*
 import java.nio.file.Path
 
 import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kHemisphereInput, Fslr32kRoute, StandardRoutePolicy, StandardRouteRefusal, StandardSurfaceRoutes}
-import scalafim.surface.SurfaceKind
-import scalafim.surface.io.TemplateFlowCache
-import scalafim.surface.reference.{DeclaredMedialWallReader, DeclaredPointMapReader, DeclaredSurfaceReader, ReferenceError}
+import neurosurf4s.surface.SurfaceKind
+import neurosurf4s.surface.io.TemplateFlowCache
+import neurosurf4s.surface.reference.{DeclaredMedialWallReader, DeclaredPointMapReader, DeclaredSurfaceReader, ReferenceError}
 
 /** Loads standard surface routes from local TemplateFlow caches. Nothing is downloaded: the locked files must already
   * be present (the point map as templateflow4s derived it), and every byte is digest-checked before it is decoded.

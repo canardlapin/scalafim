@@ -5,7 +5,7 @@ import neuroim4s.spatial.SamplingPolicy
 import neuroim4s.image.{Mask, SampleSpaces}
 import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.{SubjectId, TemplateName}
-import scalafim.surface.*
+import neurosurf4s.surface.*
 
 class TemplateSurfaceOperatorSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =

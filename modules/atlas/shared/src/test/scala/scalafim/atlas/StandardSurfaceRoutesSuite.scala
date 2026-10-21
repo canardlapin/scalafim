@@ -2,8 +2,8 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import scalafim.surface.CorticalHemisphere
-import scalafim.surface.reference.*
+import neurosurf4s.surface.CorticalHemisphere
+import neurosurf4s.surface.reference.*
 
 /** The platform-independent contract of the standard fsLR 32k route: its lock, typed frame basis, frozen policy and
   * explicit override, refusals and digest-bound identity. Assembly from real assets is JVM-only (see the JVM

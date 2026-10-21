@@ -5,7 +5,7 @@ import munit.FunSuite
 import mvpa4s.locus.SupportWeightPolicy
 import mvpa4s.AxisRef
 import mvpa4s.pattern.SupportTopology
-import scalafim.surface.{TriangleMesh, VertexId}
+import neurosurf4s.surface.{TriangleMesh, VertexId}
 
 class SurfaceSupportGraphsSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(e => fail(e.toString), identity)

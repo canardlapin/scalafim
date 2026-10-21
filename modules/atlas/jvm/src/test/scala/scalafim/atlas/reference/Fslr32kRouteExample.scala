@@ -2,8 +2,8 @@ package scalafim.atlas.reference
 
 import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kRoute}
 import scalafim.atlas.io.StandardSurfaceRouteFiles
-import scalafim.surface.CorticalHemisphere
-import scalafim.surface.reference.*
+import neurosurf4s.surface.CorticalHemisphere
+import neurosurf4s.surface.reference.*
 
 import java.nio.file.{Files, Path}
 

@@ -5,7 +5,7 @@ import neuroim4s.spaces.SubjectId
 import image4s.geometry.GeometryError
 import neuroim4s.image.{SampleSpaceError, SampleSpaces, Mask}
 import neuroim4s.image.SampleSpaces.*
-import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
+import neurosurf4s.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DomainSuite extends munit.FunSuite:
 

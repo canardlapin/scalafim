@@ -3,7 +3,7 @@ package scalafim.spatial
 import image4s.geometry.{Affine, D3, Frame}
 import neuroim4s.image.{SpatialPoint, SpatialPullback, SpatialPullbacks}
 import neuroim4s.spatial.{ProviderMapBinding, RegistrationMapError}
-import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
+import neurosurf4s.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
 import neuroim4s.transform.WorldTransform
 import reframe4s.core.SpatialMap
 

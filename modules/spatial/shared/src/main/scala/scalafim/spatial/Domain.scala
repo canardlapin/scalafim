@@ -15,7 +15,7 @@ import locus4s.{
   Selection as LocusSelection,
   SpaceMismatch
 }
-import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, SurfaceRoi}
+import neurosurf4s.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, SurfaceRoi}
 
 enum DomainKind:
   case Volume, Surface, Hybrid, Latent

@@ -2,8 +2,8 @@ package scalafim.atlas.reference
 
 import scalafim.atlas.{Fslr32kFrom2009c, Fslr32kRoute}
 import neuroim4s.image.*
-import scalafim.surface.*
-import scalafim.surface.reference.*
+import neurosurf4s.surface.*
+import neurosurf4s.surface.reference.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}

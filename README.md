@@ -24,12 +24,7 @@ cross-compiled sbt build.
 - `neuroim4s-view` (standalone): renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts. Optional `neuroim4s-view-canvas`, `neuroim4s-view-java2d` and `neuroim4s-view-javafx` modules provide the Scala.js Canvas, JVM Java2D and JVM JavaFX hosts. See [the volume viewer guide](docs/image-viewer.md).
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
-- `surface`: mesh4s-backed topology and point storage with strict manifold admission, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
-- `surface-test-fixtures`: unpublished JVM fsLR asset locks, independent oracles, qualification helpers and their tests; atlas tests consume its Compile configuration.
-- `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
-- `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
-- `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
-- `surface-view-three`: retained Scala.js Three.js/WebGL backend, browser picking/snapshots, and optional GPU volume projection.
+- [neurosurf4s](https://github.com/canardlapin/neurosurf4s) (standalone): surface anatomy, intrinsic geometry, fields, exact topology/domain ownership and GIFTI/FreeSurfer IO over mesh4s/locus4s/spatial4s plus small neuroim4s world declarations. Optional transport, volume projection, scenes, CPU raster, JavaFX and Three.js modules stay above core; fixtures, examples and parity tools live with their owners.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
 - `neuroim4s-transform` (standalone): reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
@@ -66,8 +61,9 @@ NIfTI source tests. See the [routing ownership map](docs/verification/neuroim-ro
 
 Triangle topology and primitive surface point storage are owned by standalone
 [`mesh4s`](https://github.com/canardlapin/mesh4s). Surface sets share one ordered
-topology across white, pial, inflated and spherical realizations. ScalaFIM keeps
-neuroimaging semantics, legacy persisted identity encodings and adapters. The
+topology across white, pial, inflated and spherical realizations. Surface semantics
+and unchanged persisted encodings now live in neurosurf4s; ScalaFIM keeps functional
+neuroimaging integrations. The
 `scalafim.mesh4s.build` property supports an explicit sibling source override.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
@@ -250,16 +246,14 @@ sbt thresholdJVM/test
 sbt thresholdJS/test
 sbt motionJVM/test
 sbt motionJS/test
-sbt surfaceJVM/test
-sbt surfaceJS/test
-sbt surfaceTestFixturesJVM/test
-sbt surfaceTestFixturesJS/test
-sbt surfaceViewJVM/test
-sbt surfaceViewJS/test
-sbt surfaceViewRasterJVM/test
-sbt surfaceViewRasterJS/test
-sbt surfaceViewJavafxJVM/test
-sbt surfaceViewThreeJS/test
+sbt neurosurfCoreTestAll
+sbt neurosurfSpatialTestAll
+sbt neurosurfFixtureTestAll
+sbt neurosurfViewJvmTestAll
+sbt neurosurfViewJsTestAll
+sbt neurosurfBrowserTestAll
+# Native JavaFX tests require a display and are separate from the headless campaign.
+sbt neurosurfNativeTestAll
 sbt surfaceViewConnectivityJVM/test
 sbt surfaceViewConnectivityJS/test
 sbt neuroimTransformTestAll
@@ -308,7 +302,7 @@ with smoke tests:
 
 ```sh
 sbt examplesTest
-sbt surfaceViewExamplesJVM/test surfaceViewExamplesJS/test
+sbt neurosurfExamplesJvmTestAll neurosurfBrowserTestAll
 sbt "atlasExamplesJVM/runMain scalafim.examples.atlas.describeStandardAtlases"
 ```
 

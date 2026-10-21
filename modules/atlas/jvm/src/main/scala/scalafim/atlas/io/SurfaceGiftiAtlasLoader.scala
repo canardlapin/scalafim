@@ -6,9 +6,9 @@ import java.nio.file.Path
 import scala.util.control.NonFatal
 import scalafim.atlas.*
 import neuroatlas4s.*
-import scalafim.surface.{Hemisphere as SurfaceHemisphere, LabelInfo, LabeledSurface, SurfaceGeometry}
-import scalafim.surface.gifti.*
-import scalafim.surface.io.{GiftiReader, GiftiSurfaceReader}
+import neurosurf4s.surface.{Hemisphere as SurfaceHemisphere, LabelInfo, LabeledSurface, SurfaceGeometry}
+import neurosurf4s.surface.gifti.*
+import neurosurf4s.surface.io.{GiftiReader, GiftiSurfaceReader}
 
 object SurfaceGiftiAtlasLoader:
   final case class Paths(left: Path, right: Path)

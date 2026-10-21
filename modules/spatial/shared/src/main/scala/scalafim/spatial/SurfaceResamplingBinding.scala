@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import gale.sparse.CSR
-import scalafim.surface.{SurfaceGeometry, SurfaceResampling, TemplateResamplingPlan}
+import neurosurf4s.surface.{SurfaceGeometry, SurfaceResampling, TemplateResamplingPlan}
 
 /** A checked sampled-surface binding for a template resampling plan.
   *
@@ -65,5 +65,5 @@ object SurfaceResamplingBinding:
       .left
       .map(value => SpatialError.OperatorAssemblyFailed(value.getMessage))
 
-  private def error(value: scalafim.surface.SurfaceError): SpatialError =
+  private def error(value: neurosurf4s.surface.SurfaceError): SpatialError =
     SpatialError.InvalidMixedPullback(value.message)

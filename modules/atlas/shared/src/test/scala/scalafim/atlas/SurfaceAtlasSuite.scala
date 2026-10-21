@@ -2,7 +2,7 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import scalafim.surface.{
+import neurosurf4s.surface.{
   Hemisphere as SurfaceHemisphere,
   LabelInfo,
   LabeledSurface,

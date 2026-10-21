@@ -5,7 +5,7 @@ import neuroim4s.spaces.SubjectId
 import neuroim4s.image.{SampleSpaces}
 import neuroim4s.image.SampleSpaces.*
 import locus4s.{Region, Relation, Selection, TotalMap}
-import scalafim.surface.{
+import neurosurf4s.surface.{
   Hemisphere,
   SurfaceField,
   SurfaceGeometry,

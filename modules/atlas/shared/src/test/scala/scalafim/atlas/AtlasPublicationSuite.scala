@@ -6,14 +6,14 @@ import neuroatlas4s.*
 
 import locus4s.DomainRegistry
 import neuroim4s.image.{SampleSpaces}
-import scalafim.surface.Hemisphere as SurfaceHemisphere
-import scalafim.surface.HemispherePair
-import scalafim.surface.LabelInfo
-import scalafim.surface.LabeledSurface
-import scalafim.surface.SurfaceGeometry
-import scalafim.surface.SurfaceKind
-import scalafim.surface.TriangleMesh
-import scalafim.surface.VertexId
+import neurosurf4s.surface.Hemisphere as SurfaceHemisphere
+import neurosurf4s.surface.HemispherePair
+import neurosurf4s.surface.LabelInfo
+import neurosurf4s.surface.LabeledSurface
+import neurosurf4s.surface.SurfaceGeometry
+import neurosurf4s.surface.SurfaceKind
+import neurosurf4s.surface.TriangleMesh
+import neurosurf4s.surface.VertexId
 
 class AtlasPublicationSuite extends munit.FunSuite:
   private val regions =

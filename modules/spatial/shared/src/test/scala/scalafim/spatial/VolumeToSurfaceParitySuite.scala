@@ -8,7 +8,7 @@ import image4s.geometry.{Affine, D3}
 import neuroim4s.image.*
 import neuroim4s.image.SampleSpaces.*
 import neuroim4s.spaces.SubjectId
-import scalafim.surface.*
+import neurosurf4s.surface.*
 
 class VolumeToSurfaceParitySuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(3, 4, 5))

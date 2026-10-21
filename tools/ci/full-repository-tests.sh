@@ -63,21 +63,24 @@ run_batch mvpa4s-core mvpa4sCoreTestAll
 run_batch mvpa4s-predictive mvpa4sPredictiveTestAll
 run_batch mvpa4s-locus mvpa4sLocusTestAll
 
-run_batch image-surface-jvm \
-  thresholdJVM/test \
-  motionJVM/test surfaceJVM/test surfaceTestFixturesJVM/test surfaceViewJVM/test surfaceViewRasterJVM/test
-run_batch image-surface-js \
-  thresholdJS/test \
-  motionJS/test surfaceJS/test surfaceTestFixturesJS/test surfaceViewJS/test surfaceViewRasterJS/test \
-  surfaceViewThreeJS/test
+run_batch neurosurf-Core neurosurfCoreTestAll
+run_batch neurosurf-Spatial neurosurfSpatialTestAll
+run_batch neurosurf-Fixture neurosurfFixtureTestAll
+run_batch neurosurf-ViewJvm neurosurfViewJvmTestAll
+run_batch neurosurf-ViewJs neurosurfViewJsTestAll
+run_batch neurosurf-Browser neurosurfBrowserTestAll
+run_batch neurosurf-ExamplesJvm neurosurfExamplesJvmTestAll
+
+run_batch threshold-motion-jvm thresholdJVM/test motionJVM/test
+run_batch threshold-motion-js thresholdJS/test motionJS/test
 
 run_batch data-jvm \
-  surfaceViewConnectivityJVM/test surfaceViewExamplesJVM/test \
+  surfaceViewConnectivityJVM/test \
   spatialJVM/test \
   atlasJVM/test archiveJVM/test archiveLnaJVM/test \
   archivedResponseInteropJVM/test datasetJVM/test
 run_batch data-js \
-  surfaceViewConnectivityJS/test surfaceViewExamplesJS/test \
+  surfaceViewConnectivityJS/test \
   spatialJS/test \
   atlasJS/test archiveJS/test archiveLnaJS/test \
   archivedResponseInteropJS/test datasetJS/test
@@ -104,6 +107,6 @@ run_batch downstream-js \
 # The surface JavaFX host tests require a display and are intentionally absent.
 # Volume JavaFX contract tests run in neuroim-view-jvm without the toolkit.
 run_batch examples \
-  surfaceExamplesJVM/test atlasExamplesJVM/test workflowExamplesJVM/test
+  atlasExamplesJVM/test workflowExamplesJVM/test
 run_batch examples-js \
   workflowExamplesJS/test

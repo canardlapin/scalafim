@@ -8,7 +8,7 @@ import neuroim4s.image.{GridSpec, Indexing, SomeMaskVolume, SpatialDims, Spatial
 import neuroim4s.image.SampleSpaces.*
 import neuroim4s.image.SomeNeuroVolume.*
 import gale.linalg.LinAlgError
-import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId, VolumeSurfaceSamplingPlan}
+import neurosurf4s.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId, VolumeSurfaceSamplingPlan}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -408,7 +408,7 @@ private final case class SurfaceRowAssembly(
 )
 
 private final class RequestVolumeToSurfacePullbackCompiler(
-  plan: scalafim.surface.VolumeSurfaceSamplingPlan
+  plan: neurosurf4s.surface.VolumeSurfaceSamplingPlan
 ) extends MorphismPullbackCompiler:
   override val id: MorphismCompilerId =
     MorphismCompilerId.unsafe("volume-to-surface-request-pullback-v1")
@@ -488,7 +488,7 @@ object MixedPullbackOperatorCompiler:
   private def assembleVolumeRoot(
     program: PullbackProgram,
     bridgeIndex: Int,
-    plan: scalafim.surface.VolumeSurfaceSamplingPlan,
+    plan: neurosurf4s.surface.VolumeSurfaceSamplingPlan,
     source: VolumeSource,
     target: SurfaceTarget
   ): Either[SpatialError, MixedRowAssembly] =

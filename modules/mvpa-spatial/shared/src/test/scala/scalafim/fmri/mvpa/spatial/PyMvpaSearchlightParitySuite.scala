@@ -11,7 +11,7 @@ import image4s.geometry.{Affine, D3}
 import locus4s.{DomainRegistry, Region as VolumeRegion}
 import neuroim4s.image.{ExactVolumeSearchlight, SampleSpaces, SearchlightRadius}
 import locus4s.{DomainId, Region as SurfaceRegion}
-import scalafim.surface.{DistanceMetric, Hemisphere, MeshTopology, SurfaceGeometry, SurfaceKind, SurfaceLocusDomain, SurfaceSearchlight, TriangleMesh}
+import neurosurf4s.surface.{DistanceMetric, Hemisphere, MeshTopology, SurfaceGeometry, SurfaceKind, SurfaceLocusDomain, SurfaceSearchlight, TriangleMesh}
 import mvpa4s.{AxisRef, EvidenceSource, Observations}
 import mvpa4s.measurement.{MeasurementFrameDeclaration, MeasurementId, MeasurementResource, MeasurementVisitor}
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
@@ -66,7 +66,11 @@ class PyMvpaSearchlightParitySuite extends munit.FunSuite:
     val domain = right(SurfaceLocusDomain.semantic(DomainId.parse("pymvpa-surface").toOption.get, geometry)).value
     val centers = right(SurfaceRegion.fromOrdinals(domain.finiteSpace, fixture.centerOrdinals))
     val searchlight = right(SurfaceSearchlight.metricBalls(domain, MeshTopology.from(geometry), fixture.radius, centers, DistanceMetric.Geodesic))
-    val actual = fixture.centerOrdinals.map(center => center -> searchlight.searchlight.regionAt(domain.finiteSpace.indexAtValidatedOrdinal(center)).get.ordinalsInDomainOrder.toVector)
+    val neighborhoods = searchlight.value
+    val supports = neighborhoods.centers.indices.map: compact =>
+      neighborhoods.center(compact).ordinal -> neighborhoods.neighborhood(compact).ordinalsInDomainOrder.toVector
+    .toMap
+    val actual = fixture.centerOrdinals.map(center => center -> supports(center))
     assertEquals(actual, fixture.geodesicNeighborhoods)
     assertNotEquals(actual, fixture.chordNeighborhoods)
     assert(fixture.chordNeighborhoods.head._2.contains(3))

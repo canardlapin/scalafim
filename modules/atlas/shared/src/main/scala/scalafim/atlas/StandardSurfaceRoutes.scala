@@ -2,8 +2,8 @@ package scalafim.atlas
 
 import neuroatlas4s.TemplateFlowXfm
 
-import scalafim.surface.{CorticalHemisphere, VertexId}
-import scalafim.surface.reference.*
+import neurosurf4s.surface.{CorticalHemisphere, VertexId}
+import neurosurf4s.surface.reference.*
 
 import java.nio.charset.StandardCharsets
 

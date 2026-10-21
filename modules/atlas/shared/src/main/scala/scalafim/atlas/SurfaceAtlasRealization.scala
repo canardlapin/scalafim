@@ -241,7 +241,7 @@ object SurfaceAtlasRealizations:
     yield assignments.toVector
 
   private def assignSurface(
-      labeled: scalafim.surface.LabeledSurface,
+      labeled: neurosurf4s.surface.LabeledSurface,
       offset: Int,
       assignments: Array[Option[Int]],
       parcelOrdinalById: Map[RegionId, Int]

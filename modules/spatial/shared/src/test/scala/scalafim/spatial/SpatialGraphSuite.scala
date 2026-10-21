@@ -4,7 +4,7 @@ import neuroim4s.spaces.SubjectId
 
 import neuroim4s.image.{SampleSpaces}
 import neuroim4s.image.SampleSpaces.*
-import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
+import neurosurf4s.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class SpatialGraphSuite extends munit.FunSuite:
 
