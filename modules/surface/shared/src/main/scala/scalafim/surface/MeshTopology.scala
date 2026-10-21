@@ -34,7 +34,7 @@ final case class MeshTopology private (
       .fold(error => throw new IllegalStateException(error.message), identity)
 
   lazy val edgeLengths: Vector[Double] =
-    val owner = realization.topology
+    val owner: realization.topology.type = realization.topology
     owner.edges.indices.map: edge =>
       // edgeVector retains the old finite-difference admission; squared norms
       // may still overflow, as they did through Point3D.norm.

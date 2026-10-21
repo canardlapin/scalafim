@@ -197,7 +197,7 @@ object SurfaceGeodesics:
     out: Array[Double]
   ): Unit =
     val mesh = topology.mesh
-    val owner = mesh.topology
+    val owner: mesh.topology.type = mesh.topology
     // Mean-radius choice and the established endpoint admission are anatomical
     // policy. Direction normalization and angular geometry have one owner.
     val radius = sphereRadius(topology)
