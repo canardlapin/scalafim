@@ -191,7 +191,7 @@ lazy val neuroim4sRoutingJS = ProjectRef(neuroim4sBuild, "routingJS")
 // neuroatlas4s owns atlas metadata/publication in core and volume realizations,
 // queries, reductions, template policy and loaders in optional volume/IO modules.
 // Forward explicit overrides so each provider has one owner across the graph.
-lazy val neuroatlas4sRevision = "7a662192a1a5769e92c9809feec0286f47728419"
+lazy val neuroatlas4sRevision = "f03287dd870bb65394914e69be0ecfcc4b9334d9"
 lazy val neuroatlas4sBuild = {
   Seq("locus4s", "neuroim4s", "image4s", "spatial4s", "reframe4s", "gale", "graph4s").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))

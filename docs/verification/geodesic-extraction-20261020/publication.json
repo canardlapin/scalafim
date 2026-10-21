@@ -1,0 +1,45 @@
+{
+  "captured_utc": "2026-10-21T02:36:24.507528+00:00",
+  "providers": [
+    {
+      "provider": "graph4s",
+      "candidate": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "remote_before": "856e6fb770cf5f4c5512b0607d8c3733e75e7460",
+      "remote_after": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "remote": "git@github-canardlapin:canardlapin/graph4s.git",
+      "clean": true
+    },
+    {
+      "provider": "neuroim4s",
+      "candidate": "6d20f52e6701f10126f36a4fc97bf97eeb99fa24",
+      "remote_before": "7ed49f12b1a90e18ea5ed67d48343e98a7b9547b",
+      "remote_after": "6d20f52e6701f10126f36a4fc97bf97eeb99fa24",
+      "remote": "git@github-canardlapin:canardlapin/neuroim4s.git",
+      "clean": true
+    },
+    {
+      "provider": "mesh4s",
+      "candidate": "5ed45de9ab39deb22865438d65abcd50f9f8eb4a",
+      "remote_before": "b9e0553b85113d52fc758747d62ddc0fa343e033",
+      "remote_after": "5ed45de9ab39deb22865438d65abcd50f9f8eb4a",
+      "remote": "git@github-canardlapin:canardlapin/mesh4s.git",
+      "clean": true
+    },
+    {
+      "provider": "neuroatlas4s",
+      "candidate": "f03287dd870bb65394914e69be0ecfcc4b9334d9",
+      "remote_before": "375ceb229f707a6e9fb447a3e24564e8c5cd3036",
+      "remote_after": "f03287dd870bb65394914e69be0ecfcc4b9334d9",
+      "remote": "git@github-canardlapin:canardlapin/neuroatlas4s.git",
+      "clean": true
+    }
+  ],
+  "root_published": false,
+  "default_pin_acceptance": false,
+  "authority": "User active goal: finish the five-mote tranche, including reviewed coherent provider publication.",
+  "review_receipts": [
+    "independent-review.json",
+    "atlas-volume-review.json"
+  ],
+  "workspace_impact": "python3 tools/workspace.py impact graph4s failed due stale/uncatalogued workspace entries; no workspace catalog edits made. Direct provider/loaded closure evidence retained."
+}
