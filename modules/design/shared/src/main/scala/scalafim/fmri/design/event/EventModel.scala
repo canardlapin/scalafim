@@ -374,14 +374,6 @@ object EventModel:
   ): DesignAudit =
     val convolved = terms.collect { case (_, ct: ConvolvedTerm) => ct }
     val seen = convolved.map(_.term.onsets.length).sum
-    val used = convolved.map(_.term.onsets.count(onset => onset.value.isFinite && onset.value >= 0.0)).sum
-    val excluded =
-      convolved.flatMap { ct =>
-        ct.term.onsets.zipWithIndex.collect {
-          case (onset, i) if !onset.value.isFinite || onset.value < 0.0 =>
-            EventExclusion(i, "negative-or-non-finite-onset", ct.term.termTag.map(TermId.unsafe))
-        }
-      }
     val policies = convolved.map { ct =>
       val sources =
         if ct.columnHrfs.isEmpty then Vector(ct.hrf)
@@ -399,8 +391,7 @@ object EventModel:
       case _ => Vector.empty
     DesignAudit(
       eventsSeen = seen,
-      eventsUsed = used,
-      excludedEvents = excluded,
+      eventsUsed = seen,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
       sourceEvents = sourceEvents,
       policyReceipts = policies,

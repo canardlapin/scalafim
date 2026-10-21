@@ -725,11 +725,10 @@ final case class EventTerm(
     val durs = duration.map(Seconds(_)).toVector
     val amps = amplitude.toVector
     validateRegressorParts(ons, durs, amps)
-    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
     Regressor.unsafeFromParts(
-      onsets = valid.map(ons).toVector,
-      durations = valid.map(durs).toVector,
-      amplitudes = valid.map(amps).toVector,
+      onsets = ons,
+      durations = durs,
+      amplitudes = amps,
       hrf = HrfAssignment.Shared(hrf),
       span = hrf.span,
       summate = summate
@@ -748,15 +747,14 @@ final case class EventTerm(
     val hrs = hrfs.toVector
     require(hrs.length == ons.length, "per-event HRF/onset length mismatch")
     validateRegressorParts(ons, durs, amps)
-    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
-    val keep = valid.filter(i => amps(i) != 0.0)
+    val keep = ons.indices.filter(i => amps(i) != 0.0)
     val hrsF = keep.map(hrs).toVector
     val span = hrsF.map(_.span).maxOption.getOrElse(hrs.map(_.span).maxOption.getOrElse(Seconds(0.0)))
     Regressor.unsafeFromParts(
-      onsets = valid.map(ons).toVector,
-      durations = valid.map(durs).toVector,
-      amplitudes = valid.map(amps).toVector,
-      hrf = HrfAssignment.PerEvent(valid.map(hrs).toVector),
+      onsets = ons,
+      durations = durs,
+      amplitudes = amps,
+      hrf = HrfAssignment.PerEvent(hrs),
       span = span,
       summate = summate
     )

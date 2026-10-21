@@ -9,8 +9,8 @@ class RegressorParitySuite extends munit.FunSuite:
   private val box: Hrf =
     Hrf.scalar("box", span = 1.0.s)(t => if t.value >= 0.0 && t.value <= 1.0 then 1.0 else 0.0)
 
-  test("Regressor validates inputs (R Reg/regressor)") {
-    intercept[IllegalArgumentException] { Regressor(Seq(-1.0), box) }
+  test("Regressor validates finite clock readings and duration/span contracts") {
+    assertEquals(Regressor(Seq(-1.0), box).onsets.map(_.value), Vector(-1.0))
     intercept[IllegalArgumentException] { Regressor(Seq(Double.NaN), box) }
     intercept[IllegalArgumentException] { Regressor(Seq(1.0), box, span = Some(0.0)) }
     intercept[IllegalArgumentException] { Regressor(Seq(1.0), box, span = Some(Double.PositiveInfinity)) }
