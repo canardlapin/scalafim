@@ -1,0 +1,37 @@
+{
+  "sourceCommit": "bf84f9d8c897d274cb1bde9811b71b574b677ec6",
+  "atlasRevision": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+  "execution": {
+    "schema_version": 1,
+    "started_utc": "2026-10-21T05:20:42.689236+00:00",
+    "finished_utc": "2026-10-21T05:25:00.940056+00:00",
+    "duration_seconds": 258.281211,
+    "command": [
+      "env",
+      "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+      "SBT_WARM_HEAP=4g",
+      "python3",
+      "tools/build/sbt-warm",
+      "atlasJVM/test",
+      "atlasJS/test"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+    "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/atlas-boundary-default-pin-01.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 31898
+  },
+  "logSha256": "b48c0888e2432289d984c163469ea6b8a87afce6faa50eb1d1fc090f4ce3def0",
+  "passed": {
+    "atlasJVM": 81,
+    "atlasJS": 61
+  },
+  "scope": "ScalaFIM atlas integration through default immutable provider pins on JVM and JS.",
+  "limits": [
+    "PLS linked native/component verification is separate and pending.",
+    "Not full ScalaFIM suite, full PLS application or scientific acceptance."
+  ]
+}
