@@ -1,0 +1,100 @@
+{
+  "neuroim4s": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+  "gates": [
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/volume-layout-platforms-01.log",
+      "sha256": "1386e6ff521a3a21104d84489eeb00fbdc3528a8408042f7b9cfb1c40e86580f",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T03:41:23.731828+00:00",
+        "finished_utc": "2026-10-21T03:44:04.317156+00:00",
+        "duration_seconds": 160.583322,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "viewJVM/test",
+          "viewJS/test",
+          "viewCanvasJS/test",
+          "viewJava2dJVM/test",
+          "viewJavafxJVM/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/volume-layout-platforms-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 29120
+      }
+    },
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/unresolved-volume-io-01.log",
+      "sha256": "6805c43245032f3ebfb7cc27072da62d9478b3f1c7907e9dc09d52f7d9695e64",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T03:46:15.368661+00:00",
+        "finished_utc": "2026-10-21T03:46:52.588678+00:00",
+        "duration_seconds": 37.219308,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "ioJVM/test"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/unresolved-volume-io-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 11137
+      }
+    },
+    {
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/volume-layout-native-01.log",
+      "sha256": "b139609371a3b3e19ef9858f8fd0e8f8c450fe52ed82014c1f23e690f5a1f3a6",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-10-21T03:47:39.123670+00:00",
+        "finished_utc": "2026-10-21T03:48:06.457190+00:00",
+        "duration_seconds": 27.332992,
+        "command": [
+          "sbt",
+          "-batch",
+          "-J-Xmx4g",
+          "-Dsbt.supershell=false",
+          "-Dsbt.log.noformat=true",
+          "-Dsbt.global.base=/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+          "viewJavafxJVM/Test/runMain consumer.volumeview.NativeCanvasProbe"
+        ],
+        "cwd": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-distances-20261020",
+        "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/volume-layout-native-01.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 300.0,
+        "log_bytes": 7604
+      }
+    }
+  ],
+  "sourceReview": {
+    "layout": "APPROVE a4d47d11323dc6556f17dfdf9529e165979dafa4",
+    "unresolvedIO": "APPROVE exact historical56d0 restoration; strict evidence admission untouched",
+    "nativeProbe": "APPROVE21df641;36 sampled opaque gray pixels across5layouts"
+  },
+  "limits": [
+    "No full-screen/native PLS qualification",
+    "No external caller closure acceptance yet",
+    "No performance or hostedCI claim"
+  ]
+}

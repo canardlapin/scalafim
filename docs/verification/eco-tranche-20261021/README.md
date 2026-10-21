@@ -6,14 +6,14 @@ The tranche covers `eco-u3-kernels`, `eco-u3-consumers`,
 
 ## Source and publication
 
-ScalaFIM production candidate: `17aee3f9b096f8b9d8c3f024a221e9ef61fde51c`.
+ScalaFIM production source remains `17aee3f9b096f8b9d8c3f024a221e9ef61fde51c`, with the descendant provider pins below; [pin gates](layout-descendant-pin-gates.json) bind the exact build-file hash and default-pin checks.
 Reviewed and published provider revisions:
 
 | Provider | Exact main revision |
 |---|---|
 | mesh4s | `35db08f864c86f211a14155fcaf6ef2fd811bcca` |
-| neuroim4s | `2c57d1592a98ba9f6ef416446a8c54e69a29a595` |
-| neuroatlas4s | `2b6a1a4c1a811d77316b5e2f6a1fdb9a06e5cb78` |
+| neuroim4s | `21df6416e4e28e97cfbe39e20d7303349be7e4cf` |
+| neuroatlas4s | `fe1e8f29942e7f0bc3b570e63b8ec4b4b5d8cd98` |
 
 [Publication receipts](provider-publication.json) record non-force pushes and
 exact live remote-main parity. Graph4s remains `613371f3bd0b12ce99352db0c637645eb62c6283`;
@@ -86,7 +86,7 @@ insets, visible panel/readout enumeration, and typed volume/cursor adoption.
 The prior source review approves the extraction delta only; it does not waive
 known-consumer acceptance. The narrow provider recovery is the three-file delta
 from ScalaFIM `b77c946ce2d4ee2962cf843610462fbdb66bb336`, preserving the default
-layout and all frame-owner checks. That new port is not yet qualified.
+layout and all frame-owner checks. The recovered provider delta is now qualified and published at `21df6416e4e28e97cfbe39e20d7303349be7e4cf`; [layout/IO qualification](layout-io-qualification.json) records 106 portable/backend test executions, 31 IO tests, and native sampled drawing of all five arrangements (36 gray pixels). Standalone unresolved inspection was faithfully recovered from `56d0cbcbfa55c7edb8651d19153b9e8c7897d88d`; each read owns a fresh unresolved world and strict evidence-required reads are unchanged. ScalaFIM/atlas descendant pins and actual PLS acceptance remain pending.
 
 The existing consumer recovery source `656bd6095b94d34a6677eebb96b92b54829fd69b`
 is retained in the external PLS Git store. It already preserves reversible
@@ -94,3 +94,29 @@ legacy/canonical ordinal conversion and is the donor for an isolated migration;
 old native successes coexist with cold-open/layout failures and are not new
 acceptance. `bd-01M52AQ9JQS51XFMB17X4BDQJX` tracks the existing recovery.
 Current canonical PLS and ScalaFIM dirty worktrees remain untouched.
+
+
+## Imaging closeout progress
+
+The descendant pins pass 318 affected test executions on JVM/JS (atlas,
+first-level workflow, portable view and applicable hosts), without source
+overrides. Provider volume atlas suites pass 24 JVM/24 JS and IO 26. The first
+atlas command passed both portable suites before an invalid IO target; the
+corrected `volumeIoJVM/test` command passed separately. Raw adverse commands
+remain in the common Git verification directory.
+
+Actual PLS source checkpoint `c6ae1db3729a72e8a134c30090cb803f69e1bab6`
+compiled 22 complete production files, including `ResultVolumeView` and
+`SliceFit`, under strict warnings. Its synthetic native run passed 12 physical
+layout plans, four focus modes and 24 map pixels, cursor ownership, saved focus
+and foreign-world anatomy refusal. These are development component results.
+A reviewer identified failure-path cleanup gaps in the new probe. The repair
+and two fault-injection modes are reviewed at
+`c9cd664cc3ea0f597e763d0edec04a5b0e3d35f6`; fresh committed qualification with
+private provider outputs is in progress. No full PLS qualification is claimed.
+
+Remaining I1 boundaries are the real application's provider/build/preparation
+wiring, standalone `VolumePane` loading, `ResultGeometry`/ordered scatter and
+legacy ordinal conversion, and `SpatialResponsePane` linked cursor interaction.
+Historical application/native/cold-open/performance issues remain separately
+open. Neither I1 task is closed by the 22-file component alone.

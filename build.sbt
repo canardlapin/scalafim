@@ -164,7 +164,7 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
 // neuroim4s-spaces owns the anatomical world identities (template, subject
 // scanner-RAS and tkRAS, declared and unresolved worlds) and their frames. It
 // pins the same spatial4s revision as image4s and reframe4s.
-lazy val neuroim4sRevision = "2c57d1592a98ba9f6ef416446a8c54e69a29a595"
+lazy val neuroim4sRevision = "21df6416e4e28e97cfbe39e20d7303349be7e4cf"
 lazy val neuroim4sBuild = {
   Seq("spatial4s", "image4s", "gale", "ravel", "locus4s", "reframe4s", "graph4s", "intaglio").foreach { provider =>
     sys.props
@@ -197,7 +197,7 @@ lazy val neuroim4sViewJavafxJVM = ProjectRef(neuroim4sBuild, "viewJavafxJVM")
 // neuroatlas4s owns atlas metadata/publication in core and volume realizations,
 // queries, reductions, template policy and loaders in optional volume/IO modules.
 // Forward explicit overrides so each provider has one owner across the graph.
-lazy val neuroatlas4sRevision = "2b6a1a4c1a811d77316b5e2f6a1fdb9a06e5cb78"
+lazy val neuroatlas4sRevision = "fe1e8f29942e7f0bc3b570e63b8ec4b4b5d8cd98"
 lazy val neuroatlas4sBuild = {
   Seq("locus4s", "neuroim4s", "image4s", "spatial4s", "reframe4s", "gale", "graph4s", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
