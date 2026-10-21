@@ -89,9 +89,10 @@ final case class EventModel(
   def withDerivedRowsEither(receipt: DerivedRowsReceipt): Either[DesignError, EventModel] =
     val rows = receipt.retainedRows
     val outside = (terms.flatMap(_._2 match
-      case ct: ConvolvedTerm => ct.term.eventProvenance.map(_.sourceRow)
+      case ct: ConvolvedTerm => ct.term.sourceRowIndices
       case _ => Vector.empty
-    ) ++ designSchema.audit.eventProvenance.map(_.sourceRow) ++ degenerateModulatorReceipts.flatMap(_.sourceRows) ++
+    ) ++ designSchema.audit.eventProvenance.map(_.sourceRow) ++ designSchema.audit.sourceEvents.map(_.sourceRow) ++
+      degenerateModulatorReceipts.flatMap(_.sourceRows) ++
       orthogonalizationReceipts.flatMap(_.steps.flatMap(_.groups.flatMap(_.sourceRows)))).find(row => row < 0 || row >= rows.length)
     outside match
       case Some(row) => Left(DesignError.InvalidSchema(s"compiled source row $row has no retained caller row"))
@@ -103,11 +104,15 @@ final case class EventModel(
         def orthogonalized(value: OrthogonalizationReceipt): OrthogonalizationReceipt =
           value.copy(steps = value.steps.map(step => step.copy(groups = step.groups.map(group => group.copy(sourceRows = group.sourceRows.map(rows))))))
         val terms1 = terms.map:
-          case (key, ct: ConvolvedTerm) => key -> ct.copy(term = ct.term.copy(eventProvenance = ct.term.eventProvenance.map(provenance)))
+          case (key, ct: ConvolvedTerm) => key -> ct.copy(term = ct.term.copy(
+            eventProvenance = ct.term.eventProvenance.map(provenance),
+            sourceRows = ct.term.sourceRows.map(rows)
+          ))
           case other => other
         val schema0 = designSchema
         val audit0 = schema0.audit.copy(
           eventProvenance = schema0.audit.eventProvenance.map(provenance),
+          sourceEvents = schema0.audit.sourceEvents.map(value => value.copy(sourceRow = rows(value.sourceRow))),
           missingValues = schema0.audit.missingValues.map(missing),
           degenerateModulatorReceipts = schema0.audit.degenerateModulatorReceipts.map(degenerate),
           orthogonalizationReceipts = schema0.audit.orthogonalizationReceipts.map(orthogonalized),
@@ -386,11 +391,18 @@ object EventModel:
         s"sources=${sources.map(hrf => HrfAssignment.token(HrfAssignment.hrfCanonical(hrf))).mkString("[", ",", "]")}"
       )
     }
+    val sourceEvents = terms.flatMap:
+      case (key, ct: ConvolvedTerm) =>
+        ct.term.sourceRowIndices.zipWithIndex.map: (sourceRow, eventIndex) =>
+          SourceEventRow(TermId.unsafe(key), eventIndex, sourceRow, ct.term.blockIds0(eventIndex),
+            ct.term.onsets(eventIndex), ct.term.durations0(eventIndex))
+      case _ => Vector.empty
     DesignAudit(
       eventsSeen = seen,
       eventsUsed = used,
       excludedEvents = excluded,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
+      sourceEvents = sourceEvents,
       policyReceipts = policies,
       diagnostics = diagnostics.map(toDesignDiagnostic),
       eventResponseScales = eventResponseScales(terms)

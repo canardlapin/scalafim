@@ -105,7 +105,9 @@ final case class EventTerm(
     /** The phase identity when this term was lowered from a multiphase trial. */
     phaseId: Option[PhaseId] = None,
     /** Source-row identity retained alongside the numerical event schedule. */
-    eventProvenance: Vector[EventRowProvenance] = Vector.empty
+    eventProvenance: Vector[EventRowProvenance] = Vector.empty,
+    /** Original table rows; empty means unknown, never an implicit renumbering. */
+    sourceRows: Vector[Int] = Vector.empty
 ):
 
   val schedule: EventSchedule =
@@ -126,6 +128,15 @@ final case class EventTerm(
     phaseId.forall(id => eventProvenance.isEmpty || eventProvenance.forall(_.phase.contains(id))),
     "term phase id must agree with every event provenance entry"
   )
+
+  require(sourceRows.isEmpty || sourceRows.length == n, "source rows must match the event schedule")
+  require(sourceRows.forall(_ >= 0), "source rows must be non-negative")
+  require(sourceRows.isEmpty || eventProvenance.isEmpty || sourceRows == eventProvenance.map(_.sourceRow),
+    "source rows must agree with phase provenance")
+
+  /** Hand-built terms without a source table keep their unknown identity explicit. */
+  def sourceRowIndices: Vector[Int] =
+    if sourceRows.nonEmpty then sourceRows else eventProvenance.map(_.sourceRow)
 
   val durations0: Vector[Seconds] =
     schedule.durations
@@ -820,25 +831,32 @@ object EventTerm:
       onsets: Vector[Seconds],
       durations: Vector[Seconds] = Vector.empty,
       blockIds: Vector[Int] = Vector.empty,
-      termTag: Option[String] = None
+      termTag: Option[String] = None,
+      sourceRows: Vector[Int] = Vector.empty
   ): Either[DesignError, EventTerm] =
-    EventSchedule.fromParts(onsets, durations, blockIds).flatMap(fromSchedule(events, _, termTag))
+    EventSchedule.fromParts(onsets, durations, blockIds).flatMap(fromSchedule(events, _, termTag, sourceRows))
 
   def fromSchedule(
       events: Vector[Event],
       schedule: EventSchedule,
-      termTag: Option[String] = None
+      termTag: Option[String] = None,
+      sourceRows: Vector[Int] = Vector.empty
   ): Either[DesignError, EventTerm] =
-    termTag match
+    if sourceRows.nonEmpty && sourceRows.length != schedule.size then
+      Left(DesignError.InvalidSchedule("source rows must match the event schedule"))
+    else if sourceRows.exists(_ < 0) then
+      Left(DesignError.InvalidSchedule("source rows must be non-negative"))
+    else termTag match
       case Some(tag) =>
-        TermId(tag).flatMap(_ => construct(events, schedule, termTag))
+        TermId(tag).flatMap(_ => construct(events, schedule, termTag, sourceRows))
       case None =>
-        construct(events, schedule, termTag)
+        construct(events, schedule, termTag, sourceRows)
 
   private def construct(
       events: Vector[Event],
       schedule: EventSchedule,
-      termTag: Option[String]
+      termTag: Option[String],
+      sourceRows: Vector[Int]
   ): Either[DesignError, EventTerm] =
     if events.exists(_.nEvents != schedule.size) then
       Left(DesignError.InvalidSchedule("all events must match schedule length"))
@@ -850,7 +868,8 @@ object EventTerm:
             onsets = schedule.onsets,
             durations = schedule.durations,
             blockIds = schedule.blockIds,
-            termTag = termTag
+            termTag = termTag,
+            sourceRows = sourceRows
           )
         )
       catch

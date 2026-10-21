@@ -80,6 +80,17 @@ class ProfileFitIdentitySuite extends munit.FunSuite:
   test("actual prepared profile provenance has the same literal golden on JVM and JS"):
     assertEquals(prepared().provenance, ProfileFitIdentitySuite.ProfileGolden)
 
+  test("ordinary caller-row attribution changes design identity but not fixed-condition numerical inputs"):
+    val first = term.copy(sourceRows = Vector(2, 4))
+    val second = term.copy(sourceRows = Vector(8, 9))
+    assertEquals(ProfileFitIdentity.term(first), ProfileFitIdentity.term(second))
+    def fingerprint(value: EventTerm) =
+      EventModel.build(Vector(value.convolve(basis.kernel, frame)), frame).designSchema.fingerprint
+    assertNotEquals(fingerprint(first), fingerprint(second))
+    assertNotEquals(ProfileFitIdentity.term(first), ProfileFitIdentity.term(first.copy(onsets = Vector(Seconds(1.0), Seconds(2.0)))))
+    val changedValues = first.copy(events = Vector(Event.factor(Vector("a|b", "other"), "condition")))
+    assertNotEquals(ProfileFitIdentity.term(first), ProfileFitIdentity.term(changedValues))
+
 
   private lazy val fixedFixture: (ProfileHrfPlan, ProfileDecodePolicy) =
     val convolved = expanded.term

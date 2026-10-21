@@ -46,7 +46,9 @@ private[profile] object ProfileFitIdentity:
         strings(modulators.map(_.value)), option(mainEffect.map(_.toString)))
 
   def term(value: EventTerm): String =
-    val EventTerm(events, _, _, _, tag, phase, provenance) = value
+    // Ordinary caller-row attribution belongs to DesignFingerprint v3, not
+    // this fixed-condition numerical preparation identity.
+    val EventTerm(events, _, _, _, tag, phase, provenance, _) = value
     val rows = provenance.map: row =>
       val scalafim.fmri.design.EventRowProvenance(parent, phase, source, block, onset, duration) = row
       record("source_row", parent.value, option(phase.map(_.value)), source.toString,

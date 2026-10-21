@@ -402,6 +402,24 @@ final case class EventRowProvenance(
   def canonical: String =
     s"parent=${parent.value}|phase=${phase.fold("")(_.value)}|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
 
+/** An ordinary event's original table row, without inventing a parent trial.
+  * Both eventIndex (term-local) and sourceRow (caller table) are zero-based.
+  */
+final case class SourceEventRow(
+    term: TermId,
+    eventIndex: Int,
+    sourceRow: Int,
+    blockId: Int,
+    onset: Seconds,
+    duration: Seconds
+):
+  require(eventIndex >= 0 && sourceRow >= 0 && blockId >= 0, "event source indices must be non-negative")
+  require(onset.value.isFinite, "source event onset must be finite")
+  require(duration.value.isFinite && duration.value >= 0.0, "source event duration must be finite and non-negative")
+
+  def canonical: String =
+    s"term=${term.value}|event=$eventIndex|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
+
 /** Policy for non-finite continuous event/modulator values.
   *
   * This is deliberately separate from fit-time response missingness: it is a
@@ -792,7 +810,8 @@ final case class DesignAudit(
     diagnostics: Vector[DesignDiagnostic] = Vector.empty,
     eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty,
     /** Rows retained and dropped by derived-column declarations, when the build had any. */
-    derivedRows: Vector[DerivedRowsReceipt] = Vector.empty
+    derivedRows: Vector[DerivedRowsReceipt] = Vector.empty,
+    sourceEvents: Vector[SourceEventRow] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -802,6 +821,13 @@ final case class DesignAudit(
   )
 
   def canonical: String =
+    val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
+    legacyV2Canonical + sources
+
+  /** Frozen pre-source-row audit encoding for explicit legacy receipt checks.
+    * New identity evidence belongs in canonical, never in this v2 projection.
+    */
+  private[design] def legacyV2Canonical: String =
     val exclusions = excludedEvents
       .map(e => s"${e.eventIndex}:${e.reason}:${e.term.fold("")(_.value)}")
       .mkString(",")
@@ -851,7 +877,7 @@ final case class DesignAudit(
 final case class DesignFingerprint private (value: String, canonicalEncoding: String)
 
 object DesignFingerprint:
-  private val schemaVersion = "design-schema/v2"
+  private val schemaVersion = "design-schema/v3"
 
   def from(
       matrix: Mat,
@@ -868,6 +894,25 @@ object DesignFingerprint:
       columns: Vector[StructuralColumn],
       audit: DesignAudit
   ): String =
+    encode(matrix, rows, columns, audit.canonical, schemaVersion)
+
+  /** A digest projection, not a provenance-complete current identity. */
+  private[design] def legacyV2Value(
+      matrix: Mat,
+      rows: RowLayout,
+      columns: Vector[StructuralColumn],
+      audit: DesignAudit
+  ): String =
+    val encoding = encode(matrix, rows, columns, audit.legacyV2Canonical, "design-schema/v2")
+    s"design-schema/v2:${hash(encoding)}"
+
+  private def encode(
+      matrix: Mat,
+      rows: RowLayout,
+      columns: Vector[StructuralColumn],
+      auditEncoding: String,
+      version: String
+  ): String =
     val data = matrix.data
     val values = new java.lang.StringBuilder(math.max(16, data.length * 21))
     var index = 0
@@ -877,7 +922,7 @@ object DesignFingerprint:
       values.append(java.lang.Double.doubleToLongBits(data(index)))
       index += 1
     val cols = columns.map(_.canonical).mkString(";")
-    s"$schemaVersion|matrix=${matrix.rows}x${matrix.cols}|rows=${rows.canonical}|columns=$cols|audit=${audit.canonical}|values=${values.toString}"
+    s"$version|matrix=${matrix.rows}x${matrix.cols}|rows=${rows.canonical}|columns=$cols|audit=$auditEncoding|values=${values.toString}"
 
   private def hash(value: String): String =
     // FNV-style 64-bit rolling hash.  It is an identity, not a security hash;
@@ -1361,7 +1406,8 @@ object DesignSchema:
       rankPreview = None,
       diagnostics = left.diagnostics ++ right.diagnostics,
       eventResponseScales = left.eventResponseScales ++ right.eventResponseScales,
-      derivedRows = left.derivedRows ++ right.derivedRows
+      derivedRows = left.derivedRows ++ right.derivedRows,
+      sourceEvents = left.sourceEvents ++ right.sourceEvents
     )
 
   private[design] def validate(
@@ -1377,7 +1423,7 @@ object DesignSchema:
       val expected = DesignFingerprint.from(matrix, rows, columns, audit)
       if rankPreview != expectedPreview || !audit.rankPreview.contains(expectedPreview) then
         Left(DesignError.InvalidSchema("design rank preview does not match the realized matrix and structural columns"))
-      else if expected.value != fingerprint.value then
+      else if expected != fingerprint then
         Left(DesignError.InvalidSchema("design fingerprint does not match matrix, rows, columns, and audit"))
       else Right(())
     }

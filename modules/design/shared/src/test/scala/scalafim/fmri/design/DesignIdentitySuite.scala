@@ -12,7 +12,9 @@ class DesignIdentitySuite extends munit.FunSuite:
       "fir" -> design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
     ).foreach { case (name, schema) =>
       assertEquals(schema.columnIds.map(_.value), columnIdGoldens(name))
-      exactFingerprintGoldens.get(name).foreach(expected => assertEquals(schema.fingerprint.value, expected))
+      exactFingerprintGoldens.get(name).foreach(expected =>
+        assertEquals(DesignFingerprint.legacyV2Value(schema.matrix, schema.rows, schema.columns, schema.audit), expected))
+      assert(schema.fingerprint.value.startsWith("design-schema/v3:"))
     }
   }
 
@@ -77,7 +79,8 @@ class DesignIdentitySuite extends munit.FunSuite:
     )
     val fixedAudit = compiled.audit.copy(rankPreview = Some(RankPreview.Available(rank)))
     val snapshot = DesignFingerprint.from(matrix, compiled.rows, compiled.columns, fixedAudit)
-    assertEquals(snapshot.value, "design-schema/v2:b27079652d98235d")
+    assertEquals(DesignFingerprint.legacyV2Value(matrix, compiled.rows, compiled.columns, fixedAudit), "design-schema/v2:b27079652d98235d")
+    assert(snapshot.value.startsWith("design-schema/v3:"))
   }
 
   /** SPMG columns are sums of samples of exp/pow terms. java.lang.Math may return a different result within

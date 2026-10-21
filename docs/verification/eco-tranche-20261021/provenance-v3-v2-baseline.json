@@ -1,0 +1,11 @@
+{
+  "base": "5cefcfd42fa419d3090988b343773fa0ce649e2c",
+  "legacy_value": "design-schema/v2:a2612fa13f6d46eb",
+  "legacy_canonical": "design-schema/v2|matrix=2x1|rows=rows=2;blocks=1,1;times=0,4607182418800017408;selected=1,2|columns=1|intercept|global|ordinal=1|intercept|global|hrf-scale=as-convolved:4607182418800017408|audit=seen=0;used=0;excluded=;empty=;empty-audits=;factors=;missing=;provenance=;centering=;degenerate-modulators=;orthogonalization=;policies=;rank=PivotedQr:2:1:1:ScaleAware:4382002437431492608:pivots=intercept|global|ordinal=1:independent=intercept|global|ordinal=1:aliased=:diagonal=4607182418800017408:condition=4607182418800017408;diagnostics=|values=4607182418800017408,0",
+  "expected_v3_value": "design-schema/v3:77ad21c1e89ad8b6",
+  "expected_v3_canonical": "design-schema/v3|matrix=2x1|rows=rows=2;blocks=1,1;times=0,4607182418800017408;selected=1,2|columns=1|intercept|global|ordinal=1|intercept|global|hrf-scale=as-convolved:4607182418800017408|audit=seen=0;used=0;excluded=;empty=;empty-audits=;factors=;missing=;provenance=;centering=;degenerate-modulators=;orthogonalization=;policies=;rank=PivotedQr:2:1:1:ScaleAware:4382002437431492608:pivots=intercept|global|ordinal=1:independent=intercept|global|ordinal=1:aliased=:diagonal=4607182418800017408:condition=4607182418800017408;diagnostics=|values=4607182418800017408,0",
+  "independent_check": "Python unsigned64 FNV over literal shared fixture canonical; no Scala helper used",
+  "source_event_canonical": "term=task|event=0|source=2|block=0|onset=4607182418800017408|duration=0",
+  "expected_v3_source_canonical": "design-schema/v3|matrix=2x1|rows=rows=2;blocks=1,1;times=0,4607182418800017408;selected=1,2|columns=1|intercept|global|ordinal=1|intercept|global|hrf-scale=as-convolved:4607182418800017408|audit=seen=0;used=0;excluded=;empty=;empty-audits=;factors=;missing=;provenance=;centering=;degenerate-modulators=;orthogonalization=;policies=;rank=PivotedQr:2:1:1:ScaleAware:4382002437431492608:pivots=intercept|global|ordinal=1:independent=intercept|global|ordinal=1:aliased=:diagonal=4607182418800017408:condition=4607182418800017408;diagnostics=;source-events=term=task|event=0|source=2|block=0|onset=4607182418800017408|duration=0|values=4607182418800017408,0",
+  "expected_v3_source_value": "design-schema/v3:4c19d08e41c2d4d8"
+}
