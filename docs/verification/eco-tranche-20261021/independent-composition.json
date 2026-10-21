@@ -1,0 +1,77 @@
+{
+  "sourceCommit": "bb412b148f06165671e61ff38179b39050b78004",
+  "reviewedSourceBlob": "e7f78f2d9946519ca1e67eb4befbee7a251fee9f",
+  "providerRevision": "21df6416e4e28e97cfbe39e20d7303349be7e4cf",
+  "freshSparseCheckout": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/neuroim-composition-qualified-02",
+  "sourceCleanAfter": true,
+  "noScalaFIMModulesPresent": true,
+  "execution": {
+    "execution": {
+      "schema_version": 1,
+      "started_utc": "2026-10-21T06:03:51.704754+00:00",
+      "finished_utc": "2026-10-21T06:05:33.665148+00:00",
+      "duration_seconds": 101.960709,
+      "command": [
+        "env",
+        "TMPDIR=/Volumes/My Passport for Mac/e01tmp",
+        "sbt",
+        "-batch",
+        "-J-Xmx4g",
+        "-J-Djava.io.tmpdir=/Volumes/My Passport for Mac/e01tmp",
+        "-Dsbt.supershell=false",
+        "-Dsbt.log.noformat=true",
+        "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/composition-consumer-fresh-global-02",
+        "runMain consumer.NeuroimCompositionConsumer"
+      ],
+      "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-01a153cc-20261021/neuroim-composition-qualified-02/tools/neuroim-composition-consumer",
+      "log": "/Users/bbuchsbaum/code/scala/scalafim/.git/verification/eco-tranche-20261021/neuroim-composition-consumer-11-fresh-transition.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 1800.0,
+      "log_bytes": 20663
+    },
+    "sha256": "ff9fdfd168615032038b15f7172a547c7d7f893d03ad2789f0ab21f8f59bda3c"
+  },
+  "review": {
+    "reviewer": "volume_view_astra_review",
+    "verdict": "APPROVE independent combined scenario with real pick transition; source/blob/fresh checkout/log verified"
+  },
+  "scenario": "Clean Pass only: NIfTI IO with typed evidence -> public typed world transform -> actual Java2D slice render -> real cursor pick/reducer",
+  "oracles": {
+    "noncubicDimensions": [
+      5,
+      4,
+      3
+    ],
+    "voxel": [
+      3,
+      1,
+      1
+    ],
+    "literalWorld": [
+      14.5,
+      -2.0,
+      9.5
+    ],
+    "initialWorld": [
+      11.5,
+      -2.0,
+      9.5
+    ],
+    "initialValue": 111.0,
+    "finalValue": 311.0,
+    "argb": "0xff9f9f9f",
+    "providerClasspathEntries": 41
+  },
+  "negativeWitnesses": [
+    "Foreign frame owner refused with identical coordinates",
+    "ScalaFIM/surface/neurosurf/neuroatlas/mvpa artifacts refused; direct build references immutable neuroim only"
+  ],
+  "limits": [
+    "Java2D raster composition; not native JavaFX qualification or arbitrary registration/resampling validity.",
+    "Does not close remaining I1 affected-caller requirements or whole PLS/scientific/performance acceptance.",
+    "Earlier09fresh scope lacked discriminating pick state; retained separately."
+  ]
+}

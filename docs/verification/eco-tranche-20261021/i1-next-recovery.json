@@ -1,5 +1,5 @@
 {
-  "status": "planning evidence only; no provider recovery implemented by this receipt",
+  "status": "Partially implemented and qualified; integration remains open",
   "reason": "Qualify actual affected GroupResponses -> ParticipantExplorerInputs -> ResultPresentation/StudyPane handoff without stubs, partial production files or compatibility facades.",
   "recoveryCandidates": [
     {
@@ -30,5 +30,24 @@
     "Fixed-effects and morphometry failures remain on broader PLS recovery unless needed to qualify a specific I1 caller.",
     "Independent provider-only IO->typedtransform->slice display scenario can proceed separately; reuse accepted transform corpus."
   ],
-  "nextAction": "Audit caller-set completeness, inspect necessary existing provider source dependencies and live path ownership; add/locate independent combined specimen. Keep eco-neuroim-integrations/I1 open."
+  "nextAction": "Complete response-support typed audit adaptation and current-provider dataset/deferred opener; restore explicit categorical/continuous formula roles; qualify native source membership, study support and actual full caller handoff. Keep eco-neuroim-integrations/I1 open.",
+  "completed": [
+    {
+      "scope": "Independent provider-only IO -> typed transform -> Java2D display and actual cursor transition",
+      "evidence": "independent-composition.json"
+    },
+    {
+      "scope": "Original source-event provenance and explicit v3/frozen v2 projection",
+      "evidence": "provenance-recovery.json"
+    },
+    {
+      "scope": "Selected event/confound tables and explicit sampling reference",
+      "evidence": "selected-tables-recovery.json"
+    },
+    {
+      "scope": "Signed run-clock response correction",
+      "evidence": "signed-onset-correction.json"
+    }
+  ],
+  "nativeCaller": "All GLM review production compiled; runtime explicit-role capability missing (native-membership-initial.json)."
 }

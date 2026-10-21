@@ -1,34 +1,38 @@
 {
   "sourceCommit": "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
-  "callerSetStatus": "Minimum affected callers identified by independent acceptance review; systematic completeness audit still required.",
+  "callerSetStatus": "Systematic direct neuroim4s/image4s production references plus review-identified live handoff/caller boundaries. Further caller-transitivity review remains; no claim of exhaustive completeness.",
   "callers": [
     {
-      "caller": "LegacyResultImport",
-      "file": "modules/adapters/src/main/scala/plsneuro/adapters/LegacyResultImport.scala",
-      "componentCompiled": false,
-      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "caller": "AnatomicalBackground",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/AnatomicalBackground.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
     },
     {
-      "caller": "TaskBrainMap",
-      "file": "modules/adapters/src/main/scala/plsneuro/adapters/TaskBrainMap.scala",
-      "componentCompiled": false,
-      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
-    },
-    {
-      "caller": "NamedSpatialMap",
-      "file": "modules/adapters/src/main/scala/plsneuro/adapters/NamedSpatialMap.scala",
-      "componentCompiled": false,
-      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "caller": "AtlasCursorQuery",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/AtlasCursorQuery.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
     },
     {
       "caller": "BidsFirstLevelService",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/BidsFirstLevelService.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "FirstLevelFeatures",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/FirstLevelFeatures.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
     },
     {
       "caller": "GroupResponses",
@@ -38,11 +42,131 @@
       "status": "unproven affected caller"
     },
     {
+      "caller": "LegacyResultImport",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/LegacyResultImport.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "NamedSpatialMap",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/NamedSpatialMap.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
       "caller": "ParticipantExplorerInputs",
       "file": "modules/adapters/src/main/scala/plsneuro/adapters/ParticipantExplorerInputs.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
       "status": "unproven affected caller"
+    },
+    {
+      "caller": "RegionExtraction",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/RegionExtraction.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "ResultArtifactFile",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/ResultArtifactFile.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "ResultGeometry",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/ResultGeometry.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "SpatialResultMap",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SpatialResultMap.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "SurfaceDisplayResource",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceDisplayResource.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": false,
+      "evidence": "Successful complete production source boundary still needed; failed whole-application compile cannot establish this.",
+      "status": "unproven affected caller"
+    },
+    {
+      "caller": "SurfaceProjection",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceProjection.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "SurfaceReverseLookup",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceReverseLookup.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "TaskBrainMap",
+      "file": "modules/adapters/src/main/scala/plsneuro/adapters/TaskBrainMap.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "AutomaticAnatomy",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/AutomaticAnatomy.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "OrientationMarks",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/OrientationMarks.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "ParticipantExplorerPane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantExplorerPane.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "ParticipantPane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantPane.scala",
+      "componentCompiled": false,
+      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "RegionOverlay",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/RegionOverlay.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
     },
     {
       "caller": "ResultPresentation",
@@ -52,15 +176,32 @@
       "status": "unproven affected caller"
     },
     {
-      "caller": "StudyMethodContribution",
-      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyMethodContribution.scala",
+      "caller": "ResultSurfaceView",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
     },
     {
-      "caller": "StudyResultArtifact",
-      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyResultArtifact.scala",
+      "caller": "ResultVolumeView",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultVolumeView.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "SpatialResponsePane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/SpatialResponsePane.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
+    },
+    {
+      "caller": "StudyMethodContribution",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyMethodContribution.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
       "status": "unproven affected caller"
@@ -73,39 +214,44 @@
       "status": "unproven affected caller"
     },
     {
-      "caller": "ParticipantExplorerPane",
-      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantExplorerPane.scala",
+      "caller": "StudyResultArtifact",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/StudyResultArtifact.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
-    },
-    {
-      "caller": "ParticipantPane",
-      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ParticipantPane.scala",
-      "componentCompiled": false,
-      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
     },
     {
       "caller": "TaskResultPane",
       "file": "modules/desktop/src/main/scala/plsneuro/desktop/TaskResultPane.scala",
       "componentCompiled": false,
       "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
+      "status": "unproven affected caller",
+      "discovery": "independent reviewer + direct provider use"
+    },
+    {
+      "caller": "ViewerScene",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ViewerScene.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": false,
+      "evidence": "Successful complete production source boundary still needed; failed whole-application compile cannot establish this.",
       "status": "unproven affected caller"
     },
     {
-      "caller": "ResultSurfaceView",
-      "file": "modules/desktop/src/main/scala/plsneuro/desktop/ResultSurfaceView.scala",
-      "componentCompiled": false,
-      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "caller": "VolumePane",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/VolumePane.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
     },
     {
-      "caller": "SurfaceReverseLookup",
-      "file": "modules/adapters/src/main/scala/plsneuro/adapters/SurfaceReverseLookup.scala",
-      "componentCompiled": false,
-      "evidence": "Included only in failed whole-application compile04; successful complete production source boundary still needed.",
-      "status": "unproven affected caller"
+      "caller": "VoxelReadout",
+      "file": "modules/desktop/src/main/scala/plsneuro/desktop/VoxelReadout.scala",
+      "discovery": "direct neuroim4s/image4s use in maintained production sources",
+      "componentCompiled": true,
+      "evidence": "fresh-linked-qualification.json",
+      "status": "qualified component source"
     }
   ],
   "liveHandoff": {
@@ -119,10 +265,21 @@
     "blocker": "ModelBuildSpec.responseSupport and related retained first-level provider contracts unavailable in active Root pin."
   },
   "independentComposition": {
-    "requirement": "Independent image IO -> typed transform -> slice display, no ScalaFIM/surface dependency, one scenario result",
-    "status": "missing combined specimen",
-    "existingEvidence": "Reuse accepted eco-neuroim-transforms and native viewer corpus; do not repeat standalone subcomponent proofs as combined acceptance."
+    "requirement": "Independent image IO -> typed transform -> slice display with no ScalaFIM/surface dependencies, single clean scenario result",
+    "status": "qualified",
+    "evidence": "independent-composition.json",
+    "sourceCommit": "bb412b148f06165671e61ff38179b39050b78004"
   },
   "separateHistoricalAdoption": "bd-01M52AQ9JQS51XFMB17X4BDQJX remains responsible for broader full PLS compilation/native/scientific/performance qualification. Repair necessary provider capabilities only when an affected I1 caller cannot otherwise be qualified.",
-  "review": "volume_view_astra_review: keep eco-neuroim-integrations/I1 open; passing8-probe imaging source closure is insufficient for all known callers."
+  "review": "volume_view_astra_review: keep eco-neuroim-integrations/I1 open; passing8-probe imaging source closure is insufficient for all known callers.",
+  "discoveryCommand": [
+    "git",
+    "grep",
+    "-l",
+    "-E",
+    "neuroim4s\\.|image4s\\.",
+    "dcc0892bd882908abde8d747ee6a4fefb9e1c750",
+    "--",
+    "modules/**/src/main/**/*.scala"
+  ]
 }
