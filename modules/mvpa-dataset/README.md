@@ -10,12 +10,10 @@ import scalafim.fmri.mvpa.dataset.*
 
 Generic predictive admission and the Alder method adapters live in
 [`mvpa4s-predictive`](https://github.com/canardlapin/mvpa4s/blob/main/docs/predictive.md)
-(`mvpa4s.predictive`). This module feeds them dataset-backed observations and
-keeps the one adapter that depends on the fMRI fit stack: `AlderSoftLda`
-(`scalafim.fmri.mvpa.dataset.predictive`) runs the single-fit soft-LDA kernel in
-`mvpa-fit` through the public `NativeAxisMapping.identifiedRows` binding and
-mvpa4s validation designs. It retains operator products and never requests a
-dense trial-by-feature table.
+(`mvpa4s.predictive`). This module feeds them dataset-backed observations.
+`SoftLda.fit` and `AlderSoftLda` also live in that provider: they preserve
+operator products, explicit training-only nuisance and identified validation,
+without a dependency on dataset or fMRI fit types. Import `mvpa4s.predictive.*`.
 
 See the executable
 [atlas classification workflow](../../examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala)

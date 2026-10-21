@@ -49,6 +49,11 @@ borrowed input, object overhead and whole-process memory are outside this limit.
 
 ## Held-out subjects
 
+The reusable prediction/summary contract lives in standalone `mvpa4s-core`,
+package `mvpa4s.pattern`. Import `mvpa4s.pattern.*`. Its full JVM/JS acceptance
+suite is `mvpa4s.pattern.HeldOutSubjectPredictionSuite` in that provider; the
+ScalaFIM group suites qualify the actual uncertainty/inference adapters.
+
 `HeldOutSubjectPrediction.freeze` wraps M4.06 `ComponentPredictionHeads` with
 row-bound subject columns for shared learning, head training and assessment.
 Pass the actual head-bound training exposure account and an untouched

@@ -48,7 +48,7 @@ cross-compiled sbt build.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
-- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources, plus the soft-LDA Alder lifecycle over the `mvpa-fit` kernel.
+- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into identified MVPA evidence; reusable soft-LDA fitting and Alder execution live in `mvpa4s-predictive`.
 - `mvpa-artifacts`: bounded, fitter-independent pattern profiles with verified external Float64 payloads over existing archive IO; durable fitter checkpoints are unsupported.
 - `mvpa-spatial`: surface measurement/adjacency composition and functional threshold policy. Generic region/selection frames, locus neighborhoods, scatter and integer volume support graphs live in optional `mvpa4s-locus`.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.

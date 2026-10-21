@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.artifacts
 
 import gale.linalg.DMat
 import mvpa4s.pattern.*
-import scalafim.fmri.group.{GroupDesign, GroupVarianceOrigin}
+import scalafim.fmri.group.{GroupDesign, GroupVarianceOrigin, MetaInference, TauEstimator}
 import scalafim.fmri.mvpa.group.*
 import scalafim.scenarios.{ScenarioHarness, ScenarioTolerance}
 
@@ -19,6 +19,12 @@ class GroupArchiveHandoffScenarioSuite extends SubjectGroupScenarioFixture:
       right(subject.loadingSubject(residual))
     val original = right(SubjectGroupBridge.eager(context.shared, context.domain, subjects.map(_.key), inputs))
     val restored = right(SubjectGroupBridge.fromMaterialized(right(original.materialize())))
+    val model = right(restored.marginalModel(GroupDesign.intercept(2), restored.data.subjects,
+      SubjectGroupCalculation.ApproximateMixedEffects(TauEstimator.PauleMandel, MetaInference.ModifiedKnappHartung,
+        "numerical integration only; estimated-SE calibration limits remain applicable")))
+    val fitted = right(model.fit())
+    val nativeFits = fitted.native.contrasts.map(name => fitted.native.fit(name).get)
+    val groupMeans = Vector.tabulate(4)(i => nativeFits(i % 2).coefficients(0, i / 2))
     val expectedCovariance = Vector(.078125, -.03125, .01953125, -.0078125,
       -.03125, .0625, -.0078125, .015625, .01953125, -.0078125, .01953125, -.0078125,
       -.0078125, .015625, -.0078125, .015625)
@@ -49,7 +55,8 @@ class GroupArchiveHandoffScenarioSuite extends SubjectGroupScenarioFixture:
   }
 }
 """
-    val result = ScenarioHarness.result("u4-loading-group-archive-handoff", numeric ++ Vector(
+    val result = ScenarioHarness.result("u4-loading-group-archive-handoff", numeric ++
+      ScenarioHarness.values("delegated-group-means", groupMeans, Vector(2.5, -1.0, -2.5, 3.0), ScenarioTolerance.absolute(1e-10)) ++ Vector(
       ScenarioHarness.fact("ordered-subjects", restored.subjectKeys.map(_.value) == expectedSubjects, restored.subjectKeys.toString),
       ScenarioHarness.fact("retained-identity", restored.identity == original.identity, restored.identity),
       ScenarioHarness.fact("actual-sources", restored.rows.zip(subjects).forall((row, subject) =>

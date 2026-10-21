@@ -197,7 +197,7 @@ class DatasetObservationEvidenceSuite extends FunSuite:
     val frame = right(MeasurementFrame(evidence.neural, Vector(PackedMeasurementEntry(leg, ()))))
     val visitor = new MeasurementVisitor[evidence.samples.Id, evidence.neural.Id, String, Unit, DMat]:
       def visit[L <: multivar.core.SemanticSpace](entry: PackedMeasurementEntry[evidence.neural.Id, String, Unit] { type Local = L }, measured: MeasuredObservations[evidence.samples.Id, L]): Either[MeasurementFailure, DMat] =
-        measured.patterns(DMat.eye(measured.localAxis.size)).left.map(MeasurementFailure.Measure.apply)
+        measured.patterns(DMat.eye(measured.localAxis.size)).left.map(error => MeasurementFailure.Task(error.message))
     val traversed = frame.traverse(1)(Right(MeasurementResource(evidence.observations) { closed += 1 }))(visitor)
     // Independent scalar calculation: training rows are +/- one point, so
     // sample-SD standardization gives log-odds x1/train1 + x2/train2.

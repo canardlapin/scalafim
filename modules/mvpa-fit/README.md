@@ -23,12 +23,12 @@ is a separately budgeted dense copy. Native relational consumers use the compose
 operator directly. No generic one-shot dataset, task or parallel result collector
 remains.
 
-Predictive operator ridge and soft LDA now run through `AlderOperatorRidge`
-and `AlderSoftLda` in [mvpa-dataset](../mvpa-dataset/README.md). They retain the
-single-fit `OperatorRidge.fit` and `SoftLda.fit` numerical kernels. Native
-validation supplies identified train/test rows, hard or simplex membership,
-fit audits and convergence/operator receipts. Soft LDA keeps component policy
-and trial nuisance explicit and fits nuisance scope using training rows.
+Predictive operator ridge and soft LDA are owned by standalone
+`mvpa4s-predictive`, including `AlderOperatorRidge`, `AlderSoftLda` and the
+single-fit `SoftLda.fit` adapter. Import `mvpa4s.predictive.*`; generic
+`OperatorRidge.fit` remains in the provider core. Identified validation retains
+hard/simplex membership, fit audits and convergence/operator receipts. Soft
+LDA keeps component policy and training-only trial nuisance explicit.
 
 The earlier predictive CV analyses and universal predictive payloads were
 removed in M1.12. Relational operator analyses and their universal payloads
