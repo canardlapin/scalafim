@@ -612,7 +612,7 @@
     "evidence": "native-runtime-qualification-10.json",
     "sourceCommit": "5f7bee9521d5b03fff9546488a12f6d00881b4d9"
   },
-  "remainingAcceptance": "Full bounded Root campaign and exact final independent I1 review. All focused caller/native handoffs now pass; named09 performance failure remains separate.",
+  "remainingAcceptance": "Final exact-source I1 acceptance review only; full22batch/110task campaign passed10670tests with8skips5ignored, exit0. Scientific/native/performance limits preserved.",
   "discoveredDirectFiles": [
     "modules/adapters/src/main/scala/plsneuro/adapters/AnatomicalBackground.scala",
     "modules/adapters/src/main/scala/plsneuro/adapters/AtlasCursorQuery.scala",
