@@ -1,0 +1,57 @@
+{
+  "root_source": "29bde0ae7",
+  "provider_revision": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+  "gate": {
+    "schema_version": 1,
+    "started_utc": "2026-10-22T01:50:21.154434+00:00",
+    "finished_utc": "2026-10-22T01:54:16.268665+00:00",
+    "duration_seconds": 235.113501,
+    "command": [
+      "env",
+      "-u",
+      "JAVA_TOOL_OPTIONS",
+      "JAVA_HOME=/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+      "SBT_WARM_HEAP=6g",
+      "python3",
+      "tools/build/sbt-warm",
+      "spatialJVM/test",
+      "spatialJS/test",
+      "scalafimCompileAll"
+    ],
+    "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "log": "/tmp/scalafim-eco-u5-routing-final-pin-13.log",
+    "exit_code": 0,
+    "child_returncode": 0,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1800.0,
+    "log_bytes": 35765
+  },
+  "passed": {
+    "spatialJVM": 115,
+    "spatialJS": 108
+  },
+  "skipped": 0,
+  "compile_all_exit": 0,
+  "production_equivalence": {
+    "prior_provider": "c9b05c72e2e452d66dcff8603ea96f589d3572fd",
+    "changed_paths": [
+      "docs/verification/eco-u5-20261021/routing-custody-43.log.gz",
+      "docs/verification/eco-u5-20261021/routing-custody-qualification.json",
+      "modules/neurosurf4s-routing/jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/domains.tsv",
+      "modules/neurosurf4s-routing/jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/edges.tsv",
+      "modules/neurosurf4s-routing/jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/manifest.json",
+      "modules/neurosurf4s-routing/jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/triplets.tsv",
+      "modules/neurosurf4s-routing/jvm/src/test/scala/neurosurf4s/routing/NeurofunctorLawFixtureFilesSuite.scala",
+      "modules/neurosurf4s-routing/shared/src/test/scala/neurosurf4s/routing/fixtures/NeurofunctorLawFixtures.scala",
+      "tools/r-parity/generate_neurofunctor_law_fixtures.R",
+      "tools/r-parity/generate_neurofunctor_routing_fixtures.R"
+    ],
+    "only_tests_resources_generators_docs": true
+  },
+  "other_evidence": "routing-cutover.json, routing-consumer-qualification.json, routing-before-cutover.json",
+  "task_closed": "eco-u5-spatial",
+  "implementation_tasks_closed": 29,
+  "implementation_tasks_total": 36,
+  "limits": "U5 external caller integration and A1/U6 remain open. Atlas gate11 and independent consumer42 target production-equivalent c9 provider; final-pin13 checks exact73. No hosted CI or full final U6 campaign claim; retain legacy per-platform v1 hash caveat."
+}
