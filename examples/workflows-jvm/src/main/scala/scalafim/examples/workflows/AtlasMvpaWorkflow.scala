@@ -9,6 +9,7 @@ import mvpa4s.*
 import mvpa4s.measurement.*
 import mvpa4s.predictive.*
 import mvpa4s.locus.*
+import mvpa4s.atlas.AtlasMeasurementFrames
 import neuroim4s.image.*
 import locus4s.provenance.{Provenance, ProvenanceId, SourceId}
 import ravel.DType.given
@@ -28,6 +29,7 @@ object AtlasMvpaWorkflows:
   private val sampleLabels = Vector("face", "scene", "face", "scene", "face", "scene", "face", "scene")
   private val runKeys = Vector("run-1", "run-1", "run-2", "run-2", "run-3", "run-3", "run-4", "run-4")
   def atlas(): VolumeAtlas = VolumeAtlas.fromLabelVolume(ref, regions, labelVolume())
+  private lazy val realizedAtlas = atlas()
 
   private lazy val samples = orThrow(AxisRef.fromStableKeys("workflow-samples", SpaceRole.Samples, Vector.tabulate(8)(i => s"trial-$i"), "trial", "none", "one"))
   lazy val neural = orThrow(AxisRef.fromStableKeys("workflow-neural", SpaceRole.Observed, Vector.tabulate(dims.product)(i => s"voxel-$i"), "voxel", "psc", "raw"))
@@ -41,11 +43,14 @@ object AtlasMvpaWorkflows:
   private lazy val coding = orThrow(SwiftTargetCoding(Vector(0.0 -> "face", 1.0 -> "scene")))
 
   def measurementFrame(): MeasurementFrame[neural.Id, String, SpatialMeasurementRendition[neural.Locus]] =
-    val sites = atlas().regions.regions.map: metadata =>
-      val support = atlas().realization.region(metadata.id).getOrElse(throw new IllegalStateException(s"missing ${metadata.id.value}"))
-      val region = orThrow(locus4s.Region.fromOrdinals(neural.locus, support.ordinalsInDomainOrder.toVector))
-      SpatialMeasurementSite(MeasurementId.unsafe(s"region-${metadata.id.value}"), SpatialMeasurementSupport.Regional(region), label = Some(metadata.label))
-    orThrow(SpatialMeasurementFrames.regions(neural, MeasurementFrameDeclaration("workflow-atlas", "v1", Vector.empty), sites))
+    val realization = realizedAtlas.realization
+    // Label and pattern values share the declared canonical grid key for every voxel.
+    // Certify that explicit correspondence instead of copying ordinals between live owners.
+    val ordinals = Vector.tabulate(dims.product): ordinal =>
+      neural.ordinalOf(s"voxel-$ordinal").getOrElse(throw new IllegalStateException(s"missing voxel-$ordinal"))
+    val correspondence = orThrow(locus4s.Bijection.fromTotalMap(orThrow(
+      locus4s.TotalMap.fromTargetOrdinals(realization.parcelAssignment.from, neural.locus, ordinals))))
+    orThrow(AtlasMeasurementFrames.parcels(neural, MeasurementFrameDeclaration("workflow-atlas", "v1", Vector.empty))(realization)(correspondence)).frame
 
   def runClassification(): Vector[AtlasMvpaRegionResult] =
     val frame = measurementFrame()
@@ -55,7 +60,10 @@ object AtlasMvpaWorkflows:
         AlderSwiftCentroid.crossValidate(rows, validation, coding)
           .left.map(error => MeasurementFailure.Task(error.toString))
           .map: result =>
-            val metadata = atlas().regions.find(entry.rendition.label.get).head
+            val realization = realizedAtlas.realization
+            val parcel = realization.parcelPointByKey(entry.measurement.descriptor.id.value)
+              .getOrElse(throw new IllegalStateException("measurement parcel key is absent from the realized atlas"))
+            val metadata = realization.metadata(parcel)
             AtlasMvpaRegionResult(metadata.id.value, metadata.label, entry.rendition.support.ordinalsInDomainOrder.length, result.assessment.accuracy, result.assessment.samples.toInt, entry.rendition.support.ordinalsInDomainOrder.toVector)
     val traversed = frame.traverse(1)(Right(MeasurementResource(observations) {}))(visitor)
     traversed.error.foreach(error => throw new IllegalStateException(error.toString))

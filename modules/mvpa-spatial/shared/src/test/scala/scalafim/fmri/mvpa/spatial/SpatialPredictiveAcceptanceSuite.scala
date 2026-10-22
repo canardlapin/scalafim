@@ -135,5 +135,5 @@ class SpatialPredictiveAcceptanceSuite extends munit.FunSuite:
       Vector(Vector(0, 1), Vector(1), Vector(1, 2)).iterator.map(_.iterator)))
     val patches = right(CenteredNeighborhoodSystem.fromSelection(centers, relation))
     val names = Vector("first", "failure", "last")
-    val frame = right(SurfaceMeasurementFrames.surfacePatches(fixture.neural, declaration, patches, index => Some(names(index.ordinal))))
+    val frame = right(SpatialMeasurementFrames.surfacePatches(fixture.neural, declaration, patches, index => Some(names(index.ordinal))))
     fixture.assertScatter(fixture.run(frame, Map("first" -> Vector(0, 1), "failure" -> Vector(1), "last" -> Vector(1, 2))))

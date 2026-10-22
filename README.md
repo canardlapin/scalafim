@@ -38,14 +38,14 @@ cross-compiled sbt build.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
 - `phrf-comparison`: unpublished comparative-evaluation preparation and scoring on JVM/Scala.js, with JVM runners and custody tooling. [Pilot integration scope](modules/phrf-comparison/README.md) excludes the pending S10 launch and rehearsal.
-- MVPA core (identified evidence, relational/pattern analyses, measurement and execution contracts) lives in standalone [`mvpa4s`](https://github.com/canardlapin/mvpa4s), pinned by `mvpa4sRevision`, with optional Alder predictive adapters in `mvpa4s-predictive` and locus measurement/scatter adapters in `mvpa4s-locus`; the `mvpa-*` modules below are ScalaFIM integrations over it.
+- MVPA core (identified evidence, relational/pattern analyses, measurement and execution contracts) lives in standalone [`mvpa4s`](https://github.com/canardlapin/mvpa4s), pinned by `mvpa4sRevision`, with optional Alder predictive adapters in `mvpa4s-predictive` locus measurement/scatter adapters in `mvpa4s-locus`, and optional mesh/atlas adapters in `mvpa4s-surface`/`mvpa4s-atlas`; the `mvpa-*` modules below are ScalaFIM integrations over it.
 - `mvpa-pipeline`: optional ScalaFIM pipeline interpreter for MVPA work units; the core runs directly and owns resource/commit semantics.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
 - `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into identified MVPA evidence; reusable soft-LDA fitting and Alder execution live in `mvpa4s-predictive`.
 - `mvpa-artifacts`: bounded, fitter-independent pattern profiles with verified external Float64 payloads over existing archive IO; durable fitter checkpoints are unsupported.
-- `mvpa-spatial`: surface measurement/adjacency composition and functional threshold policy. Generic region/selection frames, locus neighborhoods, scatter and integer volume support graphs live in optional `mvpa4s-locus`.
+- `mvpa-spatial`: functional threshold policy and fMRI spatial scenario checks. Generic neighborhoods/scatter live in `mvpa4s-locus`; anatomical mesh graphs and atlas measurement adapters live in optional `mvpa4s-surface` and `mvpa4s-atlas`.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `mvpa-group`: identified subject-coordinate and full-covariance adapters into group inputs, preserving first-level uncertainty/df and explicit admission limits.
 - `fmri-workflow`: estimate production and the eager fit-to-group adapter, plus typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.

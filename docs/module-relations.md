@@ -48,6 +48,8 @@ Provider libraries (no ScalaFIM backedge)
   neuroatlas4s surface/IO -> neurosurf4s core/IO; optional routing -> volume + surface + neurosurf routing
   mvpa4s core -> Gale, locus4s, Multivar, Resample4s
   mvpa4s predictive -> Alder; mvpa4s locus -> locus4s-data
+  mvpa4s surface -> mvpa4s locus, neurosurf4s core
+  mvpa4s atlas -> mvpa4s locus, neuroatlas4s core
 
 ScalaFIM functional composition
   response -> response-laws, dataset, latent
@@ -131,7 +133,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa4s`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed dataset/response adapters into identified evidence; generic soft-LDA and Alder lifecycles live in `mvpa4s-predictive`. | `mvpa4s`, `mvpa4s-predictive`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
-| `mvpa-spatial` | Surface measurement/adjacency composition and functional threshold policy; generic locus frames, scatter and volume graphs live upstream. | `mvpa4s-locus`, standalone neurosurf4s, `threshold` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
+| `mvpa-spatial` | Functional threshold policy and fMRI spatial scenario checks; generic locus/mesh/atlas adapters live in optional mvpa4s artifacts. | `mvpa4s-core`, `threshold`; locus, surface and predictive providers in Test scope | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | standalone `neuroim4s-core`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `mvpa-group` | Source-bound subject-coordinate and full joint uncertainty bridges into the existing group model; eager inputs retain covariance and df provenance. | `mvpa4s`, `group` (including adopted estimates contracts) | A second group engine, invented uncertainty, generic covariance storage disguised as anatomical geometry, or unqualified joint inference. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, result references, estimate production, and the eager fit-to-group adapter; generic pipeline lowering is a future orchestration slice. | `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
@@ -252,16 +254,17 @@ image --------^       ^
 dataset -------------+
 
 dataset -> mvpa-dataset -> mvpa4s
-image/surface -> mvpa-spatial -> mvpa4s
+neurosurf4s/neuroatlas4s core -> optional mvpa4s surface/atlas adapters
+mvpa-spatial -> mvpa4s core + threshold
 fit + mvpa4s -> mvpa-fit
 mvpa4s + group -> mvpa-group
 standalone multivar-inference (external)
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
-modeling module. `mvpa4s` is spatially agnostic; `mvpa-dataset` converts selected
-dataset rows into pattern sources, while `mvpa-spatial` converts spatial objects
-into feature sets.
+modeling module. `mvpa4s` core is spatially agnostic; `mvpa-dataset` converts selected
+dataset rows into identified evidence. Optional mvpa4s locus/surface/atlas modules
+compose measurements and scatter; `mvpa-spatial` retains fMRI threshold policy.
 
 ## Neurotransform And Neurofunctor Boundary
 
@@ -410,7 +413,8 @@ There are intentionally two layers:
   backends, phase/HMM/TVGL/SRLC internals, and scheduler-specific execution
   outside this structural core.
 - Put dataset/sample adapters for MVPA in `mvpa-dataset`; put spatial feature
-  adapters for MVPA in `mvpa-spatial`; keep `mvpa4s` over plain sample-by-feature
+  adapters for MVPA in optional `mvpa4s-locus`, `mvpa4s-surface` and `mvpa4s-atlas`;
+  keep fMRI threshold policy in `mvpa-spatial` and `mvpa4s` core over plain sample-by-feature
   matrices and linear operators. Put fit-owned time-to-trial readout composition,
   run stacking, and trial/run metadata in `mvpa-fit` so neither lower module
   depends back on the other.
