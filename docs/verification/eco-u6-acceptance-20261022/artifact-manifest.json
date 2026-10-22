@@ -2,8 +2,8 @@
   "scope": "All acceptance artifacts except this manifest; historical collector49/52 source bytes are gzip-compressed verbatim, as are raw logs.",
   "files": {
     "README.md": {
-      "bytes": 3713,
-      "sha256": "d074f6edbc55b65c1cc7a46573fe78b30a0ad47951bd8107be55f39079d5fb98"
+      "bytes": 4067,
+      "sha256": "1d04fff4b4239877ee9ae56ab619e723703570c429c6229cc04c1651a0580fbf"
     },
     "acceptance-preflight-25.json": {
       "bytes": 20548,
@@ -73,6 +73,10 @@
       "bytes": 5244,
       "sha256": "f2454e29c688670bebe0aab77896bbace01a2b007967ea97570fa3745dd6401a"
     },
+    "final-review.md": {
+      "bytes": 1709,
+      "sha256": "d91814496b2b595b0b78d15f6a2d0631ba5e11e602b3baacfa07e4e3c479c8e8"
+    },
     "historical-display-review.md": {
       "bytes": 2366,
       "sha256": "cbff3680a9c03e08a6362ce613f0756590ff9dd9de8f90d4b691eea31ff9149b"
@@ -118,8 +122,8 @@
       "sha256": "e8cecc6cc6f825dc85a0666be21f75f5831e430ebafb4cdf51446a7183df37b6"
     },
     "qualification.json": {
-      "bytes": 3872,
-      "sha256": "0cef13289502a5af72a9a9c3e4112789b48fe4f18ead8be7be72f95729c3df13"
+      "bytes": 4454,
+      "sha256": "5ca622ffe4a2cc50a3855df10e0d9a5de4aea436c78b1f6842290eab38d8393b"
     },
     "resume-inputs-51.json": {
       "bytes": 12226,
@@ -348,6 +352,10 @@
     "surface-routing-inputs.tar.gz": {
       "bytes": 2001,
       "sha256": "7e29b42d77476ef7c9a1c5b3f778f76085740dadf4978b74fed1f91d0f72c2bf"
+    },
+    "tracker-closure.json": {
+      "bytes": 18556,
+      "sha256": "5b296a087f12a07ab849c19bb1904ff40e1ee724302cf2cc083fbc0bde030ba6"
     }
   }
 }

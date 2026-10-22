@@ -1,0 +1,804 @@
+{
+  "observed_utc": "2026-10-22T09:27:07.586461+00:00",
+  "authority": "Canonical scalafim .mote store",
+  "command": [
+    "mote",
+    "ls",
+    "--all",
+    "--tag",
+    "ecosystem-unification",
+    "--json",
+    "--store",
+    "/Users/bbuchsbaum/code/scala/scalafim/.mote"
+  ],
+  "counts": {
+    "task": {
+      "closed": 36
+    },
+    "milestone": {
+      "closed": 9
+    },
+    "epic": {
+      "closed": 1
+    }
+  },
+  "scope": "The 36 task, 9 milestone and 1 epic records define eco-unification completion. Four additional ecosystem-tagged follow-ups remain outside that enumerated scope; their statuses are retained below.",
+  "items": [
+    {
+      "assignee": null,
+      "id": "bd-01M52AQ9JQS51XFMB17X4BDQJX",
+      "priority": 1,
+      "status": "review",
+      "tags": [
+        "consumer-compatibility",
+        "ecosystem-unification"
+      ],
+      "title": "Recover correct PLS Neuro provider behavior onto current main"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroatlas",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "a1",
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization"
+      ],
+      "title": "A1 milestone: Extract neuroatlas4s catalogs, realizations and routes"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroatlas-core",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "a1",
+        "dry",
+        "ecosystem-unification",
+        "locus4s",
+        "modularization",
+        "neuroatlas4s",
+        "task"
+      ],
+      "title": "A1: Extract atlas semantic core and lightweight catalog queries"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroatlas-integrations",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "a1",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neuroatlas4s",
+        "scalafim",
+        "task"
+      ],
+      "title": "A1: Migrate atlas callers and delete the ScalaFIM atlas implementation"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroatlas-surface",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "a1",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neuroatlas4s",
+        "neurosurf4s",
+        "task"
+      ],
+      "title": "A1: Move surface atlas realizations and atlas-specific routes"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroatlas-volume",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "a1",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neuroatlas4s",
+        "neuroim4s",
+        "task"
+      ],
+      "title": "A1: Move volume atlas realizations, loaders and mapping policy"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "i1",
+        "milestone",
+        "modularization"
+      ],
+      "title": "I1 milestone: Extract neuroim4s over core image and coordinate providers"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim-core",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "i1",
+        "image4s",
+        "modularization",
+        "neuroim4s",
+        "task"
+      ],
+      "title": "I1: Move neuroimaging values and IO policy over native image4s"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim-display",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "display",
+        "dry",
+        "ecosystem-unification",
+        "i1",
+        "intaglio",
+        "modularization",
+        "neuroim4s",
+        "task"
+      ],
+      "title": "I1: Move optional volume slice scenes and platform hosts"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim-integrations",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "i1",
+        "modularization",
+        "neuroim4s",
+        "scalafim",
+        "task"
+      ],
+      "title": "I1: Cut ScalaFIM image and transform callers over to neuroim4s"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim-providers",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "gale",
+        "graph4s",
+        "i1",
+        "image4s",
+        "locus4s",
+        "modularization",
+        "neuroim4s",
+        "reframe4s",
+        "task"
+      ],
+      "title": "I1: Remove generic image and spatial helpers into their core owners"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim-routing",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "i1",
+        "modularization",
+        "neuroim4s",
+        "spatial",
+        "task"
+      ],
+      "title": "I1: Separate volume spatial policy from mixed surface and latent execution"
+    },
+    {
+      "assignee": null,
+      "id": "eco-neuroim-transforms",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "i1",
+        "modularization",
+        "neuroim4s",
+        "reframe4s",
+        "task"
+      ],
+      "title": "I1: Extract toolkit transform formats and anatomical interpretation"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u0",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u0"
+      ],
+      "title": "U0 milestone: Freeze ownership and deletion decisions for all four libraries"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u0-baselines",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "task",
+        "u0",
+        "verification"
+      ],
+      "title": "U0: Capture existing contracts and composition specimens"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u0-ownership",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "architecture",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neuroatlas4s",
+        "neuroim4s",
+        "task",
+        "u0"
+      ],
+      "title": "U0: Settle provider/domain ownership and the deletion map"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u1",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u1"
+      ],
+      "title": "U1 milestone: Unify identity and provenance; free MVPA core"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u1-axes",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "locus4s",
+        "modularization",
+        "mvpa4s",
+        "resample4s",
+        "task",
+        "u1"
+      ],
+      "title": "U1: Remove response-specific types from MVPA axes"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u1-domains",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "locus4s",
+        "modularization",
+        "task",
+        "u1"
+      ],
+      "title": "U1: Use locus4s domains and explicit alignment directly"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u1-pipeline",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "mvpa4s",
+        "pipeline",
+        "task",
+        "u1"
+      ],
+      "title": "U1: Separate MVPA plans from the pipeline interpreter"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u1-provenance",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "provenance",
+        "task",
+        "u1"
+      ],
+      "title": "U1: Move source provenance to one external contract"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u2",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u2"
+      ],
+      "title": "U2 milestone: Share coordinate types and lightweight anatomical declarations"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u2-coordinates",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "image4s",
+        "modularization",
+        "reframe4s",
+        "spatial4s",
+        "task",
+        "u2"
+      ],
+      "title": "U2: Adopt spatial4s coordinate types in image4s and reframe4s"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u2-pins",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "build",
+        "dry",
+        "ecosystem-unification",
+        "mesh4s",
+        "modularization",
+        "task",
+        "u2"
+      ],
+      "title": "U2: Integrate one coherent coordinate provider revision set"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u2-world",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "image4s",
+        "modularization",
+        "neuroim4s",
+        "reframe4s",
+        "spatial4s",
+        "task",
+        "u2"
+      ],
+      "title": "U2: Extract shared anatomical declarations without a volume dependency"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u3",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u3"
+      ],
+      "title": "U3 milestone: Make surface geometry native to mesh4s"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u3-consumers",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "atlas",
+        "dry",
+        "ecosystem-unification",
+        "mesh4s",
+        "modularization",
+        "spatial",
+        "task",
+        "u3"
+      ],
+      "title": "U3: Cut surface, atlas and spatial callers over to native meshes"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u3-kernels",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "mesh4s",
+        "modularization",
+        "neurosurf4s",
+        "task",
+        "u3"
+      ],
+      "title": "U3: Move reusable mesh kernels and make input admission explicit"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u3-topology",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "locus4s",
+        "mesh4s",
+        "modularization",
+        "neurosurf4s",
+        "task",
+        "u3"
+      ],
+      "title": "U3: Adopt mesh4s topology, realizations and locus fields"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u4",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u4"
+      ],
+      "title": "U4 milestone: Extract standalone mvpa4s and migrate functional-analysis callers"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u4-core",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "mvpa4s",
+        "task",
+        "u4"
+      ],
+      "title": "U4: Bootstrap mvpa4s and move its scientific core"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u4-integrations",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "mvpa4s",
+        "scalafim",
+        "task",
+        "u4"
+      ],
+      "title": "U4: Migrate ScalaFIM MVPA integrations and delete replaced core"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u4-measurements",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "image4s",
+        "locus4s",
+        "modularization",
+        "mvpa4s",
+        "neuroim4s",
+        "task",
+        "u4"
+      ],
+      "title": "U4: Extract optional locus and image measurement adapters"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u4-predictive",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "alder",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "mvpa4s",
+        "task",
+        "u4"
+      ],
+      "title": "U4: Extract reusable Alder predictive adapters"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u5"
+      ],
+      "title": "U5 milestone: Extract neurosurf4s with optional volume integration"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5-core",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "mesh4s",
+        "modularization",
+        "neurosurf4s",
+        "task",
+        "u5"
+      ],
+      "title": "U5: Extract surface semantics and IO independently of volumes"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5-display",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "display",
+        "dry",
+        "ecosystem-unification",
+        "intaglio",
+        "modularization",
+        "neurosurf4s",
+        "task",
+        "u5"
+      ],
+      "title": "U5: Move renderer-neutral surface scenes and CPU raster display"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5-integrations",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neurosurf4s",
+        "scalafim",
+        "task",
+        "u5"
+      ],
+      "title": "U5: Migrate ScalaFIM surface consumers and remove old modules"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5-javafx",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "javafx",
+        "modularization",
+        "neurosurf4s",
+        "task",
+        "u5"
+      ],
+      "title": "U5: Move the optional JavaFX surface backend and native examples"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5-spatial",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neuroim4s",
+        "neurosurf4s",
+        "spatial",
+        "task",
+        "u5"
+      ],
+      "title": "U5: Extract optional surface and volume-surface spatial execution"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u5-threejs",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "neurosurf4s",
+        "task",
+        "threejs",
+        "u5"
+      ],
+      "title": "U5: Move the optional Three.js backend and browser parity harness"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u6",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "milestone",
+        "modularization",
+        "u6"
+      ],
+      "title": "U6 milestone: Admit all four libraries and remove remaining duplication"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u6-acceptance",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "task",
+        "u6",
+        "verification"
+      ],
+      "title": "U6: Verify clean independent consumers and end-to-end ScalaFIM workflows"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u6-build-docs",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "build",
+        "docs",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "task",
+        "u6"
+      ],
+      "title": "U6: Align pins, bounded CI and documentation with the delivered graph"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u6-cleanup",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "architecture",
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "task",
+        "u6"
+      ],
+      "title": "U6: Remove remaining duplicate authorities and expired scaffolding"
+    },
+    {
+      "assignee": null,
+      "id": "eco-u6-surface-mvpa",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "dry",
+        "ecosystem-unification",
+        "modularization",
+        "mvpa4s",
+        "neuroatlas4s",
+        "neurosurf4s",
+        "task",
+        "u6"
+      ],
+      "title": "U6: Compose optional MVPA surface and atlas measurements"
+    },
+    {
+      "assignee": null,
+      "id": "eco-unification",
+      "priority": 1,
+      "status": "closed",
+      "tags": [
+        "core-libraries",
+        "dry",
+        "ecosystem-unification",
+        "epic",
+        "modularization",
+        "mvpa4s",
+        "neuroatlas4s",
+        "neuroim4s",
+        "neurosurf4s"
+      ],
+      "title": "Unify core providers and extract neuroim4s, neuroatlas4s, mvpa4s and neurosurf4s"
+    },
+    {
+      "assignee": null,
+      "id": "bd-01M55T1NNYM0C4R8VW51G3R8YA",
+      "priority": 2,
+      "status": "open",
+      "tags": [
+        "ecosystem-unification"
+      ],
+      "title": "Port MVPA calibration and paired qualification harness to mvpa4s"
+    },
+    {
+      "assignee": null,
+      "id": "bd-01M5682X6YBHQ5CQNANA37K3B7",
+      "priority": 2,
+      "status": "open",
+      "tags": [
+        "alder",
+        "ecosystem-unification",
+        "mvpa4s"
+      ],
+      "title": "Align Alder's Gale pin with the ScalaFIM/mvpa4s Gale revision"
+    },
+    {
+      "assignee": null,
+      "id": "bd-01M56831ZXJYAKE8MJ7B6NCDW4",
+      "priority": 3,
+      "status": "open",
+      "tags": [
+        "alder",
+        "ecosystem-unification",
+        "mvpa4s"
+      ],
+      "title": "Share the operator-learner lifecycle between AlderOperatorRidge and AlderSoftLda"
+    }
+  ]
+}
