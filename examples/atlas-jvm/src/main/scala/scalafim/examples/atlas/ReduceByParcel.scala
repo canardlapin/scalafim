@@ -1,6 +1,5 @@
 package scalafim.examples.atlas
 
-import scalafim.atlas.*
 import neuroatlas4s.*
 
 final case class ParcelMeanRow(regionId: RegionId, label: String, value: Double)

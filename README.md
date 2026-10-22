@@ -28,7 +28,7 @@ cross-compiled sbt build.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
 - `neuroim4s-transform` (standalone): reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
-- `atlas`: surface realizations/loaders and mixed template routes over [neuroatlas4s](https://github.com/canardlapin/neuroatlas4s), whose core owns atlas metadata/publication and whose optional volume/IO modules own volume realizations, queries, reductions, overlap, adjacency and catalog loading.
+- Atlas metadata, publication, volume/surface realizations, loaders and template routes belong to standalone [neuroatlas4s](https://github.com/canardlapin/neuroatlas4s). Optional modules keep catalog and surface-only use free of the volume/rendering stacks; ScalaFIM examples compose the public APIs with functional analysis.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
 - `estimates`: fit-independent estimate catalogs, scientific identities, product/validity/uncertainty metadata and bounded read/write contracts.
 - `estimates-io`: shared development-schema JSON codecs and a JVM local NIfTI sink, verified reader and immutable collection publication. See [implementation scope](docs/estimate-sets.md).
@@ -105,9 +105,9 @@ only the smallest required Intaglio core or backend project.
 Generic graph topology and algorithms formerly incubated here now live in
 standalone [`graph4s`](https://github.com/canardlapin/graph4s). ScalaFIM pins an
 immutable source revision. The optional `graph4s-gale` module now owns indexed
-numerical graph operators, spectra, embeddings, and similarities. Pipeline,
-surface, atlas, and connectivity retain only ScalaFIM domain metadata and
-adapters.
+numerical graph operators, spectra, embeddings, and similarities. ScalaFIM
+pipeline and connectivity retain domain metadata and adapters; surface and
+atlas semantics live upstream.
 
 Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
@@ -193,7 +193,7 @@ or repeated settings changes, use the explicitly qualified 4 GB profile:
 
 ```sh
 python3 tools/build/sbt-warm --shutdown
-SBT_WARM_HEAP=4g python3 tools/build/sbt-warm reload 'set atlasJVM / Test / envVars += ("MY_TEST_OPTION" -> "value")'
+SBT_WARM_HEAP=4g python3 tools/build/sbt-warm reload 'set spatialJVM / Test / envVars += ("MY_TEST_OPTION" -> "value")'
 SBT_WARM_HEAP=4g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
 python3 tools/build/sbt-warm --shutdown
 ```
@@ -259,8 +259,8 @@ sbt surfaceViewConnectivityJS/test
 sbt neuroimTransformTestAll
 sbt spatialJVM/test
 sbt spatialJS/test
-sbt atlasJVM/test
-sbt atlasJS/test
+sbt neuroatlasSurfaceTestAll
+sbt neuroatlasRoutingTestAll
 sbt archiveJVM/test
 sbt archiveJS/test
 sbt archiveLnaJVM/test

@@ -58,7 +58,10 @@ run_batch neuroim-transforms neuroimTransformTestAll
 run_batch neuroim-routing neuroimRoutingTestAll
 run_batch neuroim-view-jvm neuroimViewJvmTestAll
 run_batch neuroim-view-js neuroimViewJsTestAll
+run_batch neuroatlas-core neuroatlasCoreTestAll
 run_batch neuroatlas-volume neuroatlasVolumeTestAll
+run_batch neuroatlas-surface neuroatlasSurfaceTestAll
+run_batch neuroatlas-routing neuroatlasRoutingTestAll
 run_batch mvpa4s-core mvpa4sCoreTestAll
 run_batch mvpa4s-predictive mvpa4sPredictiveTestAll
 run_batch mvpa4s-locus mvpa4sLocusTestAll
@@ -77,12 +80,12 @@ run_batch threshold-motion-js thresholdJS/test motionJS/test
 run_batch data-jvm \
   surfaceViewConnectivityJVM/test \
   spatialJVM/test \
-  atlasJVM/test archiveJVM/test archiveLnaJVM/test \
+  archiveJVM/test archiveLnaJVM/test \
   archivedResponseInteropJVM/test datasetJVM/test
 run_batch data-js \
   surfaceViewConnectivityJS/test \
   spatialJS/test \
-  atlasJS/test archiveJS/test archiveLnaJS/test \
+  archiveJS/test archiveLnaJS/test \
   archivedResponseInteropJS/test datasetJS/test
 
 run_batch estimates-jvm \

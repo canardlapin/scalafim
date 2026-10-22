@@ -2,7 +2,6 @@ package scalafim.examples.atlas
 
 import image4s.SomeSampleSpace
 
-import scalafim.atlas.*
 import neuroatlas4s.*
 import neuroim4s.image.*
 import ravel.DType.given

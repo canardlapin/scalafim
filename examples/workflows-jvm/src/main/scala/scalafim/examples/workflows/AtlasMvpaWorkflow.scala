@@ -4,7 +4,6 @@ import alder.kernel.DataFingerprint
 import gale.linalg.DMat
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.DigestAlgorithm
-import scalafim.atlas.*
 import neuroatlas4s.*
 import mvpa4s.*
 import mvpa4s.measurement.*

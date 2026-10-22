@@ -44,7 +44,8 @@ Provider libraries (no ScalaFIM backedge)
   neurosurf4s view-link -> view and reframe4s; no volume stack
   neurosurf4s view-volume -> view and optional volume integration
   neurosurf4s JavaFX/Three -> view/raster; toolkit dependencies stay platform-specific
-  neuroatlas4s core -> locus4s; optional volume/IO -> neuroim4s routing/IO
+  neuroatlas4s core/IO -> locus4s/JDK; optional volume -> neuroim4s routing/IO
+  neuroatlas4s surface/IO -> neurosurf4s core/IO; optional routing -> volume + surface + neurosurf routing
   mvpa4s core -> Gale, locus4s, Multivar, Resample4s
   mvpa4s predictive -> Alder; mvpa4s locus -> locus4s-data
 
@@ -57,7 +58,7 @@ ScalaFIM functional composition
   mvpa4s + pipeline/fit/dataset/estimates -> mvpa-* integration modules
   connectivity + neurosurf4s-view -> surface-view-connectivity
   neurosurf4s routing + neuroim4s scoped IO -> spatial (functional fields)
-  neuroatlas4s + neurosurf4s routing -> atlas (surface and workflow composition)
+  neuroatlas4s optional volume/IO -> atlas/workflow examples (functional composition)
 ```
 
 Surface modules, their unpublished fixtures, examples and parity tooling now live
@@ -116,7 +117,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | standalone `neurosurf4s` optional integrations/display | Typed transport, volume projection, pure scenes/raster, cursor linking and platform backends, with each optional dependency explicit. | core; Intaglio for display; reframe4s for links; neuroim4s volume/IO only for projection; OpenJFX/Three.js only in platform backends | Volume dependencies in core/scenes/raster, JVM UI in shared/JS, atlas or functional response processing. |
 | `surface-view-connectivity` | Typed conversion from connectivity edge spaces/vectors to renderer-neutral surface-network inputs and provenance. | standalone neurosurf4s-view, `connectivity` | Estimation/inference, backend objects, or alternate node identity. |
 | `spatial` | Functional field identity, lazy demands, caches, staged value execution and backprojection composition around anatomical routing. | neurosurf4s-routing; neuroim4s-routing-io on JVM | Anatomical graph/compiler/IO copies, atlas route catalogs, generic numeric kernels, or another domain owner. |
-| `atlas` | Surface realizations/loaders and mixed volume/surface template routes. Volume realizations, queries, reductions, overlap, adjacency, template policy and loaders belong to optional neuroatlas4s-volume / volume-io; runtime-neutral publication belongs to core. | neuroatlas4s core/volume/IO, neurosurf4s-routing, provider geometry and transforms | Generic routing/format kernels, or a second volume membership owner. |
+| standalone `neuroatlas4s` | Atlas catalog/publication, exact volume and bilateral surface realizations, loaders and template route policy in optional modules. | core: locus4s; volume: neuroim4s; surface: neurosurf4s core; mixed routing: both providers | Rendering, functional response processing, generic execution kernels or duplicate membership/domain owners. |
 | `archive` | Format-neutral revision/publication envelopes; separately versioned archive, object, and representation identities; exact canonical manifest values and encoding; namespaced payload roles and logical identities; transactional canonical write orchestration; typed payload plans/executors; resource-safe open archives; and archive-native physical receipts. | No internal module; Cats Core and Cats Effect externally. | Physical LNA or Zarr sinks/schemas, dataset selection APIs, scientific reconstruction, untyped manifest values, secretly owned handles, or model-level decoding policy. |
 | `archive-lna` | Typed LNA 2 paths, manifests, descriptors, validation, quant/delta payload codecs, shared-basis artifacts and registries, pure manifest normalization, JVM HDF5 stores, and the eager whole-payload driver. | `archive`, standalone `neuroim4s-core`; jHDF on JVM. | Scientific reconstruction, latent encoders, dataset discovery, response interpretation, runtime family assembly, or ownership of the canonical manifest writer. |
 | `response-laws` | Typed, framework-neutral JVM/Scala.js checks for response ordering, shape, selected/whole and partition decode consistency, raw-bit persistence, axis-keyed receipt conformance, and provenance derivation. | `response` | Runtime execution, representation mathematics, archive bindings, fixtures, effect interpretation, or ownership of production response types. |
@@ -216,7 +217,7 @@ spatial4s -> neuroim4s-spaces -> neurosurf4s-core
 image4s + reframe4s -> neuroim4s-core/transform/routing
 neurosurf4s-core + neuroim4s-routing -> neurosurf4s-routing
 neurosurf4s-routing -> scalafim-spatial (functional fields)
-neuroatlas4s + neurosurf4s-routing -> scalafim-atlas (pending A1)
+neuroatlas4s optional volume/IO -> ScalaFIM atlas/workflow examples
 ```
 
 `neuroim4s-spaces` owns shared world declarations. Surface geometry belongs to
@@ -224,7 +225,8 @@ neurosurf4s over mesh4s's topology and point fields. The optional neurosurf4s
 routing module owns mixed anatomical domains, graph routing, sparse operators,
 adjoints and QC; its JVM IO module owns graph ingestion and triplet files.
 ScalaFIM spatial retains functional field identity, demand, caches and staged
-value execution. Atlas policy composes these public anatomical contracts.
+value execution. Neuroatlas4s policy composes public anatomical contracts;
+ScalaFIM has no atlas implementation module.
 
 ### Surface Display
 
@@ -303,7 +305,7 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
   (`NativeInverseOracleSuite`, on the pinned reframe4s revision).
 - **standalone `neurosurf4s`** owns surface geometry, volume projection and
   surface-to-surface vertex-map execution in explicit optional modules.
-- **`atlas`** owns named known-space route descriptors such as
+- **standalone `neuroatlas4s-routing`** owns named known-space route descriptors such as
   `SpaceTransforms`, a manifest that populates the `spatial` graph over
   unsampled template domains (STP P7.01); routing is `SpatialGraph`'s.
 - **standalone `neurosurf4s-routing`** owns typed mixed anatomical domains,
@@ -374,7 +376,9 @@ There are intentionally two layers:
   admission contracts in neurosurf4s-view. Put deterministic pixels in neurosurf4s-view-raster,
   JavaFX and Three.js interpretation in the corresponding provider backends,
   and ScalaFIM connectivity result adaptation in `surface-view-connectivity`.
-- Put named atlas descriptors and parcel metadata in `atlas`.
+- Put named atlas descriptors and parcel metadata in neuroatlas4s-core,
+  runtime realizations in its optional volume/surface modules, and mixed
+  template asset policy in its optional routing/IO modules.
 - Put anatomical route compilation, sparse projectors, adjoints and QC in
   neurosurf4s-routing. Functional field caches and staged execution belong in
   ScalaFIM spatial.
