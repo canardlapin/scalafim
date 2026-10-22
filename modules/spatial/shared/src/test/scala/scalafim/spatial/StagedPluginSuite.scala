@@ -253,3 +253,30 @@ class StagedPluginSuite extends munit.FunSuite:
         assertEquals(id, malformed.id)
         assert(detail.contains("expected 2x2"))
       case other => fail(s"expected row plugin shape error, got $other")
+
+  test("spatial sampling, observation mixing and affine values retain every stage and exact recipe identity"):
+    val root = volume("component-root", 3)
+    val sampled = volume("component-sampled", 2)
+    val mixed = volume("component-mixed", 2)
+    val target = volume("component-target", 2)
+    val spatial = affine(root, sampled, 1.0)
+    val mixing = valueMorphism("component-mixing", sampled, mixed, MorphismKind.Functional,
+      spatialValue(MorphismPlugin.functional(pluginId("component-observations"),
+        GaleDMat.dense(2, 2, Vector(1d, 2d, 0d, 1d)))))
+    val offset = valueMorphism("component-offset", mixed, target, MorphismKind.Filter,
+      spatialValue(MorphismPlugin.pointwiseBarrier(pluginId("component-affine-values"), 2, 3)))
+    given SpatialGraph = graph(Vector(root, sampled, mixed, target), Vector(spatial, mixing, offset))
+    val program = spatialValue(PullbackProgram.compile(summon[SpatialGraph], CompileRequest(root.id, target.id)))
+    val field = Field.fromMatrix(root.id, GaleDMat.dense(3, 2, Vector(1d, 10d, 2d, 20d, 3d, 30d)))
+    val view = apiValue(field.to(target))
+    val runtime = LazyFieldRuntime(summon[SpatialGraph])
+    // Hand calculation: select rows [2,20] and [3,30], multiply by [[1,0],[2,1]], then 2*x+3.
+    assertEquals(spatialValue(runtime.data(view)).toRows, Vector(Vector(87d, 43d), Vector(129d, 63d)))
+    val trace = runtime.lastTrace.getOrElse(fail("missing staged execution trace"))
+    assertEquals(trace.pullback, program.fingerprint)
+    assertEquals(trace.valueResamplingPasses, 1)
+    assertEquals(trace.operator.recipe.path.map(_.value), Vector(spatial.id.value, "component-mixing", "component-offset"))
+    val selected = spatialValue(LazyFieldRuntime(summon[SpatialGraph]).data(apiValue(view.timeBlock(1, 1))))
+    assertEquals(selected.toRows, Vector(Vector(43d), Vector(63d)))
+    assertEquals(program.fingerprint.value, StagedRoutingGolden.program)
+    assertEquals(trace.operator.label, "component-root->component-target|component-root-to-component-sampled-affine>component-mixing>component-offset|Shortest|Trilinear|rows=all|inv=false|affine-pullback-fused-v1|2x3")
