@@ -1,16 +1,16 @@
 package consumer
 
-import image4s.ImageMetadata
-import image4s.geometry.{Affine, ContinuousIndex, D3, Frame, Point}
+import image4s.{Axis, AxisKind, ImageMetadata, NonSpatialAxes, SampleSpace}
+import image4s.geometry.{ContinuousIndex, D3, Frame, Point}
 import intaglio.*
 import neuroim4s.image.*
 import neuroim4s.image.io.Nifti
 import neuroim4s.spaces.{SpaceEvidence, WorldSpace}
-import neuroim4s.transform.{TransformProvenance, WorldTransform}
+import neuroim4s.transform.{Frames, NativeTransform, TransformFiles, TransformFormat}
+import neuroim4s.transform.itk.ItkLinearInterpretation
 import neuroim4s.view.*
 import neuroim4s.view.java2d.Java2DViewerHost
 import ravel.NDArray
-import reframe4s.lie.FramedAffine
 
 import java.nio.file.Files
 
@@ -18,7 +18,7 @@ import java.nio.file.Files
   * world mapping, and viewer sampling: value(x,y,z) = 100*x + 10*y + z.
   */
 object NeuroimCompositionConsumer:
-  private val providerRevision = "21df6416e4e28e97cfbe39e20d7303349be7e4cf"
+  private val providerRevision = "4f75c2bf141449d032f9fe3c558ef13a22a4d59f"
   private val dimensions = Vector(5, 4, 3)
   private val targetIndex = Vector(3, 1, 1)
   private val expectedWorldCoordinates = Vector(14.5, -2.0, 9.5)
@@ -29,7 +29,7 @@ object NeuroimCompositionConsumer:
   def main(args: Array[String]): Unit =
     try
       val receipt = scenario()
-      println(s"SCENARIO PASS provider=$providerRevision io-transform-java2d-pick value=${receipt.value} pixel=${receipt.pixel} classpathEntries=${receipt.classpathEntries}")
+      println(s"SCENARIO PASS provider=$providerRevision steps=classpath,nifti-volume,nifti-series,series-volume,itk-load,itk-interpret,transform,java2d-render,pick,foreign-frame-refusal value=${receipt.value} pixel=${receipt.pixel} classpathEntries=${receipt.classpathEntries}")
     catch
       case error: Throwable =>
         Console.err.println(s"SCENARIO FAIL ${error.getClass.getName}: ${error.getMessage}")
@@ -41,6 +41,8 @@ object NeuroimCompositionConsumer:
     val classpathEntries = refuseForbiddenClasspath()
     val directory = Files.createTempDirectory("neuroim-composition-")
     val path = directory.resolve("analytic-volume.nii")
+    val seriesPath = directory.resolve("analytic-series.nii")
+    val transformPath = directory.resolve("query-to-target.tfm")
     try
       val sourceSpace = requireRight(
         SampleSpaces.requireVolumeD3(
@@ -59,10 +61,26 @@ object NeuroimCompositionConsumer:
       requireRight(Nifti.writeVolume(path, SomeNeuroVolume.eraseSpace(source)), "write NIfTI")
 
       val assertedWorld = requireRight(WorldSpace.declare("composition consumer target world"), "declare target world")
-      val loaded = requireRight(
-        Nifti.readVolume(path, SpaceEvidence(assertion = Some(assertedWorld))),
-        "read NIfTI with typed evidence"
-      ).image
+      val evidence = SpaceEvidence(assertion = Some(assertedWorld))
+      val roundTrip = requireRight(Nifti.readVolume(path, evidence), "read NIfTI volume with typed evidence").image
+      requireClose(roundTrip(3, 1, 1), expectedValue, 1e-12, "NIfTI volume analytic round-trip")
+      val timeAxis = requireRight(Axis.ordinal("time", AxisKind.Time, 2), "create time axis")
+      val seriesAxes = requireRight(NonSpatialAxes.from(Vector(timeAxis)), "create series axes")
+      val seriesSpace = SampleSpace.create(sourceSpace.grid, seriesAxes)
+      val sourceSeries = requireRight(
+        NeuroSeries.continuous(
+          seriesSpace,
+          NDArray.tabulate[Double](5, 4, 3, 2)((x, y, z, time) => analytic(x, y, z) + 1000.0 * time),
+          ImageMetadata.named("independent analytic 4D fixture")
+        ),
+        "create source series"
+      )
+      requireRight(Nifti.writeSeries(seriesPath, SomeNeuroSeries.eraseSpace(sourceSeries)), "write NIfTI series")
+      val series = requireRight(Nifti.readSeries(seriesPath, evidence), "read NIfTI series with typed evidence").image
+      require(series.nVolumes == 2, s"expected two timepoints, got ${series.nVolumes}")
+      requireClose(series(3, 1, 1, 1), 1311.0, 1e-12, "NIfTI series second timepoint")
+      require(series.volumeAt(2).isLeft, "out-of-range series volume was not refused")
+      val loaded = requireRight(series.volumeAt(0), "select first series volume")
       require(loaded.grid.shape == dimensions, s"NIfTI shape ${loaded.grid.shape} differs from $dimensions")
       requireClose(loaded(3, 1, 1), expectedValue, 1e-12, "NIfTI analytic round-trip")
 
@@ -77,12 +95,17 @@ object NeuroimCompositionConsumer:
           requireClose(actual, expected, 1e-12, s"NIfTI world affine target axis $axis")
       val queryFrame = requireRight(Frame.named[D3]("composition consumer query world"), "query frame")
       val targetFrame = loaded.grid.frame
-      val transform = WorldTransform.Linear(
-        FramedAffine.betweenFrames[targetFrame.type, queryFrame.type, D3](targetFrame, queryFrame)(
-          translationAffine(-translation(0), -translation(1), -translation(2))
-        ),
-        TransformProvenance.constructed("analytic query-to-loaded-world translation")
-      )
+      // ITK text stores the target-to-source pullback in LPS. The RAS pullback
+      // (-2, 3, -1) is therefore represented by LPS offsets (2, -3, -1).
+      val itkText = "#Insight Transform File V1.0\n# Transform 0\nTransform: AffineTransform_double_3_3\nParameters: 1 0 0 0 1 0 0 0 1 2 -3 -1\nFixedParameters: 0 0 0\n"
+      Files.writeString(transformPath, itkText)
+      val decoded = requireRight(TransformFiles.load(transformPath, Some(TransformFormat.ItkText)), "load ITK transform file")
+      val transform = decoded.native match
+        case NativeTransform.Itk(file, TransformFormat.ItkText) =>
+          requireRight(ItkLinearInterpretation.linear(file, Frames[queryFrame.type, targetFrame.type](queryFrame, targetFrame), decoded.asset, decoded.format), "admit ITK transform")
+        case other => throw new IllegalStateException(s"expected ITK text transform, got $other")
+      require(transform.source eq queryFrame, "transform lost query frame owner")
+      require(transform.target eq targetFrame, "transform lost loaded frame owner")
       val query = requireRight(
         Point.in(queryFrame)(
           target.coordinates(0) - translation(0),
@@ -91,6 +114,10 @@ object NeuroimCompositionConsumer:
         ),
         "query source point"
       )
+      val pulled = requireRight(transform.pullPoint(target), "pull target into query world")
+      pulled.coordinates.zip(query.coordinates).foreach { (actual, expected) =>
+        requireClose(actual, expected, 1e-12, "ITK pullback coordinate")
+      }
       val transformedCursor = requireRight(transform.mapPoint(query), "map query into loaded world")
       requireClose(transformedCursor.coordinates(0), target.coordinates(0), 1e-12, "transformed cursor x")
       requireClose(transformedCursor.coordinates(1), target.coordinates(1), 1e-12, "transformed cursor y")
@@ -145,22 +172,13 @@ object NeuroimCompositionConsumer:
 
       Receipt(sampled, f"0x$pixel%08x", classpathEntries)
     finally
+      Files.deleteIfExists(transformPath)
+      Files.deleteIfExists(seriesPath)
       Files.deleteIfExists(path)
       Files.deleteIfExists(directory)
 
   private def analytic(x: Int, y: Int, z: Int): Double =
     100.0 * x + 10.0 * y + z
-
-  private def translationAffine(x: Double, y: Double, z: Double): Affine[D3] =
-    requireRight(
-      Affine.fromRowMajor[D3](Vector(
-        1.0, 0.0, 0.0, x,
-        0.0, 1.0, 0.0, y,
-        0.0, 0.0, 1.0, z,
-        0.0, 0.0, 0.0, 1.0
-      )),
-      "translation affine"
-    )
 
   private def refuseForbiddenClasspath(): Int =
     val entries = System.getProperty("java.class.path", "").split(java.io.File.pathSeparator).toVector.filter(_.nonEmpty)

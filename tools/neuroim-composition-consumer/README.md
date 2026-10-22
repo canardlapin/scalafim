@@ -1,5 +1,5 @@
 # neuroim-composition-consumer
 
-Standalone acceptance consumer for immutable neuroim4s `21df6416e4e28e97cfbe39e20d7303349be7e4cf`.
+Standalone acceptance consumer for immutable neuroim4s `4f75c2bf141449d032f9fe3c558ef13a22a4d59f`.
 
-`runMain consumer.NeuroimCompositionConsumer` writes and reads a noncubic NIfTI volume with typed world evidence, maps a query point through a public `WorldTransform.Linear`, renders the resulting slice through the Java2D host, picks the rendered panel, and checks the analytic voxel value and foreign-frame refusal. It rejects a loaded ScalaFIM or surface artifact on its runtime classpath.
+Run `sbt "runMain consumer.NeuroimCompositionConsumer"` in this directory. The consumer writes and reads synthetic noncubic NIfTI volume and 4D series fixtures with typed world evidence, selects a series volume, loads and interprets an ITK text transform, renders a transformed slice with Java2D, and checks the actual pick transition, literal value and pixel oracles, and foreign-frame refusal. It rejects unrelated runtime artifacts and removes its temporary files. The single terminal scenario line reports named steps and PASS; an error reports FAIL and throws.

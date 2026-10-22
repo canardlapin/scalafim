@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion := "3.7.4"
 
-lazy val neuroimRevision = "21df6416e4e28e97cfbe39e20d7303349be7e4cf"
+lazy val neuroimRevision = "4f75c2bf141449d032f9fe3c558ef13a22a4d59f"
 lazy val neuroimBuild = uri(s"https://github.com/canardlapin/neuroim4s.git#$neuroimRevision")
 
 lazy val ioJVM = ProjectRef(neuroimBuild, "ioJVM")

@@ -246,6 +246,12 @@ lazy val neurosurf4sFixturesJVM = ProjectRef(neurosurf4sBuild, "fixturesJVM")
 lazy val neurosurf4sFixturesJS = ProjectRef(neurosurf4sBuild, "fixturesJS")
 lazy val neurosurf4sViewJVM = ProjectRef(neurosurf4sBuild, "viewJVM")
 lazy val neurosurf4sViewJS = ProjectRef(neurosurf4sBuild, "viewJS")
+lazy val neurosurf4sViewRasterJVM = ProjectRef(neurosurf4sBuild, "viewRasterJVM")
+lazy val neurosurf4sViewRasterJS = ProjectRef(neurosurf4sBuild, "viewRasterJS")
+lazy val neurosurf4sViewVolumeJVM = ProjectRef(neurosurf4sBuild, "viewVolumeJVM")
+lazy val neurosurf4sViewVolumeJS = ProjectRef(neurosurf4sBuild, "viewVolumeJS")
+lazy val neurosurf4sViewLinkJVM = ProjectRef(neurosurf4sBuild, "viewLinkJVM")
+lazy val neurosurf4sViewLinkJS = ProjectRef(neurosurf4sBuild, "viewLinkJS")
 
 // mesh4s owns triangle topology, surface realizations and point fields. It
 // pins the same locus4s, spatial4s and graph4s revisions as ScalaFIM's other
@@ -679,6 +685,13 @@ lazy val workflowExamplesJVM =
   project
     .in(file("examples/workflows-jvm"))
     .dependsOn(neuroatlas4sVolumeIoJVM, mvpa4sAtlasJVM, mvpaSpatialJVM, mvpaDatasetJVM, fitJVM)
+    .dependsOn(
+      scenarioTestkitJVM % "test->compile",
+      neurosurf4sIoJVM % "test->compile",
+      neurosurf4sViewRasterJVM % "test->compile",
+      neurosurf4sViewVolumeJVM % "test->compile",
+      neurosurf4sViewLinkJVM % "test->compile"
+    )
     .settings(commonSettings)
     .settings(
       name := "scalafim-examples-workflows-jvm",
@@ -691,13 +704,26 @@ lazy val workflowExamplesJS =
     .enablePlugins(ScalaJSPlugin)
     .in(file("examples/workflows-js"))
     .dependsOn(neuroatlas4sVolumeJS, mvpa4sAtlasJS, mvpaSpatialJS, mvpaDatasetJS)
+    .dependsOn(
+      scenarioTestkitJS % "test->compile",
+      neurosurf4sIoJS % "test->compile",
+      neurosurf4sViewRasterJS % "test->compile",
+      neurosurf4sViewVolumeJS % "test->compile",
+      neurosurf4sViewLinkJS % "test->compile"
+    )
     .settings(commonSettings)
     .settings(jsSettingsBase)
     .settings(
       name := "scalafim-examples-workflows-js",
       publish / skip := true,
       Compile / unmanagedSources += baseDirectory.value.getParentFile / "workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala",
-      Test / unmanagedSources += baseDirectory.value.getParentFile / "workflows-jvm/src/test/scala/scalafim/examples/workflows/AtlasMvpaWorkflowSuite.scala"
+      Test / unmanagedSources += baseDirectory.value.getParentFile / "workflows-jvm/src/test/scala/scalafim/examples/workflows/AtlasMvpaWorkflowSuite.scala",
+      // Portable acceptance scenarios share sources; FreeSurfer geometry IO stays JVM-only.
+      Test / unmanagedSources ++= {
+        val scenarios = baseDirectory.value.getParentFile / "workflows-jvm/src/test/scala/scalafim/examples/workflows/eco"
+        Seq("EcosystemMeasurementScatterScenarioSuite.scala", "EcosystemSurfaceReadbackScenarioSuite.scala",
+          "EcosystemLinkedProjectionScenarioSuite.scala", "EcosystemAtlasRoutingScenarioSuite.scala").map(scenarios / _)
+      }
     )
 
 lazy val archive =
