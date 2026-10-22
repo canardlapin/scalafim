@@ -122,6 +122,14 @@ class MotionIoSuite extends munit.FunSuite:
         fail(s"expected slice timing, got $other")
     assertEquals(scan.plan().acquisitionTiming, scan.acquisitionTiming)
 
+    val defaultRaw = MotionBids.rawScans(project).fold(err => fail(err.message), identity)
+    val globRaw = MotionBids.rawScans(project, subid = "0?", task = "re*", run = "0?")
+      .fold(err => fail(err.message), identity)
+    val absentRaw = MotionBids.rawScans(project, subid = "02").fold(err => fail(err.message), identity)
+    assertEquals(defaultRaw.map(_.path), scans.map(_.path))
+    assertEquals(globRaw.map(_.path), scans.map(_.path))
+    assertEquals(absentRaw, Vector.empty)
+
     val preproc =
       MotionBids
         .preprocScans(project, subid = "01", task = "rest", run = "01", space = "MNI152NLin2009cAsym")
@@ -129,6 +137,15 @@ class MotionIoSuite extends munit.FunSuite:
     assertEquals(preproc.length, 1)
     assertEquals(preproc.head.repetitionTimeSeconds, Some(2.0))
     assertEquals(preproc.head.acquisitionTiming, AcquisitionTiming.Volume)
+
+    val defaultPreproc = MotionBids.preprocScans(project).fold(err => fail(err.message), identity)
+    val globPreproc = MotionBids.preprocScans(project, task = "re*", space = "MNI152*")
+      .fold(err => fail(err.message), identity)
+    val absentPreproc = MotionBids.preprocScans(project, space = "other*")
+      .fold(err => fail(err.message), identity)
+    assertEquals(defaultPreproc.map(_.path), preproc.map(_.path))
+    assertEquals(globPreproc.map(_.path), preproc.map(_.path))
+    assertEquals(absentPreproc, Vector.empty)
   }
 
   test("BIDS adapter rejects structurally invalid project identities") {
