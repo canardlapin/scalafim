@@ -60,7 +60,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
   test("ScalaFIM provider failures keep their messages"):
     val gridMismatch = GeometryError.GridsNotCongruent(0.0)
     assertEquals(AtlasError.Provider(GeometryFailure(gridMismatch)).message, gridMismatch.message)
-    val graph = scalafim.spatial.SpatialError.UnsupportedGeometry("no route")
+    val graph = neurosurf4s.routing.SpatialError.UnsupportedGeometry("no route")
     assertEquals(
       AtlasError.Provider(TransformGraphFailure(graph)).message,
       s"transform manifest does not form a valid spatial graph: ${graph.message}"

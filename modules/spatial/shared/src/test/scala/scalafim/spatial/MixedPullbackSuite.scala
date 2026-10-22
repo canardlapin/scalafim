@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spaces.SubjectId
 
 import ravel.NDArray as RavelArray

@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spatial.VolumeReadRequest
 import neuroim4s.spatial.io.{NiftiVolumeSource, NiftiVolumeSourceStats}
 import neuroim4s.spaces.SpaceEvidence

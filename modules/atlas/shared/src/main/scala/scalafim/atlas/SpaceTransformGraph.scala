@@ -4,7 +4,7 @@ import neuroatlas4s.*
 
 import image4s.geometry.{Affine as ProviderAffine, D3}
 import neuroim4s.spaces.TemplateName
-import scalafim.spatial.{
+import neurosurf4s.routing.{
   CoordinateMap,
   Domain,
   DomainId,
@@ -46,7 +46,8 @@ object TemplateDomains:
     yield domain
 
   def domainId(space: AnySpaceId): DomainId =
-    DomainId.unsafe(s"atlas-template:${SpaceId.normalize(space).value}")
+    DomainId(s"atlas-template:${SpaceId.normalize(space).value}")
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   /** Surface templates are surface domains; volume and unknown spaces are volumetric world spaces. */
   def domainKind(space: AnySpaceId): DomainKind =
@@ -104,7 +105,8 @@ final case class SpaceTransformGraph private (
   /** The manifest step a routed morphism runs; a step run through its inverse is described with swapped endpoints. */
   private def describe(morphism: Morphism): Either[AtlasError, TransformStep] =
     val forwardId =
-      if morphism.isInverted then MorphismId.unsafe(morphism.id.value.stripSuffix(":inverse")) else morphism.id
+      if morphism.isInverted then MorphismId(morphism.id.value.stripSuffix(":inverse"))
+        .fold(error => throw new IllegalArgumentException(error.message), identity) else morphism.id
     stepsById
       .get(forwardId)
       .toRight(AtlasError.Provider(TransformGraphFailure(SpatialError.MissingCoordinateMap(morphism.id))))
@@ -145,9 +147,11 @@ object SpaceTransformGraph:
       source <- TemplateDomains.domain(catalog, from)
       target <- TemplateDomains.domain(catalog, to)
       coordinateMap <- coordinateMapOf(normalized, source, target)
+      id <- MorphismId(s"atlas-step-$index:${from.value}->${to.value}")
+        .left.map(error => AtlasError.Provider(TransformGraphFailure(error)))
       morphism <- Morphism
         .between(
-          id = MorphismId.unsafe(s"atlas-step-$index:${from.value}->${to.value}"),
+          id = id,
           source = source,
           target = target,
           kind = morphismKind(normalized.kind),

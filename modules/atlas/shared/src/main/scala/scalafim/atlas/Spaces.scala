@@ -7,7 +7,7 @@ import image4s.geometry.D3
 import image4s.geometry.Frame
 import neuroim4s.image.{GridSpec, SpatialPoint, SpatialPullback, SpatialPullbacks}
 import neuroim4s.spaces.{FrameCatalog, WorldSpace}
-import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
+import neurosurf4s.routing.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
 import neuroim4s.transform.WorldTransform
 
 /** A route through the transform manifest, resolved by `SpatialGraph` routing.
@@ -69,7 +69,7 @@ final case class TransformPlan private (
 
   private def carry(
     points: Vector[Point3D],
-    step: Point3D => Either[scalafim.spatial.SpatialError, Point3D]
+    step: Point3D => Either[neurosurf4s.routing.SpatialError, Point3D]
   ): Either[AtlasError, Vector[Point3D]] =
     points.foldLeft[Either[AtlasError, Vector[Point3D]]](Right(Vector.empty)) { (acc, point) =>
       acc.flatMap(out => step(point).left.map(error => AtlasError.InvalidCoordinate(error.message)).map(out :+ _))

@@ -1,5 +1,8 @@
 package scalafim.spatial.io
 
+import neurosurf4s.routing.*
+import neurosurf4s.routing.io.*
+
 import neuroim4s.spatial.io.NiftiVolumeSourceStats
 
 import image4s.SomeSampleSpace

@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spaces.{SubjectId, TemplateName}
 
 import gale.linalg.DMat as GaleDMat
@@ -111,7 +113,7 @@ class StagedPluginSuite extends munit.FunSuite:
     val result = spatialValue(runtime.data(view))
     val trace = runtime.lastTrace.getOrElse(fail("expected an evaluation trace"))
     val program = trace.pullback
-    val compiled = spatialValue(PullbackProgram.compile(summon[SpatialGraph], CompileRequest(root.id, target.id)))
+    val compiled = spatialValue(PullbackProgram.compile(summon[SpatialGraph], CompileRequest(root.id, target.id), FunctionalRouting.registry))
 
     assertEquals(result.toRows, Vector(Vector(16.0, 6.0), Vector(0.0, 9.0), Vector(8.0, 12.0), Vector(0.0, 0.0)))
     assertEquals(compiled.stageTrace.map(_.semantics), Vector(StageSemantics.CoordinatePullback, StageSemantics.ValueTransform))
@@ -147,6 +149,9 @@ class StagedPluginSuite extends munit.FunSuite:
     assertEquals(trace.valueResamplingPasses, 0)
     assertEquals(trace.support.sourceRows, Vector(0, 1, 2))
     assert(trace.key.label.contains("filter-value-plugin-v1"))
+
+    val backprojection = spatialValue(Backprojection.of(view, result, summon[SpatialGraph]))
+    assertEquals(backprojection.data.toRows, Vector(Vector(0.0), Vector(1.25), Vector(1.25)))
 
   test("hybrid plugins execute typed row projections between hybrid and volume domains"):
     val left = volume("left-part", 2)
@@ -199,15 +204,15 @@ class StagedPluginSuite extends munit.FunSuite:
     )
     val laterSpatial = affine(mid, target, 1.0)
     val badGraph = graph(Vector(root, mid, target), Vector(earlyBarrier, laterSpatial))
-    val program = spatialValue(PullbackProgram.compile(badGraph, CompileRequest(root.id, target.id)))
-    VolumePullbackOperatorCompiler.compile(program).left.toOption match
+    val program = spatialValue(PullbackProgram.compile(badGraph, CompileRequest(root.id, target.id), FunctionalRouting.registry))
+    FunctionalRouting.compile(program).left.toOption match
       case Some(SpatialError.UnsupportedPluginComposition(detail)) =>
         assert(detail.contains("precedes a later coordinate"))
       case other => fail(s"expected fusion-barrier ordering failure, got $other")
 
   test("standard registry dispatch is exhaustive and plugin payload failures are typed"):
     assertEquals(
-      MorphismCompilerRegistry.standard.ids.map(_.value),
+      FunctionalRouting.registry.ids.map(_.value),
       Vector(
         "identity-pullback-v1",
         "affine-pullback-v1",
@@ -231,7 +236,7 @@ class StagedPluginSuite extends munit.FunSuite:
       )
     )
     val g = graph(Vector(root, target), Vector(missing))
-    PullbackProgram.compile(g, CompileRequest(root.id, target.id)).left.toOption match
+    PullbackProgram.compile(g, CompileRequest(root.id, target.id), FunctionalRouting.registry).left.toOption match
       case Some(SpatialError.InvalidMorphismPlugin(id, detail)) =>
         assertEquals(id, missing.id)
         assert(detail.contains("no executable plugin payload"))
@@ -266,7 +271,7 @@ class StagedPluginSuite extends munit.FunSuite:
     val offset = valueMorphism("component-offset", mixed, target, MorphismKind.Filter,
       spatialValue(MorphismPlugin.pointwiseBarrier(pluginId("component-affine-values"), 2, 3)))
     given SpatialGraph = graph(Vector(root, sampled, mixed, target), Vector(spatial, mixing, offset))
-    val program = spatialValue(PullbackProgram.compile(summon[SpatialGraph], CompileRequest(root.id, target.id)))
+    val program = spatialValue(PullbackProgram.compile(summon[SpatialGraph], CompileRequest(root.id, target.id), FunctionalRouting.registry))
     val field = Field.fromMatrix(root.id, GaleDMat.dense(3, 2, Vector(1d, 10d, 2d, 20d, 3d, 30d)))
     val view = apiValue(field.to(target))
     val runtime = LazyFieldRuntime(summon[SpatialGraph])

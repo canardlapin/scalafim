@@ -6,7 +6,7 @@ import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
 import neuroim4s.image.{GridSpec, SpatialPullbacks}
 import neuroim4s.spaces.{FrameCatalog, TemplateName, WorldSpace}
-import scalafim.spatial.{CoordinateMap, DomainKind, MorphismKind, SamplingGeometry}
+import neurosurf4s.routing.{CoordinateMap, DomainKind, MorphismKind, SamplingGeometry}
 import neuroim4s.transform.{TransformProvenance, WorldTransform}
 
 class SpaceTransformGraphSuite extends munit.FunSuite:

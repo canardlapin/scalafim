@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spatial.SamplingPolicy
 
 import neuroim4s.image.{Mask, SampleSpaces}
@@ -136,7 +138,7 @@ class TemplateSurfaceOperatorSuite extends munit.FunSuite:
     assert(SpatialGraph.build(Vector(source, target), Vector(edge)).isRight)
     val reordered = SurfaceGeometry(TriangleMesh.fromArrays(mesh.coordinates.toArray, copiedFaces), Hemisphere.Left, SurfaceKind.White)
     SurfaceResamplingBinding.checked(plan, reordered, targetGeometry) match
-      case Left(SpatialError.InvalidMixedPullback(reason)) => assert(reason.contains("ordered template topology"), reason)
+      case Left(SurfaceResamplingBindingError.Endpoint(SurfaceError.InvalidTopology(reason))) => assert(reason.contains("ordered template topology"), reason)
       case other => fail(s"expected typed endpoint topology rejection, got $other")
 
   test("masked volume ribbon followed by weighted template resampling matches staged native resampling and reports bounded coverage"):

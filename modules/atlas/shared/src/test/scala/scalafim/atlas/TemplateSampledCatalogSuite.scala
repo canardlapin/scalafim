@@ -2,7 +2,7 @@ package scalafim.atlas
 
 import neuroatlas4s.*
 
-import scalafim.spatial.{DomainKind, SamplingGeometry}
+import neurosurf4s.routing.{DomainKind, SamplingGeometry}
 
 class TemplateSampledCatalogSuite extends munit.FunSuite:
   test("all published template surface densities normalize as surface spaces while catalog domains remain unsampled"):

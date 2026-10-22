@@ -217,7 +217,7 @@ lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
 lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 
 // Surface anatomy, formats, scenes and backends have one independent provider.
-lazy val neurosurf4sRevision = "4657ed670c496a36af6ebecef22ec95156529172"
+lazy val neurosurf4sRevision = "c9b05c72e2e452d66dcff8603ea96f589d3572fd"
 lazy val neurosurf4sBuild = {
   Seq("spatial4s", "locus4s", "mesh4s", "image4s", "graph4s", "zarr4s", "neuroim4s", "reframe4s", "gale", "ravel", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neurosurf4s.$provider.build", _))
@@ -235,6 +235,9 @@ lazy val neurosurf4sSpatialIoJVM = ProjectRef(neurosurf4sBuild, "spatialIoJVM")
 lazy val neurosurf4sVolumeJVM = ProjectRef(neurosurf4sBuild, "volumeJVM")
 lazy val neurosurf4sVolumeJS = ProjectRef(neurosurf4sBuild, "volumeJS")
 lazy val neurosurf4sVolumeIoJVM = ProjectRef(neurosurf4sBuild, "volumeIoJVM")
+lazy val neurosurf4sRoutingJVM = ProjectRef(neurosurf4sBuild, "routingJVM")
+lazy val neurosurf4sRoutingJS = ProjectRef(neurosurf4sBuild, "routingJS")
+lazy val neurosurf4sRoutingIoJVM = ProjectRef(neurosurf4sBuild, "routingIoJVM")
 lazy val neurosurf4sFixturesJVM = ProjectRef(neurosurf4sBuild, "fixturesJVM")
 lazy val neurosurf4sFixturesJS = ProjectRef(neurosurf4sBuild, "fixturesJS")
 lazy val neurosurf4sViewJVM = ProjectRef(neurosurf4sBuild, "viewJVM")
@@ -652,24 +655,12 @@ lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(locusData)
-    .jvmConfigure(_.dependsOn(neurosurf4sVolumeJVM, neurosurf4sSpatialIoJVM, neurosurf4sVolumeIoJVM))
-    .jsConfigure(_.dependsOn(neurosurf4sVolumeJS))
     .settings(commonSettings)
-    .settings(
-      name := "scalafim-spatial"
-    )
-    .jvmSettings(
-      // HDF5 transform files are read by transform's jHDF container; tests silence jHDF's logging.
-      libraryDependencies += "org.slf4j" % "slf4j-nop" % "2.0.18" % Test
-    )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .settings(name := "scalafim-spatial")
+    .jvmConfigure(_.dependsOn(neurosurf4sRoutingJVM % "compile->compile;test->test", neuroim4sRoutingIoJVM,
+      neurosurf4sRoutingIoJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(neurosurf4sRoutingJS % "compile->compile;test->test"))
     .jsSettings(jsSettingsBase)
-    .jvmConfigure(_.dependsOn(neuroim4sCoreJVM, neuroim4sIoJVM))
-    .jsConfigure(_.dependsOn(neuroim4sCoreJS))
-    .jvmConfigure(_.dependsOn(neuroim4sTransformJVM, neuroim4sTransformIoJVM, neuroim4sRoutingJVM, neuroim4sRoutingIoJVM))
-    .jsConfigure(_.dependsOn(neuroim4sTransformJS, neuroim4sRoutingJS))
 
 lazy val spatialJS  = spatial.js
 lazy val spatialJVM = spatial.jvm
@@ -678,9 +669,9 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(locusData, spatial, scenarioTestkit % "test->compile")
-    .jvmConfigure(_.dependsOn(neurosurf4sVolumeJVM, neurosurf4sSpatialIoJVM, neurosurf4sVolumeIoJVM))
-    .jsConfigure(_.dependsOn(neurosurf4sVolumeJS))
+    .dependsOn(locusData, scenarioTestkit % "test->compile")
+    .jvmConfigure(_.dependsOn(neurosurf4sRoutingJVM, neurosurf4sVolumeJVM, neurosurf4sSpatialIoJVM, neurosurf4sVolumeIoJVM))
+    .jsConfigure(_.dependsOn(neurosurf4sRoutingJS, neurosurf4sVolumeJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-atlas"
@@ -1340,7 +1331,7 @@ addCommandAlias("mvpa4sLocusTestAll", s";{${mvpa4sBuild}}locusJVM/test;{${mvpa4s
 
 addCommandAlias("neurosurfCoreTestAll", ";" + Seq("coreJVM", "coreJS", "ioJVM", "ioJS").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
 
-addCommandAlias("neurosurfSpatialTestAll", ";" + Seq("spatialJVM", "spatialJS", "spatialIoJVM", "volumeJVM", "volumeJS", "volumeIoJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
+addCommandAlias("neurosurfSpatialTestAll", ";" + Seq("spatialJVM", "spatialJS", "spatialIoJVM", "volumeJVM", "volumeJS", "volumeIoJVM", "routingJVM", "routingJS", "routingIoJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
 
 addCommandAlias("neurosurfFixtureTestAll", ";" + Seq("fixturesJVM", "fixturesJS").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
 
@@ -1354,4 +1345,4 @@ addCommandAlias("neurosurfExamplesJvmTestAll", ";" + Seq("viewExamplesJVM", "sur
 
 addCommandAlias("neurosurfNativeTestAll", ";" + Seq("viewJavafxJVM").map(p => s"{${neurosurf4sBuild}}$p/test").mkString(";"))
 
-addCommandAlias("neurosurfCompileAll", ";" + Seq("coreJVM", "coreJS", "ioJVM", "ioJS", "spatialJVM", "spatialJS", "spatialIoJVM", "volumeJVM", "volumeJS", "volumeIoJVM", "fixturesJVM", "fixturesJS", "viewJVM", "viewLinkJVM", "viewVolumeJVM", "viewRasterJVM", "viewJS", "viewLinkJS", "viewVolumeJS", "viewRasterJS", "viewThreeJS", "viewThreeVolumeJS", "viewExamplesJS", "viewExamplesJVM", "surfaceExamplesJVM", "viewJavafxJVM").map(p => s"{${neurosurf4sBuild}}$p/compile").mkString(";"))
+addCommandAlias("neurosurfCompileAll", ";" + Seq("coreJVM", "coreJS", "ioJVM", "ioJS", "spatialJVM", "spatialJS", "spatialIoJVM", "volumeJVM", "volumeJS", "volumeIoJVM", "routingJVM", "routingJS", "routingIoJVM", "fixturesJVM", "fixturesJS", "viewJVM", "viewLinkJVM", "viewVolumeJVM", "viewRasterJVM", "viewJS", "viewLinkJS", "viewVolumeJS", "viewRasterJS", "viewThreeJS", "viewThreeVolumeJS", "viewExamplesJS", "viewExamplesJVM", "surfaceExamplesJVM", "viewJavafxJVM").map(p => s"{${neurosurf4sBuild}}$p/compile").mkString(";"))

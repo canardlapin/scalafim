@@ -1,11 +1,13 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
 import scala.jdk.CollectionConverters.*
 
-import scalafim.spatial.fixtures.NeurofunctorLawFixtures
+import neurosurf4s.routing.fixtures.NeurofunctorLawFixtures
 
 /** The embedded neurofunctor law fixtures must be the checked-in TSV/JSON files, line for line, so the shared suite
   * replays exactly what the R generator wrote.

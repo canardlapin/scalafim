@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spaces.SubjectId
 
 import image4s.geometry.{Affine, D3}

@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spatial.VolumeReadError
 
 /** Attach functional source identity to the anatomical reader's typed refusal. */

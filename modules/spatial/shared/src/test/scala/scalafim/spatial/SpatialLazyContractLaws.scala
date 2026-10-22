@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 final case class SpatialLazyWork(
   sourceReads: Int,
   compilations: Int,

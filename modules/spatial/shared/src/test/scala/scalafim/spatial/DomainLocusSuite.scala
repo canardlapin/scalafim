@@ -1,19 +1,12 @@
 package scalafim.spatial
 
+import neurosurf4s.routing.*
+
 import neuroim4s.spaces.SubjectId
 
 import neuroim4s.image.{SampleSpaces}
 import neuroim4s.image.SampleSpaces.*
-import locus4s.{Region, Relation, Selection, TotalMap}
-import neurosurf4s.surface.{
-  Hemisphere,
-  SurfaceField,
-  SurfaceGeometry,
-  SurfaceKind,
-  SurfaceRoi,
-  TriangleMesh,
-  VertexId
-}
+import locus4s.{Region, Selection}
 
 class DomainLocusSuite extends munit.FunSuite:
 
@@ -73,61 +66,4 @@ class DomainLocusSuite extends munit.FunSuite:
     assertEquals(
       foreign.selectionDemand(foreignSelection).map(_.spatial),
       Right(SpatialDemand.Rows(Vector(3, 1)))
-    )
-
-  test("exact maps, crisp relations, and sampled operators remain distinct contracts"):
-    val domain = volumeDomain("native")
-    val other = volumeDomain("other")
-    val locus = domain.locus
-    val exact = TotalMap.identity(locus.space)
-    val crisp =
-      Relation
-        .fromOrdinalRows(
-          locus.space,
-          locus.space,
-          Iterator.tabulate(locus.space.size)(ordinal => Iterator.single(ordinal))
-        )
-        .toOption
-        .get
-
-    assertEquals(exact.targetOrdinals.toVector, Vector(0, 1, 2, 3))
-    assertEquals(
-      crisp.ordinalRows.map(_.toVector).toVector,
-      Vector(Vector(0), Vector(1), Vector(2), Vector(3))
-    )
-    assert(exact.from.align(other.locus.space).isLeft)
-    assert(crisp.from.align(other.locus.space).isLeft)
-    assert(!classOf[SpatialOperator].isAssignableFrom(exact.getClass))
-    assert(!classOf[SpatialOperator].isAssignableFrom(crisp.getClass))
-
-  test("surface mask compatibility requires exact ordered topology"):
-    val vertices =
-      Vector(
-        Vector(0.0, 0.0, 0.0),
-        Vector(1.0, 0.0, 0.0),
-        Vector(0.0, 1.0, 0.0),
-        Vector(1.0, 1.0, 0.0)
-      )
-    val sampled =
-      SurfaceGeometry(
-        TriangleMesh.fromRows(vertices, Vector((0, 1, 2), (1, 3, 2))),
-        Hemisphere.Left,
-        SurfaceKind.Midthickness
-      )
-    val reordered =
-      SurfaceGeometry(
-        TriangleMesh.fromRows(vertices, Vector((0, 1, 3), (0, 3, 2))),
-        Hemisphere.Left,
-        SurfaceKind.Midthickness
-      )
-    val field = SurfaceField.full(reordered, Vector(true, true, true, true))
-    val mask =
-      SurfaceRoi.fromField(
-        field,
-        Vector(VertexId(0), VertexId(1), VertexId(2), VertexId(3))
-      )
-
-    assertEquals(
-      SamplingGeometry.surface(sampled, Some(mask)).left.toOption,
-      Some(SpatialError.MaskSpaceMismatch("surface"))
     )
