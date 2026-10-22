@@ -428,7 +428,7 @@ policies, lineage and coverage without the fitter. Matrices are individually
 hash-pinned external Float64 leaves. Other profiles and resumable optimizer
 checkpoints are explicitly unsupported; there is no codec registry or upload.
 
-The unpublished `surface-test-fixtures` cross-project depends on `surface` Compile. Its JVM Compile configuration owns the fsLR asset/oracle helpers and resources; its Test configuration owns their qualification suites. `atlasJVM` Test depends on `surfaceTestFixturesJVM` Compile. `surface` never depends on the fixture project, so there is no project cycle and no production dependency on test support. JVM IO helpers have no JS implementation.
+The unpublished neurosurf4s `fixturesJVM` project owns the fsLR asset/oracle helpers, resources and qualification suites. neuroatlas4s `routingIoJVM` Test depends on its Compile and Test configurations. This upward dependency is confined to test support: neither provider core nor any production module depends on the fixture project. JVM IO helpers have no JS implementation.
 
 Toolkit transform formats and anatomical interpretation now belong to standalone
 `neuroim4s-transform`; optional JVM files/HDF5/X5 belong to
