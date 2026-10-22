@@ -58,6 +58,48 @@ class BidsStudyCompilerSuite extends FunSuite:
     assertEquals(unit.runs.head.timing.sliceTimingCorrected, None)
   }
 
+  test("numeric run companions match across padding without rewriting source paths") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value).map { path =>
+      if path.endsWith("_events.tsv") then path.replace("run-01", "run-1") else path
+    }
+    val project = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(paths, fixture.project.derivatives))
+    val run = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head.runs.head
+    assertEquals(run.id.value, "01")
+    assert(run.bold.location.value.contains("run-01"))
+    assert(run.events.location.value.contains("run-1_"))
+  }
+
+  test("numeric-equivalent event companions are ambiguous and subject labels stay distinct") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val events = paths.find(_.endsWith("_events.tsv")).get
+    val duplicate = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ events.replace("run-01", "run-1"), fixture.project.derivatives))
+    val ambiguous = BidsStudyCompiler.compile(duplicate, fixture.recipe, fixture.headers).left.toOption.get
+    assert(ambiguous.issues.exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+    val otherSubject = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(p => if p == events then p.replace("sub-01", "sub-1") else p), fixture.project.derivatives))
+    val missing = BidsStudyCompiler.compile(otherSubject, fixture.recipe, fixture.headers).left.toOption.get
+    assert(missing.issues.exists(_.code == CatalogIssueCode.MissingEvents))
+  }
+
+  test("numeric-equivalent confounds preserve raw paths and refuse ambiguous companions") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val confounds = paths.find(_.endsWith("_timeseries.tsv")).get
+    val unpadded = confounds.replace("run-01", "run-1").replace("echo-1_", "echo-001_")
+    val selected = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(path => if path == confounds then unpadded else path), fixture.project.derivatives))
+    val run = BidsStudyCompiler.compile(selected, fixture.recipe, fixture.headers).toOption.get.units.head.runs.head
+    assertEquals(run.id.value, "01")
+    assert(run.confounds.exists(_.location.value.endsWith(unpadded)))
+    val duplicate = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ unpadded, fixture.project.derivatives))
+    val report = BidsStudyCompiler.compile(duplicate, fixture.recipe, fixture.headers).left.toOption.get
+    assert(report.issues.exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+  }
+
   test("compiler groups exact fMRIPrep entities into deterministic multi-run units") {
     val fixture = studyFixture(subjects = Vector("02", "01"), runs = Vector("02", "01"))
     val catalog = BidsStudyCompiler.compile(fixture.project, fixture.recipe, fixture.headers).toOption.get

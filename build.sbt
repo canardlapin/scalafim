@@ -312,7 +312,7 @@ lazy val intaglioJavafxJVM = ProjectRef(intaglioBuild, "javafxJVM")
 // Reusable BIDS semantics are developed independently. Ordinary builds clone
 // the exact reviewed revision; the property is an explicit local-development
 // override for downstream rehearsal.
-lazy val bids4sRevision = "a33678390614a91fadbdef13f22970e78c26e091"
+lazy val bids4sRevision = "5dafc800499b2a4642a19ff47fa5924516b2c024"
 lazy val bids4sBuild =
   uri(
     sys.props.getOrElse(

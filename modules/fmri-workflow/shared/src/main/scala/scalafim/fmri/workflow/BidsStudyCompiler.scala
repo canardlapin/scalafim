@@ -583,7 +583,7 @@ object BidsStudyCompiler:
       requirePipeline: Boolean
   ): Boolean =
     val entitiesMatch = keys.forall { key =>
-      candidate.entities.get(key).forall(value => target.entities.get(key).contains(value))
+      candidate.entities.get(key).forall(value => target.entities.get(key).exists(key.equivalentValue(value, _)))
     }
     val pipelineMatches = !requirePipeline || candidate.pipeline == target.pipeline
     entitiesMatch && pipelineMatches
