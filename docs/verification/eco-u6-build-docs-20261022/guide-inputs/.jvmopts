@@ -1,0 +1,5 @@
+-Xms256m
+-Xmx4g
+-XX:ActiveProcessorCount=4
+-Dsbt.supershell=false
+-Dsbt.server.autostart=false

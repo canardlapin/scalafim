@@ -1,0 +1,233 @@
+{
+  "schema": "scalafim.eco-u6-build-docs.v1",
+  "source_commit": "23cae3452dfb7357ab11b234c307c234caf4566a",
+  "provider_sources": {
+    "ravel": {
+      "source_commit": "195d71027423d5bda1c53ef1baa17e07670fe290",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/03b7f0d36fcba51e6ed8/ravel",
+      "clean_tracked_source_after": true
+    },
+    "graph4s": {
+      "source_commit": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/08e20f5c89874d9eb32d/graph4s",
+      "clean_tracked_source_after": true
+    },
+    "intaglio": {
+      "source_commit": "d553c327824f9916b1c0a055226c6c5e8f77bc59",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/135badde2a1fe78cfcb7/intaglio",
+      "clean_tracked_source_after": true
+    },
+    "gale": {
+      "source_commit": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/1acafa978adeaec8bfcf/gale",
+      "clean_tracked_source_after": true
+    },
+    "zarr4s": {
+      "source_commit": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/34c0071f90095ef07887/zarr4s",
+      "clean_tracked_source_after": true
+    },
+    "resample4s": {
+      "source_commit": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/3f5d01c7e6069e74a205/resample4s",
+      "clean_tracked_source_after": true
+    },
+    "mvpa4s": {
+      "source_commit": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/695a78cd1817a04aff73/mvpa4s",
+      "clean_tracked_source_after": true
+    },
+    "multivar": {
+      "source_commit": "7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/6e1c7e90d885ae794319/multivar",
+      "clean_tracked_source_after": true
+    },
+    "spatial4s": {
+      "source_commit": "f79674114dc5f1f88866708b74f7ea42e59895a8",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/743bbc500a4cc79953a2/spatial4s",
+      "clean_tracked_source_after": true
+    },
+    "neurosurf4s": {
+      "source_commit": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/8ec5b6670930dbda7b6f/neurosurf4s",
+      "clean_tracked_source_after": true
+    },
+    "image4s": {
+      "source_commit": "855a3a61029f78e975b43cd1736de1c94180c004",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/94c1a42c925a37ebcee0/image4s",
+      "clean_tracked_source_after": true
+    },
+    "neuroatlas4s": {
+      "source_commit": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/a32912aea373acfb662b/neuroatlas4s",
+      "clean_tracked_source_after": true
+    },
+    "mesh4s": {
+      "source_commit": "fd8b93ea42879ec5414342a084f05b831a4bbfc7",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/be34ba1347bf7c4631f4/mesh4s",
+      "clean_tracked_source_after": true
+    },
+    "locus4s": {
+      "source_commit": "e32b0aeba5c4d19c457b2329272b95b26c061943",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/c42ffad74301778951e7/locus4s",
+      "clean_tracked_source_after": true
+    },
+    "alder": {
+      "source_commit": "7618c715002b3912f856c4d44468ae173fce4dec",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/c76252a048c916057029/alder",
+      "clean_tracked_source_after": true
+    },
+    "linops4s": {
+      "source_commit": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/cfabf5f1e5e2fb8fb176/linops4s",
+      "clean_tracked_source_after": true
+    },
+    "neuroim4s": {
+      "source_commit": "4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/f1485a830167fcac1bf1/neuroim4s",
+      "clean_tracked_source_after": true
+    },
+    "reframe4s": {
+      "source_commit": "622ab31f97bbe30a9bc6436464f3124643856f47",
+      "path": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/guide-sbt-20/staging/f4cb9818d80063022be6/reframe4s",
+      "clean_tracked_source_after": true
+    }
+  },
+  "bootstrap": {
+    "validated_shared_edges": 41,
+    "additional_anchor": "image4s spatial4sRevision",
+    "source_consumers": 10,
+    "unit_methods": 5,
+    "subprocess_cases": 99,
+    "edge_refusal_cases": 84,
+    "invalid_root_pin_cases": 12,
+    "wrong_multivar_head_cases": 1,
+    "positive_modes": 2
+  },
+  "guide": {
+    "exact_markdown_build_compiled": true,
+    "jvm_core_consumers": 4,
+    "runtime_cases": 0,
+    "private_artifact_files": 120,
+    "private_archive_sha256": "404e7e79248faca4f87756c85c63947036e928e42053361222f269644fbf702d",
+    "resolved_compile_entries": {
+      "volume": 28,
+      "atlas": 6,
+      "surface": 23,
+      "analysis": 12
+    },
+    "no_root_or_provider_test_dependency": true
+  },
+  "explicit_override": {
+    "receipt": "scalafim-eco-u6-override-23.json",
+    "single_loaded_intaglio_owner": true,
+    "five_forwarding_properties_checked": true,
+    "source_checkout_verified_separately": true
+  },
+  "gates": [
+    {
+      "meaning": "Earlier40-edge dirty-source control run before moving pin excerpts outside provider checkouts.",
+      "log": {
+        "path": "scalafim-eco-u6-build-docs-bootstrap-17.log.gz",
+        "raw_sha256": "4ced6048a1b8af73d1e4b654b57f65e6b1075310527bb4da11b13962a06de14a",
+        "gzip_sha256": "fa8bb241f44a98c2f029fdb9153a2ed68572966722038172d6218dc30742e81c"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-build-docs-bootstrap-17.log.meta.json.gz",
+        "raw_sha256": "b8a7ac90c462dedcd9800d83fce424fb199232b41fba9958650126db086995f5",
+        "gzip_sha256": "81c9f7432ac0e66ee61dda659d52c7618d2e6c794a7b9464d2ffcaec97bc767a"
+      },
+      "exit_code": 0
+    },
+    {
+      "meaning": "97subprocess cases, earlier40-edge coverage at91f6487; missing Multivar Resample edge found by review.",
+      "log": {
+        "path": "scalafim-eco-u6-build-docs-controls-18.log.gz",
+        "raw_sha256": "98b97f3507a1f81b0c43532212d045a0af0e5373e83eaada2b8b1a49e36d6dcc",
+        "gzip_sha256": "970f276bcd43f24eaecd4387a853509f7505b712556b9d9195b80ed8ee281163"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-build-docs-controls-18.log.meta.json.gz",
+        "raw_sha256": "801542610ae8c8acd92709fc95db36a18993508ce680bae614f8956558c7887b",
+        "gzip_sha256": "3221dfb3bf5ae75c5ae7f04c6864d50c151774a2a5f62f74832d8eeb4e1f3604"
+      },
+      "exit_code": 0
+    },
+    {
+      "meaning": "Earlier40-edge realGit check-only pass at91f6487; partial coverage, not final admission.",
+      "log": {
+        "path": "scalafim-eco-u6-build-docs-pins-19.log.gz",
+        "raw_sha256": "0b109b55c787385b4998e16518f18e72faa0dad5b04d58ddb40edfe8f011e69d",
+        "gzip_sha256": "4052ecc461c8ed9bc1b7cda30c501e5cb7368c8dc9cc5fbf784fbd60515297cd"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-build-docs-pins-19.log.meta.json.gz",
+        "raw_sha256": "f9020ec7f5087c73f2147ec3d4f97a472b0c3cac6a482bfc7b41dbdb21f1cebf",
+        "gzip_sha256": "1ff0137282896f8279de3011387523833989882afa5937f7f486b154b44cf25a"
+      },
+      "exit_code": 0
+    },
+    {
+      "meaning": "Exact four JVM core consumer guide build, independent private artifact custody; compile evidence, no application assertions.",
+      "log": {
+        "path": "scalafim-eco-u6-guide-20.log.gz",
+        "raw_sha256": "9b6030d10d3df0bfafdc76b1c90761e1b8fc099279f90c9c4d00a87c95c5299e",
+        "gzip_sha256": "639eb4401d282cb7a8720c9c83363691dd0c6cfef2c025e08e0275886b558445"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-guide-20.log.meta.json.gz",
+        "raw_sha256": "fb4f975cee10dea6198951db36fa750621aa8b9d6f22a6d75b50755e548e9def",
+        "gzip_sha256": "d9f673ef44de798f26ae97f32a9116542b4eeef47d79c82275552cd4870d6391"
+      },
+      "exit_code": 0
+    },
+    {
+      "meaning": "Final41-edge+anchor controls:5methods/99subprocesscases at23cae3452.",
+      "log": {
+        "path": "scalafim-eco-u6-build-docs-controls-21.log.gz",
+        "raw_sha256": "a87b805ec021f7521153761b0e96d80bed37b0996e26de706c10b2396613607a",
+        "gzip_sha256": "4f6ef15cddd158244c93fd869700d09ae716883b5163478bfe524c8c9afffa49"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-build-docs-controls-21.log.meta.json.gz",
+        "raw_sha256": "32364dabe079d2aede8657d226c9cada4f3b1dc0289a766cedff06bb7c442ded",
+        "gzip_sha256": "91b9d0a43203a2e6f7cb862ebcb8888c14adaa45adcb84ca5bc08956cb51d05d"
+      },
+      "exit_code": 0
+    },
+    {
+      "meaning": "Final realGit41sharededges+anchorcheck-only pass before either publisher at23cae3452.",
+      "log": {
+        "path": "scalafim-eco-u6-build-docs-pins-22.log.gz",
+        "raw_sha256": "9c54fb5d06f23a3376e42af2ff9793d0a08c6fe4f671174e81ca4ed9a5148ecb",
+        "gzip_sha256": "d18de40975c2c1d4000381dbeb92dd5dd84981093ea7b067cd951b640a3dfdff"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-build-docs-pins-22.log.meta.json.gz",
+        "raw_sha256": "308c7e575d416474112aefb5bd0ee05d48bbf60713600bcde12ae1daf32ebd72",
+        "gzip_sha256": "cc1e1d2cb84b3c3ef15cffd7ff084a6106b586bff4bed9a72c5330fe0456a5cb"
+      },
+      "exit_code": 0
+    },
+    {
+      "meaning": "ExplicitIntaglio load/property/URI probe, allfiveforwardedproperties, singleloadedowner.",
+      "log": {
+        "path": "scalafim-eco-u6-override-23.log.gz",
+        "raw_sha256": "36d0a2d6f443130762d310a2adaddf1212962ccefa0ab4699f4cd9174121be5a",
+        "gzip_sha256": "de56d22bcd9198cf0bc6da3f3b3ddd8b3164a9762d2a31ed291bcd57d2fd271e"
+      },
+      "execution_metadata": {
+        "path": "scalafim-eco-u6-override-23.log.meta.json.gz",
+        "raw_sha256": "cb54a60c0108e5840a6254c66062780e07ce7424aa807e844d74914dabcc5298",
+        "gzip_sha256": "fc18f108f206ad6aeb5c873ee1d6aa3a4590d5367553ca0ec379b0971130507e"
+      },
+      "exit_code": 0
+    }
+  ],
+  "limits": [
+    "Guide compilation covers JVM core dependencies, not application assertions or JS behavior.",
+    "Final U6 full immutable campaign and seven scenario families are still required.",
+    "Known scientific/native/performance gaps and legacy affine v1 cross-platform fingerprint difference remain unchanged.",
+    "No artifact release, hosted CI, main landing or warning-free claim."
+  ]
+}
