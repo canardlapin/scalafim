@@ -64,7 +64,10 @@ class EcosystemLinkedProjectionScenarioSuite extends munit.FunSuite:
     val camera = SurfaceReadbackScenario.centeredCamera(surfaceFrame)
     val rendered = SurfaceRasterizer.render(plan.copy(camera = camera), RasterDimensions.unsafe(129, 129),
       SurfaceRasterStyle(culling = TriangleCulling.None)).toOption.get
-    val hit = rendered.pick(64, 64).toOption.flatten.get
+    // The raster samples pixel centers on a 129-wide viewport. At (56,72),
+    // original-vertex weights are (193/387,97/387,97/387): a unique vertex 0,
+    // with rounded RGB (127,64,64), independent of centroid tie arithmetic.
+    val hit = rendered.pick(56, 72).toOption.flatten.get
     val selection = SurfaceSelection(hit.surface, VertexId(hit.vertex))
     val volumePoint = cursor.toVolume(selection).toOption.get
     val roundtrip = cursor.toSurface(volumePoint, SurfaceLinkRadius.unsafe(0.0)).toOption.get
@@ -79,9 +82,9 @@ class EcosystemLinkedProjectionScenarioSuite extends munit.FunSuite:
         closeValues(projection.values.data.toVector, Vector(100.0,102.0,131.0)) &&
         projection.receipt.requestedSamples == 3L && projection.receipt.acceptedSamples == 3L &&
         projection.receipt.qualifiedVertices == 3, "midpoint voxel values in vertex order: 100, 102, 131"),
-      ScenarioHarness.fact("pixel-and-pick", rendered.image.pixelUnsafe(64,64) == Rgba32.unsafe(85,85,85) &&
+      ScenarioHarness.fact("pixel-and-pick", rendered.image.pixelUnsafe(56,72) == Rgba32.unsafe(127,64,64) &&
         hit.surface == surfaceId && hit.face == 0 && hit.vertex == 0,
-        "checked orthographic-camera centroid: interpolated RGB 85,85,85; face 0, vertex 0"),
+        "checked orthographic camera at (56,72): RGB 127,64,64; face 0, unique vertex 0"),
       ScenarioHarness.fact("actual-pick-cursor", closeValues(volumePoint.coordinates, Vector(-1.0,-1.0,0.0)) &&
         grid.voxelAt(volumePoint).exists(v => closeValues(Vector(v.x, v.y, v.z), Vector(0.0,0.0,0.0))) && roundtrip.selection == selection &&
         closeValues(roundtrip.vertex.coordinates, Vector(-1.0,-1.0,0.0)) && close(roundtrip.distance, 0.0),

@@ -1,7 +1,7 @@
 package scalafim.examples.workflows.eco
 
 import image4s.{ImageMetadata, NonSpatialAxes, SampleSpace}
-import image4s.geometry.{Affine, D3}
+import image4s.geometry.{Affine, D3, Grid, GridId}
 import neuroatlas4s.*
 import neuroim4s.image.*
 import scalafim.scenarios.ScenarioHarness
@@ -25,8 +25,11 @@ class EcosystemAtlasRoutingScenarioSuite extends munit.FunSuite:
       0.0, 1.0, 0.0, -18.4064,
       0.0, 0.0, 1.0, 36.1385,
       0.0, 0.0, 0.0, 1.0)))
-    val grid = right(GridSpec.in(frame)(SpatialDims(3, 1, 1), affine))
-    val space = SampleSpace.create(grid.grid, NonSpatialAxes.empty)
+    // Atlas realization persists its ambient domain; admit an explicit grid ID
+    // in the catalog frame rather than supplying an ephemeral GridSpec.
+    val gridId = right(GridId.parse("eco-synthetic-route-grid"))
+    val grid = right(Grid.createPersistent(gridId, frame)(Vector(3, 1, 1), affine))
+    val space = SampleSpace.create(grid, NonSpatialAxes.empty)
     val labels = right(NeuroVolume.copyCategoricalFromCanonicalArray(space, Array(10, 0, 50), ImageMetadata.named("synthetic labels")))
     val atlas = right(VolumeAtlas.fromLabelVolumeEither(ref, regions, SomeNeuroVolume.eraseSpace(labels), provenance))
     val dataSpace = SampleSpace.create(atlas.realization.domain.grid, NonSpatialAxes.empty)
