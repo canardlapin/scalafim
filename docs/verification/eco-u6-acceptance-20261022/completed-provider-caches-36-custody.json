@@ -1,0 +1,27 @@
+{
+  "timestamp": 1792649062.67775,
+  "items": [
+    {
+      "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/d73b497ed80dad6b",
+      "owner_worktree": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-surface-20261022",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-provider-caches-36/d73b497ed80dad6b.tar.gz",
+      "sha256": "c3b0f0ac2564a1a7fc5841d86eb44b9ca19d63654cf4a84862f1233a5ea6dea3",
+      "files": 53173,
+      "uncompressed_bytes": 733009640,
+      "manifest_sha256": "7bdb9f58a7177fe4718566982b5d0aa44c8573c1a3cad7947f55d235438196fa",
+      "all_regular_files_and_symlinks_verified": true,
+      "dead_sockets_not_archived": true
+    },
+    {
+      "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/6af05090204dd2a6",
+      "owner_worktree": "/Users/bbuchsbaum/code/scala/neurosurf4s-eco-routing-20261021",
+      "archive": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-provider-caches-36/6af05090204dd2a6.tar.gz",
+      "sha256": "0691ff804a26108720b19fcd3cd1548d21883768ac88971a3e6bd97e8b1802f5",
+      "files": 68992,
+      "uncompressed_bytes": 1021515734,
+      "manifest_sha256": "237da5e3721d5a59f4b8c04cd7018e77dda7127d69f8448c26d9483a18a85edb",
+      "all_regular_files_and_symlinks_verified": true,
+      "dead_sockets_not_archived": true
+    }
+  ]
+}

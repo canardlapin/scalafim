@@ -1,0 +1,45 @@
+{
+  "scope": "Actual final-campaign diagnostic observations, not new scientific qualification; original fixtures/budgets/flags retained.",
+  "observations": [
+    {
+      "batch": "analysis-jvm",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "raw_log": "scalafim-eco-u6-resume-56.log.gz",
+      "observed_lines": [
+        "[milestone] Gaussian basis rank 19, K = 57, nuisance rank 6",
+        "[milestone] Gaussian SNR 1.00: admitted 98.0%, p95 |peak-oracle| 0.0004 s, p95 |FWHM-oracle| 0.0012 s, p95 rel amp 2.17e-04; per voxel nodes 72.0 jets 4.14 exact 0.07; oracle beaten under the exact kernel in 178/196 admitted voxels",
+        "[milestone] Gaussian SNR 0.50: admitted 98.0%, p95 |peak-oracle| 0.0006 s, p95 |FWHM-oracle| 0.0017 s, p95 rel amp 3.89e-04; per voxel nodes 72.0 jets 4.21 exact 0.04; oracle beaten under the exact kernel in 117/196 admitted voxels",
+        "[milestone] Gaussian SNR 0.25: admitted 87.5%, p95 |peak-oracle| 0.0012 s, p95 |FWHM-oracle| 0.0038 s, p95 rel amp 8.70e-04; per voxel nodes 71.4 jets 4.30 exact 0.02; oracle beaten under the exact kernel in 60/175 admitted voxels",
+        "[milestone] Gaussian SNR 0.25 admission 87.5% (reported, not gated)",
+        "[milestone] LWU basis rank 23, K = 69",
+        "[milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+        "[milestone] LWU SNR 1.00: admitted 91.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.42 exact 0.11; oracle beaten under the exact kernel in 89/91 admitted voxels",
+        "[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "[milestone] LWU admission 91.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+        "[milestone] LWU SNR 0.50: admitted 77.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 5.12e-04; per voxel nodes 161.3 jets 4.60 exact 0.13; oracle beaten under the exact kernel in 74/77 admitted voxels",
+        "[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "[milestone] LWU admission 77.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+      ]
+    },
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "raw_log": "scalafim-eco-u6-resume-56.log.gz",
+      "observed_lines": [
+        "[milestone] Gaussian basis rank 19, K = 57, nuisance rank 6",
+        "[milestone] Gaussian SNR 1.00: admitted 97.0%, p95 |peak-oracle| 0.0004 s, p95 |FWHM-oracle| 0.0012 s, p95 rel amp 2.00e-04; per voxel nodes 72.0 jets 4.17 exact 0.07; oracle beaten under the exact kernel in 176/194 admitted voxels",
+        "[milestone] Gaussian SNR 0.50: admitted 99.0%, p95 |peak-oracle| 0.0006 s, p95 |FWHM-oracle| 0.0017 s, p95 rel amp 3.89e-04; per voxel nodes 72.0 jets 4.18 exact 0.04; oracle beaten under the exact kernel in 119/198 admitted voxels",
+        "[milestone] Gaussian SNR 0.25: admitted 87.0%, p95 |peak-oracle| 0.0012 s, p95 |FWHM-oracle| 0.0038 s, p95 rel amp 8.70e-04; per voxel nodes 71.4 jets 4.32 exact 0.01; oracle beaten under the exact kernel in 60/174 admitted voxels",
+        "[milestone] Gaussian SNR 0.25 admission 87.0% (reported, not gated)",
+        "[milestone] LWU basis rank 23, K = 69",
+        "[milestone] LWU compiler arrays=Vector(1999830, 831390), storage=14326919, trainingWork=8498985, spectralWork=46033293376, forward=113, adjoint=114, converged=48, builds=1",
+        "[milestone] LWU SNR 1.00: admitted 93.0%, p95 |peak-oracle| 0.0000 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 3.19e-04; per voxel nodes 163.1 jets 4.39 exact 0.08; oracle beaten under the exact kernel in 91/93 admitted voxels",
+        "[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "[milestone] LWU admission 93.0% at SNR 1.00 is below 95%: recorded as unmet for rho-weak voxels",
+        "[milestone] LWU SNR 0.50: admitted 81.0%, p95 |peak-oracle| 0.0100 s, p95 |FWHM-oracle| 0.0100 s, p95 rel amp 4.50e-04; per voxel nodes 161.3 jets 4.49 exact 0.12; oracle beaten under the exact kernel in 78/81 admitted voxels",
+        "[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)",
+        "[milestone] LWU admission 81.0% at SNR 0.50 is below 95%: recorded as unmet for rho-weak voxels"
+      ]
+    }
+  ]
+}

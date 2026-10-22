@@ -1,0 +1,90 @@
+{
+  "qualification": "Ignored events retained as emitted; framework may report unknown test names. No execution or identity inferred.",
+  "events": [
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "event": "==> i <unknown> ignored",
+      "preceding_lines": [
+        "  + Gaussian family jets match finite differences at interior points 0.001s",
+        "  + Gaussian family scale jets match finite differences under every supported rule 0.000s",
+        "  + Gaussian family realisation matches the library kernel and is causal 0.001s",
+        "  + LWU family jets, scale jets, realisation and causality laws hold 0.005s"
+      ],
+      "following_lines": [
+        "",
+        "scalafim.fmri.laws.ArGeneratedLawsSuite:",
+        "  + fixed-order AR estimation is invariant to scale, signs, and response-column permutation 0.039s"
+      ],
+      "qualification": "Context only; do not infer an unnamed ignored test identity from log adjacency."
+    },
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "event": "==> i <unknown> ignored",
+      "preceding_lines": [
+        "  + development banks have eight distinct points and fresh confirmation seeds 0.012s",
+        "  + explicit bank uses public corrected readout with the unchanged work budget 1.301s",
+        "  + three-dimensional compact bank preserves all six Hessian components 0.643s",
+        "  + public three-dimensional decoding uses the selected eight-point bank with two frozen score references 0.647s"
+      ],
+      "following_lines": [
+        "",
+        "scalafim.fmri.laws.profile.ProfileReductionLawsSuite:",
+        "  + compact energy, amplitudes and jets equal the direct time-domain fit at alpha = 0 6.520s"
+      ],
+      "qualification": "Context only; do not infer an unnamed ignored test identity from log adjacency."
+    },
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "event": "==> i <unknown> ignored",
+      "preceding_lines": [
+        "scalafim.fmri.laws.profile.TrialDomainGateSuite:",
+        "  + declared domain routes without response information and refuses excluded slow shapes 0.002s",
+        "  + frozen samples retain all boundaries and paired noise sensitivities 0.001s",
+        "  + public fixed-shape gate uses one reference and separates approximation from representation 0.842s"
+      ],
+      "following_lines": [
+        "",
+        "scalafim.fmri.laws.profile.ConditionMilestoneSuite:",
+        "[milestone] Gaussian basis rank 19, K = 57, nuisance rank 6"
+      ],
+      "qualification": "Context only; do not infer an unnamed ignored test identity from log adjacency."
+    },
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "event": "==> i <unknown> ignored",
+      "preceding_lines": [
+        "  + an aliased condition cell is refused as rank loss, not certified 0.002s",
+        "scalafim.fmri.laws.StaticTypeContractsSuite:",
+        "  + an HRF accepts a lag derived from absolute time, not an absolute clock reading 0.000s",
+        "  + basis coefficients remain owned by the basis that constructed them 0.000s"
+      ],
+      "following_lines": [
+        "",
+        "scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite:",
+        "  + export fixed development comparison inputs without changing the decoder 1.613s"
+      ],
+      "qualification": "Context only; do not infer an unnamed ignored test identity from log adjacency."
+    },
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "event": "==> i <unknown> ignored",
+      "preceding_lines": [
+        "  + term permutation is column-equivariant when aligned by structural origin 0.317s",
+        "  + factor relabeling transports cell identities while leaving corresponding columns unchanged 0.274s",
+        "  + scientifically relevant timing changes alter the design fingerprint 0.279s",
+        "  + generated factor, missingness, provenance, and policy audits remain internally consistent 0.175s"
+      ],
+      "following_lines": [
+        "",
+        "scalafim.fmri.laws.profile.TrialEnvelopeGradientProbeSuite:",
+        "PHRF_ENVELOPE_PROBE={\"callsPerBatch\":64,\"warmupBatchesPerMode\":1,\"repetitions\":[{\"fullSeconds\":2.047296292,\"envelopeSeconds\":0.22102625,\"fullChecksum\":12207.257383036935,\"envelopeChecksum\":12207.257383036935},{\"fullSeconds\":2.067075708,\"envelopeSeconds\":0.224840916,\"fullChecksum\":12207.257383036935,\"envelopeChecksum\":12207.257383036935},{\"fullSeconds\":2.0918835,\"envelopeSeconds\":0.227542334,\"fullChecksum\":12207.257383036935,\"envelopeChecksum\":12207.257383036935},{\"fullSeconds\":2.112914708,\"envelopeSeconds\":0.222389625,\"fullChecksum\":12207.257383036935,\"envelopeChecksum\":12207.257383036935},{\"fullSeconds\":2.108061625,\"envelopeSeconds\":0.224203125,\"fullChecksum\":12207.257383036935,\"envelopeChecksum\":12207.257383036935}],\"searchReferenceBytes\":339776,\"previousFirstOrderReferenceBytes\":766760,\"fullReferenceBytes\":1620728,\"qualification\":\"not-admitted\"}"
+      ],
+      "qualification": "Context only; do not infer an unnamed ignored test identity from log adjacency."
+    }
+  ]
+}

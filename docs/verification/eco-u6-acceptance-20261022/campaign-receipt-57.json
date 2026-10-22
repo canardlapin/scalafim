@@ -1,0 +1,2206 @@
+{
+  "schema": "scalafim.eco-segmented-campaign.v2",
+  "status": "Pass",
+  "qualified_source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "segments": [
+    {
+      "name": "full-34",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "counted_batches": 17,
+      "raw_log": "/tmp/scalafim-eco-u6-full-34.log",
+      "raw_log_sha256": "76e82675c4b209198544f851c0ece74047a2005455d2c1140f29753af15020d8",
+      "meta": {
+        "schema_version": 1,
+        "started_utc": "2026-10-22T06:27:36.094613+00:00",
+        "finished_utc": "2026-10-22T07:23:41.967942+00:00",
+        "duration_seconds": 3365.892502,
+        "command": [
+          "bash",
+          "tools/ci/full-repository-tests.sh"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+        "log": "/tmp/scalafim-eco-u6-full-34.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 21600.0,
+        "log_bytes": 788684
+      },
+      "interrupted": true,
+      "excluded_failed_batch": "mvpa4s-imaging",
+      "excluded_errors": [
+        "[error] Expected ID character",
+        "[error] Not a valid command: surfaceJVM (similar: coverageJVM)",
+        "[error] Expected project ID",
+        "[error] Expected configuration",
+        "[error] Expected ':'",
+        "[error] Expected key",
+        "[error] Not a valid key: surfaceJVM (similar: sources)",
+        "[error] surfaceJVM/test",
+        "[error]           ^"
+      ],
+      "excluded_case_failures": [],
+      "qualification": "Count only completed batch prefix. Failed partial batch excluded entirely and retained as adverse evidence."
+    },
+    {
+      "name": "resume-51",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "counted_batches": 8,
+      "raw_log": "/tmp/scalafim-eco-u6-resume-51.log",
+      "raw_log_sha256": "fec0e23ee3cf991bf7064289b38c1ce0f6520b9746d15f31f81b37002b2ede9e",
+      "meta": {
+        "schema_version": 1,
+        "started_utc": "2026-10-22T07:45:43.199935+00:00",
+        "finished_utc": "2026-10-22T08:05:16.277039+00:00",
+        "duration_seconds": 1173.041845,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/tmp/scalafim-eco-resume-51.py"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+        "log": "/tmp/scalafim-eco-u6-resume-51.log",
+        "exit_code": 1,
+        "child_returncode": 1,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 14400.0,
+        "log_bytes": 296515
+      },
+      "interrupted": true,
+      "excluded_failed_batch": "threshold-motion-jvm",
+      "excluded_errors": [
+        "[error] Failed: Total 105, Failed 1, Errors 0, Passed 104",
+        "[error] Failed tests:",
+        "[error] \tscalafim.fmri.motion.io.MotionIoSuite",
+        "[error] (motionJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful",
+        "[error] Total time: 8 s, completed Oct 22, 2026, 4:05:16 a.m."
+      ],
+      "excluded_case_failures": [
+        "==> X scalafim.fmri.motion.io.MotionIoSuite.BIDS adapter discovers raw scans with TR and slice timing sidecars  0.149s munit.ComparisonFailException: modules/motion/jvm/src/test/scala/scalafim/fmri/motion/io/MotionIoSuite.scala:114"
+      ],
+      "qualification": "Count only completed batch prefix. Failed partial batch excluded entirely and retained as adverse evidence."
+    },
+    {
+      "name": "resume-56",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "counted_batches": 12,
+      "raw_log": "/tmp/scalafim-eco-u6-resume-56.log",
+      "raw_log_sha256": "50ff1da06e9634e0168578a4176404724126646ca2975b55255bed03366e99a8",
+      "meta": {
+        "schema_version": 1,
+        "started_utc": "2026-10-22T08:20:11.234267+00:00",
+        "finished_utc": "2026-10-22T09:14:54.881960+00:00",
+        "duration_seconds": 3283.587975,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/tmp/scalafim-eco-resume-56.py"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+        "log": "/tmp/scalafim-eco-u6-resume-56.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 14400.0,
+        "log_bytes": 867359
+      },
+      "interrupted": false
+    }
+  ],
+  "expected_batch_names": [
+    "ecosystem-boundaries",
+    "phrf-comparison-jvm",
+    "phrf-comparison-js",
+    "core-jvm",
+    "core-js",
+    "neuroim",
+    "neuroim-transforms",
+    "neuroim-routing",
+    "neuroim-view-jvm",
+    "neuroim-view-js",
+    "neuroatlas-core",
+    "neuroatlas-volume",
+    "neuroatlas-surface",
+    "neuroatlas-routing",
+    "mvpa4s-core",
+    "mvpa4s-predictive",
+    "mvpa4s-locus",
+    "mvpa4s-imaging",
+    "neurosurf-Core",
+    "neurosurf-Spatial",
+    "neurosurf-Fixture",
+    "neurosurf-ViewJvm",
+    "neurosurf-ViewJs",
+    "neurosurf-Browser",
+    "neurosurf-ExamplesJvm",
+    "threshold-motion-jvm",
+    "threshold-motion-js",
+    "data-jvm",
+    "data-js",
+    "estimates-jvm",
+    "estimates-js",
+    "analysis-jvm",
+    "analysis-js",
+    "downstream-jvm",
+    "downstream-js",
+    "examples",
+    "examples-js"
+  ],
+  "completed_batches": [
+    {
+      "batch": "ecosystem-boundaries",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "ecosystemBoundaries"
+      ],
+      "summaries": [],
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "passed": 0,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "phrf-comparison-jvm",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "phrfComparisonJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 548,
+          "failed": 0,
+          "errors": 0,
+          "passed": 544,
+          "skipped": 4
+        }
+      ],
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "passed": 544,
+      "skipped": 4,
+      "declared_nonexecutions": [
+        "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.006s",
+        "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.001s",
+        "==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.002s",
+        "==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.001s"
+      ]
+    },
+    {
+      "batch": "phrf-comparison-js",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "phrfComparisonJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 254,
+          "failed": 0,
+          "errors": 0,
+          "passed": 254,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "passed": 254,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "core-jvm",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "pipelineJVM/test",
+        "responseJVM/test",
+        "responseLawsJVM/test",
+        "latentJVM/test",
+        "arJVM/test",
+        "hrfJVM/test",
+        "scenarioTestkitJVM/test",
+        "designJVM/test",
+        "providerSpikeJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 38,
+          "failed": 0,
+          "errors": 0,
+          "passed": 38,
+          "skipped": 0
+        },
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45,
+          "skipped": 0
+        },
+        {
+          "total": 172,
+          "failed": 0,
+          "errors": 0,
+          "passed": 172,
+          "skipped": 0
+        },
+        {
+          "total": 412,
+          "failed": 0,
+          "errors": 0,
+          "passed": 412,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 607,
+          "failed": 0,
+          "errors": 0,
+          "passed": 607,
+          "skipped": 0
+        },
+        {
+          "total": 52,
+          "failed": 0,
+          "errors": 0,
+          "passed": 52,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 9,
+      "known_empty_targets": {},
+      "passed": 1349,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "core-js",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "pipelineJS/test",
+        "responseJS/test",
+        "responseLawsJS/test",
+        "latentJS/test",
+        "arJS/test",
+        "hrfJS/test",
+        "scenarioTestkitJS/test",
+        "designJS/test",
+        "providerSpikeJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 38,
+          "failed": 0,
+          "errors": 0,
+          "passed": 38,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 45,
+          "failed": 0,
+          "errors": 0,
+          "passed": 45,
+          "skipped": 0
+        },
+        {
+          "total": 170,
+          "failed": 0,
+          "errors": 0,
+          "passed": 170,
+          "skipped": 0
+        },
+        {
+          "total": 412,
+          "failed": 0,
+          "errors": 0,
+          "passed": 412,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 606,
+          "failed": 0,
+          "errors": 0,
+          "passed": 606,
+          "skipped": 0
+        },
+        {
+          "total": 50,
+          "failed": 0,
+          "errors": 0,
+          "passed": 50,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 9,
+      "known_empty_targets": {},
+      "passed": 1343,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroim",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroim4s:spacesJVM/test",
+        "neuroim4s:spacesJS/test",
+        "neuroim4s:coreJVM/test",
+        "neuroim4s:coreJS/test",
+        "neuroim4s:ioJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        },
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        },
+        {
+          "total": 334,
+          "failed": 0,
+          "errors": 0,
+          "passed": 334,
+          "skipped": 0
+        },
+        {
+          "total": 333,
+          "failed": 0,
+          "errors": 0,
+          "passed": 333,
+          "skipped": 0
+        },
+        {
+          "total": 31,
+          "failed": 0,
+          "errors": 0,
+          "passed": 31,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 5,
+      "known_empty_targets": {},
+      "passed": 760,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroim-transforms",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroim4s:transformJVM/test",
+        "neuroim4s:transformJS/test",
+        "neuroim4s:transformIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 137,
+          "failed": 0,
+          "errors": 0,
+          "passed": 137,
+          "skipped": 0
+        },
+        {
+          "total": 137,
+          "failed": 0,
+          "errors": 0,
+          "passed": 137,
+          "skipped": 0
+        },
+        {
+          "total": 28,
+          "failed": 0,
+          "errors": 0,
+          "passed": 28,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 302,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroim-routing",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroim4s:routingJVM/test",
+        "neuroim4s:routingJS/test",
+        "neuroim4s:routingIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14,
+          "skipped": 0
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 32,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroim-view-jvm",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroim4s:viewJVM/test",
+        "neuroim4s:viewJava2dJVM/test",
+        "neuroim4s:viewJavafxJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 47,
+          "failed": 0,
+          "errors": 0,
+          "passed": 47,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 51,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroim-view-js",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroim4s:viewJS/test",
+        "neuroim4s:viewCanvasJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 47,
+          "failed": 0,
+          "errors": 0,
+          "passed": 47,
+          "skipped": 0
+        },
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 55,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroatlas-core",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroatlas4s:coreJVM/test",
+        "neuroatlas4s:coreJS/test",
+        "neuroatlas4s:ioJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 31,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroatlas-volume",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroatlas4s:volumeJVM/test",
+        "neuroatlas4s:volumeJS/test",
+        "neuroatlas4s:volumeIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 58,
+          "failed": 0,
+          "errors": 0,
+          "passed": 58,
+          "skipped": 0
+        },
+        {
+          "total": 58,
+          "failed": 0,
+          "errors": 0,
+          "passed": 58,
+          "skipped": 0
+        },
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 137,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroatlas-surface",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroatlas4s:surfaceJVM/test",
+        "neuroatlas4s:surfaceJS/test",
+        "neuroatlas4s:surfaceIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9,
+          "skipped": 0
+        },
+        {
+          "total": 9,
+          "failed": 0,
+          "errors": 0,
+          "passed": 9,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 21,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neuroatlas-routing",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "neuroatlas4s:routingJVM/test",
+        "neuroatlas4s:routingJS/test",
+        "neuroatlas4s:routingIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 34,
+          "failed": 0,
+          "errors": 0,
+          "passed": 34,
+          "skipped": 0
+        },
+        {
+          "total": 34,
+          "failed": 0,
+          "errors": 0,
+          "passed": 34,
+          "skipped": 0
+        },
+        {
+          "total": 17,
+          "failed": 0,
+          "errors": 0,
+          "passed": 17,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 85,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "mvpa4s-core",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "mvpa4s:coreJVM/test",
+        "mvpa4s:coreJS/test",
+        "mvpa4s:testkitJVM/test",
+        "mvpa4s:testkitJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 495,
+          "failed": 0,
+          "errors": 0,
+          "passed": 490,
+          "skipped": 5
+        },
+        {
+          "total": 495,
+          "failed": 0,
+          "errors": 0,
+          "passed": 490,
+          "skipped": 5
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "passed": 986,
+      "skipped": 10,
+      "declared_nonexecutions": [
+        "==> s mvpa4s.inference.RankV2ResourceProbeSuite.opt-in complete-adapter resource probe preserves each assigned method result skipped 0.005s",
+        "==> s mvpa4s.inference.RankPairedPilotSuite.opt-in paired exploratory cell retains every assigned method result skipped 0.0s",
+        "==> s mvpa4s.inference.RankDiagnosticReplaySuite.opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped 0.001s",
+        "==> s mvpa4s.inference.RankConfirmationSuite.opt-in case uses the production rank procedure and reports actual completed B skipped 0.001s",
+        "==> s mvpa4s.inference.RankPortabilityTraceSuite.opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped 0.0s",
+        "==> s opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped",
+        "==> s opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped",
+        "==> s opt-in paired exploratory cell retains every assigned method result skipped",
+        "==> s opt-in complete-adapter resource probe preserves each assigned method result skipped",
+        "==> s opt-in case uses the production rank procedure and reports actual completed B skipped"
+      ]
+    },
+    {
+      "batch": "mvpa4s-predictive",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "mvpa4s:predictiveJVM/test",
+        "mvpa4s:predictiveJS/test",
+        "mvpa4s:consumerJVM/test",
+        "mvpa4s:consumerJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 103,
+          "failed": 0,
+          "errors": 0,
+          "passed": 103,
+          "skipped": 0
+        },
+        {
+          "total": 103,
+          "failed": 0,
+          "errors": 0,
+          "passed": 103,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 4,
+      "known_empty_targets": {
+        "mvpa4s:consumerJVM/test": "Pinned pure consumer has main source only; compilation evidence, separate public behavior receipt40.",
+        "mvpa4s:consumerJS/test": "Same pure consumer, JS compilation/link evidence only."
+      },
+      "passed": 206,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "mvpa4s-locus",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "segment": "full-34",
+      "expanded_test_targets": [
+        "mvpa4s:locusJVM/test",
+        "mvpa4s:locusJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20,
+          "skipped": 0
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 20,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 40,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "mvpa4s-imaging",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "mvpa4s:surfaceJVM/test",
+        "mvpa4s:surfaceJS/test",
+        "mvpa4s:atlasJVM/test",
+        "mvpa4s:atlasJS/test",
+        "mvpa4s:imagingConsumerJVM/test",
+        "mvpa4s:imagingConsumerJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 6,
+      "known_empty_targets": {},
+      "passed": 24,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neurosurf-Core",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:coreJVM/test",
+        "neurosurf4s:coreJS/test",
+        "neurosurf4s:ioJVM/test",
+        "neurosurf4s:ioJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 156,
+          "failed": 0,
+          "errors": 0,
+          "passed": 156,
+          "skipped": 0
+        },
+        {
+          "total": 153,
+          "failed": 0,
+          "errors": 0,
+          "passed": 153,
+          "skipped": 0
+        },
+        {
+          "total": 73,
+          "failed": 0,
+          "errors": 0,
+          "passed": 73,
+          "skipped": 0
+        },
+        {
+          "total": 37,
+          "failed": 0,
+          "errors": 0,
+          "passed": 37,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "passed": 419,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neurosurf-Spatial",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:spatialJVM/test",
+        "neurosurf4s:spatialJS/test",
+        "neurosurf4s:spatialIoJVM/test",
+        "neurosurf4s:volumeJVM/test",
+        "neurosurf4s:volumeJS/test",
+        "neurosurf4s:volumeIoJVM/test",
+        "neurosurf4s:routingJVM/test",
+        "neurosurf4s:routingJS/test",
+        "neurosurf4s:routingIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 19,
+          "failed": 0,
+          "errors": 0,
+          "passed": 19,
+          "skipped": 0
+        },
+        {
+          "total": 20,
+          "failed": 0,
+          "errors": 0,
+          "passed": 19,
+          "skipped": 1
+        },
+        {
+          "total": 82,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82,
+          "skipped": 0
+        },
+        {
+          "total": 83,
+          "failed": 0,
+          "errors": 0,
+          "passed": 82,
+          "skipped": 1
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 109,
+          "failed": 0,
+          "errors": 0,
+          "passed": 109,
+          "skipped": 0
+        },
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 9,
+      "known_empty_targets": {
+        "neurosurf4s:spatialIoJVM/test": "Pinned spatial IO capability has no own test sources; compiled prerequisite."
+      },
+      "passed": 435,
+      "skipped": 2,
+      "declared_nonexecutions": [
+        "==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped",
+        "==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped"
+      ]
+    },
+    {
+      "batch": "neurosurf-Fixture",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:fixturesJVM/test",
+        "neurosurf4s:fixturesJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 28,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neurosurf-ViewJvm",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:viewJVM/test",
+        "neurosurf4s:viewLinkJVM/test",
+        "neurosurf4s:viewVolumeJVM/test",
+        "neurosurf4s:viewRasterJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 256,
+          "failed": 0,
+          "errors": 0,
+          "passed": 256,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 70,
+          "failed": 0,
+          "errors": 0,
+          "passed": 70,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "passed": 345,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neurosurf-ViewJs",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:viewJS/test",
+        "neurosurf4s:viewLinkJS/test",
+        "neurosurf4s:viewVolumeJS/test",
+        "neurosurf4s:viewRasterJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 256,
+          "failed": 0,
+          "errors": 0,
+          "passed": 256,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 70,
+          "failed": 0,
+          "errors": 0,
+          "passed": 70,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 4,
+      "known_empty_targets": {},
+      "passed": 345,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neurosurf-Browser",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:viewThreeJS/test",
+        "neurosurf4s:viewThreeVolumeJS/test",
+        "neurosurf4s:viewExamplesJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 51,
+          "failed": 0,
+          "errors": 0,
+          "passed": 51,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        {
+          "total": 29,
+          "failed": 0,
+          "errors": 0,
+          "passed": 29,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 3,
+      "known_empty_targets": {},
+      "passed": 87,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "neurosurf-ExamplesJvm",
+      "source_commit": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "segment": "resume-51",
+      "expanded_test_targets": [
+        "neurosurf4s:viewExamplesJVM/test",
+        "neurosurf4s:surfaceExamplesJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 30,
+          "failed": 0,
+          "errors": 0,
+          "passed": 30,
+          "skipped": 0
+        },
+        {
+          "total": 3,
+          "failed": 0,
+          "errors": 0,
+          "passed": 3,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 33,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "threshold-motion-jvm",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "thresholdJVM/test",
+        "motionJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 90,
+          "failed": 0,
+          "errors": 0,
+          "passed": 90,
+          "skipped": 0
+        },
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 195,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "threshold-motion-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "thresholdJS/test",
+        "motionJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 90,
+          "failed": 0,
+          "errors": 0,
+          "passed": 90,
+          "skipped": 0
+        },
+        {
+          "total": 92,
+          "failed": 0,
+          "errors": 0,
+          "passed": 92,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 182,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "data-jvm",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "surfaceViewConnectivityJVM/test",
+        "spatialJVM/test",
+        "archiveJVM/test",
+        "archiveLnaJVM/test",
+        "archivedResponseInteropJVM/test",
+        "datasetJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 115,
+          "failed": 0,
+          "errors": 0,
+          "passed": 115,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        },
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11,
+          "skipped": 0
+        },
+        {
+          "total": 142,
+          "failed": 0,
+          "errors": 0,
+          "passed": 142,
+          "skipped": 0
+        },
+        {
+          "total": 91,
+          "failed": 0,
+          "errors": 0,
+          "passed": 91,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 6,
+      "known_empty_targets": {},
+      "passed": 376,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "data-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "surfaceViewConnectivityJS/test",
+        "spatialJS/test",
+        "archiveJS/test",
+        "archiveLnaJS/test",
+        "archivedResponseInteropJS/test",
+        "datasetJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        {
+          "total": 108,
+          "failed": 0,
+          "errors": 0,
+          "passed": 108,
+          "skipped": 0
+        },
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10,
+          "skipped": 0
+        },
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8,
+          "skipped": 0
+        },
+        {
+          "total": 104,
+          "failed": 0,
+          "errors": 0,
+          "passed": 104,
+          "skipped": 0
+        },
+        {
+          "total": 68,
+          "failed": 0,
+          "errors": 0,
+          "passed": 68,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 6,
+      "known_empty_targets": {},
+      "passed": 300,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "estimates-jvm",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "estimatesJVM/test",
+        "estimatesIoJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11,
+          "skipped": 0
+        },
+        {
+          "total": 10,
+          "failed": 0,
+          "errors": 0,
+          "passed": 10,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 21,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "estimates-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "estimatesJS/test",
+        "estimatesIoJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 11,
+          "failed": 0,
+          "errors": 0,
+          "passed": 11,
+          "skipped": 0
+        },
+        {
+          "total": 4,
+          "failed": 0,
+          "errors": 0,
+          "passed": 4,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 15,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "analysis-jvm",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "modelJVM/test",
+        "fitJVM/test",
+        "firstLevelLawsJVM/test",
+        "mvpaPipelineJVM/test",
+        "mvpaFitJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 764,
+          "failed": 0,
+          "errors": 0,
+          "passed": 764,
+          "skipped": 0
+        },
+        {
+          "total": 222,
+          "failed": 0,
+          "errors": 0,
+          "passed": 221,
+          "skipped": 1
+        },
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6,
+          "skipped": 0
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 5,
+      "known_empty_targets": {},
+      "passed": 1138,
+      "skipped": 1,
+      "declared_nonexecutions": [
+        "==> s scalafim.fmri.laws.FglsCmrgSuite.opt-in full external CMRG control packet preserves all five cells and every dataset skipped 0.004s"
+      ]
+    },
+    {
+      "batch": "analysis-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "modelJS/test",
+        "fitJS/test",
+        "firstLevelLawsJS/test",
+        "mvpaPipelineJS/test",
+        "mvpaFitJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 706,
+          "failed": 0,
+          "errors": 0,
+          "passed": 706,
+          "skipped": 0
+        },
+        {
+          "total": 222,
+          "failed": 0,
+          "errors": 0,
+          "passed": 221,
+          "skipped": 1
+        },
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6,
+          "skipped": 0
+        },
+        {
+          "total": 42,
+          "failed": 0,
+          "errors": 0,
+          "passed": 42,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 5,
+      "known_empty_targets": {},
+      "passed": 1080,
+      "skipped": 1,
+      "declared_nonexecutions": [
+        "==> i <unknown> ignored",
+        "==> i <unknown> ignored",
+        "==> i <unknown> ignored",
+        "==> i <unknown> ignored",
+        "==> i <unknown> ignored",
+        "==> s opt-in full external CMRG control packet preserves all five cells and every dataset skipped"
+      ]
+    },
+    {
+      "batch": "downstream-jvm",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "connectivityJVM/test",
+        "mvpaDatasetJVM/test",
+        "mvpaArtifactsJVM/test",
+        "mvpaSpatialJVM/test",
+        "groupJVM/test",
+        "mvpaGroupJVM/test",
+        "fmriWorkflowJVM/test",
+        "archiveZarrJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 64,
+          "failed": 0,
+          "errors": 0,
+          "passed": 64,
+          "skipped": 0
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 12,
+          "failed": 0,
+          "errors": 0,
+          "passed": 12,
+          "skipped": 0
+        },
+        {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105,
+          "skipped": 0
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 76,
+          "failed": 0,
+          "errors": 0,
+          "passed": 76,
+          "skipped": 0
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 9,
+      "known_empty_targets": {},
+      "passed": 334,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "downstream-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "connectivityJS/test",
+        "mvpaDatasetJS/test",
+        "mvpaArtifactsJS/test",
+        "mvpaSpatialJS/test",
+        "groupJS/test",
+        "mvpaGroupJS/test",
+        "fmriWorkflowJS/test",
+        "archiveZarrJS/test",
+        "datasetZarrJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 64,
+          "failed": 0,
+          "errors": 0,
+          "passed": 64,
+          "skipped": 0
+        },
+        {
+          "total": 13,
+          "failed": 0,
+          "errors": 0,
+          "passed": 13,
+          "skipped": 0
+        },
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 12,
+          "failed": 0,
+          "errors": 0,
+          "passed": 12,
+          "skipped": 0
+        },
+        {
+          "total": 104,
+          "failed": 0,
+          "errors": 0,
+          "passed": 104,
+          "skipped": 0
+        },
+        {
+          "total": 18,
+          "failed": 0,
+          "errors": 0,
+          "passed": 18,
+          "skipped": 0
+        },
+        {
+          "total": 57,
+          "failed": 0,
+          "errors": 0,
+          "passed": 57,
+          "skipped": 0
+        },
+        {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16,
+          "skipped": 0
+        },
+        {
+          "total": 7,
+          "failed": 0,
+          "errors": 0,
+          "passed": 7,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 9,
+      "known_empty_targets": {},
+      "passed": 296,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "examples",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "atlasExamplesJVM/test",
+        "workflowExamplesJVM/test"
+      ],
+      "summaries": [
+        {
+          "total": 5,
+          "failed": 0,
+          "errors": 0,
+          "passed": 5,
+          "skipped": 0
+        },
+        {
+          "total": 8,
+          "failed": 0,
+          "errors": 0,
+          "passed": 8,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 2,
+      "known_empty_targets": {},
+      "passed": 13,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    },
+    {
+      "batch": "examples-js",
+      "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "segment": "resume-56",
+      "expanded_test_targets": [
+        "workflowExamplesJS/test"
+      ],
+      "summaries": [
+        {
+          "total": 6,
+          "failed": 0,
+          "errors": 0,
+          "passed": 6,
+          "skipped": 0
+        }
+      ],
+      "success_markers": 1,
+      "known_empty_targets": {},
+      "passed": 6,
+      "skipped": 0,
+      "declared_nonexecutions": []
+    }
+  ],
+  "passed": 11868,
+  "skipped": 18,
+  "ignored": 5,
+  "compile_all": {
+    "source_commit": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+    "raw_log_sha256": "4253fcefc0501841da8bfb8a410fcfa1b4e18c7531f30e2d3a114e10de314bed",
+    "meta": {
+      "schema_version": 1,
+      "started_utc": "2026-10-22T08:12:30.534028+00:00",
+      "finished_utc": "2026-10-22T08:20:09.038308+00:00",
+      "duration_seconds": 458.502907,
+      "command": [
+        "sbt",
+        "-Djava.awt.headless=true",
+        "-Dsbt.boot.directory=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/boot",
+        "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global",
+        "-Dsbt.ivy.home=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/ivy",
+        "-Dsbt.supershell=false",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+      "log": "/tmp/scalafim-eco-u6-compile-55.log",
+      "exit_code": 0,
+      "child_returncode": 0,
+      "reason": "exited",
+      "detail": null,
+      "timeout_seconds": 7200.0,
+      "log_bytes": 18542
+    },
+    "input_receipt_sha256": "7889e6e999a56ab3cbfd2b818889668a474464aa5e7c69f81734d72c7c771a12"
+  },
+  "existing_family_courts": {
+    "functional_group": [
+      {
+        "platform": "jvm",
+        "batch": "downstream-jvm",
+        "passed_case": "+ known effects survive public first-level fit, bridge, and fixed-effects group inference 0.17s"
+      },
+      {
+        "platform": "js",
+        "batch": "downstream-js",
+        "passed_case": "+ known effects survive public first-level fit, bridge, and fixed-effects group inference 0.018s"
+      }
+    ],
+    "identified_prediction": [
+      {
+        "platform": "jvm",
+        "batch": "downstream-jvm",
+        "passed_case": "+ dataset to identified prediction preserves literal values and training-only probabilities as one scenario 0.053s"
+      },
+      {
+        "platform": "js",
+        "batch": "downstream-js",
+        "passed_case": "+ dataset to identified prediction preserves literal values and training-only probabilities as one scenario 0.006s"
+      }
+    ],
+    "identified_rsa": [
+      {
+        "platform": "jvm",
+        "batch": "analysis-jvm",
+        "passed_case": "+ native scoped trial relations match independent beta-free signed distances and RSA 0.01s"
+      },
+      {
+        "platform": "js",
+        "batch": "analysis-js",
+        "passed_case": "+ native scoped trial relations match independent beta-free signed distances and RSA 0.009s"
+      }
+    ]
+  },
+  "new_scenario_results": [
+    {
+      "batch": "examples",
+      "scenario": "ecosystem-atlas-routing",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples",
+      "scenario": "ecosystem-measurement-scatter",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples",
+      "scenario": "gifti-freesurfer-scalar",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples",
+      "scenario": "freesurfer-geometry-jvm",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples",
+      "scenario": "ecosystem-linked-volume-projection",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples-js",
+      "scenario": "ecosystem-measurement-scatter",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples-js",
+      "scenario": "gifti-freesurfer-scalar",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples-js",
+      "scenario": "ecosystem-linked-volume-projection",
+      "status": "Pass"
+    },
+    {
+      "batch": "examples-js",
+      "scenario": "ecosystem-atlas-routing",
+      "status": "Pass"
+    }
+  ],
+  "private_artifact_inventory": {
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s_sjs1_3-javadoc.jar": "a0fb1de562207e13d60b6424a9e6112cf37d4e1da0e6002d6b5040992f37c628",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s_sjs1_3-javadoc.jar.md5": "23f6f40cf76088c5b457e7c9c184d1e2155e244f2bb0b7621eb005acf6d1bab3",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s_sjs1_3-javadoc.jar.sha1": "e18efe77d9257ce3c6059c2cdbf6731e8e13fee9592090fbe0ab486e0ec1170e",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml": "c2999a260f7323ba5b38a4c9ab11b799b2113263dc23409de646ac05aa8069fe",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml.md5": "0ff5b55dceab3b9eb86d08a21511ea639df012bd1988aa49f000d0e425659daa",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml.sha1": "bb0249128dd1dc5b051f7e48b142f84b3f3ef2d4efa96ddf908e89ca5733c1d7",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s_sjs1_3.jar": "707c0ffdcd27aab0fd41dca6425bdb8d8f97f2b92272996ca44713ef246887ba",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s_sjs1_3.jar.md5": "d6c041ebf0faf8320579ae7f6f9b86c55a4bcf597508eba72ded0b4c73ee5648",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s_sjs1_3.jar.sha1": "163c4e9a4879c1ac1d17298040fef5c62419a639502e866ea97fb054f83f130b",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s_sjs1_3.pom": "f2875ecb79d5d41eda4a4f1cb5cd0783df67d3fc631ee0616e37d156e288d708",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s_sjs1_3.pom.md5": "e07379aa799bee9301f345d4ec5228227ad7bf51200aeb896efbdfeb73d105b5",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s_sjs1_3.pom.sha1": "6b03a2aeefd4ff90081819cf60b7effc1075fe34ae171338eecd500bf8e4a552",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s_sjs1_3-sources.jar": "68753fe9daf53c62d3080cff179727f66ee4db2c5aefd3e71c2786ed6480a7bd",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s_sjs1_3-sources.jar.md5": "23eb3995055217794f598c1a8fb205f05e079956701183e65ec298beb666ac2d",
+    "io.github.canardlapin/resample4s_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s_sjs1_3-sources.jar.sha1": "ad4f055fd3c535f1f35378cc0eab85c1ecbecfa86316e73b4230aecfe640f79d",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/docs/resample4s_3-javadoc.jar": "a0fb1de562207e13d60b6424a9e6112cf37d4e1da0e6002d6b5040992f37c628",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/docs/resample4s_3-javadoc.jar.md5": "23f6f40cf76088c5b457e7c9c184d1e2155e244f2bb0b7621eb005acf6d1bab3",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/docs/resample4s_3-javadoc.jar.sha1": "e18efe77d9257ce3c6059c2cdbf6731e8e13fee9592090fbe0ab486e0ec1170e",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/ivys/ivy.xml": "65a121e4e48aecd7e243b071c202feed05b74fd5fa9ca1fc3265d209e5e2901f",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/ivys/ivy.xml.md5": "198e074f6760f91d7eb3fbf3c59515688fd617f3aa6fc948001810922a33a23b",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/ivys/ivy.xml.sha1": "e7f734e6527c82c57d197f75cb0adfd9c22b7b7c2ab008022d4295c953278d62",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/jars/resample4s_3.jar": "eb84e5197843b2cd7fd4c8ae81ede5b10a853157d721196cefd95bdda3fe0e87",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/jars/resample4s_3.jar.md5": "9ebcfaadb80acbea7aa2f5b407119151b989c3c6e2399c8d767ba0ca4d3b23bb",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/jars/resample4s_3.jar.sha1": "062d2227ebf605c3275c6ceff4e7931a8b20476ce668e7ffc7486e64eb5d651c",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/poms/resample4s_3.pom": "6f7eaf6003da1d516a4596ec640ab838329cc60ef187cfcf573908cb1c54d25f",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/poms/resample4s_3.pom.md5": "8e4558141784bff6a1305363a35f59e13b56ca605191d405a237e00cfd0ec9b4",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/poms/resample4s_3.pom.sha1": "188da5bc1a695641c434538089edad65769faaa2220af8f4fea8eb5ebbaf3c67",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/srcs/resample4s_3-sources.jar": "68753fe9daf53c62d3080cff179727f66ee4db2c5aefd3e71c2786ed6480a7bd",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/srcs/resample4s_3-sources.jar.md5": "23eb3995055217794f598c1a8fb205f05e079956701183e65ec298beb666ac2d",
+    "io.github.canardlapin/resample4s_3/0.1.0-6bc4172a966c/srcs/resample4s_3-sources.jar.sha1": "ad4f055fd3c535f1f35378cc0eab85c1ecbecfa86316e73b4230aecfe640f79d",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s-designs_sjs1_3-javadoc.jar": "e926ede0dfca18a0b70810c820e1f25d4bb4f8df7a65efc816dc0fe418f67bd6",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s-designs_sjs1_3-javadoc.jar.md5": "9fdac14912e045ef62cff1effd3a327ed0d177a76ca40338bc5ca7c8f22d0dd5",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s-designs_sjs1_3-javadoc.jar.sha1": "893b62b5021adf6bd72d3137d8c04b7ab436e37411a28989e026b8411ce960ba",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml": "120848be8ca5a124db9c5f77966b93d09cc8592683e716b6f5f0f2f6c2575b6e",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml.md5": "a713558036615d64db81ce9685d96c556055345e7dded27576166c19ac1b0474",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml.sha1": "58dfce8df38195c8694f78ff128d710ad10b02b6c4b1e6c6c180bfb427e927b7",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s-designs_sjs1_3.jar": "6e4104779fdd8d221b5eddf1e66c2a78d665418391d154a82097535eb4a5ebed",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s-designs_sjs1_3.jar.md5": "e85389d7e6235fccbaf2c3ec3cc077f37aa4226d03d6e0fcefa6e0f73f526f53",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s-designs_sjs1_3.jar.sha1": "5de0ad0941ca41f120e211ac5113d1e443f0a0cdcfa3e4a9fcae810123dbe792",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s-designs_sjs1_3.pom": "0d12c0ba8ea740a8034910374fc99889de3cdb57bcb6ad443667e3159dc0b2ad",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s-designs_sjs1_3.pom.md5": "a8b7d8fa75ac9c0c026e4f2080764f8a23c7a10004d2d5737f0cac7438c60d16",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s-designs_sjs1_3.pom.sha1": "de24ea1bc183d888557cc44df2cc66e6a2148eab1863dd2ff35d0e145aabecf6",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s-designs_sjs1_3-sources.jar": "ed68ff59772bbe36708abc4f6d6bc8af8b8f5f34bb85b24fa0fec354aa313eb7",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s-designs_sjs1_3-sources.jar.md5": "9736d5a2370af6e3dd469a8ed9c41a8a2eb5299f2c37a11d6bee609158009924",
+    "io.github.canardlapin/resample4s-designs_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s-designs_sjs1_3-sources.jar.sha1": "ad980fdd4564c8be0dd96f1f1e053dd7ab9cfacade89e1b468b02f3cd6f133e0",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/docs/resample4s-designs_3-javadoc.jar": "e926ede0dfca18a0b70810c820e1f25d4bb4f8df7a65efc816dc0fe418f67bd6",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/docs/resample4s-designs_3-javadoc.jar.md5": "9fdac14912e045ef62cff1effd3a327ed0d177a76ca40338bc5ca7c8f22d0dd5",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/docs/resample4s-designs_3-javadoc.jar.sha1": "893b62b5021adf6bd72d3137d8c04b7ab436e37411a28989e026b8411ce960ba",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/ivys/ivy.xml": "50ea99348dd8202908d75c971388bdf4f8356549ec3198e81175ea79f583260e",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/ivys/ivy.xml.md5": "79c6e5446e816954adf49fa3cf853c6698cd6272ecc8ead4765238d36f998178",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/ivys/ivy.xml.sha1": "9626d1161beba02d1765bc6977b8d1faf005d9f5f5f09448888f143f823dfbb4",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/jars/resample4s-designs_3.jar": "399e6065e2d09f56dc35bf807296f26a3b06a0db6051d1da65d29735c2feb674",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/jars/resample4s-designs_3.jar.md5": "f950bfabb476743328c8e437b9244caf9d88fa5a984c19938295e18a1e50aac8",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/jars/resample4s-designs_3.jar.sha1": "c80ba2e4b4cdee7ee5cd6a28767711e8327eb78dcc5f3efe9c3ff076e7b2a0c7",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/poms/resample4s-designs_3.pom": "999c9d439b20653275c3d0639e30794d4b8901e257e6366d9ffc9d0c414f0f9a",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/poms/resample4s-designs_3.pom.md5": "d09676e39bbdc700617153c55099104479cc74dc9b1fbc3cb7a212a927f8dd51",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/poms/resample4s-designs_3.pom.sha1": "9eade99f4ddab4cb98c9616376b8c454d74bab09547815e93fb9348a351aaa27",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/srcs/resample4s-designs_3-sources.jar": "ed68ff59772bbe36708abc4f6d6bc8af8b8f5f34bb85b24fa0fec354aa313eb7",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/srcs/resample4s-designs_3-sources.jar.md5": "9736d5a2370af6e3dd469a8ed9c41a8a2eb5299f2c37a11d6bee609158009924",
+    "io.github.canardlapin/resample4s-designs_3/0.1.0-6bc4172a966c/srcs/resample4s-designs_3-sources.jar.sha1": "ad980fdd4564c8be0dd96f1f1e053dd7ab9cfacade89e1b468b02f3cd6f133e0",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s-core_sjs1_3-javadoc.jar": "a4d94ff0675ecea97d454908518113ec6a589a7b9f8c6b9025b1b3d2817eccd9",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s-core_sjs1_3-javadoc.jar.md5": "c08c461567abc2562b3a303a41480a9ca152e24abebf8ef5562a5b1eab96bebe",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/docs/resample4s-core_sjs1_3-javadoc.jar.sha1": "a416ff2d6bca5d300cf1aa54708645ba5dcece280f83054ab2f01df5112a31da",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml": "3f2027663b3f48eec3210ceaa61631191c6b330ca17a4632aff8c918f7e22d59",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml.md5": "7cb76c5b90dfa56253ea84b38400e29da89b8927e8e643092b97cb18ae33c069",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/ivys/ivy.xml.sha1": "17cdf73cedc767583c5a99be11e01ad9ddb764c16a3a9aa5f74b697958c63538",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s-core_sjs1_3.jar": "baae644a877c4783b5a07d1e710ba0a64502dc6b5c5d2d935fa6875ca5633f2f",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s-core_sjs1_3.jar.md5": "1d640fac147af4b6762bea744869f82da85d503f89289ac5eafdd2916ca17392",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/jars/resample4s-core_sjs1_3.jar.sha1": "539183a11bc367d72424bbbb4c3e64fdc70986f6687e42043a9aaa4f099a7357",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s-core_sjs1_3.pom": "ec77ab21bd7379fe43d8deeadbc4bb6b827d31683bec194f6997d8dd636dc94f",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s-core_sjs1_3.pom.md5": "6cc5276abfe54ad203e4f3a6c311099fb4a1e34e30af8d847c85345e9efebf20",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/poms/resample4s-core_sjs1_3.pom.sha1": "ea5482089ce3e76aa659a98b09d2e325c8521e1c1f2fafbfd0102f9999d579fa",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s-core_sjs1_3-sources.jar": "1cc27310bbe2da13ffc3c787dff2c1646c1b704e74f621461819d499e6835bde",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s-core_sjs1_3-sources.jar.md5": "0e0cece6db7658759e48fb1aa7fbeb5f005832c2d558e9f2f04c042d1db13cd6",
+    "io.github.canardlapin/resample4s-core_sjs1_3/0.1.0-6bc4172a966c/srcs/resample4s-core_sjs1_3-sources.jar.sha1": "e3ddac5500cf698d612b2643de82b7d6d675b25f8c6d8916a1157da536057610",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/docs/resample4s-core_3-javadoc.jar": "a4d94ff0675ecea97d454908518113ec6a589a7b9f8c6b9025b1b3d2817eccd9",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/docs/resample4s-core_3-javadoc.jar.md5": "c08c461567abc2562b3a303a41480a9ca152e24abebf8ef5562a5b1eab96bebe",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/docs/resample4s-core_3-javadoc.jar.sha1": "a416ff2d6bca5d300cf1aa54708645ba5dcece280f83054ab2f01df5112a31da",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/ivys/ivy.xml": "aa7c3ae1721ac6ea8cbf86a0f14c380731162a9dd0ddc6770bc97b6256328c83",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/ivys/ivy.xml.md5": "9db84c557de86d2df66f77cadfa3847332c514eae6d92bd8d77170b35aa41a05",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/ivys/ivy.xml.sha1": "72928c24d99b50b4017baeffffad59abac2ddb99015c13dc62aa45edcf644b33",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/jars/resample4s-core_3.jar": "314ea7f6b35ec76b30f0ae06a63b1f1259fc747172cfa3e9063635f316b4fd9c",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/jars/resample4s-core_3.jar.md5": "acb1f09133d26eda1ca34ee5cf52b575c196729858443ca4e0922495d8e0224a",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/jars/resample4s-core_3.jar.sha1": "229564059990fed801fdb1efc3f64b157eb8cf4ad763c8dcae94d3161c3cb04d",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/poms/resample4s-core_3.pom": "8390702a4e2eb98c86469c59f03cfd168ac2f87369dd7cded326995740179e6e",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/poms/resample4s-core_3.pom.md5": "a8be73fe0332527564fba236da12f012627696d37ebd0c797d347e19f854c38f",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/poms/resample4s-core_3.pom.sha1": "d1e9b3d88884529804ae18970e3947eab16cd9ba7030a5258ae89c9e52fe5a1a",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/srcs/resample4s-core_3-sources.jar": "1cc27310bbe2da13ffc3c787dff2c1646c1b704e74f621461819d499e6835bde",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/srcs/resample4s-core_3-sources.jar.md5": "0e0cece6db7658759e48fb1aa7fbeb5f005832c2d558e9f2f04c042d1db13cd6",
+    "io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/srcs/resample4s-core_3-sources.jar.sha1": "e3ddac5500cf698d612b2643de82b7d6d675b25f8c6d8916a1157da536057610",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/docs/gale-core_sjs1_3-javadoc.jar": "ef5e84c20af6211e23428e686980e64a65f39e810b559a976c841eee039deb14",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/docs/gale-core_sjs1_3-javadoc.jar.md5": "2c28dd2872a52660d7724de4064fca4faa54cc6fa9d785754738df0dfc09a393",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/docs/gale-core_sjs1_3-javadoc.jar.sha1": "70a75ac581920c4895b8752d8fb4477f056708546684b93580190f1944a58d57",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/ivys/ivy.xml": "27ce14e40f1118548c92f02f93ff9df008b1bea1aa98698fc8ce5f2d35cf2bc0",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/ivys/ivy.xml.md5": "db5b5f61322ede689b538ac89545cb467a52274d9eff58e7adb7cc771e190f46",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/ivys/ivy.xml.sha1": "7315c2b1f22a28ec65fb80234af214b4419ee727ac5052e1454ce0332b0ae09b",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/jars/gale-core_sjs1_3.jar": "79cb4e73262c69e900b87ade3a04a5837e9a9472d02e4161be0ae4b5214e90ad",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/jars/gale-core_sjs1_3.jar.md5": "4b7588be6a4cefbcb501f86cf9ab4c954f59967ec18502fd15a35ce611fa9cf4",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/jars/gale-core_sjs1_3.jar.sha1": "8c11ae29674254fa7ea7ed9d7c89b9b3dcd5dcc0cf71057b9058a5b6b5f7bb54",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/poms/gale-core_sjs1_3.pom": "609e6201b7cedc87ebdd6ffeef16d1133900b9ba28afb920dbeb8fd32d38f158",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/poms/gale-core_sjs1_3.pom.md5": "ea4ac3bb0e598f927ea35147d094d9e370475d80d1dda7f0a6b6d59feec918f8",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/poms/gale-core_sjs1_3.pom.sha1": "50d92cd06011cbfa196a3f66aa49a3a0f0285773b0e370066290d451abb80224",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/srcs/gale-core_sjs1_3-sources.jar": "ba51fd5dfbd3d53114b24bd3e17dd8850d600615ef6a30b22e7455b9d7da2386",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/srcs/gale-core_sjs1_3-sources.jar.md5": "640579e458c3d6a6b770a29172489ae56e3b9cc879e8c797552dfbea61bfd8e1",
+    "io.github.canardlapin/gale-core_sjs1_3/0.1.0+153-779ed3d8-SNAPSHOT/srcs/gale-core_sjs1_3-sources.jar.sha1": "549b763b1efc7d46e33ef1d9c17d5e3256c18b7a45640993ce6df390a785c5a9",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/docs/gale-core_3-javadoc.jar": "325b9f9553ff0e7d69efc4e5821f924dde3db07145f63dd931a7c0c5e7cc5187",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/docs/gale-core_3-javadoc.jar.md5": "a98c28cc9c9136ab5702b8cb1473a4a3d814255515f701759a1781ad142c5adf",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/docs/gale-core_3-javadoc.jar.sha1": "e70ac54945a0509153b92396c168ba67d42df44bc89ffbea279456bcd25f836e",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/ivys/ivy.xml": "f757884ca6e34fa43d49e381f0658977336debdb33ba506fb37e53cbaef5f148",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/ivys/ivy.xml.md5": "4b1caaf39d73929b55c5d0ddf136ddaee5ffc4d63fe0c9020002c177f87dbf63",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/ivys/ivy.xml.sha1": "9b6cfec81a68fa5cf43a53d876dcae3871010a5128f50d7b9c436904f055130c",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/jars/gale-core_3.jar": "c7d618a410223dab78cb4bd3abf0cb5cda8d774ee384de0b540362c34ee8038d",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/jars/gale-core_3.jar.md5": "d572e7c52ac3e403a65a907d58be33fc22e163d7997834d78bf3918651d9c279",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/jars/gale-core_3.jar.sha1": "fc39cd3e93012760e61e51a5e805649d39c1d42d46490b9a87541cc1c84be0bb",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/poms/gale-core_3.pom": "0c313bd462eef767dfcd8cd1e3e182931d550aa7bc0211c34fe4d057f4113f99",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/poms/gale-core_3.pom.md5": "3cce3e765711d99b5020ac949289969531151bc23c28120e028199e8df59a445",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/poms/gale-core_3.pom.sha1": "826ee9c6d6cd525c76fdc2beaff5660b48adcf794a0dc0ae45fef4fbea1ee3bc",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/srcs/gale-core_3-sources.jar": "e21a02b8902735a6f183e95d8b261e63bd9ac84a728d0393eaa3e971d849f18e",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/srcs/gale-core_3-sources.jar.md5": "ac193c11f2d31036b8e52dcb5e5ab47cbb07c22cd964faf2025e862c0667153c",
+    "io.github.canardlapin/gale-core_3/0.1.0+153-779ed3d8-SNAPSHOT/srcs/gale-core_3-sources.jar.sha1": "3c109e2de1569a77db6add47a41fdb5812c807eb9f439b4512d7f671c90c08d2"
+  },
+  "staged_source_inventory": {
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/03b7f0d36fcba51e6ed8/ravel": {
+      "head": "195d71027423d5bda1c53ef1baa17e07670fe290",
+      "expected_pin": "195d71027423d5bda1c53ef1baa17e07670fe290",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/08e20f5c89874d9eb32d/graph4s": {
+      "head": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "expected_pin": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/135badde2a1fe78cfcb7/intaglio": {
+      "head": "d553c327824f9916b1c0a055226c6c5e8f77bc59",
+      "expected_pin": "d553c327824f9916b1c0a055226c6c5e8f77bc59",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/1acafa978adeaec8bfcf/gale": {
+      "head": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+      "expected_pin": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/34c0071f90095ef07887/zarr4s": {
+      "head": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "expected_pin": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/3f5d01c7e6069e74a205/resample4s": {
+      "head": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "expected_pin": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/695a78cd1817a04aff73/mvpa4s": {
+      "head": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+      "expected_pin": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/6e0906d4a78ca4f764eb/bids4s": {
+      "head": "5dafc800499b2a4642a19ff47fa5924516b2c024",
+      "expected_pin": "5dafc800499b2a4642a19ff47fa5924516b2c024",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/6e1c7e90d885ae794319/multivar": {
+      "head": "7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+      "expected_pin": "7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/743bbc500a4cc79953a2/spatial4s": {
+      "head": "f79674114dc5f1f88866708b74f7ea42e59895a8",
+      "expected_pin": "f79674114dc5f1f88866708b74f7ea42e59895a8",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/8ec5b6670930dbda7b6f/neurosurf4s": {
+      "head": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+      "expected_pin": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/94c1a42c925a37ebcee0/image4s": {
+      "head": "855a3a61029f78e975b43cd1736de1c94180c004",
+      "expected_pin": "855a3a61029f78e975b43cd1736de1c94180c004",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/a32912aea373acfb662b/neuroatlas4s": {
+      "head": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+      "expected_pin": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/be34ba1347bf7c4631f4/mesh4s": {
+      "head": "fd8b93ea42879ec5414342a084f05b831a4bbfc7",
+      "expected_pin": "fd8b93ea42879ec5414342a084f05b831a4bbfc7",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/c42ffad74301778951e7/locus4s": {
+      "head": "e32b0aeba5c4d19c457b2329272b95b26c061943",
+      "expected_pin": "e32b0aeba5c4d19c457b2329272b95b26c061943",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/c76252a048c916057029/alder": {
+      "head": "7618c715002b3912f856c4d44468ae173fce4dec",
+      "expected_pin": "7618c715002b3912f856c4d44468ae173fce4dec",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/cfabf5f1e5e2fb8fb176/linops4s": {
+      "head": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "expected_pin": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/f1485a830167fcac1bf1/neuroim4s": {
+      "head": "4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+      "expected_pin": "4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+      "clean": true
+    },
+    "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global/staging/f4cb9818d80063022be6/reframe4s": {
+      "head": "622ab31f97bbe30a9bc6436464f3124643856f47",
+      "expected_pin": "622ab31f97bbe30a9bc6436464f3124643856f47",
+      "clean": true
+    }
+  },
+  "source_inventory_scope": "Clean staged Git inventory, not actual classpath proof. Actual Compile closures and independent classpaths recorded separately.",
+  "source_backed_empty_targets": {
+    "mvpa4s:consumerJVM/test": {
+      "owner": "mvpa4s",
+      "revision": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+      "tracked_paths": [
+        "examples/consumer/src/main/scala/example/MvpaConsumer.scala"
+      ],
+      "qualification": "Pinned pure consumer has main source only; compilation evidence, separate public behavior receipt40."
+    },
+    "mvpa4s:consumerJS/test": {
+      "owner": "mvpa4s",
+      "revision": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+      "tracked_paths": [
+        "examples/consumer/src/main/scala/example/MvpaConsumer.scala"
+      ],
+      "qualification": "Same pure consumer, JS compilation/link evidence only."
+    },
+    "neurosurf4s:spatialIoJVM/test": {
+      "owner": "neurosurf4s",
+      "revision": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+      "tracked_paths": [
+        "modules/neurosurf4s-spatial-io/jvm/src/main/scala/neurosurf4s/surface/reference/DeclaredPointMapReader.scala"
+      ],
+      "qualification": "Pinned spatial IO capability has no own test sources; compiled prerequisite."
+    }
+  },
+  "source_equivalence": {
+    "source_phases": [
+      "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+      "92154d81c39b6a384be195dde0e933ed0dff29ca"
+    ],
+    "alias_repair": "Only Root test alias and callers renamed; qualified six targets/settings/pins/compile aliases unchanged.",
+    "motion_repair": "Only JVM motion BIDS wildcard defaults corrected to provider globs plus discriminating assertions in existing case; strict admission/IO frame identity/numeric algorithms unchanged. Fresh compile-all and motionJVM/JS gates atfinalsource.",
+    "standalone": "App tool byte-identical to separately passed f0 witness; no Root dependency."
+  },
+  "qualification": "Three-segment local headless JVM/Scala.js campaign17+8+12. Both failed runs preserved. Historical native/browser evidence separately qualified; no hosted CI/main merge/new scientific or performance inference.",
+  "input_receipt_hashes": {
+    "campaign-prefix-34.json": "6ff4e6386518866390ca489dd9fcd1cbdef506b0c6c8f7ca53cce4dd46bff6af",
+    "campaign-prefix-51.json": "537cf1847c27555de33c09a191fb6512b50385c4dccf93e191818fa1db8684ed",
+    "resume-inputs-51.json": "c9213e2c5eba2ce145de2ba1476eaa525b3bf7b2a96f460e78c6d13dcd56ac97",
+    "resume-inputs-56.json": "24db1975b497c77ff61e6ac7dbe97f2c8739e74a87eb13dac84824ebd57ae862",
+    "compile-resume-inputs-55.json": "7889e6e999a56ab3cbfd2b818889668a474464aa5e7c69f81734d72c7c771a12"
+  }
+}

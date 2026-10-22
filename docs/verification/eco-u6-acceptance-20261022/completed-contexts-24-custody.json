@@ -1,0 +1,574 @@
+{
+  "timestamp": 1792647769.025235,
+  "omitted": "dead Unix sockets; verified all regular files and links before source removal",
+  "adverse": "first copy refused socket; second recopy refused readonly Git packs; no source removed until full manifest match",
+  "items": [
+    {
+      "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0d034937f431a5b6",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-warm",
+      "files": 144850,
+      "bytes": 1327245899,
+      "manifest_sha256": "26f5c0baab41cfd792bf1a3006f8759c80d1d6d5fb4654c8603197f5dff31b85"
+    },
+    {
+      "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/513905a44037873d",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/mvpa-warm",
+      "files": 55931,
+      "bytes": 723800733,
+      "manifest_sha256": "508480ba8f4552c67bcd954cd1d8f253ce265fe7ab2fd57a99fb296701268e42"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/ar/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/ar/js/target",
+      "files": 520,
+      "bytes": 2602110,
+      "manifest_sha256": "c1be56cbb934e41689ed6f7d5707647c551030a526d02c68874771ebc3b9697e"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/ar/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/ar/jvm/target",
+      "files": 300,
+      "bytes": 1632060,
+      "manifest_sha256": "594ead97606e200ea5e49fc082ae86e40d1700ece180a78453353f5f78c8e611"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/archive/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/archive/js/target",
+      "files": 442,
+      "bytes": 1728530,
+      "manifest_sha256": "059cad3762dd4d01d59e03b1debf6f3650bff7546139709c0fa157d38f88e71d"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/archive/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/archive/jvm/target",
+      "files": 283,
+      "bytes": 1206388,
+      "manifest_sha256": "fd16e983b3e37c1657d30588d528523505530ff077e23ea49e0a2028175211c6"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/archive-lna/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/archive-lna/js/target",
+      "files": 452,
+      "bytes": 2691984,
+      "manifest_sha256": "e406621343a3c03fa9c9e088882ad9e44ddbca73767c982a5840ef6e71c23bff"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/archive-lna/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/archive-lna/jvm/target",
+      "files": 287,
+      "bytes": 2052459,
+      "manifest_sha256": "c51e0173ba111cd24c4d81570ad59e353cf1fc4db65483f63b72164388962596"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/archive-zarr/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/archive-zarr/js/target",
+      "files": 270,
+      "bytes": 1603716,
+      "manifest_sha256": "3154d63f763146b70172f85027173a6df84fe3d8af205eef06f83450b8190c9c"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/archive-zarr/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/archive-zarr/jvm/target",
+      "files": 171,
+      "bytes": 1099579,
+      "manifest_sha256": "1e1982b6ebdbee1cfb2edec54e8f516fdd37a372b00c6170c8eb7bb7e6a65b38"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/atlas/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/atlas/js/target",
+      "files": 285,
+      "bytes": 18641822,
+      "manifest_sha256": "415ba4fa15a7c1ea6fc7447fb39bbedb2454d0d85f9bc603e24950d57e130a7d"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/atlas/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/atlas/jvm/target",
+      "files": 245,
+      "bytes": 3277957,
+      "manifest_sha256": "1013086c068371d6f9aaf58ca97da3c0ff99739d40e83c0686d431b5abb5009e"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/connectivity/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/connectivity/js/target",
+      "files": 843,
+      "bytes": 12573984,
+      "manifest_sha256": "d4b75a91c6a282f9e09462ab40852a198b940bbb2a0e5d1b0495bdd8a43a4a59"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/connectivity/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/connectivity/jvm/target",
+      "files": 508,
+      "bytes": 2652788,
+      "manifest_sha256": "84bfdd4d4f42116011e25e460fc394716d48604bfd3d068c4701d092805d57e7"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/dataset/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/dataset/js/target",
+      "files": 922,
+      "bytes": 18258523,
+      "manifest_sha256": "796e666ae20318b39279c9d2a3c0ab3904206515941d7fcd80c3f899eaa07cab"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/dataset/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/dataset/jvm/target",
+      "files": 606,
+      "bytes": 4155953,
+      "manifest_sha256": "5ccb627b9a3329ec5f058115478c71a8ac83203e5d1ed6320c7ca92c403058b7"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/dataset-zarr/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/dataset-zarr/js/target",
+      "files": 62,
+      "bytes": 875650,
+      "manifest_sha256": "5d9f27563b69015741ef1eeaa76a83f8b8c3551524f93a26b070167aff71dca4"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/dataset-zarr/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/dataset-zarr/jvm/target",
+      "files": 87,
+      "bytes": 1190785,
+      "manifest_sha256": "024f31d2ce9665fe1335089a0fade652d06918f49efc1b8616b9e388c3e484fd"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/design/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/design/js/target",
+      "files": 3505,
+      "bytes": 20651937,
+      "manifest_sha256": "9a13b3e42ac3e3913e3ec8c0a97a69c11f9f9e0651c649b0f3897fc39df92b48"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/design/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/design/jvm/target",
+      "files": 1940,
+      "bytes": 12766938,
+      "manifest_sha256": "87f6406d6ddf65783a135cf1457597b396e38f3a20d1b838b952e99c4d6f9b47"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/estimates/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/estimates/js/target",
+      "files": 512,
+      "bytes": 2134541,
+      "manifest_sha256": "86573caf04d71e343a2718df469b78c5b7dc498cea38abfcf0f937176bc7d09f"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/estimates/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/estimates/jvm/target",
+      "files": 305,
+      "bytes": 1455314,
+      "manifest_sha256": "b5c9f4ff06fe8e810bd30af5d221d7eb7145a4ae987f134dd2b4f311bcccbccb"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/estimates-io/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/estimates-io/js/target",
+      "files": 272,
+      "bytes": 2046960,
+      "manifest_sha256": "d0f50f5c427b3a834527f765fc63367689e4c0eeeffe32683e1e45e459b70c8a"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/estimates-io/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/estimates-io/jvm/target",
+      "files": 169,
+      "bytes": 1673057,
+      "manifest_sha256": "aa160795912b10a12e86e43e8b4d2473e855dcc37a102ff9203d149aa6adb057"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/first-level-laws/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/first-level-laws/js/target",
+      "files": 46,
+      "bytes": 901480,
+      "manifest_sha256": "5def16a7f189dca47718f519b31e2d066ed51c60f252047ac52de2c8d124dd73"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/first-level-laws/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/first-level-laws/jvm/target",
+      "files": 40,
+      "bytes": 831146,
+      "manifest_sha256": "15a9355a3874f89d3d9fb952f3fb6d9ed4810baa134c2c173f499061a43665ad"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/fit/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/fit/js/target",
+      "files": 3859,
+      "bytes": 22977241,
+      "manifest_sha256": "dd429e65908a669f91d0930302b47358dae2e22aecfcb9863d142728edbcbb5d"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/fit/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/fit/jvm/target",
+      "files": 2255,
+      "bytes": 14953943,
+      "manifest_sha256": "81e565a35db0f9f20028b7ba64803a1c44340cdaba1bca57982c1fe6dd5b81de"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/fmri-workflow/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/fmri-workflow/js/target",
+      "files": 674,
+      "bytes": 36596306,
+      "manifest_sha256": "37d039a11896c4ed56a1d4b943a227b718129dcdbeac22137da23443ffd48c25"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/fmri-workflow/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/fmri-workflow/jvm/target",
+      "files": 491,
+      "bytes": 4601838,
+      "manifest_sha256": "d3ebf41de81145cd13f11ccea9e53a8c833d5b04bf552f34b5ae764e6d86b978"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/group/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/group/js/target",
+      "files": 646,
+      "bytes": 4264457,
+      "manifest_sha256": "8393920157532077daf211a7411bd10197476b5332087233cf8bd6b9063b1185"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/group/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/group/jvm/target",
+      "files": 394,
+      "bytes": 2957731,
+      "manifest_sha256": "c121a357dc2869b70939d22ef0a6d9a7de87ca597d9e033e5c1bfc637f2c8ebb"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/hrf/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/hrf/js/target",
+      "files": 1541,
+      "bytes": 6815246,
+      "manifest_sha256": "911ccd86efd6ebfe8e34aeb1e7d8e5b158f0cb557c7ae4129a09bd4e7f7fdee9"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/hrf/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/hrf/jvm/target",
+      "files": 851,
+      "bytes": 4259025,
+      "manifest_sha256": "8980173194bcb1fa702b8889ee22832e16f33d287c654fa7b71f1ac2d5eddf7f"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/interop-archived-response/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/interop-archived-response/js/target",
+      "files": 592,
+      "bytes": 4976166,
+      "manifest_sha256": "3b9ec522567ead6f629df18dd5d246a3fe0264897c02c4023a0bfc866147ddd8"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/interop-archived-response/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/interop-archived-response/jvm/target",
+      "files": 441,
+      "bytes": 3998808,
+      "manifest_sha256": "fff48c3fdca5bcfdd78c892d44670ffbd266d5fe27a7bb506ccd45175a48ea39"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/latent/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/latent/js/target",
+      "files": 1006,
+      "bytes": 15031674,
+      "manifest_sha256": "b1b0ddec7e9afc1b2399459b1e0f4c99b7cbc55f035b62a55766db4a5839b02a"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/latent/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/latent/jvm/target",
+      "files": 590,
+      "bytes": 3266774,
+      "manifest_sha256": "fbdd0feba31ba51d220a2db9b3d3832d11dfdc1f7c909548b0ab1376113ea953"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/locus-data/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/locus-data/js/target",
+      "files": 106,
+      "bytes": 390496,
+      "manifest_sha256": "3bfb3c8bf7264c32051f83c05402f2295e8b1662daa7aaacd3795f9e46e6a980"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/locus-data/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/locus-data/jvm/target",
+      "files": 74,
+      "bytes": 278199,
+      "manifest_sha256": "9263c22dd9a5c80236e7f25282f1e6fdb503b2717aec1dd5bcd54a0cd700107e"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/model/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/model/js/target",
+      "files": 843,
+      "bytes": 5317200,
+      "manifest_sha256": "18368648c0539c17e2fa13c92dc23d90a14ff658d1716cab5d5a44899cc79841"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/model/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/model/jvm/target",
+      "files": 485,
+      "bytes": 3492032,
+      "manifest_sha256": "c2cebd57440595e0fd5c07f605cf007ded282e1478dd7631c03eaf8130d51ded"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/motion/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/motion/js/target",
+      "files": 529,
+      "bytes": 2791450,
+      "manifest_sha256": "d0349088c4744a80f9baa14ad5664a9db4425b8aef30cf740c6134e0fa3a96b0"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/motion/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/motion/jvm/target",
+      "files": 414,
+      "bytes": 2662223,
+      "manifest_sha256": "b48797e50cc0a1c67db605b7434a0aedfbae320930e35c25f55fde3b1e73cb6e"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-artifacts/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-artifacts/js/target",
+      "files": 107,
+      "bytes": 932638,
+      "manifest_sha256": "6280e8baf33e0138a3ce675a6d4379d81a0515a0def778d1b53ef5094522bbc3"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-artifacts/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-artifacts/jvm/target",
+      "files": 101,
+      "bytes": 1107058,
+      "manifest_sha256": "fb4435e04acd34a7aaa1abb3049398b835968845a1542058ca592db69875c71a"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-dataset/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-dataset/js/target",
+      "files": 212,
+      "bytes": 2027139,
+      "manifest_sha256": "60d80874cb4ae0f75941ddf7c3ec2539e7ee8e0bc137405d3016f587b5d5fc7b"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-dataset/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-dataset/jvm/target",
+      "files": 132,
+      "bytes": 1664573,
+      "manifest_sha256": "f9ddfc73628080cb45ba52b436f4eef857275d3f57ece1aedaaaff8fa8363056"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-fit/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-fit/js/target",
+      "files": 441,
+      "bytes": 2813635,
+      "manifest_sha256": "060ed5db4a0bc2c7191323b7390dcd7442ee99da20d574dc5cc465edafb9a884"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-fit/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-fit/jvm/target",
+      "files": 262,
+      "bytes": 2088430,
+      "manifest_sha256": "61ab9bd812426626b7ce6e72e0c1726586592ba6e2bcc19c4c96ec27de65d32d"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-foundation-spike/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-foundation-spike/js/target",
+      "files": 30,
+      "bytes": 335850,
+      "manifest_sha256": "1fa1326d893d0f7802edfd961ec7f5a7792e5acc6e4682c975acd9e7085a7c56"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-foundation-spike/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-foundation-spike/jvm/target",
+      "files": 30,
+      "bytes": 296246,
+      "manifest_sha256": "9e0adfca5309a7b5057987a6c6c3dafde3f7ae83f2e1b080a3baa058a7e2619f"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-group/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-group/js/target",
+      "files": 151,
+      "bytes": 1487953,
+      "manifest_sha256": "df10a66b80d51bc1470d79489b91364494c6911fd3bf5ef30ffe23dc0863b3fb"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-group/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-group/jvm/target",
+      "files": 100,
+      "bytes": 1202562,
+      "manifest_sha256": "2cb9d1cd8e7729d8cfaf4a3247225fe448e5d8995e30ec366bcb7294f6875852"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-pipeline/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-pipeline/js/target",
+      "files": 38,
+      "bytes": 383879,
+      "manifest_sha256": "02f66d0958b306b2b42c8bb7c3a68f2fc3e8635eaba28d28e07bf8ce4b02f060"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-pipeline/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-pipeline/jvm/target",
+      "files": 35,
+      "bytes": 344876,
+      "manifest_sha256": "53ae3f8de8b8b04390d9a2c998eabed8259407b28b5a3b069037452f598171bc"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-spatial/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-spatial/js/target",
+      "files": 142,
+      "bytes": 18307076,
+      "manifest_sha256": "380038b39593a4b30bdb004b961f7e36b73753873f6528f0e373c612c2d3418a"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/mvpa-spatial/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/mvpa-spatial/jvm/target",
+      "files": 113,
+      "bytes": 1509151,
+      "manifest_sha256": "cf6f9017601746baecf00b9a899791dd0e302990ba1a2ed5fc47c35dbc54acd8"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/phrf-comparison/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/phrf-comparison/js/target",
+      "files": 1765,
+      "bytes": 8831872,
+      "manifest_sha256": "6d42dc8120dcacf5003be9c8b01db795ad5da600036e388d69f2bf2a4b45304f"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/phrf-comparison/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/phrf-comparison/jvm/target",
+      "files": 1423,
+      "bytes": 8154099,
+      "manifest_sha256": "7e9c10634150846892d9c1b8e19a2ca00af2b35b56dc67e1430ca8f03e800f9c"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/pipeline/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/pipeline/js/target",
+      "files": 289,
+      "bytes": 1375401,
+      "manifest_sha256": "17eef13dfc6f440cdb9cd08849f1b7d681332974989bdc9a849a40e21bbbf570"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/pipeline/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/pipeline/jvm/target",
+      "files": 178,
+      "bytes": 917533,
+      "manifest_sha256": "3292f9aececb959007dfa8e32f7ed6b39ab958eb111d7e3ed7362e3a064fc424"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/provider-spike/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/provider-spike/js/target",
+      "files": 206,
+      "bytes": 20927190,
+      "manifest_sha256": "85e1c6133a3082cc9678263fc3b58316ede11ce4ea527fd7a1c828180e77de24"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/provider-spike/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/provider-spike/jvm/target",
+      "files": 157,
+      "bytes": 1699207,
+      "manifest_sha256": "cb9f4e4a3f2d42a187f49e7c46f7ccc4dd930988ee8b0600cac9dd84478491f6"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/response/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/response/js/target",
+      "files": 562,
+      "bytes": 1934635,
+      "manifest_sha256": "6b7ccffcc5ea84cb7b9f3bb16a2e905c0fc440e3cabc493aa2998a787a6c8d76"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/response/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/response/jvm/target",
+      "files": 327,
+      "bytes": 1266843,
+      "manifest_sha256": "ac5cff065c8d9bb8f7e8ff01477798557c2c3d705f4ded666bc009b82ff826ef"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/response-laws/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/response-laws/js/target",
+      "files": 85,
+      "bytes": 478888,
+      "manifest_sha256": "e5c1aa23435ac8318542a954e76c5f720c728f3d7c172dff3e4d26d2c3dc28fb"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/response-laws/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/response-laws/jvm/target",
+      "files": 61,
+      "bytes": 341741,
+      "manifest_sha256": "73ff8aeef57013b5846aead833d6f8afaebf04d223cefd66da32399d638ec6d4"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/scenario-testkit/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/scenario-testkit/js/target",
+      "files": 117,
+      "bytes": 455356,
+      "manifest_sha256": "d3a72b825d74e3509a560e34350a669150243c6cc84f66412ede88959cd3444e"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/scenario-testkit/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/scenario-testkit/jvm/target",
+      "files": 84,
+      "bytes": 329934,
+      "manifest_sha256": "1addf62fa61535189e992606e0e83c0b980d9e7bcfab19747a59e1b0e5d9217b"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/spatial/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/spatial/js/target",
+      "files": 847,
+      "bytes": 23698536,
+      "manifest_sha256": "0c346b193e2c66b5b5ca9ad8d1c2e1320fd2dd6893d9e4a2d5b207a4a2f6cda1"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/spatial/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/spatial/jvm/target",
+      "files": 569,
+      "bytes": 4332201,
+      "manifest_sha256": "98fae79db7fb7fd192293aa752b11bc6ec22e6d21d32f15683e8764493998b40"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/surface-view-connectivity/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/surface-view-connectivity/js/target",
+      "files": 112,
+      "bytes": 8451285,
+      "manifest_sha256": "22381d3396ac4d0ca1156a6a6eb916313918b983f58cc53f0c518a43f0381397"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/surface-view-connectivity/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/surface-view-connectivity/jvm/target",
+      "files": 85,
+      "bytes": 563599,
+      "manifest_sha256": "23f3c8a5ebab4dcb731c669105f8dff3ee48691f3efbb5dd0d7e80a96a2bde1d"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/threshold/js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/threshold/js/target",
+      "files": 357,
+      "bytes": 1822972,
+      "manifest_sha256": "28ccf2c93946c9b1a1b85e4aba472c34aacf8125bd84f726f518469137075d78"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/modules/threshold/jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/modules/threshold/jvm/target",
+      "files": 215,
+      "bytes": 1292209,
+      "manifest_sha256": "c09db13b74e2045d1c18965d374277a00e062b54ea39f3b51cbe22b21d0c0e67"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/examples/atlas-jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/examples/atlas-jvm/target",
+      "files": 126,
+      "bytes": 1306246,
+      "manifest_sha256": "f8c04128be9e1b496be3b384f133bee6274ce52276a2ab7743f8fe6c2cb8a455"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/examples/workflows-js/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/examples/workflows-js/target",
+      "files": 101,
+      "bytes": 16896747,
+      "manifest_sha256": "47a50c5ad7c818b32239fa9c05968f516791969169d8b3cc78d9c3927e4c2edb"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/examples/workflows-jvm/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/examples/workflows-jvm/target",
+      "files": 96,
+      "bytes": 1722013,
+      "manifest_sha256": "adf15592671b1bc441a2c746e927b7068ad9ec92c61f2835ea44d70282d49f45"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/target",
+      "files": 11,
+      "bytes": 1642992,
+      "manifest_sha256": "6239e44e3f19049c2ef5eba8db2439d27a7c98636bf2da3e3f24fc5bc903fd17"
+    },
+    {
+      "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021/project/target",
+      "destination": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/completed-contexts-24/root-output/project/target",
+      "files": 151,
+      "bytes": 1400490,
+      "manifest_sha256": "42b9d6cf069f3b02e20646f07bd79be2d333866665b7abf4ef4b3843dd37e7d1"
+    }
+  ]
+}

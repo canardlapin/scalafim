@@ -1,0 +1,129 @@
+{
+  "method": {
+    "baseline": "86b3acf1e64d762be99b52ae146fa115b9050356",
+    "scope": "source-bearing selected entire modules, same physical LOC and path rules as report 47; ownership area not exact extraction inventory",
+    "dependency_count": "lexical call sites/mentions inside named baseline lazy val project definition sections only; excludes alias definitions and later settings, generated/project helper and transitive edges; provider after counts in report 47 cover whole build.sbt, so are not comparable to these slice figures",
+    "excluded": "mixed modules/spatial and mvpa-spatial; functional mvpa-fit, mvpa-dataset, mvpa-group, mvpa-artifacts and surface-view-connectivity; tests, examples and assets",
+    "qualification": "image and surface modules include generic machinery destined for other providers; atlas and mvpa modules include policy and integration that may remain or move elsewhere. Provider standalone totals include new work and optional integrations. These are area comparisons, not equivalent implementations or net ecosystem shrink."
+  },
+  "slices": {
+    "neuroim4s": {
+      "baseline_included_paths": [
+        "modules/image/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/image-view/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/image-view-canvas/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/image-view-java2d/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/image-view-javafx/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/transform/{shared,jvm,js}/src/main/scala/**/*.scala"
+      ],
+      "baseline_module_roots": 6,
+      "baseline_files": 89,
+      "baseline_physical_lines": 19192,
+      "baseline_project_definitions": [
+        "image",
+        "imageView",
+        "imageViewCanvas",
+        "imageViewJava2d",
+        "imageViewJavafx",
+        "transform"
+      ],
+      "baseline_project_definition_dependency_syntax": {
+        "dependsOn_call_sites": 17,
+        "ProjectRef_call_sites": 0,
+        "libraryDependencies_mentions": 5
+      },
+      "standalone_after_revision": "4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+      "standalone_after_module_roots": 11,
+      "standalone_after_files": 87,
+      "standalone_after_physical_lines": 18853,
+      "standalone_after_whole_build_dependency_syntax": {
+        "dependsOn_call_sites": 26,
+        "ProjectRef_call_sites": 27,
+        "libraryDependencies_mentions": 6
+      }
+    },
+    "neuroatlas4s": {
+      "baseline_included_paths": [
+        "modules/atlas/{shared,jvm,js}/src/main/scala/**/*.scala"
+      ],
+      "baseline_module_roots": 1,
+      "baseline_files": 31,
+      "baseline_physical_lines": 7594,
+      "baseline_project_definitions": [
+        "atlas"
+      ],
+      "baseline_project_definition_dependency_syntax": {
+        "dependsOn_call_sites": 3,
+        "ProjectRef_call_sites": 0,
+        "libraryDependencies_mentions": 1
+      },
+      "standalone_after_revision": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+      "standalone_after_module_roots": 8,
+      "standalone_after_files": 46,
+      "standalone_after_physical_lines": 8179,
+      "standalone_after_whole_build_dependency_syntax": {
+        "dependsOn_call_sites": 17,
+        "ProjectRef_call_sites": 15,
+        "libraryDependencies_mentions": 2
+      }
+    },
+    "mvpa4s": {
+      "baseline_included_paths": [
+        "modules/mvpa/{shared,jvm,js}/src/main/scala/**/*.scala"
+      ],
+      "baseline_module_roots": 1,
+      "baseline_files": 57,
+      "baseline_physical_lines": 15816,
+      "baseline_project_definitions": [
+        "mvpa"
+      ],
+      "baseline_project_definition_dependency_syntax": {
+        "dependsOn_call_sites": 3,
+        "ProjectRef_call_sites": 0,
+        "libraryDependencies_mentions": 1
+      },
+      "standalone_after_revision": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+      "standalone_after_module_roots": 6,
+      "standalone_after_files": 82,
+      "standalone_after_physical_lines": 20690,
+      "standalone_after_whole_build_dependency_syntax": {
+        "dependsOn_call_sites": 17,
+        "ProjectRef_call_sites": 32,
+        "libraryDependencies_mentions": 2
+      }
+    },
+    "neurosurf4s": {
+      "baseline_included_paths": [
+        "modules/surface/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/surface-view/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/surface-view-raster/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/surface-view-javafx/{shared,jvm,js}/src/main/scala/**/*.scala",
+        "modules/surface-view-three/{shared,jvm,js}/src/main/scala/**/*.scala"
+      ],
+      "baseline_module_roots": 5,
+      "baseline_files": 140,
+      "baseline_physical_lines": 29007,
+      "baseline_project_definitions": [
+        "surface",
+        "surfaceView",
+        "surfaceViewRaster",
+        "surfaceViewJavafx",
+        "surfaceViewThree"
+      ],
+      "baseline_project_definition_dependency_syntax": {
+        "dependsOn_call_sites": 13,
+        "ProjectRef_call_sites": 0,
+        "libraryDependencies_mentions": 2
+      },
+      "standalone_after_revision": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+      "standalone_after_module_roots": 16,
+      "standalone_after_files": 180,
+      "standalone_after_physical_lines": 35692,
+      "standalone_after_whole_build_dependency_syntax": {
+        "dependsOn_call_sites": 35,
+        "ProjectRef_call_sites": 37,
+        "libraryDependencies_mentions": 6
+      }
+    }
+  }
+}

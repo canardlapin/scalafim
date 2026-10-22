@@ -1,0 +1,7 @@
+{
+  "checked_utc": "2026-10-22T09:12:36.422082+00:00",
+  "main_head": "d13897efd18c7cdb8978146dbab3cc790f193a63",
+  "qualified_source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+  "qualified_source_in_main": false,
+  "qualification": "Read-only upstream observation; no merge/rebase/worktree changes performed."
+}

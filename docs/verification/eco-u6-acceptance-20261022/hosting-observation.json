@@ -1,0 +1,8 @@
+{
+  "checked_utc": "2026-10-22T09:06:40.797115+00:00",
+  "github_api_identity": "canardlapin",
+  "repo": "canardlapin/scalafim",
+  "branch": "eco/u5-surface-20261021",
+  "observed_runs": [],
+  "qualification": "Local gates and source publication do not establish hosted CI. Empty list means no hosted run observed for this branch at check time."
+}

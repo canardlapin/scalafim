@@ -1,0 +1,165 @@
+{
+  "historical_checkpoint": true,
+  "qualification": "Snapshot before final completion; not current job/status authority.",
+  "snapshot": {
+    "status": "Three-segment campaign running:17+8+12; first25completed, both failures retained",
+    "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+    "published_branch": "eco/u5-surface-20261021",
+    "focused_tests": 14,
+    "new_scenario_executions": 9,
+    "independent_completed_tests": 71,
+    "completed_logs": {
+      "scalafim-eco-u6-focused-25.log": {
+        "sha256": "b8e97eac0e99eda2a5880f36df49654f665509842e64f338c747847c12985845",
+        "bytes": 35928
+      },
+      "scalafim-eco-u6-focused-25.log.meta.json": {
+        "sha256": "b7c262e1d344fe2e16b5fa7ea51aab5e9f037478f05b1ffe97c70dced3d0c9eb",
+        "bytes": 983
+      },
+      "scalafim-eco-u6-focused-28.log": {
+        "sha256": "c9e3b3dded9be13e02c028aa281b76d0963853ad1ea5996fb04b3232273d732e",
+        "bytes": 18254
+      },
+      "scalafim-eco-u6-focused-28.log.meta.json": {
+        "sha256": "13b8bf3dd98e12240220f0e8e107455653388e3bea346a39b64af39d7db1e17b",
+        "bytes": 983
+      },
+      "scalafim-eco-u6-focused-31.log": {
+        "sha256": "6c004afae5eadd4a614d8e519a7a69d3c13d39e169ea48377b6abcdfe75bc774",
+        "bytes": 39570
+      },
+      "scalafim-eco-u6-focused-31.log.meta.json": {
+        "sha256": "bf194525a3ae21c1ad78b305eefaec327c542152b2795ea01c2928dd4cc57a7e",
+        "bytes": 1018
+      },
+      "scalafim-eco-u6-independent-26-neuroim.log": {
+        "sha256": "0106b0b4cf6f83cb092f7091622e05545e72878db8b1a0dcb69a009ca7339754",
+        "bytes": 30020
+      },
+      "scalafim-eco-u6-independent-26-neuroim.log.meta.json": {
+        "sha256": "a90eaf9078e8a3eb992365c4403c48cf303699fdaac83e9a9919e28fd4fe39b6",
+        "bytes": 1382
+      },
+      "scalafim-eco-u6-independent-29-neuroim.log": {
+        "sha256": "d7851523ebe85675f20c212241715d49f8f18424a40742feeade336ddfab66f7",
+        "bytes": 54848
+      },
+      "scalafim-eco-u6-independent-29-neuroim.log.meta.json": {
+        "sha256": "ffda74aa1e2681852f579b6c7c9293797bd84fd89f749e6d6d66d7fb97b769a4",
+        "bytes": 1413
+      },
+      "scalafim-eco-u6-independent-29-mvpa.log": {
+        "sha256": "bb5597fdbbe0b1168f2ac486bd206b05cd2bd2c1617a89b3cd3478ace91d488a",
+        "bytes": 49856
+      },
+      "scalafim-eco-u6-independent-29-mvpa.log.meta.json": {
+        "sha256": "6c7ce3012e793cfcfd15ff2ecd25b1f2dd09116b1a4aa69317c8256598111db4",
+        "bytes": 1391
+      },
+      "scalafim-eco-u6-independent-29-atlas.log": {
+        "sha256": "2083e208c383e6822391b787826c09cb4bde77e757c01510a6be029d5df25c40",
+        "bytes": 58961
+      },
+      "scalafim-eco-u6-independent-29-atlas.log.meta.json": {
+        "sha256": "d8057d5d2685ebba06c27c15a88c0db45e74dba7d3e39ffcd32f760c8d8082e1",
+        "bytes": 1476
+      },
+      "scalafim-eco-u6-independent-37-surface.log": {
+        "sha256": "1eafe8850ab56da2af81f4bce94641b9dd16ad333bc372fbc89206f8f869e261",
+        "bytes": 53032
+      },
+      "scalafim-eco-u6-independent-37-surface.log.meta.json": {
+        "sha256": "e27e5f14f7db7e2fba06e25c5f123715147f8537bf1b7ed509be6dc2f5d812da",
+        "bytes": 1482
+      },
+      "scalafim-eco-u6-independent-41-surface-routing.log": {
+        "sha256": "0844020abfbb8311b8ae62d835d3a83bd22ff009199b66229555a9da66f524f0",
+        "bytes": 30889
+      },
+      "scalafim-eco-u6-independent-41-surface-routing.log.meta.json": {
+        "sha256": "359a17881f3130a3953775c3ecce54f7faf491a3e09bce5c19985820c5fa1148",
+        "bytes": 1170
+      }
+    },
+    "active_jobs": {
+      "resume": "exec32393 driver55 nowrunningresume56, /tmp/scalafim-eco-u6-resume-56.log"
+    },
+    "full_campaign_pass": false,
+    "final_native_browser_execution": false,
+    "independent_classpath_sections": 27,
+    "provider_source_owners_verified": 15,
+    "resource_policy": "20GB decimal from /Users/bbuchsbaum/code/AGENTS.md; initial extra20GiB guards yielded conservative refusals; actualfloor retained.",
+    "published_source_commit": "f0b67d349ec6f444969749845b15d3e58d8996bb",
+    "compile_all": {
+      "status": "Pass",
+      "source_commit": "31a42a69004c6282e01ad939c370f249fdf5e604",
+      "raw_sha256": "54999b98dcfad51b04d899997708c9b6ee785c875c5b868691353df0c87076ba",
+      "meta": {
+        "schema_version": 1,
+        "started_utc": "2026-10-22T06:06:14.436794+00:00",
+        "finished_utc": "2026-10-22T06:27:32.650816+00:00",
+        "duration_seconds": 1278.207815,
+        "command": [
+          "sbt",
+          "-J-XX:ActiveProcessorCount=4",
+          "-Dsbt.server.autostart=false",
+          "-Djava.awt.headless=true",
+          "-Dsbt.boot.directory=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/boot",
+          "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global",
+          "-Dsbt.ivy.home=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/ivy",
+          "-Dsbt.supershell=false",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+        "log": "/tmp/scalafim-eco-u6-compile-33.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 7200.0,
+        "log_bytes": 36677
+      }
+    },
+    "source_delta": [
+      "tools/neuroim-composition-consumer/src/main/scala/consumer/NeuroimCompositionConsumer.scala"
+    ],
+    "standalone_status": "Pass",
+    "prefix_passed": 6196,
+    "prefix_skipped": 14,
+    "prefix_completed_batches": 25,
+    "alias_repair_source": "616860a2e14eb42b800462cd3d2f4fe4203f641a",
+    "planned_resume": "active",
+    "resource_floor_restored_bytes": 22039326720,
+    "qualified_candidate": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+    "completed_prefix_tests": 7912,
+    "completed_prefix_skipped": 16,
+    "final_source_compile_all": {
+      "status": "Pass",
+      "source": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+      "meta": {
+        "schema_version": 1,
+        "started_utc": "2026-10-22T08:12:30.534028+00:00",
+        "finished_utc": "2026-10-22T08:20:09.038308+00:00",
+        "duration_seconds": 458.502907,
+        "command": [
+          "sbt",
+          "-Djava.awt.headless=true",
+          "-Dsbt.boot.directory=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/boot",
+          "-Dsbt.global.base=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/global",
+          "-Dsbt.ivy.home=/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-cache-25/ivy",
+          "-Dsbt.supershell=false",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/Volumes/My Passport for Mac/codex-work/scalafim-eco-u6-20261022/acceptance-clone-25",
+        "log": "/tmp/scalafim-eco-u6-compile-55.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 7200.0,
+        "log_bytes": 18542
+      }
+    }
+  }
+}

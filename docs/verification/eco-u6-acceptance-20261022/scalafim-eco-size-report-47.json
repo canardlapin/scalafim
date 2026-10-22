@@ -1,0 +1,741 @@
+{
+  "method": {
+    "scope": "tracked modules/<module>/{shared,jvm,js}/src/main/scala/**/*.scala only; excludes tests, examples and generated/untracked sources",
+    "lines": "physical lines including blanks and comments, counted with Python bytes.splitlines",
+    "module_roots": "distinct module directory names represented by at least one in-scope Scala source",
+    "dependencies": "lexical counts in root build.sbt after stripping // comments: .dependsOn call sites, ProjectRef call sites, libraryDependencies mentions; not distinct dependency edges or resolved graphs",
+    "baseline": "four providers are absent from root baseline build.sbt; no provider baseline pin can be inferred from that build and no zero baseline is asserted",
+    "limitations": "module roots are source-bearing directories rather than sbt projects; physical LOC is not net functionality and moved code may be counted at new ownership; lexical dependency counts are not resolved edges and exclude generated, transitive, plugin and helper/macro expansion"
+  },
+  "repositories": {
+    "scalafim": {
+      "source_git_repository": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+      "before": {
+        "revision": "86b3acf1e64d762be99b52ae146fa115b9050356",
+        "module_roots_count": 49,
+        "module_roots": [
+          "ar",
+          "archive",
+          "archive-lna",
+          "archive-zarr",
+          "atlas",
+          "connectivity",
+          "dataset",
+          "dataset-zarr",
+          "design",
+          "estimates",
+          "estimates-io",
+          "fit",
+          "fit-estimates",
+          "fmri-workflow",
+          "group",
+          "hrf",
+          "hrf-laws",
+          "image",
+          "image-view",
+          "image-view-canvas",
+          "image-view-java2d",
+          "image-view-javafx",
+          "interop-archived-response",
+          "latent",
+          "locus-data",
+          "model",
+          "motion",
+          "mvpa",
+          "mvpa-artifacts",
+          "mvpa-dataset",
+          "mvpa-fit",
+          "mvpa-group",
+          "mvpa-spatial",
+          "phrf-comparison",
+          "pipeline",
+          "provider-spike",
+          "response",
+          "response-laws",
+          "scenario-testkit",
+          "spatial",
+          "surface",
+          "surface-test-fixtures",
+          "surface-view",
+          "surface-view-connectivity",
+          "surface-view-javafx",
+          "surface-view-raster",
+          "surface-view-three",
+          "threshold",
+          "transform"
+        ],
+        "production_scala_files": 911,
+        "physical_production_scala_lines": 214313,
+        "per_module": {
+          "ar": {
+            "files": 15,
+            "physical_lines": 3177
+          },
+          "archive": {
+            "files": 7,
+            "physical_lines": 2191
+          },
+          "archive-lna": {
+            "files": 14,
+            "physical_lines": 3514
+          },
+          "archive-zarr": {
+            "files": 11,
+            "physical_lines": 1866
+          },
+          "atlas": {
+            "files": 31,
+            "physical_lines": 7594
+          },
+          "connectivity": {
+            "files": 21,
+            "physical_lines": 3947
+          },
+          "dataset": {
+            "files": 20,
+            "physical_lines": 4928
+          },
+          "dataset-zarr": {
+            "files": 7,
+            "physical_lines": 838
+          },
+          "design": {
+            "files": 63,
+            "physical_lines": 21956
+          },
+          "estimates": {
+            "files": 9,
+            "physical_lines": 691
+          },
+          "estimates-io": {
+            "files": 5,
+            "physical_lines": 700
+          },
+          "fit": {
+            "files": 84,
+            "physical_lines": 28248
+          },
+          "fit-estimates": {
+            "files": 2,
+            "physical_lines": 332
+          },
+          "fmri-workflow": {
+            "files": 8,
+            "physical_lines": 1919
+          },
+          "group": {
+            "files": 17,
+            "physical_lines": 2257
+          },
+          "hrf": {
+            "files": 46,
+            "physical_lines": 7856
+          },
+          "hrf-laws": {
+            "files": 2,
+            "physical_lines": 409
+          },
+          "image": {
+            "files": 52,
+            "physical_lines": 13971
+          },
+          "image-view": {
+            "files": 6,
+            "physical_lines": 1613
+          },
+          "image-view-canvas": {
+            "files": 1,
+            "physical_lines": 401
+          },
+          "image-view-java2d": {
+            "files": 1,
+            "physical_lines": 78
+          },
+          "image-view-javafx": {
+            "files": 1,
+            "physical_lines": 70
+          },
+          "interop-archived-response": {
+            "files": 30,
+            "physical_lines": 9352
+          },
+          "latent": {
+            "files": 17,
+            "physical_lines": 4631
+          },
+          "locus-data": {
+            "files": 5,
+            "physical_lines": 444
+          },
+          "model": {
+            "files": 16,
+            "physical_lines": 3885
+          },
+          "motion": {
+            "files": 27,
+            "physical_lines": 4959
+          },
+          "mvpa": {
+            "files": 57,
+            "physical_lines": 15816
+          },
+          "mvpa-artifacts": {
+            "files": 3,
+            "physical_lines": 483
+          },
+          "mvpa-dataset": {
+            "files": 16,
+            "physical_lines": 4533
+          },
+          "mvpa-fit": {
+            "files": 10,
+            "physical_lines": 1742
+          },
+          "mvpa-group": {
+            "files": 3,
+            "physical_lines": 737
+          },
+          "mvpa-spatial": {
+            "files": 4,
+            "physical_lines": 488
+          },
+          "phrf-comparison": {
+            "files": 58,
+            "physical_lines": 10984
+          },
+          "pipeline": {
+            "files": 12,
+            "physical_lines": 1225
+          },
+          "provider-spike": {
+            "files": 1,
+            "physical_lines": 95
+          },
+          "response": {
+            "files": 10,
+            "physical_lines": 1946
+          },
+          "response-laws": {
+            "files": 1,
+            "physical_lines": 406
+          },
+          "scenario-testkit": {
+            "files": 2,
+            "physical_lines": 381
+          },
+          "spatial": {
+            "files": 30,
+            "physical_lines": 8357
+          },
+          "surface": {
+            "files": 53,
+            "physical_lines": 7864
+          },
+          "surface-test-fixtures": {
+            "files": 5,
+            "physical_lines": 1171
+          },
+          "surface-view": {
+            "files": 49,
+            "physical_lines": 11126
+          },
+          "surface-view-connectivity": {
+            "files": 1,
+            "physical_lines": 74
+          },
+          "surface-view-javafx": {
+            "files": 14,
+            "physical_lines": 3725
+          },
+          "surface-view-raster": {
+            "files": 5,
+            "physical_lines": 1553
+          },
+          "surface-view-three": {
+            "files": 19,
+            "physical_lines": 4739
+          },
+          "threshold": {
+            "files": 12,
+            "physical_lines": 1982
+          },
+          "transform": {
+            "files": 28,
+            "physical_lines": 3059
+          }
+        },
+        "build_sbt_literal_dependency_syntax": {
+          "dependsOn_call_sites": 127,
+          "ProjectRef_call_sites": 59,
+          "libraryDependencies_mentions": 29
+        }
+      },
+      "after": {
+        "revision": "92154d81c39b6a384be195dde0e933ed0dff29ca",
+        "module_roots_count": 34,
+        "module_roots": [
+          "ar",
+          "archive",
+          "archive-lna",
+          "archive-zarr",
+          "connectivity",
+          "dataset",
+          "dataset-zarr",
+          "design",
+          "estimates",
+          "estimates-io",
+          "first-level-laws",
+          "fit",
+          "fmri-workflow",
+          "group",
+          "hrf",
+          "interop-archived-response",
+          "latent",
+          "model",
+          "motion",
+          "mvpa-artifacts",
+          "mvpa-dataset",
+          "mvpa-fit",
+          "mvpa-group",
+          "mvpa-pipeline",
+          "mvpa-spatial",
+          "phrf-comparison",
+          "pipeline",
+          "provider-spike",
+          "response",
+          "response-laws",
+          "scenario-testkit",
+          "spatial",
+          "surface-view-connectivity",
+          "threshold"
+        ],
+        "production_scala_files": 561,
+        "physical_production_scala_lines": 132082,
+        "per_module": {
+          "ar": {
+            "files": 15,
+            "physical_lines": 3177
+          },
+          "archive": {
+            "files": 7,
+            "physical_lines": 2191
+          },
+          "archive-lna": {
+            "files": 14,
+            "physical_lines": 3514
+          },
+          "archive-zarr": {
+            "files": 11,
+            "physical_lines": 1866
+          },
+          "connectivity": {
+            "files": 21,
+            "physical_lines": 3943
+          },
+          "dataset": {
+            "files": 22,
+            "physical_lines": 5105
+          },
+          "dataset-zarr": {
+            "files": 7,
+            "physical_lines": 844
+          },
+          "design": {
+            "files": 66,
+            "physical_lines": 22497
+          },
+          "estimates": {
+            "files": 9,
+            "physical_lines": 691
+          },
+          "estimates-io": {
+            "files": 5,
+            "physical_lines": 704
+          },
+          "first-level-laws": {
+            "files": 2,
+            "physical_lines": 409
+          },
+          "fit": {
+            "files": 84,
+            "physical_lines": 28262
+          },
+          "fmri-workflow": {
+            "files": 17,
+            "physical_lines": 2882
+          },
+          "group": {
+            "files": 17,
+            "physical_lines": 2257
+          },
+          "hrf": {
+            "files": 46,
+            "physical_lines": 7794
+          },
+          "interop-archived-response": {
+            "files": 30,
+            "physical_lines": 9377
+          },
+          "latent": {
+            "files": 17,
+            "physical_lines": 4583
+          },
+          "model": {
+            "files": 16,
+            "physical_lines": 3918
+          },
+          "motion": {
+            "files": 27,
+            "physical_lines": 4964
+          },
+          "mvpa-artifacts": {
+            "files": 3,
+            "physical_lines": 483
+          },
+          "mvpa-dataset": {
+            "files": 3,
+            "physical_lines": 1220
+          },
+          "mvpa-fit": {
+            "files": 9,
+            "physical_lines": 1506
+          },
+          "mvpa-group": {
+            "files": 2,
+            "physical_lines": 460
+          },
+          "mvpa-pipeline": {
+            "files": 1,
+            "physical_lines": 37
+          },
+          "mvpa-spatial": {
+            "files": 1,
+            "physical_lines": 57
+          },
+          "phrf-comparison": {
+            "files": 58,
+            "physical_lines": 10984
+          },
+          "pipeline": {
+            "files": 12,
+            "physical_lines": 1225
+          },
+          "provider-spike": {
+            "files": 1,
+            "physical_lines": 95
+          },
+          "response": {
+            "files": 9,
+            "physical_lines": 1754
+          },
+          "response-laws": {
+            "files": 1,
+            "physical_lines": 408
+          },
+          "scenario-testkit": {
+            "files": 2,
+            "physical_lines": 381
+          },
+          "spatial": {
+            "files": 13,
+            "physical_lines": 2446
+          },
+          "surface-view-connectivity": {
+            "files": 1,
+            "physical_lines": 74
+          },
+          "threshold": {
+            "files": 12,
+            "physical_lines": 1974
+          }
+        },
+        "build_sbt_literal_dependency_syntax": {
+          "dependsOn_call_sites": 119,
+          "ProjectRef_call_sites": 108,
+          "libraryDependencies_mentions": 15
+        }
+      }
+    },
+    "neuroim4s": {
+      "source_git_repository": "/Users/bbuchsbaum/code/scala/neuroim4s-eco-u5-20261021",
+      "before": null,
+      "after": {
+        "revision": "4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+        "module_roots_count": 11,
+        "module_roots": [
+          "neuroim4s-core",
+          "neuroim4s-io",
+          "neuroim4s-routing",
+          "neuroim4s-routing-io",
+          "neuroim4s-spaces",
+          "neuroim4s-transform",
+          "neuroim4s-transform-io",
+          "neuroim4s-view",
+          "neuroim4s-view-canvas",
+          "neuroim4s-view-java2d",
+          "neuroim4s-view-javafx"
+        ],
+        "production_scala_files": 87,
+        "physical_production_scala_lines": 18853,
+        "per_module": {
+          "neuroim4s-core": {
+            "files": 37,
+            "physical_lines": 11484
+          },
+          "neuroim4s-io": {
+            "files": 2,
+            "physical_lines": 516
+          },
+          "neuroim4s-routing": {
+            "files": 6,
+            "physical_lines": 895
+          },
+          "neuroim4s-routing-io": {
+            "files": 1,
+            "physical_lines": 299
+          },
+          "neuroim4s-spaces": {
+            "files": 7,
+            "physical_lines": 655
+          },
+          "neuroim4s-transform": {
+            "files": 23,
+            "physical_lines": 2595
+          },
+          "neuroim4s-transform-io": {
+            "files": 3,
+            "physical_lines": 220
+          },
+          "neuroim4s-view": {
+            "files": 5,
+            "physical_lines": 1640
+          },
+          "neuroim4s-view-canvas": {
+            "files": 1,
+            "physical_lines": 401
+          },
+          "neuroim4s-view-java2d": {
+            "files": 1,
+            "physical_lines": 78
+          },
+          "neuroim4s-view-javafx": {
+            "files": 1,
+            "physical_lines": 70
+          }
+        },
+        "build_sbt_literal_dependency_syntax": {
+          "dependsOn_call_sites": 26,
+          "ProjectRef_call_sites": 27,
+          "libraryDependencies_mentions": 6
+        }
+      }
+    },
+    "neuroatlas4s": {
+      "source_git_repository": "/Users/bbuchsbaum/code/scala/neuroatlas4s-eco-surface-20261022",
+      "before": null,
+      "after": {
+        "revision": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+        "module_roots_count": 8,
+        "module_roots": [
+          "neuroatlas4s-core",
+          "neuroatlas4s-io",
+          "neuroatlas4s-routing",
+          "neuroatlas4s-routing-io",
+          "neuroatlas4s-surface",
+          "neuroatlas4s-surface-io",
+          "neuroatlas4s-volume",
+          "neuroatlas4s-volume-io"
+        ],
+        "production_scala_files": 46,
+        "physical_production_scala_lines": 8179,
+        "per_module": {
+          "neuroatlas4s-core": {
+            "files": 13,
+            "physical_lines": 3122
+          },
+          "neuroatlas4s-io": {
+            "files": 2,
+            "physical_lines": 96
+          },
+          "neuroatlas4s-routing": {
+            "files": 5,
+            "physical_lines": 952
+          },
+          "neuroatlas4s-routing-io": {
+            "files": 1,
+            "physical_lines": 48
+          },
+          "neuroatlas4s-surface": {
+            "files": 2,
+            "physical_lines": 540
+          },
+          "neuroatlas4s-surface-io": {
+            "files": 1,
+            "physical_lines": 223
+          },
+          "neuroatlas4s-volume": {
+            "files": 16,
+            "physical_lines": 2405
+          },
+          "neuroatlas4s-volume-io": {
+            "files": 6,
+            "physical_lines": 793
+          }
+        },
+        "build_sbt_literal_dependency_syntax": {
+          "dependsOn_call_sites": 17,
+          "ProjectRef_call_sites": 15,
+          "libraryDependencies_mentions": 2
+        }
+      }
+    },
+    "mvpa4s": {
+      "source_git_repository": "/Users/bbuchsbaum/code/scala/mvpa4s-eco-u6-20261022",
+      "before": null,
+      "after": {
+        "revision": "c27469484bf760c34cd896dabe4fe1c384a83b45",
+        "module_roots_count": 6,
+        "module_roots": [
+          "mvpa4s-atlas",
+          "mvpa4s-core",
+          "mvpa4s-locus",
+          "mvpa4s-predictive",
+          "mvpa4s-surface",
+          "mvpa4s-testkit"
+        ],
+        "production_scala_files": 82,
+        "physical_production_scala_lines": 20690,
+        "per_module": {
+          "mvpa4s-atlas": {
+            "files": 1,
+            "physical_lines": 65
+          },
+          "mvpa4s-core": {
+            "files": 59,
+            "physical_lines": 16033
+          },
+          "mvpa4s-locus": {
+            "files": 3,
+            "physical_lines": 400
+          },
+          "mvpa4s-predictive": {
+            "files": 15,
+            "physical_lines": 3604
+          },
+          "mvpa4s-surface": {
+            "files": 1,
+            "physical_lines": 43
+          },
+          "mvpa4s-testkit": {
+            "files": 3,
+            "physical_lines": 545
+          }
+        },
+        "build_sbt_literal_dependency_syntax": {
+          "dependsOn_call_sites": 17,
+          "ProjectRef_call_sites": 32,
+          "libraryDependencies_mentions": 2
+        }
+      }
+    },
+    "neurosurf4s": {
+      "source_git_repository": "/Users/bbuchsbaum/code/scala/neurosurf4s-eco-routing-20261021",
+      "before": null,
+      "after": {
+        "revision": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+        "module_roots_count": 16,
+        "module_roots": [
+          "neurosurf4s-core",
+          "neurosurf4s-io",
+          "neurosurf4s-routing",
+          "neurosurf4s-routing-io",
+          "neurosurf4s-spatial",
+          "neurosurf4s-spatial-io",
+          "neurosurf4s-test-fixtures",
+          "neurosurf4s-view",
+          "neurosurf4s-view-javafx",
+          "neurosurf4s-view-link",
+          "neurosurf4s-view-raster",
+          "neurosurf4s-view-three",
+          "neurosurf4s-view-three-volume",
+          "neurosurf4s-view-volume",
+          "neurosurf4s-volume",
+          "neurosurf4s-volume-io"
+        ],
+        "production_scala_files": 180,
+        "physical_production_scala_lines": 35692,
+        "per_module": {
+          "neurosurf4s-core": {
+            "files": 38,
+            "physical_lines": 4608
+          },
+          "neurosurf4s-io": {
+            "files": 12,
+            "physical_lines": 1006
+          },
+          "neurosurf4s-routing": {
+            "files": 18,
+            "physical_lines": 4287
+          },
+          "neurosurf4s-routing-io": {
+            "files": 4,
+            "physical_lines": 857
+          },
+          "neurosurf4s-spatial": {
+            "files": 4,
+            "physical_lines": 675
+          },
+          "neurosurf4s-spatial-io": {
+            "files": 1,
+            "physical_lines": 29
+          },
+          "neurosurf4s-test-fixtures": {
+            "files": 6,
+            "physical_lines": 1285
+          },
+          "neurosurf4s-view": {
+            "files": 48,
+            "physical_lines": 11127
+          },
+          "neurosurf4s-view-javafx": {
+            "files": 15,
+            "physical_lines": 3996
+          },
+          "neurosurf4s-view-link": {
+            "files": 1,
+            "physical_lines": 117
+          },
+          "neurosurf4s-view-raster": {
+            "files": 5,
+            "physical_lines": 1555
+          },
+          "neurosurf4s-view-three": {
+            "files": 17,
+            "physical_lines": 4096
+          },
+          "neurosurf4s-view-three-volume": {
+            "files": 1,
+            "physical_lines": 296
+          },
+          "neurosurf4s-view-volume": {
+            "files": 2,
+            "physical_lines": 187
+          },
+          "neurosurf4s-volume": {
+            "files": 7,
+            "physical_lines": 1537
+          },
+          "neurosurf4s-volume-io": {
+            "files": 1,
+            "physical_lines": 34
+          }
+        },
+        "build_sbt_literal_dependency_syntax": {
+          "dependsOn_call_sites": 35,
+          "ProjectRef_call_sites": 37,
+          "libraryDependencies_mentions": 6
+        }
+      }
+    }
+  }
+}
