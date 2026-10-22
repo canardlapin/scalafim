@@ -114,7 +114,14 @@ object NeuroimCompositionConsumer:
         ),
         "query source point"
       )
-      val pulled = requireRight(transform.pullPoint(target), "pull target into query world")
+      // The decoded grid existentially packages its frame type. Recover the
+      // transform's precise target type through checked owner alignment.
+      def intoTransformTarget[F <: Frame[D3]](point: Point[F, D3]): Point[targetFrame.type, D3] =
+        requireRight(
+          Frame.alignOwners[D3, F, targetFrame.type](point.frame, targetFrame).flatMap(_.pointToRight(point)),
+          "admit loaded target point owner"
+        )
+      val pulled = requireRight(transform.pullPoint(intoTransformTarget(target)), "pull target into query world")
       pulled.coordinates.zip(query.coordinates).foreach { (actual, expected) =>
         requireClose(actual, expected, 1e-12, "ITK pullback coordinate")
       }
