@@ -214,7 +214,7 @@ On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that
 are not yet on Maven Central. This helper checks out the exact pinned Multivar
 revision and runs both provider bootstraps into the local artifact cache.
-Before publishing, the helper validates 40 shared default-pin edges plus the
+Before publishing, the helper validates 41 shared default-pin edges plus the
 image4s spatial4s anchor, including the extracted MVPA/atlas/surface graph.
 `./tools/prepare-pinned-dependencies.sh --check-only` performs that admission
 without publishing artifacts. Mixing revisions can compile but fail at JS

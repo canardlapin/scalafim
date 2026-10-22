@@ -66,6 +66,7 @@ while read -r consumer dependency; do
   fi
 done <<'EDGES'
 multivar gale
+multivar resample4s
 alder gale
 alder resample4s
 graph4s gale
@@ -107,7 +108,7 @@ neuroim4s spatial4s
 neurosurf4s spatial4s
 EDGES
 
-echo 'Immutable provider graph: 40 shared edges agree (spatial4s anchored in image4s).'
+echo 'Immutable provider graph: 41 shared edges agree (spatial4s anchored in image4s).'
 if [ "$check_only" = true ]; then exit 0; fi
 GALE_CACHE="$provider_tmp/gale" \
   "$provider_tmp/multivar/tools/publish-gale-local.sh"

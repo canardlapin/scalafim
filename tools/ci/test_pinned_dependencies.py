@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 # Independent fixture graph from the admitted providers, not parsed from the
 # implementation's edge loop. Distinct revisions detect swapped expected pins.
 DEPENDENCIES = {
-    "multivar": ("gale",),
+    "multivar": ("gale", "resample4s"),
     "alder": ("gale", "resample4s"),
     "graph4s": ("gale",),
     "image4s": ("gale", "ravel", "locus4s", "intaglio", "spatial4s"),
@@ -100,7 +100,7 @@ class PinnedDependenciesTest(unittest.TestCase):
     def test_check_only_verifies_graph_without_publishing(self):
         result, calls = self.run_bootstrap(check_only=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("40 shared edges agree", result.stdout)
+        self.assertIn("41 shared edges agree", result.stdout)
         self.assertEqual(calls, [])
 
     def test_each_missing_or_mismatched_edge_refuses_before_either_publication(self):
