@@ -37,6 +37,8 @@ run_batch() {
   sbt "${sbt_args[@]}" "$@"
 }
 
+run_batch ecosystem-boundaries ecosystemBoundaries
+
 # Run comparative compiler and platform controls first for prompt portability feedback.
 # Keep the comparative court separate: its real synthetic trial arm is expensive.
 run_batch phrf-comparison-jvm phrfComparisonJVM/test

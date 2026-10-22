@@ -52,6 +52,23 @@ class TestInventorySuite(unittest.TestCase):
         )
         self.assertIn("missing release targets: neuroimViewJsTestAll", errors)
 
+    def test_extracted_surface_native_host_keeps_explicit_display_exclusion(self) -> None:
+        _, errors = inspect_inventory(
+            build("coreJVM/test;neurosurfNativeTestAll"),
+            "run_batch core coreJVM/test\n",
+        )
+        self.assertEqual(errors, [])
+
+    def test_declared_ownership_preflight_must_execute(self) -> None:
+        text = 'lazy val ecosystemBoundaries = taskKey[Unit]("check")\n' + build("coreJVM/test")
+        _, errors = inspect_inventory(text, "run_batch core coreJVM/test\n")
+        self.assertEqual(errors, ["missing release preflight: ecosystemBoundaries"])
+        inventory, errors = inspect_inventory(
+            text, "run_batch boundaries ecosystemBoundaries\nrun_batch core coreJVM/test\n",
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(inventory["release_preflights"], ["ecosystemBoundaries"])
+
     def test_extra_examples_are_reported_and_required(self) -> None:
         inventory, errors = inspect_inventory(
             build("coreJVM/test", "coreJVM/test;demoJVM/test"),

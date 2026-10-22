@@ -93,8 +93,7 @@ class TemplateSurfaceOperatorSuite extends munit.FunSuite:
     val input = DoubleMatrix.fromRows(Vector.tabulate(10242)(i => Vector(math.sin(i * 0.013), 2.0 + math.cos(i * 0.071))))
     val first = ok(plan.resample(Array.tabulate(10242)(i => math.sin(i * 0.013))) )
     val second = ok(plan.resample(Array.tabulate(10242)(i => 2.0 + math.cos(i * 0.071))) )
-    val runtime = CachedFieldRuntime(InMemoryOperatorCache.empty)
-    val observed = ok(runtime.data(ok(runtime.view(Field.fromMatrix(source.id, input, "two columns"), operator))))
+    val observed = ok(operator.forward(input))
     rows.indices.foreach: outputRow =>
       assertEqualsDouble(observed(outputRow, 0), first(rows(outputRow)), 1e-10)
       assertEqualsDouble(observed(outputRow, 1), second(rows(outputRow)), 1e-10)

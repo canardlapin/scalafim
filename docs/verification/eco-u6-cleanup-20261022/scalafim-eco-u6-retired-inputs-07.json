@@ -1,0 +1,23 @@
+{
+  "source_commit": "0ba3e7e99c2b43b51e0e51beb3233d9daad7dd56",
+  "archive_sha256": "941c18ee06f5f2fdcd6b2b90d8d84d367a85b0ba766d843ee0cc3205ed47df60",
+  "files": {
+    "modules/locus-data/README.md": "19f8c5f32db41c4f04814a9e3a4616cb24178de4d08331bcca73f0a03278fbc0",
+    "modules/locus-data/shared/src/main/scala/scalafim/locus/DomainFactory.scala": "f62f53faf5191dfc1f9651f30c25f217bb4470c513254e7dbcdc2a2e70d8701e",
+    "modules/locus-data/shared/src/main/scala/scalafim/locus/Parcellation.scala": "e13d36c05b874cfc35b356eae8f3de61d2e5e2b23afba6e9bcb979b0f99a59bb",
+    "modules/locus-data/shared/src/main/scala/scalafim/locus/Searchlight.scala": "31db7ec3022fb25f5b9bb384767c08504157659238de6c8ad618b419a1e2f6b3",
+    "modules/locus-data/shared/src/test/scala/scalafim/locus/DomainIdentityProbeSuite.scala": "1e75505a6942aed9e809418757b7bf3e5b8dc3216c86d2ab4de3235d79c71f1f",
+    "modules/locus-data/shared/src/test/scala/scalafim/locus/IndexedFieldSuite.scala": "8a3d7b379c1dea65bb7e4729652345af5ac7144f3dad2379c6fe0fd18e8e2fb5",
+    "modules/locus-data/shared/src/test/scala/scalafim/locus/ParcellationSuite.scala": "47682a10226a7973e833bca22c5f39070d6e4688d00d604ef5c57af2d1a12a70",
+    "modules/locus-data/shared/src/test/scala/scalafim/locus/ProviderAggregationSuite.scala": "932cfa2ba6a2f5a68076c08faaa41c08739a0c116f5e908d681ba8786cd734bf",
+    "modules/locus-data/shared/src/test/scala/scalafim/locus/SearchlightSuite.scala": "40b0b19176490a95b5cf1c6bba2e4f126bdf8aafe9adec2e4f909a3280e65635",
+    "modules/mvpa-foundation-spike/README.md": "92389e1641095c24f6ff745666b40974cde599826a1eec178370488d96a3a380",
+    "modules/mvpa-foundation-spike/build.sbt": "9b34919df6e9afe59dcadf2c5dfc2bb3c22a7fa6da12cf3df29ab9467aba87c4",
+    "modules/mvpa-foundation-spike/project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    "modules/mvpa-foundation-spike/project/plugins.sbt": "b0cd8165faf8b727643e5862040f92b6b4d3fad5af93a15986992dc85c00a0a3",
+    "modules/mvpa-foundation-spike/shared/src/test/scala/scalafim/umvpaspike/IdentityPrototype.scala": "ece8b1bbb585266be53fc7cfea109173ae21621c7314ee6b21262340547450df",
+    "modules/mvpa-foundation-spike/shared/src/test/scala/scalafim/umvpaspike/IdentityPrototypeSuite.scala": "439cded498a03503a3820865ec3b22788f8226e564cf4034a45221ac04ae8dac",
+    "modules/mvpa-foundation-spike/shared/src/test/scala/scalafim/umvpaspike/ProviderAdmissionSuite.scala": "ab6c7f0e3607e725079c86479364ccbef7b978c6841734b96ae6ef9bfc4d7a32",
+    "tools/run-umvpa-foundation-spike.mjs": "40db72c18617e3c3d33494a5222ea17348446a0a4d61f3ad9dc131affa5fc283"
+  }
+}

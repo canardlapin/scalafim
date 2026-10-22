@@ -9,7 +9,6 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-data`: stateless domain restoration (no process-wide registry; equal keys align explicitly), supported parcellations, and searchlights over standalone locus4s spaces and data; aggregation over parcellations uses `locus4s.data.Aggregation`.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning and physical-read receipts. Source lineage uses the optional `locus4s-provenance` artifact directly.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
@@ -20,14 +19,14 @@ cross-compiled sbt build.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `neuroim4s` (standalone): neuroimaging volumes and time series, masks and ordered selections, sampling, orientation, reslicing, image statistics and world binding. Optional JVM IO uses image4s codecs directly; ScalaFIM has no local `image` module.
-- `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
+- `provider-spike`: unpublished JVM/Scala.js public-provider composition contracts and retained domain, partial-parcel, neighborhood and provider admission laws. Its production compile contract composes image4s, locus4s, Gale, Ravel and reframe4s directly; additional MVPA foundation providers stay in Test scope.
 - `neuroim4s-view` (standalone): renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts. Optional `neuroim4s-view-canvas`, `neuroim4s-view-java2d` and `neuroim4s-view-javafx` modules provide the Scala.js Canvas, JVM Java2D and JVM JavaFX hosts. See [the volume viewer guide](docs/image-viewer.md).
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
 - [neurosurf4s](https://github.com/canardlapin/neurosurf4s) (standalone): surface anatomy, intrinsic geometry, fields, exact topology/domain ownership and GIFTI/FreeSurfer IO over mesh4s/locus4s/spatial4s plus small neuroim4s world declarations. Optional transport, mixed anatomical routing, volume projection, scenes, CPU raster, JavaFX and Three.js modules stay above core; fixtures, examples and parity tools live with their owners.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
 - `neuroim4s-transform` (standalone): reads ITK/ANTs, FSL (FLIRT, FNIRT fields and cubic/quadratic spline coefficients), AFNI and FreeSurfer (LTA, xfm, register.dat) registration files and X5, interprets them as typed world-space transforms, converts between toolkits, and writes all but ITK `.h5`, X5 and FNIRT coefficients (read-only). Generic transform algebra stays in reframe4s. Guide: `docs/spatial-transforms.md`; design: `docs/plans/spatial-transform-parity.md`.
-- `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
+- `spatial`: functional sample-by-observation fields, ordered demand, source revisions, caches, value stages and materialization over provider-owned anatomical domains and operators.
 - Atlas metadata, publication, volume/surface realizations, loaders and template routes belong to standalone [neuroatlas4s](https://github.com/canardlapin/neuroatlas4s). Optional modules keep catalog and surface-only use free of the volume/rendering stacks; ScalaFIM examples compose the public APIs with functional analysis.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
 - `estimates`: fit-independent estimate catalogs, scientific identities, product/validity/uncertainty metadata and bounded read/write contracts.
@@ -68,12 +67,13 @@ neuroimaging integrations. The
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
-The unified MVPA replacement has an unpublished
-[foundation admission court](modules/mvpa-foundation-spike/README.md) in the
-root build. It pins and exercises the accepted external provider graph and
-typed-axis laws while M1 migrates those laws into production APIs; it is not a
-shipping module or an alternate MVPA engine. See the
-[implementation epic](docs/plans/unified-mvpa-epic.md).
+The former MVPA foundation prototype and `locus-data` facades have been retired.
+Their retained provider admission and algebra witnesses run in `provider-spike`;
+production axis/reindexing witnesses live in mvpa4s. See the
+[ownership and test-custody ledger](docs/verification/eco-u6-cleanup-20261022/ownership.md).
+`ecosystemBoundaries` checks production source ownership and the actual transitive
+Compile classpaths of provider cores and optional MVPA adapters on JVM and JS.
+It runs before `scalafimCompileAll` and the bounded repository test campaign.
 
 The immutable typed dataframe work formerly incubated here now lives in the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
@@ -112,9 +112,10 @@ atlas semantics live upstream.
 Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
-source revision; `locus-data` retains only ScalaFIM-specific adapters and
-higher-level parcellation and searchlight policy. Aggregation over
-parcellations is owned by `locus4s.data.Aggregation`. Source-lineage DAGs,
+source revision and uses its registry/ephemeral constructors directly at functional
+admission boundaries. Partial parcels use `PartialSurjection`; compact neighborhoods
+use `NeighborhoodSystem` with separate centered evidence. Aggregation is owned
+by `locus4s.data.Aggregation`. Source-lineage DAGs,
 their identifiers and canonical digest framing are owned by the optional
 `locus4s-provenance` artifact, shared directly by `response` and `mvpa4s`.
 
@@ -217,11 +218,10 @@ is needed.
 
 ```sh
 sbt scalafimCompileAll
-sbt scalafimTestAll
-sbt mvpaFoundationAdmissionJVM/test
-sbt mvpaFoundationAdmissionJS/test
-sbt locusDataJVM/test
-sbt locusDataJS/test
+bash tools/ci/full-repository-tests.sh
+sbt ecosystemBoundaries
+sbt providerSpikeJVM/test
+sbt providerSpikeJS/test
 sbt pipelineJVM/test
 sbt pipelineJS/test
 sbt responseJVM/test

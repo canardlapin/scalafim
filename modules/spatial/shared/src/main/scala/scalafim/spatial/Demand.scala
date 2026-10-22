@@ -57,16 +57,6 @@ object VoxelBox:
       Left(DemandError.InvalidVoxelRegion(minInclusive, maxExclusive))
     else Right(new VoxelBox(minInclusive, maxExclusive))
 
-@deprecated("Use VoxelBox; this value is a geometric box, not an extensional region.", "0.2.0")
-type VoxelRegion = VoxelBox
-
-object VoxelRegion:
-  def build(
-      minInclusive: VoxelCoord,
-      maxExclusive: VoxelCoord
-  ): Either[DemandError, VoxelBox] =
-    VoxelBox.build(minInclusive, maxExclusive)
-
 enum SpatialDemand:
   case Full
   case Rows(indices: Vector[Int])
@@ -129,10 +119,6 @@ object FieldDemand:
 
   def box(box: VoxelBox): FieldDemand =
     FieldDemand(spatial = SpatialDemand.Box(box))
-
-  @deprecated("Use box; VoxelBox is geometric rather than extensional.", "0.2.0")
-  def region(region: VoxelBox): FieldDemand =
-    box(region)
 
   def time(block: TimeBlock): FieldDemand =
     FieldDemand(observations = ObservationDemand.Block(block))

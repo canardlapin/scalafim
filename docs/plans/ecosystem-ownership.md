@@ -3,7 +3,11 @@
 U0 decision, 2026-10-16. Source baseline: ScalaFIM
 `3a2fda43c0a1155832bfb2dc5c4ead1503038190`. This supplements the
 [program](ecosystem-unification.md); Mote `eco-unification` tracks execution.
-Destinations below are ownership decisions, not claims that extraction is done.
+Destinations below record the U0 design, not current extraction status. The
+[U6 delivered ownership and test-custody ledger](../verification/eco-u6-cleanup-20261022/ownership.md)
+supersedes allocations below where the implemented contracts differ. In particular,
+functional sample/observation execution remains in ScalaFIM; it is not the
+coordinate-field runtime in reframe4s.
 
 ## Shared contracts
 

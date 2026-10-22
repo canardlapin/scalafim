@@ -115,6 +115,8 @@ lazy val mvpa4sLocusJVM = ProjectRef(mvpa4sBuild, "locusJVM")
 lazy val mvpa4sLocusJS = ProjectRef(mvpa4sBuild, "locusJS")
 lazy val mvpa4sPredictiveJVM = ProjectRef(mvpa4sBuild, "predictiveJVM")
 lazy val mvpa4sPredictiveJS  = ProjectRef(mvpa4sBuild, "predictiveJS")
+lazy val mvpa4sSurfaceJVM = ProjectRef(mvpa4sBuild, "surfaceJVM")
+lazy val mvpa4sSurfaceJS = ProjectRef(mvpa4sBuild, "surfaceJS")
 lazy val mvpa4sAtlasJVM = ProjectRef(mvpa4sBuild, "atlasJVM")
 lazy val mvpa4sAtlasJS = ProjectRef(mvpa4sBuild, "atlasJS")
 
@@ -213,6 +215,8 @@ lazy val neuroatlas4sBuild = {
     .getOrElse(uri(s"https://github.com/canardlapin/neuroatlas4s.git#$neuroatlas4sRevision"))
 }
 
+lazy val neuroatlas4sCoreJVM = ProjectRef(neuroatlas4sBuild, "coreJVM")
+lazy val neuroatlas4sCoreJS = ProjectRef(neuroatlas4sBuild, "coreJS")
 lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
 lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 
@@ -1209,7 +1213,54 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("scalafimCompileAll", ";mvpa4sImagingCompileAll;neuroatlasCompileAll;neurosurfCompileAll;neuroimViewCompileAll;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;spatialJVM/compile;spatialJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaPipelineJVM/compile;mvpaPipelineJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+// Resolve the real transitive Compile closures on both platforms; source-import
+// checks alone cannot detect an accidental runtime, rendering or Test backedge.
+lazy val ecosystemBoundaries = taskKey[Unit]("Check ecosystem ownership and resolved provider Compile boundaries")
+ecosystemBoundaries / aggregate := false
+ecosystemBoundaries := {
+  val log = streams.value.log
+  val repo = baseDirectory.value
+  val output = target.value / "ecosystem-boundaries"
+  val closures = Seq(
+    "mvpa-core-JVM" -> (mvpa4sCoreJVM / Compile / fullClasspath).value.map(_.data),
+    "mvpa-core-JS" -> (mvpa4sCoreJS / Compile / fullClasspath).value.map(_.data),
+    "mvpa-locus-JVM" -> (mvpa4sLocusJVM / Compile / fullClasspath).value.map(_.data),
+    "mvpa-locus-JS" -> (mvpa4sLocusJS / Compile / fullClasspath).value.map(_.data),
+    "mvpa-atlas-JVM" -> (mvpa4sAtlasJVM / Compile / fullClasspath).value.map(_.data),
+    "mvpa-atlas-JS" -> (mvpa4sAtlasJS / Compile / fullClasspath).value.map(_.data),
+    "mvpa-surface-JVM" -> (mvpa4sSurfaceJVM / Compile / fullClasspath).value.map(_.data),
+    "mvpa-surface-JS" -> (mvpa4sSurfaceJS / Compile / fullClasspath).value.map(_.data),
+    "atlas-core-JVM" -> (neuroatlas4sCoreJVM / Compile / fullClasspath).value.map(_.data),
+    "atlas-core-JS" -> (neuroatlas4sCoreJS / Compile / fullClasspath).value.map(_.data),
+    "surface-core-JVM" -> (neurosurf4sCoreJVM / Compile / fullClasspath).value.map(_.data),
+    "surface-core-JS" -> (neurosurf4sCoreJS / Compile / fullClasspath).value.map(_.data),
+    "volume-core-JVM" -> (neuroim4sCoreJVM / Compile / fullClasspath).value.map(_.data),
+    "volume-core-JS" -> (neuroim4sCoreJS / Compile / fullClasspath).value.map(_.data),
+    "spaces-JVM" -> (neuroim4sSpacesJVM / Compile / fullClasspath).value.map(_.data),
+    "spaces-JS" -> (neuroim4sSpacesJS / Compile / fullClasspath).value.map(_.data),
+    "locus-core-JVM" -> (locus4sCoreJVM / Compile / fullClasspath).value.map(_.data),
+    "locus-core-JS" -> (locus4sCoreJS / Compile / fullClasspath).value.map(_.data),
+    "locus-data-JVM" -> (locus4sDataJVM / Compile / fullClasspath).value.map(_.data),
+    "locus-data-JS" -> (locus4sDataJS / Compile / fullClasspath).value.map(_.data),
+    "locus-provenance-JVM" -> (locus4sProvenanceJVM / Compile / fullClasspath).value.map(_.data),
+    "locus-provenance-JS" -> (locus4sProvenanceJS / Compile / fullClasspath).value.map(_.data)
+  )
+  val builds = Project.extract(state.value).structure.units.keys.toSeq.map(_.toString).sorted
+  val rows = builds.map("@build\t" + _) ++ closures.flatMap { case (label, paths) =>
+    paths.map(path => label + "\t" + path.getCanonicalPath)
+  }
+  IO.createDirectory(output)
+  val manifest = output / "compile-classpaths.tsv"
+  IO.writeLines(manifest, rows)
+  val command = Seq("python3", (repo / "tools/ci/check_ecosystem_boundaries.py").getPath,
+    "--root", repo.getPath, "--classpath-manifest", manifest.getPath,
+    "--receipt", (output / "receipt.json").getPath)
+  val exit = scala.sys.process.Process(command, repo).!(scala.sys.process.ProcessLogger(
+    line => log.info(line), line => log.error(line)))
+  if (exit != 0) sys.error("Ecosystem ownership or Compile boundary check failed")
+}
+
+addCommandAlias("scalafimCompileAll", ";ecosystemBoundaries;mvpa4sImagingCompileAll;neuroatlasCompileAll;neurosurfCompileAll;neuroimViewCompileAll;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;spatialJVM/compile;spatialJS/compile;archiveJVM/compile;archiveJS/compile;estimatesJVM/compile;estimatesJS/compile;estimatesIoJVM/compile;estimatesIoJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;phrfComparisonJVM/compile;phrfComparisonJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaPipelineJVM/compile;mvpaPipelineJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaArtifactsJVM/compile;mvpaArtifactsJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;mvpaGroupJVM/compile;mvpaGroupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
 addCommandAlias("scalafimTestAll", ";neurosurfCoreTestAll;neurosurfSpatialTestAll;neurosurfFixtureTestAll;neurosurfViewJvmTestAll;neurosurfViewJsTestAll;neurosurfBrowserTestAll;neurosurfExamplesJvmTestAll;neurosurfNativeTestAll;mvpa4sCoreTestAll;mvpa4sPredictiveTestAll;mvpa4sLocusTestAll;mvpa4sImagingTestAll;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;neuroimTestAll;neuroimTransformTestAll;neuroimRoutingTestAll;neuroatlasCoreTestAll;neuroatlasVolumeTestAll;neuroatlasSurfaceTestAll;neuroatlasRoutingTestAll;neuroimViewJvmTestAll;neuroimViewJsTestAll;providerSpikeJVM/test;providerSpikeJS/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;spatialJVM/test;spatialJS/test;archiveJVM/test;archiveJS/test;estimatesJVM/test;estimatesJS/test;estimatesIoJVM/test;estimatesIoJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;phrfComparisonJVM/test;phrfComparisonJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaPipelineJVM/test;mvpaPipelineJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaArtifactsJVM/test;mvpaArtifactsJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;mvpaGroupJVM/test;mvpaGroupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("examplesCompile", ";atlasExamplesJVM/compile;workflowExamplesJVM/compile;workflowExamplesJS/compile")
 addCommandAlias("examplesTest", ";atlasExamplesJVM/test;workflowExamplesJVM/test;workflowExamplesJS/test")

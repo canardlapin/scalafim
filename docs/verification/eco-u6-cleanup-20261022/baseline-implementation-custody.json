@@ -1,0 +1,1766 @@
+{
+  "schema": "scalafim.eco-implementation-custody.v1",
+  "baseline": "3a2fda43c0a1155832bfb2dc5c4ead1503038190",
+  "files": [
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AtlasAsset.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AtlasLabelMaps.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AtlasProvenanceFiles.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/MniTemplateBridgeFiles.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/StandardSurfaceRouteFiles.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoader.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasError.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRealization.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRegistry.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Overlap.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/ParcelData.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Provenance.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Query.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Reduce.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Region.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/RegionGraph.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/Spaces.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/StandardAtlases.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/StandardSurfaceRoutes.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SurfaceAtlas.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateFlowBridge.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/TemplateGrids.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/VolumeAtlas.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/atlas/shared/src/main/scala/scalafim/atlas/syntax.scala",
+      "owner_family": "neuroatlas4s core/volume/surface/routing",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view-canvas/js/src/main/scala/scalafim/image/view/canvas/CanvasViewerHost.scala",
+      "owner_family": "neuroim4s-view-canvas",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view-java2d/jvm/src/main/scala/scalafim/image/view/java2d/Java2DViewerHost.scala",
+      "owner_family": "neuroim4s-view-java2d",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view-javafx/jvm/src/main/scala/scalafim/image/view/javafx/JavaFxViewerHost.scala",
+      "owner_family": "neuroim4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view/shared/src/main/scala/scalafim/image/view/AdvancedView.scala",
+      "owner_family": "neuroim4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view/shared/src/main/scala/scalafim/image/view/Colorizer.scala",
+      "owner_family": "neuroim4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view/shared/src/main/scala/scalafim/image/view/Interaction.scala",
+      "owner_family": "neuroim4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view/shared/src/main/scala/scalafim/image/view/Layer.scala",
+      "owner_family": "neuroim4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerCursor.scala",
+      "owner_family": "neuroim4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala",
+      "owner_family": "neuroim4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/jvm/src/main/scala/scalafim/image/io/NiftiSpaceEvidence.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/AxisCodes.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/ClusterSearchlightTypes.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/ConnectedComponents.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/DenseVectorField.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/ExactVolumeSearchlight.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/FieldValidity.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Geometry.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/GridDomainOps.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Indexing.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/KMeans.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Kernel3D.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Mask.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/MaskedLocalStats.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/MissingVoxelPolicy.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NativeResampling.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NeuroAffineSyntax.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NeuroImage.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NeuroSeries.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NeuroSeriesSeq.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NeuroStats.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/NeuroVolume.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Ops.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Orientation.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/ParcelNeighborhoods.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/ParcelSeries.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/PrimitiveBuffers.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/ResamplingPlan.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SelectedImage.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SelectedVolumeWindow.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SeparableVolumeFilters.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SliceGeometry.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SliceSampling.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SpaceUtils.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SpatialCoordinates.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/SpatialPullbacks.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/VolumeParcellation.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/WorldBox.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/WorldPointSyntax.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/package.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/FrameCatalog.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/Identifiers.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/Placed.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/SpaceError.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/SpaceResolver.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/Spaces.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/ToolCoordinates.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/WorldLink.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/image/shared/src/main/scala/scalafim/image/world/WorldSpace.scala",
+      "owner_family": "neuroim4s + image4s/locus4s/Gale generic providers",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/locus-data/shared/src/main/scala/scalafim/locus/DomainFactory.scala",
+      "owner_family": "locus4s core/data; public consumer laws in provider-spike",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/locus-data/shared/src/main/scala/scalafim/locus/MapEvidence.scala",
+      "owner_family": "locus4s core/data; public consumer laws in provider-spike",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/locus-data/shared/src/main/scala/scalafim/locus/Parcellation.scala",
+      "owner_family": "locus4s core/data; public consumer laws in provider-spike",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/locus-data/shared/src/main/scala/scalafim/locus/Searchlight.scala",
+      "owner_family": "locus4s core/data; public consumer laws in provider-spike",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/locus-data/shared/src/main/scala/scalafim/locus/package.scala",
+      "owner_family": "locus4s core/data; public consumer laws in provider-spike",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/AxisRef.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ClassMembership.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Classification.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Column.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceDesign.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceOrigins.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/FeatureModel.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/GroupedValidation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Ids.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Metrics.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/MvpaError.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Observations.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/OperatorRidge.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/PatternMatrix.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/PatternOperator.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Rdm.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/ReindexingLeg.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Rsa.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/RsaScoreKernels.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Compilation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Diagnostics.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/ObservationProduct.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/ResourceAdmission.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/decomposition/GlobalDecompositions.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/execution/LocalExecution.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/measurement/MeasurementDescriptor.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/measurement/MeasurementFrame.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/measurement/MeasurementLeg.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentConfirmation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ComponentInference.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ConditionalInformation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ConfirmationDesign.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/LocalPatternPrediction.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/PatternArtifact.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/PatternCoordinateRotation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/PatternInterpretation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/PatternPrediction.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/PatternTrainingStability.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/RankConfirmation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/ResidualCovariance.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SpatialSupport.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/StructuredPatternOptimizer.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/SubjectCoordinates.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/TwoStagePatternFit.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelFamilyRandomization.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/pattern/VoxelLoadingConfirmation.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/ObservationMeanRelations.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/OrdinaryRelationGeometry.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Pairing.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Queries.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/QueryReuse.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/RelationConsumers.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/RelationRdm.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Relations.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/ResidualMetric.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/ScopeReplay.scala",
+      "owner_family": "mvpa4s; functional integrations in ScalaFIM mvpa-*",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/NiftiFieldSource.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/SpatialIngest.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/SpatialIoError.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/SpatialTripletFileCache.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/TransformAssetLoader.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Backprojection.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Demand.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/DiscreteTransport.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Domain.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/FieldApi.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/FieldExplanation.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/FieldRuntime.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/FieldSource.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/GaleSpatialSupport.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/HybridOperator.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Ids.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/LazyFieldRuntime.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/MorphismPlugin.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/OperatorCompiler.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/OperatorSignature.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/PullbackCompiler.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/RowSelection.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/SpatialError.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/SpatialGraph.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/SpatialQc.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/StagedOperatorCompiler.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/SurfaceResamplingBinding.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/ViewPlan.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": true
+    },
+    {
+      "baseline_path": "modules/spatial/shared/src/main/scala/scalafim/spatial/VolumeToSurfaceOperator.scala",
+      "owner_family": "split: anatomical contracts in neuroim4s/neurosurf4s routing; functional execution retained in ScalaFIM (see ledger)",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAffineAtlas.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRasterSurfaceHost.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRuntimeCapabilities.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceAdmissionBenchmark.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceApproximation.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceBenchmark.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceComposition.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceFlatMapHost.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceLabelRasterizer.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfacePulseBenchmark.scala",
+      "owner_family": "neurosurf4s-view-javafx",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-raster/jvm/src/main/scala/scalafim/surface/view/raster/SurfaceRasterAdmissionBenchmark.scala",
+      "owner_family": "neurosurf4s-view-raster",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceDecorationRaster.scala",
+      "owner_family": "neurosurf4s-view-raster",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala",
+      "owner_family": "neurosurf4s-view-raster",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceTextureSampler.scala",
+      "owner_family": "neurosurf4s-view-raster",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceVisualQa.scala",
+      "owner_family": "neurosurf4s-view-raster",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/CanvasRasterSurfaceHost.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/CanvasSurfaceFlatMapHost.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/CanvasSurfaceLabelRasterizer.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeBrowserProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeCompositionBrowserProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeDecorationBrowserProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeDepthAdmission.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeDepthPolicyBrowserProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeFaceProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeFlatMapProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeFragmentProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeFragmentShader.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeJsRuntime.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeLinkedViewProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeNearestProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceProgram.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeVisibilityProbe.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeVolumeProjector.scala",
+      "owner_family": "neurosurf4s-view-three",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBenchmarkFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBenchmarkReceipt.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCameraFrustum.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCameraPose.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceColorPipeline.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceComposition.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompositionDocument.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompositionNavigation.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCurvatureDisplay.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorationAssets.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorationGeometry.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorationPicking.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDecorations.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDisplayHit.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDynamics.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFaceFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFeatureFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFigurePublication.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFlatMap.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFlatMapInteraction.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFragmentApproximation.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFragmentEvaluator.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLegend.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLegendPublication.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLinkedFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceMappingPartition.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNearestFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNearestPartition.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNetwork.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNetworkDecorations.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfacePlaybackDocument.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfacePublication.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceScalarFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceScalarInterpolation.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneLegendCodec.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceThresholdEdges.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewportFit.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceVisibilityFixture.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceVolumeCursor.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceVolumeProjection.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceWorldIndex.scala",
+      "owner_family": "neurosurf4s-view",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/js/src/main/scala/scalafim/surface/io/GiftiJsCompression.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/js/src/main/scala/scalafim/surface/io/GiftiReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/js/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/js/src/main/scala/scalafim/surface/reference/DeclaredSurfaceReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/FreeSurferSurfaceReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/TemplateFlowCache.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/io/TemplateSphereFiles.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/reference/DeclaredMedialWallReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/reference/DeclaredPointMapReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/reference/DeclaredSurfaceReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/jvm/src/main/scala/scalafim/surface/reference/DeclaredVolumeReader.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/FramedSurface.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/GeometryPrimitives.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/Ids.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/MeshTopology.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/RibbonFill.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceComponents.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceData.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceDigest.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceDomain.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceError.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceFaceField.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceGeodesics.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceGeometry.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceLocusDomain.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceMeshDomain.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceModule.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceMorphism.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceParcels.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceResampling.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceSampling.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceSearchlight.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceTags.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceTopologyTraversal.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/TemplateSphereAssets.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/TemplateSurfaces.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/TriangleMesh.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiCoordinates.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiModel.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPayloadDecoder.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPlacement.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiSurfaceCodec.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiXmlParser.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/CorticalReference.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/DeclaredPointMap.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/DeclaredVolume.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/FrameDeclaration.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/FrameEvidence.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/PointMap.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/SpatialReference.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/surface/shared/src/main/scala/scalafim/surface/reference/SurfaceRoute.scala",
+      "owner_family": "neurosurf4s + mesh4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/jvm/src/main/scala/scalafim/transform/TransformFiles.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/jvm/src/main/scala/scalafim/transform/itk/ItkHdf5Container.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/jvm/src/main/scala/scalafim/transform/x5/X5Container.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/Codec.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/Conversion.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/NumberText.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/StageChain.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/TransformDetection.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/TransformError.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/TransformFormat.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/TransformIoError.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/TransformProvenance.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/Transforms.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/WarpAlgebra.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/WorldTransform.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/afni/Aff12.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/field/DenseFields.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/field/FnirtCoefficients.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/freesurfer/FreeSurferLinear.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/fsl/Flirt.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/itk/ItkCodecs.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/itk/ItkHdf5.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/itk/ItkInterpretation.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/itk/ItkTransformFile.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/nifti/NiftiRaw.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/nifti/NiftiWriter.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/package.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    },
+    {
+      "baseline_path": "modules/transform/shared/src/main/scala/scalafim/transform/x5/X5.scala",
+      "owner_family": "neuroim4s-transform + reframe4s",
+      "old_path_retained": false
+    }
+  ]
+}

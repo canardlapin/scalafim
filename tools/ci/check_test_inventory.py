@@ -19,7 +19,12 @@ DEFAULT_RUNNER = REPO_ROOT / "tools" / "ci" / "full-repository-tests.sh"
 # contract tests compile scenes and events without starting the toolkit.
 DISPLAY_EXCLUSIONS = {
     "surfaceViewJavafxJVM/test": "requires OpenJFX natives and a display",
+    "neurosurfNativeTestAll": "extracted surface JavaFX host; requires OpenJFX natives and a display",
 }
+
+# These are executed checks, not test targets. Keep the allowlist exact so a
+# misspelled or newly omitted test still fails the inventory.
+PREFLIGHTS = {"ecosystemBoundaries"}
 
 
 def alias_targets(build_text: str, alias: str) -> list[str]:
@@ -71,7 +76,7 @@ def inspect_inventory(build_text: str, script_text: str) -> tuple[dict[str, obje
         target for target in actual if actual_list.count(target) > 1
     )
     missing = sorted((supported - excluded) - actual)
-    unknown = sorted(actual - supported - extra_examples)
+    unknown = sorted(actual - supported - extra_examples - PREFLIGHTS)
     missing_examples = sorted(extra_examples - actual)
 
     if duplicate_supported:
@@ -84,11 +89,14 @@ def inspect_inventory(build_text: str, script_text: str) -> tuple[dict[str, obje
         errors.append("unknown release targets: " + ", ".join(unknown))
     if missing_examples:
         errors.append("missing extra example tests: " + ", ".join(missing_examples))
+    if "lazy val ecosystemBoundaries = taskKey" in build_text and "ecosystemBoundaries" not in actual:
+        errors.append("missing release preflight: ecosystemBoundaries")
     inventory: dict[str, object] = {
         "batches": batches,
         "display_exclusions": DISPLAY_EXCLUSIONS,
         "extra_example_tests": sorted(extra_examples),
         "supported_test_targets": sorted(supported),
+        "release_preflights": sorted(actual & PREFLIGHTS),
     }
     return inventory, errors
 
