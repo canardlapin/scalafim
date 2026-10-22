@@ -1,7 +1,8 @@
 package scalafim.dataset
 
-import scalafim.locus.DomainFactory
 import locus4s.{
+  DomainRecord,
+  DomainRegistry,
   FiniteDomain,
   Index,
   Injection,
@@ -132,13 +133,14 @@ object DatasetAcquisitionDomain:
     val value: FiniteDomain[S]
 
   private def restored(id: String, size: Int): Owned =
-    val resolution = DomainFactory.unsafeRestore(id, size)
+    val record = DomainRecord.parse(id, id, size).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val resolution = DomainRegistry.empty.restore(record).fold(error => throw new IllegalArgumentException(error.message), identity)
     new Owned:
       type S = resolution.S
       val value: FiniteDomain[S] = resolution.space
 
   private def ephemeral(name: String, size: Int): Owned =
-    val domain = DomainFactory.unsafeEphemeral(name, size)
+    val domain = FiniteDomain.ephemeral(name, size).fold(error => throw new IllegalArgumentException(error.message), identity)
     new Owned:
       type S = domain.S
       val value: FiniteDomain[S] = domain.value
@@ -173,7 +175,8 @@ object DatasetAcquisitionDomain:
       // meaningful only through `injection` below — so it is ephemeral rather
       // than keyed by its own index list.
       val activeDomain =
-        DomainFactory.unsafeEphemeral("dataset-active", requestedVoxelDomain.nVoxels)
+        FiniteDomain.ephemeral("dataset-active", requestedVoxelDomain.nVoxels)
+          .fold(error => throw new IllegalArgumentException(error.message), identity)
       val times = timeDomain.value
       val full = fullDomain.value
       val active = activeDomain.value

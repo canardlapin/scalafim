@@ -1,7 +1,6 @@
 package scalafim.latent
 
 import gale.linalg.DVec
-import scalafim.locus.DomainFactory
 import locus4s.{
   FiniteDomain,
   Index,
@@ -153,7 +152,7 @@ object RadialLocusOrder:
     // identity of its own: a mask size names many unrelated grids. It is
     // derived and ephemeral; callers with a real grid compose through it.
     val fullDomain =
-      DomainFactory.unsafeEphemeral("radial-full", maskSize)
+      FiniteDomain.ephemeral("radial-full", maskSize).fold(error => throw new IllegalArgumentException(error.message), identity)
     type Active = requestedOrder.ActivePoint
     type Full = fullDomain.S
     val full: FiniteDomain[Full] = fullDomain.value
@@ -222,7 +221,7 @@ object RadialMaskOrder:
     // Derived from the full radial grid; ephemeral rather than keyed by its own
     // index list, which for a whole-brain mask was a megabyte-scale string.
     val activeDomain =
-      DomainFactory.unsafeEphemeral("radial-active", activeToFullGrid.length)
+      FiniteDomain.ephemeral("radial-active", activeToFullGrid.length).fold(error => throw new IllegalArgumentException(error.message), identity)
     type Active = activeDomain.S
     val active: FiniteDomain[Active] = activeDomain.value
     val selection =

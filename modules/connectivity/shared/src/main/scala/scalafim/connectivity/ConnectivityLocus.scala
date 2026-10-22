@@ -1,7 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.locus.DomainFactory
-import locus4s.{FiniteSpace, Index, Region}
+import locus4s.{DomainRecord, DomainRegistry, FiniteSpace, Index, Region}
 
 trait NodeLocusDomain:
   type N
@@ -20,8 +19,8 @@ object NodeLocusDomain:
   ): NodeLocusDomain =
     val key =
       s"scalafim:connectivity:nodes:${axisIdentity(requestedAxis)}"
-    val resolution =
-      DomainFactory.unsafeRestore(key, requestedAxis.size)
+    val record = DomainRecord.parse(key, key, requestedAxis.size).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val resolution = DomainRegistry.empty.restore(record).fold(error => throw new IllegalArgumentException(error.message), identity)
     new NodeLocusDomain:
       type N = resolution.S
       val axis: NodeAxis = requestedAxis
@@ -65,8 +64,8 @@ object EdgeLocusDomain:
           s"${requestedSpace.topology.label}:" +
           s"${requestedSpace.order.label}:" +
           s"${requestedSpace.sourceAxis.locus.space.id.value}:$target"
-    val resolution =
-      DomainFactory.unsafeRestore(key, requestedSpace.size)
+    val record = DomainRecord.parse(key, key, requestedSpace.size).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val resolution = DomainRegistry.empty.restore(record).fold(error => throw new IllegalArgumentException(error.message), identity)
     new EdgeLocusDomain:
       type E = resolution.S
       val edgeSpace: EdgeSpace = requestedSpace

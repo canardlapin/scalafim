@@ -45,11 +45,11 @@ run_batch phrf-comparison-js phrfComparisonJS/test
 # Start a fresh sbt JVM for each bounded group. Scala.js linking and Node test
 # runners otherwise accumulate enough heap to exhaust ordinary CI runners.
 run_batch core-jvm \
-  locusDataJVM/test pipelineJVM/test responseJVM/test responseLawsJVM/test \
+  pipelineJVM/test responseJVM/test responseLawsJVM/test \
   latentJVM/test arJVM/test hrfJVM/test \
   scenarioTestkitJVM/test designJVM/test providerSpikeJVM/test
 run_batch core-js \
-  locusDataJS/test pipelineJS/test responseJS/test responseLawsJS/test \
+  pipelineJS/test responseJS/test responseLawsJS/test \
   latentJS/test arJS/test hrfJS/test \
   scenarioTestkitJS/test designJS/test providerSpikeJS/test
 
@@ -101,11 +101,11 @@ run_batch analysis-js \
 
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
-  mvpaFoundationAdmissionJVM/test groupJVM/test mvpaGroupJVM/test \
+  groupJVM/test mvpaGroupJVM/test \
   fmriWorkflowJVM/test archiveZarrJVM/test datasetZarrJVM/test
 run_batch downstream-js \
   connectivityJS/test mvpaDatasetJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
-  mvpaFoundationAdmissionJS/test groupJS/test mvpaGroupJS/test \
+  groupJS/test mvpaGroupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 
 # The surface JavaFX host tests require a display and are intentionally absent.

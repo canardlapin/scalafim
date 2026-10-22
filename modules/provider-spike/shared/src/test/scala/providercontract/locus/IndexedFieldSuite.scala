@@ -1,11 +1,11 @@
-package scalafim.locus
+package providercontract.locus
 
 import locus4s.{FiniteSpace, Region, Selection}
 import locus4s.data.{FieldConstructionError, SectionSelectionError, VectorField}
 
 class IndexedFieldSuite extends munit.FunSuite:
   private val resolution =
-    DomainFactory.unsafeRestore("field:test", 6)
+    DomainFixtures.restore("field:test", 6)
   private type S = resolution.S
   private val space: FiniteSpace[S] = resolution.space
   private val field = VectorField.fromValues(space, Vector(0, 10, 20, 30, 40, 50)).toOption.get
@@ -63,7 +63,7 @@ class IndexedFieldSuite extends munit.FunSuite:
 
   test("restriction rejects a reused phantom with a different runtime identity"):
     val other =
-      DomainFactory.unsafeRestore("field:other", 6).space
+      DomainFixtures.restore("field:other", 6).space
     val wrongRegion =
       Region.whole(other).asInstanceOf[Region[S]]
 
