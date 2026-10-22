@@ -67,7 +67,7 @@ run_batch neuroatlas-routing neuroatlasRoutingTestAll
 run_batch mvpa4s-core mvpa4sCoreTestAll
 run_batch mvpa4s-predictive mvpa4sPredictiveTestAll
 run_batch mvpa4s-locus mvpa4sLocusTestAll
-run_batch mvpa4s-imaging mvpa4sImagingTestAll
+run_batch mvpa4s-imaging scalafimMvpaImagingTestAll
 
 run_batch neurosurf-Core neurosurfCoreTestAll
 run_batch neurosurf-Spatial neurosurfSpatialTestAll
