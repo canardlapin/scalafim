@@ -61,9 +61,7 @@ class EcosystemLinkedProjectionScenarioSuite extends munit.FunSuite:
     val state = SurfaceViewer.reduce(model, SurfaceViewerState.initial(model),
       SurfaceViewerAction.SetLighting(SurfaceLighting.Unlit)).toOption.get
     val plan = SurfaceCompiler.compile(model, state).toOption.get
-    // Same centered centroid and identity camera as SurfaceNearestRasterSuite's literal tie witness.
-    val identity = new FloatBufferView(Array[Float](1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1))
-    val camera = SurfaceCameraPacket(identity, identity, 0.0, 0.0, 1.0)
+    val camera = SurfaceReadbackScenario.centeredCamera(surfaceFrame)
     val rendered = SurfaceRasterizer.render(plan.copy(camera = camera), RasterDimensions.unsafe(129, 129),
       SurfaceRasterStyle(culling = TriangleCulling.None)).toOption.get
     val hit = rendered.pick(64, 64).toOption.flatten.get
@@ -83,7 +81,7 @@ class EcosystemLinkedProjectionScenarioSuite extends munit.FunSuite:
         projection.receipt.qualifiedVertices == 3, "midpoint voxel values in vertex order: 100, 102, 131"),
       ScenarioHarness.fact("pixel-and-pick", rendered.image.pixelUnsafe(64,64) == Rgba32.unsafe(85,85,85) &&
         hit.surface == surfaceId && hit.face == 0 && hit.vertex == 0,
-        "identity-camera centroid: interpolated RGB 85,85,85; face 0, vertex 0"),
+        "checked orthographic-camera centroid: interpolated RGB 85,85,85; face 0, vertex 0"),
       ScenarioHarness.fact("actual-pick-cursor", closeValues(volumePoint.coordinates, Vector(-1.0,-1.0,0.0)) &&
         grid.voxelAt(volumePoint).exists(v => closeValues(Vector(v.x, v.y, v.z), Vector(0.0,0.0,0.0))) && roundtrip.selection == selection &&
         closeValues(roundtrip.vertex.coordinates, Vector(-1.0,-1.0,0.0)) && close(roundtrip.distance, 0.0),

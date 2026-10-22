@@ -1,5 +1,6 @@
 package scalafim.examples.workflows.eco
 
+import image4s.geometry.{D3, Frame, Point, Vec}
 import intaglio.*
 import neurosurf4s.surface.*
 import neurosurf4s.surface.freesurfer.FreeSurferMorphometryCodec
@@ -26,6 +27,16 @@ class EcosystemSurfaceReadbackScenarioSuite extends munit.FunSuite:
 /** One triangle and the independently specified morphometry and raster witnesses.
   * The raster center tie is the provider's SurfaceNearestRasterSuite centroid witness. */
 object SurfaceReadbackScenario:
+  /** A checked public camera keeps the centroid at pixel (64,64), using exact
+    * one-half scaling in x and y. No provider-private buffer constructor. */
+  def centeredCamera(frame: Frame[D3]): SurfaceCameraPacket =
+    val target = Point.in(frame)(0.0, 0.0, 0.0).toOption.get
+    val eye = Point.in(frame)(0.0, 0.0, 5.0).toOption.get
+    val pose = SurfaceCameraPose.make(target, eye).toOption.get
+    val up = Vec.in(frame)(0.0, 1.0, 0.0).toOption.get
+    SurfaceCameraPacket.lookAt(pose, up,
+      SurfaceCameraFrustum.Orthographic(-2.0, 2.0, -2.0, 2.0, 1.0, 10.0)).toOption.get
+
   private def close(actual: Double, expected: Double): Boolean =
     actual.isFinite && expected.isFinite && math.abs(actual - expected) <= 1e-12
 
@@ -71,9 +82,8 @@ object SurfaceReadbackScenario:
     val restored = decoded.restore(model, bindings).toOption.get
     val before = SurfaceCompiler.compile(model, state).toOption.get
     val after = SurfaceCompiler.compile(model, restored).toOption.get
-    // This explicit identity camera reproduces the provider's mathematical centroid oracle.
-    val identity = new FloatBufferView(Array[Float](1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1))
-    val camera = SurfaceCameraPacket(identity, identity, 0.0, 0.0, 1.0)
+    val cameraFrame = Frame.named[D3]("synthetic-native-surface-camera").toOption.get
+    val camera = centeredCamera(cameraFrame)
     val dimensions = RasterDimensions.unsafe(129, 129)
     val style = SurfaceRasterStyle(culling = TriangleCulling.None)
     val originalView = SurfaceRasterizer.render(before, dimensions, style).toOption.get
@@ -104,7 +114,7 @@ object SurfaceReadbackScenario:
       ScenarioHarness.fact("raster-oracle", sameImage && second.image.pixelUnsafe(64,64) == palette(0) && pick.exists(p => p.surface == surface && p.face == 0 && p.vertex == 0) && first.pick(64,64).toOption.flatten.exists(p => pick.exists(q =>
         p.surface == q.surface && p.face == q.face && p.vertex == q.vertex &&
           closeValues(Vector(p.barycentricA, p.barycentricB, p.barycentricC, p.depth),
-            Vector(q.barycentricA, q.barycentricB, q.barycentricC, q.depth)))), "129x129 identity-camera centroid: red, face 0, vertex 0"),
+            Vector(q.barycentricA, q.barycentricB, q.barycentricC, q.depth)))), "129x129 checked orthographic-camera centroid: red, face 0, vertex 0"),
       ScenarioHarness.fact("admission-refusals", FreeSurferMorphometryCodec.decode(badCount, geometry).isLeft && decoded.admit(incomplete).isLeft && decoded.restore(wrongModel, bindings).isLeft && decoded.restore(model, bindings.copy(surfaces = Map(surface -> reference("asset://synthetic/geometry", 'f')))).isLeft, "scalar count, missing nearest-sampling capability, ordered topology, and reference digest")))
 
     if result.ciPass then println(result.render)
