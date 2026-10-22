@@ -29,6 +29,7 @@ FAMILIES = ("neuroim4s", "neurosurf4s", "neuroatlas4s", "mvpa4s", "image4s",
             "mesh4s", "spatial4s", "reframe4s", "intaglio")
 NO_IMAGING = {name: set() for name in FAMILIES if name != "mvpa4s"}
 POLICIES = {
+    "mvpa-predictive": {**NO_IMAGING, "mvpa4s": {"core", "predictive"}},
     "mvpa-core": {**NO_IMAGING, "mvpa4s": {"core"}},
     "mvpa-locus": {**NO_IMAGING, "mvpa4s": {"core", "locus"}},
     "mvpa-atlas": {**NO_IMAGING, "mvpa4s": {"core", "locus", "atlas"}, "neuroatlas4s": {"core"}},
@@ -132,7 +133,30 @@ def provider_module(path: str) -> tuple[str, str] | None:
     return (match[1], match[2]) if match else None
 
 
-def inspect_classpaths(root: Path, gates: dict[str, list[str]], builds: list[str]) -> list[str]:
+def resolved_owner(path: str, projects: list[dict], artifacts: dict) -> tuple[str, str] | None:
+    resolved = Path(path).resolve()
+    candidates = [project for project in projects
+                  if resolved.is_relative_to(Path(project["base"]).resolve())]
+    if candidates:
+        project = max(candidates, key=lambda row: len(Path(row["base"]).parts))
+        if project["owner"]:
+            module = re.sub(r"(?:JVM|JS)$", "", project["id"])
+            return project["owner"], module.removeprefix(project["owner"] + "-")
+    artifact = artifacts.get(str(resolved))
+    if artifact:
+        name = artifact["name"]
+        if artifact["organization"] == "scalafim" or name.startswith("scalafim-"):
+            return "scalafim", name
+        for family in FAMILIES:
+            if name.startswith(family + "-"):
+                return family, name.removeprefix(family + "-").split("_", 1)[0]
+    if resolved.name.startswith("scalafim-") and resolved.suffix == ".jar":
+        return "scalafim", resolved.name
+    return provider_module(path)
+
+
+def inspect_classpaths(root: Path, gates: dict[str, list[str]], builds: list[str],
+                       projects: list[dict] | None = None, artifacts: dict | None = None) -> list[str]:
     errors = []
     if set(gates) != EXPECTED_GATES:
         errors.append(f"classpath gate set differs: missing={sorted(EXPECTED_GATES - set(gates))}, extra={sorted(set(gates) - EXPECTED_GATES)}")
@@ -152,13 +176,15 @@ def inspect_classpaths(root: Path, gates: dict[str, list[str]], builds: list[str
         policy = POLICIES.get(gate.rsplit("-", 1)[0], {})
         for path in paths:
             resolved = Path(path).resolve()
-            if resolved.is_relative_to(root.resolve()) or re.search(r"/scalafim(?:-[^/]*)?/modules/", str(resolved)):
+            module = resolved_owner(path, projects or [], artifacts or {})
+            if (module and module[0] == "scalafim") or resolved.is_relative_to(root.resolve()) or re.search(r"/scalafim(?:-[^/]*)?/modules/", str(resolved)):
                 errors.append(f"{gate}: ScalaFIM provider backedge: {path}")
             if "test-classes" in resolved.parts or any("-testkit" in part for part in resolved.parts):
                 errors.append(f"{gate}: Test dependency in Compile: {path}")
             if resolved.name.startswith(("javafx-", "scalafx_")):
                 errors.append(f"{gate}: platform rendering dependency in Compile: {path}")
-            module = provider_module(path)
+            if module and "testkit" in module[1] and not any("-testkit" in part for part in resolved.parts):
+                errors.append(f"{gate}: Test dependency in Compile: {path}")
             if module and module[0] in policy and module[1] not in policy[module[0]]:
                 errors.append(f"{gate}: forbidden {module[0]}-{module[1]}: {path}")
     return errors
@@ -173,16 +199,27 @@ def main() -> int:
     files, errors = inspect_source(args.root)
     gates: dict[str, list[str]] = {}
     builds = []
+    projects = []
+    artifacts = {}
     if args.classpath_manifest:
         for line in args.classpath_manifest.read_text().splitlines():
             key, value = line.split("\t", 1)
-            if key == "@build":
+            if key == "@project":
+                owner, project, base = value.split("\t")
+                projects.append({"owner": owner, "id": project, "base": base})
+            elif key == "@artifact":
+                path, organization, name = value.split("\t")
+                artifacts[path] = {"organization": organization, "name": name}
+            elif key == "@build":
                 builds.append(value)
             else:
                 gates.setdefault(key, []).append(value)
-        errors += inspect_classpaths(args.root, gates, builds)
+        if not projects or not artifacts:
+            errors.append("resolved project/artifact ownership metadata is missing")
+        errors += inspect_classpaths(args.root, gates, builds, projects, artifacts)
     receipt = {"schema": "scalafim.ecosystem-boundaries.v1", "source_files": files,
-               "loaded_builds": builds, "compile_classpaths": gates, "errors": errors}
+               "loaded_builds": builds, "resolved_projects": projects, "resolved_artifacts": artifacts,
+               "compile_classpaths": gates, "errors": errors}
     if args.receipt:
         args.receipt.parent.mkdir(parents=True, exist_ok=True)
         args.receipt.write_text(json.dumps(receipt, indent=2) + "\n")

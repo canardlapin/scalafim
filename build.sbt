@@ -1222,32 +1222,53 @@ ecosystemBoundaries := {
   val repo = baseDirectory.value
   val output = target.value / "ecosystem-boundaries"
   val closures = Seq(
-    "mvpa-core-JVM" -> (mvpa4sCoreJVM / Compile / fullClasspath).value.map(_.data),
-    "mvpa-core-JS" -> (mvpa4sCoreJS / Compile / fullClasspath).value.map(_.data),
-    "mvpa-locus-JVM" -> (mvpa4sLocusJVM / Compile / fullClasspath).value.map(_.data),
-    "mvpa-locus-JS" -> (mvpa4sLocusJS / Compile / fullClasspath).value.map(_.data),
-    "mvpa-atlas-JVM" -> (mvpa4sAtlasJVM / Compile / fullClasspath).value.map(_.data),
-    "mvpa-atlas-JS" -> (mvpa4sAtlasJS / Compile / fullClasspath).value.map(_.data),
-    "mvpa-surface-JVM" -> (mvpa4sSurfaceJVM / Compile / fullClasspath).value.map(_.data),
-    "mvpa-surface-JS" -> (mvpa4sSurfaceJS / Compile / fullClasspath).value.map(_.data),
-    "atlas-core-JVM" -> (neuroatlas4sCoreJVM / Compile / fullClasspath).value.map(_.data),
-    "atlas-core-JS" -> (neuroatlas4sCoreJS / Compile / fullClasspath).value.map(_.data),
-    "surface-core-JVM" -> (neurosurf4sCoreJVM / Compile / fullClasspath).value.map(_.data),
-    "surface-core-JS" -> (neurosurf4sCoreJS / Compile / fullClasspath).value.map(_.data),
-    "volume-core-JVM" -> (neuroim4sCoreJVM / Compile / fullClasspath).value.map(_.data),
-    "volume-core-JS" -> (neuroim4sCoreJS / Compile / fullClasspath).value.map(_.data),
-    "spaces-JVM" -> (neuroim4sSpacesJVM / Compile / fullClasspath).value.map(_.data),
-    "spaces-JS" -> (neuroim4sSpacesJS / Compile / fullClasspath).value.map(_.data),
-    "locus-core-JVM" -> (locus4sCoreJVM / Compile / fullClasspath).value.map(_.data),
-    "locus-core-JS" -> (locus4sCoreJS / Compile / fullClasspath).value.map(_.data),
-    "locus-data-JVM" -> (locus4sDataJVM / Compile / fullClasspath).value.map(_.data),
-    "locus-data-JS" -> (locus4sDataJS / Compile / fullClasspath).value.map(_.data),
-    "locus-provenance-JVM" -> (locus4sProvenanceJVM / Compile / fullClasspath).value.map(_.data),
-    "locus-provenance-JS" -> (locus4sProvenanceJS / Compile / fullClasspath).value.map(_.data)
+    "mvpa-predictive-JVM" -> (mvpa4sPredictiveJVM / Compile / fullClasspath).value,
+    "mvpa-predictive-JS" -> (mvpa4sPredictiveJS / Compile / fullClasspath).value,
+    "mvpa-core-JVM" -> (mvpa4sCoreJVM / Compile / fullClasspath).value,
+    "mvpa-core-JS" -> (mvpa4sCoreJS / Compile / fullClasspath).value,
+    "mvpa-locus-JVM" -> (mvpa4sLocusJVM / Compile / fullClasspath).value,
+    "mvpa-locus-JS" -> (mvpa4sLocusJS / Compile / fullClasspath).value,
+    "mvpa-atlas-JVM" -> (mvpa4sAtlasJVM / Compile / fullClasspath).value,
+    "mvpa-atlas-JS" -> (mvpa4sAtlasJS / Compile / fullClasspath).value,
+    "mvpa-surface-JVM" -> (mvpa4sSurfaceJVM / Compile / fullClasspath).value,
+    "mvpa-surface-JS" -> (mvpa4sSurfaceJS / Compile / fullClasspath).value,
+    "atlas-core-JVM" -> (neuroatlas4sCoreJVM / Compile / fullClasspath).value,
+    "atlas-core-JS" -> (neuroatlas4sCoreJS / Compile / fullClasspath).value,
+    "surface-core-JVM" -> (neurosurf4sCoreJVM / Compile / fullClasspath).value,
+    "surface-core-JS" -> (neurosurf4sCoreJS / Compile / fullClasspath).value,
+    "volume-core-JVM" -> (neuroim4sCoreJVM / Compile / fullClasspath).value,
+    "volume-core-JS" -> (neuroim4sCoreJS / Compile / fullClasspath).value,
+    "spaces-JVM" -> (neuroim4sSpacesJVM / Compile / fullClasspath).value,
+    "spaces-JS" -> (neuroim4sSpacesJS / Compile / fullClasspath).value,
+    "locus-core-JVM" -> (locus4sCoreJVM / Compile / fullClasspath).value,
+    "locus-core-JS" -> (locus4sCoreJS / Compile / fullClasspath).value,
+    "locus-data-JVM" -> (locus4sDataJVM / Compile / fullClasspath).value,
+    "locus-data-JS" -> (locus4sDataJS / Compile / fullClasspath).value,
+    "locus-provenance-JVM" -> (locus4sProvenanceJVM / Compile / fullClasspath).value,
+    "locus-provenance-JS" -> (locus4sProvenanceJS / Compile / fullClasspath).value
   )
-  val builds = Project.extract(state.value).structure.units.keys.toSeq.map(_.toString).sorted
-  val rows = builds.map("@build\t" + _) ++ closures.flatMap { case (label, paths) =>
-    paths.map(path => label + "\t" + path.getCanonicalPath)
+  val extracted = Project.extract(state.value)
+  val structure = extracted.structure
+  val owners = Map(structure.root -> "scalafim", mvpa4sBuild -> "mvpa4s",
+    neuroim4sBuild -> "neuroim4s", neurosurf4sBuild -> "neurosurf4s",
+    neuroatlas4sBuild -> "neuroatlas4s", image4sBuild -> "image4s",
+    reframe4sBuild -> "reframe4s", spatial4sBuild -> "spatial4s",
+    mesh4sBuild -> "mesh4s", intaglioBuild -> "intaglio")
+  val builds = structure.units.keys.toSeq.map(_.toString).sorted
+  val projects = structure.allProjectRefs.map { ref =>
+    val owner = owners.getOrElse(ref.build,
+      if (extracted.get(ref / organization) == "scalafim") "scalafim" else "")
+    Seq("@project", owner, ref.project, extracted.get(ref / baseDirectory).getCanonicalPath).mkString("\t")
+  }
+  val artifacts = closures.flatMap { case (_, paths) =>
+    paths.flatMap { entry =>
+      entry.get(moduleID.key).map { module =>
+        Seq("@artifact", entry.data.getCanonicalPath, module.organization, module.name).mkString("\t")
+      }
+    }
+  }.distinct
+  val rows = builds.map("@build\t" + _) ++ projects ++ artifacts ++ closures.flatMap { case (label, paths) =>
+    paths.map(entry => label + "\t" + entry.data.getCanonicalPath)
   }
   IO.createDirectory(output)
   val manifest = output / "compile-classpaths.tsv"

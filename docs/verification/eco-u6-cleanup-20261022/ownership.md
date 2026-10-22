@@ -104,10 +104,12 @@ caller census or retirement claim is made here.
 
 ## Enforced boundaries
 
-`ecosystemBoundaries` resolves 22 actual transitive Compile closures: JVM and JS
-for MVPA core/locus/surface/atlas, anatomical cores, spaces, and locus
+`ecosystemBoundaries` resolves 24 actual transitive Compile closures: JVM and JS
+for MVPA core/predictive/locus/surface/atlas, anatomical cores, spaces, and locus
 core/data/provenance. It rejects Root backedges, Test outputs/testkits in Compile,
 and forbidden anatomical/volume/render dependencies in those cores/adapters.
+Source outputs carry the loaded project owner/base, and binary outputs carry
+resolved module coordinates; enforcement does not depend on checkout names.
 Neutral spaces and image geometry remain permitted in surface core; semantic
 atlas core is permitted in the optional MVPA atlas adapter. It also rejects
 multiple loaded immutable Git revisions of one provider. Explicit local build
@@ -117,7 +119,7 @@ The source guard scans production Scala roots, ignoring build outputs, comments
 and string literals. It rejects retired implementation modules/namespaces and
 known duplicated authority declarations (including aliases). This is a named
 architecture tripwire, not a semantic proof against arbitrarily renamed code.
-Six negative-control tests cover duplicate aliases, nested comments/literals,
+Eight negative-control tests cover duplicate aliases, nested comments/literals,
 retired source custody, transitive source/binary edges, missing platform/empty
 closures and split provider revisions. Independent public-package consumers
 remain separate executed evidence at each extraction boundary.

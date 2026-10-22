@@ -97,6 +97,34 @@ type TriangleMesh = mesh4s.Mesh
         self.assertEqual(len(errors), 1)
         self.assertIn("multiple loaded revisions of image4s", errors[0])
 
+    def test_hash_staged_projects_use_resolved_owner_and_project(self):
+        gates = self.gates()
+        gates["volume-core-JVM"] += [
+            "/staging/abc/modules/core/jvm/target/classes",
+            "/staging/def/modules/dataset/jvm/target/classes",
+        ]
+        projects = [
+            {"owner": "intaglio", "id": "coreJVM", "base": "/staging/abc/modules/core/jvm"},
+            {"owner": "scalafim", "id": "datasetJVM", "base": "/staging/def/modules/dataset/jvm"},
+        ]
+        errors = inspect_classpaths(Path("/root/scalafim"), gates, ["file:/root/scalafim/"], projects)
+        self.assertEqual(len(errors), 2)
+        self.assertTrue(any("forbidden intaglio-core" in error for error in errors))
+        self.assertTrue(any("ScalaFIM provider backedge" in error for error in errors))
+        projects[0]["owner"] = "neuroim4s"
+        projects[1]["owner"] = "unrelated-provider"
+        self.assertEqual(inspect_classpaths(
+            Path("/root/scalafim"), gates, ["file:/root/scalafim/"], projects), [])
+
+    def test_binary_backedges_use_coordinates_and_canonical_prefix(self):
+        gates = self.gates()
+        gates["mvpa-core-JS"] += ["/ivy/scalafim-dataset_sjs1_3-0.1.jar", "/cache/opaque.jar"]
+        artifacts = {"/cache/opaque.jar": {"organization": "scalafim", "name": "dataset"}}
+        errors = inspect_classpaths(Path("/root/scalafim"), gates,
+                                   ["file:/root/scalafim/"], artifacts=artifacts)
+        self.assertEqual(len(errors), 2)
+        self.assertTrue(all("ScalaFIM provider backedge" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
