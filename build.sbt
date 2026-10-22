@@ -124,7 +124,7 @@ lazy val mvpa4sAtlasJS = ProjectRef(mvpa4sBuild, "atlasJS")
 // revision; coordinated development can select a sibling checkout explicitly.
 lazy val image4sRevision = "855a3a61029f78e975b43cd1736de1c94180c004"
 lazy val image4sBuild = {
-  Seq("locus4s", "spatial4s").foreach { provider =>
+  Seq("locus4s", "spatial4s", "intaglio").foreach { provider =>
     sys.props
       .get(s"scalafim.$provider.build")
       .foreach(System.setProperty(s"image4s.$provider.build", _))

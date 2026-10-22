@@ -1,7 +1,11 @@
 # Ecosystem unification and ScalaFIM modularization
 
-Status: implementation started; U0 ownership decisions recorded in
-[the deletion map](ecosystem-ownership.md).
+Status: the four libraries and caller cutovers are delivered; U6 build/docs
+consolidation and final acceptance remain tracked in Mote. Current owners and
+preserved tests are in the [delivered ledger](../verification/eco-u6-cleanup-20261022/ownership.md).
+The U0 [deletion map](ecosystem-ownership.md) and baseline commands below are
+historical design/evidence, not current module names. Use the
+[composition guide](../standalone-composition.md) and live README command map.
 
 Date: 2026-10-16.
 

@@ -1,5 +1,6 @@
-"""Exercise the dependency bootstrap without network or an sbt installation."""
-
+"""Exercise default-graph admission without network or an sbt installation."""
+import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -7,135 +8,127 @@ import subprocess
 import tempfile
 import unittest
 
-
 ROOT = Path(__file__).resolve().parents[2]
-MULTIVAR = "a" * 40
-GALE = "b" * 40
-SOURCE_PROVIDERS = ("alder", "graph4s", "image4s", "mvpa4s", "reframe4s")
-GRAPH_CONSUMERS = ("mesh4s", "neuroim4s")
+# Independent fixture graph from the admitted providers, not parsed from the
+# implementation's edge loop. Distinct revisions detect swapped expected pins.
+DEPENDENCIES = {
+    "multivar": ("gale",),
+    "alder": ("gale", "resample4s"),
+    "graph4s": ("gale",),
+    "image4s": ("gale", "ravel", "locus4s", "intaglio", "spatial4s"),
+    "reframe4s": ("gale", "ravel", "image4s", "spatial4s"),
+    "mvpa4s": ("gale", "resample4s", "locus4s", "multivar", "alder", "neuroatlas4s", "neurosurf4s"),
+    "mesh4s": ("graph4s", "locus4s", "spatial4s"),
+    "neuroim4s": ("graph4s", "gale", "image4s", "reframe4s", "intaglio", "spatial4s"),
+    "neuroatlas4s": ("neuroim4s", "neurosurf4s", "locus4s"),
+    "neurosurf4s": ("mesh4s", "neuroim4s", "image4s", "reframe4s", "locus4s", "graph4s", "zarr4s", "intaglio", "spatial4s"),
+}
+PINS = {name: hashlib.sha256(name.encode()).hexdigest()[:40]
+        for name in set(DEPENDENCIES) | {dep for deps in DEPENDENCIES.values() for dep in deps}}
+
+FAKE_GIT = r'''#!/usr/bin/env python3
+import json
+import os
+from pathlib import Path
+import sys
+fixture = json.loads(Path(os.environ["PROVIDER_FIXTURE"]).read_text())
+if sys.argv[1] == "clone":
+    repo = Path(sys.argv[-1])
+    repo.mkdir()
+    (repo / "tools").mkdir()
+    for provider in ("gale", "resample4s"):
+        script = repo / "tools" / ("publish-" + provider + "-local.sh")
+        script.write_text('#!/bin/sh\necho ' + provider + ' >> "$PROVIDER_CALL_LOG"\n')
+        script.chmod(0o755)
+elif sys.argv[1] == "-C":
+    repo = Path(sys.argv[2])
+    command = sys.argv[3:]
+    if command[:1] == ["show"]:
+        assert command == ["show", fixture["pins"][repo.name] + ":build.sbt"], command
+        for index, (dependency, sha) in enumerate(fixture["graph"][repo.name].items()):
+            if sha is None:
+                continue
+            # Both spellings occur in real providers; exercise them together.
+            print('lazy val ' + dependency + 'Revision =' + ('\n  ' if index % 2 else ' ') + '"' + sha + '"')
+    elif command == ["rev-parse", "HEAD"]:
+        print("f" * 40 if fixture["wrong_head"] else fixture["pins"][repo.name])
+    elif command[:3] != ["checkout", "--quiet", "--detach"]:
+        raise SystemExit("unexpected Git command: " + repr(command))
+else:
+    raise SystemExit("unexpected Git arguments: " + repr(sys.argv))
+'''
 
 
 class PinnedDependenciesTest(unittest.TestCase):
-    def run_bootstrap(self, local_gale, provider_gale, source_gale=None, mismatched="", source_graph="d" * 40, source_neuroim="d" * 40, source_intaglio="e" * 40):
+    def run_bootstrap(self, mutation=None, root_mutation=None, check_only=False, wrong_head=False):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "tools").mkdir()
             shutil.copyfile(ROOT / "tools/prepare-pinned-dependencies.sh", root / "tools/prepare-pinned-dependencies.sh")
-            (root / "build.sbt").write_text(
-                f'lazy val multivarRevision = "{MULTIVAR}"\n'
-                f'lazy val galeRevision = "{local_gale}"\n'
-                f'lazy val intaglioRevision = "{"e" * 40}"\n'
-                + "".join(f'lazy val {name}Revision = "{"d" * 40}"\n' for name in SOURCE_PROVIDERS + GRAPH_CONSUMERS + ("neuroatlas4s",))
-            )
+            pins = dict(PINS)
+            graph = {consumer: {dep: PINS[dep] for dep in deps}
+                     for consumer, deps in DEPENDENCIES.items()}
+            if mutation:
+                consumer, dependency, value = mutation
+                graph[consumer][dependency] = value
+            if root_mutation:
+                dependency, value = root_mutation
+                pins[dependency] = value
+            # Root has no independent spatial4s revision: image4s anchors it.
+            (root / "build.sbt").write_text("".join(
+                f'lazy val {name}Revision = "{sha}"\n'
+                for name, sha in pins.items() if name != "spatial4s"))
+            fixture = root / "fixture.json"
+            fixture.write_text(json.dumps({"pins": pins, "graph": graph, "wrong_head": wrong_head}))
             executable = root / "git"
-            executable.write_text('''#!/usr/bin/env python3
-import os
-from pathlib import Path
-import sys
-if sys.argv[1] == "clone":
-    repo = Path(sys.argv[-1])
-    (repo / "tools").mkdir(parents=True)
-    revision = os.environ["PROVIDER_GALE"]
-    (repo / "build.sbt").write_text('lazy val galeRevision = "' + revision + '"\\n' if revision else '')
-    source = os.environ["SOURCE_GALE"] if repo.name != os.environ["MISMATCHED"] else "c" * 40
-    # Alder spells its pin over two lines; the bootstrap must read both forms.
-    pin = 'lazy val galeRevision =\\n  "' + source + '"\\n' if repo.name == "alder" else 'lazy val galeRevision = "' + source + '"\\n'
-    graph = os.environ["SOURCE_GRAPH"] if repo.name != os.environ["MISMATCHED"] else "c" * 40
-    graph_pin = 'lazy val graph4sRevision =\\n  "' + graph + '"\\n' if repo.name == "mesh4s" else 'lazy val graph4sRevision = "' + graph + '"\\n'
-    neuroim_pin = 'lazy val neuroim4sRevision = "' + os.environ["SOURCE_NEUROIM"] + '"\\n'
-    intaglio_pin = 'lazy val intaglioRevision = "' + os.environ["SOURCE_INTAGLIO"] + '"\\n'
-    (repo / "source-build.sbt").write_text(pin + graph_pin + neuroim_pin + intaglio_pin)
-    for provider in ("gale", "resample4s"):
-        script = repo / "tools" / ("publish-" + provider + "-local.sh")
-        script.write_text('#!/bin/sh\\necho ' + provider + ' >> "$PROVIDER_CALL_LOG"\\n')
-        script.chmod(0o755)
-elif sys.argv[3:4] == ["show"] and sys.argv[4] == "d" * 40 + ":build.sbt":
-    sys.stdout.write((Path(sys.argv[2]) / "source-build.sbt").read_text())
-elif sys.argv[3:] == ["rev-parse", "HEAD"]:
-    print(os.environ["PROVIDER_MULTIVAR"])
-elif sys.argv[3:6] != ["checkout", "--quiet", "--detach"]:
-    raise SystemExit("unexpected git invocation: " + repr(sys.argv))
-''')
+            executable.write_text(FAKE_GIT)
             executable.chmod(0o755)
             calls = root / "calls"
-            result = subprocess.run(
-                ["sh", str(root / "tools/prepare-pinned-dependencies.sh")],
-                env=dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
-                         TMPDIR=str(root), PROVIDER_GALE=provider_gale,
-                         SOURCE_GALE=provider_gale if source_gale is None else source_gale,
-                         SOURCE_GRAPH=source_graph, SOURCE_NEUROIM=source_neuroim,
-                         SOURCE_INTAGLIO=source_intaglio,
-                         MISMATCHED=mismatched,
-                         PROVIDER_MULTIVAR=MULTIVAR, PROVIDER_CALL_LOG=str(calls)),
-                capture_output=True, text=True,
-            )
+            command = ["sh", str(root / "tools/prepare-pinned-dependencies.sh")]
+            if check_only:
+                command.append("--check-only")
+            result = subprocess.run(command, capture_output=True, text=True, env=dict(
+                os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
+                TMPDIR=str(root), PROVIDER_FIXTURE=str(fixture), PROVIDER_CALL_LOG=str(calls)))
             return result, calls.read_text().splitlines() if calls.exists() else []
 
-    def test_aligned_revisions_publish_both_providers(self):
-        result, calls = self.run_bootstrap(GALE, GALE)
+    def test_distinct_aligned_revisions_publish_both_providers(self):
+        result, calls = self.run_bootstrap()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(calls, ["gale", "resample4s"])
 
-    def test_mismatch_refuses_before_publishing(self):
-        result, calls = self.run_bootstrap(GALE, "c" * 40)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Gale revision mismatch", result.stderr)
+    def test_check_only_verifies_graph_without_publishing(self):
+        result, calls = self.run_bootstrap(check_only=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("40 shared edges agree", result.stdout)
         self.assertEqual(calls, [])
 
-    def test_source_provider_mismatch_refuses_before_publishing(self):
-        for provider in SOURCE_PROVIDERS:
-            with self.subTest(provider=provider):
-                result, calls = self.run_bootstrap(GALE, GALE, mismatched=provider)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn(f"Gale revision mismatch: ScalaFIM={GALE} {provider}=" + "c" * 40, result.stderr)
-                self.assertEqual(calls, [])
+    def test_each_missing_or_mismatched_edge_refuses_before_either_publication(self):
+        for consumer, dependencies in DEPENDENCIES.items():
+            for dependency in dependencies:
+                for invalid in (None, "f" * 40):
+                    with self.subTest(consumer=consumer, dependency=dependency, invalid=invalid):
+                        result, calls = self.run_bootstrap(mutation=(consumer, dependency, invalid))
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertEqual(calls, [])
+                        if consumer == "image4s" and dependency == "spatial4s":
+                            # A valid changed anchor is refused by the other
+                            # coordinate consumers, rather than self-compared.
+                            self.assertIn("spatial4s", result.stderr)
+                        else:
+                            self.assertIn(f"{consumer}=", result.stderr)
+                            self.assertIn("revision mismatch", result.stderr)
 
-    def test_missing_source_provider_gale_refuses(self):
-        result, calls = self.run_bootstrap(GALE, GALE, source_gale="")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(calls, [])
+    def test_invalid_root_pins_refuse_before_publishing(self):
+        for dependency in ("multivar", "gale", "neurosurf4s", "intaglio"):
+            for invalid in ("", "b" * 12, "g" * 40):
+                with self.subTest(dependency=dependency, invalid=invalid):
+                    result, calls = self.run_bootstrap(root_mutation=(dependency, invalid))
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(calls, [])
 
-    def test_transitive_graph_mismatch_refuses_before_publishing(self):
-        for provider in GRAPH_CONSUMERS:
-            with self.subTest(provider=provider):
-                result, calls = self.run_bootstrap(GALE, GALE, mismatched=provider)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn(f"graph4s revision mismatch: ScalaFIM={'d' * 40} {provider}=" + "c" * 40, result.stderr)
-                self.assertEqual(calls, [])
-
-    def test_missing_transitive_graph_pin_refuses(self):
-        result, calls = self.run_bootstrap(GALE, GALE, source_graph="")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("graph4s revision mismatch", result.stderr)
-        self.assertEqual(calls, [])
-
-    def test_neuroatlas_neuroim_mismatch_refuses_before_publishing(self):
-        result, calls = self.run_bootstrap(GALE, GALE, source_neuroim="c" * 40)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("neuroim4s revision mismatch", result.stderr)
-        self.assertEqual(calls, [])
-
-    def test_neuroatlas_missing_neuroim_pin_refuses(self):
-        result, calls = self.run_bootstrap(GALE, GALE, source_neuroim="")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("neuroim4s revision mismatch", result.stderr)
-        self.assertEqual(calls, [])
-
-    def test_missing_provider_pin_refuses(self):
-        result, calls = self.run_bootstrap(GALE, "")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(calls, [])
-
-    def test_volume_view_intaglio_mismatch_refuses_before_publishing(self):
-        for pin in ("c" * 40, ""):
-            with self.subTest(pin=pin):
-                result, calls = self.run_bootstrap(GALE, GALE, source_intaglio=pin)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Intaglio revision mismatch", result.stderr)
-                self.assertEqual(calls, [])
-
-    def test_equal_but_truncated_pins_refuse(self):
-        result, calls = self.run_bootstrap("b" * 12, "b" * 12)
+    def test_wrong_multivar_head_refuses_before_publishing(self):
+        result, calls = self.run_bootstrap(wrong_head=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(calls, [])
 

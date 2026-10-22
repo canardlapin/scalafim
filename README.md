@@ -1,7 +1,9 @@
 # scalafim
 
 This repository consolidates the Scala fMRI and neuroimaging libraries into one
-cross-compiled sbt build.
+cross-compiled sbt build over independently usable imaging, atlas, MVPA and
+surface providers. Start with the [direct-composition guide](docs/standalone-composition.md)
+when you need one library without the functional-analysis stack.
 
 > **Maturity:** `0.1-development` / pre-release research software. Module
 > ownership and workflow boundaries are still being consolidated; APIs may
@@ -143,9 +145,13 @@ sbt \
 ```
 
 `build.sbt` also honours `scalafim.ravel.build`, `scalafim.multivar.build`,
-`scalafim.intaglio.build`, `scalafim.bids4s.build` and `scalafim.zarr4s.build`.
-An image4s override is forwarded to a local reframe4s checkout; with the pinned
-reframe4s URI, reframe4s loads its own image4s pin.
+`scalafim.intaglio.build`, `scalafim.bids4s.build`, `scalafim.zarr4s.build`,
+`scalafim.spatial4s.build`, `scalafim.mesh4s.build`, `scalafim.neuroim4s.build`,
+`scalafim.neurosurf4s.build`, `scalafim.neuroatlas4s.build` and `scalafim.mvpa4s.build`.
+Shared overrides are forwarded explicitly into dependent provider builds, including
+pinned Git builds: image4s receives locus4s, spatial4s and Intaglio overrides;
+reframe4s receives image4s and spatial4s; extracted libraries receive their shared
+providers. A local URI does not certify that checkout's revision or cleanliness.
 
 The override applies only to that sbt process. Removing the properties restores
 the immutable GitHub source dependencies.
@@ -189,30 +195,30 @@ batches, as described in `AGENTS.md`. The
 [local sbt/Mill comparison](docs/benchmarks/build-tools-20261005.md) records
 the rationale for retaining the current build.
 
-The warm server uses a 3 GB heap by default. For `reload` followed by `set`
-or repeated settings changes, use the explicitly qualified 4 GB profile:
+The warm server uses a 6 GB heap by default. Its launch profile is fixed while
+it runs. For an explicit profile or changed startup options, stop the worktree's
+server first:
 
 ```sh
 python3 tools/build/sbt-warm --shutdown
-SBT_WARM_HEAP=4g python3 tools/build/sbt-warm reload 'set spatialJVM / Test / envVars += ("MY_TEST_OPTION" -> "value")'
-SBT_WARM_HEAP=4g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
-python3 tools/build/sbt-warm --shutdown
+SBT_WARM_HEAP=6g python3 tools/build/sbt-warm hrfJVM/test hrfJS/test
+python3 tools/build/sbt-warm --status
 ```
 
-Keep the same profile for commands while that server runs. The wrapper refuses
-an unknown or differing recorded startup profile; restart after changing heap,
-processor count or idle timeout. `--status` reports requested and recorded
-startup values. An existing server from an older wrapper needs one shutdown
-before reuse. See the [reconfiguration evidence](docs/verification/sbt-reconfiguration-20261006/README.md)
-for measured limits; source pins and the ordinary 3 GB default are preserved.
+The wrapper refuses a differing recorded heap, processor count or idle timeout.
+`--status` distinguishes requested settings from a verified live startup profile.
+The older [reconfiguration evidence](docs/verification/sbt-reconfiguration-20261006/README.md)
+records its historical 3/4 GB measurements; it is not the current default.
 
 On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
 Multivar consumes Gale and Resample4s through revision-tagged artifacts that
 are not yet on Maven Central. This helper checks out the exact pinned Multivar
 revision and runs both provider bootstraps into the local artifact cache.
-The helper requires Multivar's Gale revision to match ScalaFIM's source pin;
-mixing revisions can compile but fail at JavaScript linking or JVM invocation.
-Repeat after changing the Gale, Resample4s, or Multivar pins. Ordinary builds
+Before publishing, the helper validates 40 shared default-pin edges plus the
+image4s spatial4s anchor, including the extracted MVPA/atlas/surface graph.
+`./tools/prepare-pinned-dependencies.sh --check-only` performs that admission
+without publishing artifacts. Mixing revisions can compile but fail at JS
+linking or JVM invocation. Repeat after provider-pin changes. Ordinary builds
 then use the committed source pins; no sibling checkout or provider override
 is needed.
 

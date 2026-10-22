@@ -7,6 +7,21 @@
 - Atlas follow-up: `bd-01M0NS3FBVXXG1CRQWSH60EAKC`
 - Admitted providers: Ravel `9c5669399ab8e2a11402e71973dd5f1e2f2c13f4`, image4s `6b9016b7aa622df8dec3d887080ee512fa7439c6`, reframe4s `357426b4fd1e35ddead0068375016f55b082c9e2`, and locus4s `58c9739be51345ad9adc4bc9c9e7335023254ec9`
 
+## Ecosystem placement amendment (2026-10-22)
+
+The native representation decision remains in force. Neuroimaging refinements
+and policy now live in standalone neuroim4s; image4s/Ravel/locus4s retain their
+storage, sampling and domain authority. Spatial4s supplies the shared frame
+kernel. ScalaFIM has no local image container, image module or locus facade.
+Optional IO/view/transform modules remain provider artifacts; functional dataset,
+response, fit and workflow interpretation remain downstream.
+
+The original pin set and API examples below are historical evidence, not current
+build instructions. See the [delivered ledger](../verification/eco-u6-cleanup-20261022/ownership.md)
+and [direct-composition guide](../standalone-composition.md) for the current
+owners and immutable source-build workflow. Package moves do not rewrite
+persisted identities, source lineage, ordering or numerical qualification.
+
 ## Context
 
 ScalaFIM already stores dense images in image4s `Sampled` values backed by

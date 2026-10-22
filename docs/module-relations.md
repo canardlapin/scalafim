@@ -109,7 +109,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `phrf-comparison` | Unpublished comparative-evaluation preparation/scoring and JVM runners/custody. | `model`, `ar`, `hrf`, `fit`, standalone Gale | Production workflow orchestration or claims of completed S10 rehearsal/pilot qualification. |
 | standalone `neuroim4s-core` / optional `neuroim4s-io` | Volumes, time series, masks, selected images, sampling, orientation, world binding and neuroimaging policy. The local image module is removed. | neuroim4s-spaces; image4s, locus4s, Ravel, Gale, reframe4s; optional image4s NIfTI on JVM | ScalaFIM, atlas, surface, MVPA or rendering dependencies; duplicate provider geometry, axes, finite domains or codecs. |
 | `provider-spike` | An unpublished JVM/Scala.js compile contract for direct provider composition; it owns no runtime abstraction. | standalone image4s, image4s-locus, locus4s, Ravel, Gale, and reframe4s | ScalaFIM packages, adapters, wrappers, policies, error algebras, or production runtime code. |
-| `transform` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | standalone `neuroim4s-core`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), generic frame identity (`spatial4s`) or anatomical world identity (`neuroim4s-spaces`), platform IO in shared sources (`transformBoundaryCheck`), or graph routing (`spatial`). |
+| standalone `neuroim4s-transform` / optional `transform-io` | Toolkit transform formats (ITK/ANTs, FSL FLIRT/FNIRT, AFNI, FreeSurfer, X5), their interpretation as frame-typed world-space transforms, toolkit conversion, writers, and gated numerical inverses of dense warps over the provider solver. | standalone `neuroim4s-core`; standalone image4s-geometry and reframe4s (`lie`, `field`, `resample`); jHDF on JVM | Generic transform algebra or solvers (reframe4s), generic frame identity (`spatial4s`) or anatomical world identity (`neuroim4s-spaces`), platform IO in shared sources (the provider transform boundary checks), or graph routing (`spatial`). |
 | standalone `neuroim4s-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | standalone `neuroim4s-core`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `standalone neuroim4s-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | standalone `neuroim4s-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
 | `standalone neuroim4s-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | standalone `neuroim4s-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
@@ -233,18 +233,16 @@ ScalaFIM has no atlas implementation module.
 ### Surface Display
 
 ```text
-image ----------------------> surface-view <---------------- connectivity
-                               ^       |
-                               |       +--> surface-view-raster  (JVM + JS)
-surface -----------------------+       +--> surface-view-javafx  (JVM)
-Intaglio core -----------------+       +--> surface-view-three   (Scala.js)
-                                       +--> surface-view-connectivity
+neurosurf4s-core -> neurosurf4s-view -> raster / JavaFX / Three.js
+                          ^
+ScalaFIM connectivity -> surface-view-connectivity
 ```
 
-`surface-view` is the only owner of scientific display semantics and emits one
-backend-neutral plan. The raster backend is the deterministic oracle. JavaFX
-and Three.js retain native resources but may only interpret the plan; the
-connectivity adapter converts estimator output without reversing that boundary.
+Arrows here mean the flow of scientific values. Neurosurf4s view owns the pure
+scene plan; backends interpret it. Linked-volume composition is an optional
+provider module above both anatomical libraries, not a core/display dependency.
+The raster backend remains the deterministic oracle; native and browser lifecycle
+qualification are separate from compilation and headless unit checks.
 
 ### Inference And Analysis
 
@@ -276,7 +274,8 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 
 **Providers:**
 
-- **image4s-geometry** owns `Frame`, `Point`, `Vec`, `Affine` and `Grid`.
+- **spatial4s** owns nominal dimensions, frames, points, vectors, units and affine maps.
+- **image4s-geometry** owns grids and sampling geometry over those same coordinate types.
 - **reframe4s** (`lie`, `field`, `resample`, consumed by standalone `neuroim4s-core` and
   `neuroim4s-transform`) owns
   generic transform algebra:
@@ -291,7 +290,7 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 **Neuroimaging policy and ScalaFIM modules:**
 
 - **standalone `neuroim4s-core`** owns neuroimaging adapters over those providers: `GridSpec`,
-  `SpatialPullbacks`, the ScalaFIM `ResamplingPlan` policy wrapper,
+  `SpatialPullbacks`, neuroimaging sampling policy,
   `DenseVectorField` roles, and anatomical orientation. It defines no
   morphism or affine algebra of its own; its `coreBoundaryCheck` rejects
   the retired `SpatialMorphism`/`Affine3DMorphism` family.
@@ -310,7 +309,7 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
   surface-to-surface vertex-map execution in explicit optional modules.
 - **standalone `neuroatlas4s-routing`** owns named known-space route descriptors such as
   `SpaceTransforms`, a manifest that populates the `spatial` graph over
-  unsampled template domains (STP P7.01); routing is `SpatialGraph`'s.
+  unsampled template domains (STP P7.01); routing is `neurosurf4s.routing.SpatialGraph`'s.
 - **standalone `neurosurf4s-routing`** owns typed mixed anatomical domains,
   graph morphisms, routing, compiled sparse operators, adjoints and QC. Its
   optional JVM IO module owns transform-asset graph ingestion.
@@ -330,11 +329,11 @@ There are intentionally two layers:
 
 **Points:**
 
-- `neuroim4s.image.SpatialPoint` is the unlabelled finite 3D coordinate at
-  format and kernel boundaries. the surface provider and the remaining
-  atlas adapter use it at unlabelled coordinate boundaries.
+- Raw unlabelled triples use provider `spatial4s.Xyz` (neuroimaging point
+  conveniences do not establish frame alignment). Surface and atlas code
+  do not mint a second coordinate owner.
 - Where voxel or world roles matter, prefer `VoxelPoint` and `WorldPoint`.
-- Frame-indexed image4s `Point[F, D3]` values carry world coordinates through
+- Frame-indexed spatial4s `Point[F, D3]` values carry world coordinates through
   transforms and linked viewer cursors; cross-world sharing requires a
   `WorldLink`.
 
@@ -368,7 +367,9 @@ There are intentionally two layers:
 - Put general plotting, scene-description contracts, and concrete renderers in
   standalone Intaglio. ScalaFIM modules may adapt scientific values into that
   public API but must not recreate renderer or grammar internals.
-- Put pure image-space kernels in standalone `neuroim4s-core`; volume IO goes in `neuroim4s-io`, and transform file IO in `neuroim4s-transform-io`.
+- Put generic image kernels in image4s (or its domain/numeric providers). Put
+  neuroimaging admission/policy in `neuroim4s-core`, volume IO in `neuroim4s-io`,
+  and toolkit container IO in `neuroim4s-transform-io`.
 - Put nonlinear registration state, objectives, deformation geometry, and
   acceptance policy in standalone reframe4s. ScalaFIM retains no registration
   module and depends only on the reframe4s `lie`, `field` and `resample`
