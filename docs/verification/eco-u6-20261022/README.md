@@ -1,0 +1,7 @@
+# U6 adapter cutover
+
+Root runtime source `70b3ee7bc0a35e28569ae6d68c5c88c8ff9cc599` consumes mvpa4s `c27469484bf760c34cd896dabe4fe1c384a83b45`. The two generic surface helper implementations and three original tests now have standalone upstream custody. `FamilyThreshold` is unchanged and remains the sole production implementation in `mvpa-spatial`; surface/locus dependencies are test-scoped.
+
+Both platforms pass provider locus20/surface3/atlas7/publicconsumer2; Root passes34 caller/example cases. A separate public Git-pinned build passes four surface/atlas JVM/JS cases using exact source-published private artifacts, with source/artifact/HEAD inventories verified. Independent review approved the bounded `eco-u6-surface-mvpa` closure. Full provider evidence is linked in `adapter-qualification.json`; Root raw caller logs and the verdict accompany it.
+
+Generic topology and frame identity goldens remain byte-identical. The native volume classification example intentionally adopts complete parcel keys, changing its example measurement/frame identities while unchanged tests preserve supports, feature order and numerical outputs. There is no claim of unchanged example frame IDs. Earlier dependency-resolution failure and temporary-consumer Git diagnostics remain recorded. No Maven release, main merge, native/visual/performance/new scientific or fullU6 admission follows from these bounded results.
