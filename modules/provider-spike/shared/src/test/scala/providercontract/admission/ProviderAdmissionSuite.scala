@@ -6,7 +6,7 @@ import cats.Id
 import cats.data.EitherT
 import gale.linalg.DMat
 import multivar.core.*
-import resample4s.core.{Coverage, DigestAlgorithm, IndexSpace, Labels, Selection}
+import resample4s.core.{DigestAlgorithm, IndexSpace, Labels}
 import resample4s.designs.{KFold, LeaveOneGroupOut}
 import scala.compiletime.testing.typeCheckErrors
 
