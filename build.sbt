@@ -1252,12 +1252,15 @@ ecosystemBoundaries := {
   val owners = Map(structure.root -> "scalafim", mvpa4sBuild -> "mvpa4s",
     neuroim4sBuild -> "neuroim4s", neurosurf4sBuild -> "neurosurf4s",
     neuroatlas4sBuild -> "neuroatlas4s", image4sBuild -> "image4s",
-    reframe4sBuild -> "reframe4s", spatial4sBuild -> "spatial4s",
-    mesh4sBuild -> "mesh4s", intaglioBuild -> "intaglio")
+    reframe4sBuild -> "reframe4s",
+    mesh4sBuild -> "mesh4s", intaglioBuild -> "intaglio") ++
+    sys.props.get("scalafim.spatial4s.build").map(path => file(path).getCanonicalFile.toURI -> "spatial4s").toSeq
   val builds = structure.units.keys.toSeq.map(_.toString).sorted
   val projects = structure.allProjectRefs.map { ref =>
     val owner = owners.getOrElse(ref.build,
-      if (extracted.get(ref / organization) == "scalafim") "scalafim" else "")
+      if (extracted.get(ref / organization) == "scalafim") "scalafim"
+      else """https://github.com/canardlapin/([^/]+)\.git#[0-9a-f]{40}""".r
+        .findFirstMatchIn(ref.build.toString).map(_.group(1)).getOrElse(""))
     Seq("@project", owner, ref.project, extracted.get(ref / baseDirectory).getCanonicalPath).mkString("\t")
   }
   val artifacts = closures.flatMap { case (_, paths) =>
