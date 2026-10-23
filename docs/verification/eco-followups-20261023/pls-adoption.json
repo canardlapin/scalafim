@@ -73,5 +73,16 @@
     "Land consumer only after its exact source/provider closure and required gates pass."
   ],
   "current_blocker": "The registered frozen runtime and adverse-evidence archives are unavailable because /Volumes/My Passport for Mac is unmounted; the user has been asked to reconnect it or identify its new path. Internal free space is near the20GB heavy-build floor.",
-  "next_action": "Restore and hash-verify the registered runtime archive, then use the existing acceptance runner with the exact candidate and required broader lanes; failed cases must be repaired and reviewed. No automatic outcome reuse or main merge."
+  "next_action": "Restore and hash-verify the registered runtime archive, then use the existing acceptance runner with the exact candidate and required broader lanes; failed cases must be repaired and reviewed. No automatic outcome reuse or main merge.",
+  "drive_observation": {
+    "command": [
+      "diskutil",
+      "list",
+      "external",
+      "physical"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "interpretation": "No external physical disk listed at the observation; no mount or data mutation attempted."
+  }
 }

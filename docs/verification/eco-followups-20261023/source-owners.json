@@ -1,0 +1,120 @@
+{
+  "root_source": "f551218be",
+  "owners": [
+    {
+      "name": "ravel",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/03b7f0d36fcba51e6ed8/ravel",
+      "revision": "195d71027423d5bda1c53ef1baa17e07670fe290",
+      "clean": true
+    },
+    {
+      "name": "graph4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/08e20f5c89874d9eb32d/graph4s",
+      "revision": "613371f3bd0b12ce99352db0c637645eb62c6283",
+      "clean": true
+    },
+    {
+      "name": "intaglio",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/135badde2a1fe78cfcb7/intaglio",
+      "revision": "d553c327824f9916b1c0a055226c6c5e8f77bc59",
+      "clean": true
+    },
+    {
+      "name": "gale",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/1acafa978adeaec8bfcf/gale",
+      "revision": "779ed3d8169cdd9f4eb9ab10b1ca9defadc27715",
+      "clean": true
+    },
+    {
+      "name": "zarr4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/34c0071f90095ef07887/zarr4s",
+      "revision": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "clean": true
+    },
+    {
+      "name": "resample4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/3f5d01c7e6069e74a205/resample4s",
+      "revision": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "clean": true
+    },
+    {
+      "name": "bids4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/6e0906d4a78ca4f764eb/bids4s",
+      "revision": "5dafc800499b2a4642a19ff47fa5924516b2c024",
+      "clean": true
+    },
+    {
+      "name": "multivar",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/6e1c7e90d885ae794319/multivar",
+      "revision": "7afdeea290fdcc80b81a4126aa303f93a5348c0e",
+      "clean": true
+    },
+    {
+      "name": "spatial4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/743bbc500a4cc79953a2/spatial4s",
+      "revision": "f79674114dc5f1f88866708b74f7ea42e59895a8",
+      "clean": true
+    },
+    {
+      "name": "neurosurf4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/8ec5b6670930dbda7b6f/neurosurf4s",
+      "revision": "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7",
+      "clean": true
+    },
+    {
+      "name": "image4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/94c1a42c925a37ebcee0/image4s",
+      "revision": "855a3a61029f78e975b43cd1736de1c94180c004",
+      "clean": true
+    },
+    {
+      "name": "neuroatlas4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/a32912aea373acfb662b/neuroatlas4s",
+      "revision": "4df875d8a1cd20afd3b83ed49446422bc507e5ec",
+      "clean": true
+    },
+    {
+      "name": "mesh4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/be34ba1347bf7c4631f4/mesh4s",
+      "revision": "fd8b93ea42879ec5414342a084f05b831a4bbfc7",
+      "clean": true
+    },
+    {
+      "name": "locus4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/c42ffad74301778951e7/locus4s",
+      "revision": "e32b0aeba5c4d19c457b2329272b95b26c061943",
+      "clean": true
+    },
+    {
+      "name": "alder",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/c76252a048c916057029/alder",
+      "revision": "7618c715002b3912f856c4d44468ae173fce4dec",
+      "clean": true
+    },
+    {
+      "name": "linops4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/cfabf5f1e5e2fb8fb176/linops4s",
+      "revision": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "clean": true
+    },
+    {
+      "name": "mvpa4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/ebbe2d657c78bd3adbb8/mvpa4s",
+      "revision": "ba73ed6077c0218ff55411938cdda83300623170",
+      "clean": true
+    },
+    {
+      "name": "neuroim4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/f1485a830167fcac1bf1/neuroim4s",
+      "revision": "4f75c2bf141449d032f9fe3c558ef13a22a4d59f",
+      "clean": true
+    },
+    {
+      "name": "reframe4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7eabfa21776f89a0/staging/f4cb9818d80063022be6/reframe4s",
+      "revision": "622ab31f97bbe30a9bc6436464f3124643856f47",
+      "clean": true
+    }
+  ],
+  "scope": "Actual private source checkouts during Root direct-consumer gate; no artifact-release claim."
+}

@@ -1,0 +1,114 @@
+{
+  "observed_utc": "2026-10-23T11:09:12.011929+00:00",
+  "root_tested_source": "f551218be6b988dacb14b3727584206a026878f7",
+  "mvpa_tested_source": "ba73ed6077c0218ff55411938cdda83300623170",
+  "provider_evidence_commit": "ec6ed87701ae231dc9680121f9ef12dbd93e1fb7",
+  "provider_final_review": "APPROVE bounded provider-local acceptance; independent read-only lean_expert /root/acceptance_scenario_review, no blocking findings.",
+  "checks": {
+    "predictive": {
+      "JVM": 108,
+      "JS": 108
+    },
+    "inference_protocol_oracles": {
+      "JVM": 21,
+      "JS": 21
+    },
+    "migrated_runner_fixture": {
+      "JVM_tests": 1,
+      "JS_tests": 1,
+      "method_records_per_platform": 2,
+      "outer_and_worker_exit": 0,
+      "resource_refusal": null,
+      "successful_cleanup": true
+    },
+    "root_mvpaFit": {
+      "JVM": 42,
+      "JS": 42
+    },
+    "root_mvpaDataset": {
+      "JVM": 13,
+      "JS": 13
+    },
+    "python": {
+      "paired": 12,
+      "calibration": 25,
+      "wrapper_pass": 62,
+      "wrapper_skip": 1
+    },
+    "R_rank_population": {
+      "pass": true,
+      "locale_warnings": true
+    },
+    "readiness_cli": {
+      "exit_code": 0,
+      "status": "confirmation-unavailable",
+      "confirmation_invoked": false,
+      "refusals": 20
+    }
+  },
+  "tasks": {
+    "1": {
+      "id": "bd-01M52AQ9JQS51XFMB17X4BDQJX",
+      "status": "pending input and broader native acceptance",
+      "details": "pls-adoption.json"
+    },
+    "2": {
+      "id": "bd-01M55T1NNYM0C4R8VW51G3R8YA",
+      "status": "closed"
+    },
+    "3": {
+      "id": "bd-01M5682X6YBHQ5CQNANA37K3B7",
+      "status": "closed",
+      "details": "gale-alignment.json"
+    },
+    "4": {
+      "id": "bd-01M56831ZXJYAKE8MJ7B6NCDW4",
+      "status": "closed"
+    }
+  },
+  "root_raw_artifacts": [
+    {
+      "path": "eco-followups-root-05.log.gz",
+      "raw_sha256": "53408dd31d667d6cd1702908d0b308ab82e8a42fac6a42da7ade102b03dc51fa",
+      "raw_bytes": 50200,
+      "sha256": "8d3e39dd98444f14ad3a6434873d26671cf206506891a38ffd4d1fce930b1187",
+      "bytes": 6274
+    },
+    {
+      "path": "eco-followups-root-05.log.meta.json.gz",
+      "raw_sha256": "b51bf0ab85eaa0c60e27201667372d014a7b60f6102e425d6b8f080d06af7ae3",
+      "raw_bytes": 583,
+      "sha256": "33614265c54675a582004d9801a8087d59b5c8f00fd2cbf96fb3fb456ee8b000",
+      "bytes": 346
+    },
+    {
+      "path": "eco-followups-readiness-07.log.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_bytes": 0,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20
+    },
+    {
+      "path": "eco-followups-readiness-07.log.meta.json.gz",
+      "raw_sha256": "4eda5b36e7bbdcba0f24ef110a8910fcda9ec4d0e449500ae667fe0805a8a79a",
+      "raw_bytes": 560,
+      "sha256": "bc666ce12ace7fcd896c7431627a9c5e37ea3a35ad5db75ce2bfaf549d34feca",
+      "bytes": 327
+    },
+    {
+      "path": "eco-followups-readiness-07.json.gz",
+      "raw_sha256": "a660a61be0920ee6310ef0c255d78a6b03644e7bbb0f8fa237b4ae79e2ca7125",
+      "raw_bytes": 125822,
+      "sha256": "fbf1addf4a58ad5f91a64531240c463acb44499639787f767527a1e3583694d3",
+      "bytes": 16213
+    }
+  ],
+  "limits": [
+    "Local engineering qualification, no new scientific campaign or confirmation admission.",
+    "Historical audit remains absent and paired historical platform discrepancy remains retained.",
+    "Fixture RSS monitors owned JVMs and excludes aggregate Node memory; result marker requires successful outer exit/cleanup.",
+    "One wrapper legacy-commit test skipped; R locale warnings and unused Intaglio documentation-setting warnings retained.",
+    "Canonical main remains unmerged; hosted CI is not inferred from local passes."
+  ],
+  "tracker_status": "tracker-status.json"
+}

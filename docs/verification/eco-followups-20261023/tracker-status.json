@@ -1,0 +1,51 @@
+{
+  "observed_utc": "2026-10-23T11:14:44.229322+00:00",
+  "authority": "canonical ScalaFIM .mote",
+  "items": [
+    {
+      "assignee": null,
+      "id": "bd-01M52AQ9JQS51XFMB17X4BDQJX",
+      "priority": 1,
+      "status": "review",
+      "tags": [
+        "consumer-compatibility",
+        "ecosystem-unification"
+      ],
+      "title": "Recover correct PLS Neuro provider behavior onto current main"
+    },
+    {
+      "assignee": null,
+      "id": "bd-01M55T1NNYM0C4R8VW51G3R8YA",
+      "priority": 2,
+      "status": "closed",
+      "tags": [
+        "ecosystem-unification"
+      ],
+      "title": "Port MVPA calibration and paired qualification harness to mvpa4s"
+    },
+    {
+      "assignee": null,
+      "id": "bd-01M5682X6YBHQ5CQNANA37K3B7",
+      "priority": 2,
+      "status": "closed",
+      "tags": [
+        "alder",
+        "ecosystem-unification",
+        "mvpa4s"
+      ],
+      "title": "Align Alder's Gale pin with the ScalaFIM/mvpa4s Gale revision"
+    },
+    {
+      "assignee": null,
+      "id": "bd-01M56831ZXJYAKE8MJ7B6NCDW4",
+      "priority": 3,
+      "status": "closed",
+      "tags": [
+        "alder",
+        "ecosystem-unification",
+        "mvpa4s"
+      ],
+      "title": "Share the operator-learner lifecycle between AlderOperatorRidge and AlderSoftLda"
+    }
+  ]
+}
