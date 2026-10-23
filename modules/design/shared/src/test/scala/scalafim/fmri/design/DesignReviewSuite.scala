@@ -57,6 +57,25 @@ class DesignReviewSuite extends munit.FunSuite:
     assert(DesignReviewGraphics.traceScene(r.scans,Vector(ReviewSeries("FD","source units",Vector.fill(3)(None)))).isLeft)
   }
 
+  test("matrix semantics retain full source labels and original positions after run filtering"):
+    val label = "A long sampled nuisance label with & <source> and Unicode β beyond the plotted tick width"
+    val longColumns = columns.updated(1, StructuralColumn.fromOrigin(2,
+      StructuralColumnOrigin.Intercept(RunScope.Run(RunIndex.unsafeOneBased(2))),label).toOption.get)
+    val longSchema = DesignSchema.validated(Mat.unsafe(6,2,Array(1.0,0.0,1.0,0.0,1.0,0.0,0.0,2.0,0.0,-4.0,0.0,0.0)),
+      RowLayout.fromSamplingFrame(frame),longColumns).toOption.get
+    val filtered = DesignReview.forRun(longSchema,frame,RunIndex.unsafeOneBased(2),retained).toOption.get
+    assertEquals(filtered.sourceColumnIndices,Vector(1))
+    val plot = DesignReviewGraphics.matrixPlot(filtered).toOption.get
+    assert(plot.semantics.accessibleDescription.contains("Source column 2: " + label))
+    assert(plot.scene.semantics.plots.head.accessibleDescription.contains(label))
+    assert(!plot.semantics.accessibleDescription.contains("Source column 1:"))
+
+  test("paged matrix semantics describe only the displayed source columns without truncation"):
+    val r = review(DesignReviewScope.SourceColumns)
+    val plot = DesignReviewGraphics.matrixPlot(r,firstColumn=1,columnCount=1).toOption.get
+    assert(plot.semantics.accessibleDescription.contains("Source column 2: second intercept"))
+    assert(!plot.semantics.accessibleDescription.contains("Source column 1: first intercept"))
+
   test("event timeline uses the current audit provenance") {
     val audited = DesignSchema.validated(
       Mat.unsafe(6,2,Array(1.0,0.0,1.0,0.0,1.0,0.0,0.0,2.0,0.0,-4.0,0.0,0.0)),

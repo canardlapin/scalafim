@@ -53,7 +53,12 @@ object DesignReviewGraphics:
             .build
           scene <- PlotCompiler.resolve(program.plot,
             options(width,height,GuideSpec.Axis(AxisSide.Left,ticks=Some(ticks)),legend=height >= 220))
-        yield scene
+        yield
+          val labels = indices.map(column =>
+            s"Source column ${review.sourceColumnIndices(column) + 1}: ${review.columns(column).label}"
+          ).mkString("\n")
+          val description = scene.semantics.accessibleDescription + "\n" + labels
+          scene.copy(semantics=scene.semantics.withDescription(description).withAltText(description))
 
   def traceScene(scans: Vector[ReviewScan], series: Vector[ReviewSeries],
       width: Double = 800, height: Double = 180): Either[GraphicsError, Scene] =
