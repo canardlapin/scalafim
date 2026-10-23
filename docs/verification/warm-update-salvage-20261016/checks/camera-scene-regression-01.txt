@@ -1,0 +1,158 @@
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.view.SurfacePairedCameraSuite:
+  + paired lateral and medial cameras retain opposite directions and geometry 0.048s
+  + shared navigation survives focus and reset while SetViewpoint clears overrides 0.006s
+  + unknown overrides fail before mutation and fit uses each effective orientation 0.011s
+  + camera identity is deterministic and legacy composition keeps effective cameras 0.012s
+  + an explicit typed pose remains authoritative over a single-surface override 0.011s
+scalafim.surface.view.SurfaceSceneDocumentSuite:
+  + revision 1 documents retain vertex association and their original JSON shape 0.095s
+  + canonical document roundtrip reproduces state, camera, and semantic render resources 0.044s
+  + camera aspect survives document encoding and restoration 0.003s
+  + unknown fields and future revisions obey explicit read policy 0.003s
+  + canonical and historical revision 8 discriminators remain distinct 0.005s
+  + external digests and exact mesh identities are checked before state restoration 0.005s
+  + backend-neutral requirements admit capabilities without naming an implementation 0.004s
+  + codec rejects duplicate fields, malformed JSON, invalid digests, and invalid document state 0.004s
+  + every display threshold kind roundtrips through the scene codec 0.013s
+  + threshold decoding rejects invalid cutoffs, nesting, and fields foreign to the kind 0.008s
+  + two-sided threshold accepts the legacy V8 form and re-encodes canonically 0.005s
+  + actual September writer restores nondefault viewpoints and morph coordinates 0.012s
+  + revision 9 preserves complete geometry, appearance and per-surface camera state 0.004s
+  + geometry duplicates, missing evidence, bad endpoints and changed content are refused 0.003s
+  + historical revision 8 rejects contradictory recognized fields under both unknown-field policies 0.003s
+[info] Passed: Total 20, Failed 0, Errors 0, Passed 20
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-7w6az2k4/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite scalafim.surface.view.SurfacePairedCameraSuite: exit 0 in 9.2s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/surface-view/js/target/scala-3.7.4/scalafim-surface-view-test-fastopt
+scalafim.surface.view.SurfacePairedCameraSuite:
+  + paired lateral and medial cameras retain opposite directions and geometry 0.014s
+  + shared navigation survives focus and reset while SetViewpoint clears overrides 0.002s
+  + unknown overrides fail before mutation and fit uses each effective orientation 0.010s
+  + camera identity is deterministic and legacy composition keeps effective cameras 0.002s
+  + an explicit typed pose remains authoritative over a single-surface override 0.001s
+scalafim.surface.view.SurfaceSceneDocumentSuite:
+  + revision 1 documents retain vertex association and their original JSON shape 0.013s
+  + canonical document roundtrip reproduces state, camera, and semantic render resources 0.011s
+  + camera aspect survives document encoding and restoration 0.002s
+  + unknown fields and future revisions obey explicit read policy 0.003s
+  + canonical and historical revision 8 discriminators remain distinct 0.006s
+  + external digests and exact mesh identities are checked before state restoration 0.001s
+  + backend-neutral requirements admit capabilities without naming an implementation 0.001s
+  + codec rejects duplicate fields, malformed JSON, invalid digests, and invalid document state 0.002s
+  + every display threshold kind roundtrips through the scene codec 0.007s
+  + threshold decoding rejects invalid cutoffs, nesting, and fields foreign to the kind 0.013s
+  + two-sided threshold accepts the legacy V8 form and re-encodes canonically 0.013s
+  + actual September writer restores nondefault viewpoints and morph coordinates 0.003s
+  + revision 9 preserves complete geometry, appearance and per-surface camera state 0.002s
+  + geometry duplicates, missing evidence, bad endpoints and changed content are refused 0.002s
+  + historical revision 8 rejects contradictory recognized fields under both unknown-field policies 0.002s
+[info] Passed: Total 20, Failed 0, Errors 0, Passed 20
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-j_w96gft/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJS/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite scalafim.surface.view.SurfacePairedCameraSuite: exit 0 in 7.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-raster/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.234s
+  + reference backend publishes stable capabilities and explicit caveats 0.0s
+  + unlit asymmetric landmark image and picks are deterministic 0.021s
+  + advertised lighting produces ambient and directional Lambert pixels 0.008s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.006s
+  + world translation preserves framing, pixels, and picks 0.004s
+  + depth buffering keeps the nearer face independent of draw order 0.003s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.002s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.004s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.004s
+  + overlays composite in model order with exact packed source-over semantics 0.002s
+  + bilateral slots keep left and right surface picks distinct 0.003s
+  + raster receipts expose phase timings and exact work counters 0.001s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.007s
+  + paired cameras render and pick identically through opaque and composition entry points 0.044s
+[info] Passed: Total 15, Failed 0, Errors 0, Passed 15
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-vvlf9uzf/completed
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewRasterJVM/testOnly scalafim.surface.view.raster.SurfaceRasterizerSuite: exit 0 in 6.5s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-raster/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-raster/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/surface-view-raster/js/target/scala-3.7.4/scalafim-surface-view-raster-test-fastopt
+scalafim.surface.view.raster.SurfaceRasterizerSuite:
+  + CPU projection and signed network tubes render through the reference backend 0.020s
+  + reference backend publishes stable capabilities and explicit caveats 0.000s
+  + unlit asymmetric landmark image and picks are deterministic 0.004s
+  + advertised lighting produces ambient and directional Lambert pixels 0.003s
+  + lighting uses world-space normals under a rotated surface-to-world affine 0.006s
+  + world translation preserves framing, pixels, and picks 0.001s
+  + depth buffering keeps the nearer face independent of draw order 0.001s
+  + back-face culling is explicit and reversed winding remains renderable when disabled 0.001s
+  + homogeneous clipping triangulates visible polygon without per-pixel allocation semantics 0.001s
+  + world clipping uses normalized planes and explicit keep-side semantics 0.001s
+  + overlays composite in model order with exact packed source-over semantics 0.001s
+  + bilateral slots keep left and right surface picks distinct 0.001s
+  + raster receipts expose phase timings and exact work counters 0.001s
+  + compact bilateral raster placement and picking share the same physical viewport centers 0.008s
+  + paired cameras render and pick identically through opaque and composition entry points 0.024s
+[info] Passed: Total 15, Failed 0, Errors 0, Passed 15
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-oc73sdsb/completed
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewRasterJS/testOnly scalafim.surface.view.raster.SurfaceRasterizerSuite: exit 0 in 6.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/openjfx/javafx-graphics/21.0.5/javafx-graphics-21.0.5-mac-aarch64.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+scalafim.surface.view.javafx.JavaFxPairedCameraSuite:
+  + native transforms project each effective camera into its slot 0.226s
+  + camera matrix changes dirty native camera without resource uploads and invalid packets reject 0.024s
+==> X scalafim.surface.view.javafx.JavaFxPairedCameraSuite.public camera updates refuse malformed packets before native transforms change  0.059s munit.ComparisonFailException: modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxPairedCameraSuite.scala:96
+95:    assert(compiled.applyCamera(before).isRight)
+96:    assertEquals(transforms,original)
+97:
+values are not the same
+=> Obtained
+Vector(
+  """Transform [
+	0.0, -1.0, 0.0, 0.5
+	0.0, 0.0, -1.0, 1.5
+	1.0, 0.0, 0.0, 12.21870231628418
+]""",
+  """Transform [
+	1.0, 0.0, 0.0, 2.0
+	0.1576493916655447, 0.5, 0.0, 2.491569770435672
+	0.0, 0.0, 0.5, 0.75
+]""",
+  """Transform [
+	-1.0, 0.0, 0.0, 2.0
+	0.1576493916655447, -0.5, 0.0, -1.4915697704356723
+	0.0, 0.0, 0.5, 0.75
+]"""
+)
+=> Diff (- expected, + obtained)
+ 	0.0, -1.0, 0.0, 0.5
+-	0.0, -0.0, -1.0, 1.5
++	0.0, 0.0, -1.0, 1.5
+ 	1.0, 0.0, 0.0, 12.21870231628418
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.surface.view.javafx.JavaFxPairedCameraSuite.$init$$$anonfun$3(JavaFxPairedCameraSuite.scala:96)
+[error] Failed: Total 3, Failed 1, Errors 0, Passed 2
+[error] Failed tests:
+[error] 	scalafim.surface.view.javafx.JavaFxPairedCameraSuite
+[error] (surfaceViewJavafxJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[[31merror[0m] elapsed: 7 s
+[0J[sbt-warm] surfaceViewJavafxJVM/testOnly scalafim.surface.view.javafx.JavaFxPairedCameraSuite: exit 1 in 6.9s

@@ -1,0 +1,37 @@
+bd-01M21VA8DYMNJS9PZ8076SBWWJ p1 doing    Qualify first-level estimate and standard-error calibration under known truth  [stranded: expired by exec-calibration at 2026-09-30T09:20:06.557764Z]
+bd-01M25Q0JY8GA7CJRKZF2934PJ0 p1 doing    PHRF-21: Qualify the condition-only milestone  [stranded: expired by exec-orchestrator at 2026-09-30T00:16:29.431030Z]
+bd-01M26A285YAQ3H8TGS26BK9T7J p1 doing    PHRF-29: Add `ProfileHrfPlan` and attach the trial backend to the executor  [stranded: expired by exec-trial-plan at 2026-09-30T00:28:07.085479Z]
+bd-01M2BNHG03Y1EV95H0CMQ86NRN p1 doing    UMVPA-M4.07: Implement sequential rank confirmation in independently learned subspaces  [stranded: released by umvpa-rank-integration-20261008 at 2026-10-08T02:31:41.342404Z]
+bd-01M2BYY6WDV2X0RRCA6RHDGPD9 p1 doing    Bounded render-only surface raster strips with preflight and cancellation  [stranded: released by scalafim-strip-raster-20260912 at 2026-09-12T23:34:34.272453Z]
+bd-01M31KPY7EK45HKWB9TJS1VFWJ p1 doing    First-level: source-bound joint response-distribution evidence for conditional actions  [stranded: expired by phrf-claude-20260929 at 2026-09-30T11:11:58.063195Z]
+bd-01M37DV2BCSYH88EWF5M835JC5 p1 doing    Admit corresponding fsLR 32k anatomical and display assets  [stranded: expired by phrf-claude-20260929 at 2026-09-30T09:15:56.052929Z]
+bd-01M39Q3ZCM2BDP6TBV607RQE0P p1 open     STP-P6 GATE: Warp algebra adapters
+bd-01M39Q4RG0D0CWYPB7PSYKF2J1 p1 open     STP-P4.02: FreeSurfer 7 oracle set
+bd-01M3SXN00BWG740AND63HJD3JM p1 doing    PHRF-14.CMP: Bounded read-only comparative evaluation protocol for ProfileHrf  [stranded: expired by phrf-claude-20260929 at 2026-09-30T20:16:29.379615Z]
+bd-01M3TNWW63XC71C3EF2PQME3P8 p1 open     PHRF-CMP pilot runner: design and slicing
+bd-01M3VSW06P4G26MA7DEC9BZ4WH p1 open     PHRF-CMP S6: GLMsingle bridge (from_generator.py STORED re-emit + converter receipt)
+bd-01M3VZTKYWQQ7X0H65Y3B38HRQ p1 open     PHRF-CMP S7: ledger, CPU guard, scheduler (stamp, resume, atomic writes, soft/hard stop, round-robin, reverse-index drop)
+bd-01M3VZTP1V5ZP8WSJQM59QGN38 p1 open     PHRF-CMP S9: custody tooling (drand beacon, root64 + denylist, owner-key encryption of sealed outputs, clean-checkout build, runbook)
+bd-01M44W2HXQ5PY3YE33D5W37A04 p1 open     Public consumer API for the qualified real 2009c->fsLR32k surface route (move asset/point-map/frame wiring out of test code)
+bd-01M4K6KEPYEMP9XHFT2J0WCYEE p1 open     Voxelwise FGLS: run-varying AR within a voxel
+bd-01M4XAQ87FRRSD48EV0CPK05FP p1 doing    Core SurfViewJS display parity with side-by-side native QA  [stranded: expired by surfview-parity-20261015 at 2026-10-15T17:40:06.596521Z]
+eco-u1-domains           p1 open     U1: Use locus4s domains and explicit alignment directly
+eco-u1-provenance        p1 open     U1: Move source provenance to one external contract
+eco-u2-coordinates       p1 open     U2: Adopt spatial4s coordinate types in image4s and reframe4s
+bd-01KXYJPWYV08VFWRMCYYDPZCAV p2 doing    Audit remaining HRF representations and motion/RSA solver ownership  [stranded: expired by codex-numerical-ownership-next at 2026-10-04T01:42:59.144380Z]
+bd-01M24EQFARZKYMZ71BJP91C9XS p2 doing    Recover retained-atlas optimization and qualify ordinary native update cost  [stranded: expired by warm-salvage-analysis-20261016 at 2026-10-16T12:34:21.782907Z]
+bd-01M37FQGV8ZPT30X37TA4MM8R7 p2 open     Reconcile duplicate volume-to-surface engines and frame metadata gaps found in the fsLR audit
+bd-01M3RNPCE1X9GDK98DNZVZ1FPQ p2 doing    Threshold: first-level uncertainty, prior admission, non-symmetric errors, and consumer evidence  [stranded: expired by phrf-claude-20260929 at 2026-09-30T09:15:49.360772Z]
+bd-01M3STE5N68HYC144CWK9RCVD7 p2 doing    PHRF-21: bounded same-process C0 warm measurement wrapper  [stranded: expired by c0-warm-measurement-20260930 at 2026-09-30T19:21:11.944297Z]
+bd-01M4Q4KTV7H5XD0B5XWCEH1WAH p2 open     fslr-real-qualification bounded qualification
+bd-01M4Q7PSY7RE6K5ZQBE3K0GBHV p2 open     PHRF S10: diagnose retained harness trial ML refusals before pilot readiness
+bd-01KX2CQZFRZHXS40YWA9PDX0DV p3 open     [DEFERRED] Define a typed external-engine contract before optional plugin discovery
+bd-01KX2CQZGWBQ3KKX7BWE28X3T2 p3 open     [DEFERRED] Specify remaining group estimator extensions after baseline requalification
+bd-01KXSQ62V1G2XSSFT4DEX1HX7V p3 open     [DEFERRED] ntab 0: rebase the neuroimaging table plan onto independent Frame
+bd-01KXYHVBTCJ05W4EX3GY80DS1X p3 open     [DORMANT PROPOSAL] Revisit cross-project workflow ownership if a concrete consumer emerges
+bd-01KZ6BCP86MHP8HBHRWRDRTKN3 p3 open     [DEFERRED] Remove scalafim.locus facade vocabulary and MapEvidence
+bd-01M0NS3FNR5RCYEP49GNGN6GWN p3 open     [DEFERRED] Pin Three.js and fix browser page import paths
+bd-01M0Z696YYJC1QRNQRF8SF2CVV p3 open     [DEFERRED] Assess observation-RDM queries against current labeled-RDM contracts
+bd-01M24KKCA32BDHHCSS3VRYFPPS p3 open     [DEFERRED] Reconcile PR 6 and retained provider/JavaFX integration with current main
+bd-01M25RZGYEC3SSXCYBF84MWG22 p3 open     [DEFERRED] Recover paired per-slot cameras and complete backend qualification
+bd-01M4K6MF614KCHZ2VFVSA9Z5QB p3 open     Move real-asset fsLR fixtures into a shared test-fixtures module

@@ -1,0 +1,25 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.508s
+  + shared retention requests describe and deliver actual native uncertainty 0.021s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.013s
+[info] Passed: Total 3, Failed 0, Errors 0, Passed 3
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-gp5imcd8/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] fitJVM/testOnly *SelectedEstimatesSuite: exit 0 in 9.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fit/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/fit/js/target/scala-3.7.4/scalafim-fmri-fit-test-fastopt
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.041s
+  + shared retention requests describe and deliver actual native uncertainty 0.011s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.007s
+[info] Passed: Total 3, Failed 0, Errors 0, Passed 3
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-ic60ftx0/completed
+[[32msuccess[0m] elapsed: 8 s
+[0J[sbt-warm] fitJS/testOnly *SelectedEstimatesSuite: exit 0 in 8.7s

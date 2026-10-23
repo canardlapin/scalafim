@@ -1,0 +1,4 @@
+error: patch failed: modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala:199
+error: modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala: patch does not apply
+error: patch failed: modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala:23
+error: modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala: patch does not apply

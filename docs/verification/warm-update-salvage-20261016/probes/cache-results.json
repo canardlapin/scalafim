@@ -1,0 +1,28 @@
+{
+  "current": {
+    "revision": "ac2ec8b706fce08596a943d79f71a140aad05948",
+    "path": "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiResponseBlockSource.scala",
+    "compileExit": 0,
+    "runExit": 0,
+    "observed": {
+      "sameSourceSize": true,
+      "sameSourceMtime": true,
+      "returnedFreshContent": false,
+      "sameCachePath": true,
+      "repairedCorruptedCache": false
+    }
+  },
+  "retained": {
+    "revision": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+    "path": "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiStagingCache.scala",
+    "compileExit": 0,
+    "runExit": 0,
+    "observed": {
+      "sameSourceSize": true,
+      "sameSourceMtime": true,
+      "returnedFreshContent": true,
+      "sameCachePath": false,
+      "repairedCorruptedCache": true
+    }
+  }
+}

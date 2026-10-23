@@ -1,0 +1,193 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E040] Syntax Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:306:82 
+[error] 306 |      SurfaceKind.White,SurfaceKind.Inflated,SurfaceMorphFraction.unsafe(1.0)))))))
+[error]     |                                                                                  ^
+[error]     |                                           eof expected, but ')' found
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:13:47 
+[error] 13 |    val (model, state, bindings, provenance) = fixture()
+[error]    |                                               ^^^^^^^
+[error]    |                                               Not found: fixture
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:27:47 
+[error] 27 |    val (model, state, bindings, provenance) = fixture()
+[error]    |                                               ^^^^^^^
+[error]    |                                               Not found: fixture
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:62:49 
+[error] 62 |    val (model, initial, bindings, provenance) = fixture()
+[error]    |                                                 ^^^^^^^
+[error]    |                                                 Not found: fixture
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:72:47 
+[error] 72 |    val (model, state, bindings, provenance) = fixture()
+[error]    |                                               ^^^^^^^
+[error]    |                               Not found: fixture - did you mean future?
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:93:47 
+[error] 93 |    val (model, state, bindings, provenance) = fixture()
+[error]    |                                               ^^^^^^^
+[error]    |                                               Not found: fixture
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:105:47 
+[error] 105 |    val (model, state, bindings, provenance) = fixture()
+[error]     |                                               ^^^^^^^
+[error]     |                                               Not found: fixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:117:48 
+[error] 117 |    val changedLeft = SurfaceAsset.make(leftId, geometry(Hemisphere.Left, SurfaceKind.Pial, 0.0)).toOption.get
+[error]     |                                                ^^^^^^^^
+[error]     |                                                Not found: geometry
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:124:18 
+[error] 124 |    val rewound = geometry(Hemisphere.Left, SurfaceKind.Inflated, 0.0, reversed = true)
+[error]     |                  ^^^^^^^^
+[error]     |                  Not found: geometry
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E171] Type Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:125:45 
+[error] 125 |    val mismatchedLayer = SurfaceLayer.scalar(
+[error]     |                          ^
+[error]     |missing argument for parameter opacity of method scalar in object SurfaceLayer: (id: scalafim.surface.view.SurfaceLayerId,
+[error]     |  surfaceId: scalafim.surface.view.SurfaceId,
+[error]     |  geometry: scalafim.surface.SurfaceGeometry, values: Array[Double],
+[error]     |  colorizer: intaglio.Colorizer[Double], frameCount: Int,
+[error]     |  opacity: intaglio.DisplayOpacity, blendMode: intaglio.DisplayBlendMode,
+[error]     |  interpolation: scalafim.surface.view.SurfaceVertexInterpolation):
+[error]     |  Either[scalafim.surface.view.SurfaceViewError,
+[error]     |    scalafim.surface.view.SurfaceLayer]
+[error] 126 |      activationId,
+[error] 127 |      leftId,
+[error] 128 |      rewound,
+[error] 129 |      Array.fill(rewound.vertexCount * 2)(1.0),
+[error] 130 |      ScalarColorizer(DisplayWindow.unsafe(-1.0, 1.0)),
+[error] 131 |      frameCount = 2
+[error] 132 |    ).toOption.get
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:140:47 
+[error] 140 |    val (model, state, bindings, provenance) = fixture()
+[error]     |                                               ^^^^^^^
+[error]     |                                               Not found: fixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:165:47 
+[error] 165 |    val (model, state, bindings, provenance) = fixture()
+[error]     |                                               ^^^^^^^
+[error]     |                                               Not found: fixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:173:47 
+[error] 173 |    val (model, state, bindings, provenance) = fixture()
+[error]     |                                               ^^^^^^^
+[error]     |                                               Not found: fixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:207:47 
+[error] 207 |    val (model, state, bindings, provenance) = fixture()
+[error]     |                                               ^^^^^^^
+[error]     |                                               Not found: fixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:247:47 
+[error] 247 |    val (model, state, bindings, provenance) = fixture()
+[error]     |                                               ^^^^^^^
+[error]     |                                               Not found: fixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:270:41 
+[error] 270 |    val (model, expected, bindings, _) = frozenGeometryFixture()
+[error]     |                                         ^^^^^^^^^^^^^^^^^^^^^
+[error]     |                                      Not found: frozenGeometryFixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:271:44 
+[error] 271 |    val document = SurfaceSceneCodec.decode(frozenHistoricalV8).toOption.get
+[error]     |                                            ^^^^^^^^^^^^^^^^^^
+[error]     |                                         Not found: frozenHistoricalV8
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:278:42 
+[error] 278 |    assertEquals(SurfaceSceneCodec.decode(frozenCanonicalV8).toOption.get.revision,SurfaceDocumentRevision.V8)
+[error]     |                                          ^^^^^^^^^^^^^^^^^
+[error]     |                                          Not found: frozenCanonicalV8
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:279:67 
+[error] 279 |    assertEquals(SurfaceSceneCodec.encode(SurfaceSceneCodec.decode(frozenCanonicalV8).toOption.get),frozenCanonicalV8)
+[error]     |                                                                   ^^^^^^^^^^^^^^^^^
+[error]     |                                          Not found: frozenCanonicalV8
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:279:100 
+[error] 279 |    assertEquals(SurfaceSceneCodec.encode(SurfaceSceneCodec.decode(frozenCanonicalV8).toOption.get),frozenCanonicalV8)
+[error]     |                                                                                                    ^^^^^^^^^^^^^^^^^
+[error]     |                                          Not found: frozenCanonicalV8
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:282:49 
+[error] 282 |    val (model, initial, bindings, provenance) = frozenGeometryFixture()
+[error]     |                                                 ^^^^^^^^^^^^^^^^^^^^^
+[error]     |                                      Not found: frozenGeometryFixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:287:61 
+[error] 287 |      .foldLeft(initial)((s,a) => SurfaceViewer.reduce(model,s,a).toOption.get)
+[error]     |                                                             ^
+[error]     |                    Found:    (s : Any)
+[error]     |                    Required: scalafim.surface.view.SurfaceViewerState
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:288:56 
+[error] 288 |    for state <- Vector(rich,SurfaceViewer.reduce(model,rich,SurfaceViewerAction.SetGeometryState(id,SurfaceKind.Inflated)).toOption.get) do
+[error]     |                                                        ^^^^
+[error]     |                    Found:    (rich : Any)
+[error]     |                    Required: scalafim.surface.view.SurfaceViewerState
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:289:53 
+[error] 289 |      val saved = SurfaceSceneDocument.capture(model,state,bindings,provenance).toOption.get
+[error]     |                                                     ^^^^^
+[error]     |                    Found:    (state : Any)
+[error]     |                    Required: scalafim.surface.view.SurfaceViewerState
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:296:44 
+[error] 296 |    val (model,state,bindings,provenance) = frozenGeometryFixture()
+[error]     |                                            ^^^^^^^^^^^^^^^^^^^^^
+[error]     |                                      Not found: frozenGeometryFixture
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E173] Reference Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:301:19 
+[error] 301 |    rejected(saved.copy(geometryStates=Vector.empty))
+[error]     |             ^^^^^^^^^^
+[error]     |method copy cannot be accessed as a member of (saved : scalafim.surface.view.SurfaceSceneDocument) from class SurfaceSceneDocumentSuite.
+[error]     |  private method copy can only be accessed from class SurfaceSceneDocument in package scalafim.surface.view.
+[error] -- [E173] Reference Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:302:19 
+[error] 302 |    rejected(saved.copy(geometryStates=Vector(geometry,geometry)))
+[error]     |             ^^^^^^^^^^
+[error]     |method copy cannot be accessed as a member of (saved : scalafim.surface.view.SurfaceSceneDocument) from class SurfaceSceneDocumentSuite.
+[error]     |  private method copy can only be accessed from class SurfaceSceneDocument in package scalafim.surface.view.
+[error] -- [E173] Reference Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:303:19 
+[error] 303 |    rejected(saved.copy(geometryStates=Vector(geometry.copy(surface=SurfaceId.unsafe("absent")))))
+[error]     |             ^^^^^^^^^^
+[error]     |method copy cannot be accessed as a member of (saved : scalafim.surface.view.SurfaceSceneDocument) from class SurfaceSceneDocumentSuite.
+[error]     |  private method copy can only be accessed from class SurfaceSceneDocument in package scalafim.surface.view.
+[error] -- [E173] Reference Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:304:19 
+[error] 304 |    rejected(saved.copy(geometryStates=Vector(geometry.copy(variants=geometry.variants - SurfaceKind.Inflated))))
+[error]     |             ^^^^^^^^^^
+[error]     |method copy cannot be accessed as a member of (saved : scalafim.surface.view.SurfaceSceneDocument) from class SurfaceSceneDocumentSuite.
+[error]     |  private method copy can only be accessed from class SurfaceSceneDocument in package scalafim.surface.view.
+[error] -- [E173] Reference Error: /private/tmp/scalafim-pls-main-20261016/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala:305:19 
+[error] 305 |    rejected(saved.copy(geometryStates=Vector(geometry.copy(presentation=SurfaceGeometryPresentation.Morphing(
+[error]     |             ^^^^^^^^^^
+[error]     |method copy cannot be accessed as a member of (saved : scalafim.surface.view.SurfaceSceneDocument) from class SurfaceSceneDocumentSuite.
+[error]     |  private method copy can only be accessed from class SurfaceSceneDocument in package scalafim.surface.view.
+[error] 30 errors found
+[error] (surfaceViewJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 6 s
+[0J[sbt-warm] surfaceViewJVM/testOnly scalafim.surface.view.SurfaceSceneDocumentSuite: exit 1 in 6.2s

@@ -1,0 +1,21 @@
+{
+  "schema": "scalafim.black-surface-publication.v1",
+  "baseSha": "9c409939d8280a244e68a26104742a39c45a8e44",
+  "qualificationBaseSha": "fb53f187cee3361c79845b2fbd21a1c9098e0af7",
+  "scope": "Self-contained opt-in OpenJFX24 repair and recorded frozen-closure evidence; no compiled Scala sources or default runtimes changed.",
+  "qualificationReceiptSha256": "d2d5f649df51e51359150f9f51719a8de010b24e8261066cba54af0b587d4eb9",
+  "nativeSourceSha256": {
+    "build.py": "ece97ca9994d299a0ceb9f4f1d93701760f5b879e578981a506fbc8527ca1837",
+    "MeshUtil.patch": "3e21693e6076e95b21631b2b19bb35439ec654a82cda8144593c6e3b0f69b381",
+    "TangentSpaceProbe.java": "c9865b0afff8b9ad112b450d8cc2684de46b2e879b0d6b68446d1d4b22f51c84",
+    "PublicEmissionControl.java": "ef0e1198fe9298c4af56de5cc5a14cb72f4d97794457e8b327027cbb55678826",
+    "plsneuro-integration.patch": "450a8b141cf7f830aeccd1b86517df27204437c07633f1a8c91a9aab6bd7a47c"
+  },
+  "frozenProviderSpecimenSha256": "e406901ca886b1fbd6b1f4396e69baa3f0ee27802e20e1bad5656c59d7333135",
+  "publishedTreeNativeCheck": {
+    "cpu": "pass",
+    "native": "pass",
+    "jarSha256": "490b13a1b368360f0eb48f58a4c135ac00821defc2269295e8294f64f32f2702",
+    "sameArtifactAsQualified": true
+  }
+}

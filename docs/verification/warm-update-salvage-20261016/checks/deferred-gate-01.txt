@@ -1,0 +1,95 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/dataset/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.dataset.DeferredResponseBlockSourceSuite:
+  + declared shape and selection resolution do not open response storage 0.038s
+  + changed acquisition fails before delegating a read 0.002s
+[info] Passed: Total 2, Failed 0, Errors 0, Passed 2
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-a34f_ymk/completed
+[[32msuccess[0m] elapsed: 7 s
+[0J[sbt-warm] datasetJVM/testOnly scalafim.dataset.DeferredResponseBlockSourceSuite: exit 0 in 7.2s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/dataset/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/dataset/js/target/scala-3.7.4/scalafim-dataset-test-fastopt
+scalafim.dataset.DeferredResponseBlockSourceSuite:
+  + declared shape and selection resolution do not open response storage 0.003s
+  + changed acquisition fails before delegating a read 0.001s
+[info] Passed: Total 2, Failed 0, Errors 0, Passed 2
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-9gcf8ydc/completed
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] datasetJS/testOnly scalafim.dataset.DeferredResponseBlockSourceSuite: exit 0 in 5.1s
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.284s
+  + compiler accumulates missing header, metadata, and companion failures 0.007s
+  + one-unit-per-run grouping preserves the run in unit identity 0.004s
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.005s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.002s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.003s
+  + participant-table coverage reports missing and duplicate subjects 0.006s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.032s
+scalafim.fmri.workflow.FirstLevelPreviewSuite:
+  + condition and FIR previews never touch unavailable BOLD; restored deferred fits equal eager fits 0.833s
+scalafim.fmri.workflow.FirstLevelCompanionReviewJvmSuite:
+  + optional QC uses source units and rows, independently of nuisance or readable BOLD 0.049s
+scalafim.fmri.workflow.WorkflowIngestAcceptanceSuite:
+  + header-first catalog opens mixed-byte multi-run BOLD lazily with compressed staging 0.027s
+scalafim.fmri.workflow.BidsStudyCompilerJvmSuite:
+  + JVM compiler reads headers only for a multi-subject multi-run fMRIPrep project 0.02s
+scalafim.fmri.workflow.FirstLevelUnitDatasetSuite:
+==> X scalafim.fmri.workflow.FirstLevelUnitDatasetSuite.selected companion files bind into condition and FIR fits without discovering unrelated files  0.033s munit.FailException: modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelUnitDatasetSuite.scala:57 invalid first-level unit 'selected': phase 'stimulus' parent trial ids must be unique
+56:          defaultHrf = hrf, precision = 0.1.s, strategy = FitStrategy.RunwiseLeastSquares()))
+57:          .fold(e => fail(e.message), identity)
+58:        val fit = FitPlanExecutor.fit(opened.dataset, plan).fold(e => fail(e.message), identity)
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.fmri.workflow.FirstLevelUnitDatasetSuite.$anonfun$8(FirstLevelUnitDatasetSuite.scala:57)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.fmri.workflow.FirstLevelUnitDatasetSuite.$init$$$anonfun$1$$anonfun$4(FirstLevelUnitDatasetSuite.scala:57)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.fmri.workflow.FirstLevelUnitDatasetSuite.$init$$$anonfun$1(FirstLevelUnitDatasetSuite.scala:53)
+scalafim.fmri.workflow.FirstLevelUnitSourceSuite:
+  + unit source opens run references lazily and applies the exact mask intersection 0.01s
+  + unit source preserves provider geometry failure beyond the admitted tolerance 0.003s
+scalafim.fmri.workflow.FirstLevelTablesSuite:
+  + binding preserves selected run order, leading zeros, repeated trials and nuisance names 0.003s
+  + binding refuses missing or duplicate runs and conflicting run labels 0.0s
+  + binding refuses missing confounds and scan count mismatch 0.001s
+  + binding refuses unresolved event missingness and nonfinite confounds 0.001s
+  + explicit event selection ignores unused missing cells and preserves original companions 0.003s
+  + event selection cannot hide invalid timing or conflicting source run identity 0.001s
+scalafim.fmri.workflow.SamplingReferenceSuite:
+  + reference fractions accept endpoints and refuse nonfinite or out-of-range values 0.0s
+  + TR2 boundary grids have explicit first and last samples without changing run duration 0.002s
+  + per-run fractions preserve exact labels and selection order with varying TR 0.001s
+  + empty, duplicate, missing and foreign run declarations are rejected 0.001s
+  + invalid precision and unrepresentable sampling domains return errors 0.005s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.012s
+  + catalog construction rejects invalid run layout and duplicate units 0.001s
+  + group workflow validates terms and output formats stay open 0.016s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.016s
+  + preflight accumulates independent structural errors without reading payloads 0.003s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.001s
+  + empty catalogs fail preflight before job construction 0.001s
+scalafim.fmri.workflow.FirstLevelCompanionReviewSuite:
+  + QC binding preserves original samples and missing values without a nuisance request 0.001s
+  + QC row mismatch cannot shift scan identity 0.0s
+[error] Failed: Total 39, Failed 1, Errors 0, Passed 38
+[error] Failed tests:
+[error] 	scalafim.fmri.workflow.FirstLevelUnitDatasetSuite
+[error] (fmriWorkflowJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[[31merror[0m] elapsed: 7 s
+[0J[sbt-warm] fmriWorkflowJVM/test: exit 1 in 7.3s

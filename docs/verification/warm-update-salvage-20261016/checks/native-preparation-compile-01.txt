@@ -1,0 +1,9 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-0i578b81/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] surfaceViewJavafxJVM/compile: exit 0 in 10.0s

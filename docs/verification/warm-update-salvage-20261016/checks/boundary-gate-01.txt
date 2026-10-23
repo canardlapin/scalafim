@@ -1,0 +1,15 @@
+[info] compiling 5 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface-test-fixtures/jvm/target/scala-3.7.4/classes ...
+[info] compiling 30 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 32 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 26 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/atlas/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E008] Not Found Error: /private/tmp/scalafim-pls-main-20261016/modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasBoundaryQuerySuite.scala:111:17 
+[error] 111 |    val a = DMat.fromRows(diagonal)
+[error]     |            ^^^^^^^^^^^^^
+[error]     |            value fromRows is not a member of object gale.linalg.DMat
+[error] one error found
+[error] (atlasJVM / Test / compileIncremental) Compilation failed
+[[31merror[0m] elapsed: 12 s
+[0J[sbt-warm] atlasJVM/test: exit 1 in 11.9s

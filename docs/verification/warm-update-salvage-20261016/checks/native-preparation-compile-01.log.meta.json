@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T13:49:29.815464+00:00",
+  "finished_utc": "2026-10-16T13:49:39.918605+00:00",
+  "duration_seconds": 10.102916,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "surfaceViewJavafxJVM/compile"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/native-preparation-compile-01.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 702
+}

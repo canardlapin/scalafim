@@ -1,0 +1,10 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.FirstLevelCompanionReviewJvmSuite:
+  + optional QC uses source units and rows, independently of nuisance or readable BOLD 0.299s
+[info] Passed: Total 1, Failed 0, Errors 0, Passed 1
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-271panke/completed
+[[32msuccess[0m] elapsed: 6 s
+[0J[sbt-warm] fmriWorkflowJVM/testOnly scalafim.fmri.workflow.FirstLevelCompanionReviewJvmSuite: exit 0 in 6.2s

@@ -1,0 +1,331 @@
+{
+  "providerIssue": "bd-01M52AQ9JQS51XFMB17X4BDQJX",
+  "consumerIssue": "plsneuro:bd-01M52AWZR7FJW4QX66CSFJ0SZT",
+  "mainBaseline": "ac2ec8b706fce08596a943d79f71a140aad05948",
+  "oldBranch": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+  "localCommits": [
+    {
+      "sha": "3a0aebe32498075e2be25d0634a8c7e99a2fe7d2",
+      "behavior": "content-verified bounded cache",
+      "checks": {
+        "JVM": 15,
+        "JS": 62
+      },
+      "log": "cache-gate-03.log"
+    },
+    {
+      "sha": "b77c946ce2d4ee2962cf843610462fbdb66bb336",
+      "behavior": "adaptive/single-plane layout",
+      "checks": {
+        "JVM": 47,
+        "JS": 47
+      },
+      "log": "layout-gate-01.log"
+    },
+    {
+      "sha": "662f88d5bf6cdb067e8cb08917d0f00a2cace854",
+      "behavior": "bounded companion review with cancellation",
+      "checks": {
+        "JVM": 26,
+        "JS": 21,
+        "affectedJvmAfterCancellationFix": 1
+      },
+      "logs": [
+        "companion-gate-01.log",
+        "companion-gate-02.log"
+      ]
+    },
+    {
+      "sha": "302fdca7ab093c0941026d741c224909e9a6bda7",
+      "behavior": "FreeSurfer scalar morphometry",
+      "checks": {
+        "JVM": 14,
+        "JS": 3
+      },
+      "log": "morphometry-gate-01.log"
+    },
+    {
+      "sha": "40086dc1f1a579ad961f6aff1859363610eac583",
+      "behavior": "bounded atlas boundary queries retaining typed grid ownership",
+      "checks": {
+        "JVM": 146,
+        "JS": 100
+      },
+      "logs": [
+        "boundary-gate-02.log"
+      ]
+    },
+    {
+      "sha": "b664cc576cc1a842e1342de25b02b01f43e402f5",
+      "behavior": "explicit run sampling and selected companion table binding",
+      "checks": {
+        "JVM": 37,
+        "JS": 32
+      },
+      "logs": [
+        "tables-sampling-gate-01.log"
+      ]
+    },
+    {
+      "sha": "23c135d0c6812eeb2b1a8aa612f51478a444533d",
+      "behavior": "event source provenance, run-scoped trial identity, signed-onset responses",
+      "checks": {
+        "hrfJVM": 402,
+        "hrfJS": 402,
+        "designJVM": 563,
+        "designJS": 562,
+        "profileIdentityJVM": 8,
+        "profileIdentityJS": 8
+      },
+      "logs": [
+        "source-rows-gate-02.log",
+        "recovery-compile-01.log"
+      ]
+    },
+    {
+      "sha": "af7679d3095ac150d1386c7cc4fc337f6073dd34",
+      "behavior": "deferred response access with checked grid identity and first-level dataset preview",
+      "checks": {
+        "workflowJVM": 39,
+        "workflowJS": 32,
+        "deferredSourceJVM": 4,
+        "deferredSourceJS": 4
+      },
+      "logs": [
+        "deferred-gate-02.log"
+      ]
+    },
+    {
+      "sha": "14cbaf01f5e0975329673502ed5cae775f8325f7",
+      "behavior": "sampled response support with original event provenance, current event scaling and versioned saved model policy",
+      "checks": {
+        "designJVM": 584,
+        "designJS": 583,
+        "modelJVM": 103,
+        "modelJS": 103,
+        "fitJVM": 34,
+        "fitJS": 34,
+        "supportKernelJVM": 10,
+        "supportKernelJS": 10
+      },
+      "logs": [
+        "support-policy-gate-02.log",
+        "support-policy-gate-03.log"
+      ]
+    },
+    {
+      "sha": "6f758ff6c5fdd5d14f3a07f471cfdf732c0cad15",
+      "behavior": "bounded strict study mask intersection with typed domain ownership, explicit world evidence and observed timing metadata",
+      "checks": {
+        "workflowJVM": 54,
+        "workflowJS": 42
+      },
+      "logs": [
+        "study-spatial-gate-04.log"
+      ]
+    },
+    {
+      "sha": "bf202d75b83f94297083947db47518b18480c320",
+      "behavior": "renderer-neutral compatible layer transactions preserving current display contracts and fragment-mode checks",
+      "checks": {
+        "surfaceJVM": 260,
+        "surfaceJS": 260,
+        "affectedAfterWorldClippingGuardJVM": 7,
+        "affectedAfterWorldClippingGuardJS": 7
+      },
+      "logs": [
+        "surface-transaction-gate-01.log",
+        "surface-transaction-gate-02.log"
+      ]
+    },
+    {
+      "sha": "229a65f3e403f043a363ead4625e98248d9dcda4",
+      "behavior": "CPU-only legacy-atlas worker preparation and transactional JavaFX publication with opaque ownership and stale/foreign rejection",
+      "checks": {
+        "javafxJVM": 58,
+        "affectedSharedJVM": 7,
+        "affectedSharedJS": 7,
+        "actualFxThreadProbe": "pass"
+      },
+      "logs": [
+        "native-preparation-gate-02.log"
+      ],
+      "limitations": [
+        "Affine sampler and retained/refined affine optimization remain unqualified",
+        "Native probe verifies transactions, not framebuffer interpolation or publication performance",
+        "JavaFX21/JDK25 emit upstream native-access/Unsafe/module warnings"
+      ]
+    },
+    {
+      "sha": "140e4ab0a75e116d4172374318d158ec93e06c1a",
+      "behavior": "native surface dirt checks actual topology, geometry and colour buffers independently of caller-visible resource keys",
+      "checks": {
+        "javafxJVM": 59,
+        "actualFxThreadProbe": "pass"
+      },
+      "logs": [
+        "native-preparation-review-gate-02.log"
+      ],
+      "review": "native-publication-review.md"
+    },
+    {
+      "sha": "7861652716348679cf8dac22dca10cbd67378dfe",
+      "behavior": "selected-estimate receipt retains exact native fixed-effects policy; shared OLS records none",
+      "checks": {
+        "JVM": 3,
+        "JS": 3
+      },
+      "logs": [
+        "selected-policy-gate-01.log"
+      ]
+    },
+    {
+      "sha": "56d0cbcbfa55c7edb8651d19153b9e8c7897d88d",
+      "behavior": "Explicit unresolved-world NIfTI volume inspection without label-based alignment",
+      "checks": {
+        "imageJVM": 13,
+        "imageJSCompile": "pass"
+      },
+      "logs": [
+        "checks/unresolved-volume-gate-02.txt"
+      ]
+    },
+    {
+      "sha": "89e139faca6fd2796273d9864338a2bd28532684",
+      "behavior": "Paired anatomical viewpoints with shared navigation and native transform/picking support",
+      "checks": {
+        "actualFxRayHits": 2
+      },
+      "logs": [
+        "checks/paired-native-pick.txt"
+      ]
+    },
+    {
+      "sha": "f0eb44afa7bd047c79d5998ad18b785c5ec7b6ed",
+      "behavior": "Revision 9 complete geometry-family provenance with discriminated historical revision 8 recovery",
+      "checks": {},
+      "logs": [
+        "checks/final-surface-recovery-02.txt"
+      ]
+    },
+    {
+      "sha": "fa188b9283d2864a30aac4cb7b85f701038860d2",
+      "behavior": "Paired cameras across CPU fallback and Three composition; native malformed-camera refusal",
+      "checks": {
+        "surfaceViewJVM": 272,
+        "surfaceViewJS": 272,
+        "rasterJVM": 70,
+        "rasterJS": 70,
+        "javafxJVM": 63,
+        "threeJS": 57
+      },
+      "logs": [
+        "checks/final-surface-recovery-02.txt"
+      ]
+    },
+    {
+      "sha": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
+      "behavior": "Historical per-surface-cameras capability and inferred admission; camera-only update avoids colour recomputation",
+      "checks": {
+        "surfaceViewJVM": 272,
+        "surfaceViewJS": 272,
+        "rasterJVM": 70,
+        "rasterJS": 70,
+        "javafxJVM": 63,
+        "threeJS": 57
+      },
+      "logs": [
+        "checks/final-surface-review-04.txt"
+      ]
+    },
+    {
+      "sha": "5d2a86db6598a9358a65189e674607e5d3939000",
+      "behavior": "explicit categorical/continuous event roles preserving current missing and degenerate policies",
+      "checks": {
+        "JVM": 7,
+        "JS": 7
+      },
+      "log": "event-roles-recovery-02.txt",
+      "review": "independent exact-commit review: no bounded findings"
+    },
+    {
+      "sha": "9bc3510a3eb8f651dc54590dbc852b671089c07e",
+      "behavior": "Numeric Run/Echo companion equivalence with refusal of selected-BOLD aliases; original labels and label-entity equality preserved",
+      "checks": {
+        "JVM": 18,
+        "JS": 18
+      },
+      "logs": [
+        "checks/numeric-companion-recovery-03.txt"
+      ],
+      "review": "Independent review found duplicate-acquisition edge; final guard closes it under both grouping policies. Test fixture corrections and failed attempts retained."
+    },
+    {
+      "sha": "5a7c4566c61a361dfa3363f03822cfa3051f2c58",
+      "behavior": "Snapshot-bound full design/trace/event and response-basis metadata restored without changing rendered page, fixed axes, or validation guards",
+      "checks": {
+        "JVM": 5,
+        "JS": 5
+      },
+      "logs": [
+        "checks/plot-semantic-recovery-02.txt"
+      ],
+      "review": "Independent review found no material issue in either provider diff. Initial JavaScript fixture numeric-string mismatch retained; expected formatting corrected. Native SVG consumer acceptance remains required."
+    }
+  ],
+  "publishedToMain": false,
+  "consumerRepinned": false,
+  "consumerCompile": {
+    "providerCandidate": "fa188b9283d2864a30aac4cb7b85f701038860d2",
+    "consumerCommittedProduction": "76f0f745b13e3a66dac22bab9e3011dd33580678",
+    "result": "Adapter test compilation and narrowed ContrastReprojection probe pass; desktop test fixture migration in progress. Diagnostic closure only, not an admitted provider pin.",
+    "logs": [
+      "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/adapter-fixture-compile-10.log",
+      "/private/tmp/plsneuro-main-adoption-20261016/.agent-work/explorer-reprojection-10.log"
+    ]
+  },
+  "remaining": [
+    "required hosted provider checks and landing on canonical main",
+    "fresh committed consumer checkout with declared closure: sbt check, strict native/headless and touched surface/brain-view acceptance",
+    "exact canonical-main provider pin and portable consumer publication",
+    "release task reservations and publish portable Mote authority checkpoint"
+  ],
+  "validatedSourceHead": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
+  "compileAll": {
+    "result": "pass",
+    "sourceHead": "f87fecf7ade27054229aa55bbd24d499f519dc8a",
+    "platforms": [
+      "JVM",
+      "Scala.js"
+    ],
+    "warnings": 0,
+    "log": "checks/candidate-compile-all-f87fecf.txt",
+    "scope": "All targets in scalafimCompileAll, both platforms; final committed production source unchanged throughout run."
+  },
+  "checkpointBranch": "recovery/plsneuro-main-20261016",
+  "evidenceCaution": "Required hosted gates remain pending. Local tests are engineering evidence, not GPU interpolation, scientific admission or release qualification.",
+  "lastPublishedCheckpoint": "4840db93c7fa37e1686111f370c1681387873b52",
+  "pullRequest": "https://github.com/canardlapin/scalafim/pull/62",
+  "dependencyDirection": "PLSNeuro depends on ScalaFIM; ScalaFIM has no PLSNeuro source or build dependency. Recovery branch is temporary; final consumer pin must be on canonical main.",
+  "withheld": [
+    "Stock native affine interpolation and dense-colour refinement remain unqualified; application default uses legacy renderer",
+    "Historical ReachableResponseBasis probe family assertions are archived and withheld; no production caller depends on that API. Current Gale-backed HRF family capability is a different contract."
+  ],
+  "latestSourceHead": "5a7c4566c61a361dfa3363f03822cfa3051f2c58",
+  "consumerCheckpoint": {
+    "commit": "20c7f533c693e33ba1d6f1f67854905b98b7a7f2",
+    "freshCheck": "pass in85 seconds",
+    "strictNative": {
+      "passed": 166,
+      "failed": 1,
+      "blocked": 29,
+      "failure": "StandaloneReviewProbe missing provider SVG metadata"
+    },
+    "diagnosticRemaining": {
+      "passed": 23,
+      "failed": 6,
+      "acceptance": false
+    },
+    "followup": "Provider design/basis metadata repaired and tested. Synthetic geometry and canonical selection test corrections reviewed. Two unchanged native focus probes failed again because OS focus was unavailable; strict lanes and final main pin remain required."
+  }
+}

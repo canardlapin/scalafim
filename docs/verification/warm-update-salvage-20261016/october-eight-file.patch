@@ -1,0 +1,1853 @@
+diff --git a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala
+index 7b7addd0e..1822a4e58 100644
+--- a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala
++++ b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala
+@@ -7,9 +7,11 @@ import scalafim.surface.view.*
+   * Original vertices stay shared; only fallback faces add three edge midpoints.
+   */
+ private[javafx] final class JavaFxAdaptiveLayout private[javafx] (
+-    private val starts: Array[Int], private val splitIndices: Array[Int], val splitCount: Int):
++    private val starts: Array[Int], private val splitIndices: Array[Int],
++    private val anchors: Array[Int], val splitCount: Int):
+   def renderedFaces: Int = starts.last
+   def start(face: Int): Int = starts(face)
++  def anchor(face: Int): Int = anchors(face)
+   def split(face: Int): Boolean = splitIndices(face) >= 0
+   def midpointOffset(face: Int): Int = splitIndices(face) * 3
+   def sourceFace(rendered: Int): Int =
+@@ -33,6 +35,22 @@ private[javafx] object JavaFxAdaptiveAtlas:
+   def anchor(a: Int, b: Int, c: Int): Int =
+     if fits(a,b,c) then 0 else if fits(b,c,a) then 1 else if fits(c,a,b) then 2 else -1
+ 
++  private def retainedAnchor(a: Int, b: Int, c: Int): Int =
++    var best = -1; var distance = Int.MaxValue; var pivot = 0
++    while pivot < 3 do
++      val p = if pivot == 0 then a else if pivot == 1 then b else c
++      val q = if pivot == 0 then b else if pivot == 1 then c else a
++      val r = if pivot == 0 then c else if pivot == 1 then a else b
++      if fits(p, q, r) then
++        var score = 0; var shift = 8
++        while shift <= 24 do
++          val x = (a >>> shift) & 255; val y = (b >>> shift) & 255; val z = (c >>> shift) & 255
++          val median = x + y + z - math.min(x, math.min(y, z)) - math.max(x, math.max(y, z))
++          score += math.abs(((p >>> shift) & 255) - median); shift += 8
++        if score < distance then { best = pivot; distance = score }
++      pivot += 1
++    best
++
+   private def faceAnchor(indices: IntBufferView, colors: Array[Int], face: Int): Int =
+     val i = face * 3
+     anchor(colors(indices(i)), colors(indices(i+1)), colors(indices(i+2)))
+@@ -62,29 +80,46 @@ private[javafx] object JavaFxAdaptiveAtlas:
+       if total > Int.MaxValue - 8L then Left(JavaFxSurfaceError.AttributeBufferTooLarge(total))
+       else Right(total.toInt)
+ 
+-  def layout(indices: IntBufferView, colors: Array[Int], first: Int, count: Int): JavaFxAdaptiveLayout =
++  private def accepts(pivot: Int, indices: IntBufferView, colors: Array[Int], face: Int): Boolean =
++    val offset = face * 3
++    fits(colors(indices(offset + pivot)), colors(indices(offset + (pivot + 1) % 3)), colors(indices(offset + (pivot + 2) % 3)))
++
++  def layout(indices: IntBufferView, colors: Array[Int], first: Int, count: Int,
++      previous: Option[JavaFxAdaptiveLayout] = None, preferMedian: Boolean = false): JavaFxAdaptiveLayout =
+     val starts = new Array[Int](count + 1)
+     val splits = Array.fill(count)(-1)
++    val anchors = new Array[Int](count)
+     var splitCount = 0
+     var face = 0
+     while face < count do
+-      val split = faceAnchor(indices, colors, first + face) < 0
++      val pivot = previous match
++        case Some(before) => val retained = before.anchor(face); if retained >= 0 && accepts(retained, indices, colors, first + face) then retained else -1
++        case None =>
++          val offset = (first + face) * 3
++          if preferMedian then retainedAnchor(colors(indices(offset)), colors(indices(offset + 1)), colors(indices(offset + 2))) else faceAnchor(indices, colors, first + face)
++      anchors(face) = pivot
++      val split = pivot < 0
+       if split then
+         splits(face) = splitCount
+         splitCount += 1
+       starts(face + 1) = starts(face) + (if split then 4 else 1)
+       face += 1
+-    new JavaFxAdaptiveLayout(starts, splits, splitCount)
++    new JavaFxAdaptiveLayout(starts, splits, anchors, splitCount)
+ 
+-  def matches(layout: JavaFxAdaptiveLayout, indices: IntBufferView, colors: Array[Int], first: Int, count: Int): Boolean =
++  def matches(layout: JavaFxAdaptiveLayout, indices: IntBufferView, colors: Array[Int], first: Int, count: Int,
++      retain: Boolean = false): Boolean =
+     var face = 0
+     while face < count do
+-      if layout.split(face) != (faceAnchor(indices, colors, first + face) < 0) then return false
++      if retain then
++        if !layout.split(face) && !accepts(layout.anchor(face), indices, colors, first + face) then return false
++      else if layout.split(face) != (faceAnchor(indices, colors, first + face) < 0) then return false
+       face += 1
+     true
+ 
+   def write(pixels: IntBuffer, width: Int, x: Int, y: Int, a: Int, b: Int, c: Int): Unit =
+-    val pivot = anchor(a,b,c)
++    write(pixels, width, x, y, a, b, c, anchor(a, b, c))
++
++  def write(pixels: IntBuffer, width: Int, x: Int, y: Int, a: Int, b: Int, c: Int, pivot: Int): Unit =
+     if pivot < 0 then JavaFxAffineAtlas.write(pixels,width,x,y,a,b,c)
+     else
+       val p = if pivot == 0 then a else if pivot == 1 then b else c
+@@ -106,13 +141,17 @@ private[javafx] object JavaFxAdaptiveAtlas:
+ 
+   def coordinates(packet: SurfaceMeshPacket, first: Int, count: Int, atlas: JavaFxFaceAtlas,
+       colors: Array[Int], layout: JavaFxAdaptiveLayout): Array[Float] =
++    coordinates(packet, first, count, atlas.pixelLayout, colors, layout)
++
++  def coordinates(packet: SurfaceMeshPacket, first: Int, count: Int, atlas: JavaFxAtlasPixelLayout,
++      colors: Array[Int], layout: JavaFxAdaptiveLayout): Array[Float] =
+     val result = new Array[Float](layout.renderedFaces * 6)
+     val columns = atlas.width / 4
+     var face = 0
+     while face < count do
+-      val pivot = faceAnchor(packet.indices,colors,first+face)
++      val pivot = if atlas.encoding.retainsLayout then layout.anchor(face) else faceAnchor(packet.indices,colors,first+face)
+       val offset = (first+face)*3
+-      val constant = colors(packet.indices(offset)) == colors(packet.indices(offset+1)) &&
++      val constant = !atlas.encoding.retainsLayout && colors(packet.indices(offset)) == colors(packet.indices(offset+1)) &&
+         colors(packet.indices(offset)) == colors(packet.indices(offset+2))
+       var child = 0
+       val children = if layout.split(face) then 4 else 1
+diff --git a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala
+new file mode 100644
+index 000000000..b14dc36c9
+--- /dev/null
++++ b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala
+@@ -0,0 +1,190 @@
++package scalafim.surface.view.javafx
++
++import java.nio.IntBuffer
++import scalafim.surface.view.*
++
++/** CPU-only atlas description. It owns no JavaFX node, image or mutable native buffer. */
++private[javafx] final case class JavaFxAtlasPixelLayout(
++  faceStart: Int, faceCount: Int, width: Int, height: Int, tileSize: Int,
++  encoding: JavaFxAtlasEncoding, adaptiveLayout: Option[JavaFxAdaptiveLayout]
++)
++
++private[javafx] final case class JavaFxColorChunkBasis(
++  surface: SurfaceId, meshKey: SurfaceResourceKey, atlas: JavaFxAtlasPixelLayout,
++  pointCapacity: Int, normalCapacity: Int, textureCapacity: Int
++)
++
++private[javafx] final case class JavaFxPreparedAtlasUpdate(
++  pixels: Array[Int]
++)
++
++private[javafx] final case class JavaFxPreparedMeshData(
++  points: Array[Float], normals: Array[Float], coordinates: Array[Float], faces: Array[Int]
++)
++
++private[javafx] final class JavaFxColorPreparationToken
++
++/** Owned worker output. Arrays are private and are never mutated after preparation. */
++final class JavaFxPreparedColorUpdate private[javafx] (
++  private[javafx] val owner: JavaFxColorPreparationToken,
++  private[javafx] val plan: SurfaceRenderPlan,
++  private[javafx] val mode: JavaFxMaterialMode,
++  private[javafx] val colorsBySurface: Map[SurfaceId, Array[Int]],
++  private[javafx] val chunks: Vector[JavaFxColorChunkBasis],
++  private[javafx] val layouts: Vector[Option[JavaFxAdaptiveLayout]],
++  private[javafx] val atlases: Vector[JavaFxPreparedAtlasUpdate],
++  private[javafx] val replacementMeshes: Vector[Option[JavaFxPreparedMeshData]],
++  private[javafx] val geometryChanged: Boolean,
++  val requiresRebuild: Boolean
++):
++  private[javafx] def matches(next: SurfaceRenderPlan): Boolean =
++    JavaFxColorPreparationBasis.sameContent(plan, next)
++
++/** Capture on the FX thread, then prepare retained colours on any worker.
++  * The captured inputs and returned pixels contain no native objects. Public
++  * render-plan buffers are read-only; internal unsafeArray mutation during
++  * preparation or publication is prohibited and cannot be detected by identity.
++  */
++final class JavaFxColorPreparationBasis private[javafx] (
++  private val owner: JavaFxColorPreparationToken,
++  private val meshes: Vector[SurfaceMeshPacket],
++  private val chunks: Vector[JavaFxColorChunkBasis],
++  private val config: JavaFxAtlasConfig
++):
++  def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
++    if !config.encoding.retainsLayout then
++      Left(JavaFxSurfaceError.IncompatiblePlan("worker atlas preparation requires retained affine layout"))
++    else prepareChecked(plan, JavaFxSurfaceProgram.materialMode(plan), renderAtlases = true)
++
++  private[javafx] def prepareChecked(plan: SurfaceRenderPlan, mode: JavaFxMaterialMode,
++      renderAtlases: Boolean = false): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
++    if meshes.map(m => (m.surface, m.resourceKey)) != plan.meshes.map(m => (m.surface, m.resourceKey)) then
++      return Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
++    // Keys are hashes, not proofs. A CPU comparison checks actual topology
++    // before a captured layout can be reused, even for recompiled equal packets.
++    var meshIndex = 0
++    var geometryChanged = false
++    while meshIndex < meshes.length do
++      if !java.util.Arrays.equals(meshes(meshIndex).indices.unsafeArray, plan.meshes(meshIndex).indices.unsafeArray) then
++        return Left(JavaFxSurfaceError.IncompatiblePlan("original face topology changed"))
++      if !java.util.Arrays.equals(meshes(meshIndex).positions.unsafeArray, plan.meshes(meshIndex).positions.unsafeArray) ||
++          !java.util.Arrays.equals(meshes(meshIndex).normals.unsafeArray, plan.meshes(meshIndex).normals.unsafeArray) then
++        geometryChanged = true
++      meshIndex += 1
++    val colors = JavaFxSurfaceProbe.validatePlan(plan, mode, config) match
++      case Left(error) => return Left(error)
++      case Right(value) => value
++    var changed = false
++    val layouts = Vector.newBuilder[Option[JavaFxAdaptiveLayout]]
++    var faces = 0L
++    var chunkIndex = 0
++    while chunkIndex < chunks.length do
++      val chunk = chunks(chunkIndex)
++      val packet = plan.meshes.find(_.surface == chunk.surface).get
++      val layout = chunk.atlas.adaptiveLayout.map: before =>
++        if config.encoding.retainsLayout then
++          val same = JavaFxAdaptiveAtlas.matches(before, packet.indices, colors(packet.surface),
++            chunk.atlas.faceStart, chunk.atlas.faceCount, retain = true)
++          if same then before
++          else
++            changed = true
++            JavaFxAdaptiveAtlas.layout(packet.indices, colors(packet.surface),
++              chunk.atlas.faceStart, chunk.atlas.faceCount, Some(before), preferMedian = true)
++        else
++          val same = JavaFxAdaptiveAtlas.matches(before, packet.indices, colors(packet.surface),
++            chunk.atlas.faceStart, chunk.atlas.faceCount)
++          if !same then changed = true
++          if same then before else JavaFxAdaptiveAtlas.layout(packet.indices, colors(packet.surface),
++            chunk.atlas.faceStart, chunk.atlas.faceCount)
++      faces += layout.fold(chunk.atlas.faceCount.toLong * config.encoding.facesPerSource)(_.renderedFaces.toLong)
++      layouts += layout
++      val layoutChanged = layout != chunk.atlas.adaptiveLayout
++      val count = JavaFxSurfaceProbe.attributeCount(packet, chunk.atlas.faceCount, config.encoding, layout) match
++        case Left(error) => return Left(error)
++        case Right(value) => value
++      if !layoutChanged && (count != chunk.pointCapacity || count != chunk.normalCapacity) then
++        return Left(JavaFxSurfaceError.IncompatiblePlan("morph buffers changed vertex count"))
++      if !layoutChanged && layout.fold(chunk.atlas.faceCount * config.encoding.facesPerSource)(_.renderedFaces) * 6 != chunk.textureCapacity then
++        return Left(JavaFxSurfaceError.IncompatiblePlan("texture-coordinate capacity changed"))
++      chunkIndex += 1
++    if faces > config.maxRenderedFaces then
++      return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $faces exceed budget ${config.maxRenderedFaces}"))
++    val resultingLayouts = layouts.result()
++    val rendered =
++      if renderAtlases then chunks.zip(resultingLayouts).map: (chunk, layout) =>
++        val packet = plan.meshes.find(_.surface == chunk.surface).get
++        JavaFxPreparedAtlasUpdate(JavaFxAtlasPixels.render(chunk.atlas.copy(adaptiveLayout = layout), packet.indices, colors(packet.surface)))
++      else Vector.empty
++    val replacements = chunks.zip(resultingLayouts).map: (chunk, layout) =>
++      if !renderAtlases || layout == chunk.atlas.adaptiveLayout then None
++      else
++        val packet = plan.meshes.find(_.surface == chunk.surface).get
++        val refined = layout.get
++        Some(JavaFxPreparedMeshData(
++          JavaFxAdaptiveAtlas.attributes(packet, packet.positions, chunk.atlas.faceStart, chunk.atlas.faceCount, refined),
++          JavaFxAdaptiveAtlas.attributes(packet, packet.normals, chunk.atlas.faceStart, chunk.atlas.faceCount, refined),
++          JavaFxAdaptiveAtlas.coordinates(packet, chunk.atlas.faceStart, chunk.atlas.faceCount,
++            chunk.atlas.copy(adaptiveLayout = layout), colors(packet.surface), refined),
++          JavaFxAdaptiveAtlas.faces(packet, chunk.atlas.faceStart, chunk.atlas.faceCount, refined)))
++    Right(new JavaFxPreparedColorUpdate(owner, plan, mode, colors, chunks, resultingLayouts, rendered, replacements, geometryChanged, changed))
++
++private[javafx] object JavaFxColorPreparationBasis:
++  /** Cheap publication binding; camera, slots, chrome and readouts may rebase.
++    * Replaced buffers are rejected even when their 32-bit keys are unchanged.
++    */
++  def sameContent(a: SurfaceRenderPlan, b: SurfaceRenderPlan): Boolean =
++    val meshes = a.meshes.length == b.meshes.length && a.meshes.zip(b.meshes).forall: (x, y) =>
++        x.surface == y.surface && x.resourceKey == y.resourceKey && x.geometryKey == y.geometryKey &&
++          (x.positions eq y.positions) && (x.normals eq y.normals) && (x.indices eq y.indices)
++    val layers = a.layers.length == b.layers.length && a.layers.zip(b.layers).forall: (x, y) =>
++        x.layer == y.layer && x.surface == y.surface && x.resourceKey == y.resourceKey &&
++          (x.colors eq y.colors) && x.opacity == y.opacity && x.blendMode == y.blendMode
++    a.lighting == b.lighting && meshes && layers
++
++private[javafx] object JavaFxAtlasPixels:
++  def render(layout: JavaFxAtlasPixelLayout, indices: IntBufferView, colors: Array[Int]): Array[Int] =
++    val result = new Array[Int](layout.width * layout.height)
++    write(layout, IntBuffer.wrap(result), indices, colors)
++    result
++
++  def write(layout: JavaFxAtlasPixelLayout, target: IntBuffer, indices: IntBufferView,
++      colors: Array[Int]): Unit =
++    var localFace = 0
++    while localFace < layout.faceCount do
++      val offset = (layout.faceStart + localFace) * 3
++      val a = colors(indices(offset)); val b = colors(indices(offset + 1)); val c = colors(indices(offset + 2))
++      val columns = layout.width / layout.tileSize
++      val x = (localFace % columns) * layout.tileSize
++      val y = (localFace / columns) * layout.tileSize
++      if layout.encoding.adaptive then
++        val pivot = if layout.encoding.retainsLayout then layout.adaptiveLayout.get.anchor(localFace)
++          else JavaFxAdaptiveAtlas.anchor(a, b, c)
++        JavaFxAdaptiveAtlas.write(target, layout.width, x, y, a, b, c, pivot)
++      else if layout.encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
++        JavaFxAffineAtlas.write(target, layout.width, x, y, a, b, c)
++      else
++        val denominator = (layout.tileSize - 1).toDouble
++        var row = 0
++        while row < layout.tileSize do
++          var col = 0
++          while col < layout.tileSize do
++            var wb = col / denominator
++            var wc = (layout.tileSize - 1 - row) / denominator
++            var wa = 1.0 - wb - wc
++            if wa < 0.0 then
++              val sum = wb + wc
++              wb /= sum; wc /= sum; wa = 0.0
++            target.put((y + row) * layout.width + x + col, interpolate(a, b, c, wa, wb, wc))
++            col += 1
++          row += 1
++      localFace += 1
++
++  private def interpolate(a: Int, b: Int, c: Int, wa: Double, wb: Double, wc: Double): Int =
++    def channel(shift: Int): Int =
++      math.round(((a >>> shift) & 255) * wa + ((b >>> shift) & 255) * wb + ((c >>> shift) & 255) * wc)
++        .toInt.max(0).min(255)
++    val alpha = channel(0)
++    val red = (channel(24) * alpha + 127) / 255
++    val green = (channel(16) * alpha + 127) / 255
++    val blue = (channel(8) * alpha + 127) / 255
++    (alpha << 24) | (red << 16) | (green << 8) | blue
+diff --git a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala
+index 38303b0d9..f0f439fc0 100644
+--- a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala
++++ b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala
+@@ -36,6 +36,10 @@ enum JavaFxAtlasEncoding(val facesPerSource: Int):
+   case LegacyTriangle extends JavaFxAtlasEncoding(1)
+   case AffineMidpointOpaque extends JavaFxAtlasEncoding(4)
+   case AdaptiveAffineOpaque extends JavaFxAtlasEncoding(4)
++  case RetainedAffineOpaque extends JavaFxAtlasEncoding(4)
++
++  def adaptive: Boolean = this == AdaptiveAffineOpaque || this == RetainedAffineOpaque
++  def retainsLayout: Boolean = this == RetainedAffineOpaque
+ 
+ /** NativePhong preserves the existing adapter. WorldVertexLambert explicitly
+   * shades the composited field in anatomical coordinates before atlas lowering.
+@@ -89,7 +93,8 @@ final case class JavaFxSurfaceUpdateReceipt(
+   updateNanos: Long,
+   verticesUpdated: Int = 0,
+   bytesUpdated: Long = 0L,
+-  textureCoordinateBytesUpdated: Long = 0L
++  textureCoordinateBytesUpdated: Long = 0L,
++  chunksReplaced: Int = 0
+ )
+ 
+ final class JavaFxFaceAtlas private[javafx] (
+@@ -106,69 +111,24 @@ final class JavaFxFaceAtlas private[javafx] (
+ ):
+   def direct: Boolean = pixels.isDirect
+ 
+-  private[javafx] def write(
+-    indices: IntBufferView,
+-    colors: Array[Int]
+-  ): Rectangle2D =
+-    var localFace = 0
+-    while localFace < faceCount do
+-      val face = faceStart + localFace
+-      val offset = face * 3
+-      val a = colors(indices(offset))
+-      val b = colors(indices(offset + 1))
+-      val c = colors(indices(offset + 2))
+-      writeTile(localFace, a, b, c)
+-      localFace += 1
++  private[javafx] val pixelLayout = JavaFxAtlasPixelLayout(
++    faceStart, faceCount, width, height, tileSize, encoding, adaptiveLayout)
++
++  private[javafx] def write(indices: IntBufferView, colors: Array[Int]): Rectangle2D =
++    JavaFxAtlasPixels.write(pixelLayout, pixels, indices, colors)
++    pixels.position(0)
++    new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
++
++  private[javafx] def replace(rendered: Array[Int]): Rectangle2D =
++    require(rendered.length == width * height, "prepared atlas size changed")
++    pixels.position(0)
++    pixels.put(rendered)
+     pixels.position(0)
+     new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
+ 
+   def commit(region: Rectangle2D): Unit =
+     pixelBuffer.updateBuffer(_ => region)
+ 
+-  private def writeTile(localFace: Int, a: Int, b: Int, c: Int): Unit =
+-    val tilesPerRow = width / tileSize
+-    val tileX = (localFace % tilesPerRow) * tileSize
+-    val tileY = (localFace / tilesPerRow) * tileSize
+-    if encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
+-      JavaFxAdaptiveAtlas.write(pixels, width, tileX, tileY, a, b, c)
+-      return
+-    if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
+-      JavaFxAffineAtlas.write(pixels, width, tileX, tileY, a, b, c)
+-      return
+-    val denominator = (tileSize - 1).toDouble
+-    var y = 0
+-    while y < tileSize do
+-      var x = 0
+-      while x < tileSize do
+-        var weightB = x / denominator
+-        var weightC = (tileSize - 1 - y) / denominator
+-        var weightA = 1.0 - weightB - weightC
+-        if weightA < 0.0 then
+-          val sum = weightB + weightC
+-          weightB /= sum
+-          weightC /= sum
+-          weightA = 0.0
+-        pixels.put((tileY + y) * width + tileX + x, interpolateArgbPre(a, b, c, weightA, weightB, weightC))
+-        x += 1
+-      y += 1
+-
+-  private def interpolateArgbPre(
+-    a: Int,
+-    b: Int,
+-    c: Int,
+-    wa: Double,
+-    wb: Double,
+-    wc: Double
+-  ): Int =
+-    def channel(shift: Int): Int =
+-      math.round(((a >>> shift) & 0xff) * wa + ((b >>> shift) & 0xff) * wb + ((c >>> shift) & 0xff) * wc)
+-        .toInt.max(0).min(255)
+-    val alpha = channel(0)
+-    val red = (channel(24) * alpha + 127) / 255
+-    val green = (channel(16) * alpha + 127) / 255
+-    val blue = (channel(8) * alpha + 127) / 255
+-    (alpha << 24) | (red << 16) | (green << 8) | blue
+-
+ final case class JavaFxSurfaceChunk(
+   surface: SurfaceId,
+   meshKey: SurfaceResourceKey,
+@@ -188,9 +148,9 @@ final case class JavaFxSurfaceChunk(
+ 
+ final class JavaFxSurfaceProbeResult private[javafx] (
+   val root: Group,
+-  val chunks: Vector[JavaFxSurfaceChunk],
++  initialChunks: Vector[JavaFxSurfaceChunk],
+   val surfaceGroups: Map[SurfaceId, Group],
+-  val receipt: JavaFxSurfaceBuildReceipt,
++  initialReceipt: JavaFxSurfaceBuildReceipt,
+   private var activeMaterialMode: JavaFxMaterialMode,
+   val config: JavaFxAtlasConfig,
+   private val perspectiveCamera: PerspectiveCamera,
+@@ -199,6 +159,10 @@ final class JavaFxSurfaceProbeResult private[javafx] (
+   private val layoutTransforms: Map[SurfaceId, Affine],
+   private var plan: SurfaceRenderPlan
+ ):
++  private var activeChunks = initialChunks
++  private var activeReceipt = initialReceipt
++  def chunks: Vector[JavaFxSurfaceChunk] = activeChunks
++  def receipt: JavaFxSurfaceBuildReceipt = activeReceipt
+   private val subScenes = scala.collection.mutable.ArrayBuffer.empty[SubScene]
+   private var viewportWidth = 1.0
+   private var viewportHeight = 1.0
+@@ -246,61 +210,155 @@ final class JavaFxSurfaceProbeResult private[javafx] (
+     scene.setCamera(camera)
+     if !subScenes.contains(scene) then subScenes += scene
+ 
+-  private[javafx] def requiresAtlasRebuild(
+-    next: SurfaceRenderPlan,
+-    mode: JavaFxMaterialMode
+-  ): Either[JavaFxSurfaceError, Boolean] =
+-    JavaFxSurfaceProbe.validatePlan(next, mode, config).map: colors =>
+-      chunks.exists: chunk =>
+-        chunk.atlas.adaptiveLayout.exists: layout =>
+-          val packet = next.meshes.find(_.surface == chunk.surface).get
+-          !JavaFxAdaptiveAtlas.matches(layout, packet.indices, colors(chunk.surface), chunk.faceStart, chunk.faceCount)
+-
+-  def updateColors(
+-    next: SurfaceRenderPlan,
+-    commit: Boolean = false,
+-    mode: JavaFxMaterialMode = activeMaterialMode
+-  ): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
+-    if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
+-      Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
++  private var colorOwner = new JavaFxColorPreparationToken
++
++  private[javafx] def invalidateColorPreparationBasis(): Unit =
++    colorOwner = new JavaFxColorPreparationToken
++
++  private[javafx] def colorPreparationBasis: JavaFxColorPreparationBasis =
++    val descriptors = chunks.map: chunk =>
++      JavaFxColorChunkBasis(chunk.surface, chunk.meshKey, chunk.atlas.pixelLayout,
++        chunk.mesh.getPoints.size(), chunk.mesh.getNormals.size(), chunk.mesh.getTexCoords.size())
++    new JavaFxColorPreparationBasis(colorOwner, plan.meshes, descriptors, config)
++
++  private[javafx] def prepareColorUpdate(next: SurfaceRenderPlan,
++      mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
++    colorPreparationBasis.prepareChecked(next, mode)
++
++  private[javafx] def requiresAtlasRebuild(next: SurfaceRenderPlan,
++      mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, Boolean] =
++    prepareColorUpdate(next, mode).map(_.requiresRebuild)
++
++  private[javafx] def validatePrepared(prepared: JavaFxPreparedColorUpdate,
++      next: SurfaceRenderPlan,
++      expectedMode: Option[JavaFxMaterialMode] = None): Either[JavaFxSurfaceError, Unit] =
++    if !(prepared.owner eq colorOwner) then
++      Left(JavaFxSurfaceError.IncompatiblePlan("prepared colour layout is stale or belongs to another backend"))
++    else if expectedMode.exists(_ != prepared.mode) || !prepared.matches(next) then
++      Left(JavaFxSurfaceError.IncompatiblePlan("prepared colour content differs from target buffers"))
++    else if prepared.chunks.length != chunks.length || prepared.layouts.length != chunks.length ||
++        prepared.replacementMeshes.length != chunks.length ||
++        (prepared.atlases.nonEmpty && prepared.atlases.length != chunks.length) then
++      Left(JavaFxSurfaceError.IncompatiblePlan("prepared chunk coverage changed"))
+     else
+-      val started = System.nanoTime()
+-      val colorsBySurface = JavaFxSurfaceProbe.validatePlan(next, mode, config) match
+-        case Left(error) => return Left(error)
+-        case Right(colors) => colors
+-      requiresAtlasRebuild(next, mode) match
+-        case Left(error) => return Left(error)
+-        case Right(true) => return Left(JavaFxSurfaceError.AtlasLayoutChanged)
+-        case Right(false) => ()
+-      var dirtyPixels = 0L
+-      var textureCoordinateBytesUpdated = 0L
+       var index = 0
+       while index < chunks.length do
+-        val chunk = chunks(index)
+-        val mesh = next.meshes.find(_.surface == chunk.surface).get
+-        val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount,
+-          chunk.atlas, colorsBySurface(chunk.surface))
+-        var same = coordinates.length == chunk.mesh.getTexCoords.size()
+-        var coordinate = 0
+-        while coordinate < coordinates.length && same do
+-          same = coordinates(coordinate) == chunk.mesh.getTexCoords.get(coordinate)
+-          coordinate += 1
+-        if !same then
+-          chunk.mesh.getTexCoords.setAll(coordinates, 0, coordinates.length)
+-          textureCoordinateBytesUpdated += coordinates.length.toLong * 4L
+-        val region = chunk.atlas.write(mesh.indices, colorsBySurface(chunk.surface))
+-        if commit then chunk.atlas.commit(region)
+-        dirtyPixels += chunk.atlas.width.toLong * chunk.atlas.height.toLong
++        val actual = chunks(index)
++        val captured = prepared.chunks(index)
++        if captured.surface != actual.surface || captured.meshKey != actual.meshKey ||
++            captured.atlas != actual.atlas.pixelLayout ||
++            captured.pointCapacity != actual.mesh.getPoints.size() ||
++            captured.normalCapacity != actual.mesh.getNormals.size() ||
++            captured.textureCapacity != actual.mesh.getTexCoords.size() ||
++            prepared.atlases.lift(index).exists(_.pixels.length != actual.atlas.width * actual.atlas.height) then
++          return Left(JavaFxSurfaceError.IncompatiblePlan("prepared native capacities changed"))
++        prepared.replacementMeshes(index) match
++          case Some(data) =>
++            val packet = next.meshes.find(_.surface == actual.surface).get
++            val count = JavaFxSurfaceProbe.attributeCount(packet, actual.faceCount, config.encoding, prepared.layouts(index)) match
++              case Left(error) => return Left(error)
++              case Right(value) => value
++            val faces = prepared.layouts(index).get.renderedFaces
++            if data.points.length != count || data.normals.length != count ||
++                data.coordinates.length.toLong != faces.toLong * 6 || data.faces.length.toLong != faces.toLong * 9 then
++              return Left(JavaFxSurfaceError.IncompatiblePlan("prepared replacement mesh capacities changed"))
++          case None => ()
+         index += 1
++      Right(())
++
++  /** Stage only changed native chunks. No live node is reparented during
++    * preflight, and all remaining atlas pixels are ready before publication.
++    * Simultaneous geometry changes use the complete replacement path instead.
++    */
++  private[javafx] def refinePreparedColors(prepared: JavaFxPreparedColorUpdate,
++      next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
++    validatePrepared(prepared, next) match
++      case Left(error) => return Left(error)
++      case Right(_) => ()
++    if !config.encoding.retainsLayout || !prepared.requiresRebuild || prepared.geometryChanged then
++      Left(JavaFxSurfaceError.IncompatiblePlan("chunk refinement requires unchanged original geometry"))
++    else
++      val started = System.nanoTime()
++      // A caller can remove a view through the public root; refuse this
++      // incompatible mount before allocating or mutating any native resource.
++      if chunks.exists(c => !surfaceGroups(c.surface).getChildren.contains(c.view)) then
++        return Left(JavaFxSurfaceError.IncompatiblePlan("native chunk is no longer mounted in its surface group"))
++      val replacements = chunks.zipWithIndex.map: (chunk, index) =>
++        val layout = prepared.layouts(index)
++        if layout == chunk.atlas.adaptiveLayout then None
++        else
++          val packet = next.meshes.find(_.surface == chunk.surface).get
++            Some(JavaFxSurfaceProbe.buildChunk(packet, chunk.faceStart, chunk.faceCount,
++              prepared.colorsBySurface(chunk.surface), prepared.mode, config, layout,
++              prepared.atlases.lift(index).map(_.pixels), prepared.replacementMeshes(index)))
++      val staged = chunks.zipWithIndex.map: (chunk, index) =>
++        if replacements(index).nonEmpty then None
++        else Some(prepared.atlases.lift(index).getOrElse:
++          val packet = next.meshes.find(_.surface == chunk.surface).get
++          JavaFxPreparedAtlasUpdate(JavaFxAtlasPixels.render(chunk.atlas.pixelLayout,
++            packet.indices, prepared.colorsBySurface(chunk.surface))))
++      var meshBytes = 0L
++      var uvBytes = 0L
++      var vertices = 0
++      val updated = chunks.zipWithIndex.map: (chunk, index) =>
++        replacements(index) match
++          case Some(replacement) =>
++            val group = surfaceGroups(chunk.surface)
++            group.getChildren.set(group.getChildren.indexOf(chunk.view), replacement.view)
++            vertices += replacement.mesh.getPoints.size() / 3
++            meshBytes += (replacement.mesh.getPoints.size().toLong + replacement.mesh.getNormals.size() +
++              replacement.mesh.getFaces.size()) * 4L
++            uvBytes += replacement.mesh.getTexCoords.size().toLong * 4L
++            replacement
++          case None =>
++            chunk.atlas.commit(chunk.atlas.replace(staged(index).get.pixels))
++            chunk
++      activeChunks = updated
++      activeReceipt = activeReceipt.copy(
++        verticesUploaded = updated.map(_.mesh.getPoints.size() / 3).sum,
++        facesUploaded = updated.map(_.renderedFaceCount).sum)
+       plan = next
+-      configureMode(mode)
+-      Right(JavaFxSurfaceUpdateReceipt(
+-        geometryRebuilt = false,
+-        atlasesUpdated = chunks.length,
+-        dirtyPixels = dirtyPixels,
+-        updateNanos = System.nanoTime() - started,
+-        textureCoordinateBytesUpdated = textureCoordinateBytesUpdated
+-      ))
++      configureMode(prepared.mode)
++      Right(JavaFxSurfaceUpdateReceipt(true, chunks.length,
++        chunks.map(c => c.atlas.width.toLong * c.atlas.height).sum, System.nanoTime() - started,
++        vertices, meshBytes, uvBytes, replacements.count(_.nonEmpty)))
++
++  def updateColors(next: SurfaceRenderPlan, commit: Boolean = false,
++      mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
++    prepareColorUpdate(next, mode).flatMap(prepared => updatePreparedColors(prepared, next, commit))
++
++  private[javafx] def updatePreparedColors(prepared: JavaFxPreparedColorUpdate,
++      next: SurfaceRenderPlan, commit: Boolean): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
++    validatePrepared(prepared, next).flatMap: _ =>
++      if prepared.requiresRebuild then Left(JavaFxSurfaceError.AtlasLayoutChanged)
++      else
++        val started = System.nanoTime()
++        var dirtyPixels = 0L
++        var textureCoordinateBytesUpdated = 0L
++        var index = 0
++        while index < chunks.length do
++          val chunk = chunks(index)
++          val mesh = next.meshes.find(_.surface == chunk.surface).get
++          val colors = prepared.colorsBySurface(chunk.surface)
++          if !config.encoding.retainsLayout then
++            val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount, chunk.atlas, colors)
++            var same = coordinates.length == chunk.mesh.getTexCoords.size()
++            var coordinate = 0
++            while coordinate < coordinates.length && same do
++              same = coordinates(coordinate) == chunk.mesh.getTexCoords.get(coordinate)
++              coordinate += 1
++            if !same then
++              chunk.mesh.getTexCoords.setAll(coordinates, 0, coordinates.length)
++              textureCoordinateBytesUpdated += coordinates.length.toLong * 4L
++          val region = prepared.atlases.lift(index).fold(chunk.atlas.write(mesh.indices, colors))(
++            staged => chunk.atlas.replace(staged.pixels))
++          if commit then chunk.atlas.commit(region)
++          dirtyPixels += chunk.atlas.width.toLong * chunk.atlas.height.toLong
++          index += 1
++        plan = next
++        configureMode(prepared.mode)
++        Right(JavaFxSurfaceUpdateReceipt(false, chunks.length, dirtyPixels, System.nanoTime() - started,
++          textureCoordinateBytesUpdated = textureCoordinateBytesUpdated))
+ 
+   def updateGeometry(
+     next: SurfaceRenderPlan,
+@@ -369,6 +427,19 @@ final class JavaFxSurfaceProbeResult private[javafx] (
+       ))
+ 
+ object JavaFxSurfaceProbe:
++  private[javafx] def buildChunk(packet: SurfaceMeshPacket, faceStart: Int, count: Int,
++      colors: Array[Int], mode: JavaFxMaterialMode, config: JavaFxAtlasConfig,
++      layout: Option[JavaFxAdaptiveLayout], stagedPixels: Option[Array[Int]] = None,
++      stagedMesh: Option[JavaFxPreparedMeshData] = None): JavaFxSurfaceChunk =
++    val atlas = buildAtlas(faceStart, count, packet.indices, colors, config, layout, stagedPixels)
++    val mesh = buildMesh(packet, faceStart, count, atlas, colors, stagedMesh)
++    val material = materialFor(atlas.image, mode, config.lightingPolicy)
++    val view = new MeshView(mesh)
++    view.setMaterial(material)
++    view.setCullFace(CullFace.NONE)
++    view.setDepthTest(DepthTest.ENABLE)
++    JavaFxSurfaceChunk(packet.surface, packet.resourceKey, faceStart, count, mesh, atlas, material, view)
++
+   private[javafx] def validatePlan(
+     plan: SurfaceRenderPlan,
+     mode: JavaFxMaterialMode,
+@@ -391,13 +462,13 @@ object JavaFxSurfaceProbe:
+         return Left(JavaFxSurfaceError.IncompatiblePlan("layer colour count differs from the original vertex count"))
+       sourceFaces += mesh.indices.length.toLong / 3L
+       meshIndex += 1
+-    val minimum = sourceFaces * (if config.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then 1 else config.encoding.facesPerSource)
++    val minimum = sourceFaces * (if config.encoding.adaptive then 1 else config.encoding.facesPerSource)
+     if minimum > config.maxRenderedFaces then
+       return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $minimum exceed budget ${config.maxRenderedFaces}"))
+     val colors = compositeColors(plan, mode, config.lightingPolicy)
+     if config.encoding != JavaFxAtlasEncoding.LegacyTriangle && !JavaFxAffineAtlas.opaque(colors) then
+       return Left(JavaFxSurfaceError.IncompatiblePlan("affine encoding requires opaque final vertex colours"))
+-    if config.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
++    if config.encoding.adaptive then
+       val actual = plan.meshes.iterator.map(packet => JavaFxAdaptiveAtlas.renderedFaces(packet.indices, colors(packet.surface))).sum
+       if actual > config.maxRenderedFaces then
+         return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $actual exceed budget ${config.maxRenderedFaces}"))
+@@ -419,15 +490,43 @@ object JavaFxSurfaceProbe:
+     Right(colors)
+ 
+   /** Diagnostic lowering; successful construction does not admit the GPU sampler. */
+-  def compile(
+-    plan: SurfaceRenderPlan,
+-    materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,
+-    config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default
+-  ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
++  def compile(plan: SurfaceRenderPlan, materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,
++      config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
++    compileRetaining(plan, materialMode, config, None)
++
++  private[javafx] def compileRetaining(plan: SurfaceRenderPlan, materialMode: JavaFxMaterialMode,
++      config: JavaFxAtlasConfig, previous: Option[JavaFxSurfaceProbeResult],
++      checkedColors: Option[Map[SurfaceId, Array[Int]]] = None,
++      retainedChunks: Vector[JavaFxSurfaceChunk] = Vector.empty): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+     val meshStarted = System.nanoTime()
+-    val colorsBySurface = validatePlan(plan, materialMode, config) match
+-      case Left(error) => return Left(error)
+-      case Right(colors) => colors
++    val colorsBySurface = checkedColors match
++      case Some(colors) => colors
++      case None => validatePlan(plan, materialMode, config) match
++        case Left(error) => return Left(error)
++        case Right(colors) => colors
++    val layouts = scala.collection.mutable.Map.empty[(SurfaceId, Int), JavaFxAdaptiveLayout]
++    var renderedFaces = 0L
++    var preflightMesh = 0
++    while preflightMesh < plan.meshes.length do
++      val packet = plan.meshes(preflightMesh)
++      val faces = packet.indices.length / 3
++      var first = 0
++      while first < faces do
++        val count = math.min(config.facesPerAtlas, faces - first)
++        val retained = if config.encoding.retainsLayout then (previous.toVector.flatMap(_.chunks) ++ retainedChunks).find(c =>
++          c.surface == packet.surface && c.meshKey == packet.resourceKey && c.faceStart == first && c.faceCount == count)
++          .flatMap(_.atlas.adaptiveLayout) else None
++        val layout = Option.when(config.encoding.adaptive)(JavaFxAdaptiveAtlas.layout(packet.indices,
++          colorsBySurface(packet.surface), first, count, retained, preferMedian = config.encoding.retainsLayout))
++        renderedFaces += layout.fold(count.toLong * config.encoding.facesPerSource)(_.renderedFaces.toLong)
++        attributeCount(packet, count, config.encoding, layout) match
++          case Left(error) => return Left(error)
++          case Right(_) => ()
++        layout.foreach(l => layouts((packet.surface, first)) = l)
++        first += count
++      preflightMesh += 1
++    if renderedFaces > config.maxRenderedFaces then
++      return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $renderedFaces exceed budget ${config.maxRenderedFaces}"))
+     val chunks = Vector.newBuilder[JavaFxSurfaceChunk]
+     var verticesUploaded = 0
+     var facesUploaded = 0
+@@ -442,7 +541,7 @@ object JavaFxSurfaceProbe:
+       while faceStart < faceCount do
+         val count = math.min(config.facesPerAtlas, faceCount - faceStart)
+         val atlasStarted = System.nanoTime()
+-        val atlas = buildAtlas(faceStart, count, packet.indices, colorsBySurface(packet.surface), config)
++        val atlas = buildAtlas(faceStart, count, packet.indices, colorsBySurface(packet.surface), config, layouts.get((packet.surface, faceStart)))
+         atlasNanos += System.nanoTime() - atlasStarted
+         atlasPixels += atlas.width.toLong * atlas.height.toLong
+         val chunkStarted = System.nanoTime()
+@@ -660,7 +759,9 @@ object JavaFxSurfaceProbe:
+     faceCount: Int,
+     indices: IntBufferView,
+     colors: Array[Int],
+-    config: JavaFxAtlasConfig
++    config: JavaFxAtlasConfig,
++    layout: Option[JavaFxAdaptiveLayout],
++    stagedPixels: Option[Array[Int]] = None
+   ): JavaFxFaceAtlas =
+     val columns = math.min(config.tilesPerRow, faceCount)
+     val rows = (faceCount + columns - 1) / columns
+@@ -670,16 +771,15 @@ object JavaFxSurfaceProbe:
+     val pixels = byteBuffer.asIntBuffer()
+     val pixelBuffer = new PixelBuffer[IntBuffer](width, height, pixels, PixelFormat.getIntArgbPreInstance())
+     val image = new WritableImage(pixelBuffer)
+-    val adaptive = Option.when(config.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque)(
+-      JavaFxAdaptiveAtlas.layout(indices, colors, faceStart, faceCount))
++    val adaptive = layout
+     val atlas = new JavaFxFaceAtlas(faceStart, faceCount, width, height, config.tileSize,
+       config.encoding, adaptive, pixels, pixelBuffer, image)
+-    atlas.write(indices, colors)
++    stagedPixels.fold(atlas.write(indices, colors))(atlas.replace)
+     atlas
+ 
+   private[javafx] def textureCoordinates(packet: SurfaceMeshPacket, faceStart: Int, faceCount: Int,
+       atlas: JavaFxFaceAtlas, colors: Array[Int]): Array[Float] =
+-    if atlas.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
++    if atlas.encoding.adaptive then
+       return JavaFxAdaptiveAtlas.coordinates(packet, faceStart, faceCount, atlas, colors, atlas.adaptiveLayout.get)
+     if atlas.encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
+       return JavaFxAffineAtlas.coordinates(packet, faceStart, faceCount, atlas, colors)
+@@ -708,15 +808,24 @@ object JavaFxSurfaceProbe:
+     faceStart: Int,
+     faceCount: Int,
+     atlas: JavaFxFaceAtlas,
+-    colors: Array[Int]
++    colors: Array[Int],
++    staged: Option[JavaFxPreparedMeshData] = None
+   ): TriangleMesh =
+     val mesh = new TriangleMesh(VertexFormat.POINT_NORMAL_TEXCOORD)
++    staged match
++      case Some(data) =>
++        mesh.getPoints.setAll(data.points, 0, data.points.length)
++        mesh.getNormals.setAll(data.normals, 0, data.normals.length)
++        mesh.getTexCoords.setAll(data.coordinates, 0, data.coordinates.length)
++        mesh.getFaces.setAll(data.faces, 0, data.faces.length)
++        return mesh
++      case None => ()
+     val points = attributes(packet, packet.positions, faceStart, faceCount, atlas.encoding, atlas.adaptiveLayout)
+     val normals = attributes(packet, packet.normals, faceStart, faceCount, atlas.encoding, atlas.adaptiveLayout)
+     mesh.getPoints.setAll(points, 0, points.length)
+     mesh.getNormals.setAll(normals, 0, normals.length)
+     val texCoords = textureCoordinates(packet, faceStart, faceCount, atlas, colors)
+-    if atlas.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
++    if atlas.encoding.adaptive then
+       val faces = JavaFxAdaptiveAtlas.faces(packet, faceStart, faceCount, atlas.adaptiveLayout.get)
+       mesh.getTexCoords.setAll(texCoords, 0, texCoords.length)
+       mesh.getFaces.setAll(faces, 0, faces.length)
+@@ -746,7 +855,7 @@ object JavaFxSurfaceProbe:
+   private[javafx] def attributeCount(packet: SurfaceMeshPacket, count: Int,
+       encoding: JavaFxAtlasEncoding,
+       adaptive: Option[JavaFxAdaptiveLayout]): Either[JavaFxSurfaceError, Int] =
+-    if encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
++    if encoding.adaptive then
+       JavaFxAdaptiveAtlas.attributeCount(packet.positions.length, adaptive.get.splitCount)
+     else if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
+       val total = count.toLong * 18L
+@@ -757,7 +866,7 @@ object JavaFxSurfaceProbe:
+   private[javafx] def attributes(packet: SurfaceMeshPacket, source: FloatBufferView,
+       first: Int, count: Int, encoding: JavaFxAtlasEncoding,
+       adaptive: Option[JavaFxAdaptiveLayout] = None): Array[Float] =
+-    if encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
++    if encoding.adaptive then
+       JavaFxAdaptiveAtlas.attributes(packet, source, first, count, adaptive.get)
+     else if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
+       JavaFxAffineAtlas.attributes(source, packet.indices, first, count)
+diff --git a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala
+index e36af3760..3921425fd 100644
+--- a/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala
++++ b/modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala
+@@ -23,6 +23,7 @@ enum JavaFxSurfaceCommand:
+   case RebuildGeometry(plan: SurfaceRenderPlan)
+   case UpdateGeometry(plan: SurfaceRenderPlan)
+   case UpdateAtlases(plan: SurfaceRenderPlan)
++  case RefineAtlases(plan: SurfaceRenderPlan)
+   case UpdateMaterial(mode: JavaFxMaterialMode)
+   case UpdateCamera(plan: SurfaceRenderPlan)
+   case UpdateLayout(slots: Vector[SurfaceViewSlot])
+@@ -161,7 +162,8 @@ final case class JavaFxInterpretReceipt(
+   geometryUpdates: Int,
+   geometryBytesUpdated: Long,
+   elapsedNanos: Long,
+-  textureCoordinateBytesUpdated: Long = 0L
++  textureCoordinateBytesUpdated: Long = 0L,
++  chunksReplaced: Int = 0
+ )
+ 
+ final case class JavaFxObservedReceipt(
+@@ -183,38 +185,96 @@ final class JavaFxSurfaceBackend private (
+   private var disposed = false
+ 
+   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
++    render(plan, None)
++
++  /** Publish owned CPU-prepared pixels; camera/readout state may be rebased. */
++  def render(plan: SurfaceRenderPlan,
++      prepared: JavaFxPreparedColorUpdate): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
++    render(plan, Some(prepared))
++
++  /** Capture on FX; the returned retained-layout basis contains CPU data only. */
++  def colorPreparationBasis: Either[JavaFxSurfaceError, JavaFxColorPreparationBasis] =
++    requireFxThread().flatMap: _ =>
++      if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
++      else if !config.encoding.retainsLayout then
++        Left(JavaFxSurfaceError.IncompatiblePlan("worker preparation requires retained affine layout"))
++      else current.map(_.colorPreparationBasis).toRight(JavaFxSurfaceError.IncompatiblePlan("no native layout exists"))
++
++  private def render(plan: SurfaceRenderPlan,
++      supplied: Option[JavaFxPreparedColorUpdate]): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+     JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
+       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
+       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
+         val started = System.nanoTime()
++        // Validate supplied work on every path, including no-op and rebuild,
++        // before native allocation, camera attachment or buffer mutation.
++        supplied.foreach: prepared =>
++          current match
++            case None => scala.util.boundary.break(Left(JavaFxSurfaceError.IncompatiblePlan("prepared layout has no owner")))
++            case Some(probe) => probe.validatePrepared(prepared, plan, Some(JavaFxSurfaceProgram.materialMode(plan))) match
++              case Left(error) => scala.util.boundary.break(Left(error))
++              case Right(_) => ()
+         val incremental = JavaFxSurfaceProgram.compile(currentPlan, plan, config)
+         val rebuildsGeometry = incremental.commands.exists:
+           case JavaFxSurfaceCommand.RebuildGeometry(_) => true
+           case _ => false
++        val changedContent = currentPlan.exists(before => !JavaFxColorPreparationBasis.sameContent(before, plan))
+         val updatesBuffers = incremental.commands.exists:
+           case JavaFxSurfaceCommand.UpdateAtlases(_) | JavaFxSurfaceCommand.UpdateGeometry(_) => true
+           case _ => false
+-        val needsReplacement =
+-          if updatesBuffers && !rebuildsGeometry then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan))
+-          else Right(false)
+-        val program = needsReplacement match
++        val prepared =
++          if !rebuildsGeometry && (updatesBuffers || supplied.nonEmpty || (config.encoding.retainsLayout && changedContent)) then
++            supplied match
++              case Some(value) => Right(Some(value))
++              case None => current.get.prepareColorUpdate(plan, JavaFxSurfaceProgram.materialMode(plan)).map(Some(_))
++          else Right(None)
++        val checked = prepared match
+           case Left(error) => scala.util.boundary.break(Left(error))
+-          case Right(false) => incremental
+-          case Right(true) =>
+-            // Complete construction and resource validation precede the scene swap.
++          case Right(value) => value
++        val program = checked match
++          case Some(colors) if colors.requiresRebuild && config.encoding.retainsLayout &&
++              !colors.geometryChanged && !rebuildsGeometry =>
++            val commands = incremental.commands.filter:
++              case JavaFxSurfaceCommand.UpdateGeometry(_) | JavaFxSurfaceCommand.UpdateAtlases(_) => false
++              case _ => true
++            incremental.copy(commands = Vector(JavaFxSurfaceCommand.RefineAtlases(plan)) ++ commands,
++              dirty = incremental.dirty.copy(geometry = true, layerData = true))
++          case Some(colors) if colors.requiresRebuild =>
+             val full = JavaFxSurfaceProgram.compile(None, plan, config)
+             full.copy(dirty = full.dirty.copy(removedResources = incremental.dirty.removedResources))
++          case _ if rebuildsGeometry => incremental
++          case _ =>
++            // Buffer identity is stronger than V1's 32-bit resource hashes.
++            // CPU preparation proves whether geometry actually changed.
++            val extraGeometry = checked.exists(_.geometryChanged) && !incremental.dirty.geometry
++            val extraColors = checked.nonEmpty && changedContent && !incremental.dirty.layerData
++            val beforeColors = incremental.commands.filter:
++              case JavaFxSurfaceCommand.UpdateAtlases(_) => false
++              case _ => true
++            val commands = beforeColors ++
++              Option.when(extraGeometry)(JavaFxSurfaceCommand.UpdateGeometry(plan)).toVector ++
++              Option.when(incremental.dirty.layerData || extraColors)(JavaFxSurfaceCommand.UpdateAtlases(plan)).toVector
++            // Geometry and atlases must precede material/camera/layout changes.
++            val (buffers, state) = commands.partition:
++              case JavaFxSurfaceCommand.UpdateGeometry(_) | JavaFxSurfaceCommand.UpdateAtlases(_) => true
++              case _ => false
++            incremental.copy(commands = buffers ++ state, dirty = incremental.dirty.copy(
++              geometry = incremental.dirty.geometry || extraGeometry,
++              layerData = incremental.dirty.layerData || extraColors))
+         var atlasUpdates = 0
+         var geometryUpdates = 0
+         var geometryBytesUpdated = 0L
+         var textureCoordinateBytesUpdated = 0L
++        var chunksReplaced = 0
+         var index = 0
+         var failure: Option[JavaFxSurfaceError] = None
+         while index < program.commands.length && failure.isEmpty do
+           program.commands(index) match
+             case JavaFxSurfaceCommand.DisposeResources(_) => ()
+             case JavaFxSurfaceCommand.RebuildGeometry(next) =>
+-              JavaFxSurfaceProbe.compile(next, JavaFxSurfaceProgram.materialMode(next), config) match
++              JavaFxSurfaceProbe.compileRetaining(next, JavaFxSurfaceProgram.materialMode(next), config,
++                if config.encoding.retainsLayout && currentPlan.exists(_.receipt.meshKeys == next.receipt.meshKeys) then current else None,
++                checked.map(_.colorsBySurface)) match
+                 case Left(error) => failure = Some(error)
+                 case Right(probe) =>
+                   mountedScene.foreach: scene =>
+@@ -230,11 +290,20 @@ final class JavaFxSurfaceBackend private (
+                   geometryUpdates += 1
+                   geometryBytesUpdated += receipt.bytesUpdated
+             case JavaFxSurfaceCommand.UpdateAtlases(next) =>
+-              current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)) match
++              current.get.updatePreparedColors(checked.get, next, commit = true) match
++                case Left(error) => failure = Some(error)
++                case Right(receipt) =>
++                  atlasUpdates += receipt.atlasesUpdated
++                  textureCoordinateBytesUpdated += receipt.textureCoordinateBytesUpdated
++            case JavaFxSurfaceCommand.RefineAtlases(next) =>
++              current.get.refinePreparedColors(checked.get, next) match
+                 case Left(error) => failure = Some(error)
+                 case Right(receipt) =>
+                   atlasUpdates += receipt.atlasesUpdated
++                  geometryUpdates += 1
++                  geometryBytesUpdated += receipt.bytesUpdated
+                   textureCoordinateBytesUpdated += receipt.textureCoordinateBytesUpdated
++                  chunksReplaced += receipt.chunksReplaced
+             case JavaFxSurfaceCommand.UpdateMaterial(mode) =>
+               current.foreach: probe =>
+                 probe.setMaterialMode(mode) match
+@@ -249,6 +318,7 @@ final class JavaFxSurfaceBackend private (
+         failure match
+           case Some(error) => Left(error)
+           case None =>
++            if geometryUpdates > 0 then current.foreach(_.invalidateColorPreparationBasis())
+             currentPlan = Some(plan)
+             Right(JavaFxInterpretReceipt(
+               program.dirty,
+@@ -258,7 +328,8 @@ final class JavaFxSurfaceBackend private (
+               geometryUpdates,
+               geometryBytesUpdated,
+               System.nanoTime() - started,
+-              textureCoordinateBytesUpdated
++              textureCoordinateBytesUpdated,
++              chunksReplaced
+             ))
+ 
+   def renderObserved(
+@@ -266,10 +337,11 @@ final class JavaFxSurfaceBackend private (
+     path: SurfaceAdmissionPath
+   ): Either[JavaFxSurfaceError, JavaFxObservedReceipt] =
+     val previous = currentPlan
++    val previousChunks = current.toVector.flatMap(_.chunks)
+     render(plan).map: receipt =>
+       val events = Vector.newBuilder[SurfaceResourceEvent]
+-      if receipt.dirty.geometry && receipt.geometryUpdates == 0 then
+-        current.toVector.flatMap(_.chunks).foreach: chunk =>
++      if receipt.dirty.geometry && (receipt.geometryUpdates == 0 || receipt.chunksReplaced > 0) then
++        current.toVector.flatMap(_.chunks).filter(c => !previousChunks.exists(p => p.view eq c.view)).foreach: chunk =>
+           events += SurfaceResourceEvent.MeshUploaded(
+             chunk.meshKey,
+             chunk.mesh.getPoints.size() / 3,
+diff --git a/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala
+index 964e4efe9..6064d0328 100644
+--- a/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala
++++ b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala
+@@ -86,7 +86,7 @@ object JavaFxAffineColorProbe:
+     finally out.close()
+ 
+   private def render(f: Fixture, encoding: JavaFxAtlasEncoding, aa: SceneAntialiasing,
+-      maxTextureSize: Int, lighting: SurfaceLighting): WritableImage =
++      maxTextureSize: Int, lighting: SurfaceLighting, retainedSeed: Boolean): WritableImage =
+     val id = SurfaceId.unsafe("color-oracle")
+     val geometry = SurfaceGeometry(TriangleMesh.fromArrays(f.positions.map(_.toDouble),f.faces),Hemisphere.Left,SurfaceKind.Inflated)
+     val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("original-rgb"),id,geometry,f.colors.toVector.map(Rgba32.fromPackedInt)).toOption.get
+@@ -104,7 +104,15 @@ object JavaFxAffineColorProbe:
+       lightingPolicy=JavaFxAtlasLighting.WorldVertexLambert
+     ).toOption.get
+     val mode = if lighting==SurfaceLighting.Unlit then JavaFxMaterialMode.Unlit else JavaFxMaterialMode.Lit
+-    val probe = JavaFxSurfaceProbe.compile(plan,mode,config).toOption.get
++    val previous = Option.when(retainedSeed):
++      val primaries = Vector(Rgba32.unsafe(255,0,0),Rgba32.unsafe(0,255,0),Rgba32.unsafe(0,0,255))
++      val seedLayer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("seed-rgb"), id, geometry,
++        Vector.tabulate(f.colors.length)(i => primaries(i % 3))).toOption.get
++      val seedModel = SurfaceViewerModel.make(model.surfaces, Vector(seedLayer)).toOption.get
++      val seedCompiled = SurfaceCompiler.compile(seedModel, SurfaceViewerState.initial(seedModel).copy(lighting=lighting)).toOption.get
++      val seed = seedCompiled.copy(meshes=seedCompiled.meshes.map(_.copy(normals=new FloatBufferView(f.normals))))
++      JavaFxSurfaceProbe.compile(seed, mode, config).toOption.get
++    val probe = JavaFxSurfaceProbe.compileRetaining(plan, mode, config, previous).toOption.get
+     println(s"atlases=${probe.chunks.map(c => s"${c.atlas.width}x${c.atlas.height}").mkString(",")} faces=${probe.chunks.map(_.renderedFaceCount).sum}")
+     // Isolate the scientific atlas/geometry lowering from application camera fit.
+     // ParallelCamera expresses this fixture directly in known pixel coordinates.
+@@ -130,6 +138,9 @@ object JavaFxAffineColorProbe:
+     val encoding = JavaFxAtlasEncoding.valueOf(args(1))
+     val maxTextureSize = args.lift(2).fold(256)(_.toInt)
+     val lightingName = args.lift(3).getOrElse("Unlit")
++    val retainedSeed = args.lift(4).contains("seeded")
++    require(args.lift(4).forall(value => value == "fresh" || value == "seeded"))
++    require(!retainedSeed || encoding.retainsLayout, "seeded refinement requires retained encoding")
+     val lighting = lightingName match
+       case "Unlit" => SurfaceLighting.Unlit
+       case "Default" => SurfaceLighting.Default
+@@ -137,7 +148,7 @@ object JavaFxAffineColorProbe:
+       case other => throw new IllegalArgumentException(s"unknown fixture lighting: $other")
+     require(JavaFxAtlasConfig.make(maxTextureSize=maxTextureSize,encoding=encoding).isRight)
+     Files.writeString(output.resolve("fixture-config.json"),
+-      s"""{"maxTextureSize":$maxTextureSize,"lighting":"$lightingName","encoding":"$encoding"}
++      s"""{"maxTextureSize":$maxTextureSize,"lighting":"$lightingName","encoding":"$encoding","retainedSeed":$retainedSeed}
+ """)
+     for name <- Vector("com.sun.prism.es2.ES2PhongMaterial","com.sun.prism.es2.ES2PhongShader") do
+       val source = Class.forName(name).getProtectionDomain.getCodeSource.getLocation.toString
+@@ -155,7 +166,7 @@ object JavaFxAffineColorProbe:
+           val name = s"$family-$order-${if oblique then "oblique" else "front"}-$aa"
+           val f = fixture(family,order,oblique)
+           saveOriginal(output.resolve(name+".bin"),f,lighting)
+-          val image = render(f,encoding,aa,maxTextureSize,lighting)
++          val image = render(f,encoding,aa,maxTextureSize,lighting,retainedSeed)
+           val colors = scala.collection.mutable.Set.empty[Int]
+           var y = 0
+           while y < 256 do
+diff --git a/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala
+index 90c048efc..0529ad215 100644
+--- a/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala
++++ b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala
+@@ -8,6 +8,7 @@ import javax.imageio.ImageIO
+ import java.nio.{ByteBuffer, ByteOrder}
+ import java.nio.file.{Files, Path}
+ import java.util.concurrent.{CountDownLatch, TimeUnit}
++import java.util.concurrent.FutureTask
+ import _root_.javafx.application.Platform
+ import _root_.javafx.scene.{Group, Scene as FxScene, SceneAntialiasing, SubScene}
+ import _root_.javafx.scene.image.WritableImage
+@@ -90,28 +91,31 @@ object JavaFxAffineCortexProbe:
+       reverse: Boolean = false, shift: Double = 0)
+   private final case class Prepared(plan: SurfaceRenderPlan, model: SurfaceViewerModel, state: SurfaceViewerState)
+ 
+-  private def prepare(source: Source, settings: Settings): Prepared =
++  private def prepare(source: Source, settings: Settings, reuse: Option[Prepared] = None): Prepared =
+     val geometries = source.plan.meshes.map: m =>
+-      val coordinates = m.positions.unsafeArray.map(_.toDouble)
+-      if settings.shift != 0 then
+-        var vertex = 0
+-        while vertex < coordinates.length do
+-          // Shift along the exported camera's screen-right world basis. A
+-          // translation along its viewing axis is invisible orthographically.
+-          var axis = 0
+-          while axis < 3 do
+-            coordinates(vertex + axis) += settings.shift * source.plan.camera.viewMatrix(axis)
+-            axis += 1
+-          vertex += 3
+-      m -> SurfaceGeometry(TriangleMesh.fromArrays(coordinates, m.indices.unsafeArray),
+-        if hemi(m.surface) == "lh" then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Inflated)
+-    val assets = geometries.map((m, g) => SurfaceAsset.make(m.surface, g).toOption.get)
++      val existing = reuse.filter(_ => settings.shift == 0).flatMap(_.model.surface(m.surface)).map(_.geometry)
++      val geometry = existing.getOrElse:
++        val coordinates = m.positions.unsafeArray.map(_.toDouble)
++        if settings.shift != 0 then
++          var vertex = 0
++          while vertex < coordinates.length do
++            var axis = 0
++            while axis < 3 do
++              coordinates(vertex + axis) += settings.shift * source.plan.camera.viewMatrix(axis)
++              axis += 1
++            vertex += 3
++        SurfaceGeometry(TriangleMesh.fromArrays(coordinates, m.indices.unsafeArray),
++          if hemi(m.surface) == "lh" then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Inflated)
++      m -> geometry
++    val assets = reuse.filter(_ => settings.shift == 0).fold(
++      geometries.map((m, g) => SurfaceAsset.make(m.surface, g).toOption.get))(_.model.surfaces)
+     val layers = geometries.flatMap: (m, g) =>
+       val under = source.plan.layers.find(p => p.surface == m.surface && p.layer.value.startsWith("cortex-")).get
+       val over = source.plan.layers.find(p => p.surface == m.surface && !p.layer.value.startsWith("cortex-")).get
+       Vector(
+-        SurfaceLayer.packedRgba(under.layer, m.surface, g,
+-          under.colors.unsafeArray.toVector.map(Rgba32.fromPackedInt), opacity=under.opacity, blendMode=under.blendMode).toOption.get,
++        reuse.filter(_ => settings.shift == 0).flatMap(_.model.layer(under.layer)).getOrElse(
++          SurfaceLayer.packedRgba(under.layer, m.surface, g,
++            under.colors.unsafeArray.toVector.map(Rgba32.fromPackedInt), opacity=under.opacity, blendMode=under.blendMode).toOption.get),
+         SurfaceLayer.scalar(over.layer, m.surface, g, source.values(m.surface),
+           Exporter(source.range, settings.cutoff, settings.reverse), opacity=DisplayOpacity.unsafe(settings.opacity),
+           blendMode=over.blendMode).toOption.get)
+@@ -143,10 +147,13 @@ object JavaFxAffineCortexProbe:
+       require(packet.opacity.toDouble == settings.opacity)
+     require(finiteChecked > 0)
+     val meshes = compiled.meshes.map: packet =>
+-      val original = source.plan.meshes.find(_.surface == packet.surface).get
++      val original = reuse.filter(_ => settings.shift == 0).flatMap(_.plan.meshes.find(_.surface == packet.surface))
++        .getOrElse(source.plan.meshes.find(_.surface == packet.surface).get)
+       require(java.util.Arrays.equals(packet.indices.unsafeArray, original.indices.unsafeArray))
+       if settings.shift == 0 then require(java.util.Arrays.equals(packet.positions.unsafeArray, original.positions.unsafeArray))
+-      packet.copy(resourceKey=original.resourceKey, normals=original.normals,
++      packet.copy(resourceKey=original.resourceKey,
++        positions=if reuse.nonEmpty && settings.shift == 0 then original.positions else packet.positions,
++        indices=original.indices, normals=original.normals,
+         geometryRevision=Some(if settings.shift == 0 then original.geometryKey
+           else SurfaceResourceKey(original.geometryKey.value + ":qualification-translation")))
+     val drawPasses = compiled.drawPasses.map: pass =>
+@@ -168,6 +175,25 @@ object JavaFxAffineCortexProbe:
+     image.setRGB(0, 0, Width, Height, pixels, 0, Width)
+     require(ImageIO.write(image, "png", path.toFile))
+ 
++  private def maxChannelDifference(a: Array[Int], b: Array[Int]): Int =
++    var maximum = 0; var i = 0
++    while i < a.length do
++      var shift = 0
++      while shift <= 24 do
++        maximum = math.max(maximum, math.abs(((a(i) >>> shift) & 255) - ((b(i) >>> shift) & 255)))
++        shift += 8
++      i += 1
++    maximum
++
++  private def invertedComposite(plan: SurfaceRenderPlan): SurfaceRenderPlan =
++    val colors = JavaFxSurfaceProbe.compositeColors(plan, JavaFxMaterialMode.Unlit, JavaFxAtlasLighting.NativePhong)
++    val layers = plan.meshes.map: mesh =>
++      val inverted = colors(mesh.surface).map(value => value ^ 0xffffff00)
++      SurfaceLayerPacket(SurfaceLayerId.unsafe("adversarial-final-rgb:" + mesh.surface.value), mesh.surface,
++        SurfaceResourceKey("adversarial-final-rgb:" + mesh.surface.value), new IntBufferView(inverted),
++        DisplayOpacity.unsafe(1), DisplayBlendMode.Normal)
++    plan.copy(layers = layers, receipt = plan.receipt.copy(layerKeys = layers.map(_.resourceKey)))
++
+   private def checkPicks(prepared: Prepared, source: Source, backend: JavaFxSurfaceBackend, scene: SubScene): String =
+     val controller = JavaFxSurfaceController.attachRendered(prepared.model, prepared.state, backend, scene).toOption.get
+     try
+@@ -211,8 +237,181 @@ object JavaFxAffineCortexProbe:
+       s"""{"sampled":$sampled,"agreed":$agreed,"missing":$missing,"selectionReadouts":$readouts,"maximumBarycentricError":$maximumBarycentricError}"""
+     finally controller.dispose()
+ 
++  private def verifyRuntime(): Unit =
++    val expected = Option(System.getProperty("probe.expectedOrigin")).getOrElse(
++      throw new IllegalStateException("diagnostic runtime origin pin is required"))
++    for name <- Vector("com.sun.prism.es2.ES2PhongMaterial", "com.sun.prism.es2.ES2PhongShader") do
++      require(Class.forName(name).getProtectionDomain.getCodeSource.getLocation.toString == expected,
++        s"unexpected $name origin")
++
++  private def onFx[A](operation: => A): A =
++    val task = new FutureTask[A](() => operation)
++    Platform.runLater(task)
++    task.get(300, TimeUnit.SECONDS)
++
++  private final case class Publication(receipt: JavaFxInterpretReceipt, pixels: Array[Int],
++      queueNanos: Long, publishNanos: Long, snapshotNanos: Long, pixelCopyNanos: Long,
++      allocated: Long, faces: Long, atlasBytes: Long, meshBytes: Long,
++      heapUsed: Long, heapCommitted: Long, heapMax: Long)
++
++  /** Worker input -> public scalar/model/plan -> optional CPU atlas preparation
++    * -> queued FX publication -> synchronous snapshot. Node.snapshot includes
++    * draw/readback; this does not measure the PLS consumer's full FX callback.
++    */
++  private def benchmarkMain(source: Source, alternate: Source, output: Path, lighting: SurfaceLighting,
++      config: JavaFxAtlasConfig, sceneName: String, lightingName: String, antialiasing: SceneAntialiasing): Unit =
++    require(source.plan.meshes.length == alternate.plan.meshes.length)
++    source.plan.meshes.zip(alternate.plan.meshes).foreach: (left, right) =>
++      require(left.surface == right.surface && java.util.Arrays.equals(left.positions.unsafeArray, right.positions.unsafeArray) &&
++        java.util.Arrays.equals(left.normals.unsafeArray, right.normals.unsafeArray) && java.util.Arrays.equals(left.indices.unsafeArray, right.indices.unsafeArray),
++        s"alternate source geometry differs for ${left.surface.value}")
++    val initial = prepare(source, Settings(lighting, source.cutoff))
++    val allocation = ManagementFactory.getThreadMXBean.asInstanceOf[com.sun.management.ThreadMXBean]
++    require(allocation.isThreadAllocatedMemorySupported)
++    if !allocation.isThreadAllocatedMemoryEnabled then allocation.setThreadAllocatedMemoryEnabled(true)
++    Platform.startup(() => ())
++    try
++      val (backend, scene, host) = onFx:
++        verifyRuntime()
++        val backend = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
++        backend.render(initial.plan).toOption.get
++        val scene = backend.newSubScene(JavaFxSnapshotConfig.make(Width, Height, antialiasing).toOption.get).toOption.get
++        val host = new FxScene(new Group(scene), Width, Height)
++        host.getRoot.applyCss(); host.getRoot.layout()
++        (backend, scene, host)
++      try
++        val baseline = onFx(pixels(scene))
++        require(baseline.distinct.length > 32, "blank/degenerate cortex")
++        require(java.util.Arrays.equals(baseline, onFx(pixels(scene))), "repeat native baseline differs")
++        save(output.resolve("initial.png"), baseline)
++        val beforePicks = onFx(checkPicks(initial, source, backend, scene))
++        val rows = Vector.newBuilder[String]
++        val variants = Vector("palette", "cutoff", "opacity", "map", "adversarialFinalRgb", "unchanged")
++        def target(name: String, restoring: Boolean): SurfaceRenderPlan =
++          if name == "unchanged" then initial.plan
++          else if restoring then prepare(source, Settings(lighting, source.cutoff), Some(initial)).plan
++          else name match
++            case "palette" => prepare(source, Settings(lighting, source.cutoff, reverse = true), Some(initial)).plan
++            case "cutoff" => prepare(source, Settings(lighting, source.cutoff * 1.5), Some(initial)).plan
++            case "opacity" => prepare(source, Settings(lighting, source.cutoff, opacity = .5), Some(initial)).plan
++            case "map" => prepare(alternate, Settings(lighting, alternate.cutoff), Some(initial)).plan
++            case "adversarialFinalRgb" => invertedComposite(initial.plan)
++            case other => throw new IllegalArgumentException(other)
++        var warmed = baseline
++        var currentCpuPlan = initial.plan
++        var stableFaces = -1L
++        var publications = 0
++        def publish(name: String, restoring: Boolean, worker: Boolean, phase: String, cycle: Int): Unit =
++          val inputStarted = System.nanoTime()
++          val workerAllocStart = allocation.getThreadAllocatedBytes(Thread.currentThread.getId)
++          val planStarted = System.nanoTime()
++          val plan = if name == "unchanged" then currentCpuPlan else target(name, restoring)
++          val planNanos = System.nanoTime() - planStarted
++          val captured = if worker && name != "unchanged" then
++            val captureStarted = System.nanoTime()
++            val basis = onFx(backend.colorPreparationBasis.toOption.get)
++            Some((basis, System.nanoTime() - captureStarted))
++          else None
++          val atlasStarted = System.nanoTime()
++          val prepared = captured.map((basis, _) => basis.prepare(plan).fold(e => throw new IllegalStateException(e.message), identity))
++          val atlasNanos = if prepared.nonEmpty then System.nanoTime() - atlasStarted else 0L
++          val workerAllocated = allocation.getThreadAllocatedBytes(Thread.currentThread.getId) - workerAllocStart
++          val queued = System.nanoTime()
++          val result = onFx:
++            val queueNanos = System.nanoTime() - queued
++            val allocatedBefore = allocation.getThreadAllocatedBytes(Thread.currentThread.getId)
++            val fxStarted = System.nanoTime()
++            val receipt = prepared.fold(backend.render(plan))(value => backend.render(plan, value)).fold(
++              e => throw new IllegalStateException(s"$phase/$name: ${e.message}"), identity)
++            val fxNanos = System.nanoTime() - fxStarted
++            val fxAllocated = allocation.getThreadAllocatedBytes(Thread.currentThread.getId) - allocatedBefore
++            val snapshotStarted = System.nanoTime()
++            val image = scene.snapshot(null, new WritableImage(Width, Height))
++            val snapshotNanos = System.nanoTime() - snapshotStarted
++            val copyStarted = System.nanoTime()
++            val observed = new Array[Int](Width * Height)
++            image.getPixelReader.getPixels(0, 0, Width, Height,
++              _root_.javafx.scene.image.PixelFormat.getIntArgbInstance(), observed, 0, Width)
++            val copyNanos = System.nanoTime() - copyStarted
++            val heap = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage
++            require(backend.pickingPlan.contains(plan))
++            Publication(receipt, observed, queueNanos, fxNanos, snapshotNanos, copyNanos, fxAllocated,
++              backend.chunks.map(_.renderedFaceCount.toLong).sum,
++              backend.chunks.map(c => c.atlas.width.toLong * c.atlas.height * 4).sum,
++              backend.chunks.map(c => (c.mesh.getPoints.size().toLong + c.mesh.getNormals.size() + c.mesh.getTexCoords.size() + c.mesh.getFaces.size()) * 4).sum,
++              heap.getUsed, heap.getCommitted, heap.getMax)
++          val endToEndNanos = System.nanoTime() - inputStarted
++          currentCpuPlan = plan
++          val changed = result.pixels.indices.count(i => result.pixels(i) != warmed(i))
++          if phase == "first" && restoring then
++            val maximum = maxChannelDifference(baseline, result.pixels)
++            if maximum > 2 then
++              save(output.resolve(s"failed-$name-restoration.png"), result.pixels)
++              Files.writeString(output.resolve("failure.json"),
++                s"""{"variant":"$name","phase":"$phase","maximumChannelDifference":$maximum,"changedPixels":$changed,"faces":${result.faces},"chunksReplaced":${result.receipt.chunksReplaced}}\n""")
++            // Pairwise differences across subdivisions are observations, not
++            // the frozen footprint-envelope/AA-off-center correctness gate.
++            save(output.resolve(s"first-$name-restored.png"), result.pixels)
++          else if restoring || name == "unchanged" then
++            require(changed == 0, s"$phase/$name restoration differs at $changed pixels")
++          else require(changed > 0, s"$name produced no framebuffer change")
++          if name == "unchanged" then
++            require(result.receipt.atlasUpdates == 0 && result.receipt.geometryUpdates == 0 && result.receipt.textureCoordinateBytesUpdated == 0)
++          if phase == "warm" then
++            require(result.receipt.textureCoordinateBytesUpdated == 0 && result.receipt.geometryBytesUpdated == 0 &&
++              result.receipt.geometryUpdates == 0 && result.receipt.chunksReplaced == 0 && result.faces == stableFaces,
++              s"$name warm publication changed retained topology")
++          rows += s"""{"phase":"$phase","cycle":$cycle,"variant":"$name","restoring":$restoring,"workerPrepared":$worker,"publicPlanNanos":$planNanos,"basisCaptureWallNanos":${captured.fold(0L)(_._2)},"atlasPreparationNanos":$atlasNanos,"workerAllocatedBytes":$workerAllocated,"fxQueueWaitNanos":${result.queueNanos},"fxPublishNanos":${result.publishNanos},"snapshotNanos":${result.snapshotNanos},"pixelCopyNanos":${result.pixelCopyNanos},"inputToSnapshotNanos":$endToEndNanos,"fxPublishAllocatedBytes":${result.allocated},"changedPixels":$changed,"atlasUpdates":${result.receipt.atlasUpdates},"uvBytes":${result.receipt.textureCoordinateBytesUpdated},"geometryBytes":${result.receipt.geometryBytesUpdated},"chunksReplaced":${result.receipt.chunksReplaced},"faces":${result.faces},"retainedAtlasBytes":${result.atlasBytes},"retainedMeshBytes":${result.meshBytes},"heapUsed":${result.heapUsed},"heapCommitted":${result.heapCommitted},"heapMax":${result.heapMax}}"""
++          publications += 1
++        variants.filterNot(_ == "unchanged").foreach: name =>
++          publish(name, restoring = false, worker = true, phase = "first", cycle = 0)
++          publish(name, restoring = true, worker = true, phase = "first", cycle = 0)
++        warmed = onFx(pixels(scene))
++        stableFaces = onFx(backend.chunks.map(_.renderedFaceCount.toLong).sum)
++        save(output.resolve("warmed.png"), warmed)
++        for worker <- Vector(false, true); cycle <- 0 until 5; name <- variants; restoring <- Vector(false, true) do
++          publish(name, restoring, worker, "warm", cycle)
++        require(publications == 130)
++        onFx(backend.render(initial.plan).toOption.get)
++        val restored = onFx(pixels(scene))
++        require(java.util.Arrays.equals(restored, warmed))
++        save(output.resolve("restored.png"), restored)
++        val afterPicks = onFx(checkPicks(initial, source, backend, scene))
++        val fullReference = onFx:
++          val full = JavaFxSurfaceProbe.compileRetaining(initial.plan, JavaFxSurfaceProgram.materialMode(initial.plan),
++            config, None, retainedChunks = backend.chunks).toOption.get
++          require(full.chunks.length == backend.chunks.length)
++          full.chunks.zip(backend.chunks).foreach: (a,b) =>
++            require(a.surface == b.surface && a.faceStart == b.faceStart && a.faceCount == b.faceCount)
++            require(java.util.Arrays.equals(a.mesh.getPoints.toArray(null: Array[Float]), b.mesh.getPoints.toArray(null: Array[Float])))
++            require(java.util.Arrays.equals(a.mesh.getNormals.toArray(null: Array[Float]), b.mesh.getNormals.toArray(null: Array[Float])))
++            require(java.util.Arrays.equals(a.mesh.getTexCoords.toArray(null: Array[Float]), b.mesh.getTexCoords.toArray(null: Array[Float])))
++            require(java.util.Arrays.equals(a.mesh.getFaces.toArray(null: Array[Int]), b.mesh.getFaces.toArray(null: Array[Int])))
++            val left = a.atlas.pixelBuffer.getBuffer; val right = b.atlas.pixelBuffer.getBuffer
++            require(left.capacity() == right.capacity())
++            var i = 0
++            while i < left.capacity() do
++              require(left.get(i) == right.get(i), s"full retained reference atlas texel differs at $i")
++              i += 1
++          full.setViewportSize(Width,Height)
++          val referenceScene = new SubScene(full.root,Width,Height,true,antialiasing)
++          full.attachCamera(referenceScene); referenceScene.setFill(Color.WHITE)
++          val referenceHost = new FxScene(new Group(referenceScene),Width,Height)
++          referenceHost.getRoot.applyCss(); referenceHost.getRoot.layout()
++          pixels(referenceScene)
++        require(java.util.Arrays.equals(restored, fullReference), "incremental final frame differs from same-layout full retained rebuild")
++        save(output.resolve("full-retained-reference.png"), fullReference)
++        val hashes = InputHashes.toVector.sortBy(_._1).map((name, hash) => s"\"$name\":\"$hash\"").mkString("{", ",", "}")
++        val record = s"""{"schema":"scalafim.javafx-retained-cortex.v1","diagnosticBackend":true,"consumerFullCallbackMeasured":false,"isolatedGpuDrawMeasured":false,"denseFirstRefinementFootprintQualified":false,"fullRetainedReferenceExact":true,"scene":"$sceneName","lighting":"$lightingName","antialiasing":"$antialiasing","encoding":"${config.encoding}","vertices":${source.plan.meshes.map(_.positions.length.toLong / 3).sum},"sourceFaces":${source.plan.meshes.map(_.indices.length.toLong / 3).sum},"inputs":$hashes,"firstPublications":10,"warmPublications":120,"baselineMaxChannelDifference":${maxChannelDifference(baseline, warmed)},"beforePicks":$beforePicks,"afterPicks":$afterPicks,"updates":${rows.result().mkString("[", ",", "]")}}"""
++        Files.writeString(output.resolve("receipt.json"), record + "\n")
++        println(s"PASS $sceneName $lightingName retained cortex: 130 measured publications, 2400 native original-face picks")
++      finally onFx(backend.dispose())
++    finally Platform.exit()
++
+   def main(args: Array[String]): Unit =
+-    require(args.length == 5, "inputdir scene(beta|fir) output lighting(Unlit|Default|Soft) encoding")
++    require(args.length == 5 || ((args.length == 6 || args.length == 7) && args(5) == "benchmark"),
++      "inputdir scene(beta|fir) output lighting(Unlit|Default|Soft) encoding [benchmark [DISABLED|BALANCED]]")
++    val benchmark = args.lift(5).contains("benchmark")
+     val dir = Path.of(args(0))
+     verifyInputs(dir)
+     val source = read(dir, args(1))
+@@ -225,6 +424,17 @@ object JavaFxAffineCortexProbe:
+       case "Default" => SurfaceLighting.Default
+       case "Soft" => soft
+       case other => throw new IllegalArgumentException(other)
++    val config = JavaFxAtlasConfig.make(encoding=JavaFxAtlasEncoding.valueOf(args(4)),
++      lightingPolicy=JavaFxAtlasLighting.WorldVertexLambert).toOption.get
++    if benchmark then require(config.encoding == JavaFxAtlasEncoding.RetainedAffineOpaque,
++      "benchmark requires RetainedAffineOpaque so CPU atlas preparation has a stable owner")
++    if benchmark then
++      benchmarkMain(source, alternate, output, lighting, config, args(1), args(3),
++        args.lift(6).getOrElse("BALANCED") match
++          case "BALANCED" => SceneAntialiasing.BALANCED
++          case "DISABLED" => SceneAntialiasing.DISABLED
++          case other => throw new IllegalArgumentException(other))
++      return
+     val initial = prepare(source, Settings(lighting, source.cutoff))
+     val variants = Vector(
+       "palette" -> prepare(source, Settings(lighting, source.cutoff, reverse=true)).plan,
+@@ -237,8 +447,6 @@ object JavaFxAffineCortexProbe:
+     view(3) += 2f
+     val cameraVariant = initial.plan.copy(camera=initial.plan.camera.copy(viewMatrix=new FloatBufferView(view)),
+       receipt=initial.plan.receipt.copy(cameraKey=initial.plan.receipt.cameraKey + ":qualification-pan"))
+-    val config = JavaFxAtlasConfig.make(encoding=JavaFxAtlasEncoding.valueOf(args(4)),
+-      lightingPolicy=JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+     val done = new CountDownLatch(1)
+     @volatile var failure: Throwable | Null = null
+     Platform.startup(() => ())
+@@ -246,6 +454,10 @@ object JavaFxAffineCortexProbe:
+       try
+         val backend = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
+         try
++          Option(System.getProperty("probe.expectedOrigin")).foreach: expected =>
++            for name <- Vector("com.sun.prism.es2.ES2PhongMaterial", "com.sun.prism.es2.ES2PhongShader") do
++              val actual = Class.forName(name).getProtectionDomain.getCodeSource.getLocation.toString
++              require(actual == expected, s"unexpected $name origin: $actual")
+           backend.render(initial.plan).toOption.get
+           val scene = backend.newSubScene(JavaFxSnapshotConfig.make(Width, Height, SceneAntialiasing.BALANCED).toOption.get).toOption.get
+           val host = new FxScene(new Group(scene), Width, Height)
+@@ -289,7 +501,8 @@ object JavaFxAffineCortexProbe:
+           val afterPicks = checkPicks(initial, source, backend, scene)
+           save(output.resolve("restored.png"), pixels(scene))
+           val hashes = InputHashes.toVector.sortBy(_._1).map((name, hash) => s"\"$name\":\"$hash\"").mkString("{", ",", "}")
+-          val record = s"""{"schema":"scalafim.javafx-affine-cortex.v1","scene":"${args(1)}","lighting":"${args(3)}","encoding":"${args(4)}","vertices":${source.plan.meshes.map(_.positions.length.toLong / 3).sum},"sourceFaces":${source.plan.meshes.map(_.indices.length.toLong / 3).sum},"inputs":$hashes,"updates":${rows.result().mkString("[", ",", "]")},"beforePicks":$beforePicks,"afterPicks":$afterPicks}"""
++          val heap = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage
++          val record = s"""{"schema":"scalafim.javafx-affine-cortex.v1","diagnosticBackend":true,"benchmark":$benchmark,"scene":"${args(1)}","lighting":"${args(3)}","encoding":"${args(4)}","vertices":${source.plan.meshes.map(_.positions.length.toLong / 3).sum},"sourceFaces":${source.plan.meshes.map(_.indices.length.toLong / 3).sum},"inputs":$hashes,"heap":{"used":${heap.getUsed},"committed":${heap.getCommitted},"max":${heap.getMax}},"updates":${rows.result().mkString("[", ",", "]")},"beforePicks":$beforePicks,"afterPicks":$afterPicks}"""
+           Files.writeString(output.resolve("receipt.json"), record + "\n")
+           println(s"PASS ${args(1)} ${args(3)} cortex: 32 verified updates/restorations, 2400 native original-face picks")
+         finally backend.dispose()
+diff --git a/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala
+new file mode 100644
+index 000000000..b8620e627
+--- /dev/null
++++ b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala
+@@ -0,0 +1,278 @@
++package scalafim.surface.view.javafx
++
++import intaglio.*
++import scalafim.surface.view.*
++import java.util.concurrent.{CountDownLatch, FutureTask, TimeUnit}
++
++class JavaFxColorPreparationSuite extends munit.FunSuite:
++  import JavaFxAffineFixture.*
++  private val config = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.RetainedAffineOpaque).toOption.get
++  private val grey = Vector(1, 100, 101).map(v => Rgba32.unsafe(v, v, v))
++  private def atlas(probe: JavaFxSurfaceProbeResult): Vector[Int] =
++    val image = probe.chunks.head.atlas.image
++    Vector.tabulate(image.getWidth.toInt * image.getHeight.toInt)(i =>
++      image.getPixelReader.getArgb(i % image.getWidth.toInt, i / image.getWidth.toInt))
++
++  test("worker preparation owns pixels and agrees with synchronous final lowering"):
++    val original = plan(model(grey))
++    val target = plan(model(Vector.fill(3)(Rgba32.unsafe(80, 80, 80))))
++    val probe = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val basis = probe.colorPreparationBasis
++    val task = new FutureTask(() => basis.prepare(target).toOption.get)
++    val worker = new Thread(task, "retained-colour-test")
++    worker.start()
++    val prepared = task.get(10, TimeUnit.SECONDS)
++    worker.join(1000)
++    assert(!worker.isAlive)
++    assertEquals(probe.updatePreparedColors(prepared, target, commit = false).toOption.get.textureCoordinateBytesUpdated, 0L)
++    val cold = JavaFxSurfaceProbe.compile(target, JavaFxSurfaceProgram.materialMode(target), config).toOption.get
++    assertEquals(atlas(probe), atlas(cold))
++
++  test("prepared colour content accepts camera/readout rebasing but rejects changed buffers with unchanged keys"):
++    val original = plan(model(grey))
++    val probe = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val prepared = probe.colorPreparationBasis.prepare(original).toOption.get
++    val view = original.camera.viewMatrix.unsafeArray.clone()
++    view(3) += 2
++    val rebased = original.copy(camera = original.camera.copy(viewMatrix = new FloatBufferView(view)),
++      receipt = original.receipt.copy(cameraKey = original.receipt.cameraKey + ":pan"), readouts = Vector.empty)
++    assertEquals(probe.validatePrepared(prepared, rebased), Right(()))
++    val mesh = original.meshes.head
++    val layer = original.layers.head
++    val changes = Vector(
++      original.copy(meshes = Vector(mesh.copy(positions = new FloatBufferView(mesh.positions.unsafeArray.clone())))),
++      original.copy(meshes = Vector(mesh.copy(normals = new FloatBufferView(mesh.normals.unsafeArray.clone())))),
++      original.copy(meshes = Vector(mesh.copy(indices = new IntBufferView(mesh.indices.unsafeArray.clone())))),
++      original.copy(layers = Vector(layer.copy(colors = new IntBufferView(layer.colors.unsafeArray.clone())))),
++      original.copy(layers = Vector(layer.copy(opacity = DisplayOpacity.unsafe(.5)))),
++      original.copy(lighting = SurfaceLighting.Unlit))
++    val before = atlas(probe)
++    changes.foreach(changed => assert(probe.validatePrepared(prepared, changed).isLeft))
++    assertEquals(atlas(probe), before)
++
++  test("a basis is reusable across stable colours; target A cannot be published with preparation B"):
++    val original = plan(model(grey))
++    val target = plan(model(Vector.fill(3)(Rgba32.unsafe(80, 80, 80))))
++    val probe = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val basis = probe.colorPreparationBasis
++    val a = basis.prepare(original).toOption.get
++    val b = basis.prepare(target).toOption.get
++    assert(probe.updatePreparedColors(b, original, commit = false).isLeft)
++    assert(probe.updatePreparedColors(b, target, commit = false).isRight)
++    assert(probe.updatePreparedColors(a, original, commit = false).isRight)
++
++  test("foreign and replaced layout work is refused; actual topology is checked despite reused keys"):
++    val original = plan(model(grey))
++    val first = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val other = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val prepared = first.colorPreparationBasis.prepare(original).toOption.get
++    assert(other.validatePrepared(prepared, original).isLeft)
++    val indices = original.meshes.head.indices.unsafeArray.clone()
++    indices(0) = 1
++    val changed = original.copy(meshes = Vector(original.meshes.head.copy(indices = new IntBufferView(indices))))
++    assert(first.colorPreparationBasis.prepare(changed).isLeft)
++    first.invalidateColorPreparationBasis()
++    assert(first.validatePrepared(prepared, original).isLeft)
++
++  test("worker refinement accounts for persistent faces before any native mutation"):
++    val limited = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.RetainedAffineOpaque, maxRenderedFaces = 3).toOption.get
++    val original = plan(model(Vector(0, 255, 255).map(v => Rgba32.unsafe(v, v, v))))
++    val target = plan(model(Vector(255, 0, 255).map(v => Rgba32.unsafe(v, v, v))))
++    val probe = JavaFxSurfaceProbe.compile(original, config = limited).toOption.get
++    val before = atlas(probe)
++    assert(probe.colorPreparationBasis.prepare(target).left.toOption.get.message.contains("rendered faces 4 exceed budget 3"))
++    assertEquals(atlas(probe), before)
++    assertEquals(probe.chunks.head.renderedFaceCount, 1)
++
++/** Deterministic worker/FX interleaving, native refusal atomicity and key-collision
++  * controls. Runs in a separate hidden native process; no Stage is created.
++  */
++object JavaFxColorPreparationProbe:
++  def main(args: Array[String]): Unit =
++    import _root_.javafx.application.Platform
++    import _root_.javafx.scene.{Group, Scene, SceneAntialiasing}
++    import JavaFxAffineFixture.*
++    val done = new CountDownLatch(1)
++    @volatile var failure: Throwable | Null = null
++    Platform.startup(() => ())
++    Platform.runLater: () =>
++      try
++        val config = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.RetainedAffineOpaque).toOption.get
++        val grey = Vector(1, 100, 101).map(v => Rgba32.unsafe(v, v, v))
++        // A pixel-visible orthographic triangle, rather than the tiny default
++        // perspective fixture used for toolkit-free buffer/dispatch tests.
++        val viewMatrix = Array[Float](1,0,0,0, 0,1,0,0, 0,0,1,-10, 0,0,0,1)
++        val projection = Array[Float](1.5f,0,0,0, 0,1.5f,0,0, 0,0,1,0, 0,0,0,1)
++        def visible(colors: Vector[Rgba32]): SurfaceRenderPlan =
++          val raw = plan(model(colors))
++          raw.copy(camera = SurfaceCameraPacket(new FloatBufferView(viewMatrix), new FloatBufferView(projection), 0, 0, 1),
++            lighting = SurfaceLighting.Unlit,
++            slots = Vector(SurfaceViewSlot(surface, SurfaceViewport(0,0,1,1), -.5, -.5, 0)),
++            receipt = raw.receipt.copy(cameraKey = "visible-orthographic"))
++        val original = visible(grey)
++        val target = visible(Vector.fill(3)(Rgba32.unsafe(80, 80, 80)))
++        val snapshot = JavaFxSnapshotConfig.make(192, 192, SceneAntialiasing.DISABLED).toOption.get
++        def pixels(backend: JavaFxSurfaceBackend): Vector[Int] =
++          val image = backend.snapshot(snapshot).toOption.get
++          Vector.tabulate(192 * 192)(i => image.getPixelReader.getArgb(i % 192, i / 192))
++        val backend = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
++        val cold = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
++        try
++          backend.render(original).toOption.get
++          val scene = backend.newSubScene(snapshot).toOption.get
++          val host = new Scene(new Group(scene), 192, 192)
++          host.getRoot.applyCss(); host.getRoot.layout()
++          val baseline = pixels(backend)
++          require(baseline.distinct.length > 1)
++          val basis = backend.colorPreparationBasis.toOption.get
++          val started = new CountDownLatch(1)
++          val resume = new CountDownLatch(1)
++          val task = new FutureTask(() =>
++            started.countDown()
++            require(resume.await(10, TimeUnit.SECONDS))
++            basis.prepare(target).toOption.get)
++          val worker = new Thread(task, "retained-native-worker")
++          worker.start()
++          require(started.await(10, TimeUnit.SECONDS))
++          val view = original.camera.viewMatrix.unsafeArray.clone()
++          view(3) += .1f
++          val camera = original.copy(camera = original.camera.copy(viewMatrix = new FloatBufferView(view)),
++            receipt = original.receipt.copy(cameraKey = original.receipt.cameraKey + ":pan"))
++          backend.render(camera).toOption.get
++          resume.countDown()
++          val prepared = task.get(10, TimeUnit.SECONDS)
++          worker.join(1000)
++          require(!worker.isAlive)
++          val rebased = target.copy(camera = camera.camera, receipt = target.receipt.copy(cameraKey = camera.receipt.cameraKey))
++          val receipt = backend.render(rebased, prepared).toOption.get
++          require(receipt.geometryUpdates == 0 && receipt.textureCoordinateBytesUpdated == 0)
++          cold.render(rebased).toOption.get
++          val coldScene = cold.newSubScene(snapshot).toOption.get
++          val coldHost = new Scene(new Group(coldScene), 192, 192)
++          coldHost.getRoot.applyCss(); coldHost.getRoot.layout()
++          require(pixels(backend) == pixels(cold), "worker publication differs from cold final frame")
++          val stable = pixels(backend)
++          require(backend.render(original, prepared).isLeft, "wrong target accepted on a no-op/key path")
++          require(pixels(backend) == stable && backend.pickingPlan.contains(rebased))
++          val foreign = cold.colorPreparationBasis.toOption.get.prepare(rebased).toOption.get
++          require(backend.render(rebased, foreign).isLeft)
++          val newTopology = rebased.copy(receipt = rebased.receipt.copy(meshKeys = Vector(SurfaceResourceKey("different-topology"))))
++          require(backend.render(newTopology, foreign).isLeft, "foreign preparation ignored on a full-rebuild path")
++          val empty = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
++          try require(empty.render(rebased, prepared).isLeft)
++          finally empty.dispose()
++          backend.render(original).toOption.get
++          require(pixels(backend) == baseline)
++          // Different pixels with deliberately reused resource keys must still
++          // be published when prepared for their exact target buffers.
++          val changedColors = original.layers.head.colors.unsafeArray.clone()
++          java.util.Arrays.fill(changedColors, Rgba32.unsafe(60, 60, 60).toPackedInt)
++          val collision = original.copy(layers = Vector(original.layers.head.copy(colors = new IntBufferView(changedColors))))
++          val collisionPrepared = basis.prepare(collision).toOption.get
++          require(backend.render(collision, collisionPrepared).toOption.get.atlasUpdates > 0)
++          require(pixels(backend) != baseline)
++          backend.render(original, basis.prepare(original).toOption.get).toOption.get
++          require(pixels(backend) == baseline)
++          val moved = original.meshes.head.positions.unsafeArray.clone()
++          moved(0) += .1f
++          val morph = original.copy(meshes = Vector(original.meshes.head.copy(positions = new FloatBufferView(moved))))
++          val morphPrepared = basis.prepare(morph).toOption.get
++          require(backend.render(morph, morphPrepared).toOption.get.geometryUpdates > 0)
++          val afterMorph = pixels(backend)
++          require(backend.render(morph, morphPrepared).isLeft, "geometry-stale basis accepted on no-op")
++          require(pixels(backend) == afterMorph && backend.pickingPlan.contains(morph))
++          // A -> B geometry -> A is the stale-basis hazard: the old A basis
++          // would otherwise describe this restoration as colour-only work.
++          val staleRestoration = basis.prepare(original).toOption.get
++          require(backend.render(original, staleRestoration).isLeft, "pre-morph A basis accepted after publishing B")
++          require(pixels(backend) == afterMorph && backend.pickingPlan.contains(morph))
++          val fresh = backend.colorPreparationBasis.toOption.get
++          backend.render(original, fresh.prepare(original).toOption.get).toOption.get
++          require(pixels(backend) == baseline)
++          val disposed = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
++          disposed.render(original).toOption.get
++          val disposedWork = disposed.colorPreparationBasis.toOption.get.prepare(original).toOption.get
++          disposed.dispose()
++          require(disposed.render(original, disposedWork).isLeft, "disposed owner accepted prepared work")
++          // Two atlas chunks with independent vertex triples. Refinement of
++          // the late chunk must leave the early native resources mounted.
++          val vertices = new FloatBufferView(Array[Float](0,0,0, 1,0,0, 0,1,0, 3,0,0, 4,0,0, 3,1,0))
++          val normals = new FloatBufferView(Array.fill(6)(Array[Float](0,0,1)).flatten)
++          val faces = new IntBufferView((Vector.fill(256)(Vector(0,1,2)) ++ Vector.fill(44)(Vector(3,4,5))).flatten.toArray)
++          val packet = original.meshes.head.copy(positions = vertices, normals = normals, indices = faces)
++          val projectionTwo = projection.clone(); projectionTwo(0) = .4f
++          def twoPlan(first: Vector[Int], second: Vector[Int]): SurfaceRenderPlan =
++            val colors = new IntBufferView((first ++ second).map(v => Rgba32.unsafe(v,v,v).toPackedInt).toArray)
++            original.copy(meshes = Vector(packet), layers = Vector(original.layers.head.copy(colors = colors)),
++              camera = original.camera.copy(projectionMatrix = new FloatBufferView(projectionTwo)),
++              slots = Vector(SurfaceViewSlot(surface, SurfaceViewport(0,0,1,1), -2, -.5, 0)),
++              receipt = original.receipt.copy(cameraKey = "two-visible-triangles"))
++          val twoOriginal = twoPlan(Vector(0,255,255), Vector(0,255,255))
++          val twoTarget = twoPlan(Vector(100,100,100), Vector(255,0,255))
++          val twoConfig = JavaFxAtlasConfig.make(maxTextureSize = 64,
++            encoding = JavaFxAtlasEncoding.RetainedAffineOpaque).toOption.get
++          val partial = JavaFxSurfaceBackend.createDiagnostic(twoConfig).toOption.get
++          try
++            partial.render(twoOriginal).toOption.get
++            val partialScene = partial.newSubScene(snapshot).toOption.get
++            val partialHost = new Scene(new Group(partialScene),192,192)
++            partialHost.getRoot.applyCss(); partialHost.getRoot.layout()
++            val old = partial.chunks
++            require(old.map(_.renderedFaceCount) == Vector(256,44))
++            val oldBasis = partial.colorPreparationBasis.toOption.get
++            val prepared = oldBasis.prepare(twoTarget).toOption.get
++            val changed = partial.render(twoTarget, prepared).toOption.get
++            require(changed.chunksReplaced == 1 && changed.geometryUpdates == 1)
++            require(partial.chunks.head eq old.head)
++            require(!(partial.chunks(1).view eq old(1).view))
++            require(partial.chunks.map(_.renderedFaceCount) == Vector(256,176))
++            val replacement = partial.chunks(1)
++            require(changed.geometryBytesUpdated == (replacement.mesh.getPoints.size().toLong +
++              replacement.mesh.getNormals.size() + replacement.mesh.getFaces.size()) * 4)
++            require(changed.textureCoordinateBytesUpdated == replacement.mesh.getTexCoords.size().toLong * 4)
++            for chunk <- partial.chunks; face <- 0 until chunk.renderedFaceCount do
++              require(chunk.packetFace(face).contains(chunk.faceStart + (if chunk.faceStart == 0 then face else face / 4)))
++            val fullBefore = JavaFxSurfaceProbe.compile(twoOriginal, config = twoConfig).toOption.get
++            val full = JavaFxSurfaceProbe.compileRetaining(twoTarget, JavaFxMaterialMode.Unlit, twoConfig, Some(fullBefore)).toOption.get
++            full.setViewportSize(192,192)
++            val fullScene = new _root_.javafx.scene.SubScene(full.root,192,192,true,SceneAntialiasing.DISABLED)
++            full.attachCamera(fullScene)
++            fullScene.setFill(_root_.javafx.scene.paint.Color.WHITE)
++            val fullHost = new Scene(new Group(fullScene),192,192)
++            fullHost.getRoot.applyCss(); fullHost.getRoot.layout()
++            val fullPixels = fullScene.snapshot(null, new _root_.javafx.scene.image.WritableImage(192,192))
++            val partialPixels = pixels(partial)
++            require(partialPixels.distinct.length > 1)
++            require(partialPixels == Vector.tabulate(192*192)(i => fullPixels.getPixelReader.getArgb(i%192,i/192)),
++              "affected-chunk publication differs from full retained rebuild")
++            require(partial.render(twoTarget, prepared).isLeft, "pre-refinement work accepted after publication")
++            require(partial.render(twoOriginal, oldBasis.prepare(twoOriginal).toOption.get).isLeft)
++            val currentBasis = partial.colorPreparationBasis.toOption.get
++            val stable = partial.render(twoOriginal, currentBasis.prepare(twoOriginal).toOption.get).toOption.get
++            require(stable.chunksReplaced == 0 && stable.geometryUpdates == 0 && stable.textureCoordinateBytesUpdated == 0)
++            println("PASS: exactly one affected chunk; unchanged native identities; exact full-rebuild frame; 432 original-face mappings; stale-basis refusal")
++          finally partial.dispose()
++          val limitedTwo = JavaFxSurfaceBackend.createDiagnostic(JavaFxAtlasConfig.make(maxTextureSize = 64,
++            encoding = JavaFxAtlasEncoding.RetainedAffineOpaque, maxRenderedFaces = 400).toOption.get).toOption.get
++          try
++            limitedTwo.render(twoOriginal).toOption.get
++            val limitedScene = limitedTwo.newSubScene(snapshot).toOption.get
++            val limitedHost = new Scene(new Group(limitedScene),192,192)
++            limitedHost.getRoot.applyCss(); limitedHost.getRoot.layout()
++            val old = limitedTwo.chunks
++            val before = pixels(limitedTwo)
++            require(limitedTwo.render(twoTarget).isLeft)
++            require(limitedTwo.chunks.zip(old).forall((a,b) => a eq b))
++            require(pixels(limitedTwo) == before && limitedTwo.pickingPlan.contains(twoOriginal))
++            println("PASS: late-chunk retained budget refusal preserves all earlier resources, pixels and pick/camera plan")
++          finally limitedTwo.dispose()
++          println("PASS: worker/camera interleaving, exact rebasing, key-collision updates and stale/foreign refusal on all paths")
++        finally
++          cold.dispose()
++          backend.dispose()
++      catch case error: Throwable => failure = error
++      finally done.countDown()
++    try
++      require(done.await(60, TimeUnit.SECONDS), "colour preparation probe timed out")
++      if failure != null then throw failure.nn
++    finally Platform.exit()
+diff --git a/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala
+new file mode 100644
+index 000000000..0aad6a3cf
+--- /dev/null
++++ b/modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala
+@@ -0,0 +1,172 @@
++package scalafim.surface.view.javafx
++
++import intaglio.*
++import scalafim.surface.*
++import scalafim.surface.view.*
++
++class JavaFxRetainedAtlasSuite extends munit.FunSuite:
++  import JavaFxAffineFixture.*
++  private val config = JavaFxAtlasConfig.make(maxTextureSize = 64,
++    encoding = JavaFxAtlasEncoding.RetainedAffineOpaque).toOption.get
++  private def grey(a: Int, b: Int, c: Int) = Vector(a,b,c).map(v => Rgba32.unsafe(v,v,v))
++
++  private def twoChunkPlan(second: Vector[Rgba32]): SurfaceRenderPlan =
++    val id = SurfaceId.unsafe("retained-two-chunk")
++    val vertices = Vector(
++      Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0),
++      Vector(3.0, 0.0, 0.0), Vector(4.0, 0.0, 0.0), Vector(3.0, 1.0, 0.0))
++    val faces = Vector.fill(256)((0, 1, 2)) ++ Vector.fill(44)((3, 4, 5))
++    val geometry = SurfaceGeometry(TriangleMesh.fromRows(vertices, faces), Hemisphere.Left, SurfaceKind.Inflated)
++    val colors = grey(0, 255, 255) ++ second
++    val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("retained-two-chunk-colours"), id, geometry, colors).toOption.get
++    val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(id, geometry).toOption.get), Vector(layer)).toOption.get
++    SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get
++
++  test("retained scalar ramps choose their middle corner instead of a feasible extrapolating endpoint"):
++    val result = JavaFxSurfaceProbe.compile(plan(model(grey(1,100,101))), config = config).toOption.get
++    assertEquals(result.chunks.head.atlas.adaptiveLayout.get.anchor(0), 1)
++    assertEquals(result.receipt.facesUploaded, 1)
++
++  test("a valid retained anchor survives a change to constant colour without any UV upload"):
++    val original = plan(model(grey(0,255,255)))
++    val result = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    assertEquals(result.chunks.head.atlas.adaptiveLayout.get.anchor(0), 1)
++    val before = result.chunks.head.mesh.getTexCoords.toArray(null: Array[Float]).toVector
++    assert(before.distinct.size > 1)
++    val receipt = result.updateColors(plan(model(grey(100,100,100)))).toOption.get
++    assertEquals(receipt.textureCoordinateBytesUpdated, 0L)
++    assertEquals(result.chunks.head.mesh.getTexCoords.toArray(null: Array[Float]).toVector, before)
++    assertEquals(result.chunks.head.atlas.adaptiveLayout.get.anchor(0), 1)
++
++  test("invalid retained anchor promotes faces once and preserves their source correspondence across chunks"):
++    val original = plan(model(grey(0,255,255), copies = 300))
++    val before = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val next = plan(model(grey(255,0,255), copies = 300))
++    assertEquals(before.requiresAtlasRebuild(next, JavaFxMaterialMode.Unlit), Right(true))
++    val promoted = JavaFxSurfaceProbe.compileRetaining(next, JavaFxMaterialMode.Unlit, config, Some(before)).toOption.get
++    assertEquals(promoted.receipt.facesUploaded, 1200)
++    assertEquals(promoted.receipt.verticesUploaded, 906)
++    assertEquals(promoted.requiresAtlasRebuild(original, JavaFxMaterialMode.Unlit), Right(false))
++    val receipt = promoted.updateColors(original).toOption.get
++    assertEquals(receipt.textureCoordinateBytesUpdated, 0L)
++    for chunk <- promoted.chunks; face <- 0 until chunk.renderedFaceCount do
++      assertEquals(chunk.packetFace(face), Some(chunk.faceStart + face / 4))
++    val moved = promoted.updateGeometry(plan(model(grey(0,255,255), copies = 300, shift = 3))).toOption.get
++    assertEquals(moved.verticesUpdated, 906)
++    assertEqualsDouble(promoted.chunks.head.mesh.getPoints.get(9).toDouble, 3.5, 0)
++
++  test("retained refinements consume budget even if the current map has a cheaper static encoding"):
++    val limited = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.RetainedAffineOpaque,
++      maxRenderedFaces = 3).toOption.get
++    val first = JavaFxSurfaceProbe.compile(plan(model(grey(0,255,255))), config = limited).toOption.get
++    val next = plan(model(grey(255,0,255)))
++    assert(JavaFxSurfaceProbe.compile(next, config = limited).isRight)
++    val refused = JavaFxSurfaceProbe.compileRetaining(next, JavaFxMaterialMode.Unlit, limited, Some(first))
++    assert(refused.left.toOption.get.message.contains("rendered faces 4 exceed budget 3"))
++    assertEquals(first.receipt.facesUploaded, 1)
++
++  test("midpoint texels after multiple colour changes retain affine continuation without clipping"):
++    val original = plan(model(grey(0,255,255)))
++    val first = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    val promoted = JavaFxSurfaceProbe.compileRetaining(plan(model(grey(255,0,255))),
++      JavaFxMaterialMode.Unlit, config, Some(first)).toOption.get
++    for colors <- Vector(rgb, grey(100,100,100), grey(255,0,255), grey(0,255,255)) do
++      assertEquals(promoted.updateColors(plan(model(colors))).toOption.get.textureCoordinateBytesUpdated, 0L)
++      val image = promoted.chunks.head.atlas.image
++      // Independently check the four square continuations using original RGB.
++      for shift <- Vector(8,16,24) do
++        val c = colors.map(value => ((value.toPackedInt >>> shift) & 255).toDouble)
++        val mid = Vector((c(0)+c(1))/2, (c(1)+c(2))/2, (c(2)+c(0))/2)
++        val children = Vector(Vector(c(0),mid(0),mid(2)), Vector(c(1),mid(1),mid(0)),
++          Vector(c(2),mid(2),mid(1)), Vector(mid(0),mid(1),mid(2)))
++        for child <- 0 until 4 do
++          val x = (child%2)*2; val y = (child/2)*2
++          val p = children(child)(0); val q = children(child)(1); val r = children(child)(2)
++          for (dx,dy,expected) <- Vector((0,1,p),(1,1,q),(0,0,r),(1,0,q+r-p)) do
++            val actual = (image.getPixelReader.getArgb(x+dx,y+dy) >>> (shift-8)) & 255
++            assertEqualsDouble(actual.toDouble, expected, 0.5)
++
++  test("retained preparation marks only the promoted late chunk for replacement"):
++    val original = twoChunkPlan(grey(0, 255, 255))
++    val next = twoChunkPlan(grey(255, 0, 255))
++    val first = JavaFxSurfaceProbe.compile(original, config = config).toOption.get
++    assertEquals(first.chunks.map(_.renderedFaceCount), Vector(256, 44))
++    val prepared = first.prepareColorUpdate(next, JavaFxMaterialMode.Unlit).toOption.get
++    assert(prepared.requiresRebuild)
++    val promoted = JavaFxSurfaceProbe.compileRetaining(next, JavaFxMaterialMode.Unlit, config, Some(first)).toOption.get
++    assertEquals(promoted.chunks.map(_.renderedFaceCount), Vector(256, 176))
++    assertEquals(promoted.receipt.facesUploaded, 432)
++
++/** Native update and original-face dispatch, without opening a Stage. */
++object JavaFxRetainedAtlasProbe:
++  def main(args: Array[String]): Unit =
++    import java.util.concurrent.{CountDownLatch,TimeUnit}
++    import _root_.javafx.application.Platform
++    import _root_.javafx.geometry.{Point2D,Point3D}
++    import _root_.javafx.scene.{Group,Scene,SceneAntialiasing}
++    import _root_.javafx.scene.input.PickResult
++    import JavaFxAffineFixture.*
++    val done = new CountDownLatch(1)
++    @volatile var failure: Option[Throwable] = None
++    Platform.startup(() => ())
++    Platform.runLater: () =>
++      try
++        val adaptive = JavaFxAtlasConfig.make(maxTextureSize=64,encoding=JavaFxAtlasEncoding.RetainedAffineOpaque).toOption.get
++        val grey = Vector(Rgba32.unsafe(0,0,0),Rgba32.unsafe(255,255,255),Rgba32.unsafe(255,255,255))
++        val fixture = model(grey,copies=300)
++        val backend = JavaFxSurfaceBackend.createDiagnostic(adaptive).toOption.get
++        try
++          backend.render(plan(fixture)).toOption.get
++          val snapshot = JavaFxSnapshotConfig.make(192,192,SceneAntialiasing.DISABLED).toOption.get
++          val sub = backend.newSubScene(snapshot).toOption.get
++          val host = new Scene(new Group(sub),192,192)
++          host.getRoot.applyCss()
++          host.getRoot.layout()
++          val controller = JavaFxSurfaceController.attach(fixture,SurfaceViewerState.initial(fixture),backend,sub).toOption.get
++          try
++            var checked = 0
++            for colors <- Vector(rgb,grey,grey.reverse,rgb.reverse,grey) do
++              val next = plan(model(colors,copies=300))
++              val previousFaces = backend.chunks.map(_.renderedFaceCount).sum
++              val receipt = backend.render(next).toOption.get
++              val currentFaces = backend.chunks.map(_.renderedFaceCount).sum
++              require(receipt.dirty.geometry == (previousFaces != currentFaces))
++              if currentFaces > previousFaces then
++                require(receipt.textureCoordinateBytesUpdated > 0L && receipt.geometryBytesUpdated > 0L && receipt.chunksReplaced > 0)
++              else
++                require(receipt.textureCoordinateBytesUpdated == 0L && receipt.geometryBytesUpdated == 0L && receipt.chunksReplaced == 0)
++              require(currentFaces >= previousFaces)
++              backend.snapshot(snapshot).toOption.get
++              for chunk <- backend.chunks; local <- 0 until chunk.renderedFaceCount do
++                val faces = chunk.mesh.getFaces
++                val points = chunk.mesh.getPoints
++                def axis(d: Int): Double = (0 until 3).map(c => points.get(faces.get(local*9+c*3)*3+d).toDouble).sum/3
++                val point = new Point3D(axis(0),axis(1),axis(2))
++                val pick = controller.pick(new PickResult(chunk.view,point,1,local,Point2D.ZERO)).toOption.get
++                require(pick.face.index == chunk.packetFace(local).get)
++                require(math.abs(pick.barycentricA-(1-point.getX-point.getY)) < 1e-7)
++                require(math.abs(pick.barycentricB-point.getX) < 1e-7)
++                require(math.abs(pick.barycentricC-point.getY) < 1e-7)
++                checked += 1
++            println(s"PASS: $checked picks after retained subdivision and colour changes; original barycentrics retained")
++          finally controller.dispose()
++        finally backend.dispose()
++        val limited = JavaFxSurfaceBackend.createDiagnostic(JavaFxAtlasConfig.make(
++          encoding=JavaFxAtlasEncoding.RetainedAffineOpaque,maxRenderedFaces=3).toOption.get).toOption.get
++        try
++          val original = plan(model(grey))
++          limited.render(original).toOption.get
++          val view = limited.chunks.head.view
++          require(limited.render(plan(model(rgb))).isLeft)
++          val differentAnchor = Vector(Rgba32.unsafe(255,255,255),Rgba32.unsafe(0,0,0),Rgba32.unsafe(255,255,255))
++          require(limited.render(plan(model(differentAnchor))).isLeft)
++          require(limited.chunks.head.view eq view)
++          require(limited.pickingPlan.contains(original))
++          println("PASS: over-budget colour-driven subdivision leaves original native view and pick plan intact")
++        finally limited.dispose()
++      catch case error: Throwable => failure = Some(error)
++      finally done.countDown()
++    try
++      require(done.await(60,TimeUnit.SECONDS),"adaptive native probe timed out")
++      failure.foreach(throw _)
++    finally Platform.exit()

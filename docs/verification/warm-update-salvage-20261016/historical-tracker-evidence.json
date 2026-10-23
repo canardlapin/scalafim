@@ -1,0 +1,69 @@
+{
+  "issue": "bd-01M24EQFARZKYMZ71BJP91C9XS",
+  "source": "canonical Mote replay after documented 2026-10-16 recovery; original note bytes retained in operations",
+  "notes": [
+    {
+      "actor": "scalafim-surface-warm-20260921",
+      "kind": "progress",
+      "op_id": "20260921T214320.130551Z-p26716-c0003-r909c-ha13609",
+      "text": "PLS Neuro A3/V4 real beta trace on admitted 01ed86f: RetainedAffineOpaque prevents repeat geometry rebuilds but stable color applies are p95 59.54 ms backend / 61.79 ms full callback. Implement one prepared color composite/validation reused by preflight and commit; retain first-refinement, atomicity, picks and exact color contracts.",
+      "ts": "2026-09-21T21:43:20.130551Z"
+    },
+    {
+      "actor": "scalafim-surface-warm-20260921",
+      "kind": "progress",
+      "op_id": "20260921T232316.922483Z-p46046-c0000-rf6eb-h6d3249",
+      "text": "Provider candidate 1044c0d3de84adda98ffae23ae376bf89482f532 supplies the provider-owned FX-basis/off-FX atlas preparation/apply boundary used by PLS Neuro A3/V4. Full surfaceViewJavafxJVM test passed 49/49. Fresh consumer exact-commit qualification additionally passed JavaFxRetainedAtlasProbe: 6000 picks after retained subdivision and colour changes preserve original face/barycentrics; over-budget colour-driven subdivision leaves the old native view and pick plan intact. Real beta/FIR consumer runs report first-use refinement separately, then 57 stable warm publications at 2.535/2.520 ms p95 with zero geometry updates. Stock JavaFX25 Metal admission remains outside this candidate evidence; keep the native issue open if that target remains required.",
+      "ts": "2026-09-21T23:23:16.922483Z"
+    },
+    {
+      "actor": "scalafim-surface-landing-20260921",
+      "kind": "progress",
+      "op_id": "20260921T233936.935232Z-p98490-c0000-r0e2f-hbf887d",
+      "text": "Published exact provider candidate 1044c0d3de84adda98ffae23ae376bf89482f532 as origin/surface/warm-update-20260921. PLS Neuro now pins this commit directly; 0615eff incorporates the formerly external admitted patch, so downstream preparation no longer reapplies it. Prior native surfaceViewJavafxJVM/test remains 49/49. Ticket stays open pending provider-main integration/release boundaries.",
+      "ts": "2026-09-21T23:39:36.935232Z"
+    },
+    {
+      "actor": "scalafim-surface-landing-fix-20260921",
+      "kind": "progress",
+      "op_id": "20260922T002331.107277Z-p41200-c0003-rb817-hb9ce4d",
+      "text": "Measured final consumer gate found unchanged-selection FX readout/chrome recompilation above the 4 ms publication gate; preserve changed-selection rebasing and reuse prepared readout/chrome otherwise.",
+      "ts": "2026-09-22T00:23:31.107277Z"
+    },
+    {
+      "actor": "scalafim-surface-landing-fix-20260921",
+      "kind": "progress",
+      "op_id": "20260922T004101.083193Z-p79665-c0000-r08bf-h2332f6",
+      "text": "Published follow-up 7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4 on origin/surface/warm-update-20260921. Stable-selection layer transactions now reuse the off-FX prepared readout/chrome; an intervening selection still recompiles against the new model. Native tests pass: surfaceViewJVM 151/151, surfaceViewJS 151/151, surfaceViewJavafxJVM 49/49. PLS Neuro exact f9f3363 passes sbt check and provenance against this pin.",
+      "ts": "2026-09-22T00:41:01.083193Z"
+    },
+    {
+      "actor": "scalafim-surface-landing-fix-20260921",
+      "kind": "blocker",
+      "op_id": "20260922T004102.698018Z-p79600-c0000-re452-h2ae5a3",
+      "text": "Consumer main adoption remains blocked: exact surface-runtime trace on f9f3363 / provider 7c3ff0a recorded backend p95 2.849 ms but full FX publication p95 6.904 ms (5 stable warm samples), above the preserved 4 ms gate. No gate change or main landing. Receipt: /private/tmp/plsneuro-surface-landing-runtime-f9f3363/receipt.json.",
+      "ts": "2026-09-22T00:41:02.698018Z"
+    },
+    {
+      "actor": "codex-mote-queue-20261004",
+      "kind": "progress",
+      "op_id": "20261005T043811.290515Z-p46063-c0000-rf6d8-h66f6d9",
+      "text": "Recovered retained helper/suite from1044c0d3 onto current V1 plus aa2a17a5 single-composite and1044 off-FX preparation seam, avoiding new scalar/fragment/transaction APIs. Exact original retained-layout.patch64f28a9 and evidencec4b2a4 are byte-verified copies. Pure CPU basis captures layouts/capacities and opaque owner; worker never reads mutable backend/native state. Actual buffer identities bind target even under same32bit keys; all supplied work validated before no-op/incremental/replacement commands; geometry changes invalidate old basis after whole publication. Independent draft review found no code blocker.45CPUtests pass;6000retained dispatch/refusal and native worker-camera interleave/exact-cold/key-collision/stale-owner checks pass on explicit diagnosticES2 baseline. Initial blank perspective test fixture and unmounted cold host failures retained, corrected without loosening assertions. Implementing ordinary palette/cutoff/opacity/FIR and adversarial-inversion preparation/FX/native snapshot/heap measurements. No production/consumer-publication/main/push admission.",
+      "ts": "2026-10-05T04:38:11.290515Z"
+    },
+    {
+      "actor": "codex-mote-queue-20261004",
+      "kind": "progress",
+      "op_id": "20261005T115337.756046Z-p52422-c0000-rbfb8-ha29cd8",
+      "text": "Retained draft v3: all576 fresh/seeded native analytic cases pass unchanged2-channel+permutation gates; legacy and stock controls fail as expected. Draft v4 adds staged affected-chunk refinement (unchanged originalgeometry/topology), retaining groups/camera/unaffected native resources and charging only replacement mesh/UV bytes.46CPUtests pass. Native dense first palette restoration failed unchanged2level framebuffer comparison; raw failure retained, adding exact diagnostic image/maximum and native two-chunk/full-reference/refusal proof. No whole-ticket closure or first-refinement/performance/consumer admission claimed.",
+      "ts": "2026-10-05T11:53:37.756046Z"
+    },
+    {
+      "actor": "codex-open-mote-audit-20261005",
+      "kind": "progress",
+      "op_id": "20261005T200736.742285Z-p91505-c0036-r4436-hda9a22",
+      "text": "Current assessment \u2014 2026-10-05\n\nReviewed against local main 7057a8d5a2d898c1bfb528a28f3f635dda639b8b, origin/main 568ce108 (local main clean, 112 ahead/0 behind at audit; no push).\n\nWhere we are: A live claim remains with codex-mote-queue-20261004. Its latest v4 draft records a dense-palette framebuffer failure at the unchanged two-channel limit and no first-refinement/performance/consumer admission. Consolidation preserves the dirty queue source; only the separately reviewed bounded affine recovery is on main.\n\nFresh context: Yes: active retained candidate / native failure.\n\nNext action: Continue with the existing owner from the preserved v4 source/failure receipt; diagnose exact two-chunk/full-reference native equality before ordinary palette/cutoff/opacity/FIR and inversion measurements. Do not reset the claim or credit a main unit pass as this draft's acceptance.\n\nEvidence: live claim and latest v4 note 2026-10-05; docs/verification/consolidation-20261005.md.\n\nThis is a tracker/source/retained-evidence assessment, not a new experiment or test run. Existing acceptance criteria and owner decisions remain binding; dated source-state statements below are superseded where this assessment explicitly corrects them. Status, priority, assignee, claims and dependency edges are unchanged.\n",
+      "ts": "2026-10-05T20:07:36.742285Z"
+    }
+  ]
+}

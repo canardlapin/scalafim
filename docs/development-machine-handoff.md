@@ -20,13 +20,15 @@ require supported recovery; ordinary Git conflict resolution is insufficient.
 
 ## Start on the new machine
 
-The latest machine-handoff snapshot is `handoff/20261015-development-machine`.
-Use that branch until its handoff changes have landed on `main`. It starts at
-published main `ac2ec8b706fc`; all local branch commits were already remotely
-preserved. See the [2026-10-15 receipt](verification/development-machine-20261015/README.md)
-for retained evidence, worktree dispositions, and initial verification. The
-[2026-10-16 recovery receipt](verification/mote-recovery-20261016/README.md)
-records the restored tracker and modularization epic.
+Clone canonical `main` for a new development machine. The handoff changes landed there at
+`2a1af3d003b6f491296b071ee07bd6133801d861`; use the current `main` tip after fetching rather
+than treating that historical landing SHA as a moving bootstrap target. The retained
+`handoff/20261015-development-machine` branch is historical custody evidence from before the
+complete tracker recovery, not a branch to start or merge new work from. See the
+[2026-10-15 receipt](verification/development-machine-20261015/README.md) for its retained
+worktree dispositions and initial verification. The
+[2026-10-16 recovery receipt](verification/mote-recovery-20261016/README.md) records the
+restored tracker and modularization epic.
 
 Install Git, JDK 21 (the compiler targets Java 17), sbt 1.11.7, Node.js 22 or
 newer, Python 3.11 or newer, and a compatible current Mote CLI. With Rust/Cargo
@@ -36,7 +38,7 @@ Scala 3.7.4 and build plugins are resolved by sbt. GitHub source dependencies
 and artifact repositories require network access on the first build.
 
 ```sh
-git clone --branch handoff/20261015-development-machine https://github.com/canardlapin/scalafim.git
+git clone https://github.com/canardlapin/scalafim.git
 cd scalafim
 git config --local user.name canardlapin
 git config --local user.email 307091466+canardlapin@users.noreply.github.com

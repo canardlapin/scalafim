@@ -1,0 +1,53 @@
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + observed slice-timing metadata preserves true, false and unknown separately 0.15s
+  + present malformed slice-timing correction declarations are refused 0.004s
+  + raw companion metadata does not assert derivative slice-timing correction 0.001s
+  + run and echo index padding selects unique event confound and mask companions 0.003s
+  + zero-valued run and echo indices match across padding without rewriting run identity 0.001s
+  + padded event and confound duplicates remain equally-specific ambiguities 0.002s
+  + BIDS labels and malformed index values remain exact matches 0.005s
+  + numeric-equivalent BOLD aliases are refused under both grouping policies 0.005s
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.004s
+  + compiler accumulates missing header, metadata, and companion failures 0.002s
+  + one-unit-per-run grouping preserves the run in unit identity 0.002s
+  + confound-free recipes ignore ambiguous confound tables 0.001s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.003s
+  + compiler reports incompatible geometry and duplicate run identities 0.003s
+  + compiler preserves provider frame failures for mask geometry 0.001s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.002s
+  + participant-table coverage reports missing and duplicate subjects 0.004s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.019s
+[info] Passed: Total 18, Failed 0, Errors 0, Passed 18
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-9b95hkdj/completed
+[[32msuccess[0m] elapsed: 5 s
+[0J[sbt-warm] fmriWorkflowJVM/testOnly scalafim.fmri.workflow.BidsStudyCompilerSuite: exit 0 in 4.9s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/fmri-workflow/js/target/scala-3.7.4/scalafim-fmri-workflow-test-fastopt
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + observed slice-timing metadata preserves true, false and unknown separately 0.017s
+  + present malformed slice-timing correction declarations are refused 0.005s
+  + raw companion metadata does not assert derivative slice-timing correction 0.003s
+  + run and echo index padding selects unique event confound and mask companions 0.002s
+  + zero-valued run and echo indices match across padding without rewriting run identity 0.002s
+  + padded event and confound duplicates remain equally-specific ambiguities 0.003s
+  + BIDS labels and malformed index values remain exact matches 0.005s
+  + numeric-equivalent BOLD aliases are refused under both grouping policies 0.007s
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.004s
+  + compiler accumulates missing header, metadata, and companion failures 0.001s
+  + one-unit-per-run grouping preserves the run in unit identity 0.002s
+  + confound-free recipes ignore ambiguous confound tables 0.002s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.004s
+  + compiler reports incompatible geometry and duplicate run identities 0.003s
+  + compiler preserves provider frame failures for mask geometry 0.001s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.002s
+  + participant-table coverage reports missing and duplicate subjects 0.001s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.005s
+[info] Passed: Total 18, Failed 0, Errors 0, Passed 18
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-ofzlhmp2/completed
+[[32msuccess[0m] elapsed: 9 s
+[0J[sbt-warm] fmriWorkflowJS/testOnly scalafim.fmri.workflow.BidsStudyCompilerSuite: exit 0 in 9.7s

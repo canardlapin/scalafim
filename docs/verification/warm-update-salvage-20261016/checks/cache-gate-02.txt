@@ -1,0 +1,206 @@
+[sbt-warm] seeding base from template 2c8da53c46b91ac6 (copy-on-write)
+[[0minfo[0m] server was not detected. starting an instance
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-pls-main-20261016-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-pls-main-20261016/project
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/70113493d2034afa26c1/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/3affa4797661edd945b9/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/project
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/cfabf5f1e5e2fb8fb176/linops4s/build.sbt:82: warning: value lookup of `streams` inside an `if` expression
+
+problem: `streams.value` is inside an `if` expression of a regular task.
+  Regular tasks always evaluate task dependencies (`.value`) regardless of `if` expressions.
+solution:
+  1. Use a conditional task `Def.taskIf(...)` to evaluate it when the `if` predicate is true or false.
+  2. Or turn the task body into a single `if` expression; the task is then auto-converted to a conditional task.
+  3. Or make the static evaluation explicit by declaring `streams.value` outside the `if` expression.
+  4. If you still want to force the static lookup, you may annotate the task lookup with `@sbtUnchecked`, e.g. `(streams.value: @sbtUnchecked)`.
+  5. Add `import sbt.dsl.LinterLevel.Ignore` to your build file to disable all task linting.
+
+      streams.value.log.info(s"$moduleName: module boundaries OK (no effect deps)")
+      ^
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b51ea69c1c3a30e37df3/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/8022bdf7e1aa5920ac9e/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/6c77ef03ad5f6b5be136/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/project
+[info] compiling 1 Scala source to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (370120 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-pls-main-20261016/)
+[warn] there are 18 keys that are not used by any other settings/tasks:
+[warn]  
+[warn] * browserJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * canvasJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * coreJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * coreJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * docs / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * interactionJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * interactionJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * java2dJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * javafxExample / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * javafxJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * lawsJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * lawsJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * notebookJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * pdfJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * performanceJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * performanceJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * svgJS / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn] * svgJVM / Compile / doc / tags
+[warn]   +- /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/22f1c56c83df4441f78e/intaglio/build.sbt:93
+[warn]  
+[warn] note: a setting might still be used by a command; to exclude a key from this `lintUnused` check
+[warn] either append it to `Global / excludeLintKeys` or call .withRank(KeyRanks.Invisible) on the key
+[info] sbt server started at local:///Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/server/3ebdec96ee60d4af1aef/sock
+[info] started sbt server
+[info] compiling 46 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 86 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/3affa4797661edd945b9/gale/core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 43 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 52 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/locus-data/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes ...
+[info] compiling 10 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 14 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/response-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 7 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes ...
+[info] compiling 11 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes ...
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/995ff8e011f5a5221e44/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/55ea4b14b89fb02ef5c0/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 52 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 21 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 22 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/dataset/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.dataset.io.NiftiStagingCacheSuite:
+  + same path size and modification time cannot reuse different compressed content 0.029s
+  + corrupt staged payload is repaired even when its size and header still match 0.005s
+  + expansion and free-space limits refuse publication and remove owned partials 0.008s
+  + cancelled staging preserves interruption and publishes nothing 0.005s
+  + truncated compressed input cannot publish an apparently valid header 0.003s
+  + concurrent cache instances share one verified content revision 0.007s
+  + distinct concurrent images cannot exceed a shared aggregate quota 0.006s
+  + multi-window staging preserves exact bytes and tight publication limits 0.053s
+scalafim.dataset.io.NiftiResponseBlockSourceSuite:
+  + uncompressed NIfTI source reads only the requested ordered block 0.169s
+  + response-kernel adapter preserves uncompressed NIfTI values and order 0.175s
+  + compressed NIfTI requires explicit reusable staging 0.024s
+==> X scalafim.dataset.io.NiftiResponseBlockSourceSuite.failed compressed staging leaves no partial finalized artifact  0.032s munit.ComparisonFailException: modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiResponseBlockSourceSuite.scala:155
+154:      val files = Files.list(cache.root)
+155:      try assertEquals(files.iterator().asScala.toVector, Vector.empty)
+156:      finally files.close()
+values are not the same
+=> Obtained
+Vector(
+  /private/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-nifti-block-9697072992999113197/cache/.staging.lock
+)
+=> Diff (- expected, + obtained)
+-Nil
++Vector(
++  /private/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-nifti-block-9697072992999113197/cache/.staging.lock
++)
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.dataset.io.NiftiResponseBlockSourceSuite.$init$$$anonfun$6$$anonfun$1(NiftiResponseBlockSourceSuite.scala:155)
+    at scalafim.dataset.io.NiftiResponseBlockSourceSuite.withFixture(NiftiResponseBlockSourceSuite.scala:299)
+    at scalafim.dataset.io.NiftiResponseBlockSourceSuite.$init$$$anonfun$6(NiftiResponseBlockSourceSuite.scala:147)
+  + raw byte fixtures cover every supported NIfTI scalar decoder 0.01s
+  + big-endian payloads apply slope and intercept while zero slope means identity 0.004s
+  + truncated payloads and unsupported datatype contracts fail explicitly 0.005s
+[error] Failed: Total 15, Failed 1, Errors 0, Passed 14
+[error] Failed tests:
+[error] 	scalafim.dataset.io.NiftiResponseBlockSourceSuite
+[error] (datasetJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[[31merror[0m] elapsed: 39 s
+[0J[sbt-warm] datasetJVM/testOnly scalafim.dataset.io.NiftiStagingCacheSuite scalafim.dataset.io.NiftiResponseBlockSourceSuite: exit 1 in 103.1s

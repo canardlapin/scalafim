@@ -1,0 +1,50 @@
+[
+  {
+    "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala",
+    "snapshotSha256": "330dede94ab5cc8572caecafc615b1b0781847617644d65fc5133e5a5cb08054",
+    "mainExists": true,
+    "mainSha256": "9805e341f70f23f913025b21ef9d1fdf2287885d45a0becdcbd2bf2afcf5acbf"
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala",
+    "snapshotSha256": "24b6a9c4aea09cf295a1d23dc4fbc6bc3ef237689eec9490bfb0fab0f3aeb081",
+    "mainExists": false,
+    "mainSha256": null
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala",
+    "snapshotSha256": "c5226b5411d932133136892bca1b1018ec5b82e9638282872c05780cf558a443",
+    "mainExists": true,
+    "mainSha256": "25b0a4835bfc7d0d77f2cb846603537fee63817ccd6668003eabe1a9d083feeb"
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala",
+    "snapshotSha256": "97472a143ebe18dc105905aab6ace87887239d9d2e61efa2894ddc16389f6061",
+    "mainExists": true,
+    "mainSha256": "369d2ea24ab3b755bc33cd19934a5cfc4abd894b432932bfc33b5fa695b49669"
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala",
+    "snapshotSha256": "6a47d345937feb44acef8186e2ddf2e549aa2498ed00e8632942b052386edaa3",
+    "mainExists": true,
+    "mainSha256": "af13cd2e44fdadd6bc293f61d380bcf3fc2f92f4370f25351b719ca7deec024f"
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala",
+    "snapshotSha256": "87a2b63b1ffae8bd894c10bf731936799b03a977d1547de8ea925c3e4f7b0e55",
+    "mainExists": true,
+    "mainSha256": "f1caabb510146d68b8f61b56ebb88506c3ff720b0e039dd9b5ab648062b25f53"
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala",
+    "snapshotSha256": "a225f998e1c08d5d596ea0418bd5694db4e59a3168ef58a705a1ffcea4b93cb1",
+    "mainExists": false,
+    "mainSha256": null
+  },
+  {
+    "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala",
+    "snapshotSha256": "3d6b31f65a50afe3f3316e7eb7900715721620909353a88cb2f368d52f19d1e1",
+    "mainExists": false,
+    "mainSha256": null
+  }
+]

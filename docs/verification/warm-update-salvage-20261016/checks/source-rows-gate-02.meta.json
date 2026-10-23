@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-16T12:56:44.989986+00:00",
+  "finished_utc": "2026-10-16T12:58:18.718656+00:00",
+  "duration_seconds": 93.72764,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "hrfJVM/test",
+    "hrfJS/test",
+    "designJVM/test",
+    "designJS/test",
+    "fmriWorkflowJVM/test",
+    "fmriWorkflowJS/test",
+    "datasetJVM/testOnly scalafim.dataset.DeferredResponseBlockSourceSuite",
+    "datasetJS/testOnly scalafim.dataset.DeferredResponseBlockSourceSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-pls-main-20261016",
+  "log": "/private/tmp/scalafim-pls-main-20261016/.agent-work/source-rows-gate-02.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 153510
+}

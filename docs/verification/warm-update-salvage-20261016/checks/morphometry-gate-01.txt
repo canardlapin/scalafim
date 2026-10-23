@@ -1,0 +1,66 @@
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/core/.jvm/target/scala-3.7.4/classes ...
+[info] compiling 2 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/scenario-testkit/jvm/target/scala-3.7.4/classes ...
+[info] compiling 33 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/34c0071f90095ef07887/zarr4s/core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/indexed/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/data/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/algorithms/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 28 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/transform/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 51 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 54 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.io.FreeSurferMorphometryReaderSuite:
+  + public file reader binds scalar data and rejects opposite hemisphere and length 0.026s
+scalafim.surface.FreeSurferMorphometrySuite:
+  + modern float32 and legacy hundredths agree with explicit scalar oracle 0.001s
+  + invalid headers counts components and payloads fail before allocation 0.001s
+  + nonfinite scalars are retained as data rather than converted to zero 0.0s
+scalafim.surface.io.FreeSurferSurfaceReaderSuite:
+  + readAscii handles std.8-style FreeSurfer ASCII surfaces 0.005s
+  + read auto-detects ASCII and can infer right hemisphere 0.001s
+  + readBinary loads triangle geometry and accepts explicit metadata 0.003s
+  + readBinary rejects bad magic with a stable message 0.003s
+  + readBinary rejects headers shorter than magic bytes 0.001s
+  + readBinary rejects files without created-by and info lines 0.001s
+  + readBinary rejects short reads with a stable message 0.001s
+  + readAscii rejects malformed rows with a stable message 0.001s
+  + readAscii surfaces TriangleMesh face-index validation 0.001s
+  + read infers VeryInflated from HCP and TemplateFlow very-inflated file names 0.002s
+[info] Passed: Total 14, Failed 0, Errors 0, Passed 14
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-0shdpgcg/completed
+[[32msuccess[0m] elapsed: 14 s
+[0J[sbt-warm] surfaceJVM/testOnly scalafim.surface.FreeSurferMorphometrySuite scalafim.surface.io.FreeSurferMorphometryReaderSuite scalafim.surface.io.FreeSurferSurfaceReaderSuite: exit 0 in 14.5s
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/scenario-testkit/js/target/scala-3.7.4/classes ...
+[info] compiling 8 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/core/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 5 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/indexed/.js/target/scala-3.7.4/classes ...
+[info] compiling 30 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/34c0071f90095ef07887/zarr4s/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/data/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/staging/b4b08747efd9a8151229/graph4s/algorithms/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/transform/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 45 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 47 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/surface/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-pls-main-20261016/modules/surface/js/target/scala-3.7.4/scalafim-surface-test-fastopt
+scalafim.surface.FreeSurferMorphometrySuite:
+  + modern float32 and legacy hundredths agree with explicit scalar oracle 0.002s
+  + invalid headers counts components and payloads fail before allocation 0.000s
+  + nonfinite scalars are retained as data rather than converted to zero 0.000s
+[info] Passed: Total 3, Failed 0, Errors 0, Passed 3
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-a7otlmqg/completed
+[[32msuccess[0m] elapsed: 15 s
+[0J[sbt-warm] surfaceJS/testOnly scalafim.surface.FreeSurferMorphometrySuite: exit 0 in 14.9s

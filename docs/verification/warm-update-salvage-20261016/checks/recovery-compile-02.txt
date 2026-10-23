@@ -1,0 +1,9 @@
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/phrf-comparison/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-pls-main-20261016/modules/phrf-comparison/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-pls-main-20261016/modules/phrf-comparison/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] ans: java.nio.file.Path = /Users/bbuchsbaum/.cache/scalafim-sbt/bases/c9b50185467d73a4/command-receipts/run-llhg1p6y/completed
+[[32msuccess[0m] elapsed: 304 s (0:05:04.0)
+[0J[sbt-warm] scalafimCompileAll: exit 0 in 304.2s

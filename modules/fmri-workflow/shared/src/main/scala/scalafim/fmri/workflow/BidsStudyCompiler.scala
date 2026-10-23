@@ -159,7 +159,9 @@ object BidsStudyCompiler:
       EntityKey.Resolution
     )
 
-  /** Inspect optional QC without adding a nuisance-fitting requirement. */
+  /** Inspect an optional companion without enabling nuisance regressors or compiling image data.
+    * Uses the same pipeline/entity specificity and ambiguity rules as requested confound binding.
+    */
   def confoundCompanion(project: BidsProject, boldPath: BidsPath): Either[CatalogIssue, Option[BidsFile]] =
     project.manifest.files.find(_.path == boldPath) match
       case Some(bold) if isBoldImage(bold) =>
@@ -187,7 +189,19 @@ object BidsStudyCompiler:
     compiled.foreach(result => issues ++= result._1)
 
     val candidates = compiled.flatMap(_._2)
-    val grouped = candidates.groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
+    val aliasCollisions = boldAliasGroups(candidates).filter(_.size > 1)
+      .map(_.sortBy(_.bold.path.value)).sortBy(_.head.bold.path.value)
+    aliasCollisions.foreach { runs =>
+      val paths = runs.map(_.bold.path.value)
+      issues += CatalogIssue(
+        CatalogIssueCode.DuplicateRun,
+        runs.headOption.map(_.bold.path),
+        s"numeric-equivalent BOLD aliases collide: ${paths.mkString(", ")}"
+      )
+    }
+    val collidingPaths = aliasCollisions.flatten.map(_.bold.path).toSet
+    val grouped = candidates.filterNot(run => collidingPaths.contains(run.bold.path))
+      .groupBy(run => unitKey(run, recipe.runGrouping)).toVector.sortBy(_._1.sortKey)
     val units = Vector.newBuilder[FirstLevelUnit]
     grouped.foreach { case (key, runs) =>
       compileUnit(recipe, imageHeaders, key, runs.sortBy(run => run.runId.value)) match
@@ -503,6 +517,26 @@ object BidsStudyCompiler:
       pipeline = run.pipeline,
       run = if grouping == RunGrouping.OneUnitPerRun then Some(run.runId.value) else None
     )
+
+  /** Compare run/echo aliases through their BIDS owner, without rewriting persisted identities.
+    * Exact non-index entities first partition the study into small independent run cohorts.
+    */
+  private def boldAliasGroups(runs: Vector[CandidateRun]): Vector[Vector[CandidateRun]] =
+    runs.groupBy(run => unitKey(run, RunGrouping.BySubjectSessionTask).copy(echo = None)).values.toVector
+      .flatMap { cohort =>
+        cohort.foldLeft(Vector.empty[Vector[CandidateRun]]) { (groups, run) =>
+          val index = groups.indexWhere { group =>
+            val other = group.head
+            EntityKey.Run.equivalentValue(run.runId.value, other.runId.value) &&
+              ((run.echo, other.echo) match
+                case (Some(left), Some(right)) => EntityKey.Echo.equivalentValue(left, right)
+                case (None, None) => true
+                case _ => false)
+          }
+          if index < 0 then groups :+ Vector(run)
+          else groups.updated(index, groups(index) :+ run)
+        }
+      }
 
   private def requiredEntity(
       file: BidsFile,

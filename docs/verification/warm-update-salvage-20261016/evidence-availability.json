@@ -1,0 +1,10 @@
+{
+  "stockMetalBundle": {
+    "path": "docs/verification/javafx-stock-metal-20260929-evidence.tar.gz",
+    "exists": true,
+    "sha256": "969933c2ebf547841191b2ab429ac6f1dc41041fc9a126cefe579b2b7380c209"
+  },
+  "octoberQueueRawEvidenceDirectoryExists": false,
+  "octoberSourceSnapshot": "cb0712b4a93636372228f9e0dc0c64270f882a36",
+  "octoberApplyCheckExit": 1
+}

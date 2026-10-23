@@ -1,0 +1,21 @@
+FAIL normal=Vec3f[1.0, 0.0, 0.0] derivatives=0
+FAIL normal=Vec3f[1.0, 0.0, 0.0] derivatives=1
+FAIL normal=Vec3f[1.0, 0.0, 0.0] derivatives=2
+FAIL normal=Vec3f[0.0, 1.0, 0.0] derivatives=0
+FAIL normal=Vec3f[0.0, 1.0, 0.0] derivatives=1
+FAIL normal=Vec3f[0.0, 1.0, 0.0] derivatives=2
+FAIL normal=Vec3f[0.0, 0.0, 1.0] derivatives=0
+FAIL normal=Vec3f[0.0, 0.0, 1.0] derivatives=1
+FAIL normal=Vec3f[0.0, 0.0, 1.0] derivatives=2
+FAIL normal=Vec3f[-1.0, 0.0, 0.0] derivatives=0
+FAIL normal=Vec3f[-1.0, 0.0, 0.0] derivatives=1
+FAIL normal=Vec3f[-1.0, 0.0, 0.0] derivatives=2
+FAIL normal=Vec3f[0.0, -1.0, 0.0] derivatives=0
+FAIL normal=Vec3f[0.0, -1.0, 0.0] derivatives=1
+FAIL normal=Vec3f[0.0, -1.0, 0.0] derivatives=2
+FAIL normal=Vec3f[0.0, 0.0, -1.0] derivatives=0
+FAIL normal=Vec3f[0.0, 0.0, -1.0] derivatives=1
+FAIL normal=Vec3f[0.0, 0.0, -1.0] derivatives=2
+failures=18 / 24
+Exception in thread "main" java.lang.AssertionError: Invalid tangent frames
+	at javafx.graphics@24.0.1/com.sun.prism.impl.TangentSpaceProbe.main(TangentSpaceProbe.java:23)

@@ -51,7 +51,10 @@ object DesignReviewGraphics:
             .geomTile(_ => review.repetitionTime.value, _ => 1.0, params = Some(GraphicParams.unsafe(stroke=None)))
             .axisTitles("Run time (s)", "")
             .build
-          scene <- PlotCompiler.resolve(program.plot,
+          scene <- PlotCompiler.resolve(program.plot.withDescription(
+            s"Raw design divided by each column's maximum absolute value over all original scans; all-zero columns remain zero. Source=${review.fingerprint.value}; run=${review.run.oneBased}; scope=${review.scope}. " +
+            s"Rows=${review.scans.map(s => s"${s.source.oneBased}:${s.time.value}:${s.retained}").mkString(",")}. " +
+            indices.map(c => s"column=${c+1}; label=${review.columns(c).label}; id=${review.columns(c).id.value}; source-index=${review.sourceColumnIndices(c)}; peak=${review.peaks(c)}; raw=${review.scans.indices.map(r => review.raw(r,c)).mkString(",")}").mkString("\n")),
             options(width,height,GuideSpec.Axis(AxisSide.Left,ticks=Some(ticks)),legend=height >= 220))
         yield
           val labels = indices.map(column =>
@@ -87,6 +90,8 @@ object DesignReviewGraphics:
       else
         val colors = Vector(blue,warm,Rgba.unsafe(67,137,109),Rgba.unsafe(136,95,150))
         val base = Plot(segments.flatMap(_._1)).withAxisTitles("Run time (s)",series.map(_.units).distinct.mkString(" / "))
+          .withDescription(series.map(s => s"${s.name}; design-column=${s.designColumn}; units=${s.units}; values=${s.values.map(_.fold("missing")(_.toString)).mkString(",")}").mkString("\n") +
+            "\nOriginal source scans=" + scans.map(s => s"${s.run.oneBased}:${s.source.oneBased}:${s.time.value}:${s.retained}").mkString(","))
         val layered = segments.foldLeft[Either[GraphicsError,Plot[PointValue]]](Right(base)) { (acc,entry) =>
           val (points,index) = entry
           val gp = Some(GraphicParams.unsafe(stroke=Some(colors(index % colors.size)),lineWidth=1.3))
@@ -110,7 +115,7 @@ object DesignReviewGraphics:
         program <- plot(marks).aes(_.start,_.y)
           .geomSegment(_.end,_.top,params=Some(GraphicParams.unsafe(stroke=Some(blue),lineWidth=1.3))).build
         positioned <- program.plot.encode(Aesthetic.X,_.start,time)
-        trained <- aligned(positioned,
+        trained <- aligned(positioned.withDescription("Effective model event timing; " + events.map(_.canonical).mkString("\n")),
           options(width,height,GuideSpec.Axis(AxisSide.Left,ticks=Some(Vector.empty)),legend=false),alignWith)
       yield trained
 

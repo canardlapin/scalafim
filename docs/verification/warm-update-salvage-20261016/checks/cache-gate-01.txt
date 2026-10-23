@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/private/tmp/scalafim-pls-main-20261016/tools/build/sbt-warm", line 687, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ~~~~^^^^^^^^^^^^^^
+  File "/private/tmp/scalafim-pls-main-20261016/tools/build/sbt-warm", line 680, in main
+    return run(root, payload)
+  File "/private/tmp/scalafim-pls-main-20261016/tools/build/sbt-warm", line 602, in run
+    with worktree_lock(base) as held:
+         ~~~~~~~~~~~~~^^^^^^
+  File "/private/tmp/scalafim-pls-main-20261016/tools/build/sbt-warm", line 375, in worktree_lock
+    return open(locks / base.name, "a")
+PermissionError: [Errno 1] Operation not permitted: '/Users/bbuchsbaum/.cache/scalafim-sbt/locks/c9b50185467d73a4'

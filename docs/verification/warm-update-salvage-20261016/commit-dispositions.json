@@ -1,0 +1,200 @@
+[
+  {
+    "sha": "4f079da9c18473918e0b5122fae88a7aebc50ce4",
+    "subject": "feat(mvpa): consolidate identified evidence and upstream domain contracts",
+    "disposition": "superseded architecture",
+    "reason": "Current identified evidence and unified MVPA migration ledger replace the September execution hierarchy. Reuse residual fixtures and domain contracts only after mapping to current estimands; do not restore the old facade."
+  },
+  {
+    "sha": "702ecd9a65674c6c74e49eb032dd82ab05baf777",
+    "subject": "feat(first-level): add selected estimates and inspectable workflow support",
+    "disposition": "partial integration; salvage seams",
+    "reason": "Selected estimation exists, but bounded/content-verified staging, observed event support, companion tables, and study-mask support require separate recovery. PLS consumer compilation is the acceptance boundary. Numeric Run/Echo companion equivalence was also recovered in 9bc3510a3, with explicit duplicate-acquisition refusal and JVM/JS tests."
+  },
+  {
+    "sha": "c14b36ac624c3d38e767af7bdbd62addd2c1cd47",
+    "subject": "feat(surface): preserve cortical scalar semantics across viewer backends",
+    "disposition": "partial integration; salvage seams",
+    "reason": "Current scalar, frame, visibility, colour, and composition contracts are newer. Preserve current APIs; recover missing morphometry IO and specific provenance/consumer contracts."
+  },
+  {
+    "sha": "72a35a46df661e6e8b0e8dd6bd7dbb59002ec9e4",
+    "subject": "docs(group): retain reproducible numerical audit and admission findings",
+    "disposition": "preserve evidence",
+    "reason": "Historical group audit/admission evidence; no numerical or scientific admission transfers to current main."
+  },
+  {
+    "sha": "986bc5a107fd5f8d9c8ed7c4cb7a00e1ee5bb905",
+    "subject": "Add reachable response basis (design) and exact contrast reprojection kernel (fit)",
+    "disposition": "partial integration; numerical repair",
+    "reason": "ContrastReprojection is byte-identical on main. ReachableResponseBasis is absent and needs overflow-safe norm and decomposition review before adoption."
+  },
+  {
+    "sha": "8f0c05c2588c60de79e77604bfe08fa543497179",
+    "subject": "Retain basis-expanded fit products through the bounded-read executor path",
+    "disposition": "represented",
+    "reason": "BasisExpandedRetention implementation is byte-identical on main; its test has evolved."
+  },
+  {
+    "sha": "ce95fb5649ff1fe51ba627bcfe23bbef6a621f7b",
+    "subject": "Add a scalar layer-data swap that leaves viewer presentation in place",
+    "disposition": "represented goal; compare consumer semantics",
+    "reason": "Current image ViewerModelUpdate.ReplaceLayer provides typed replacement. Validate presentation/interaction preservation using the real consumer rather than restore the old API by name."
+  },
+  {
+    "sha": "23fc4a4d23abbb281a3118c15043a8f9286f65f5",
+    "subject": "build: add a local Gale override and wire resample4s into group",
+    "disposition": "superseded build",
+    "reason": "Current build has local Gale override and newer provider wiring; do not restore old dependency coordinates."
+  },
+  {
+    "sha": "81f6c16e6ab4f2626e74eb2e4f7444a2009714bb",
+    "subject": "design: add cutoff-period DCT drift and explicit event column roles",
+    "disposition": "represented; preserve tests",
+    "reason": "Cutoff-period DCT and explicit event-column roles exist in current design/model paths. Keep current provider and type boundaries."
+  },
+  {
+    "sha": "c35e8a9bd7daf674788728819515a84b584bf041",
+    "subject": "latent: delegate DCT column construction to Gale",
+    "disposition": "represented",
+    "reason": "Current latent DCT uses Gale; do not copy obsolete imports or pins."
+  },
+  {
+    "sha": "ab7ad147a23280e29abfe62a7acea27c5559d299",
+    "subject": "group: repair the numerical engine and add symmetry and contrast review",
+    "disposition": "partial integration; scientific review",
+    "reason": "Current group engine evolved. GroupSignFlip and GroupContrastDiagnostics remain potential domain-policy/diagnostic salvage; compare with current resampling and CR2 contracts before porting."
+  },
+  {
+    "sha": "9ca9303ca4348d0cd4fa808c972cbbadb956681b",
+    "subject": "image-view: add adaptive orthogonal layout and single-plane focus",
+    "disposition": "salvage",
+    "reason": "Automatic physical-area layout and single-plane focus are absent on main. Recover shared logic/tests with current typed image grid ownership."
+  },
+  {
+    "sha": "c0c04b19fd5219e01800fd989213a92b19df80e6",
+    "subject": "docs(verification): record the canonical incremental NIfTI output review",
+    "disposition": "preserve evidence",
+    "reason": "Incremental NIfTI review is a historical receipt, not a current gate."
+  },
+  {
+    "sha": "887a5ce4a88e3f219dad99bce46aaf6853126d1d",
+    "subject": "build: advance the Gale and Intaglio pins",
+    "disposition": "superseded build",
+    "reason": "Provider revisions have advanced. Update consumer to one coherent current dependency graph rather than downgrade main."
+  },
+  {
+    "sha": "066be6c11960de26a8825811f12241af6e5120a1",
+    "subject": "wip(javafx): recover affine atlas work before provider integration",
+    "disposition": "superseded draft; preserve failure",
+    "reason": "Later September and October atlas sources are better inputs. Native sampler admission remains independently blocked on recorded stock runtimes."
+  },
+  {
+    "sha": "6a7e17beb42c5d056e2596809be627cca8f026b5",
+    "subject": "Preserve paired surface cameras and retained atlas candidate",
+    "disposition": "partial integration; salvage optimization",
+    "reason": "Current composition covers paired/multi-view pose and geometry. October snapshot is the better source for CPU preparation and retained layouts; native qualification remains separate."
+  },
+  {
+    "sha": "618e03cf52ebcb9bd4a4930d406867d040217653",
+    "subject": "Pack paired surface views to fit wide and portrait canvases",
+    "disposition": "represented/compare fixtures",
+    "reason": "Current SurfaceViewComposition and layout have wider scope; retain wide/portrait fixtures as consumer regressions."
+  },
+  {
+    "sha": "6d4cdbda771f03da476a3bdd9a84f7fda2404078",
+    "subject": "Record responsive surface qualification and consumer boundaries",
+    "disposition": "preserve evidence",
+    "reason": "Responsive qualification describes its own revision and native runtime only."
+  },
+  {
+    "sha": "a3ee73b3be2da9eb00240e6b95eb652d733d7ca2",
+    "subject": "Require zero native hits in fully clipped paired-camera fixture",
+    "disposition": "retain regression",
+    "reason": "Keep zero native hits for completely clipped surfaces when adapting current viewport/pick contracts."
+  },
+  {
+    "sha": "c2c142b79b3fbbbfdb7fc4e936c94755124ef5da",
+    "subject": "Preserve geometry families and fixed or morph presentation in scene documents",
+    "disposition": "salvage provenance; schema migration required",
+    "reason": "September V8 geometryStates conflicts with current V8 colour/opacity format. Current composition stores morph/fixed state but not the same per-variant URI/digest contract."
+  },
+  {
+    "sha": "4d00cc0db589516a1683c0cce28dae7235ec29cc",
+    "subject": "Exercise invalid scene documents through their public codec",
+    "disposition": "retain regression",
+    "reason": "Reapply malformed scene-document cases through the new migration/public codec; do not copy the old schema revision."
+  },
+  {
+    "sha": "47c024b8ca3c2d86f081db41ac496570d7da32cd",
+    "subject": "Draft bounded native voxel-cell atlas boundary query",
+    "disposition": "salvage final series only",
+    "reason": "Bounded voxel-cell boundary query is distinct from current voxel-center/point query. Recover the final 535977a series, including all arithmetic fixes."
+  },
+  {
+    "sha": "93a9f9398f1fa44c81b92fc4c8526dd182b8a32b",
+    "subject": "Specify and test affine atlas boundary distance contracts",
+    "disposition": "retain with query",
+    "reason": "Keep independent cube, edge/corner, anisotropy, shear, cancellation and budget oracles."
+  },
+  {
+    "sha": "d3138374eb3fda56a72a4c541382dc4a52816521",
+    "subject": "Declare only present labels in boundary query oracles",
+    "disposition": "retain with query",
+    "reason": "Preserve present-label oracle correction."
+  },
+  {
+    "sha": "372da9f23b5fffe90c202a02bfe4803c73aec324",
+    "subject": "Preserve inclusive boundary contacts with an outward ulp guard",
+    "disposition": "retain with query",
+    "reason": "Preserve inclusive-contact outward-rounding correction."
+  },
+  {
+    "sha": "a34b83b489a5eb0de8dce84001664084adff7d86",
+    "subject": "Round candidate-bound operands outward before cancellation",
+    "disposition": "retain with query",
+    "reason": "Preserve operand-rounding-before-cancellation correction."
+  },
+  {
+    "sha": "33467fa08581c2dfe00e226215b66196906b89de",
+    "subject": "Bound atlas boundary arithmetic and inverse discovery uncertainty",
+    "disposition": "retain with query",
+    "reason": "Preserve inverse discovery and arithmetic uncertainty envelopes."
+  },
+  {
+    "sha": "535977a86270bd3cc5c033eda165a0370870dd22",
+    "subject": "Refuse globally ambiguous nearest boundary witnesses",
+    "disposition": "retain with query",
+    "reason": "Preserve globally ambiguous nearest-witness refusal."
+  },
+  {
+    "sha": "01ed86f439bb1c989b5f2c5db2ac6f4048657611",
+    "subject": "Add atomic compatible surface layer transactions",
+    "disposition": "salvage consumer contract",
+    "reason": "PLS Neuro directly uses SurfaceLayerTransaction. Rebuild prepare/rebase/validate/backend-success/controller-commit semantics against current render plans."
+  },
+  {
+    "sha": "aa2a17a5e9fbfa779f78869ec0dce24b70b6a0b9",
+    "subject": "Prepare retained colour updates once",
+    "disposition": "salvage through October source",
+    "reason": "Avoid double colour preparation, but use October ownership/snapshot checks rather than September live-owner worker reads."
+  },
+  {
+    "sha": "0615eff901fe14660e71c1f481bfdb40610a1a31",
+    "subject": "Carry admitted ScalaFIM candidate patch",
+    "disposition": "partial integration; compare semantic policy",
+    "reason": "Old provider pins are obsolete. Compare SelectedEstimates fixed-effects policy and current implementation; do not reapply the old consumer patch wholesale."
+  },
+  {
+    "sha": "1044c0d3de84adda98ffae23ae376bf89482f532",
+    "subject": "Prepare retained atlas pixels off the FX thread",
+    "disposition": "salvage through October source",
+    "reason": "Use immutable CPU-only preparation basis and owner token; bind every current rendering-semantic input."
+  },
+  {
+    "sha": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+    "subject": "Reuse prepared surface readouts when selection is stable",
+    "disposition": "salvage consumer contract",
+    "reason": "Reuse readout/chrome only when selection is unchanged; rebase on live interaction and refuse stale prepared state."
+  }
+]
