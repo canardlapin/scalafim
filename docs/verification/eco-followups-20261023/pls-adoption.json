@@ -1,0 +1,77 @@
+{
+  "observed_utc": "2026-10-23T10:55:33.517492+00:00",
+  "status": "Pending broader consumer acceptance and canonical landing",
+  "provider_ticket": "bd-01M52AQ9JQS51XFMB17X4BDQJX",
+  "consumer_ticket": "plsneuro:bd-01M52AWZR7FJW4QX66CSFJ0SZT",
+  "provider_PR62": {
+    "state": "MERGED",
+    "url": "https://github.com/canardlapin/scalafim/pull/62",
+    "merge_commit": "2a1af3d003b6f491296b071ee07bd6133801d861",
+    "contained_in_observed_origin_main": true
+  },
+  "scalafim_observed_origin_main": "d13897efd18c7cdb8978146dbab3cc790f193a63",
+  "pls_main": "94e15eb9794468ff27bd0559cbecd596d68ec6c4",
+  "pls_main_scalafim_pin": "7c3ff0a0edc92be0e2fe35c431d5b9e458c92ab4",
+  "latest_scoped_consumer_branch": "eco/surface-atlas-20261022",
+  "latest_scoped_consumer_head": "d01f3cf1a065ad6979febec1a498023bc10f8e9b",
+  "scoped_qualified_source": "f0c66f37a0802a2902a10b73a78ecd6039608d0b",
+  "scoped_provider_pin": "6a587c7f121b2766005558a5c27013c79ed825e0",
+  "prior_executed_scope": {
+    "headless_passes": 113,
+    "selected_passes": 11,
+    "tooling_passes": 68,
+    "qualification_json_sha256": "4e9136c1e74271356c8f222dfd22ae052846f881c2ffa8904dc4282474152469",
+    "rechecked_archived_receipt_hashes": [
+      {
+        "name": "headless",
+        "compressed_sha256": "f19d84ee7de13a8f71be3a4ef0f97da710dbae7b64ce66b2df61e90410db65fd",
+        "raw_sha256": "86efaf264eb22b847a2767656c5e01d395eed05f081582a4e443364525d864d4"
+      },
+      {
+        "name": "compile_isolation",
+        "compressed_sha256": "bfd4989271cea0e15ace2093a6d0dd5035bc8f5c78ac9bae5037bd62541562d2",
+        "raw_sha256": "870d95fc0765ff2df0a4904aeb74d638366da49e169ef1b4dbe8332f92027196"
+      },
+      {
+        "name": "selected",
+        "compressed_sha256": "726c843fcc0bb39cb441923f26d4fa033c5243b6e6b0ef4375e1d82873c82a71",
+        "raw_sha256": "95e8a1723af37c6d9a0cb2a961b5846b3d775e5e98af1d7977cf9170d27fe7dc"
+      }
+    ],
+    "new_execution_claimed": false
+  },
+  "runtime_custody": [
+    {
+      "path": "/Volumes/My Passport for Mac/codex-work/plsneuro-eco-a1-20261022/qualification/f0c66f37-qualified-runtime-24.tar.gz",
+      "bytes": 183422407,
+      "sha256": "519dfec34f4ad2596500d7fd3c6da619f0fb930820d39849e90db89c291eb055",
+      "regular_files": 37923,
+      "referenced_by": [
+        "docs/verification/eco-surface-atlas-20261022/qualification.json",
+        "docs/verification/eco-surface-atlas-20261022/README.md"
+      ],
+      "scope": "Exact qualified frozen runtime, copied source snapshot, headless113 and selected11 original manifest cases; visual review pending.",
+      "available_now": false
+    },
+    {
+      "path": "/Volumes/My Passport for Mac/codex-work/plsneuro-eco-a1-20261022/qualification/retained-adverse-evidence-24.tar.gz",
+      "bytes": 176748218,
+      "sha256": "21264b3bbd782ed6eb0c96f9900ef33ce3c9215abd55044c86f786336011b79f",
+      "regular_files": 35169,
+      "referenced_by": [
+        "docs/verification/eco-surface-atlas-20261022/qualification.json",
+        "docs/verification/eco-surface-atlas-20261022/README.md"
+      ],
+      "scope": "Retained failed preflight, compile and old-runtime diagnostics; no failure waiver or qualification from these runs.",
+      "available_now": false
+    }
+  ],
+  "remaining": [
+    "Integrate the exact qualified provider onto canonical ScalaFIM main; neither scoped Root6a587 nor final92154 is contained in observed main.",
+    "Qualify/adopt the exact consumer candidate through the full native and brain-view/surface-runtime lanes, with actual visual review and preserved performance limits.",
+    "Retain historical adverse cold-open241.030417ms versus200ms and full-publication4.631833ms versus4ms results. No threshold or admission waiver.",
+    "Land consumer only after its exact source/provider closure and required gates pass."
+  ],
+  "current_blocker": "The registered frozen runtime and adverse-evidence archives are unavailable because /Volumes/My Passport for Mac is unmounted; the user has been asked to reconnect it or identify its new path. Internal free space is near the20GB heavy-build floor.",
+  "next_action": "Restore and hash-verify the registered runtime archive, then use the existing acceptance runner with the exact candidate and required broader lanes; failed cases must be repaired and reviewed. No automatic outcome reuse or main merge."
+}
