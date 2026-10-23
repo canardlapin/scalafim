@@ -1,0 +1,43 @@
+{
+  "scope": "Current-main behavior reconciliation before final provider pin coherence update",
+  "checks": [
+    {
+      "name": "design",
+      "source": "295d0171577cffa9d63324387b37ee204f64352c",
+      "counts": [
+        621,
+        620
+      ],
+      "raw_log": "checks/eco-root-design-34.log.gz",
+      "exit_code": 0,
+      "duration_seconds": 199.115403
+    },
+    {
+      "name": "dataset-fit",
+      "source": "295d0171577cffa9d63324387b37ee204f64352c",
+      "counts": [
+        91,
+        68,
+        764,
+        706
+      ],
+      "raw_log": "checks/eco-root-dataset-fit-35.log.gz",
+      "exit_code": 0,
+      "duration_seconds": 251.818208
+    },
+    {
+      "name": "workflow",
+      "source": "295d0171577cffa9d63324387b37ee204f64352c",
+      "counts": [
+        82,
+        63
+      ],
+      "raw_log": "checks/eco-root-workflow-39.log.gz",
+      "exit_code": 0,
+      "duration_seconds": 152.056247
+    }
+  ],
+  "limits": [
+    "Does not qualify PLS consumer, hosted CI, full repository or final provider pin graph."
+  ]
+}
