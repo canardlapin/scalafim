@@ -322,13 +322,13 @@ candidate-bound release report supplies final execution status.
 
 ### E32: First-level estimates and fit-estimates bridge
 
-- Owning modules: `estimates`, `fit-estimates`, `group`
-- Public API/source: `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala`, `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala`, `modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala`, `modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala`
-- Suites and exact tests/scenarios: `modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` (`group.first-level-bridge.v1`); `modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala` (`group.first-level-to-group-known-effect.v1`)
+- Owning modules: `estimates`, `fmri-workflow`, `group`
+- Public API/source: `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala`, `modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala`, `modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala`, `modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala`
+- Suites and exact tests/scenarios: `modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` (`group.first-level-bridge.v1`); `modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala` (`group.first-level-to-group-known-effect.v1`)
 - External fixtures/receipts: none claimed
 - Commands:
-  - `sbt fitEstimatesJVM/test`
-  - `sbt fitEstimatesJS/test`
+  - `sbt fmriWorkflowJVM/test`
+  - `sbt fmriWorkflowJS/test`
 
 ## Global acceptance criteria
 

@@ -1,8 +1,10 @@
-"""Keep the six cross-provider workflow witnesses registered and scheduled."""
+"""Keep scenario and first-level evidence execution registered and scheduled."""
 
 import hashlib
 import json
 from pathlib import Path
+import re
+import shlex
 import sys
 import unittest
 
@@ -53,6 +55,30 @@ class ScenarioRegistrationSuite(unittest.TestCase):
     scenario = next(entry for entry in manifest["scenarios"] if entry["id"] == "surface.real-orig-to-fsaverage-to-fslr32k.v1")
     for path in scenario["reference"]["source_paths"]:
       self.assertTrue((ROOT / path).is_file(), path)
+
+
+class FirstLevelEvidenceRegistrationSuite(unittest.TestCase):
+  def test_fit_group_bridge_commands_name_existing_scheduled_projects(self) -> None:
+    evidence = json.loads((ROOT / "docs/verification/first-level-identity-acceptance.json").read_text())["evidence_catalog"]["E32"]
+    build = (ROOT / "build.sbt").read_text()
+    supported = alias_targets(build, "scalafimTestAll")
+    batches = release_batches((ROOT / "tools/ci/full-repository-tests.sh").read_text())
+    scheduled = [target for batch in batches.values() for target in batch]
+    platforms = set()
+    for command in evidence["commands"]:
+      words = shlex.split(command)
+      self.assertEqual(len(words), 2, command)
+      self.assertEqual(words[0], "sbt", command)
+      target = words[1]
+      project, task = target.split("/")
+      self.assertEqual(task, "test", command)
+      self.assertRegex(build, rf"lazy val {re.escape(project)}\s*=")
+      self.assertIn(target, supported)
+      self.assertEqual(scheduled.count(target), 1)
+      platforms.add("jvm" if project.endswith("JVM") else "js" if project.endswith("JS") else "unknown")
+    self.assertEqual(platforms, {"jvm", "js"})
+    modules = set(re.findall(r'\.in\(file\("modules/([^"/]+)"\)\)', build))
+    self.assertTrue(set(evidence["modules"]).issubset(modules))
 
 
 if __name__ == "__main__":

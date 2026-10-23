@@ -1,0 +1,33 @@
+{
+  "schema": "scalafim-evidence-routing-repair/v1",
+  "parent": "253e82016d43d08d824acdfe6436faacf9879d12",
+  "hosted_failure": {
+    "run": 40015325427,
+    "job": 120626310976,
+    "passed_before_failure": [
+      "38 scenario registrations",
+      "16 Python checks",
+      "14 external receipt checks"
+    ],
+    "failure": "Four E32 source/suite paths still named removed fit-estimates module."
+  },
+  "repair": "E32 source/suite paths and owning module now name fmri-workflow; commands name fmriWorkflowJVM/test and fmriWorkflowJS/test. Scientific wording, IDs, fixtures and status policies unchanged.",
+  "regression": "Evidence commands must name existing build projects and be scheduled once in the full runner on both platforms; owning modules must exist in build.sbt.",
+  "parent_checks": {
+    "exit_code": 0,
+    "python_tests": 12,
+    "docs_checker": "pass",
+    "inventory": {
+      "targets": 89,
+      "batches": 37
+    }
+  },
+  "delegated_checks_reported_by": "standalone_volume_scenario",
+  "delegated_checks": {
+    "first_level_release": 18,
+    "branch_evidence_collector": 9,
+    "run_evidence_collector": 9
+  },
+  "production_and_provider_pins_changed": false,
+  "hosted_requalification": "pending"
+}

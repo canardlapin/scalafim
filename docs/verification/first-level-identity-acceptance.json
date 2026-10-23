@@ -1346,30 +1346,30 @@
     },
     "E32": {
       "commands": [
-        "sbt fitEstimatesJVM/test",
-        "sbt fitEstimatesJS/test"
+        "sbt fmriWorkflowJVM/test",
+        "sbt fmriWorkflowJS/test"
       ],
       "external_fixtures": [],
       "modules": [
         "estimates",
-        "fit-estimates",
+        "fmri-workflow",
         "group"
       ],
       "source_paths": [
         "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala",
         "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala",
-        "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala",
-        "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala"
+        "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala",
+        "modules/fmri-workflow/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala"
       ],
       "suites": [
         {
-          "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+          "path": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
           "scenarios": [
             "group.first-level-bridge.v1"
           ]
         },
         {
-          "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+          "path": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
           "scenarios": [
             "group.first-level-to-group-known-effect.v1"
           ]
