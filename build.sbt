@@ -94,7 +94,7 @@ lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
 // mvpa4s owns identified MVPA evidence and analyses. Ordinary builds clone the
 // exact reviewed revision. Coordinated overrides are forwarded so mvpa4s
 // resolves the same provider builds as ScalaFIM.
-lazy val mvpa4sRevision = "ba73ed6077c0218ff55411938cdda83300623170"
+lazy val mvpa4sRevision = "11b547338df58dc8b922006e0a9cca9b575fe3ff"
 lazy val mvpa4sBuild = {
   Seq("alder", "gale", "locus4s", "multivar", "resample4s", "neuroatlas4s", "neurosurf4s",
     "neuroim4s", "mesh4s", "image4s", "spatial4s", "reframe4s", "graph4s", "zarr4s", "ravel", "intaglio").foreach { provider =>
@@ -204,7 +204,7 @@ lazy val neuroim4sViewJavafxJVM = ProjectRef(neuroim4sBuild, "viewJavafxJVM")
 // neuroatlas4s owns catalog/publication, optional volume/surface realizations,
 // loaders and mixed template route policy. ScalaFIM composes its public APIs.
 // Forward explicit overrides so each provider has one owner across the graph.
-lazy val neuroatlas4sRevision = "4df875d8a1cd20afd3b83ed49446422bc507e5ec"
+lazy val neuroatlas4sRevision = "0256e98eb78d35523ce6dbd08fea4f19b76e1b68"
 lazy val neuroatlas4sBuild = {
   Seq("locus4s", "neuroim4s", "neurosurf4s", "mesh4s", "zarr4s", "image4s", "spatial4s", "reframe4s", "gale", "ravel", "graph4s", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neuroatlas4s.$provider.build", _))
@@ -221,7 +221,7 @@ lazy val neuroatlas4sVolumeJS = ProjectRef(neuroatlas4sBuild, "volumeJS")
 lazy val neuroatlas4sVolumeIoJVM = ProjectRef(neuroatlas4sBuild, "volumeIoJVM")
 
 // Surface anatomy, formats, scenes and backends have one independent provider.
-lazy val neurosurf4sRevision = "73a244fbe5d7b4db2f0c946d98fa2a3c00101ab7"
+lazy val neurosurf4sRevision = "4b23386bf750118b9c7c1220b6c592da9ba965e0"
 lazy val neurosurf4sBuild = {
   Seq("spatial4s", "locus4s", "mesh4s", "image4s", "graph4s", "zarr4s", "neuroim4s", "reframe4s", "gale", "ravel", "intaglio").foreach { provider =>
     sys.props.get(s"scalafim.$provider.build").foreach(System.setProperty(s"neurosurf4s.$provider.build", _))
