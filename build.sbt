@@ -593,10 +593,12 @@ lazy val providerSpike =
     .jvmConfigure(_.dependsOn(
       neuroim4sTransformJVM % "test->compile;test->test",
       neuroim4sTransformIoJVM % "test->compile",
+      neurosurf4sVolumeJVM % "test->compile",
       scenarioTestkit.jvm % "test->compile"
     ))
     .jsConfigure(_.dependsOn(
       neuroim4sTransformJS % "test->compile;test->test",
+      neurosurf4sVolumeJS % "test->compile",
       scenarioTestkit.js % "test->compile"
     ))
 

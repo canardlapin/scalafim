@@ -1,0 +1,6 @@
+{
+  "analytic_commutativity_max_bound": 0.0001920374989730609,
+  "analytic_rule": "gradient norm times (second-row propagated subject radial-hit distance + second radial-hit distance + direct radial-hit distance) + 1e-9; each distance computed from full-source geometry only",
+  "native_bounds_rule": "half union-support true-input range times radial/closest row L1 difference + maximum input placement sample delta + 1e-3 float32 budget",
+  "native_bounds_sha256": "e2c0c34e3feb561e8316ae717130277841fc2dc74fb2db63a96e6bb448182915"
+}

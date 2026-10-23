@@ -1,0 +1,101 @@
+{
+  "repository": "https://github.com/OpenNeuroDerivatives/ds002748-fmriprep",
+  "commit": "1d8407e467d1af0ac8933c0539bbbb0168badab6",
+  "license": "CC0",
+  "assets": {
+    "subject_L_mid.surf.gii": {
+      "path": "sub-01/anat/sub-01_hemi-L_midthickness.surf.gii",
+      "annex_key": "MD5E-s3355623--0f2ff87b858790222b88fff05a21c2b7.surf.gii",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/anat/sub-01_hemi-L_midthickness.surf.gii",
+      "size": 3355623,
+      "md5": "0f2ff87b858790222b88fff05a21c2b7",
+      "sha256": "087fc123ea5c78c18abd14ec97cfdbcf6519949cba98205783ae7125a92ce29c"
+    },
+    "subject_L_pial.surf.gii": {
+      "path": "sub-01/anat/sub-01_hemi-L_pial.surf.gii",
+      "annex_key": "MD5E-s3360443--05c40ca195c7f93a1bd8f20aa37f8d00.surf.gii",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/anat/sub-01_hemi-L_pial.surf.gii",
+      "size": 3360443,
+      "md5": "05c40ca195c7f93a1bd8f20aa37f8d00",
+      "sha256": "dde7ad7748044675727c8e7825df5516b239bab7371f0feb7926e55936728cc8"
+    },
+    "subject_L_white.surf.gii": {
+      "path": "sub-01/anat/sub-01_hemi-L_smoothwm.surf.gii",
+      "annex_key": "MD5E-s3348880--ee676f14ea6166f14d39e1005cf2f8fd.surf.gii",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/anat/sub-01_hemi-L_smoothwm.surf.gii",
+      "size": 3348880,
+      "md5": "ee676f14ea6166f14d39e1005cf2f8fd",
+      "sha256": "b66650e50eb7dc54e5235df303be0bbaf58ebf89f7b4f2e316def4cdcc6c9f14"
+    },
+    "subject_L_sphere.reg": {
+      "path": "sourcedata/freesurfer/sub-01/surf/lh.sphere.reg",
+      "annex_key": "MD5E-s4900717--fb3b0b124fcdb0abd8f955a88da493ae.reg",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sourcedata/freesurfer/sub-01/surf/lh.sphere.reg",
+      "size": 4900717,
+      "md5": "fb3b0b124fcdb0abd8f955a88da493ae",
+      "sha256": "0e79912c0029c3197e5377ddacd9027ce545013b3d1c71867e53ee86bd38b3b3"
+    },
+    "subject_orig.mgz": {
+      "path": "sourcedata/freesurfer/sub-01/mri/orig.mgz",
+      "annex_key": "MD5E-s1622124--d49412f0acdd5e16940623fff2bde434.mgz",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sourcedata/freesurfer/sub-01/mri/orig.mgz",
+      "size": 1622124,
+      "md5": "d49412f0acdd5e16940623fff2bde434",
+      "sha256": "df13c0a756ea71cf948ba9c340bd6086a8ed8af66fc1bccff725a8d7d0d2fdd6"
+    },
+    "boldref.nii.gz": {
+      "size": 286010,
+      "md5": "8cf0686a92511e57cbc310a8f4e45db7",
+      "sha256": "4ef3fb341cd8452223528b5e115e674ec1582e5c3b311a4fbc5e2524472f7e36",
+      "git_blob": "5d3be83c6add9bb26298700fc405689592634b71",
+      "upstream_name": "sub-01_task-rest_boldref.nii.gz",
+      "path": "sub-01/func/sub-01_task-rest_boldref.nii.gz",
+      "target": "../../.git/annex/objects/kW/fz/MD5E-s286010--8cf0686a92511e57cbc310a8f4e45db7.nii.gz/MD5E-s286010--8cf0686a92511e57cbc310a8f4e45db7.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/func/sub-01_task-rest_boldref.nii.gz"
+    },
+    "T1w.nii.gz": {
+      "size": 7212866,
+      "md5": "cafcf9dbf15d3a8263a33dfc36e423e2",
+      "sha256": "c3348f1124001ebfdd7c7f9b7b9aa99af106ee86c7839698c7d7ae5e9b467c98",
+      "git_blob": "61df182b25842f311eaabfe7b8d07dfbc58ecfa2",
+      "upstream_name": "sub-01_desc-preproc_T1w.nii.gz",
+      "path": "sub-01/anat/sub-01_desc-preproc_T1w.nii.gz",
+      "target": "../../.git/annex/objects/VJ/3f/MD5E-s7212866--cafcf9dbf15d3a8263a33dfc36e423e2.nii.gz/MD5E-s7212866--cafcf9dbf15d3a8263a33dfc36e423e2.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz"
+    },
+    "dataset_description.json": {
+      "path": "dataset_description.json",
+      "source": "pinned Git blob",
+      "size": 659,
+      "sha256": "b21ca3e4fdc7f9f78508b024f97635aa4a0a833e3e52970074b46da189d246a5"
+    },
+    "boldref_to_t1.txt": {
+      "path": "sub-01/func/sub-01_task-rest_from-scanner_to-T1w_mode-image_xfm.txt",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/func/sub-01_task-rest_from-scanner_to-T1w_mode-image_xfm.txt",
+      "annex_key": "MD5E-s237--7a6c6423a86b4f2f222ed7c036150ce2.txt",
+      "size": 237,
+      "sha256": "6f6bd33d6864da7de02a1838a05df507e1b63ac3e04c44d05fffbca47cb35476"
+    },
+    "t1_to_boldref.txt": {
+      "path": "sub-01/func/sub-01_task-rest_from-T1w_to-scanner_mode-image_xfm.txt",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/func/sub-01_task-rest_from-T1w_to-scanner_mode-image_xfm.txt",
+      "annex_key": "MD5E-s235--e1644fcd5c7c33c6207399f669cb0a8d.txt",
+      "size": 235,
+      "sha256": "16f73f230e9a323ae5ff566abf7966daf49881bff3c3370bea188d3604647658"
+    },
+    "subject_L_white": {
+      "path": "sourcedata/freesurfer/sub-01/surf/lh.white",
+      "annex_key": "MD5E-s4898525--db269bf1d387e5208e85c90b531c0669",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sourcedata/freesurfer/sub-01/surf/lh.white",
+      "size": 4898525,
+      "sha256": "d05996718e7e7e7fcf39a0775e8b6cae253e8d3cbd3ff0ca3388f44212f2cab6"
+    },
+    "subject_L_pial": {
+      "path": "sourcedata/freesurfer/sub-01/surf/lh.pial",
+      "annex_key": "MD5E-s4898525--ebc9f4ad0e6d107ae6d8cd5b3db743bb.pial",
+      "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sourcedata/freesurfer/sub-01/surf/lh.pial",
+      "size": 4898525,
+      "sha256": "b8a1407c49960fd7676c681437fd6812060b44ebf9198ed5ce65f49de8a0cbbb"
+    }
+  }
+}

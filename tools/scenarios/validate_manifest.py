@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 from typing import Any
@@ -1265,6 +1266,24 @@ def validate_fixture_receipt(
       errors.append(f"{fixture_path}: truth_boundary is required")
 
 
+def validate_suite_source(repo_root: Path, suite_path: str, suite_class: Any, prefix: str, errors: list[str]) -> None:
+  candidate = repo_root / suite_path
+  if Path(suite_path).is_absolute() or not candidate.resolve().is_relative_to(repo_root.resolve()):
+    errors.append(f"{prefix}: suite_path escapes the repository: {suite_path}")
+    return
+  if not candidate.is_file():
+    errors.append(f"{prefix}: suite_path does not exist: {suite_path}")
+    return
+  if not isinstance(suite_class, str) or "." not in suite_class:
+    errors.append(f"{prefix}: suite_class must be a qualified class name")
+    return
+  package, name = suite_class.rsplit(".", 1)
+  source = candidate.read_text()
+  if not re.search(rf"^package\s+{re.escape(package)}\s*$", source, re.MULTILINE) or not re.search(
+      rf"^(?:final\s+)?class\s+{re.escape(name)}\b", source, re.MULTILINE):
+    errors.append(f"{prefix}: suite_class is not declared in suite_path: {suite_class}")
+
+
 def validate_manifest(manifest_path: Path) -> list[str]:
   errors: list[str] = []
   manifest = read_json(manifest_path, errors)
@@ -1297,8 +1316,8 @@ def validate_manifest(manifest_path: Path) -> list[str]:
     suite_path = scenario.get("suite_path")
     if not isinstance(suite_path, str) or not suite_path.strip():
       errors.append(f"{prefix}: suite_path is required")
-    elif not (repo_root / suite_path).is_file():
-      errors.append(f"{prefix}: suite_path does not exist: {suite_path}")
+    else:
+      validate_suite_source(repo_root, suite_path, scenario.get("suite_class"), prefix, errors)
 
     platforms = scenario.get("platforms")
     if not isinstance(platforms, list) or not platforms or any(platform not in ALLOWED_PLATFORMS for platform in platforms):

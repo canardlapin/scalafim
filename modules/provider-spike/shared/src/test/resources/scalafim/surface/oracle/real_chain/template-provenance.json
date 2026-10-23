@@ -1,0 +1,78 @@
+{
+  "fsaverage_L.surf.gii": {
+    "repository": "https://github.com/templateflow/tpl-fsaverage",
+    "commit": "8e53ba4f2e438758f69d11436fe0cd291a28bec6",
+    "path": "tpl-fsaverage_hemi-L_den-164k_desc-std_sphere.surf.gii",
+    "annex_key": "MD5E-s4093613--9f69e268a62e19f358dfd2cc0f8cffc8.surf.gii",
+    "size": 4093613,
+    "sha256": "9bf5b673cc1c4738b1137ac53ff724ff0ef45e12f5550448efa2da50bb521c32",
+    "url": "https://templateflow.s3.amazonaws.com/tpl-fsaverage/tpl-fsaverage_hemi-L_den-164k_desc-std_sphere.surf.gii"
+  },
+  "fslr_L_in_fsaverage.surf.gii": {
+    "repository": "https://github.com/templateflow/tpl-fsLR",
+    "commit": "ca545b4721c2858decef9bbca302c1eac4d0d8bf",
+    "path": "tpl-fsLR_space-fsaverage_hemi-L_den-32k_sphere.surf.gii",
+    "annex_key": "MD5E-s720487--c1390ecd78b0f3bd7600dd655bbcf413.surf.gii",
+    "size": 720487,
+    "sha256": "31987d139b6cdf1040188d1795bf23c213c57f8e84fb45f2c04823d996b0defc",
+    "url": "https://templateflow.s3.amazonaws.com/tpl-fsLR/tpl-fsLR_space-fsaverage_hemi-L_den-32k_sphere.surf.gii"
+  },
+  "HCP-fsaverage.L_LR.spherical_std.164k_fs_LR.surf.gii": {
+    "repository": "https://github.com/Washington-University/HCPpipelines",
+    "commit": "fb25ef4e9be44402d1d746834d18050842bb4042",
+    "path": "global/templates/standard_mesh_atlases/fsaverage.L_LR.spherical_std.164k_fs_LR.surf.gii",
+    "url": "https://raw.githubusercontent.com/Washington-University/HCPpipelines/fb25ef4e9be44402d1d746834d18050842bb4042/global/templates/standard_mesh_atlases/fsaverage.L_LR.spherical_std.164k_fs_LR.surf.gii",
+    "size": 3614784,
+    "sha256": "6968ef7d9638de54ade78cdbb7f0c6f25025c60477f72456ab2fb77c53a85cfa",
+    "purpose": "Original-source registration gauge and notice correspondence audit"
+  },
+  "HCP-fs_LR-deformed_to-fsaverage.L.sphere.32k_fs_LR.surf.gii": {
+    "repository": "https://github.com/Washington-University/HCPpipelines",
+    "commit": "fb25ef4e9be44402d1d746834d18050842bb4042",
+    "path": "global/templates/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.L.sphere.32k_fs_LR.surf.gii",
+    "url": "https://raw.githubusercontent.com/Washington-University/HCPpipelines/fb25ef4e9be44402d1d746834d18050842bb4042/global/templates/standard_mesh_atlases/resample_fsaverage/fs_LR-deformed_to-fsaverage.L.sphere.32k_fs_LR.surf.gii",
+    "size": 720487,
+    "sha256": "31987d139b6cdf1040188d1795bf23c213c57f8e84fb45f2c04823d996b0defc",
+    "purpose": "Original-source registration gauge and notice correspondence audit"
+  },
+  "HCP-LICENSE.md": {
+    "url": "https://raw.githubusercontent.com/Washington-University/HCPpipelines/fb25ef4e9be44402d1d746834d18050842bb4042/LICENSE.md",
+    "commit": "fb25ef4e9be44402d1d746834d18050842bb4042",
+    "size": 3144,
+    "sha256": "2c686e38603c7e1525e2a98a6de9d15ae6766e4ff850a2e759fbb2de7c6c6445",
+    "scope": "Original-source notice; templates are not relabeled CC0"
+  },
+  "FreeSurfer-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/freesurfer/freesurfer/f4ae227c140ba9087a82b2db275ecc1e64a5866f/LICENSE.txt",
+    "commit": "f4ae227c140ba9087a82b2db275ecc1e64a5866f",
+    "size": 10297,
+    "sha256": "632d404ea17b9101d9ac87cf8f09e651d18eb20d2cc0ba8dbee77e85b8516307",
+    "scope": "Original-source notice; templates are not relabeled CC0"
+  },
+  "original_fsaverage_L.sphere.reg": {
+    "repository": "https://github.com/OpenNeuroDerivatives/ds002748-fmriprep",
+    "commit": "1d8407e467d1af0ac8933c0539bbbb0168badab6",
+    "path": "sourcedata/freesurfer/fsaverage/surf/lh.sphere.reg",
+    "annex_key": "MD5E-s5898546--9bcc318b66c4da5e479b33e9451ec5e1.reg",
+    "url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sourcedata/freesurfer/fsaverage/surf/lh.sphere.reg",
+    "size": 5898546,
+    "sha256": "fddcf0eeecc6e0f62142164f7c0ac24fda1f0be8cb653d3f037970184c5ba98f",
+    "license": "Bundled original fsaverage reference; retain original FreeSurfer terms, not subject CC0"
+  },
+  "HCP-fsaverage-std-native-order.surf.gii": {
+    "repository": "https://github.com/Washington-University/HCPpipelines",
+    "commit": "fb25ef4e9be44402d1d746834d18050842bb4042",
+    "path": "global/templates/standard_mesh_atlases/fs_L/fs_L-to-fs_LR_fsaverage.L_LR.spherical_std.164k_fs_L.surf.gii",
+    "url": "https://raw.githubusercontent.com/Washington-University/HCPpipelines/fb25ef4e9be44402d1d746834d18050842bb4042/global/templates/standard_mesh_atlases/fs_L/fs_L-to-fs_LR_fsaverage.L_LR.spherical_std.164k_fs_L.surf.gii",
+    "size": 4323015,
+    "sha256": "a92b7c63eff6d04d8ce74b38e9f0060390b88d24b7c109bf13b194f0e8a54221"
+  },
+  "HCP-fsaverage_std_sphere.L.164k_fsavg_L.surf.gii": {
+    "repository": "https://github.com/Washington-University/HCPpipelines",
+    "commit": "fb25ef4e9be44402d1d746834d18050842bb4042",
+    "path": "global/templates/standard_mesh_atlases/resample_fsaverage/fsaverage_std_sphere.L.164k_fsavg_L.surf.gii",
+    "url": "https://raw.githubusercontent.com/Washington-University/HCPpipelines/fb25ef4e9be44402d1d746834d18050842bb4042/global/templates/standard_mesh_atlases/resample_fsaverage/fsaverage_std_sphere.L.164k_fsavg_L.surf.gii",
+    "size": 4093613,
+    "sha256": "9bf5b673cc1c4738b1137ac53ff724ff0ef45e12f5550448efa2da50bb521c32"
+  }
+}

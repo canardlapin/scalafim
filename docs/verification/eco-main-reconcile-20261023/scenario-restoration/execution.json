@@ -1,0 +1,38 @@
+{
+  "schema": "scalafim-restored-scenario-execution/v1",
+  "gate68_exit_code": 0,
+  "seconds": 627.302064,
+  "jvm_tests": 62,
+  "js_tests": 60,
+  "executed_scenario_test_counts": {
+    "scalafim.spike.scenarios.SurfaceRealChainScenarioSuite": [
+      7,
+      7
+    ],
+    "scalafim.spike.scenarios.SurfaceChainScenarioSuite": [
+      3,
+      3
+    ],
+    "scalafim.spike.scenarios.Demo1NativeScenarioSuite": [
+      5,
+      5
+    ],
+    "scalafim.spike.scenarios.FslChainScenarioSuite": [
+      4,
+      4
+    ],
+    "scalafim.spike.scenarios.FmriprepChainScenarioSuite": [
+      3,
+      3
+    ],
+    "scalafim.spike.scenarios.FslRealChainScenarioSuite": [
+      4,
+      4
+    ],
+    "scalafim.spike.scenarios.Demo1NativeContainerSuite": [
+      2
+    ]
+  },
+  "gate63_adverse": "deprecated immutable-array conversion rejected by unchanged -Werror; supported historical conversion restored",
+  "qualification": "Local JVM/JS execution and independent bounded source review; hosted CI and native application acceptance remain separate."
+}

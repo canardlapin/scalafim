@@ -54,6 +54,19 @@ coherence, then runs the shared `scenario-testkit`, `hrf`, `design`, `model`,
 `fit`, and `first-level-laws` tests on both the JVM and Scala.js. It does not
 install or execute R, Nilearn, or fmrimod.
 
+The four transform-chain and two surface-chain scenarios live in the
+`provider-spike` integration test court. They compose the standalone providers
+with ScalaFIM's scenario harness; their numerical references, mutation controls
+and declared caveats remain part of acceptance. Run them with:
+
+```sh
+python3 tools/build/sbt-warm providerSpikeJVM/test providerSpikeJS/test
+```
+
+The bounded full-repository runner schedules this court on both platforms.
+The focused first-level gate validates its registration and fixture paths;
+it does not execute these six workflow scenarios.
+
 ## Live regeneration
 
 [`tools/r-parity/reference-lock.json`](../../tools/r-parity/reference-lock.json)

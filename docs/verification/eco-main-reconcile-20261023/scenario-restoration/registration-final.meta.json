@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-23T19:53:42.372689+00:00",
+  "finished_utc": "2026-10-23T19:53:43.829453+00:00",
+  "duration_seconds": 1.456593,
+  "command": [
+    "bash",
+    "-c",
+    "python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json && python3 -S -m unittest tools/scenarios/test_validate_manifest.py tools/ci/test_scenario_registration.py && python3 -S tools/ci/check_test_inventory.py --check && bash -n tools/ci/first-level-gate.sh && git diff --check"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim-eco-followups-check-20261023",
+  "log": "/tmp/eco-scenario-registration-final-72.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 60.0,
+  "log_bytes": 203
+}

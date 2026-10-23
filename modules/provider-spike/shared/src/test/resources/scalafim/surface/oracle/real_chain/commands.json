@@ -1,0 +1,155 @@
+[
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-version"
+    ],
+    "exit_code": 0,
+    "seconds": 0.22014154202770442,
+    "stdout": "Connectome Workbench\nType: Command Line Application\nVersion: 2.2.1\nQt Compiled Version: 6.11.1\nQt Runtime Version: 6.11.1\nCommit: 01164ffa47f2778088bd6ff472ec9cd9a57f5b42\nCommit Date: 2026-07-13 18:19:49 -0500\nCompiler: c++ (/usr/bin)\nCompiler Version: 17.0.0.17000604\nCompiled Debug: NO\nOperating System: Apple OSX\nCompiled with OpenMP: YES\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-0.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-0.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.2519977089832537,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-1.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-1.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.24977229203796014,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-2.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-2.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.2454819169943221,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-3.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-3.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.24541725002927706,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-4.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-4.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.2535772499977611,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-5.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-5.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.2490354580222629,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-volume-to-surface-mapping",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/orig.nii.gz",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-6.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fraction-6.func.gii",
+      "-trilinear"
+    ],
+    "exit_code": 0,
+    "seconds": 0.24273858300875872,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-metric-resample",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/subject.func.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/subject-registered.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/audit/inputs/fsaverage_L.surf.gii",
+      "BARYCENTRIC",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fsaverage.func.gii"
+    ],
+    "exit_code": 0,
+    "seconds": 0.6079387909849174,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-metric-resample",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/fsaverage.func.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/audit/inputs/fsaverage_L.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/audit/inputs/fslr_L_in_fsaverage.surf.gii",
+      "BARYCENTRIC",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/staged.func.gii"
+    ],
+    "exit_code": 0,
+    "seconds": 0.3513906250009313,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-surface-real-20261001/tooling/ConnectomeWorkbench.app/Contents/usr/bin/wb_command",
+      "-metric-resample",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/subject.func.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/subject-registered.surf.gii",
+      "/private/tmp/scalafim-p707-surface-real-20261001/audit/inputs/fslr_L_in_fsaverage.surf.gii",
+      "BARYCENTRIC",
+      "/private/tmp/scalafim-p707-surface-real-20261001/native-reviewed/direct.func.gii"
+    ],
+    "exit_code": 0,
+    "seconds": 0.3188642499735579,
+    "stdout": "",
+    "stderr": ""
+  }
+]
