@@ -1,0 +1,42 @@
+{
+  "schema": "qualified-producer-main-publication/v1",
+  "repo": "canardlapin/scalafim",
+  "previous_main": "d13897efd18c7cdb8978146dbab3cc790f193a63",
+  "published_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+  "method": "normal fast-forward push; no force or protection bypass",
+  "upstream_ahead_behind_before_push": [
+    154,
+    0
+  ],
+  "github_account": "canardlapin",
+  "protected_main": true,
+  "enforce_admins": true,
+  "strict_required_status_checks": true,
+  "required_checks": [
+    {
+      "name": "full repository JVM/Scala.js compile and test",
+      "run": 40019700974,
+      "job": 120641447627,
+      "conclusion": "success"
+    },
+    {
+      "name": "focused first-level JVM/Scala.js gates",
+      "run": 40019700974,
+      "job": 120641447604,
+      "conclusion": "success"
+    },
+    {
+      "name": "scoped first-level scientific coverage",
+      "run": 40019700974,
+      "job": 120641447489,
+      "conclusion": "success"
+    }
+  ],
+  "pr": "https://github.com/canardlapin/scalafim/pull/67",
+  "pr_state": "MERGED",
+  "merged_at": "2026-10-23T23:09:56Z",
+  "merge_commit": "a746d9cefb183baee718afbc19838c1d0d673339",
+  "remote_parity_verified": true,
+  "observed_utc": "2026-10-23T23:28:27.192227+00:00",
+  "scope": "Producer publication. Separate PLS consumer full native/brain gates still pending. A post-main push rerun at the same SHA is separate from these completed source-bound check runs."
+}

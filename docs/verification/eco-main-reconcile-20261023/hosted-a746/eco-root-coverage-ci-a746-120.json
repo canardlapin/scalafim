@@ -1,0 +1,45 @@
+{
+  "head": "a746d9cefb183baee718afbc19838c1d0d673339",
+  "run": 40019700974,
+  "job": 120641447489,
+  "conclusion": "success",
+  "completed_at": "2026-10-23T22:50:14Z",
+  "reports": [
+    {
+      "module": "arJVM",
+      "statement_percent": 82.42,
+      "branch_percent": 71.13
+    },
+    {
+      "module": "hrfJVM",
+      "statement_percent": 84.76,
+      "branch_percent": 75.81
+    },
+    {
+      "module": "designJVM",
+      "statement_percent": 80.15,
+      "branch_percent": 70.13
+    },
+    {
+      "module": "modelJVM",
+      "statement_percent": 80.09,
+      "branch_percent": 71.71
+    },
+    {
+      "module": "fitJVM",
+      "statement_percent": 83.65,
+      "branch_percent": 73.0
+    }
+  ],
+  "all_declared_module_floors_passed": true,
+  "sbt_summary_counts": {
+    "total": 2296,
+    "failed": 0,
+    "errors": 0,
+    "passed": 2295,
+    "skipped": 1
+  },
+  "sbt_count_summaries": 6,
+  "raw_log_sha256": "59feea5e9ad7821a22d16c3d38daff4d30ae546aa7e767f79b60901ba1680729",
+  "scope": "Five scoped JVM module coverage floors, not whole-repository coverage or external CMRG/scientific acceptance."
+}

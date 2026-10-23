@@ -1,0 +1,37 @@
+{
+  "recorded_utc": "2026-10-23T22:01:23.120286+00:00",
+  "account": "canardlapin",
+  "providers": [
+    {
+      "repo": "canardlapin/neurosurf4s",
+      "previous_main": "a42bba99407e82f78a5a772b2962c0e91afd2bb0",
+      "published_main": "fdb3a52118522eed55ba9ed75fb0c2270abcb880",
+      "qualified_source": "4b23386bf750118b9c7c1220b6c592da9ba965e0",
+      "fast_forward": true,
+      "incoming_main_commits": 0,
+      "remote_parity_verified": true,
+      "production_delta_after_qualified_source": "none; receipts and tracker operations only"
+    },
+    {
+      "repo": "canardlapin/neuroatlas4s",
+      "previous_main": "07e3d24d58d196c82c24429aefa7b7d65a671a34",
+      "published_main": "e1decf0bed2d303469d73b5b2a8fd49187c0419c",
+      "qualified_source": "0256e98eb78d35523ce6dbd08fea4f19b76e1b68",
+      "fast_forward": true,
+      "incoming_main_commits": 0,
+      "remote_parity_verified": true,
+      "production_delta_after_qualified_source": "none; receipts and tracker operations only"
+    },
+    {
+      "repo": "canardlapin/mvpa4s",
+      "previous_main": "b8259ab7eb00b4ad48cf26e3f5da49f398eae58a",
+      "published_main": "8be3b6f36ec41efb49ab2103b2c4bc3d81368dc2",
+      "qualified_source": "11b547338df58dc8b922006e0a9cca9b575fe3ff",
+      "fast_forward": true,
+      "incoming_main_commits": 0,
+      "remote_parity_verified": true,
+      "production_delta_after_qualified_source": "none; receipts and tracker operations only"
+    }
+  ],
+  "scope": "Independent provider local JVM/JS and native qualifications, not PLS FX24 consumer qualification; existing qualified source pins retained."
+}

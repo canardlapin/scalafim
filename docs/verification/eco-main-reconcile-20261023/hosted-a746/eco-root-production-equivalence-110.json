@@ -1,0 +1,12 @@
+{
+  "recorded_utc": "2026-10-23T22:12:19.429433+00:00",
+  "application_provider_pin": "5c7936ef6f4c247451182f33cfad00a7286c8cb8",
+  "root_current_candidate": "a746d9cefb183baee718afbc19838c1d0d673339",
+  "main_source_and_resource_files": 586,
+  "all_main_blobs_equal": true,
+  "main_map_sha256": "87eff4c662f9d554c6ca6a06e0d58ada831a2aa19222168fcc19f523242b9a8e",
+  "build_difference": "Exactly two providerSpike test->compile edges to neurosurf4sVolumeJVM/JS; removing only those exact added lines reproduces the entire earlier build.sbt byte-for-byte. All provider pin declarations unchanged.",
+  "project_tree": "7545160f87e5f40b7c6c9ba427b5e462802848d6",
+  "project_tree_unchanged": true,
+  "scope": "Source/build equivalence binds downstream product behavior; not a claim of finished hosted CI or PLS native/brain acceptance."
+}

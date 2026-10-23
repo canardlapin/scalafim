@@ -1,0 +1,354 @@
+[
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T20:48:26.4125161Z ==> s scalafim.phrfcmp.prep.RhoBiasHeavySuite.frozen rho bias criterion over 50 harness datasets: trial and condition cells (opt-in) skipped 0.009s",
+    "following": [
+      "2026-10-23T20:48:29.2672380Z scalafim.phrfcmp.exec.InteropSuite:",
+      "2026-10-23T20:48:29.2673255Z   + blobs sealed by the JVM unseal with the Python reader (random keys, buckets, duplicates, tmp debris, CLOSE) 2.11s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T20:49:16.9052178Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.real GLMsingle on T-TX-fast: E-trial in input order equals the converter output bit for bit; scratch gone skipped 0.002s",
+    "following": [
+      "2026-10-23T20:49:16.9052980Z   + scan control: the leak scanner finds a planted value in a plain file 0.002s",
+      "2026-10-23T20:49:16.9053792Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T20:49:16.9053792Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.disk leak: no file created during a real bridge run contains a beta value (planted sentinel and real betas) skipped 0.0s",
+    "following": [
+      "2026-10-23T20:49:16.9054464Z   + end to end with a non-identity trial permutation: bridge returns input (event) order 0.291s",
+      "2026-10-23T20:49:16.9054955Z   + timeout: refusal, whole process group killed, scratch wiped and detached 1.544s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T20:49:16.9062697Z ==> s scalafim.phrfcmp.run.GlmSingleBridgeSuite.F3/F4: a successful attempt reports both CPU figures and the output hash; guard is rusage, timing is the sidecar skipped 0.001s",
+    "following": [
+      "2026-10-23T20:49:16.9063420Z   + F5: the startup sweep releases a deliberately leaked scratch of a dead owner, and nothing else 0.007s",
+      "2026-10-23T20:49:16.9063942Z   + F5: the JVM shutdown path kills the child's process group and releases a live scratch 0.336s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T20:49:17.0679864Z ==> s scalafim.phrfcmp.ingest.RealGeneratorSuite.fixtures are byte-identical to a fresh generator run (skipped without python3+numpy) skipped 0.13s",
+    "following": [
+      "2026-10-23T20:49:36.0406691Z scalafim.phrfcmp.exec.PilotCorpusAssemblerSuite:",
+      "2026-10-23T20:49:36.0407274Z   + complete production contributions assemble every cell and preserve canonical outcomes under reordering 3.922s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:52.9443910Z ==> s neuroatlas4s.reference.Fslr32kRouteBudgetSuite.P1-P3, P5, P6 (timing asserted with SCALAFIM_TIMING_BUDGETS=1): the public route matches the oracle at every vertex and maps GM within budget skipped 0.029s",
+    "following": [
+      "2026-10-23T21:07:52.9446772Z ==> s neuroatlas4s.reference.Fslr32kRouteBudgetSuite.the public route is the qualified wiring: same locked anatomy, publisher basis and bridge as the reference fixtures skipped 0.008s",
+      "2026-10-23T21:07:52.9474934Z ==> s neuroatlas4s.reference.Fslr32kRouteBudgetSuite.an override is disclosed, changes the identity, and is held to the placement gate skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:52.9446772Z ==> s neuroatlas4s.reference.Fslr32kRouteBudgetSuite.the public route is the qualified wiring: same locked anatomy, publisher basis and bridge as the reference fixtures skipped 0.008s",
+    "following": [
+      "2026-10-23T21:07:52.9474934Z ==> s neuroatlas4s.reference.Fslr32kRouteBudgetSuite.an override is disclosed, changes the identity, and is held to the placement gate skipped 0.0s",
+      "2026-10-23T21:07:53.0982089Z neuroatlas4s.io.StandardSurfaceRouteFilesSuite:"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:52.9474934Z ==> s neuroatlas4s.reference.Fslr32kRouteBudgetSuite.an override is disclosed, changes the identity, and is held to the placement gate skipped 0.0s",
+    "following": [
+      "2026-10-23T21:07:53.0982089Z neuroatlas4s.io.StandardSurfaceRouteFilesSuite:",
+      "2026-10-23T21:07:53.0983031Z   + an empty cache is refused with every locked path listed; nothing is downloaded 0.012s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:53.0988450Z ==> s neuroatlas4s.io.StandardSurfaceRouteFilesSuite.the consumer example maps locked GM through the public route and discloses its identity skipped 0.0s",
+    "following": [
+      "2026-10-23T21:07:53.6387800Z neuroatlas4s.io.MniTemplateBridgeFilesSuite:",
+      "2026-10-23T21:07:53.6388599Z   + the committed oracle matches its manifest and pins the inspected composites 0.048s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:53.6390639Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.the composite pulls MNI152NLin2009cAsym points to MNI152NLin6Asym exactly as ITK TransformPoint does skipped 0.009s",
+    "following": [
+      "2026-10-23T21:07:53.6392282Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.resampling 6Asym data onto a 2009c grid samples it through the composite skipped 0.071s",
+      "2026-10-23T21:07:53.6393725Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:53.6392282Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.resampling 6Asym data onto a 2009c grid samples it through the composite skipped 0.071s",
+    "following": [
+      "2026-10-23T21:07:53.6393725Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing skipped 0.0s",
+      "2026-10-23T21:07:53.6395111Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.TemplateFlow's reverse composite is refused with its measured direction skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:53.6393725Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing skipped 0.0s",
+    "following": [
+      "2026-10-23T21:07:53.6395111Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.TemplateFlow's reverse composite is refused with its measured direction skipped 0.0s",
+      "2026-10-23T21:07:53.6396241Z   + in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back 0.009s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:53.6395111Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.TemplateFlow's reverse composite is refused with its measured direction skipped 0.0s",
+    "following": [
+      "2026-10-23T21:07:53.6396241Z   + in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back 0.009s",
+      "2026-10-23T21:07:53.6397501Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.a qualified numerical inverse gives the forward map and an executable reverse route skipped 0.001s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:07:53.6397501Z ==> s neuroatlas4s.io.MniTemplateBridgeFilesSuite.a qualified numerical inverse gives the forward map and an executable reverse route skipped 0.001s",
+    "following": [
+      "2026-10-23T21:07:53.6640579Z [info] Passed: Total 17, Failed 0, Errors 0, Passed 8, Skipped 9",
+      "2026-10-23T21:07:53.7278356Z [success] Total time: 8 s, completed Oct 23, 2026, 9:07:53 PM"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:08:58.9284236Z ==> s mvpa4s.inference.RankPairedPilotSuite.opt-in paired exploratory cell retains every assigned method result skipped 0.009s",
+    "following": [
+      "2026-10-23T21:08:58.9465978Z mvpa4s.relation.MeasuredMeanRelationSuite:",
+      "2026-10-23T21:08:58.9467144Z   + a real frame preserves selected order and bounded origins through scoped ordinary and signed RSA 0.016s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:00.1216648Z ==> s mvpa4s.inference.RankPortabilityTraceSuite.opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped 0.0s",
+    "following": [
+      "2026-10-23T21:09:00.1242625Z mvpa4s.inference.RankV2ResourceProbeSuite:",
+      "2026-10-23T21:09:00.1243411Z ==> s mvpa4s.inference.RankV2ResourceProbeSuite.opt-in complete-adapter resource probe preserves each assigned method result skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:00.1243411Z ==> s mvpa4s.inference.RankV2ResourceProbeSuite.opt-in complete-adapter resource probe preserves each assigned method result skipped 0.0s",
+    "following": [
+      "2026-10-23T21:09:00.1399561Z mvpa4s.AxisRefSuite:",
+      "2026-10-23T21:09:00.1411820Z   + MVPA core has no response API on its compile classpath 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:00.8214003Z ==> s mvpa4s.inference.RankDiagnosticReplaySuite.opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped 0.001s",
+    "following": [
+      "2026-10-23T21:09:01.1378939Z mvpa4s.pattern.ResidualCovarianceSuite:",
+      "2026-10-23T21:09:01.1379866Z   + a two-feature, rank-one covariance matches the hand-derived precision, diagonal and log determinant 0.004s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:01.1751373Z ==> s mvpa4s.inference.RankConfirmationSuite.opt-in case uses the production rank procedure and reports actual completed B skipped 0.001s",
+    "following": [
+      "2026-10-23T21:09:01.1752530Z mvpa4s.inference.FixedRepresentationInferenceSuite:",
+      "2026-10-23T21:09:01.1753422Z   + serialized independent rank coordinates retain the actual nuisance and candidate scope 0.008s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:29.7428152Z ==> s opt-in paired exploratory cell retains every assigned method result skipped",
+    "following": [
+      "2026-10-23T21:09:29.7879785Z mvpa4s.analysis.EvidenceExposureSuite:",
+      "2026-10-23T21:09:29.7885639Z   + unknown external evidence refuses a training-only probe without calling the callback 0.000s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:32.0711209Z ==> s opt-in case uses the production rank procedure and reports actual completed B skipped",
+    "following": [
+      "2026-10-23T21:09:32.1163141Z mvpa4s.analysis.ComponentInferenceSuite:",
+      "2026-10-23T21:09:32.1203621Z   + independent R oracle: full target covariance and separately refitted component improvements 0.004s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:32.3471983Z ==> s opt-in diagnostic exports actual residual and stepwise kernels without Monte Carlo skipped",
+    "following": [
+      "2026-10-23T21:09:32.3887926Z mvpa4s.OperatorRidgeSuite:",
+      "2026-10-23T21:09:32.3892316Z   + membership and solver smart constructors reject invalid states 0.001s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:32.6514384Z ==> s opt-in complete-adapter resource probe preserves each assigned method result skipped",
+    "following": [
+      "2026-10-23T21:09:32.6552501Z mvpa4s.relation.RelationConsumersSuite:",
+      "2026-10-23T21:09:32.6561393Z   + samplewise block exclusion keeps undefined rows explicit 0.000s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:09:32.7920641Z ==> s opt-in retained fixture traces nuisance QR, residual coordinates and every accepted draw skipped",
+    "following": [
+      "2026-10-23T21:09:32.8367171Z mvpa4s.decomposition.GlobalDecompositionsSuite:",
+      "2026-10-23T21:09:32.8388540Z   + neutral relation SVD reconstructs a signed rectangular estimate without PSD retagging 0.002s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:14:43.4535928Z ==> s neurosurf4s.surface.reference.DeclaredSurfaceReaderSuite.TemplateFlow fsLR 32k left midthickness declares Talairach, CortexLeft, 32492 vertices skipped 0.021s",
+    "following": [
+      "2026-10-23T21:14:43.4652674Z neurosurf4s.surface.io.GiftiFloat64ReaderSuite:",
+      "2026-10-23T21:14:43.4672359Z   + Float64 public reader preserves precision: ASCII LittleEndian 0 0.004s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:14:43.5550982Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres skipped 0.002s",
+    "following": [
+      "2026-10-23T21:14:43.5552602Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.001s",
+      "2026-10-23T21:14:43.5554199Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:14:43.5552602Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench skipped 0.001s",
+    "following": [
+      "2026-10-23T21:14:43.5554199Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.0s",
+      "2026-10-23T21:14:43.5555740Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:14:43.5554199Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench skipped 0.0s",
+    "following": [
+      "2026-10-23T21:14:43.5555740Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s",
+      "2026-10-23T21:14:43.5557263Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:14:43.5555740Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere skipped 0.0s",
+    "following": [
+      "2026-10-23T21:14:43.5557263Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s",
+      "2026-10-23T21:14:43.5955488Z neurosurf4s.surface.io.GiftiReaderSuite:"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:14:43.5557263Z ==> s neurosurf4s.surface.io.TemplateSphereFilesSuite.every pinned sphere loads with its template's counts; other bytes are refused skipped 0.001s",
+    "following": [
+      "2026-10-23T21:14:43.5955488Z neurosurf4s.surface.io.GiftiReaderSuite:",
+      "2026-10-23T21:14:43.5968112Z   + parseString builds a typed GIFTI document with metadata and transforms 0.003s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:15:59.7116194Z ==> s P6-JS: real-field pointwise placement of both hemispheres matches the oracle within budget skipped",
+    "following": [
+      "2026-10-23T21:15:59.7689229Z neurosurf4s.surface.reference.PointMapSuite:",
+      "2026-10-23T21:15:59.7835340Z   + a constant RAS displacement translates points inside its support 0.012s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:16:22.1229214Z ==> s synthetic same-size hemisphere: placement at admission and prepare+map timings skipped",
+    "following": [
+      "2026-10-23T21:16:22.1321541Z neurosurf4s.surface.SurfaceSamplingSuite:",
+      "2026-10-23T21:16:22.1327178Z   + SurfaceGeometryPair exposes a shared cortical domain 0.000s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:17:31.3633348Z ==> s neurosurf4s.surface.reference.RealFrameEvidenceSuite.Conte69 anatomy carries the publisher's affine group-average basis; the inverse bridge is approximate skipped 0.031s",
+    "following": [
+      "2026-10-23T21:17:31.3837452Z neurosurf4s.surface.reference.RealPointMapSuite:",
+      "2026-10-23T21:17:31.3856509Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.the real point map is the digest-bound 2009c -> 6Asym composite: displacement then affine skipped 0.001s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:17:31.3856509Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.the real point map is the digest-bound 2009c -> 6Asym composite: displacement then affine skipped 0.001s",
+    "following": [
+      "2026-10-23T21:17:31.3868661Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.forward evaluation agrees with SimpleITK on the templateflow4s oracle to 1e-6 mm skipped 0.001s",
+      "2026-10-23T21:17:31.3871669Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.001s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:17:31.3868661Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.forward evaluation agrees with SimpleITK on the templateflow4s oracle to 1e-6 mm skipped 0.001s",
+    "following": [
+      "2026-10-23T21:17:31.3871669Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.001s",
+      "2026-10-23T21:17:31.4032558Z neurosurf4s.surface.reference.ThreadAllocationSuite:"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:17:31.3871669Z ==> s neurosurf4s.surface.reference.RealPointMapSuite.the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym skipped 0.001s",
+    "following": [
+      "2026-10-23T21:17:31.4032558Z neurosurf4s.surface.reference.ThreadAllocationSuite:",
+      "2026-10-23T21:17:31.4069723Z   + supported runtime measures a retained allocation 0.005s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:17:31.7774616Z ==> s neurosurf4s.surface.reference.RealInverseOracleSuite.ITK solutions round-trip through ScalaFIM's exact declared map at every vertex skipped 0.001s",
+    "following": [
+      "2026-10-23T21:17:31.8812349Z neurosurf4s.surface.reference.DeclaredPointMapReaderSuite:",
+      "2026-10-23T21:17:31.8842199Z   + the canonical synthetic directory reads, verifies and agrees with the SimpleITK oracle to 1e-9 mm 0.067s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:34:38.4171936Z ==> s scalafim.fmri.laws.FglsCmrgSuite.opt-in full external CMRG control packet preserves all five cells and every dataset skipped 0.013s",
+    "following": [
+      "2026-10-23T21:34:39.6628202Z scalafim.fmri.laws.DesignGeneratedLawsSuite:",
+      "2026-10-23T21:34:39.6629317Z   + generated explicit and mixed acquisition grids preserve run-local and global axes 0.015s"
+    ]
+  },
+  {
+    "kind": "ignored",
+    "line": "2026-10-23T21:43:45.3766410Z ==> i <unknown> ignored",
+    "following": [
+      "2026-10-23T21:43:45.8937147Z scalafim.fmri.laws.profile.ProfileReductionLawsSuite:",
+      "2026-10-23T21:43:47.0456205Z   + compact energy, amplitudes and jets equal the direct time-domain fit at alpha = 0 1.151s"
+    ]
+  },
+  {
+    "kind": "ignored",
+    "line": "2026-10-23T21:46:11.8164770Z ==> i <unknown> ignored",
+    "following": [
+      "2026-10-23T21:46:11.8202277Z scalafim.fmri.laws.profile.TrialObservationEnclosureSuite:",
+      "2026-10-23T21:46:14.0400432Z   + original impulse observation certificate encloses QR errors and admits a nonzero conditioning box 2.219s"
+    ]
+  },
+  {
+    "kind": "ignored",
+    "line": "2026-10-23T21:46:15.3148647Z ==> i <unknown> ignored",
+    "following": [
+      "2026-10-23T21:46:15.3582930Z scalafim.fmri.laws.FglsCmrgSuite:",
+      "2026-10-23T21:46:15.4072282Z   + external CMRG known-control oracle: ar2-high-censored-short dataset 0 0.049s"
+    ]
+  },
+  {
+    "kind": "skipped",
+    "line": "2026-10-23T21:46:15.5573641Z ==> s opt-in full external CMRG control packet preserves all five cells and every dataset skipped",
+    "following": [
+      "2026-10-23T21:46:15.5628715Z scalafim.fmri.laws.profile.TrialRefinementSuite:",
+      "2026-10-23T21:47:25.8495676Z   + bounded public search agrees with all reference energies and refuses boundary fits at noise ratio 0 70.286s"
+    ]
+  },
+  {
+    "kind": "ignored",
+    "line": "2026-10-23T21:51:07.2101491Z ==> i <unknown> ignored",
+    "following": [
+      "2026-10-23T21:51:07.2134027Z scalafim.fmri.laws.profile.TrialReferencePlacementSuite:",
+      "2026-10-23T21:51:07.2273210Z   + development banks have eight distinct points and fresh confirmation seeds 0.014s"
+    ]
+  },
+  {
+    "kind": "ignored",
+    "line": "2026-10-23T22:04:56.9487936Z ==> i <unknown> ignored",
+    "following": [
+      "2026-10-23T22:04:56.9644571Z scalafim.fmri.laws.FglsVoxelwiseStudySuite:",
+      "2026-10-23T22:04:56.9653633Z   + portable F upper tail matches R pf 0.001s"
+    ]
+  }
+]

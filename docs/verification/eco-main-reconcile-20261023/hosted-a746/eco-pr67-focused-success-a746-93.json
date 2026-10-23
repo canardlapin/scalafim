@@ -1,0 +1,140 @@
+{
+  "head": "a746d9cefb183baee718afbc19838c1d0d673339",
+  "run": 40019700974,
+  "job": 120641447604,
+  "conclusion": "success",
+  "executed_test_courts": 14,
+  "test_counts": [
+    {
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "passed": 5,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "scenarioTestkitJVM/test"
+    },
+    {
+      "total": 172,
+      "failed": 0,
+      "errors": 0,
+      "passed": 172,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "arJVM/test"
+    },
+    {
+      "total": 412,
+      "failed": 0,
+      "errors": 0,
+      "passed": 412,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "hrfJVM/test"
+    },
+    {
+      "total": 621,
+      "failed": 0,
+      "errors": 0,
+      "passed": 621,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "designJVM/test"
+    },
+    {
+      "total": 105,
+      "failed": 0,
+      "errors": 0,
+      "passed": 105,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "modelJVM/test"
+    },
+    {
+      "total": 764,
+      "failed": 0,
+      "errors": 0,
+      "passed": 764,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "fitJVM/test"
+    },
+    {
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "skipped": 1,
+      "ignored": 0,
+      "target": "firstLevelLawsJVM/test"
+    },
+    {
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "passed": 5,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "scenarioTestkitJS/test"
+    },
+    {
+      "total": 170,
+      "failed": 0,
+      "errors": 0,
+      "passed": 170,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "arJS/test"
+    },
+    {
+      "total": 412,
+      "failed": 0,
+      "errors": 0,
+      "passed": 412,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "hrfJS/test"
+    },
+    {
+      "total": 620,
+      "failed": 0,
+      "errors": 0,
+      "passed": 620,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "designJS/test"
+    },
+    {
+      "total": 105,
+      "failed": 0,
+      "errors": 0,
+      "passed": 105,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "modelJS/test"
+    },
+    {
+      "total": 706,
+      "failed": 0,
+      "errors": 0,
+      "passed": 706,
+      "skipped": 0,
+      "ignored": 0,
+      "target": "fitJS/test"
+    },
+    {
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "skipped": 1,
+      "ignored": 5,
+      "target": "firstLevelLawsJS/test"
+    }
+  ],
+  "total_tests_passed": 4539,
+  "total_skipped": 2,
+  "total_ignored_reporter_entries": 5,
+  "skip_scope": "Full external CMRG packet is opt-in and was not requested (FglsCmrgSuite.scala:55); no full-packet qualification credited.",
+  "ignored_scope": "Five Scala.js reporter entries named <unknown>; source attribution pending; no behavior credited."
+}
