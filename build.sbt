@@ -94,7 +94,7 @@ lazy val locus4sProvenanceJS  = ProjectRef(locus4sBuild, "locus4s-provenanceJS")
 // mvpa4s owns identified MVPA evidence and analyses. Ordinary builds clone the
 // exact reviewed revision. Coordinated overrides are forwarded so mvpa4s
 // resolves the same provider builds as ScalaFIM.
-lazy val mvpa4sRevision = "c27469484bf760c34cd896dabe4fe1c384a83b45"
+lazy val mvpa4sRevision = "ba73ed6077c0218ff55411938cdda83300623170"
 lazy val mvpa4sBuild = {
   Seq("alder", "gale", "locus4s", "multivar", "resample4s", "neuroatlas4s", "neurosurf4s",
     "neuroim4s", "mesh4s", "image4s", "spatial4s", "reframe4s", "graph4s", "zarr4s", "ravel", "intaglio").foreach { provider =>
