@@ -125,7 +125,7 @@
         "description": "A public first-level model assigns canonical, informed, and FIR bases to distinct structural cells, derives five event columns from the assigned basis widths, and evaluates semantic canonical and FIR omnibus hypotheses. Responses are generated from the inspected compiled design, so this scenario is explicitly a solver/provenance acceptance case rather than an independent end-to-end design oracle."
       },
       "allowed_statuses": ["pass"],
-      "acceptance_commands": ["sbt modelJVM/test", "sbt modelJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
       "caveats": []
     },
     {
@@ -197,7 +197,7 @@
         "description": "A public factor-plus-modulator model distinguishes categorical, per-cell slope, and shared slope columns; explicit centering and zero/impute/drop/reject missing-value policies are retained in receipts. Responses are generated from the inspected compiled design, so this is explicitly a solver/provenance and policy acceptance case rather than an independent end-to-end design oracle."
       },
       "allowed_statuses": ["pass"],
-      "acceptance_commands": ["sbt modelJVM/test", "sbt modelJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
       "caveats": []
     },
     {
@@ -666,7 +666,7 @@
       "tier": "workflow_parity",
       "module": "transform",
       "suite_class": "scalafim.spike.scenarios.FmriprepChainScenarioSuite",
-      "suite_path": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FmriprepChainScenarioSuite.scala",
+      "suite_path": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FmriprepChainScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -674,7 +674,7 @@
         "description": "boldref -> T1w (ITK rigid text) -> template (ITK HDF5 affine+displacement composite) against SimpleITK 2.5.6 TransformPoint (itk_hdf5, itk_linear) and linear Resample (neurotransform itk_oracle), plus a gated numerical-inverse round trip and SHA-256 provenance. Synthetic SimpleITK composites, not fMRIPrep demo outputs."
       },
       "allowed_statuses": ["pass_with_caveats"],
-      "acceptance_commands": ["sbt providerSpikeJVM/test", "sbt providerSpikeJS/test"],
+      "acceptance_commands": ["sbt providerContractJVM/test", "sbt providerContractJS/test"],
       "caveats": [
         {
           "id": "transform.itk-border-band",
@@ -691,7 +691,7 @@
       "tier": "workflow_parity",
       "module": "transform",
       "suite_class": "scalafim.spike.scenarios.Demo1NativeScenarioSuite",
-      "suite_path": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/Demo1NativeScenarioSuite.scala",
+      "suite_path": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/Demo1NativeScenarioSuite.scala",
       "public_seam": true,
       "platforms": [
         "jvm",
@@ -705,8 +705,8 @@
         "pass"
       ],
       "acceptance_commands": [
-        "sbt providerSpikeJVM/test",
-        "sbt providerSpikeJS/test"
+        "sbt providerContractJVM/test",
+        "sbt providerContractJS/test"
       ],
       "caveats": []
     },
@@ -715,7 +715,7 @@
       "tier": "workflow_parity",
       "module": "transform",
       "suite_class": "scalafim.spike.scenarios.FslChainScenarioSuite",
-      "suite_path": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FslChainScenarioSuite.scala",
+      "suite_path": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FslChainScenarioSuite.scala",
       "public_seam": true,
       "platforms": [
         "jvm",
@@ -729,8 +729,8 @@
         "pass_with_caveats"
       ],
       "acceptance_commands": [
-        "sbt providerSpikeJVM/test",
-        "sbt providerSpikeJS/test"
+        "sbt providerContractJVM/test",
+        "sbt providerContractJS/test"
       ],
       "caveats": [
         {
@@ -748,7 +748,7 @@
       "tier": "workflow_parity",
       "module": "transform",
       "suite_class": "scalafim.spike.scenarios.FslRealChainScenarioSuite",
-      "suite_path": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/FslRealChainScenarioSuite.scala",
+      "suite_path": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/FslRealChainScenarioSuite.scala",
       "public_seam": true,
       "platforms": [
         "jvm",
@@ -762,8 +762,8 @@
         "pass"
       ],
       "acceptance_commands": [
-        "sbt providerSpikeJVM/test",
-        "sbt providerSpikeJS/test"
+        "sbt providerContractJVM/test",
+        "sbt providerContractJS/test"
       ],
       "caveats": []
     },
@@ -772,7 +772,7 @@
       "tier": "workflow_parity",
       "module": "surface",
       "suite_class": "scalafim.spike.scenarios.SurfaceRealChainScenarioSuite",
-      "suite_path": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/SurfaceRealChainScenarioSuite.scala",
+      "suite_path": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/SurfaceRealChainScenarioSuite.scala",
       "public_seam": true,
       "platforms": [
         "jvm",
@@ -783,15 +783,15 @@
         "description": "Pinned real CC0 ds002748 sub-01 orig/white/pial/sphere.reg, registered fsaverage and fsLR32k template spheres with separate notices. Geometry-only frozen connected patch of 64 targets; seven-point segment ribbon, strict independent double radial mathematics, separate closest-point Workbench route references and input-only estimator bounds. Analytic commutativity has per-query geometry bounds; arbitrary real intensity route gap is descriptive. No whole-mesh, polyhedral ribbon, overlap, template-volume or registration-quality claim.",
         "source_paths": [
           "tools/transform/generate_surface_real_chain_oracle.py",
-          "modules/provider-spike/shared/src/test/resources/scalafim/surface/oracle/real_chain/manifest.json"
+          "modules/provider-contract/shared/src/test/resources/scalafim/surface/oracle/real_chain/manifest.json"
         ]
       },
       "allowed_statuses": [
         "pass"
       ],
       "acceptance_commands": [
-        "sbt providerSpikeJVM/test",
-        "sbt providerSpikeJS/test"
+        "sbt providerContractJVM/test",
+        "sbt providerContractJS/test"
       ],
       "caveats": []
     },
@@ -800,7 +800,7 @@
       "tier": "workflow_parity",
       "module": "surface",
       "suite_class": "scalafim.spike.scenarios.SurfaceChainScenarioSuite",
-      "suite_path": "modules/provider-spike/shared/src/test/scala/scalafim/spike/scenarios/SurfaceChainScenarioSuite.scala",
+      "suite_path": "modules/provider-contract/shared/src/test/scala/scalafim/spike/scenarios/SurfaceChainScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -808,7 +808,7 @@
         "description": "A linear scanner-RAS volume sampled through a tkRAS white/pial ribbon (FramedSurface.toScanner, RibbonOperator) equals the field at mid-thickness + c_ras; barycentric resampling from the registered sphere to fsaverage-like and fsLR-like meshes stays within the gradient-times-sagitta bound, and the two-step and direct routes commute within the summed bounds."
       },
       "allowed_statuses": ["pass_with_caveats"],
-      "acceptance_commands": ["sbt providerSpikeJVM/test", "sbt providerSpikeJS/test"],
+      "acceptance_commands": ["sbt providerContractJVM/test", "sbt providerContractJS/test"],
       "caveats": [
         {
           "id": "surface.mni152-nlin6-nlin2009c-bridge",

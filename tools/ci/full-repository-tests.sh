@@ -49,11 +49,11 @@ run_batch phrf-comparison-js phrfComparisonJS/test
 run_batch core-jvm \
   pipelineJVM/test responseJVM/test responseLawsJVM/test \
   latentJVM/test arJVM/test hrfJVM/test \
-  scenarioTestkitJVM/test designJVM/test providerSpikeJVM/test
+  scenarioTestkitJVM/test designJVM/test designViewJVM/test providerContractJVM/test
 run_batch core-js \
   pipelineJS/test responseJS/test responseLawsJS/test \
   latentJS/test arJS/test hrfJS/test \
-  scenarioTestkitJS/test designJS/test providerSpikeJS/test
+  scenarioTestkitJS/test designJS/test designViewJS/test providerContractJS/test
 
 run_batch neuroim neuroimTestAll
 run_batch neuroim-transforms neuroimTransformTestAll
@@ -97,9 +97,9 @@ run_batch estimates-js \
   estimatesJS/test estimatesIoJS/test
 
 run_batch analysis-jvm \
-  modelJVM/test fitJVM/test firstLevelLawsJVM/test mvpaPipelineJVM/test mvpaFitJVM/test
+  fitJVM/test firstLevelLawsJVM/test mvpaPipelineJVM/test mvpaFitJVM/test
 run_batch analysis-js \
-  modelJS/test fitJS/test firstLevelLawsJS/test mvpaPipelineJS/test mvpaFitJS/test
+  fitJS/test firstLevelLawsJS/test mvpaPipelineJS/test mvpaFitJS/test
 
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \

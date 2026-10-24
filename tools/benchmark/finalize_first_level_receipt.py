@@ -35,7 +35,7 @@ SOURCE_PATHS = (
   "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala",
   "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Primitive.scala",
   "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/regressor/Regressor.scala",
-  "modules/model/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
+  "modules/fit/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
   "tools/benchmark/first-level-budgets.json",
   "tools/benchmark/finalize_first_level_receipt.py",
   "tools/ci/first-level-benchmark.sh",

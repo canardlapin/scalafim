@@ -10,8 +10,8 @@ Current examples:
   workflows.
 - `atlas-jvm`: standard atlas descriptors, explicit JVM loaders, coordinate
   lookup, parcel reduction, and atlas-to-MVPA feature plans.
-- `workflows-jvm`: cross-module examples that start with domain objects and
-  run small end-to-end analyses.
+- `workflows`: one cross project for portable workflow examples, with JVM-only
+  FreeSurfer and platform bindings kept in their platform source roots.
 
 Run all examples smoke tests with:
 

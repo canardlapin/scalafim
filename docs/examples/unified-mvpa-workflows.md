@@ -13,7 +13,7 @@ Run the complete synthetic atlas-to-classification example:
 python3 tools/build/sbt-warm 'workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow'
 ```
 
-[AtlasMvpaWorkflow.scala](../../examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala)
+[AtlasMvpaWorkflow.scala](../../examples/workflows/shared/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala)
 builds nominal sample and neural axes, run-bound columns, an atlas measurement
 frame and `LeaveOneGroupOutDesign`. Each visited region enters
 `AlderPredictiveAdmission.nativeMeasurement` and

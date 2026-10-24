@@ -21,7 +21,7 @@ when you need one library without the functional-analysis stack.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `neuroim4s` (standalone): neuroimaging volumes and time series, masks and ordered selections, sampling, orientation, reslicing, image statistics and world binding. Optional JVM IO uses image4s codecs directly; ScalaFIM has no local `image` module.
-- `provider-spike`: unpublished JVM/Scala.js public-provider composition contracts and retained domain, partial-parcel, neighborhood and provider admission laws. Its production compile contract composes image4s, locus4s, Gale, Ravel and reframe4s directly; additional MVPA foundation providers stay in Test scope.
+- `provider-contract`: unpublished JVM/Scala.js public-provider composition contracts and retained domain, partial-parcel, neighborhood and provider admission laws. Its production compile contract composes image4s, locus4s, Gale, Ravel and reframe4s directly; additional MVPA foundation providers stay in Test scope.
 - `neuroim4s-view` (standalone): renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts. Optional `neuroim4s-view-canvas`, `neuroim4s-view-java2d` and `neuroim4s-view-javafx` modules provide the Scala.js Canvas, JVM Java2D and JVM JavaFX hosts. See [the volume viewer guide](docs/image-viewer.md).
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
@@ -36,8 +36,11 @@ when you need one library without the functional-analysis stack.
 - `archive-lna`: typed LNA 2 schema, pure manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
 - `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, LNA pipeline reconstruction, archive-aware dataset adapters, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
-- `model`: fMRI model composition and typed fitting plans/configuration.
-- `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
+- `fit`: fMRI model composition and typed fitting plans/configuration plus
+  portable fit kernels and explicit synchronous-reader and effectful
+  opened-dataset execution boundaries. The retained model APIs remain in their
+  `scalafim.fmri.model` package.
+- `design-view`: renderer-neutral design review graphics and raster exports.
 - `phrf-comparison`: unpublished comparative-evaluation preparation and scoring on JVM/Scala.js, with JVM runners and custody tooling. [Pilot integration scope](modules/phrf-comparison/README.md) excludes the pending S10 launch and rehearsal.
 - MVPA core (identified evidence, relational/pattern analyses, measurement and execution contracts) lives in standalone [`mvpa4s`](https://github.com/canardlapin/mvpa4s), pinned by `mvpa4sRevision`, with optional Alder predictive adapters in `mvpa4s-predictive` locus measurement/scatter adapters in `mvpa4s-locus`, and optional mesh/atlas adapters in `mvpa4s-surface`/`mvpa4s-atlas`; the `mvpa-*` modules below are ScalaFIM integrations over it.
 - `mvpa-pipeline`: optional ScalaFIM pipeline interpreter for MVPA work units; the core runs directly and owns resource/commit semantics.
@@ -70,7 +73,7 @@ neuroimaging integrations. The
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
 The former MVPA foundation prototype and `locus-data` facades have been retired.
-Their retained provider admission and algebra witnesses run in `provider-spike`;
+Their retained provider admission and algebra witnesses run in `provider-contract`;
 production axis/reindexing witnesses live in mvpa4s. See the
 [ownership and test-custody ledger](docs/verification/eco-u6-cleanup-20261022/ownership.md).
 `ecosystemBoundaries` checks production source ownership and the actual transitive
@@ -97,7 +100,7 @@ does not retain a registration module. Its standalone neuroim4s core and optiona
 consume the reframe4s `lie`, `field` and `resample` capabilities (generic
 spatial maps, dense fields, numerical inverses and resampling execution)
 through an immutable source revision; the HalfFlow and registration modules
-are not dependencies. `provider-spike` composes `lie` and `resample` directly.
+are not dependencies. `provider-contract` composes `lie` and `resample` directly.
 
 Renderer-neutral graphics, plotting, and the SVG/Canvas/Java2D/JavaFX backends
 live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).
@@ -226,8 +229,8 @@ is needed.
 sbt scalafimCompileAll
 bash tools/ci/full-repository-tests.sh
 sbt ecosystemBoundaries
-sbt providerSpikeJVM/test
-sbt providerSpikeJS/test
+sbt providerContractJVM/test
+sbt providerContractJS/test
 sbt pipelineJVM/test
 sbt pipelineJS/test
 sbt responseJVM/test
@@ -244,6 +247,8 @@ sbt scenarioTestkitJVM/test
 sbt scenarioTestkitJS/test
 sbt designJVM/test
 sbt designJS/test
+sbt designViewJVM/test
+sbt designViewJS/test
 sbt neuroimTestAll  # provider core JVM/JS and optional JVM IO
 # Optional volume-view tests run in the pinned neuroim4s provider.
 sbt neuroimViewJvmTestAll
@@ -275,8 +280,6 @@ sbt archivedResponseInteropJVM/test
 sbt archivedResponseInteropJS/test
 sbt datasetJVM/test
 sbt datasetJS/test
-sbt modelJVM/test
-sbt modelJS/test
 sbt fitJVM/test
 sbt fitJS/test
 sbt archiveZarrJVM/test
