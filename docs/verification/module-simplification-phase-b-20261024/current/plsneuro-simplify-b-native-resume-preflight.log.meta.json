@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-24T14:43:06.530289+00:00",
+  "finished_utc": "2026-10-24T14:43:14.118549+00:00",
+  "duration_seconds": 7.588016,
+  "command": [
+    "python3",
+    "/tmp/preflight-plsneuro-native-resume-20261024.py"
+  ],
+  "cwd": "/Volumes/EcoBrainHFS20261023/work/plsneuro-simplify-b-20261024",
+  "log": "/tmp/plsneuro-simplify-b-native-resume-preflight.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 600.0,
+  "log_bytes": 667
+}

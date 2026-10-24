@@ -1,0 +1,11 @@
+{
+  "run": 40094296421,
+  "job": 120873212764,
+  "source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "raw_bytes": 1125623,
+  "raw_sha256": "eb8d032205ea84a352cc736b852a2d65bfb781b5884b6c69a616b51b470288c0",
+  "gzip_sha256": "e96e2ec67d8f28b97ef6ae545aec7177145f76ec36c320c1f94c7edbd596ee46",
+  "candidate_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c",
+  "tree_binding": "hosted-checkout-binding.json"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-24T12:34:51.841349+00:00",
+  "finished_utc": "2026-10-24T12:38:44.291763+00:00",
+  "duration_seconds": 232.469602,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "designJS/test",
+    "designViewJS/test"
+  ],
+  "cwd": "/Volumes/EcoBrainHFS20261023/work/scalafim-simplify-b-20261024",
+  "log": "/tmp/scalafim-simplify-b-design-js-03.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 53515
+}

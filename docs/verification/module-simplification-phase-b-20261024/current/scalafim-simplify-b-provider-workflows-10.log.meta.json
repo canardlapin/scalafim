@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-24T13:30:55.931080+00:00",
+  "finished_utc": "2026-10-24T13:32:08.647375+00:00",
+  "duration_seconds": 72.715748,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "providerContractJVM/test",
+    "providerContractJS/test",
+    "workflowExamplesJVM/test",
+    "workflowExamplesJS/test",
+    "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"
+  ],
+  "cwd": "/Volumes/EcoBrainHFS20261023/work/scalafim-simplify-b-20261024",
+  "log": "/tmp/scalafim-simplify-b-provider-workflows-10.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 11098
+}

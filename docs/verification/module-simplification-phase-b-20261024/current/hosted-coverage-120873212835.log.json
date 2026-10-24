@@ -1,0 +1,26 @@
+{
+  "run": 40094296421,
+  "job": 120873212835,
+  "candidate_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c",
+  "raw_bytes": 653136,
+  "raw_sha256": "af1f609c55d38cbf4c333ee226ce6606d98d5b0838a90a678893654887095a04",
+  "gzip_bytes": 122537,
+  "gzip_sha256": "2ec1465ed228a0ad0831eabb2dc6afb8a447e65dea83715c41ac26ae1e5a4e95",
+  "metric_lines": [
+    "2026-10-24T12:32:07.6149015Z [first-level-coverage] enforcing per-module scientific coverage floors",
+    "2026-10-24T12:32:07.6149898Z [first-level-coverage] arJVM",
+    "2026-10-24T12:35:56.9802433Z [info] Statement coverage.: 82.42%",
+    "2026-10-24T12:35:56.9832684Z [info] Branch coverage....: 71.13%",
+    "2026-10-24T12:36:01.2374362Z [first-level-coverage] hrfJVM",
+    "2026-10-24T12:38:54.2630608Z [info] Statement coverage.: 84.76%",
+    "2026-10-24T12:38:54.2644248Z [info] Branch coverage....: 75.81%",
+    "2026-10-24T12:38:54.7005331Z [first-level-coverage] designJVM",
+    "2026-10-24T12:41:44.1558388Z [info] Statement coverage.: 78.71%",
+    "2026-10-24T12:41:44.1595257Z [info] Branch coverage....: 69.22%",
+    "2026-10-24T12:41:45.4787680Z [first-level-coverage] fitJVM",
+    "2026-10-24T14:52:41.7291428Z [info] Statement coverage.: 83.60%",
+    "2026-10-24T14:52:41.7346536Z [info] Branch coverage....: 73.69%",
+    "2026-10-24T14:52:42.1873994Z [first-level-coverage] all module floors passed"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "source_commit": "2fd0b2b1117c979a1320b8f5158f34fa957bb485",
+  "root_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "declared_cases": 201,
+  "lane_timeout_seconds": 2400,
+  "outer_timeout_seconds": 2700,
+  "output": "/private/tmp/plsneuro-simplify-b-native-15",
+  "compile_root": "/Volumes/EcoBrainHFS20261023/work/pb-native-15",
+  "free_before_bytes": 21798490112,
+  "no_prior_outcomes_reused": true,
+  "selected_inherited_env": {
+    "JAVA_TOOL_OPTIONS": null,
+    "JAVA_OPTS": null,
+    "SBT_OPTS": null
+  }
+}

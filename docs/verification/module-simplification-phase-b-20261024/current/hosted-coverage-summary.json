@@ -1,0 +1,31 @@
+{
+  "job": 120873212835,
+  "run": 40094296421,
+  "candidate_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c",
+  "coverage": {
+    "arJVM": {
+      "statement_percent": 82.42,
+      "branch_percent": 71.13
+    },
+    "hrfJVM": {
+      "statement_percent": 84.76,
+      "branch_percent": 75.81
+    },
+    "designJVM": {
+      "statement_percent": 78.71,
+      "branch_percent": 69.22
+    },
+    "fitJVM": {
+      "statement_percent": 83.6,
+      "branch_percent": 73.69
+    }
+  },
+  "all_configured_floors_passed": true,
+  "fit_floor_unchanged": {
+    "statement_percent": 75,
+    "branch_percent": 62
+  },
+  "full_instrumented_law_court": "221 passed,1existingopt-inskip",
+  "scope": "Scoped scientific coverage checks; not scientific acceptance, full-repository completion or consumer native admission."
+}

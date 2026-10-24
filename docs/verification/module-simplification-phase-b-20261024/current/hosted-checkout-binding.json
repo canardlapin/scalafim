@@ -1,0 +1,14 @@
+{
+  "candidate_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c",
+  "tested_ref": "refs/pull/68/merge",
+  "parents": [
+    "a746d9cefb183baee718afbc19838c1d0d673339",
+    "2418878f66f0c6ce28ea1933851fa5a18888a4ac"
+  ],
+  "candidate_tree": "08cab4ffbb958602e63f590f092041e41cd3fc41",
+  "tested_tree": "08cab4ffbb958602e63f590f092041e41cd3fc41",
+  "tree_identical": true,
+  "run": 40094296421,
+  "scope": "Hosted workflow runs checkout the PR merge commit; local gates and PLS consumer pin the candidate commit. The checked trees are identical."
+}

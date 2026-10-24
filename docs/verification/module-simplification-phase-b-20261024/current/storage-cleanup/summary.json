@@ -1,0 +1,18 @@
+{
+  "status": "six-merged-worktrees-archived-verified-and-retired",
+  "worktrees": 6,
+  "disk_kib_before": 6279436,
+  "archive_bytes": 4556234990,
+  "verified_entries": 282870,
+  "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+  "archive_root": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees",
+  "current_free_internal_bytes": 21853294592,
+  "preserved": [
+    "Dirty scalafim-u2pins",
+    "Unpublished scalafim-design-view branch",
+    "Other unmerged and active worktrees",
+    "Orphan sbt caches pending inspection",
+    "Original dirty canonical checkouts"
+  ],
+  "scope": "Bounded local cleanup only; Phase C repository weight work remains open."
+}

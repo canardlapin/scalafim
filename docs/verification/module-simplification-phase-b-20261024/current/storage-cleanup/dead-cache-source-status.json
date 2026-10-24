@@ -1,0 +1,1142 @@
+[
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/04952fe6eed421b8/staging/c42ffad74301778951e7/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/04952fe6eed421b8/staging/784ef883a6e00dffd47c/spatial4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/04952fe6eed421b8/staging/e6c88898cf2a580290f7/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/04952fe6eed421b8/staging/03b7f0d36fcba51e6ed8/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/04952fe6eed421b8/staging/1acafa978adeaec8bfcf/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/55ea4b14b89fb02ef5c0/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/8022bdf7e1aa5920ac9e/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/3affa4797661edd945b9/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/6c77ef03ad5f6b5be136/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/22f1c56c83df4441f78e/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/995ff8e011f5a5221e44/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/b51ea69c1c3a30e37df3/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/04c54b2d3f3921f04b0c/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/05a8f1a231c171f1bca0/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/b3db316401092ccd708e/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/5a3fe250684692aa42c1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/d79d1afec9bc45383768/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/41e96dde036f148f012a/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/04c54b2d3f3921f04b0c/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/05a8f1a231c171f1bca0/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/b3db316401092ccd708e/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/5a3fe250684692aa42c1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/d79d1afec9bc45383768/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/ddfd051529833423c112/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/41e96dde036f148f012a/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/05a8f1a231c171f1bca0/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/1c0c6951f424be151a44/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/3f2178822f022481a0df/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/ea79ceab03fbab81fbf0/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/8d03f2d14a9e2c9f6990/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/34d9c7c30eaa1e7f169b/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/25e2fa7418954dc8ed84/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/c6b5fe94c20cf0d05b05/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754/staging/1e43f2e8d8596f8f6e65/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/04c54b2d3f3921f04b0c/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/05a8f1a231c171f1bca0/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/b3db316401092ccd708e/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/5a3fe250684692aa42c1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/22f1c56c83df4441f78e/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/d79d1afec9bc45383768/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/ddfd051529833423c112/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/41e96dde036f148f012a/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/dea3d4c9ff8d564020ce/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/13888b7dd8bc22e12ae8/neuroatlas4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/b9182975c3d7d363f190/mvpa4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/c42ffad74301778951e7/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/784ef883a6e00dffd47c/spatial4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/8396538c6d21f1d20214/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/135badde2a1fe78cfcb7/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/e6c88898cf2a580290f7/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/70890b60a1c9586a474b/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/6e1c7e90d885ae794319/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/c76252a048c916057029/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/03b7f0d36fcba51e6ed8/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/1acafa978adeaec8bfcf/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/55ea4b14b89fb02ef5c0/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/8022bdf7e1aa5920ac9e/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/3affa4797661edd945b9/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/6c77ef03ad5f6b5be136/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/22f1c56c83df4441f78e/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/995ff8e011f5a5221e44/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/b51ea69c1c3a30e37df3/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/04c54b2d3f3921f04b0c/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/05a8f1a231c171f1bca0/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/b3db316401092ccd708e/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/5a3fe250684692aa42c1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/d79d1afec9bc45383768/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/ddfd051529833423c112/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/41e96dde036f148f012a/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/55ea4b14b89fb02ef5c0/reframe4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/8022bdf7e1aa5920ac9e/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/3affa4797661edd945b9/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/6c77ef03ad5f6b5be136/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/5a90f48e170e9e640ee1/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/22f1c56c83df4441f78e/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/70113493d2034afa26c1/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/995ff8e011f5a5221e44/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/57a292f3a6ded9e259cf/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/b4b08747efd9a8151229/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/b51ea69c1c3a30e37df3/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/34fcacf7027b8ae3b2f8/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/03b7f0d36fcba51e6ed8/ravel",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/08e20f5c89874d9eb32d/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/0ee248d4152359c48369/mesh4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/11585c56fc41c8120d55/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/127b7f11a9c714dce6f9/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/135badde2a1fe78cfcb7/intaglio",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/13888b7dd8bc22e12ae8/neuroatlas4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/169dde1ec5b6720cd043/mesh4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/1acafa978adeaec8bfcf/gale",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/26895a150789b457b61c/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/34c0071f90095ef07887/zarr4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f04b5b8ce91bb20e877/neuroatlas4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/3f5d01c7e6069e74a205/resample4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/43c5a90961a946dbd228/reframe4s",
+    "exit_code": -15,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/61bb012376653558d95d/mesh4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/636a9eab2c3e1ef8bcd5/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/6e1c7e90d885ae794319/multivar",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/70890b60a1c9586a474b/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/779670f983616f20129a/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/77e7bdc71bddb8077fcd/bids4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/784ef883a6e00dffd47c/spatial4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/7ed5bf16f075c3452340/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/809cb5823a15cbd421f3/reframe4s",
+    "exit_code": -15,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/8396538c6d21f1d20214/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/86f1c63c989457747731/mesh4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/8a5ba4c137e2020cea60/neuroatlas4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/96c50b025d799c245ede/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/9a199e5426b41e6cb41d/mesh4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/a589cf835327a24b1004/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/ae0fc8f94feb05e0d662/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b38ada66002f2d4efb82/templateflow4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/b9182975c3d7d363f190/mvpa4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/bd2144d06e8834fe3334/neuroatlas4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/be338f4f58a6c02f0696/neuroim4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c13fa73f28124fe09f40/neuroatlas4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c42ffad74301778951e7/locus4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c76252a048c916057029/alder",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+    "exit_code": -15,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/cfabf5f1e5e2fb8fb176/linops4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/dea3d4c9ff8d564020ce/reframe4s",
+    "exit_code": -15,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/e5369b89f9d6f9ffec6b/scaladock",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/e6c88898cf2a580290f7/graph4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/f5c617061301c10ae066/image4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  },
+  {
+    "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/f98e804abaf038a1d97a/frame4s",
+    "exit_code": 0,
+    "status": "",
+    "error": ""
+  }
+]

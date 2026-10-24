@@ -1,0 +1,638 @@
+{
+  "schema": "worktree-cleanup-audit.v1",
+  "created_utc": "2026-10-24T13:48:12.766207+00:00",
+  "existing_internal_candidates": [
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-design-view-20261020",
+      "HEAD": "baf26de0e782a9a556f46425e62d3e3ac4cfe15d",
+      "branch": "refs/heads/simplify/event-provenance-v3-20261020",
+      "status_exit": 0,
+      "dirty_lines": 1,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [],
+      "disk_kib": 1635364
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-eco-atlas-volume-20261020",
+      "HEAD": "c1f4f0aab1a348fec11fadd7e1d35ca6347a1432",
+      "branch": "refs/heads/eco/neuroatlas-volume-20261020",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": true,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/eco/followups-20261023",
+        "refs/remotes/origin/eco/main-reconcile-20261023",
+        "refs/remotes/origin/eco/u4-measurements-20261021",
+        "refs/remotes/origin/eco/u5-surface-20261021",
+        "refs/remotes/origin/main",
+        "refs/remotes/origin/simplify/phase-b-recovery-20261024"
+      ],
+      "disk_kib": 1273128
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-eco-mesh-kernels-20261020",
+      "HEAD": "e998f099b005743c9361df86f3c45b8704cd7418",
+      "branch": "refs/heads/eco/u4-measurements-20261021",
+      "status_exit": 0,
+      "dirty_lines": 1,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/eco/u4-measurements-20261021"
+      ],
+      "disk_kib": 825844
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+      "HEAD": "eb85814ad1a2fbf8f9157d1275d1eb798d8b4179",
+      "branch": "refs/heads/eco/neuroim-routing-20261020",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": true,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/eco/followups-20261023",
+        "refs/remotes/origin/eco/main-reconcile-20261023",
+        "refs/remotes/origin/eco/u4-measurements-20261021",
+        "refs/remotes/origin/eco/u5-surface-20261021",
+        "refs/remotes/origin/main",
+        "refs/remotes/origin/simplify/phase-b-recovery-20261024"
+      ],
+      "disk_kib": 1309040
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+      "HEAD": "fab87d0760aaca7d4697465b289f9eba6716c7b7",
+      "branch": "refs/heads/eco/followups-20261023",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": true,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/eco/followups-20261023",
+        "refs/remotes/origin/eco/main-reconcile-20261023",
+        "refs/remotes/origin/main",
+        "refs/remotes/origin/simplify/phase-b-recovery-20261024"
+      ],
+      "disk_kib": 797772
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-pr",
+      "HEAD": "81a0408d91f3a8471e7136c11261eb21a234e493",
+      "branch": "refs/heads/integration/mvpa-on-exact-spatial",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/migration/20261005/branches/integration/mvpa-on-exact-spatial"
+      ],
+      "disk_kib": 828656
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-spike-face",
+      "HEAD": "73775e299a75263a786f80ececd80d8cb3911436",
+      "branch": "refs/heads/spike/face-texel",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/migration/20261005/branches/spike/face-texel"
+      ],
+      "disk_kib": 339640
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-spike-lut",
+      "HEAD": "d7b0293bc461fe2bbe0aed6c40552cb46a2cc33c",
+      "branch": "refs/heads/spike/lut-encoding",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/migration/20261005/branches/spike/face-texel",
+        "refs/remotes/origin/migration/20261005/branches/spike/lut-encoding"
+      ],
+      "disk_kib": 309240
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-spike-raster",
+      "HEAD": "a89b2994adeb10293b434bd6680338d7bdc2b4be",
+      "branch": "refs/heads/spike/raster-figures",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/migration/20261005/branches/spike/raster-figures"
+      ],
+      "disk_kib": 258036
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim-u2pins",
+      "HEAD": "747282570b1132486968845f2baefdce3658b960",
+      "branch": "refs/heads/eco/u2-pins",
+      "status_exit": 0,
+      "dirty_lines": 1,
+      "ancestor_of_origin_main": true,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/eco/followups-20261023",
+        "refs/remotes/origin/eco/main-reconcile-20261023",
+        "refs/remotes/origin/eco/u4-measurements-20261021",
+        "refs/remotes/origin/eco/u5-surface-20261021",
+        "refs/remotes/origin/main",
+        "refs/remotes/origin/simplify/phase-b-recovery-20261024"
+      ],
+      "disk_kib": 2216184
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim/.claude/worktrees/agent-a3ebf3564cf9328f3",
+      "HEAD": "0282f0aa3d1b16e4313fcecdeb2f8a03e66fae9b",
+      "branch": "refs/heads/worktree-agent-a3ebf3564cf9328f3",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/migration/20261005/branches/worktree-agent-a3ebf3564cf9328f3"
+      ],
+      "disk_kib": 391524
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/Users/bbuchsbaum/code/scala/scalafim/.claude/worktrees/agent-a6daa1f0970060d9c",
+      "HEAD": "8be020efd3d49aba1d1ac4a07356781a43f67f8e",
+      "branch": "refs/heads/worktree-agent-a6daa1f0970060d9c",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "a746d9cefb183baee718afbc19838c1d0d673339",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/migration/20261005/branches/worktree-agent-a6daa1f0970060d9c"
+      ],
+      "disk_kib": 396212
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-fast-feedback-20261020",
+      "HEAD": "94e15eb9794468ff27bd0559cbecd596d68ec6c4",
+      "branch": "refs/heads/chore/fast-feedback-20261020",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": true,
+      "origin_main": "7701237443e0142d5047cf170747c577eb875261",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/adoption/eco-final-native-20261023",
+        "refs/remotes/origin/adoption/eco-native-receipts-20261023",
+        "refs/remotes/origin/adoption/scalafim-phase-b-20261024",
+        "refs/remotes/origin/eco/surface-atlas-20261022",
+        "refs/remotes/origin/main"
+      ],
+      "disk_kib": 2155344
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-feedback-verify-94e15eb9",
+      "HEAD": "94e15eb9794468ff27bd0559cbecd596d68ec6c4",
+      "detached": "",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": true,
+      "origin_main": "7701237443e0142d5047cf170747c577eb875261",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/adoption/eco-final-native-20261023",
+        "refs/remotes/origin/adoption/eco-native-receipts-20261023",
+        "refs/remotes/origin/adoption/scalafim-phase-b-20261024",
+        "refs/remotes/origin/eco/surface-atlas-20261022",
+        "refs/remotes/origin/main"
+      ],
+      "disk_kib": 192128
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/Users/bbuchsbaum/code/scala/plsneuro-design-view-20261020",
+      "HEAD": "d68aa194ccbee1b7a86b38ca96414bcad66afeba",
+      "branch": "refs/heads/qualify/scalafim-design-view-20261020",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": false,
+      "origin_main": "7701237443e0142d5047cf170747c577eb875261",
+      "remote_refs_containing_head": [],
+      "disk_kib": 191780
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/Users/bbuchsbaum/code/scala/plsneuro-eco-surface-atlas-20261022",
+      "HEAD": "d01f3cf1a065ad6979febec1a498023bc10f8e9b",
+      "branch": "refs/heads/eco/surface-atlas-20261022",
+      "status_exit": 0,
+      "dirty_lines": 0,
+      "ancestor_of_origin_main": true,
+      "origin_main": "7701237443e0142d5047cf170747c577eb875261",
+      "remote_refs_containing_head": [
+        "refs/remotes/origin/adoption/eco-final-native-20261023",
+        "refs/remotes/origin/adoption/eco-native-receipts-20261023",
+        "refs/remotes/origin/adoption/scalafim-phase-b-20261024",
+        "refs/remotes/origin/eco/surface-atlas-20261022",
+        "refs/remotes/origin/main"
+      ],
+      "disk_kib": 552024
+    }
+  ],
+  "missing_registrations": [
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/atlasfix",
+      "HEAD": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "branch": "refs/heads/fix/atlas-int8-followup-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c0base",
+      "HEAD": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c0ulp",
+      "HEAD": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "branch": "refs/heads/fix/c0-ulp-stationarity-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c2",
+      "HEAD": "c114cc3b556e6b70d9c651baef1d15dd1fa919d0",
+      "branch": "refs/heads/review/c2-provenance-v2-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c4",
+      "HEAD": "3ddc8693102bc9d1541286e10e4b9aa4c47081e3",
+      "branch": "refs/heads/review/c4-voxel-status-lookup-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c5",
+      "HEAD": "54d4528e30faf2c196c79040b91b26b7c88220e9",
+      "branch": "refs/heads/review/c5-hrf-complete-bspline-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c7",
+      "HEAD": "7e1f989f0b1894c8161ec65e34e73eb1ef918ad8",
+      "branch": "refs/heads/review/c7-viewer-leftovers-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c8",
+      "HEAD": "3f261adde7fb716cb997e290516fa49379121c81",
+      "branch": "refs/heads/review/c8-locus-aggregation-removal-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/fit-replay",
+      "HEAD": "10d59c82d9b0a597a3eb71538b60f6c03302c911",
+      "branch": "refs/heads/fix/fit-replay-review-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/fix-ar",
+      "HEAD": "7ed4876c1aef51f6f3fc29e6eef9bc9aa606ee21",
+      "branch": "refs/heads/fix/laws-chunk-ar-determinism-20261003",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/jdk17",
+      "HEAD": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "branch": "refs/heads/fix/jdk17-api-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/jdk17b",
+      "HEAD": "780661c51b91eb25f01563108b2e675baed836a6",
+      "branch": "refs/heads/fix/jdk17-api-guard-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/pr19ci",
+      "HEAD": "29a76fdeb62b289ab95ecb6763edc3e26583e071",
+      "branch": "refs/heads/fix/pr19-ci-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/prereqs",
+      "HEAD": "36240e396de9906a11fd31e6aa7a151f9162d017",
+      "branch": "refs/heads/land/phrf-prereqs-20261003",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeA",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeB",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeC",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeM",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/reconcile",
+      "HEAD": "b8e83fc42a851f19b65c2895c2652487913d039d",
+      "branch": "refs/heads/reconcile/origin-main-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/sbtwarm",
+      "HEAD": "ce2c6d803499942f94e79f8115e2eb0d798b47ff",
+      "branch": "refs/heads/fix/sbt-warm-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/seam",
+      "HEAD": "e275bffc56c38f1d3536da7198cf18cf9af9f325",
+      "branch": "refs/heads/fix/model-authoring-seam-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-ar-bias-20261001",
+      "HEAD": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "branch": "refs/heads/ar/bias-correction-20261001",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-atlas-native-candidate",
+      "HEAD": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-black-surface-pr-20261019",
+      "HEAD": "d29bb810528fb4fa69f724d0a934c157b5ebe6f6",
+      "branch": "refs/heads/fix/black-surface-native-20261019",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-black-surface-takeover-20261019",
+      "HEAD": "fb53f187cee3361c79845b2fbd21a1c9098e0af7",
+      "branch": "refs/heads/fix/black-surface-takeover-20261019",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-fit-landing-20261003",
+      "HEAD": "fa6bd6a9f7d773144885c57849cd298521c1772c",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-fit-preparation-20261002",
+      "HEAD": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-fslr-reconcile-20261001/work",
+      "HEAD": "c603045413faef00ebb0b55b1decca5b3b55de6c",
+      "branch": "refs/heads/work/fslr-reconcile-20261001",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-merge-20261003/fir",
+      "HEAD": "8f967b619c9648d1d7e0587838ce18976912b8c0",
+      "branch": "refs/heads/integrate/fir-reviewed-20261003",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-model-studio-20261002",
+      "HEAD": "b6612f915e5882097fbf60ec05593129ee01de6d",
+      "branch": "refs/heads/work/model-studio-20261002",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-mote-queue-20261004",
+      "HEAD": "9b29fcd303879c31d0e4cf0d2984c95730f19411",
+      "branch": "refs/heads/work/mote-queue-20261004",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-numerical-ownership-20261003",
+      "HEAD": "8f5ac7c241fdfe114b3764fa7a4a0cb2164ea789",
+      "branch": "refs/heads/work/numerical-ownership-20261003",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-render-gate-20261019",
+      "HEAD": "c68ec62340b9ae728b7d1c2163831200e20ac4c8",
+      "branch": "refs/heads/fix/render-emission-20261019",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-review-graphics-check-20261002",
+      "HEAD": "fa6bd6a9f7d773144885c57849cd298521c1772c",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-simplify-a-20261019",
+      "HEAD": "e98cc987041c3ea013c3637ba3f48cb7e24877a3",
+      "branch": "refs/heads/eco/u3-topology-20261019",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-surface-baseline-dc101ea0",
+      "HEAD": "dc101ea05a327e06641b9fc7064f822c4a9608e3",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-surface-composition",
+      "HEAD": "53feab621013d0c148a5b5d2567408a153354218",
+      "branch": "refs/heads/codex/surface-composition-20261014",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-surface-qualification-20261015",
+      "HEAD": "c4c44b76db6274b6edead08cdbe407e3357043e5",
+      "branch": "refs/heads/codex/surface-parity-qualification-20261015",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-surface-visibility",
+      "HEAD": "7ec313d769f9fd494d67618e6bf4109491652eab",
+      "branch": "refs/heads/codex/surface-mapping-visibility-20261014",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-surfview-baseline",
+      "HEAD": "fedfca318bd208719a52854cdbcdf59613982d13",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-surfview-parity",
+      "HEAD": "090c7f5f2661c366186c0a805ad734b6c9e0a974",
+      "branch": "refs/heads/codex/surfview-core-parity-20261014",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-umvpa-component-20261003",
+      "HEAD": "785726b93609fd41c37411f211ea6dd543772772",
+      "branch": "refs/heads/work/umvpa-component-20261003",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/scalafim",
+      "worktree": "/private/tmp/scalafim-umvpa-five-20261001",
+      "HEAD": "48453314884f0109c03721fa4ffcab5412a1ccdd",
+      "branch": "refs/heads/work/umvpa-five-20261001",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-black-surface-verify-20261019",
+      "HEAD": "ece27521cee872c739c3b6f000dd71db50905e53",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-meridian-adopt-20261020",
+      "HEAD": "28f2963a78e830cb58a2ddf64374fb64674c1206",
+      "branch": "refs/heads/adopt/meridian-fx27-20261020",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-meridian-verify-4c4bda33",
+      "HEAD": "4c4bda3336a902db30a0aedfe2348b3c4cfc7682",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-meridian-verify-7f720727",
+      "HEAD": "7f720727ca292102a1c19bc2df9e3284bf796311",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-meridian-verify-chrome",
+      "HEAD": "64733aca26941fc1a8b7c90dab4dcef151ee8bb5",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-meridian-verify-inter",
+      "HEAD": "28f2963a78e830cb58a2ddf64374fb64674c1206",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-render-final-verify-20261019",
+      "HEAD": "b5ea7f26ee77fc42dd00501cae33dab8412b5436",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-render-gate-20261019",
+      "HEAD": "c8a2a4b9fe1a9ca46330ed3edfc3959f75f8756c",
+      "branch": "refs/heads/fix/render-gate-20261019",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-render-stabilization-verify-20261019",
+      "HEAD": "5fc69462901708124a9e8bee02123d37ede3cad6",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-render-verify-20261019",
+      "HEAD": "1cb1440fb7617f2ada664befc7f6016054d3d387",
+      "detached": "",
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "repo": "/Users/bbuchsbaum/code/scala/plsneuro",
+      "worktree": "/private/tmp/plsneuro-restore-retire-exec-20261018",
+      "HEAD": "8850ad119e0184fb2d2fa5678e11bd8167c8e205",
+      "branch": "refs/heads/docs/restore-retire-20261019",
+      "prunable": "gitdir file points to non-existent location"
+    }
+  ],
+  "no_mutations": true
+}

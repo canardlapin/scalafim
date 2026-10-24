@@ -1,0 +1,29 @@
+{
+  "reason": "First merged worktree removal recovered1.3GiB and archive writer paused; changed resource condition.",
+  "results": [
+    {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/43c5a90961a946dbd228/reframe4s",
+      "exit_code": 124,
+      "status": "",
+      "error": "30s timeout after space recovery"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/809cb5823a15cbd421f3/reframe4s",
+      "exit_code": 124,
+      "status": "",
+      "error": "30s timeout after space recovery"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/c7e7842ecb7d5871d028/reframe4s",
+      "exit_code": 124,
+      "status": "",
+      "error": "30s timeout after space recovery"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76/staging/dea3d4c9ff8d564020ce/reframe4s",
+      "exit_code": 124,
+      "status": "",
+      "error": "30s timeout after space recovery"
+    }
+  ]
+}

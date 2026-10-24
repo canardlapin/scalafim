@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-24T13:38:15.372614+00:00",
+  "finished_utc": "2026-10-24T13:41:43.302537+00:00",
+  "duration_seconds": 207.928745,
+  "command": [
+    "bash",
+    "tools/prepare-pinned-dependencies.sh"
+  ],
+  "cwd": "/Volumes/EcoBrainHFS20261023/work/scalafim-simplify-b-20261024",
+  "log": "/tmp/scalafim-simplify-b-prepare-pins-11.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2400.0,
+  "log_bytes": 28533
+}

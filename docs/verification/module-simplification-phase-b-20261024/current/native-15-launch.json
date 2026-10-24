@@ -1,0 +1,27 @@
+{
+  "source_commit": "2fd0b2b1117c979a1320b8f5158f34fa957bb485",
+  "root_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "declared_cases": 201,
+  "lane_timeout_seconds": 2400,
+  "outer_timeout_seconds": 2700,
+  "output": "/private/tmp/plsneuro-simplify-b-native-15",
+  "compile_root": "/Volumes/EcoBrainHFS20261023/work/pb-native-15",
+  "free_before_bytes": 21798490112,
+  "no_prior_outcomes_reused": true,
+  "selected_inherited_env": {
+    "JAVA_TOOL_OPTIONS": null,
+    "JAVA_OPTS": null,
+    "SBT_OPTS": null
+  },
+  "session_id": 7802,
+  "runner_pid": 87090,
+  "wrapper_pid": 87088,
+  "started_utc": "2026-10-24T14:09:00.625204+00:00",
+  "log": "/tmp/plsneuro-simplify-b-native-15.log",
+  "guard": "/tmp/plsneuro-simplify-b-native-15-space-guard-16.json",
+  "next_decision": "Inspect complete terminal receipt, all201case records, isolation/provenance/source-integrity and original2400s budget. If passed, fresh full Brain with unchanged protocol at same source; no prior case outcomes reused.",
+  "guard_session_id": 18121,
+  "hosted_watch_session_id": 71382,
+  "hosted_run": 40094296421,
+  "hosted_tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c"
+}

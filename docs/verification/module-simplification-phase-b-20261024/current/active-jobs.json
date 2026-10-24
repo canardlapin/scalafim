@@ -1,0 +1,35 @@
+{
+  "root_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "pls_source": "2fd0b2b1117c979a1320b8f5158f34fa957bb485",
+  "ci_run": 40094296421,
+  "ci_watch": {
+    "session_id": 51128,
+    "log": "/tmp/scalafim-simplify-b-ci-watch-22.log",
+    "timeout_seconds": 7200,
+    "previous_watch_session": 71382,
+    "previous_watch_exit": 124,
+    "previous_watch_scope": "Status watcher timeout only; hosted jobs continued.",
+    "status": "terminal-success",
+    "exit_code": 0
+  },
+  "native15": {
+    "session": 7802,
+    "status": "failed",
+    "counts": {
+      "passed": 162,
+      "failed": 1,
+      "blocked": 38
+    },
+    "guard_session": 18121,
+    "guard_status": "runner-ended-without-resource-interruption"
+  },
+  "native17": "Not started; awaiting user quiet-desktop signal for complete201case frozen-runtime replay. Revalidate existing resume guards at launch.",
+  "brain19": "Not started; after native17 passes, fresh isolated27case court with fixtures/compatibility and unchanged5400/6000s budgets.",
+  "no_owned_archive_remove_or_warm_server_running": true,
+  "next_decision": "Await user quiet-desktop signal, then revalidate resume guards and run all201Native17cases. After pass, freshBrain19. Do not land either sourcePR before consumer qualification.",
+  "hosted_jobs": {
+    "120873212596": "success",
+    "120873212764": "success",
+    "120873212835": "success"
+  }
+}

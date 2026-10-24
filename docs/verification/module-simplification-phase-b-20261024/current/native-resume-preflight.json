@@ -1,0 +1,12 @@
+{
+  "status": "verified-runtime-eligible-for-complete-rerun",
+  "source_commit": "2fd0b2b1117c979a1320b8f5158f34fa957bb485",
+  "previous_receipt_sha256": "4dd3c2a8b42ef91a250188e00a488b3d0e3182cc8665b763655c3533dcd6b85b",
+  "runtime_receipt_sha256": "dee20c3fee0122efac33561f239e2045c3f2eb0d7566f0913360d58597536a22",
+  "isolated_origin": true,
+  "cases_to_rerun": 201,
+  "prior_case_outcomes_reused": false,
+  "previous_status": "failed",
+  "verified_utc": "2026-10-24T14:43:13.959676+00:00",
+  "next_action": "Wait for user quiet-desktop signal; run full Native17 with --resume-from Native15 and unchanged2400s lane/2700s outer budgets. Native15 remains failed."
+}

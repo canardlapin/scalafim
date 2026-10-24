@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-24T13:08:09.831216+00:00",
+  "finished_utc": "2026-10-24T13:16:37.409341+00:00",
+  "duration_seconds": 507.577834,
+  "command": [
+    "sbt",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dsbt.color=false",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/Volumes/EcoBrainHFS20261023/work/plsneuro-simplify-b-check-cache/global",
+    "-Dsbt.boot.directory=/Volumes/EcoBrainHFS20261023/work/plsneuro-simplify-b-check-cache/boot",
+    "-Dsbt.ivy.home=/Volumes/EcoBrainHFS20261023/work/plsneuro-simplify-b-check-cache/ivy",
+    "-Dplsneuro.providers=/Volumes/EcoBrainHFS20261023/work/plsneuro-simplify-b-providers-2418878f",
+    "check"
+  ],
+  "cwd": "/Volumes/EcoBrainHFS20261023/work/plsneuro-simplify-b-20261024",
+  "log": "/tmp/plsneuro-simplify-b-check-08.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2400.0,
+  "log_bytes": 13845
+}

@@ -1,0 +1,128 @@
+{
+  "schema": "scalafim.phase-b-log-custody.v1",
+  "root_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "pls_source": "2fd0b2b1117c979a1320b8f5158f34fa957bb485",
+  "scope": "Completed gates only; adverse attempts retained; no native/Brain or full CI verdict yet.",
+  "logs": [
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-design-jvm-01.log",
+      "raw_bytes": 31885,
+      "raw_sha256": "f64a7ac7979d367f8e2d321ebb7ef57bbd6ada4d6b02694c21290720e6120325",
+      "gzip": "scalafim-simplify-b-design-jvm-01.log.gz",
+      "gzip_bytes": 5132,
+      "gzip_sha256": "7b585fcfb9c4a28177355e9863652d340f946e7ac82ecbd88e57cf3e3695c5f4",
+      "metadata": "scalafim-simplify-b-design-jvm-01.log.meta.json",
+      "exit_code": 1
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-design-jvm-02.log",
+      "raw_bytes": 63715,
+      "raw_sha256": "01318d192f34eff0ec3867834d3588a1a7f890db149ccf7a9ca41a3257d76266",
+      "gzip": "scalafim-simplify-b-design-jvm-02.log.gz",
+      "gzip_bytes": 17214,
+      "gzip_sha256": "618416af80f668dfe2a9a9ddb930291798095badab9f608e6843cdcff35d1842",
+      "metadata": "scalafim-simplify-b-design-jvm-02.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-design-js-03.log",
+      "raw_bytes": 53515,
+      "raw_sha256": "44dbe354e9eac25ed119ee479af8bfc342c1e4f952d5c2a0b32cbcfdc9271f22",
+      "gzip": "scalafim-simplify-b-design-js-03.log.gz",
+      "gzip_bytes": 15919,
+      "gzip_sha256": "279f7bafef8ffd877990801aa9c955f148d121001c3320000aa741706e36b2d0",
+      "metadata": "scalafim-simplify-b-design-js-03.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-fit-laws-jvm-04.log",
+      "raw_bytes": 285052,
+      "raw_sha256": "2cb4de2a1165dc71d998b9a38a15b12e8ae4e29ed8cc07b225f4cd60f5d1d2ef",
+      "gzip": "scalafim-simplify-b-fit-laws-jvm-04.log.gz",
+      "gzip_bytes": 57775,
+      "gzip_sha256": "3c88955f48edbb2c823163b743521d739803a8c4520f5b56a754b0b61674a369",
+      "metadata": "scalafim-simplify-b-fit-laws-jvm-04.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-fit-laws-js-07.log",
+      "raw_bytes": 271800,
+      "raw_sha256": "f36c049a92c3861dc331dc4e42b65b057b25ffc8e250d0965decbf7dd3a39493",
+      "gzip": "scalafim-simplify-b-fit-laws-js-07.log.gz",
+      "gzip_bytes": 55482,
+      "gzip_sha256": "50c5fb4f1579ef0f1da94d68250c989c2caa4d81ccee0d4eca130e6318c48e0c",
+      "metadata": "scalafim-simplify-b-fit-laws-js-07.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-shutdown-09.log",
+      "raw_bytes": 32,
+      "raw_sha256": "1723fc8dc4bc58fb3cad8d7eb6f94e21f35b3c8b64cf5ac7551667fffb333e65",
+      "gzip": "scalafim-simplify-b-shutdown-09.log.gz",
+      "gzip_bytes": 48,
+      "gzip_sha256": "f31c0341eae2447dfb8757ac25a04f61375de4e06765c1fdad3f20bd2627fd2a",
+      "metadata": "scalafim-simplify-b-shutdown-09.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-provider-workflows-10.log",
+      "raw_bytes": 11098,
+      "raw_sha256": "e4d60c0f81baa349275b3f7b16f223397161be71ada2470ddf85b3732187de9e",
+      "gzip": "scalafim-simplify-b-provider-workflows-10.log.gz",
+      "gzip_bytes": 1644,
+      "gzip_sha256": "0c87f1810ab5a3a009b36c34b52762b9ae3ebaec37f605cdaae6b2eff8bf2f9f",
+      "metadata": "scalafim-simplify-b-provider-workflows-10.log.meta.json",
+      "exit_code": 1
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-prepare-pins-11.log",
+      "raw_bytes": 28533,
+      "raw_sha256": "46f7d2088c173168087743af8f865d0221f064f037659050228249e4f9ff5cf8",
+      "gzip": "scalafim-simplify-b-prepare-pins-11.log.gz",
+      "gzip_bytes": 3208,
+      "gzip_sha256": "c9d4e8fdd20772710c5f793edbbb448bb6873c8304280f4a29996dcaa37d95f5",
+      "metadata": "scalafim-simplify-b-prepare-pins-11.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/scalafim-simplify-b-shutdown-space-12.log",
+      "raw_bytes": 32,
+      "raw_sha256": "1723fc8dc4bc58fb3cad8d7eb6f94e21f35b3c8b64cf5ac7551667fffb333e65",
+      "gzip": "scalafim-simplify-b-shutdown-space-12.log.gz",
+      "gzip_bytes": 48,
+      "gzip_sha256": "f31c0341eae2447dfb8757ac25a04f61375de4e06765c1fdad3f20bd2627fd2a",
+      "metadata": "scalafim-simplify-b-shutdown-space-12.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/plsneuro-simplify-b-prepare-01.log",
+      "raw_bytes": 507,
+      "raw_sha256": "c8566b780ff9760b82d14a610f40764123021a72d211f3ad7d6be45070841374",
+      "gzip": "plsneuro-simplify-b-prepare-01.log.gz",
+      "gzip_bytes": 304,
+      "gzip_sha256": "006a2ca50b01a609f66772079080c8d7473c9f1c219c1798a4d6904335317449",
+      "metadata": "plsneuro-simplify-b-prepare-01.log.meta.json",
+      "exit_code": 0
+    },
+    {
+      "raw_path": "/tmp/plsneuro-simplify-b-check-06.log",
+      "raw_bytes": 40806,
+      "raw_sha256": "bdc285f17a6aceb1454e865be922f1d5b148ceb3cb25d250d5b1f90d45798070",
+      "gzip": "plsneuro-simplify-b-check-06.log.gz",
+      "gzip_bytes": 4603,
+      "gzip_sha256": "fe15a622d2a2f1300a64d67e139b9ac8de7ad64bc439d1866069806b54b28c1f",
+      "metadata": "plsneuro-simplify-b-check-06.log.meta.json",
+      "exit_code": 1
+    },
+    {
+      "raw_path": "/tmp/plsneuro-simplify-b-check-08.log",
+      "raw_bytes": 13845,
+      "raw_sha256": "fbd1cd81429e3621ab5d322fb5e221469e01e9e51e0fb21b98e50a24993779de",
+      "gzip": "plsneuro-simplify-b-check-08.log.gz",
+      "gzip_bytes": 1663,
+      "gzip_sha256": "028f65e58acfc6ea59f1222d2533287b983e004d9102d7333b2892a9f887a3e4",
+      "metadata": "plsneuro-simplify-b-check-08.log.meta.json",
+      "exit_code": 0
+    }
+  ]
+}

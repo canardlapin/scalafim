@@ -1,0 +1,235 @@
+{
+  "schema": "scalafim.phase-b-raw-custody.v1",
+  "status": "all-listed-compressed-bytes-and-decompressed-hashes-verified",
+  "volume_uuid": "51B72C66-64BB-3C5F-8853-2219CA2FFA9F",
+  "physical_root": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/phase-b-raw-evidence",
+  "created_utc": "2026-10-24T15:07:50.741034+00:00",
+  "files": [
+    {
+      "file": "hosted-coverage-120873212835.log.gz",
+      "gzip_bytes": 122537,
+      "gzip_sha256": "2ec1465ed228a0ad0831eabb2dc6afb8a447e65dea83715c41ac26ae1e5a4e95",
+      "raw_bytes": 653136,
+      "raw_sha256": "af1f609c55d38cbf4c333ee226ce6606d98d5b0838a90a678893654887095a04"
+    },
+    {
+      "file": "hosted-focused-120873212764.log.gz",
+      "gzip_bytes": 220610,
+      "gzip_sha256": "e96e2ec67d8f28b97ef6ae545aec7177145f76ec36c320c1f94c7edbd596ee46",
+      "raw_bytes": 1125623,
+      "raw_sha256": "eb8d032205ea84a352cc736b852a2d65bfb781b5884b6c69a616b51b470288c0"
+    },
+    {
+      "file": "hosted-full-120873212596.log.gz",
+      "gzip_bytes": 589784,
+      "gzip_sha256": "5b530b3530904e02d52b8120df879a8e7e08f885da545a80141a44d6517739a2",
+      "raw_bytes": 3235344,
+      "raw_sha256": "485d8735f2aed3002ac4839b0c5dcbcef771699959ddbc03d74a18f1dbb69c6b"
+    },
+    {
+      "file": "hosted-partial-120873212596.log.gz",
+      "gzip_bytes": 382440,
+      "gzip_sha256": "502958b6a15a83b39b8e3c507c88be3b072b35c8b92d49a85d1d6d9eb4380b8d",
+      "raw_bytes": 2113417,
+      "raw_sha256": "89862fa05cb2177c30fe1d15dd0f0d34f479a3941f5421cb49ba562f5602c4bc"
+    },
+    {
+      "file": "native-15-adverse/162-NativeCohortDensityProbe.log.gz",
+      "gzip_bytes": 955,
+      "gzip_sha256": "51bbc394fb1463362c27e09a2010c57699c188b3fa51812e74a09200504069b2",
+      "raw_bytes": 3840,
+      "raw_sha256": "9e7ffd2e3ea2edffda56dd64ff393ab7f476188aa2020239ec9443af9bc3e3a5"
+    },
+    {
+      "file": "native-15-adverse/build.log.gz",
+      "gzip_bytes": 2555,
+      "gzip_sha256": "6a2ed4db412e6f03e740206da1f594deacee08e0531a85cc0243c4f2168aced8",
+      "raw_bytes": 30306,
+      "raw_sha256": "bed9abd577eb1a9047656ffeb91a28d3e9485e1b8c1b065ad243198044c589e6"
+    },
+    {
+      "file": "native-15-adverse/compile-isolation.json.gz",
+      "gzip_bytes": 179651,
+      "gzip_sha256": "e5d5ba5b3378a9842252933eb34fd565deadbe57766767465b8507026a344aac",
+      "raw_bytes": 553858,
+      "raw_sha256": "043d11921f6439f62d95404694c89cd6f17d4987d336e1af6d8119861af510b4"
+    },
+    {
+      "file": "native-15-adverse/gale-artifact.log.gz",
+      "gzip_bytes": 1656,
+      "gzip_sha256": "1ee706f069f382ff276ce6407650f0a996699257cb2063c80d3ca1937e29f39c",
+      "raw_bytes": 9075,
+      "raw_sha256": "4b21e3c7fdcf02abcb29300b6794385a3a0bfc4148d06c4ef3b65bad36346f72"
+    },
+    {
+      "file": "native-15-adverse/plsneuro-simplify-b-native-15.log.gz",
+      "gzip_bytes": 989,
+      "gzip_sha256": "56df1e187ff236182278cbe9b3d7134f7bf8cc2665b90d404b2cb4e1e0b4090c",
+      "raw_bytes": 7781,
+      "raw_sha256": "e5ddb2c41f39f6914d5f7b6c38afac450f04bcae72fa163b4a99d08f0b7415cd"
+    },
+    {
+      "file": "native-15-adverse/plsneuro-simplify-b-native-15.log.meta.json.gz",
+      "gzip_bytes": 389,
+      "gzip_sha256": "65ceefb649a45203aba5b715b2237a49858ab2f885e675b5424d29ea2176ed9e",
+      "raw_bytes": 786,
+      "raw_sha256": "7d881d97b4147e6e9768bc558ffd7e66f5fffe50e5807cc695ca258f8fe6708a"
+    },
+    {
+      "file": "native-15-adverse/receipt.json.gz",
+      "gzip_bytes": 1954984,
+      "gzip_sha256": "feaf9896fcc0584dd24981aaf19fb648dcaa6e8fb9b8ce1c48a87bcacb25dc1e",
+      "raw_bytes": 8076634,
+      "raw_sha256": "4dd3c2a8b42ef91a250188e00a488b3d0e3182cc8665b763655c3533dcd6b85b"
+    },
+    {
+      "file": "native-15-adverse/resample4s-artifact.log.gz",
+      "gzip_bytes": 950,
+      "gzip_sha256": "e0c5f77fb1c464c418692021b2c59d09af962fa8955adc2790d5f6abb31f2ae4",
+      "raw_bytes": 6909,
+      "raw_sha256": "17db7d580e64837c2e52a005c60a735fc65e551799681496d19389a317ef0d4c"
+    },
+    {
+      "file": "native-15-adverse/resample4s-bootstrap.log.gz",
+      "gzip_bytes": 2410,
+      "gzip_sha256": "60d6169af75bac218ed005d063ffb5cdd91bd5abafb1398f93e41db33de04545",
+      "raw_bytes": 15353,
+      "raw_sha256": "895e931e8cd2bd2a52f80f7c0be7d57cc3a1d6daa10755acaf0018571ec30ab8"
+    },
+    {
+      "file": "native-15-adverse/run.log.gz",
+      "gzip_bytes": 26192,
+      "gzip_sha256": "6154e4fe9606b42d80f971f8412d307938f81533bd54fa468a8ab814415dc888",
+      "raw_bytes": 126585,
+      "raw_sha256": "7ba210886315366a5ad2b980c705ea3a4342ae55a4128b682662764d4ebf6053"
+    },
+    {
+      "file": "native-15-adverse/runtime-input-receipt.json.gz",
+      "gzip_bytes": 1584878,
+      "gzip_sha256": "fc57ebfcc67bda72c67eb9d84f5c5beef1a3d59bd0ecf113d2e1418f1c81917f",
+      "raw_bytes": 4387349,
+      "raw_sha256": "dee20c3fee0122efac33561f239e2045c3f2eb0d7566f0913360d58597536a22"
+    },
+    {
+      "file": "plsneuro-simplify-b-check-06.log.gz",
+      "gzip_bytes": 4603,
+      "gzip_sha256": "fe15a622d2a2f1300a64d67e139b9ac8de7ad64bc439d1866069806b54b28c1f",
+      "raw_bytes": 40806,
+      "raw_sha256": "bdc285f17a6aceb1454e865be922f1d5b148ceb3cb25d250d5b1f90d45798070"
+    },
+    {
+      "file": "plsneuro-simplify-b-check-08.log.gz",
+      "gzip_bytes": 1663,
+      "gzip_sha256": "028f65e58acfc6ea59f1222d2533287b983e004d9102d7333b2892a9f887a3e4",
+      "raw_bytes": 13845,
+      "raw_sha256": "fbd1cd81429e3621ab5d322fb5e221469e01e9e51e0fb21b98e50a24993779de"
+    },
+    {
+      "file": "plsneuro-simplify-b-native-resume-preflight.log.gz",
+      "gzip_bytes": 440,
+      "gzip_sha256": "0663358f26397e4d9e93414a0cd814d5b5cd0fd48fcc61b324a60f609f78d09f",
+      "raw_bytes": 667,
+      "raw_sha256": "cdb388f52fe96b6d05d2cf38e2e99cc5e3383280beaadff4714fb9bf3dc04724"
+    },
+    {
+      "file": "plsneuro-simplify-b-prepare-01.log.gz",
+      "gzip_bytes": 304,
+      "gzip_sha256": "006a2ca50b01a609f66772079080c8d7473c9f1c219c1798a4d6904335317449",
+      "raw_bytes": 507,
+      "raw_sha256": "c8566b780ff9760b82d14a610f40764123021a72d211f3ad7d6be45070841374"
+    },
+    {
+      "file": "scalafim-simplify-b-ci-watch-05.log.gz",
+      "gzip_bytes": 3072,
+      "gzip_sha256": "3c946b398bbbc6f086088ac3d203085a4af416414034c7c79adb7ab9a9dac7c5",
+      "raw_bytes": 401830,
+      "raw_sha256": "9b0947e66ce7a6e90338baf85327fc678133a7c460f9e051a12389c8b8aa1e06"
+    },
+    {
+      "file": "scalafim-simplify-b-ci-watch-22.log.gz",
+      "gzip_bytes": 1118,
+      "gzip_sha256": "9b082b8f93f034467425b35e91ea25e3cec083eb874e34b94943e14c62297b84",
+      "raw_bytes": 57172,
+      "raw_sha256": "f92e0aecf42dac8b275128df3c1bb58e3872d6dddbb1b801b1f7bfa1393bff4a"
+    },
+    {
+      "file": "scalafim-simplify-b-design-js-03.log.gz",
+      "gzip_bytes": 15919,
+      "gzip_sha256": "279f7bafef8ffd877990801aa9c955f148d121001c3320000aa741706e36b2d0",
+      "raw_bytes": 53515,
+      "raw_sha256": "44dbe354e9eac25ed119ee479af8bfc342c1e4f952d5c2a0b32cbcfdc9271f22"
+    },
+    {
+      "file": "scalafim-simplify-b-design-jvm-01.log.gz",
+      "gzip_bytes": 5132,
+      "gzip_sha256": "7b585fcfb9c4a28177355e9863652d340f946e7ac82ecbd88e57cf3e3695c5f4",
+      "raw_bytes": 31885,
+      "raw_sha256": "f64a7ac7979d367f8e2d321ebb7ef57bbd6ada4d6b02694c21290720e6120325"
+    },
+    {
+      "file": "scalafim-simplify-b-design-jvm-02.log.gz",
+      "gzip_bytes": 17214,
+      "gzip_sha256": "618416af80f668dfe2a9a9ddb930291798095badab9f608e6843cdcff35d1842",
+      "raw_bytes": 63715,
+      "raw_sha256": "01318d192f34eff0ec3867834d3588a1a7f890db149ccf7a9ca41a3257d76266"
+    },
+    {
+      "file": "scalafim-simplify-b-fit-laws-js-07.log.gz",
+      "gzip_bytes": 55482,
+      "gzip_sha256": "50c5fb4f1579ef0f1da94d68250c989c2caa4d81ccee0d4eca130e6318c48e0c",
+      "raw_bytes": 271800,
+      "raw_sha256": "f36c049a92c3861dc331dc4e42b65b057b25ffc8e250d0965decbf7dd3a39493"
+    },
+    {
+      "file": "scalafim-simplify-b-fit-laws-jvm-04.log.gz",
+      "gzip_bytes": 57775,
+      "gzip_sha256": "3c88955f48edbb2c823163b743521d739803a8c4520f5b56a754b0b61674a369",
+      "raw_bytes": 285052,
+      "raw_sha256": "2cb4de2a1165dc71d998b9a38a15b12e8ae4e29ed8cc07b225f4cd60f5d1d2ef"
+    },
+    {
+      "file": "scalafim-simplify-b-prepare-pins-11.log.gz",
+      "gzip_bytes": 3208,
+      "gzip_sha256": "c9d4e8fdd20772710c5f793edbbb448bb6873c8304280f4a29996dcaa37d95f5",
+      "raw_bytes": 28533,
+      "raw_sha256": "46f7d2088c173168087743af8f865d0221f064f037659050228249e4f9ff5cf8"
+    },
+    {
+      "file": "scalafim-simplify-b-provider-workflows-10.log.gz",
+      "gzip_bytes": 1644,
+      "gzip_sha256": "0c87f1810ab5a3a009b36c34b52762b9ae3ebaec37f605cdaae6b2eff8bf2f9f",
+      "raw_bytes": 11098,
+      "raw_sha256": "e4d60c0f81baa349275b3f7b16f223397161be71ada2470ddf85b3732187de9e"
+    },
+    {
+      "file": "scalafim-simplify-b-provider-workflows-13.log.gz",
+      "gzip_bytes": 10738,
+      "gzip_sha256": "8f0442d4e18a73942599eef13294fbe77a110a6f0dab7371c5e364a3b1605402",
+      "raw_bytes": 92238,
+      "raw_sha256": "15c57a1be11c61e9f16497444642ba3918b7f840ee1c4de4417067a4df363fc1"
+    },
+    {
+      "file": "scalafim-simplify-b-shutdown-09.log.gz",
+      "gzip_bytes": 48,
+      "gzip_sha256": "f31c0341eae2447dfb8757ac25a04f61375de4e06765c1fdad3f20bd2627fd2a",
+      "raw_bytes": 32,
+      "raw_sha256": "1723fc8dc4bc58fb3cad8d7eb6f94e21f35b3c8b64cf5ac7551667fffb333e65"
+    },
+    {
+      "file": "scalafim-simplify-b-shutdown-final-14.log.gz",
+      "gzip_bytes": 48,
+      "gzip_sha256": "f31c0341eae2447dfb8757ac25a04f61375de4e06765c1fdad3f20bd2627fd2a",
+      "raw_bytes": 32,
+      "raw_sha256": "1723fc8dc4bc58fb3cad8d7eb6f94e21f35b3c8b64cf5ac7551667fffb333e65"
+    },
+    {
+      "file": "scalafim-simplify-b-shutdown-space-12.log.gz",
+      "gzip_bytes": 48,
+      "gzip_sha256": "f31c0341eae2447dfb8757ac25a04f61375de4e06765c1fdad3f20bd2627fd2a",
+      "raw_bytes": 32,
+      "raw_sha256": "1723fc8dc4bc58fb3cad8d7eb6f94e21f35b3c8b64cf5ac7551667fffb333e65"
+    }
+  ],
+  "restore": "Verify gzip_bytes and gzip_sha256, then gzip-decompress into a fresh evidence directory and verify raw_bytes/raw_sha256. These files are evidence, not current executable inputs. Native15 frozen runtime remains at its recorded /private/tmp path for guarded replay; no case outcomes may be reused.",
+  "scope": "Raw local/hosted logs, failed Native15 receipts/runtime-input manifest; no large runtime class binaries or cleanup worktree archives in this index."
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/04952fe6eed421b8",
+    "worktree": "/private/tmp/scalafim-mesh4s-u3-source-20261019",
+    "disk_kib": 219296
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b6c5ff8f54afbfa8",
+    "worktree": "/private/tmp/scalafim-surface-baseline-dc101ea0",
+    "disk_kib": 433772
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/2183ba43eddeb2df",
+    "worktree": "/private/tmp/scalafim-surfview-baseline",
+    "disk_kib": 273588
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/5e614cde2f486d32",
+    "worktree": "/private/tmp/scalafim-surfview-parity",
+    "disk_kib": 302288
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/a75ce45d1f1ef754",
+    "worktree": "/private/tmp/scalafim-black-surface-takeover-20261019",
+    "disk_kib": 216824
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/c5815ce812d2490a",
+    "worktree": "/private/tmp/scalafim-surface-visibility",
+    "disk_kib": 321692
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/613c2f1216058878",
+    "worktree": "/private/tmp/scalafim-u3-javafx-20261019",
+    "disk_kib": 614820
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/b61b602c898c685e",
+    "worktree": "/private/tmp/scalafim-canonical-slice-verify-9b42",
+    "disk_kib": 434776
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0fac30abb421aecd",
+    "worktree": "/private/tmp/scalafim-surface-composition",
+    "disk_kib": 298204
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/0ef2d91217dcfaae",
+    "worktree": "/private/tmp/scalafim-surface-qualification-20261015",
+    "disk_kib": 437048
+  },
+  {
+    "base": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/dc58d8731036fb76",
+    "worktree": "/private/tmp/scalafim-simplify-a-20261019",
+    "disk_kib": 218364
+  }
+]

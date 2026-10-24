@@ -1,0 +1,14 @@
+{
+  "run": 40094296421,
+  "job": 120873212596,
+  "candidate_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c",
+  "status": "partial-log-only-not-terminal-admission",
+  "batch_markers": 28,
+  "completed_prior_batches_lower_bound": 27,
+  "last_started_batch": "data-jvm",
+  "last_log_timestamp": "2026-10-24T13:51:01.3067026Z",
+  "summary_rows": 95,
+  "partial_reported_passes": 8344,
+  "scope": "API supplied an incomplete running-job log. Its end timestamp does not establish that the job is stalled. Required terminal full test and coverage statuses remain pending."
+}

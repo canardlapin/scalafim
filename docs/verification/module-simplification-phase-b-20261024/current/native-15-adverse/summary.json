@@ -1,0 +1,13 @@
+{
+  "source_commit": "2fd0b2b1117c979a1320b8f5158f34fa957bb485",
+  "status": "failed",
+  "counts": {
+    "passed": 162,
+    "failed": 1,
+    "blocked": 38
+  },
+  "lane_seconds": 1747.373026,
+  "failed_probe": "plsneuro.desktop.NativeCohortDensityProbe",
+  "failure": "CancellationException after a Glass-delivered key release toggled Use a cohort table (CohortTablePane enabled listener396), cancelling an outstanding operation via LatestWork.clear. Key and origin are unproven; initial-load versus early-review phase is unresolved. The density probe has no keyboard injection; no source/probe/assertion changes.",
+  "next_action": "Await a quiet desktop window, then use the runner verified frozen-runtime resume path to rerun all201cases with no outcome reuse. Keep Native15 failed."
+}

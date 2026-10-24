@@ -1,0 +1,74 @@
+[
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-atlas-volume-20261020",
+    "head": "c1f4f0aab1a348fec11fadd7e1d35ca6347a1432",
+    "branch_retained": "refs/heads/eco/neuroatlas-volume-20261020",
+    "archive": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees/scalafim-eco-atlas-volume-20261020/scalafim-eco-atlas-volume-20261020.tar.gz",
+    "archive_sha256": "07be3001d18a9e09f1b80dc564637ec216a69ecc7471b8378c78783fa98f38ab",
+    "entries_verified_immediately_before_removal": 94828,
+    "removed_utc": "2026-10-24T13:58:37.937447+00:00",
+    "free_before": 736178176,
+    "free_after": 2130432000,
+    "normal_git_worktree_remove": true
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-routing-20261020",
+    "head": "eb85814ad1a2fbf8f9157d1275d1eb798d8b4179",
+    "branch_retained": "refs/heads/eco/neuroim-routing-20261020",
+    "archive": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees/scalafim-eco-routing-20261020/scalafim-eco-routing-20261020.tar.gz",
+    "archive_sha256": "9d67b2db3bde3bedc469b11ea0769adff3ac0bcf0fdd152361e51c785bd909cf",
+    "entries_verified_immediately_before_removal": 96823,
+    "removed_utc": "2026-10-24T13:59:36.177815+00:00",
+    "free_before": 16643317760,
+    "free_after": 18026225664,
+    "normal_git_worktree_remove": true
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/scalafim-eco-surface-20261021",
+    "head": "fab87d0760aaca7d4697465b289f9eba6716c7b7",
+    "branch_retained": "refs/heads/eco/followups-20261023",
+    "archive": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees/scalafim-eco-surface-20261021/scalafim-eco-surface-20261021.tar.gz",
+    "archive_sha256": "05cf6febd87724a543d2fded3e6b00b83698aaee76141219b9571a2c43235806",
+    "entries_verified_immediately_before_removal": 37159,
+    "removed_utc": "2026-10-24T13:59:55.757211+00:00",
+    "free_before": 18004164608,
+    "free_after": 18833571840,
+    "normal_git_worktree_remove": true
+  },
+  {
+    "source": "/private/tmp/plsneuro-fast-feedback-20261020",
+    "head": "94e15eb9794468ff27bd0559cbecd596d68ec6c4",
+    "branch_retained": "refs/heads/chore/fast-feedback-20261020",
+    "archive": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees/plsneuro-fast-feedback-20261020/plsneuro-fast-feedback-20261020.tar.gz",
+    "archive_sha256": "23b07d217a78968e92c55824d67bf31385f3cc896ad38948e67945ff5791e3db",
+    "entries_verified_immediately_before_removal": 41246,
+    "removed_utc": "2026-10-24T14:06:38.929318+00:00",
+    "free_before": 18846167040,
+    "free_after": 21065007104,
+    "normal_git_worktree_remove": true
+  },
+  {
+    "source": "/private/tmp/plsneuro-feedback-verify-94e15eb9",
+    "head": "94e15eb9794468ff27bd0559cbecd596d68ec6c4",
+    "branch_retained": null,
+    "archive": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees/plsneuro-feedback-verify-94e15eb9/plsneuro-feedback-verify-94e15eb9.tar.gz",
+    "archive_sha256": "bbae87fd9cdf566893efea2dbfbd79a377afa6bdec958b2f028a71b6bb4f0efd",
+    "entries_verified_immediately_before_removal": 2670,
+    "removed_utc": "2026-10-24T14:06:42.234049+00:00",
+    "free_before": 21064704000,
+    "free_after": 21262663680,
+    "normal_git_worktree_remove": true
+  },
+  {
+    "source": "/Users/bbuchsbaum/code/scala/plsneuro-eco-surface-atlas-20261022",
+    "head": "d01f3cf1a065ad6979febec1a498023bc10f8e9b",
+    "branch_retained": "refs/heads/eco/surface-atlas-20261022",
+    "archive": "/Volumes/My Passport for Mac/codex-work/module-simplification-20261024/retired-worktrees/plsneuro-eco-surface-atlas-20261022/plsneuro-eco-surface-atlas-20261022.tar.gz",
+    "archive_sha256": "10b4b3170bb721002c053bce886ec3024517d765be6c1280b63672e7d7fb5b6e",
+    "entries_verified_immediately_before_removal": 10144,
+    "removed_utc": "2026-10-24T14:06:52.021157+00:00",
+    "free_before": 21255213056,
+    "free_after": 21828313088,
+    "normal_git_worktree_remove": true
+  }
+]

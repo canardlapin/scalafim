@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-24T12:56:56.483049+00:00",
+  "finished_utc": "2026-10-24T13:28:02.991673+00:00",
+  "duration_seconds": 1866.464265,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJS/test",
+    "firstLevelLawsJS/test",
+    "fmriWorkflowJS/test"
+  ],
+  "cwd": "/Volumes/EcoBrainHFS20261023/work/scalafim-simplify-b-20261024",
+  "log": "/tmp/scalafim-simplify-b-fit-laws-js-07.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 271800
+}

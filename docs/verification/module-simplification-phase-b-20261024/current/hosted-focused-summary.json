@@ -1,0 +1,95 @@
+{
+  "source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "job": 120873212764,
+  "summary_rows": [
+    {
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "passed": 5,
+      "other": ""
+    },
+    {
+      "total": 172,
+      "failed": 0,
+      "errors": 0,
+      "passed": 172,
+      "other": ""
+    },
+    {
+      "total": 412,
+      "failed": 0,
+      "errors": 0,
+      "passed": 412,
+      "other": ""
+    },
+    {
+      "total": 588,
+      "failed": 0,
+      "errors": 0,
+      "passed": 588,
+      "other": ""
+    },
+    {
+      "total": 869,
+      "failed": 0,
+      "errors": 0,
+      "passed": 869,
+      "other": ""
+    },
+    {
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "other": ", Skipped 1"
+    },
+    {
+      "total": 5,
+      "failed": 0,
+      "errors": 0,
+      "passed": 5,
+      "other": ""
+    },
+    {
+      "total": 170,
+      "failed": 0,
+      "errors": 0,
+      "passed": 170,
+      "other": ""
+    },
+    {
+      "total": 412,
+      "failed": 0,
+      "errors": 0,
+      "passed": 412,
+      "other": ""
+    },
+    {
+      "total": 588,
+      "failed": 0,
+      "errors": 0,
+      "passed": 588,
+      "other": ""
+    },
+    {
+      "total": 811,
+      "failed": 0,
+      "errors": 0,
+      "passed": 811,
+      "other": ""
+    },
+    {
+      "total": 222,
+      "failed": 0,
+      "errors": 0,
+      "passed": 221,
+      "other": ", Skipped 1, Ignored 5"
+    }
+  ],
+  "executed_passes": 4474,
+  "scope": "Focused hosted checks only; total includes existing opt-in skips, which are not credited.",
+  "candidate_source": "2418878f66f0c6ce28ea1933851fa5a18888a4ac",
+  "tested_checkout": "7e9370f078622cfef9f10a79ec4069822ddfa28c",
+  "tree_binding": "hosted-checkout-binding.json"
+}
