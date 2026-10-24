@@ -11,8 +11,8 @@ import scalafim.fmri.design.*
 This module contains event models, formula parsing, condition bases, baseline
 models, contrast definitions, design-matrix metadata, and design export helpers.
 It depends on `scalafim-fmri-hrf` for sampling/convolution, standalone Gale for
-shared QR/rank primitives, and Intaglio core for renderer-neutral plot and scene
-exports.
+shared QR/rank primitives. Optional graphics live in
+[`design-view`](../design-view/README.md).
 
 Preferred typed entry points:
 
@@ -27,9 +27,6 @@ Preferred typed entry points:
 - `DesignColumnDescriptor` and typed export indices (`DesignColumnIndex`,
   `ScanIndex`, `RunIndex`, `BasisIndex`, `TermIndex`) sit beside the legacy
   `DesignColumnMeta` fields for safer downstream plotting/reporting.
-- `DesignGraphics.eventPlot` and `DesignGraphics.eventScene` adapt
-  `EventPlotData` into graphics `Plot` and `Scene` values without depending on
-  SVG or any platform renderer.
 - `ContrastExpr`, `CellSelector`, `BasisSelection`, and `CompiledContrast`
   provide a typed, total contrast path via `compileEither` while legacy
   `ContrastSpec`/`ContrastWeights` constructors remain available.
@@ -45,41 +42,8 @@ declared storage/work, actual training/factor shapes and operator applications,
 and convergence. All portable resource limits remain unchanged. Dense provenance
 retains `kernel-basis/v2`; the explicit blocked plan uses `kernel-basis/v3`.
 
-Renderer-neutral event plot export:
-
-```scala
-import scalafim.fmri.design.*
-import intaglio.svg.*
-
-val scene = DesignGraphics.eventModelScene(model, termName = Some("task")).toOption.get
-val svg = SvgRenderer.render(scene).toOption.get
-```
-
-`DesignGraphics` itself is implemented with the public plotting DSL. A design
-adapter can use the same surface directly:
-
-```scala
-import intaglio.*
-
-val trained = plot(eventPlotData.points)
-  .aes(_.time, _.response)
-  .group(_.regressor)
-  .scaleColorDiscrete(_.regressor, levels = eventPlotData.regressors, name = "regressor")
-  .geomLine()
-  .resolve
-```
-
-The dependency direction is `design -> Intaglio core`; applications select an
-Intaglio renderer separately. `design` produces plot specs/scenes, while SVG is
-used only by the JVM integration gallery.
-
-Run it directly with:
-
-```sh
-sbt designJVM/test
-sbt designJS/test
-tools/render_design_gallery.sh
-```
+Run the portable analysis tests with `designJVM/test` and `designJS/test`.
+Plot/scene adapters and the render gallery belong to `design-view`.
 
 ## Cutoff-period DCT drift
 

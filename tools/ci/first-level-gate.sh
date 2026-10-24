@@ -74,9 +74,9 @@ run_batch() {
 run_batch formatting firstLevelLawsJVM/Test/scalafmtCheck
 run_batch first-level-jvm \
   scenarioTestkitJVM/test arJVM/test hrfJVM/test \
-  designJVM/test modelJVM/test fitJVM/test firstLevelLawsJVM/test
+  designJVM/test fitJVM/test firstLevelLawsJVM/test
 run_batch first-level-js-a \
   scenarioTestkitJS/test arJS/test hrfJS/test
 run_batch first-level-js-b \
-  designJS/test modelJS/test fitJS/test firstLevelLawsJS/test
+  designJS/test fitJS/test firstLevelLawsJS/test
 echo "[first-level-ci] focused first-level gates passed"

@@ -1,6 +1,8 @@
 # Model authoring APIs
 
-These APIs live in the portable `hrf`, `design`, `model`, and `fit` modules. They expose an
+These APIs live in the portable `hrf`, `design`, and `fit` modules; the merged
+`fit` module retains the `scalafim.fmri.model` package. Renderer-neutral review
+graphics and raster exports live in `design-view`. Together they expose an
 inspectable compiled design, source-preserving event summaries, and versioned
 model specifications. Builders return `Either` where a request can be rejected;
 renderers return recipes or scenes rather than a UI.
