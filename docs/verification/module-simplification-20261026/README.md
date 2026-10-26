@@ -128,3 +128,57 @@ live-observation test skipped in its sandbox, with a successful separate-child
 positive control in the actual apply context. Eight archive restoration tests
 passed. The source checkout's historical Git objects and other worktrees were
 retained; this operation does not claim physical disk savings from logical sizes.
+
+
+Archived Markdown hard breaks use explicit backslashes instead of trailing
+spaces; their rendering is preserved. Updated archived hashes are recorded in
+c-plan-moves.json; the tar retains the exact original plan bytes.
+
+## E: typed fit and contrast execution
+
+FitStrategy now supplies typed controls, noise preparation and subtype-preserving
+control updates. Execution, preparation, FGLS/version checks and fixed-profile
+identity no longer reconstruct FitConfig. FitPreparationSpec projects only
+controls and noise; it does not duplicate engine, LSS, latent or reduced-rank
+configuration. Existing numeric kernels receive narrow AR/robust/weight adapters.
+Typed nuisance regularization rejects negative and nonfinite fixed penalties.
+Masked children retain the strategy subtype; runwise GLS row omission remains
+unsupported. Dense typed kernel dispatch refuses runwise GLS instead of silently
+changing its coefficient estimand. Robust re-estimation derives from the explicit
+policy, including when the old robust flag disagrees.
+
+Compatibility boundaries remain intentionally narrow: FitPlan/ModelBuild public
+config projections, legacy constructors, direct legacy FitKernel ingress, and raw
+ProfileHrfSource.TrialEvents. Raw trial preparation preserves explicit AR
+initialization bytes; typed fixed preparation preserves the existing normalized
+legacy encoding. Both profile routes share complete validation and one identity
+encoder. Existing model/document wire versions and pattern/legacy-pattern variants
+are unchanged.
+
+Contrast embedding, subtraction, generated-F construction and validation operate
+on typed local/design weights. Legacy public outputs and the existing numerical
+leaf builders are explicit boundaries. Subtraction order, row/column/selection
+ordering, weight bits, outer IDs, effect IDs, weights IDs and source tags remain
+unchanged. No replacement numeric algorithm or unsupported contrast form was added.
+
+Before production edits, baseline capture froze 24 contrast outputs, 54 configuration
+identity outputs and five complete codec outputs, alongside the existing full
+profile, prepared-geometry and design-identity goldens. The failed first design
+test compile (missing phantom-axis annotation) is retained with the successful
+rerun. Full design suites passed 591 JVM and 591 JS; focused fit identity/typed
+contract gates passed 40 JVM and 40 JS. Independent source review approved both
+areas after repairs; complete fit/consumer gate results are recorded separately.
+
+Full fit/consumer qualification: fit 874 JVM / 816 JS, first-level laws 221 / 221,
+fmri-workflow 82 / 63, mvpa-fmri 55 / 55, workflow examples 8 / 6: 2,401 passes,
+zero failures. The unchanged law suites retain two opt-in skips and five
+Scala.js ignored tests. One sbt multiple-main-class message is not a Scala
+source warning. The profile milestone fixture reports LWU admission 93% against
+a 95% advisory target; this adverse result is retained, not promoted into a
+scientific acceptance claim. This refactor adds no new numerical or native
+performance qualification. See [e-fit-checks.json](e-fit-checks.json).
+
+Final integration: `scalafimCompileAll` and `examplesCompile` passed on both
+platforms. The boundary gate checked 559 production files and 24 compile
+closures with zero errors. Logs include the collector-lock wait separately
+from the reported compile execution times. No source warnings were emitted.

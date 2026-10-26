@@ -1,5 +1,9 @@
 # ScalaFIM module simplification
 
+Current status (2026-10-26): the authorized MVPA integration slice and remaining
+A, C and E work are complete locally. See the completion checkpoint and
+[verification receipts](../verification/module-simplification-20261026/README.md).
+
 Status: accepted with decisions (2026-10-19). Companion to `ecosystem-unification.md`, which
 moves imaging, surface, atlas and MVPA code into provider libraries. This
 plan covers what remains in ScalaFIM: boundaries that do not pay for
@@ -228,6 +232,7 @@ The requested MVPA merge/delete slice is committed as `fe6fe70bb`; remaining
 Phase A hygiene is committed as `a6abc2fb9`. Phase C now has verified external
 custody for 1,554 historical files and 38 full template trees, 22 archived plans
 with forwarding pages, seven retired target-only module directories, and 36
-retired stale templates. E's typed implementation and JVM/JS qualification are
-complete in the isolated checkout; its source commit follows this archive
-checkpoint. See [the stage receipts](../verification/module-simplification-20261026/README.md).
+retired stale templates. Phase C is recorded in `1ba80c172`. Phase E is complete in this branch: typed
+fit preparation and contrast composition, unchanged literal identities, full
+JVM/Scala.js owning and consumer checks, and final repository/examples compile.
+The requested D slice plus A, C and E are complete locally; publication is separate. See [the stage receipts](../verification/module-simplification-20261026/README.md).

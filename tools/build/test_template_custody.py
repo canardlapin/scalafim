@@ -302,4 +302,3 @@ class TemplateGcSuite(unittest.TestCase):
         self.assertEqual(result["code"], 0)
         self.assertTrue(removed.is_set())
         self.assertTrue(template.exists())  # rmtree was mocked: no test cache deletion.
-

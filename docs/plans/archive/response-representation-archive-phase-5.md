@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 5 Record
 
-Status: complete; repository-wide JVM/Scala.js gates verified on 2026-07-26  
-Issue: `bd-01KYAA8NCV89JFF3ZAX6NFQ1N0`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; repository-wide JVM/Scala.js gates verified on 2026-07-26\
+Issue: `bd-01KYAA8NCV89JFF3ZAX6NFQ1N0`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 4 record](response-representation-archive-phase-4.md)
 
 Phase 5 makes logical representation dispatch and physical archive dispatch

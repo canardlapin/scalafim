@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 1 Record
 
-Status: complete and repository-wide verified on 2026-07-26  
-Issue: `bd-01KYAA8M2XMHHBPASHKK1871E9`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete and repository-wide verified on 2026-07-26\
+Issue: `bd-01KYAA8M2XMHHBPASHKK1871E9`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 0 record](response-representation-archive-phase-0.md)
 
 Phase 1 establishes a storage-neutral response kernel and a typed bridge from

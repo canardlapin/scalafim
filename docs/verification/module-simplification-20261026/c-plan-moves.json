@@ -80,77 +80,77 @@
     "old": "docs/plans/response-representation-archive-phase-0.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-0.md",
     "original_sha256": "779054878bcaedae5242b0afcb34bcd3d0d575424ca99527f8f9de41f7ae15e9",
-    "archived_sha256": "4dbf1acc1f2a47e4f7a2345324195f2cfdbef13ee4292dbec6777891a2a22d83",
+    "archived_sha256": "d643f1f592e286eed263c59481a46da5830519444cb9a424f76b93e33065b368",
     "forwarder_sha256": "251a1458c431b89154452eb9fd939016aca645d734ba6d3d95ec9e0c27579806"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-1.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-1.md",
     "original_sha256": "48c4ceb5209eb96fdbadf911468ab0963d2774726a37d1872ed6d87d6843ff1d",
-    "archived_sha256": "7deb2d3c051535515f5c643daeaf255d2331f39c0be0b19a256c73fe62218ce5",
+    "archived_sha256": "6b70afc9fabd256f030507e6510341915f527c2adc54b3540e899ce163b0e8e8",
     "forwarder_sha256": "d8bc791cac9fe49c341fe45e76200f5e36c399c473da1709df8000de70f0f3ee"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-10.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-10.md",
     "original_sha256": "51db7c442a9417eecdac5ebe44d3e6d7695e79f27ce804a135253f174c9e5524",
-    "archived_sha256": "d2047fbf345586732d32eaa5ed96f46db45ff26940839dc15757f6d166340bfc",
+    "archived_sha256": "593d78ab1cf8f28fd1bd91efbdd3295c339b85c296830cae265da05897c5dc4d",
     "forwarder_sha256": "155a3328e8659150f6afd7d324d7e10bc2ceabdfe21aeecdea8458f74d334e5b"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-2.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-2.md",
     "original_sha256": "b16ee6c5ad5358a4715e92e49996388f03722d7f35d85ff9bd192490bc44d878",
-    "archived_sha256": "23a8e8e3594fdef17ffe86be28c28eacf893f569660a9851273afb01a07507d6",
+    "archived_sha256": "696cf81f2521dbee74cff2cda76a20a7412b8d926e7152b6a10a20bc7c2f825e",
     "forwarder_sha256": "c9b4ab754268a3ca4dee9f7a04e42ee7901234fa072e9a5e9dda7fcad0cfc653"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-3.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-3.md",
     "original_sha256": "520228fe59ae0b0a5d7da643c8833e4a039e79402308e584f1fd927bd17b248b",
-    "archived_sha256": "4959631ba9cc24c2c99a4b272949f9dbee920f0761dfe9ac7065edd325076930",
+    "archived_sha256": "ad906804ef95ab8c26093b0488f4aff5dae703ce5a140e509524051aa3173305",
     "forwarder_sha256": "de5cd629ab50f0b71798122c08e141ab3fdcdcaa95782b798f88c14e4358a9b9"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-4.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-4.md",
     "original_sha256": "5ee1b44b81c8dda9821554ff8a7dd183202b6a9d38548a9b1c6132f40b8d9119",
-    "archived_sha256": "3391df0a41b4a72d33031645382454e925a4e574b82a8dcdbc2ab64fbe1d662d",
+    "archived_sha256": "9b48b8da2c2f939b5af0983d7e12c87a3b97c40451ba1bd98a2d22fcc05e60c1",
     "forwarder_sha256": "4b9b2ff87b346b3439060600877b5dc6cb31a9302207e9e32d2bb25c62dece53"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-5.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-5.md",
     "original_sha256": "5c42b02d6a80cea5958319b2a97a4f38290a5d8bdb3320dfa96315c322b48281",
-    "archived_sha256": "fed21e8febcc37791833c2c625df9602348b6a4aa77b5b455106e9465246fd7b",
+    "archived_sha256": "007563b491be914aeba5d218132e3bc19c066e857787c4f33468d6010c2f3a11",
     "forwarder_sha256": "00a2fde00895c0f093996191441a6d30d4b62a04b6070280e736b357bc64a49c"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-6.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-6.md",
     "original_sha256": "201e1b55e0eab2a069ba7579eb896f3f8ada8d9df31caecebd5b77158d53facf",
-    "archived_sha256": "ffc3cd6604c5f60ffdb05337927292e71969b74f5cccdde1b3743709ad3ec7bd",
+    "archived_sha256": "a95239797cc38d512f57b9d46668016b774eed48d993d8839cfdd0f421f58885",
     "forwarder_sha256": "f46a420ad9218e5964f7a637fb4dbc3b5a21370ec9ba8a1a505faa69e5b67845"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-7.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-7.md",
     "original_sha256": "0af3ae6593ac21c517686c100cc189aee49711c33fbccbb9362447c988782c79",
-    "archived_sha256": "9352ddf7acfae338c55fc1722e0b77be658c7b1476a3131144f1d4cae1e40c69",
+    "archived_sha256": "28f174ed3532d1354ecd25f93c13d2e24dbeff7b9daafe9acaac73c48eba38c4",
     "forwarder_sha256": "4be5d923b4aaf0c2408d85233621ccc535713c72c9f56afa551f0a9768df2b2b"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-8.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-8.md",
     "original_sha256": "542198cdef7ff2f31fa77503eca7c75a61ca77eb7c70efc754a585dd3ef73974",
-    "archived_sha256": "72b7b712983475c812909247c2372b58312b44ca55cb9b2a50377c9b946afdb7",
+    "archived_sha256": "ec02d9203f38a0345fee420bd2c1e49ce8f8a8b8d6b2ed303e5f7c6d9548e6f5",
     "forwarder_sha256": "6fe310e280fe48eaac1a24f24158abd5070b66db1e0e986dbc6b8c6ace37d5f4"
   },
   {
     "old": "docs/plans/response-representation-archive-phase-9.md",
     "archived": "docs/plans/archive/response-representation-archive-phase-9.md",
     "original_sha256": "6e648fd963cb5816f44595642004be3d110ec041fc9c3b80f008d4ddf2e18806",
-    "archived_sha256": "a38cb5aca262c649cfe8151d7a98a7dc4fca21845a0feb569eb02137147122ce",
+    "archived_sha256": "e91ba64e6c2b88a4a96b6ea70eceed34b7ccdb315cdd1fda5a707cf0e48c25b2",
     "forwarder_sha256": "96157a9a89749d62002558341e2bc329ee47dafc1e108e146b8ea9c9f721c26e"
   }
 ]

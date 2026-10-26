@@ -16,21 +16,7 @@ final case class ContrastWeights(
   require(weights.cols == contrastNames.length, "weights/contrastNames col mismatch")
 
   def embedIn(allColumns: Vector[String]): ContrastWeights =
-    val idx = condNames.zipWithIndex.toMap
-    val out = new Array[Double](allColumns.length * weights.cols)
-    var rOut = 0
-    while rOut < allColumns.length do
-      idx.get(allColumns(rOut)).foreach { rIn =>
-        System.arraycopy(weights.data, rIn * weights.cols, out, rOut * weights.cols, weights.cols)
-      }
-      rOut += 1
-    ContrastWeights(
-      name = name,
-      condNames = allColumns,
-      contrastNames = contrastNames,
-      weights = Mat.unsafe(allColumns.length, weights.cols, out),
-      selectedCondNames = selectedCondNames.filter(allColumns.toSet)
-    )
+    TypedContrastWeights.fromLegacyLocal(this).embedIn(allColumns).toLegacy
 
 object ContrastWeights:
 

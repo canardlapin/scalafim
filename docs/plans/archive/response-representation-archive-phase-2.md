@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 2 Record
 
-Status: complete and focused JVM/Scala.js gates verified on 2026-07-26  
-Issue: `bd-01KYAA8MDBRHYQW74FDVHVFA3Z`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete and focused JVM/Scala.js gates verified on 2026-07-26\
+Issue: `bd-01KYAA8MDBRHYQW74FDVHVFA3Z`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 0 record](response-representation-archive-phase-0.md)
 
 Phase 2 separates immutable archive identity from live resources and physical

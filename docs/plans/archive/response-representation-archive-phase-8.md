@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 8 Record
 
-Status: complete; repository-wide JVM/Scala.js gates passed  
-Issue: `bd-01KYAA8PCPZNAAFKHRNXP5TWGR`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; repository-wide JVM/Scala.js gates passed\
+Issue: `bd-01KYAA8PCPZNAAFKHRNXP5TWGR`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 7 record](response-representation-archive-phase-7.md)
 
 Phase 8 makes the response, representation, archive, and dataset ownership

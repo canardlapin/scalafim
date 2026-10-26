@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 7 Record
 
-Status: complete; repository-wide JVM/Scala.js gates passed  
-Issue: `bd-01KYAA8P1ZX4C3N49WPBG9055J`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; repository-wide JVM/Scala.js gates passed\
+Issue: `bd-01KYAA8P1ZX4C3N49WPBG9055J`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 6 record](response-representation-archive-phase-6.md)
 
 Phase 7 proves that representation semantics are independent of archive

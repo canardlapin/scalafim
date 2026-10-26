@@ -38,23 +38,24 @@ object FitPreparation:
     import FitPreparationReduction.*
     import FitPreparationTopology.*
     val discovery =
-      if plan.config.missingData == MissingDataPolicy.OmitRowsPerVoxel then Vector(ObservationPatterns)
+      if plan.strategy.fitControls.missingData == MissingDataPolicy.OmitRowsPerVoxel then Vector(ObservationPatterns)
       else Vector.empty
-    val weighting = plan.config.volumeWeighting match
+    val weighting = plan.strategy.fitControls.volumeWeighting.toLegacy match
       case VolumeWeighting.Estimated(_) => Vector(Dvars)
       case _ => Vector.empty
     val enginePhases = plan.engine match
       case FitEngine.GeneralizedLeastSquares =>
-        if needsPooledAr(plan.config.autocorrelation) then Vector(PooledAutocorrelation) else Vector.empty
+        if plan.strategy.arConfig.exists(value => needsPooledAr(value.toLegacy)) then Vector(PooledAutocorrelation) else Vector.empty
       case FitEngine.RobustLeastSquares =>
-        val weights = if plan.config.robust.psi != RobustPsi.Disabled then Vector(RobustRowWeights)
-          else if plan.config.robust.scaleScope != ScaleScope.Voxel then Vector(RobustScales)
+        val robust = plan.strategy.preparation.robust
+        val weights = if robust.psi != RobustPsi.Disabled then Vector(RobustRowWeights)
+          else if robust.scaleScope != ScaleScope.Voxel then Vector(RobustScales)
           else Vector.empty
-        val ar = if plan.config.robust.reestimateAutocorrelation && needsPooledAr(plan.config.autocorrelation)
+        val ar = if robust.reestimateAutocorrelation && plan.strategy.arConfig.exists(value => needsPooledAr(value.toLegacy))
           then Vector(PooledAutocorrelation) else Vector.empty
         weights ++ ar
       case FitEngine.ReducedRankGls =>
-        val ar = if needsPooledAr(plan.config.autocorrelation) then Vector(PooledAutocorrelation) else Vector.empty
+        val ar = if plan.strategy.arConfig.exists(value => needsPooledAr(value.toLegacy)) then Vector(PooledAutocorrelation) else Vector.empty
         ar :+ SpatialBasis
       case FitEngine.LatentSketch => Vector(SpatialBasis)
       case _ => Vector.empty
@@ -62,7 +63,7 @@ object FitPreparation:
     val topology =
       if phases.nonEmpty then GlobalReduction
       else plan.engine match
-        case FitEngine.GeneralizedLeastSquares if !fixedAr(plan.config.autocorrelation) => BlockLocal
+        case FitEngine.GeneralizedLeastSquares if !plan.strategy.arConfig.exists(value => fixedAr(value.toLegacy)) => BlockLocal
         case FitEngine.RobustLeastSquares => BlockLocal
         case _ => DesignOnly
     FitPreparationRequirements(topology, phases)
@@ -114,7 +115,7 @@ object FitPreparation:
     for
       input <- designInput(plan, timepoints)
       declared = ResponsePreparationPlan.fromPlan(plan)
-      resolved <- (plan.config.volumeWeighting, dvars) match
+      resolved <- (plan.strategy.fitControls.volumeWeighting.toLegacy, dvars) match
         case (VolumeWeighting.Estimated(estimator), Some((weights, metric))) =>
           ResolvedVolumeWeighting.fromDvars(estimator, input, weights, metric)
             .map(weighting => ResolvedResponsePreparation(declared, Some(weighting)))
@@ -131,7 +132,7 @@ object FitPreparation:
       plan: FitPlan,
       chunks: FitChunkPlan
   ): Either[FitError, OlsExecutionPrepared] =
-    val estimator = plan.config.volumeWeighting match
+    val estimator = plan.strategy.fitControls.volumeWeighting.toLegacy match
       case VolumeWeighting.Estimated(value) => value
       case _ => return Left(FitError.UnsupportedVolumeWeighting("DVARS reduction requires an estimator"))
     val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, chunks.timepoints)

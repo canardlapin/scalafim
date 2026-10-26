@@ -2,7 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.fmri.fit.GaleTestSyntax.*
 
-import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine}
+import scalafim.fmri.model.{ArOptions, ArStructure, AutocorrelationConfig, FitConfig, FitEngine, FitStrategy, RobustAutocorrelation, RobustConfig, RobustOptions, RobustPsi}
 import scalafim.fmri.design.{DesignSchema, ModelSource}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
@@ -11,6 +11,19 @@ import gale.linalg.DMat
 class FitBlockSuite extends munit.FunSuite:
 
   private val timepoints = (0 until 8).toVector
+
+  test("typed dense dispatch carries robust re-estimation and rejects runwise GLS"):
+    val design = DesignMatrix.unsafe(GaleTestMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble))))
+    val response = ResponseBlock.unsafe(GaleTestMatrix.fromRows(timepoints.map(i => Vector(1.0 + i, 2.0 + i * 0.5))))
+    val input = FitBlockInput(design, response, Vector(0, 1), timepoints,
+      Vector(RunPartition(0, timepoints, timepoints)))
+    val ar = AutocorrelationConfig.unsafe(order = 1)
+    val robust = FitStrategy.RobustLeastSquares(
+      RobustConfig.unsafe(RobustOptions(RobustPsi.Huber(), reestimateAutocorrelation = false)),
+      autocorrelation = RobustAutocorrelation.Reestimate(ar)
+    )
+    assert(FitKernel.fitDense(input, robust).toOption.flatMap(_.autocorrelation).nonEmpty)
+    assert(FitKernel.fitDense(input, FitStrategy.RunwiseGeneralizedLeastSquares(ar)).isLeft)
 
   test("dense OLS block results merge to the same result as a full voxel block") {
     val design = DesignMatrix.unsafe(

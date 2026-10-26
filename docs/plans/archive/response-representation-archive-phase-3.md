@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 3 Record
 
-Status: complete and repository-wide verified on 2026-07-26  
-Issue: `bd-01KYAA8MQNZ97F44JFPN6MQD39`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete and repository-wide verified on 2026-07-26\
+Issue: `bd-01KYAA8MQNZ97F44JFPN6MQD39`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Track A integration record](../response-representation-archive-track-a.md)
 
 Phase 3 proves the representation boundary with one temporal-DCT vertical

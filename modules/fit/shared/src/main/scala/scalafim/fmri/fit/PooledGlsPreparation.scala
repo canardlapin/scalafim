@@ -63,7 +63,7 @@ private[fit] object PooledGlsPreparation:
     * already frozen; use its effective design and post-filter run geometry.
     */
   private[fit] def shared(source: BoundedResponseReplay): Either[FitError, GlsPrepared] =
-    val prepared = makeUnit(source.design, source.partitions, source.plan.config.autocorrelation,
+    val prepared = makeUnit(source.design, source.partitions, source.plan.strategy.arOptions,
       source.plan.coefficientAxis, None)
     prepared.flatMap(shared(source, _))
 
@@ -106,16 +106,16 @@ private[fit] object PooledGlsPreparation:
       input <- FitPlanExecutor.fitBlockInput(plan, shapeOnly, partitions)
       units <- plan.strategy match
         case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) =>
-          RunwiseGls.prepareDesigns(input.design, partitions, plan.config.autocorrelation, input.runwiseProjections)
+          RunwiseGls.prepareDesigns(input.design, partitions, plan.strategy.arOptions, input.runwiseProjections)
             .flatMap(runUnits)
         case _ =>
-          makeUnit(input.design, partitions, plan.config.autocorrelation, input.coefficientAxis, None)
+          makeUnit(input.design, partitions, plan.strategy.arOptions, input.coefficientAxis, None)
             .map(Vector(_))
     yield units
 
   private def identity(plan: FitPlan, units: Vector[NoiseUnit]): String =
     val header = Vector("pooled-gls-noise-v1", plan.coefficientScope.toString,
-      plan.config.missingData.toString,
+      plan.strategy.fitControls.missingData.toString,
       plan.model.designSchema.fold("")(_.rows.canonical),
       FitWorkDescriptor.frame(plan.structuralColumns.map(column =>
         FitWorkDescriptor.frame(Vector(column.canonical, column.renderedLabel)))))
@@ -220,7 +220,7 @@ private[fit] object PooledGlsPreparation:
     // the finite-column population between preparation passes.
     val membership = Array.fill(chunks.length)(Vector.empty[Int])
     val excluded = Vector.newBuilder[VoxelInferenceExclusion]
-    val iterations = math.max(1, plan.config.autocorrelation.iterations)
+    val iterations = math.max(1, plan.strategy.arOptions.iterations)
     var units = Vector.empty[NoiseUnit]
     var previous = Vector.empty[WhiteningPlan]
     var completedUnits = Vector.empty[PreparedGlsUnit]
@@ -305,4 +305,4 @@ private[fit] object PooledGlsPreparation:
         FitInterpreters.runwiseGlsContext(plan, new RunwiseGlsPrepared(chunks.timepoints.length, runs))
       case _ => FitInterpreters.glsContext(plan, units.head.prepared(whitening.head, voxels))
     // The final pass must fit exactly the population that estimated the shared whitening.
-    new RetainedMembershipFitContext(fitted, voxels.toSet, plan.config.missingData)
+    new RetainedMembershipFitContext(fitted, voxels.toSet, plan.strategy.fitControls.missingData)

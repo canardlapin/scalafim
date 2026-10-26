@@ -44,7 +44,7 @@ object FitPlanExecutor:
         .left
         .map(FitChunkPlan.mapDatasetError)
       result <-
-        plan.config.missingData match
+        plan.strategy.fitControls.missingData match
           case MissingDataPolicy.OmitRowsPerVoxel => MaskedResponseExecutor.fit(plan, series)
           case _                                  => interpreter.fit(plan, series)
     yield result
@@ -237,7 +237,7 @@ object FitPlanExecutor:
   ): Either[FitError, FitBlockInput] =
     for
       design <- MatrixAdapters.designMatrix(plan.model, series.timepoints)
-      adaptedResponse <- MatrixAdapters.responseBlock(series, plan.config.missingData)
+      adaptedResponse <- MatrixAdapters.responseBlock(series, plan.strategy.fitControls.missingData)
       runwiseProjections <- runwiseProjections(plan, series.timepoints, partitions)
       lss <- lssDesign match
         case None        => Right(None)
@@ -330,7 +330,7 @@ object FitPlanExecutor:
       prepared <- LeastSquaresSeparate.prepare(
         trials = trialMatrix,
         fixed = fixed,
-        options = LssOptions(eps = plan.config.lss.eps, rankTol = plan.config.lss.rankTol)
+        options = LssOptions(eps = plan.strategy.lssConfig.map(_.eps).getOrElse(1e-12), rankTol = plan.strategy.lssConfig.map(_.rankTol).getOrElse(1e-7))
       )
     yield LssBlockDesign(prepared, trialColumns = termCols.trials)
 
@@ -344,7 +344,7 @@ object FitPlanExecutor:
           TrialwiseTerm(key, index, term)
       }
 
-    plan.config.lss.trialTerm match
+    plan.strategy.lssConfig.flatMap(_.trialTerm).map(_.value) match
       case Some(requested) =>
         trialwiseTerms.find(_.key == requested).toRight(FitError.UnknownLssTrialTerm(requested))
       case None =>

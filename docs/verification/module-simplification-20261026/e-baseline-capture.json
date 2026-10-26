@@ -1,0 +1,18 @@
+{
+  "production_fit_source": "a6abc2fb92389a584380754d73283e1a41adf386",
+  "capture_before_production_edits": true,
+  "logs": [
+    {
+      "path": "/private/tmp/scalafim-simplify-e-baseline.log",
+      "bytes": 86006,
+      "sha256": "3a591c55ca02c842baf00cf9fe4056d80cc93c6c655cb9814d96baebfc21cff3"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-baseline.log.meta.json",
+      "bytes": 733,
+      "sha256": "290dac63208e91ef87b699c161ae0f9ee1c0ac40ac2858813596b20cf62e71b5"
+    }
+  ],
+  "literal_contrast_outputs": 24,
+  "tests_passed": 21
+}

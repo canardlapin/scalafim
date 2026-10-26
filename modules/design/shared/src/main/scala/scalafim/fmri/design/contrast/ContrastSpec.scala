@@ -99,39 +99,15 @@ object ContrastSpec:
 
     override def compileEither(term: ConvolvedTerm): Either[ContrastError, CompiledContrast] =
       for
-        l <- left.compileEither(term).map(_.toLegacy)
-        r <- right.compileEither(term).map(_.toLegacy)
-        weights <- differenceWeights(l, r)
+        l <- left.compileEither(term).map(_.weights)
+        r <- right.compileEither(term).map(_.weights)
+        weights <- l.difference(r, ContrastId.unsafe(name))
       yield CompiledContrast(
         id = ContrastId.unsafe(name),
         effect = None,
         source = ContrastSource.User,
-        weights = TypedContrastWeights.fromLegacyDesign(weights)
+        weights = weights
       )
-
-    private def differenceWeights(l: ContrastWeights, r: ContrastWeights): Either[ContrastError, ContrastWeights] =
-      if l.condNames != r.condNames then
-        Left(ContrastError.IncompatibleWeights(name, "component contrasts must have matching condition names"))
-      else if l.weights.cols != r.weights.cols then
-        Left(ContrastError.IncompatibleWeights(name, "component contrasts must have matching contrast column counts"))
-      else
-        val out = new Array[Double](l.weights.rows * l.weights.cols)
-        var i = 0
-        while i < out.length do
-          out(i) = l.weights.data(i) - r.weights.data(i)
-          i += 1
-        val names =
-          if l.weights.cols == 1 then Vector(name)
-          else (1 to l.weights.cols).map(j => s"${name}_$j").toVector
-        Right(
-          ContrastWeights(
-            name = name,
-            condNames = l.condNames,
-            contrastNames = names,
-            weights = scalafim.fmri.hrf.linalg.Mat.unsafe(l.weights.rows, l.weights.cols, out),
-            selectedCondNames = (l.selectedCondNames ++ r.selectedCondNames).distinct
-          )
-        )
 
   final case class Oneway(
       name: String,

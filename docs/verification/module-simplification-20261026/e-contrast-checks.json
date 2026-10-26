@@ -1,0 +1,35 @@
+{
+  "status": "passed after test type annotation repair",
+  "design_jvm": 591,
+  "design_js": 591,
+  "fit_identity_jvm": 37,
+  "fit_identity_js": 37,
+  "literal_contrast_witnesses": 24,
+  "literal_configuration_witnesses": 54,
+  "additional_literal_codec_witnesses": 5,
+  "new_failures": 0,
+  "source_warnings": 0,
+  "logs": [
+    {
+      "path": "/private/tmp/scalafim-simplify-e-goldens.log",
+      "bytes": 1232,
+      "sha256": "0ac9f96b2fad70bba4f5598ea22c07063af3d17a1946a3ed10df2fa15302692d"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-goldens.log.meta.json",
+      "bytes": 1267,
+      "sha256": "2d0afb5e5ac9d10bb64fd5aa65b489411a82034ea0b5c75dc4136ee372c47843"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-goldens-2.log",
+      "bytes": 106311,
+      "sha256": "6b8c5685cbba1962c993714f666afcfcc0b25e7240df489647e869356101f067"
+    },
+    {
+      "path": "/private/tmp/scalafim-simplify-e-goldens-2.log.meta.json",
+      "bytes": 1272,
+      "sha256": "1e44e74ea2191bb73c55022fa6743036f59fbd92e57a3c62ba4f797c4dc5c742"
+    }
+  ],
+  "review": "independent source review approved; per-field legacy numeric leaf adapters remain explicit boundaries"
+}

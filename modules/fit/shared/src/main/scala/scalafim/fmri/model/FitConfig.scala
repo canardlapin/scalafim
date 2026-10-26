@@ -723,7 +723,11 @@ enum ModelNuisanceProjection:
   def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
     this match
       case Disabled => Right(())
-      case MatrixProjection(matrix, _) => matrix.validateRows(nTimepoints)
+      case MatrixProjection(matrix, lambda) =>
+        for
+          _ <- matrix.validateRows(nTimepoints)
+          _ <- ModelNuisanceProjection.validateRegularization(lambda)
+        yield ()
 
 object ModelNuisanceProjection:
   def fromLegacy(value: NuisanceProjection): Either[ModelError, ModelNuisanceProjection] =
@@ -733,7 +737,7 @@ object ModelNuisanceProjection:
       case NuisanceProjection.MatrixProjection(matrix, lambda) =>
         validateRegularization(lambda).flatMap(_ => NuisanceMatrix(matrix).map(MatrixProjection(_, lambda)))
 
-  private def validateRegularization(lambda: Regularization): Either[ModelError, Unit] =
+  private[model] def validateRegularization(lambda: Regularization): Either[ModelError, Unit] =
     lambda match
       case Regularization.Fixed(value) if value < 0.0 || !value.isFinite =>
         Left(ModelError.InvalidParameter("lambda", "must be non-negative and finite"))
@@ -1219,6 +1223,53 @@ enum FitStrategy:
       controls: FitControls = FitControls()
   )
 
+  def fitControls: FitControls =
+    this match
+      case OrdinaryLeastSquares(controls) => controls
+      case RunwiseLeastSquares(controls) => controls
+      case SeparateRunsThenFixedEffects(controls) => controls
+      case GeneralizedLeastSquares(_, controls) => controls
+      case RunwiseGeneralizedLeastSquares(_, controls) => controls
+      case RobustLeastSquares(_, controls, _) => controls
+      case LeastSquaresSeparate(_, controls) => controls
+      case LatentSketch(_, controls) => controls
+      case ReducedRankGls(_, controls) => controls
+
+  def arConfig: Option[AutocorrelationConfig] =
+    this match
+      case GeneralizedLeastSquares(autocorrelation, _) => Some(autocorrelation)
+      case RunwiseGeneralizedLeastSquares(autocorrelation, _) => Some(autocorrelation)
+      case RobustLeastSquares(_, _, RobustAutocorrelation.Reestimate(autocorrelation)) => Some(autocorrelation)
+      case ReducedRankGls(lowRank, _) => Some(lowRank.autocorrelation)
+      case _ => None
+
+  def preparation: FitPreparationSpec =
+    this match
+      case GeneralizedLeastSquares(autocorrelation, controls) => FitPreparationSpec(controls, FitNoisePreparation.Autocorrelated(autocorrelation))
+      case RunwiseGeneralizedLeastSquares(autocorrelation, controls) => FitPreparationSpec(controls, FitNoisePreparation.Autocorrelated(autocorrelation))
+      case RobustLeastSquares(robust, controls, autocorrelation) => FitPreparationSpec(controls, FitNoisePreparation.Robust(robust, autocorrelation))
+      case ReducedRankGls(lowRank, controls) => FitPreparationSpec(controls, FitNoisePreparation.Autocorrelated(lowRank.autocorrelation))
+      case _ => FitPreparationSpec(fitControls, FitNoisePreparation.Iid)
+
+  def arOptions: ArOptions = preparation.autocorrelation
+
+  def lssConfig: Option[LssStrategyConfig] =
+    this match
+      case LeastSquaresSeparate(lss, _) => Some(lss)
+      case _ => None
+
+  def withControls(value: FitControls): FitStrategy =
+    this match
+      case OrdinaryLeastSquares(_) => OrdinaryLeastSquares(value)
+      case RunwiseLeastSquares(_) => RunwiseLeastSquares(value)
+      case SeparateRunsThenFixedEffects(_) => SeparateRunsThenFixedEffects(value)
+      case GeneralizedLeastSquares(autocorrelation, _) => GeneralizedLeastSquares(autocorrelation, value)
+      case RunwiseGeneralizedLeastSquares(autocorrelation, _) => RunwiseGeneralizedLeastSquares(autocorrelation, value)
+      case RobustLeastSquares(robust, _, autocorrelation) => RobustLeastSquares(robust, value, autocorrelation)
+      case LeastSquaresSeparate(lss, _) => LeastSquaresSeparate(lss, value)
+      case LatentSketch(sketch, _) => LatentSketch(sketch, value)
+      case ReducedRankGls(lowRank, _) => ReducedRankGls(lowRank, value)
+
   def engine: FitEngine =
     this match
       case OrdinaryLeastSquares(_) => FitEngine.OrdinaryLeastSquares
@@ -1264,8 +1315,8 @@ enum FitStrategy:
 
   def validateFor(model: FmriModel): Either[ModelError, Unit] =
     val nTimepoints = model.nTimepoints
-    if config.autocorrelation.fgls.nonEmpty && (!this.isInstanceOf[FitStrategy.GeneralizedLeastSquares] ||
-        config.missingData == MissingDataPolicy.OmitRowsPerVoxel || config.nuisanceProjection != NuisanceProjection.Disabled) then
+    if arConfig.exists(_.fgls.nonEmpty) && (!this.isInstanceOf[FitStrategy.GeneralizedLeastSquares] ||
+        fitControls.missingData == MissingDataPolicy.OmitRowsPerVoxel || fitControls.nuisanceProjection != ModelNuisanceProjection.Disabled) then
       Left(ModelError.InvalidFitConfig(engine, "voxelwise FGLS requires shared-coefficient GLS, a complete selected time axis, and no nuisance projection"))
     else this match
       case OrdinaryLeastSquares(controls) =>
@@ -1310,6 +1361,27 @@ enum FitStrategy:
           _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- lowRank.validateFor(model)
         yield ()
+
+enum FitNoisePreparation:
+  case Iid
+  case Autocorrelated(autocorrelation: AutocorrelationConfig)
+  case Robust(robust: RobustConfig, autocorrelation: RobustAutocorrelation)
+
+final case class FitPreparationSpec(
+    controls: FitControls,
+    noise: FitNoisePreparation
+):
+  def autocorrelation: ArOptions =
+    noise match
+      case FitNoisePreparation.Iid => ArOptions()
+      case FitNoisePreparation.Autocorrelated(value) => value.toLegacy
+      case FitNoisePreparation.Robust(_, RobustAutocorrelation.Disabled) => ArOptions()
+      case FitNoisePreparation.Robust(_, RobustAutocorrelation.Reestimate(value)) => value.toLegacy
+
+  def robust: RobustOptions =
+    noise match
+      case FitNoisePreparation.Robust(value, policy) => value.toLegacy.copy(reestimateAutocorrelation = policy.reestimates)
+      case _ => RobustOptions()
 
 object FitStrategy:
   val Default: FitStrategy =

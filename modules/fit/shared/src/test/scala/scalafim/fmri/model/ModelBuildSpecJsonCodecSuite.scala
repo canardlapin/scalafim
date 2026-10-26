@@ -42,9 +42,15 @@ class ModelBuildSpecJsonCodecSuite extends munit.FunSuite:
     )
     val estimated = AutocorrelationConfig.unsafe(order = 2, iterations = 2, voxelwise = true)
     val strategies = Vector(FitStrategy.GeneralizedLeastSquares(ar1), FitStrategy.RunwiseGeneralizedLeastSquares(ar2), FitStrategy.RunwiseGeneralizedLeastSquares(estimated))
-    strategies.foreach: strategy =>
+    val goldens = Vector(
+      "{\"schema\":\"scalafim.model-build\",\"version\":1,\"formula\":\"onset ~ trialwise()\",\"blockColumn\":null,\"durationColumn\":null,\"baseline\":{\"kind\":\"constant\"},\"baselineDegree\":1,\"intercept\":\"Global\",\"strategy\":{\"kind\":\"gls\",\"ar\":{\"order\":1,\"iterations\":0,\"global\":true,\"voxelwise\":false,\"exactFirst\":false,\"censoredTimepoints\":[3,8],\"coefficients\":{\"kind\":\"rho\",\"value\":0.35}}},\"defaultHrf\":\"SPMG1\",\"precision\":0.3,\"dropEmpty\":true,\"summate\":true,\"strict\":false,\"contrastSets\":{},\"nuisance\":null,\"factorLevels\":[],\"emptyCellPolicy\":\"UseDropEmptyFlag\",\"missingValuePolicy\":{\"kind\":\"zero-contribution\"},\"degenerateModulatorPolicy\":\"RetainAndReport\",\"orthogonalization\":[]}",
+      "{\"schema\":\"scalafim.model-build\",\"version\":1,\"formula\":\"onset ~ trialwise()\",\"blockColumn\":null,\"durationColumn\":null,\"baseline\":{\"kind\":\"constant\"},\"baselineDegree\":1,\"intercept\":\"Global\",\"strategy\":{\"kind\":\"runwise-gls\",\"ar\":{\"order\":2,\"iterations\":1,\"global\":false,\"voxelwise\":false,\"exactFirst\":false,\"censoredTimepoints\":[1],\"coefficients\":{\"kind\":\"phi\",\"values\":[0.4,-0.15]}}},\"defaultHrf\":\"SPMG1\",\"precision\":0.3,\"dropEmpty\":true,\"summate\":true,\"strict\":false,\"contrastSets\":{},\"nuisance\":null,\"factorLevels\":[],\"emptyCellPolicy\":\"UseDropEmptyFlag\",\"missingValuePolicy\":{\"kind\":\"zero-contribution\"},\"degenerateModulatorPolicy\":\"RetainAndReport\",\"orthogonalization\":[]}",
+      "{\"schema\":\"scalafim.model-build\",\"version\":1,\"formula\":\"onset ~ trialwise()\",\"blockColumn\":null,\"durationColumn\":null,\"baseline\":{\"kind\":\"constant\"},\"baselineDegree\":1,\"intercept\":\"Global\",\"strategy\":{\"kind\":\"runwise-gls\",\"ar\":{\"order\":2,\"iterations\":2,\"global\":false,\"voxelwise\":true,\"exactFirst\":true,\"censoredTimepoints\":[],\"coefficients\":{\"kind\":\"estimate\"}}},\"defaultHrf\":\"SPMG1\",\"precision\":0.3,\"dropEmpty\":true,\"summate\":true,\"strict\":false,\"contrastSets\":{},\"nuisance\":null,\"factorLevels\":[],\"emptyCellPolicy\":\"UseDropEmptyFlag\",\"missingValuePolicy\":{\"kind\":\"zero-contribution\"},\"degenerateModulatorPolicy\":\"RetainAndReport\",\"orthogonalization\":[]}"
+    )
+    strategies.zip(goldens).foreach: (strategy, golden) =>
       val spec = ModelBuildSpec("onset ~ trialwise()", strategy = strategy)
       val json = ModelBuildSpecJsonCodec.encode(spec).toOption.getOrElse(fail("portable GLS encoding"))
+      assertEquals(json, golden)
       assertEquals(ModelBuildSpecJsonCodec.decode(json), Right(spec))
       assertEquals(ModelBuildSpecJsonCodec.encode(ModelBuildSpecJsonCodec.decode(json).toOption.getOrElse(fail("portable GLS decoding"))), Right(json))
 

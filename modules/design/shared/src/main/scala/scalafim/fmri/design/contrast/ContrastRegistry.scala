@@ -71,13 +71,13 @@ object ContrastRegistry:
                     yield
                       local.foldLeft(out) { case (acc0, (contrastName, compiled)) =>
                         val key = s"$termKey#$contrastName"
-                        val embedded = compiled.toLegacy.embedIn(model.columnNames)
+                        val embedded = compiled.weights.embedIn(model.columnNames)
                         acc0.updated(
                           key,
                           compiled.copy(
                             id = ContrastId.unsafe(key),
                             effect = Some(EffectId.unsafe(contrastName)),
-                            weights = TypedContrastWeights.fromLegacyDesign(embedded)
+                            weights = embedded
                           )
                         )
                       }
@@ -95,14 +95,14 @@ object ContrastRegistry:
         tol: Double = Validate.DefaultTol,
         rankTol: Double = Validate.DefaultRankTol
     ): Either[ContrastError, Vector[Validate.ContrastValidation]] =
-      contrastWeightsEither.map { ws =>
+      compiledContrasts.map { ws =>
         if ws.isEmpty then Vector.empty
         else
           ws.iterator.flatMap { case (key, cw) =>
             Validate.validateContrasts(
               design = model.designMatrix,
               columnNames = model.columnNames,
-              weights = cw.weights,
+              weights = cw.weights.weights,
               name = key,
               tol = tol,
               rankTol = rankTol
@@ -122,14 +122,14 @@ object ContrastRegistry:
         tol: Double = Validate.DefaultTol,
         rankTol: Double = Validate.DefaultRankTol
     ): Vector[Validate.ContrastValidation] =
-      val ws = fContrastWeights(maxInter = maxInter)
+      val ws = unsafe(compiledFContrastWeights(maxInter = maxInter))
       if ws.isEmpty then Vector.empty
       else
         ws.iterator.flatMap { case (key, cw) =>
           Validate.validateContrasts(
             design = model.designMatrix,
             columnNames = model.columnNames,
-            weights = cw.weights,
+            weights = cw.weights.weights,
             name = key,
             tol = tol,
             rankTol = rankTol

@@ -1,7 +1,7 @@
 # Response/Representation/Archive Phase 0 Record
 
-Status: complete and repository-wide verified on 2026-07-26  
-Issue: `bd-01KYAA8KS1B9F0D6SZ00GCRESJ`  
+Status: complete and repository-wide verified on 2026-07-26\
+Issue: `bd-01KYAA8KS1B9F0D6SZ00GCRESJ`\
 Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)
 
 This record freezes the input to the response/archive convergence. It is not a

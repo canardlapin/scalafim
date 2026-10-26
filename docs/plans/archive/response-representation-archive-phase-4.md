@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 4 Record
 
-Status: complete; repository-wide JVM/Scala.js gates verified on 2026-07-26  
-Issue: `bd-01KYAA8N28KT4STPR5XXSA1KYR`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; repository-wide JVM/Scala.js gates verified on 2026-07-26\
+Issue: `bd-01KYAA8N28KT4STPR5XXSA1KYR`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 3 record](response-representation-archive-phase-3.md)
 
 Phase 4 binds the typed temporal-DCT representation to LNA-HDF5 without

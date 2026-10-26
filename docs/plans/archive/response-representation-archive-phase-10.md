@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 10 Record
 
-Status: complete; repository-wide JVM/Scala.js gates passed  
-Issue: `bd-01KYAA8Q1Z0HV74WQHFYYTE709`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; repository-wide JVM/Scala.js gates passed\
+Issue: `bd-01KYAA8Q1Z0HV74WQHFYYTE709`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 9 record](response-representation-archive-phase-9.md)
 
 Phase 10 converts the architectural acceptance criteria into reusable laws,

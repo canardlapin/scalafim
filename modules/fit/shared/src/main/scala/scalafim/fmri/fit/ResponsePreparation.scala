@@ -8,6 +8,7 @@ import scalafim.fmri.model.{
   DvarsWeightFunction,
   DvarsWeightScope,
   FitConfig,
+  FitPreparationSpec,
   FitPlan,
   FixedWeightAlignment,
   MissingDataPolicy,
@@ -605,7 +606,17 @@ private[fit] object DvarsVolumeWeightEstimator:
 
 object ResponsePreparationPlan:
   def fromPlan(plan: FitPlan): ResponsePreparationPlan =
-    fromConfig(plan.config)
+    fromPreparation(plan.strategy.preparation)
+
+  def fromPreparation(preparation: FitPreparationSpec): ResponsePreparationPlan =
+    ResponsePreparationPlan(
+      missingData = preparation.controls.missingData,
+      censoredTimepoints = preparation.autocorrelation.censoredTimepoints,
+      volumeWeighting = preparation.controls.volumeWeighting.toLegacy,
+      nuisanceProjection = preparation.controls.nuisanceProjection.toLegacy,
+      autocorrelation = preparation.autocorrelation,
+      robust = preparation.robust
+    )
 
   def fromConfig(config: FitConfig): ResponsePreparationPlan =
     ResponsePreparationPlan(

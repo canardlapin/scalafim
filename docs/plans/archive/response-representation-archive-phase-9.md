@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 9 Record
 
-Status: complete; repository-wide JVM/Scala.js gates passed  
-Issue: `bd-01KYAA8PQ71BZHQ55BEFGVNYH3`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; repository-wide JVM/Scala.js gates passed\
+Issue: `bd-01KYAA8PQ71BZHQ55BEFGVNYH3`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 8 record](response-representation-archive-phase-8.md)
 
 Phase 9 normalizes the format-neutral archive manifest without changing

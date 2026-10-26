@@ -2,7 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.dataset.FmriSeries
 import scalafim.fmri.ar.TimeSegment
-import scalafim.fmri.model.{ArBiasCorrection, ArCensorTreatment, FitEngine, FitPlan}
+import scalafim.fmri.model.{ArBiasCorrection, ArCensorTreatment, ArOptions, FitEngine, FitPlan}
 
 /** The plan route deliberately retains the complete time axis. Censor indicators
   * integrate out missing observations under continuous covariance; arbitrary
@@ -22,7 +22,7 @@ private[fit] object VoxelwiseArInterpreter extends FitInterpreter:
     Some(prepareSpec(plan, timepoints))
 
   private def prepareSpec(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, Prepared] =
-    val ar = plan.config.autocorrelation
+    val ar = plan.strategy.arConfig.map(_.toLegacy).getOrElse(ArOptions())
     if timepoints != (0 until plan.nTimepoints).toVector then
       Left(FitError.UnsupportedAutocorrelation("voxelwise FGLS requires the complete model time axis; use explicit censoredTimepoints"))
     else (ar.structure, ar.fgls, ar.biasCorrection) match
@@ -43,17 +43,18 @@ private[fit] object VoxelwiseArInterpreter extends FitInterpreter:
 
   def fitChunk(plan: FitPlan, series: FmriSeries, prepared: Prepared): Either[FitError, Block] =
     val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+    val ar = plan.strategy.arConfig.map(_.toLegacy).getOrElse(ArOptions())
     for
       expected <- prepare(plan, series)
       _ <- if expected == prepared then Right(()) else Left(FitError.IncompatibleFitBlocks("FGLS preparation differs from plan"))
       input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
       runs = partitions.map(p => TimeSegment(p.rowIndices.head, p.rowIndices.last + 1, p.runIndex))
-      fitted <- VoxelwiseArFgls.fit(input.design.value, input.response.value, runs, plan.config.autocorrelation.censoredTimepoints, prepared)
+      fitted <- VoxelwiseArFgls.fit(input.design.value, input.response.value, runs, ar.censoredTimepoints, prepared)
       provenance = input.preparationProvenance.map(p => p.copy(records = p.records.map:
         case ResponsePreparationRecord(step: ResponsePreparationStep.Whitening, _) =>
           ResponsePreparationRecord(step, ResponsePreparationDisposition.Applied("voxelwise FGLS with explicit covariance inference policy"))
-        case ResponsePreparationRecord(step: ResponsePreparationStep.Censoring, _) if plan.config.autocorrelation.censoredTimepoints.nonEmpty =>
-          ResponsePreparationRecord(step, ResponsePreparationDisposition.Applied(s"voxelwise FGLS censor treatment: ${plan.config.autocorrelation.censorTreatment}"))
+        case ResponsePreparationRecord(step: ResponsePreparationStep.Censoring, _) if ar.censoredTimepoints.nonEmpty =>
+          ResponsePreparationRecord(step, ResponsePreparationDisposition.Applied(s"voxelwise FGLS censor treatment: ${ar.censorTreatment}"))
         case record => record
       ))
     yield VoxelwiseArFitBlockResult(fitted, input.voxelIndices, input.timepoints, input.coefficientAxis, provenance, input.fitExclusions)

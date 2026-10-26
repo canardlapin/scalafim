@@ -1,8 +1,8 @@
 # Response/Representation/Archive Phase 6 Record
 
-Status: complete; permanent module edge and repository-wide JVM/Scala.js gates passed  
-Issue: `bd-01KYAA8NQH72CY0J7W3EXH04FZ`  
-Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)  
+Status: complete; permanent module edge and repository-wide JVM/Scala.js gates passed\
+Issue: `bd-01KYAA8NQH72CY0J7W3EXH04FZ`\
+Governing plan: [response-representation-archive-architecture.md](../response-representation-archive-architecture.md)\
 Baseline: [Phase 5 record](response-representation-archive-phase-5.md)
 
 Phase 6 separates scientific dataset descriptions from effectful response
